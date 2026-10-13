@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "logos_dimension:block/mercury_bucket"
+  }
+}

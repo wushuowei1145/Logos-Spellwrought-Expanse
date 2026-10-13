@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "phase=0": {
+      "model": "logos_dimension:block/salt_crust_0"
+    },
+    "phase=1": {
+      "model": "logos_dimension:block/salt_crust_1"
+    },
+    "phase=2": {
+      "model": "logos_dimension:block/salt_crust_2"
+    },
+    "phase=3": {
+      "model": "logos_dimension:block/salt_crust_3"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "logos_dimension:block/sulfur_deposit_1"
+  }
+}

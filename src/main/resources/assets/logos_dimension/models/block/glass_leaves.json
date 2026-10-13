@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "logos_dimension:block/glass_leaves"
+  },
+  "render_type": "neoforge:translucent"
+}

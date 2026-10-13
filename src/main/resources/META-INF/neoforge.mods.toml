@@ -1,0 +1,30 @@
+license="All Rights Reserved"
+
+[[mods]]
+modId="logos_dimension"
+version="0.1.0"
+displayName="Logos: The Alchemical Crucible"
+description='''
+A world being transmuted: repeating colossal empty sky islands, sulfur, mercury and salt belts, linked by living aether wilderness. Requires Logos.
+'''
+
+[[dependencies.logos_dimension]]
+modId="neoforge"
+type="required"
+versionRange="[26.1.2.112,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.logos_dimension]]
+modId="minecraft"
+type="required"
+versionRange="[26.1.2]"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.logos_dimension]]
+modId="logos"
+type="required"
+versionRange="[0.5.0,)"
+ordering="AFTER"
+side="BOTH"

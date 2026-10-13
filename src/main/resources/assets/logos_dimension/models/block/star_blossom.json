@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "logos_dimension:block/star_blossom"
+  },
+  "render_type": "neoforge:cutout"
+}

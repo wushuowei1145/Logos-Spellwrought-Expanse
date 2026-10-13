@@ -1,0 +1,10 @@
+/.gradle/
+/build/
+/run/
+/runs/
+/libs/
+/.idea/
+*.iml
+*.env
+*.env.*
+*.log

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "GGG",
+    "GSG",
+    "GGG"
+  ],
+  "key": {
+    "G": "minecraft:glass",
+    "S": "logos:tainted_mana_shard"
+  },
+  "result": {
+    "id": "logos_dimension:vortex",
+    "count": 1
+  }
+}

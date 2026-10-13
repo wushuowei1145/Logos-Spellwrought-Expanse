@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "logos_dimension:block/salt_crystal_0"
+  },
+  "render_type": "neoforge:translucent"
+}

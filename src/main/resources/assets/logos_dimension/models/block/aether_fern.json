@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "logos_dimension:block/aether_fern"
+  },
+  "render_type": "neoforge:cutout"
+}

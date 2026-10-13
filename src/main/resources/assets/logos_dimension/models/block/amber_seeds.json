@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "logos_dimension:block/amber_seeds"
+  },
+  "render_type": "neoforge:cutout"
+}

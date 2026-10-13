@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "phase=0": {
+      "model": "logos_dimension:block/cinnabar_0"
+    },
+    "phase=1": {
+      "model": "logos_dimension:block/cinnabar_1"
+    },
+    "phase=2": {
+      "model": "logos_dimension:block/cinnabar_2"
+    },
+    "phase=3": {
+      "model": "logos_dimension:block/cinnabar_3"
+    }
+  }
+}

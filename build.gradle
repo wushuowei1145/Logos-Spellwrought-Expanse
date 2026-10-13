@@ -1,0 +1,56 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.148'
+}
+
+group = 'dev.logos.dimension'
+version = mod_version
+base { archivesName = mod_id }
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+repositories {
+    maven { url = 'https://maven.firstdark.dev/snapshots' }
+    exclusiveContent {
+        forRepository { maven { url = 'https://api.modrinth.com/maven' } }
+        filter { includeGroup 'maven.modrinth' }
+    }
+}
+
+neoForge {
+    version = neo_version
+    runs {
+        client { client() }
+        server { server(); programArgument '--nogui' }
+        gameTestServer {
+            type = 'gameTestServer'
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+            // 26.1's GameTestServer deliberately ignores datapack LevelStems. Supply a test-only
+            // flat preset containing the real generator; this pack is never shipped with the mod.
+            programArguments.addAll '--tests', "${mod_id}:*", '--packs', file('gametest-packs').absolutePath,
+                    '--report', file('build/gametest-results.xml').absolutePath
+        }
+        configureEach { logLevel = org.slf4j.event.Level.INFO }
+    }
+    mods { logos_dimension { sourceSet sourceSets.main } }
+    unitTest { enable(); testedMod = mods.logos_dimension }
+}
+
+dependencies {
+    // Logos remains a separately installed mod; no copy of its code or items is bundled.
+    if (providers.gradleProperty('logosJar').isPresent()) {
+        runtimeOnly files(providers.gradleProperty('logosJar').get())
+    }
+    implementation "com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:${ldlib2_version}"
+    runtimeOnly("com.lowdragmc.photon:photon-neoforge-26.1:${photon_version}") { transitive = false }
+    runtimeOnly("com.lowdragmc.kilagraph:kilagraph-neoforge-26.1:${kilagraph_version}") { transitive = false }
+    runtimeOnly "maven.modrinth:geckolib:${geckolib_version}"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test', Test) { useJUnitPlatform(); testLogging { events 'passed', 'failed' } }
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+if (file('gradle/ldlib2-uitest.gradle').exists()) {
+    apply from: 'gradle/ldlib2-uitest.gradle'
+}
