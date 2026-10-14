@@ -42,13 +42,18 @@ public final class DimensionTravel {
     private DimensionTravel() {}
 
     public static boolean enter(ServerPlayer player) {
+        return enter(player, player.position());
+    }
+
+    /** A physical entrance may save a safe position beside its basin instead of inside its portal. */
+    public static boolean enter(ServerPlayer player, Vec3 returnPosition) {
         if (player.level().dimension().equals(LogosDimension.CRUCIBLE)) return leave(player);
         var server = player.level().getServer();
         var target = server.getLevel(LogosDimension.CRUCIBLE);
         if (target == null || !(target.getChunkSource().getGenerator() instanceof AlchemicalChunkGenerator generator)) {
             player.sendSystemMessage(Component.translatable("message.logos_dimension.missing_dimension")); return false;
         }
-        var home = new ReturnPoint(player.level().dimension().identifier().toString(), player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
+        var home = new ReturnPoint(player.level().dimension().identifier().toString(), returnPosition.x, returnPosition.y, returnPosition.z, player.getYRot(), player.getXRot());
         var center = generator.terrain().layout().center(0, 0);
         var landing = findLanding(target, center, AlchemicalLayout.Region.AETHER);
         if (landing == null) return false;
