@@ -22,12 +22,18 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class LogosDimension {
     public static final String ID = "logos_dimension";
     public static final ResourceKey<Level> CRUCIBLE = ResourceKey.create(Registries.DIMENSION, id("crucible"));
+    public static final ResourceKey<Level> CLOUDSEA = ResourceKey.create(Registries.DIMENSION, id("cloudsea"));
     private static final DeferredRegister<MapCodec<? extends ChunkGenerator>> GENERATORS = DeferredRegister.create(Registries.CHUNK_GENERATOR, ID);
     private static final DeferredRegister<MapCodec<? extends BiomeSource>> BIOME_SOURCES = DeferredRegister.create(Registries.BIOME_SOURCE, ID);
     private static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, ID);
     static {
         GENERATORS.register("crucible", () -> AlchemicalChunkGenerator.CODEC);
         BIOME_SOURCES.register("alchemical", () -> AlchemicalBiomeSource.CODEC);
+        GENERATORS.register("cloudsea", () -> dev.logos.dimension.cloudsea.CloudseaChunkGenerator.CODEC);
+        BIOME_SOURCES.register("cloudsea", () -> dev.logos.dimension.cloudsea.CloudseaBiomeSource.CODEC);
+        TABS.register("cloudsea", () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.logos_dimension.cloudsea"))
+                .icon(() -> dev.logos.dimension.cloudsea.CloudseaBlocks.PORCELAIN.get().asItem().getDefaultInstance())
+                .displayItems((p,out) -> dev.logos.dimension.cloudsea.CloudseaBlocks.PALETTE.forEach(b -> out.accept(b.get()))).build());
         TABS.register("crucible", () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.logos_dimension"))
                 .icon(() -> DimensionBlocks.SALT_CRYSTAL.get().asItem().getDefaultInstance())
                 .displayItems((p, out) -> {
@@ -37,10 +43,12 @@ public final class LogosDimension {
     }
     public LogosDimension(IEventBus bus) {
         DimensionFluids.init();
+        dev.logos.dimension.cloudsea.CloudseaBlocks.init();
         DimensionBlocks.BLOCKS.register(bus); DimensionBlocks.ITEMS.register(bus);
         DimensionFluids.TYPES.register(bus); DimensionFluids.FLUIDS.register(bus);
         GENERATORS.register(bus); BIOME_SOURCES.register(bus); TABS.register(bus);
         DimensionGameTests.register(bus);
+        dev.logos.dimension.gametest.CloudseaGameTests.register(bus);
         bus.addListener(DimensionSpawns::register);
         bus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
                 event.registrar("1").playToClient(dev.logos.dimension.net.HauntPayload.TYPE, dev.logos.dimension.net.HauntPayload.CODEC));
