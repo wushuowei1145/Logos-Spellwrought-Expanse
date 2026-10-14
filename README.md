@@ -1,5 +1,7 @@
 # 维度-咒械原
 
+**Logos: Spellwrought Expanse** — 由咒术塑成的辽阔原野。
+
 Logos 的独立新维度附属 Mod。工程名 `LogosDimensionAddon`，Mod ID `logos_dimension`。当前版本为可运行的 **0.1.0 原型**，适合逐步调整世界生成和美术。
 
 ![空岛下方的影雾](docs/screenshots/shadow-fog.png)
@@ -31,9 +33,11 @@ Logos 的独立新维度附属 Mod。工程名 `LogosDimensionAddon`，Mod ID `l
 
 当前构建目标：Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**。与独立安装的 Logos 0.5.0+ 一起放入 `mods`；开发验证使用 Logos **0.5.1**，主仓库基线 `f196960`。Logos 自身所需的 LDLib2、Photon、KilaGraph、GeckoLib 也需按主模组要求安装。本附属不内嵌这些模组。
 
-生存入口：8 块玻璃围住一个现有 `logos:tainted_mana_shard`，合成「炼金漩涡」。放置并右键进入；再次使用可返回之前的位置。朱砂与盐晶的材料掉落同样复用这个 Logos 注册 ID，没有重复注册污染碎片。
+生存入口：8 块玻璃围住一个现有 `logos:tainted_mana_shard`，合成「炼金漩涡」；再与原版炼药锅合成「炼金釜」。釜内的金银漩涡缓慢旋转并发光，跳入釜内液面即可传送到咒械原。釜壁与釜沿有实际碰撞，碰外壁或站釜沿不会触发。返回位置保存在釜旁的安全地面，狭窄位置则落在实心釜沿；传送后有 4 秒冷却。在咒械原使用另一个炼金釜可返回。旧炼金漩涡的右键入口仍可使用。朱砂与盐晶的材料掉落同样复用这个 Logos 注册 ID，没有重复注册污染碎片。
 
 管理员命令：
+
+![炼金釜实机截图](docs/screenshots/alchemical-cauldron.png)
 
 ```text
 /alchemy enter

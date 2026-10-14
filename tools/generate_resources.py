@@ -32,7 +32,8 @@ palette = {
  'amber_seeds':((199,158,83),'琥珀种穗','Amber Seed Tassels'),
  'star_blossom':((211,227,221),'星形花','Star Blossom'),
  'aether_fern':((113,165,149),'以太蕨','Aether Fern'),
- 'vortex':((174,159,112),'炼金漩涡','Alchemical Vortex')}
+ 'vortex':((174,159,112),'炼金漩涡','Alchemical Vortex'),
+ 'alchemical_cauldron':((49,52,59),'炼金釜','Alchemical Cauldron')}
 reactive = {'cinnabar','sulfur_deposit','mercury_crust','salt_crust','salt_crystal'}
 plants = {'star_blossom','aether_fern','amber_seeds'}
 
@@ -117,6 +118,52 @@ for name,(color,cn,english) in palette.items():
     else: entry={'type':'minecraft:item','name':f'{ns}:{name}'}
     write(data/'loot_table/blocks'/f'{name}.json',{'type':'minecraft:block','pools':[{'rolls':1,'entries':[entry],'conditions':[{'condition':'minecraft:survives_explosion'}]}]})
 
+# A hollow, low-poly crucible, importable as a Java block model in Blockbench.
+save_texture('cauldron_iron', texture('cauldron_iron', (47,51,58)))
+rim=texture('cauldron_brass', (142,122,77)); rd=ImageDraw.Draw(rim)
+rd.line([(0,2),(15,2)], fill=(192,168,103,255)); rd.line([(0,13),(15,13)], fill=(83,76,60,255))
+save_texture('cauldron_brass',rim)
+sheet=Image.new('RGBA',(64,64*24)); gold=(231,195,111); silver=(178,202,210)
+for frame in range(24):
+    im=Image.new('RGBA',(64,64)); pix=im.load()
+    for y in range(64):
+        for x in range(64):
+            dx=x-31.5; dy=y-31.5; r=math.hypot(dx,dy); a=math.atan2(dy,dx)
+            wave=(a-frame*math.tau/24+r*.15)*3
+            crest=max(0,math.cos(wave))**10
+            alt=math.floor((a-frame*math.tau/24+r*.15)*3/math.tau)%2
+            tint=gold if alt==0 else silver
+            depth=.2+.8*crest
+            core=max(0,1-r/5)**2
+            pix[x,y]=tuple(min(255,int((18,26,35)[i]*(1-depth)+tint[i]*depth+core*85)) for i in range(3))+(255,)
+    sheet.paste(im,(0,64*frame))
+save_texture('cauldron_vortex',sheet)
+write(assets/'textures/block/cauldron_vortex.png.mcmeta',{'animation':{'frametime':3,'interpolate':True}})
+elements=[]
+def cauldron_cube(name,start,end,tex):
+    elements.append({'name':name,'from':start,'to':end,'faces':{face:{'texture':'#'+tex} for face in ['up','down','north','south','east','west']}})
+cauldron_cube('basin_floor',[1,3,1],[15,4,15],'iron')
+for name,start,end in [
+ ('wall_west',[1,4,1],[2,11,15]),('wall_east',[14,4,1],[15,11,15]),
+ ('wall_north',[2,4,1],[14,11,2]),('wall_south',[2,4,14],[14,11,15])]: cauldron_cube(name,start,end,'iron')
+for name,start,end in [
+ ('rim_north',[0,11,0],[16,13,2]),('rim_south',[0,11,14],[16,13,16]),
+ ('rim_west',[0,11,2],[2,13,14]),('rim_east',[14,11,2],[16,13,14])]: cauldron_cube(name,start,end,'brass')
+for x in [2,12]:
+    for z in [2,12]: cauldron_cube(f'foot_{x}_{z}',[x,0,z],[x+2,3,z+2],'iron')
+for x in [-1,16]:
+    cauldron_cube(f'handle_{x}_front',[x,7,5],[x+1,10,6],'brass')
+    cauldron_cube(f'handle_{x}_back',[x,7,10],[x+1,10,11],'brass')
+    cauldron_cube(f'handle_{x}_bar',[x,6,5],[x+1,7,11],'brass')
+elements.append({'name':'liquid_vortex','from':[2,8,2],'to':[14,8,14],
+                 'faces':{'up':{'texture':'#vortex','uv':[0,0,16,16]}},'shade':False,'light_emission':15})
+write(assets/'models/block/alchemical_cauldron.json',{'parent':'minecraft:block/block',
+ 'textures':{'particle':f'{ns}:block/cauldron_iron','iron':f'{ns}:block/cauldron_iron','brass':f'{ns}:block/cauldron_brass','vortex':f'{ns}:block/cauldron_vortex'},
+ 'elements':elements,'display':{'gui':{'rotation':[30,225,0],'translation':[0,1,0],'scale':[.8,.8,.8]},
+ 'ground':{'translation':[0,3,0],'scale':[.35,.35,.35]},'fixed':{'scale':[.75,.75,.75]}}})
+write(data/'recipe/alchemical_cauldron.json',{'type':'minecraft:crafting_shapeless','category':'misc',
+ 'ingredients':['minecraft:cauldron',f'{ns}:vortex'],'result':{'id':f'{ns}:alchemical_cauldron','count':1}})
+
 for name,color in [('mercury',(175,190,201)),('molten_glass',(223,124,55))]:
     for mode in ['still','flow']:
         sheet=Image.new('RGBA',(16,64))
@@ -169,7 +216,7 @@ tracks['minecraft:gameplay/sky_light_level']={'keyframes':[{'ticks':i*24000,'val
 tracks['minecraft:visual/sky_light_factor']={'keyframes':[{'ticks':i*24000,'value':v} for i,v in enumerate([.4,1.0,.9,.75])]}
 write(data/'timeline/opus.json',{'clock':f'{ns}:opus','period_ticks':96000,'time_markers':{f'{ns}:{p}':{'ticks':i*24000,'show_in_commands':True} for i,p in enumerate(['nigredo','albedo','citrinitas','rubedo'])},'tracks':tracks})
 write(data/'recipe/vortex.json',{'type':'minecraft:crafting_shaped','category':'misc','pattern':['GGG','GSG','GGG'],'key':{'G':'minecraft:glass','S':'logos:tainted_mana_shard'},'result':{'id':f'{ns}:vortex','count':1}})
-for tag,names in [('mineable/pickaxe',['strata_stone','island_stone','charred_stone','cinnabar','sulfur_deposit','mercury_metal','mercury_crust','salt_crust','salt_crystal']),('logs',['fan_trunk']),('leaves',['fan_leaves','glass_leaves']),('supports_vegetation',['aether_turf','aether_soil']),('animals_spawnable_on',['aether_turf'])]:
+for tag,names in [('mineable/pickaxe',['strata_stone','island_stone','charred_stone','cinnabar','sulfur_deposit','mercury_metal','mercury_crust','salt_crust','salt_crystal','alchemical_cauldron']),('logs',['fan_trunk']),('leaves',['fan_leaves','glass_leaves']),('supports_vegetation',['aether_turf','aether_soil']),('animals_spawnable_on',['aether_turf'])]:
     write(resources/'data/minecraft/tags/block'/f'{tag}.json',{'replace':False,'values':[f'{ns}:{n}' for n in names]})
 
 # The sparse astrolabe is a real renderer texture, not a concept illustration.

@@ -27,7 +27,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 /** Tests load the real addon's dimension and use actual registry data, chunks and spawn events. */
 public final class DimensionGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS = DeferredRegister.create(Registries.TEST_FUNCTION, LogosDimension.ID);
-    private static final List<String> NAMES = List.of("registry_compatibility", "empty_island", "island_spawn_guard", "custom_materials", "phase_clock", "travel_round_trip", "reactive_matter", "fluids_flow", "island_boss_progress");
+    private static final List<String> NAMES = List.of("registry_compatibility", "empty_island", "island_spawn_guard", "custom_materials", "phase_clock", "travel_round_trip", "reactive_matter", "fluids_flow", "island_boss_progress", "cauldron_portal");
     public static void register(IEventBus bus) {
         FUNCTIONS.register("registry_compatibility", () -> DimensionGameTests::registry);
         FUNCTIONS.register("empty_island", () -> DimensionGameTests::island);
@@ -38,6 +38,7 @@ public final class DimensionGameTests {
         FUNCTIONS.register("reactive_matter", () -> DimensionGameTests::reaction);
         FUNCTIONS.register("fluids_flow", () -> DimensionGameTests::flow);
         FUNCTIONS.register("island_boss_progress", () -> DimensionGameTests::progress);
+        FUNCTIONS.register("cauldron_portal", () -> DimensionGameTests::cauldron);
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
             Holder<TestEnvironmentDefinition<?>> env = event.registerEnvironment(LogosDimension.id("default"), new TestEnvironmentDefinition.AllOf());
@@ -185,6 +186,41 @@ public final class DimensionGameTests {
             var restored = IslandProgress.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE,encoded).getOrThrow();
             h.assertTrue(restored.defeated(center) && !restored.defeated(next), "Boss progress failed to serialize");
         } finally { data.setDefeated(center,wasDefeated); }
+        h.succeed();
+    }
+    private static void cauldron(GameTestHelper h) {
+        var level = h.getLevel();
+        var state = DimensionBlocks.ALCHEMICAL_CAULDRON.get().defaultBlockState();
+        var pos = h.absolutePos(new BlockPos(4, 2, 4));
+        level.setBlockAndUpdate(pos, state);
+        var collision = state.getCollisionShape(level, pos);
+        h.assertTrue(collision.toAabbs().stream().noneMatch(box -> box.contains(.5, .5, .5)), "Basin has no hollow interior");
+        h.assertTrue(collision.toAabbs().stream().anyMatch(box -> box.contains(.05, .75, .5)), "Rim has no physical collision");
+        var player = h.makeMockServerPlayerInLevel(); player.connection.markClientLoaded();
+        var original = player.level().dimension();
+        var effects = new net.minecraft.world.entity.InsideBlockEffectApplier.StepBasedCollector();
+        player.setPos(pos.getX() + .02, pos.getY() + .5, pos.getZ() + .5);
+        state.entityInside(level, pos, player, effects, true); effects.applyAndClear(player);
+        h.assertTrue(player.level().dimension().equals(original), "Outside wall triggered portal");
+        player.setPos(pos.getX() + .5, pos.getY() + .9, pos.getZ() + .5);
+        state.entityInside(level, pos, player, effects, true); effects.applyAndClear(player);
+        h.assertTrue(player.level().dimension().equals(original), "Above rim triggered portal");
+        player.setPos(pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5);
+        state.entityInside(level, pos, player, effects, true);
+        h.assertTrue(player.level().dimension().equals(original), "Portal changed levels during collision traversal");
+        effects.applyAndClear(player);
+        h.assertTrue(player.level().dimension().equals(LogosDimension.CRUCIBLE), "Entering liquid did not teleport");
+        h.assertTrue(player.isOnPortalCooldown(), "Entrance did not start cooldown");
+        var destination = player.level(); var other = player.blockPosition();
+        destination.setBlockAndUpdate(other, state);
+        player.setPos(other.getX() + .5, other.getY() + .5, other.getZ() + .5);
+        state.entityInside(destination, other, player, effects, true); effects.applyAndClear(player);
+        h.assertTrue(player.level() == destination, "Cooldown allowed immediate return");
+        player.setPortalCooldown(0);
+        state.entityInside(destination, other, player, effects, true); effects.applyAndClear(player);
+        destination.removeBlock(other, false);
+        h.assertTrue(player.level().dimension().equals(original), "Cauldron return failed");
+        h.assertTrue(player.getY() >= pos.getY() + .8 || player.position().distanceToSqr(pos.getCenter()) > .5, "Return was saved inside liquid");
         h.succeed();
     }
     private DimensionGameTests() {}
