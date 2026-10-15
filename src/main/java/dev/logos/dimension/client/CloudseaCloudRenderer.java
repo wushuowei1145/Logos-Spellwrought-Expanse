@@ -44,8 +44,12 @@ public final class CloudseaCloudRenderer {
                     float dy=data[i+1]-(float)frame.y;
                     float close=(float)Math.sqrt(dx*dx+dz*dz+dy*dy);
                     float nearFade=Math.clamp(close/22,0,1);
-                    int alpha=(int)(farFade*nearFade*250);
                     float nx=data[i+3],ny=data[i+4],nz=data[i+5];
+                    float facing=Math.abs((float)((dx*nx+dy*ny+dz*nz)/Math.max(close,.001f)));
+                    // Grazing rays pass through less cloud: soften the silhouette without
+                    // billboards, a full-screen filter or additional geometry passes.
+                    float rimOpacity=.10f+.90f*Math.clamp(facing*3,0,1);
+                    int alpha=(int)(farFade*nearFade*rimOpacity*250);
                     float light=.84f+.13f*Math.max(ny,0)+.035f*Math.max(nx*.7f+nz*.3f,0);
                     float haze=1-farFade;
                     int red=(int)(242*light*(1-haze)+156*haze),green=(int)(249*light*(1-haze)+183*haze),blue=(int)(255*light*(1-haze)+202*haze);
