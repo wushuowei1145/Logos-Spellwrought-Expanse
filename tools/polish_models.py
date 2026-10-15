@@ -246,9 +246,9 @@ def polish_cloudsea():
 
 def astrolabe():
     """Three independent transparent engravings: calligraphy is geometry, not unreadable text."""
-    size=2048; center=1024; gold=(235,208,139,225); ivory=(231,241,224,240); soft=(175,209,216,165)
+    size=2048; center=1024; gold=(249,218,155,250); ivory=(231,252,255,255); soft=(139,212,240,215)
     def point(r,a):return (center+math.cos(a)*r,center+math.sin(a)*r)
-    def ring(d,r,col=gold,width=3):d.ellipse((center-r,center-r,center+r,center+r),outline=col,width=width)
+    def ring(d,r,col=gold,width=4):d.ellipse((center-r,center-r,center+r,center+r),outline=col,width=width)
     def polygon(d,r,n,offset=0,col=gold,width=3,step=1):
         pts=[point(r,offset+i*math.tau/n*step) for i in range(n)];d.line(pts+[pts[0]],fill=col,width=width)
     def glyph(d,x,y,i,scale=1):
@@ -301,8 +301,9 @@ def astrolabe():
             for i in range(6):
                 a=i*math.tau/6;x,y=point(72,a);d.ellipse((x-14,y-14,x+14,y+14),outline=gold,width=2)
         # A restrained halo is baked into alpha, leaving crisp line art in front.
-        halo=im.filter(ImageFilter.GaussianBlur(6));halo.putalpha(halo.getchannel('A').point(lambda a:int(a*.35)))
-        halo.alpha_composite(im)
+        halo=im.filter(ImageFilter.GaussianBlur(9));halo.putalpha(halo.getchannel('A').point(lambda a:int(a*.40)))
+        close_halo=im.filter(ImageFilter.GaussianBlur(2));close_halo.putalpha(close_halo.getchannel('A').point(lambda a:int(a*.48)))
+        halo.alpha_composite(close_halo);halo.alpha_composite(im)
         images.append(halo)
         path=ASSETS/'textures/environment'/f'astrolabe_{("outer","orbits","seal")[layer]}.png';path.parent.mkdir(parents=True,exist_ok=True);halo.save(path)
     preview=Image.new('RGBA',(size,size),(24,36,46,255))

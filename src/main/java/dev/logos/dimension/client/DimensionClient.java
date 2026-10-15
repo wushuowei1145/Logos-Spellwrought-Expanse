@@ -42,7 +42,7 @@ public final class DimensionClient {
                     .withVertexShader("core/position_tex_color").withFragmentShader("core/position_tex_color")
                     .withSampler("Sampler0").withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
                     .withCull(false).withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, false))
-                    .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT)).build())
+                    .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING)).build())
             .withTexture("Sampler0", LogosDimension.id("textures/environment/" +
                     (layer.equals("energy") ? "cloudsea_white" : "astrolabe_" + layer) + ".png"))
             .sortOnUpload().createRenderSetup());
@@ -76,21 +76,22 @@ public final class DimensionClient {
         if (sky == null) return;
         PoseStack pose = event.getPoseStack();
         var motion = sky.motion;
+        GlassArcaneArray.submit(event,motion);
         pose.pushPose();
-        pose.translate(0, 182, 0);
+        pose.translate(0, GlassArcaneArray.HEIGHT-.9f, 0);
         pose.mulPose(Axis.YP.rotationDegrees(motion.outerAngle()));
         pose.scale(motion.unfold(), 1, motion.unfold());
         LogosSkyOverlay.collector(event.getSubmitNodeCollector()).submitCustomGeometry(pose, OUTER,
                 (p, v) -> fragmentedRing(p, v, motion, sky.color));
         pose.popPose();
-        layer(event, pose, ORBITS, motion.orbitAngle(), 174, sky.color,
+        layer(event, pose, ORBITS, motion.orbitAngle(), GlassArcaneArray.HEIGHT-9.9f, sky.color,
                 .88f + motion.opening() * .16f, (float) Math.sin(motion.time() * .009) * 11);
         int alpha = (int) ((sky.color >>> 24) * motion.glow());
-        layer(event, pose, SEAL, motion.sealAngle(), 158 + motion.opening() * 20,
+        layer(event, pose, SEAL, motion.sealAngle(), GlassArcaneArray.HEIGHT-25.9f + motion.opening() * 20,
                 (alpha << 24) | (sky.color & 0xFFFFFF), .76f + motion.opening() * .28f,
                 (float) Math.cos(motion.time() * .007) * 7);
         pose.pushPose();
-        pose.translate(0, 167, 0);
+        pose.translate(0, GlassArcaneArray.HEIGHT-16, 0);
         LogosSkyOverlay.collector(event.getSubmitNodeCollector()).submitCustomGeometry(pose, ENERGY,
                 (p, v) -> energy(p, v, motion));
         pose.popPose();
@@ -137,7 +138,8 @@ public final class DimensionClient {
             double b = (i + stride) * Math.PI / 4 + frame.time() * .003;
             float x1 = (float) Math.cos(a) * radius, z1 = (float) Math.sin(a) * radius;
             float x2 = (float) Math.cos(b) * radius, z2 = (float) Math.sin(b) * radius;
-            filament(pose, out, x1, z1, x2, z2, .22f, 0x658ECAD8);
+            filament(pose, out, x1, z1, x2, z2, 1.15f, 0x298ECAD8);
+            filament(pose, out, x1, z1, x2, z2, .30f, 0xB8DCFAFF);
             float progress = (float) ((frame.time() / 85 + i / 8.0) % 1);
             float x = x1 + (x2 - x1) * progress, z = z1 + (z2 - z1) * progress;
             filament(pose, out, x - 2, z, x + 2, z, .8f, 0xEFFFF1C9);
@@ -151,7 +153,16 @@ public final class DimensionClient {
             double b = a + .035; float r = 179 + (float) Math.sin(frame.time() * .01) * 5;
             int alpha = 35 + step * 10;
             filament(pose, out, (float)Math.cos(a)*r, (float)Math.sin(a)*r,
-                    (float)Math.cos(b)*r, (float)Math.sin(b)*r, .45f, (alpha<<24)|0xFFE6AF);
+                    (float)Math.cos(b)*r, (float)Math.sin(b)*r, .70f, (alpha<<24)|0xE7FAFF);
+        }
+        // Anime-style activation fronts propagate through the nested seal, then dissolve.
+        for(int pulse=0;pulse<2;pulse++){
+            float progress=(float)((frame.time()/160+pulse*.5)%1);float r=36+progress*138;
+            int color=((int)(Math.sin(progress*Math.PI)*90)<<24)|0xABEAFF;
+            for(int i=0;i<64;i++){
+                double a=i*Math.PI/32,b=(i+1)*Math.PI/32;
+                filament(pose,out,(float)Math.cos(a)*r,(float)Math.sin(a)*r,(float)Math.cos(b)*r,(float)Math.sin(b)*r,.45f,color);
+            }
         }
     }
     private static void filament(PoseStack.Pose pose, VertexConsumer out, float x1, float z1,
