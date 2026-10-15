@@ -2,14 +2,11 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/salt_crust_3",
-    "body": "logos_dimension:block/salt_crust_3",
-    "side": "logos_dimension:block/salt_crust_3_side",
-    "glow": "logos_dimension:block/salt_crust_3_glow",
-    "side_glow": "logos_dimension:block/salt_crust_3_side_glow"
+    "body": "logos_dimension:block/salt_crust_3"
   },
   "elements": [
     {
-      "name": "盐壳错鳞_foundation",
+      "name": "continuous_strata",
       "from": [
         0,
         0,
@@ -42,7 +39,7 @@
           "cullface": "down"
         },
         "north": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -52,7 +49,7 @@
           "cullface": "north"
         },
         "south": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -62,7 +59,7 @@
           "cullface": "south"
         },
         "east": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -72,7 +69,7 @@
           "cullface": "east"
         },
         "west": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -80,182 +77,8 @@
             16
           ],
           "cullface": "west"
-        }
-      }
-    },
-    {
-      "name": "inlaid_mana",
-      "from": [
-        -0.004,
-        -0.004,
-        -0.004
-      ],
-      "to": [
-        16.004,
-        16.004,
-        16.004
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "up"
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "down"
-        },
-        "north": {
-          "texture": "#side_glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "north"
-        },
-        "south": {
-          "texture": "#side_glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "south"
-        },
-        "east": {
-          "texture": "#side_glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "east"
-        },
-        "west": {
-          "texture": "#side_glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "west"
-        }
-      },
-      "shade": false,
-      "light_emission": 5
-    },
-    {
-      "name": "盐壳错鳞_0",
-      "from": [
-        0,
-        16.003,
-        0
-      ],
-      "to": [
-        9,
-        16.09,
-        5
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            0,
-            0,
-            9,
-            5
-          ]
-        }
-      }
-    },
-    {
-      "name": "盐壳错鳞_1",
-      "from": [
-        10,
-        16.003,
-        1
-      ],
-      "to": [
-        16,
-        16.09,
-        7
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            10,
-            1,
-            16,
-            7
-          ]
-        }
-      }
-    },
-    {
-      "name": "盐壳错鳞_2",
-      "from": [
-        2,
-        16.003,
-        7
-      ],
-      "to": [
-        7,
-        16.09,
-        16
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            2,
-            7,
-            7,
-            16
-          ]
-        }
-      }
-    },
-    {
-      "name": "盐壳错鳞_3",
-      "from": [
-        8,
-        16.003,
-        9
-      ],
-      "to": [
-        15,
-        16.09,
-        15
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            8,
-            9,
-            15,
-            15
-          ]
         }
       }
     }
-  ],
-  "render_type": "neoforge:cutout"
+  ]
 }

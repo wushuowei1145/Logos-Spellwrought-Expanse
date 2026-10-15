@@ -2,456 +2,85 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/cloudsea_tide_ribbons_leaf",
-    "body": "logos_dimension:block/cloudsea_tide_ribbons_leaf",
-    "rib": "logos_dimension:block/cloudsea_tide_ribbons_leaf_rib",
-    "glow": "logos_dimension:block/cloudsea_tide_ribbons_leaf_core"
+    "body": "logos_dimension:block/cloudsea_tide_ribbons_leaf"
   },
   "elements": [
     {
-      "name": "wave_a",
+      "name": "full_leaf_cluster",
       "from": [
         0,
-        5,
-        6
-      ],
-      "to": [
-        5,
-        5.6,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            0,
-            6,
-            5,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            0,
-            6,
-            5,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            11,
-            10.4,
-            16,
-            11
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            0,
-            10.4,
-            5,
-            11
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            10.4,
-            10,
-            11
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            10.4,
-            10,
-            11
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "wave_b",
-      "from": [
-        4,
-        8,
-        6
-      ],
-      "to": [
-        10,
-        8.6,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            4,
-            6,
-            10,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            4,
-            6,
-            10,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            6,
-            7.4,
-            12,
-            8
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            4,
-            7.4,
-            10,
-            8
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            7.4,
-            10,
-            8
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            7.4,
-            10,
-            8
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": -22.5
-      }
-    },
-    {
-      "name": "wave_c",
-      "from": [
-        9,
-        5,
-        6
+        0,
+        0
       ],
       "to": [
         16,
-        5.6,
-        10
+        16,
+        16
       ],
       "faces": {
         "up": {
           "texture": "#body",
           "uv": [
-            9,
-            6,
+            0,
+            0,
             16,
-            10
-          ]
+            16
+          ],
+          "cullface": "up"
         },
         "down": {
           "texture": "#body",
           "uv": [
-            9,
-            6,
+            0,
+            0,
             16,
-            10
-          ]
+            16
+          ],
+          "cullface": "down"
         },
         "north": {
           "texture": "#body",
           "uv": [
             0,
-            10.4,
-            7,
-            11
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            9,
-            10.4,
+            0,
             16,
-            11
-          ]
+            16
+          ],
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "south"
         },
         "east": {
           "texture": "#body",
           "uv": [
-            6,
-            10.4,
-            10,
-            11
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "east"
         },
         "west": {
           "texture": "#body",
           "uv": [
-            6,
-            10.4,
-            10,
-            11
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "wave_keel",
-      "from": [
-        2,
-        6,
-        7.7
-      ],
-      "to": [
-        14,
-        6.6,
-        8.3
-      ],
-      "faces": {
-        "up": {
-          "texture": "#rib",
-          "uv": [
-            2,
-            7.7,
-            14,
-            8.3
-          ]
-        },
-        "down": {
-          "texture": "#rib",
-          "uv": [
-            2,
-            7.699999999999999,
-            14,
-            8.3
-          ]
-        },
-        "north": {
-          "texture": "#rib",
-          "uv": [
-            2,
-            9.4,
-            14,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#rib",
-          "uv": [
-            2,
-            9.4,
-            14,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#rib",
-          "uv": [
-            7.699999999999999,
-            9.4,
-            8.3,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            7.7,
-            9.4,
-            8.3,
-            10
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "west"
         }
       }
-    },
-    {
-      "name": "tide_spark_a",
-      "from": [
-        3,
-        7,
-        7
-      ],
-      "to": [
-        5,
-        8,
-        9
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            3,
-            7,
-            5,
-            9
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            3,
-            7,
-            5,
-            9
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            11,
-            8,
-            13,
-            9
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            3,
-            8,
-            5,
-            9
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            8,
-            9,
-            9
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            8,
-            9,
-            9
-          ]
-        }
-      },
-      "shade": false,
-      "light_emission": 5
-    },
-    {
-      "name": "tide_spark_b",
-      "from": [
-        11,
-        7,
-        7
-      ],
-      "to": [
-        13,
-        8,
-        9
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            11,
-            7,
-            13,
-            9
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            11,
-            7,
-            13,
-            9
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            3,
-            8,
-            5,
-            9
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            11,
-            8,
-            13,
-            9
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            8,
-            9,
-            9
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            8,
-            9,
-            9
-          ]
-        }
-      },
-      "shade": false,
-      "light_emission": 5
     }
   ],
-  "render_type": "neoforge:cutout"
+  "render_type": "neoforge:cutout",
+  "ambientocclusion": false
 }

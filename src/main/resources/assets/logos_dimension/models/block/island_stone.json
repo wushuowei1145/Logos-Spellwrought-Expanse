@@ -2,12 +2,11 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/island_stone",
-    "body": "logos_dimension:block/island_stone",
-    "side": "logos_dimension:block/island_stone_side"
+    "body": "logos_dimension:block/island_stone"
   },
   "elements": [
     {
-      "name": "空岛古石接缝_foundation",
+      "name": "continuous_marble",
       "from": [
         0,
         0,
@@ -40,7 +39,7 @@
           "cullface": "down"
         },
         "north": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -50,7 +49,7 @@
           "cullface": "north"
         },
         "south": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -60,7 +59,7 @@
           "cullface": "south"
         },
         "east": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -70,7 +69,7 @@
           "cullface": "east"
         },
         "west": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -78,78 +77,6 @@
             16
           ],
           "cullface": "west"
-        }
-      }
-    },
-    {
-      "name": "空岛古石接缝_0",
-      "from": [
-        0.25,
-        16.003,
-        0.25
-      ],
-      "to": [
-        15.75,
-        16.09,
-        7.75
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            0.25,
-            0.25,
-            15.75,
-            7.75
-          ]
-        }
-      }
-    },
-    {
-      "name": "空岛古石接缝_1",
-      "from": [
-        0.25,
-        16.003,
-        8.25
-      ],
-      "to": [
-        7.75,
-        16.09,
-        15.75
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            0.25,
-            8.25,
-            7.75,
-            15.75
-          ]
-        }
-      }
-    },
-    {
-      "name": "空岛古石接缝_2",
-      "from": [
-        8.25,
-        16.003,
-        8.25
-      ],
-      "to": [
-        15.75,
-        16.09,
-        15.75
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            8.25,
-            8.25,
-            15.75,
-            15.75
-          ]
         }
       }
     }

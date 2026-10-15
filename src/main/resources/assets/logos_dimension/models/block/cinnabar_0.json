@@ -2,12 +2,11 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/cinnabar_0",
-    "body": "logos_dimension:block/cinnabar_0",
-    "side": "logos_dimension:block/cinnabar_0_side"
+    "body": "logos_dimension:block/cinnabar_0"
   },
   "elements": [
     {
-      "name": "朱砂棱鳞_foundation",
+      "name": "continuous_char",
       "from": [
         0,
         0,
@@ -40,7 +39,7 @@
           "cullface": "down"
         },
         "north": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -50,7 +49,7 @@
           "cullface": "north"
         },
         "south": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -60,7 +59,7 @@
           "cullface": "south"
         },
         "east": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -70,7 +69,7 @@
           "cullface": "east"
         },
         "west": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -78,78 +77,6 @@
             16
           ],
           "cullface": "west"
-        }
-      }
-    },
-    {
-      "name": "朱砂棱鳞_0",
-      "from": [
-        1,
-        16.003,
-        1
-      ],
-      "to": [
-        6,
-        16.09,
-        6
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            1,
-            1,
-            6,
-            6
-          ]
-        }
-      }
-    },
-    {
-      "name": "朱砂棱鳞_1",
-      "from": [
-        8,
-        16.003,
-        2
-      ],
-      "to": [
-        14,
-        16.09,
-        5
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            8,
-            2,
-            14,
-            5
-          ]
-        }
-      }
-    },
-    {
-      "name": "朱砂棱鳞_2",
-      "from": [
-        4,
-        16.003,
-        8
-      ],
-      "to": [
-        10,
-        16.09,
-        14
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            4,
-            8,
-            10,
-            14
-          ]
         }
       }
     }

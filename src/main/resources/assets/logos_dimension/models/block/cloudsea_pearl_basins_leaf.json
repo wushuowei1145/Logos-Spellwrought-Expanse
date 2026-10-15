@@ -2,454 +2,85 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/cloudsea_pearl_basins_leaf",
-    "body": "logos_dimension:block/cloudsea_pearl_basins_leaf",
-    "rib": "logos_dimension:block/cloudsea_pearl_basins_leaf_rib",
-    "glow": "logos_dimension:block/cloudsea_pearl_basins_leaf_core"
+    "body": "logos_dimension:block/cloudsea_pearl_basins_leaf"
   },
   "elements": [
     {
-      "name": "shell_floor",
+      "name": "full_leaf_cluster",
       "from": [
-        3,
-        5,
-        3
+        0,
+        0,
+        0
       ],
       "to": [
-        13,
-        5.7,
-        13
+        16,
+        16,
+        16
       ],
       "faces": {
         "up": {
           "texture": "#body",
           "uv": [
-            3,
-            3,
-            13,
-            13
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "up"
         },
         "down": {
           "texture": "#body",
           "uv": [
-            3,
-            3,
-            13,
-            13
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "down"
         },
         "north": {
           "texture": "#body",
           "uv": [
-            3,
-            10.3,
-            13,
-            11
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "north"
         },
         "south": {
           "texture": "#body",
           "uv": [
-            3,
-            10.3,
-            13,
-            11
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "south"
         },
         "east": {
           "texture": "#body",
           "uv": [
-            3,
-            10.3,
-            13,
-            11
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "east"
         },
         "west": {
           "texture": "#body",
           "uv": [
-            3,
-            10.3,
-            13,
-            11
-          ]
-        }
-      }
-    },
-    {
-      "name": "shell_left",
-      "from": [
-        1,
-        6,
-        4
-      ],
-      "to": [
-        4,
-        6.6,
-        12
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            1,
-            4,
-            4,
-            12
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            1,
-            4,
-            4,
-            12
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            12,
-            9.4,
-            15,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            1,
-            9.4,
-            4,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            4,
-            9.4,
-            12,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            4,
-            9.4,
-            12,
-            10
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": -22.5
-      }
-    },
-    {
-      "name": "shell_right",
-      "from": [
-        12,
-        6,
-        4
-      ],
-      "to": [
-        15,
-        6.6,
-        12
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            12,
-            4,
-            15,
-            12
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            12,
-            4,
-            15,
-            12
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            1,
-            9.4,
-            4,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            12,
-            9.4,
-            15,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            4,
-            9.4,
-            12,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            4,
-            9.4,
-            12,
-            10
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "shell_back",
-      "from": [
-        4,
-        6,
-        12
-      ],
-      "to": [
-        12,
-        8,
-        13
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            4,
-            12,
-            12,
-            13
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            4,
-            3,
-            12,
-            4
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            4,
-            8,
-            12,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            4,
-            8,
-            12,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            3,
-            8,
-            4,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            12,
-            8,
-            13,
-            10
-          ]
-        }
-      }
-    },
-    {
-      "name": "pearl",
-      "from": [
-        6.5,
-        6,
-        6.5
-      ],
-      "to": [
-        9.5,
-        9,
-        9.5
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            6.5,
-            6.5,
-            9.5,
-            9.5
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            6.5,
-            6.5,
-            9.5,
-            9.5
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            6.5,
-            7,
-            9.5,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            6.5,
-            7,
-            9.5,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            6.5,
-            7,
-            9.5,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            6.5,
-            7,
-            9.5,
-            10
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "y",
-        "angle": 45
-      },
-      "shade": false,
-      "light_emission": 6
-    },
-    {
-      "name": "shell_foot",
-      "from": [
-        6,
-        2,
-        6
-      ],
-      "to": [
-        10,
-        5,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#rib",
-          "uv": [
-            6,
-            6,
-            10,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#rib",
-          "uv": [
-            6,
-            6,
-            10,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#rib",
-          "uv": [
-            6,
-            11,
-            10,
-            14
-          ]
-        },
-        "south": {
-          "texture": "#rib",
-          "uv": [
-            6,
-            11,
-            10,
-            14
-          ]
-        },
-        "east": {
-          "texture": "#rib",
-          "uv": [
-            6,
-            11,
-            10,
-            14
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            6,
-            11,
-            10,
-            14
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "west"
         }
       }
     }
   ],
-  "render_type": "neoforge:cutout"
+  "render_type": "neoforge:cutout",
+  "ambientocclusion": false
 }

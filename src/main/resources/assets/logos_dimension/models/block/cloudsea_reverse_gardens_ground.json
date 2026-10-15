@@ -3,13 +3,11 @@
   "textures": {
     "particle": "logos_dimension:block/cloudsea_reverse_gardens_ground",
     "body": "logos_dimension:block/cloudsea_reverse_gardens_ground",
-    "side": "logos_dimension:block/cloudsea_reverse_gardens_ground_side",
-    "glow": "logos_dimension:block/cloudsea_reverse_gardens_ground_glow",
-    "side_glow": "logos_dimension:block/cloudsea_reverse_gardens_ground_side_glow"
+    "side": "logos_dimension:block/cloudsea_reverse_gardens_ground_side"
   },
   "elements": [
     {
-      "name": "逆生根槽_foundation",
+      "name": "continuous_turf",
       "from": [
         0,
         0,
@@ -80,182 +78,8 @@
             16
           ],
           "cullface": "west"
-        }
-      }
-    },
-    {
-      "name": "inlaid_mana",
-      "from": [
-        -0.004,
-        -0.004,
-        -0.004
-      ],
-      "to": [
-        16.004,
-        16.004,
-        16.004
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "up"
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "down"
-        },
-        "north": {
-          "texture": "#side_glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "north"
-        },
-        "south": {
-          "texture": "#side_glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "south"
-        },
-        "east": {
-          "texture": "#side_glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "east"
-        },
-        "west": {
-          "texture": "#side_glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "west"
-        }
-      },
-      "shade": false,
-      "light_emission": 5
-    },
-    {
-      "name": "逆生根槽_0",
-      "from": [
-        3,
-        16.003,
-        1
-      ],
-      "to": [
-        4,
-        16.09,
-        15
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            3,
-            1,
-            4,
-            15
-          ]
-        }
-      }
-    },
-    {
-      "name": "逆生根槽_1",
-      "from": [
-        8,
-        16.003,
-        2
-      ],
-      "to": [
-        9,
-        16.09,
-        12
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            8,
-            2,
-            9,
-            12
-          ]
-        }
-      }
-    },
-    {
-      "name": "逆生根槽_2",
-      "from": [
-        12,
-        16.003,
-        0
-      ],
-      "to": [
-        13,
-        16.09,
-        16
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            12,
-            0,
-            13,
-            16
-          ]
-        }
-      }
-    },
-    {
-      "name": "逆生根槽_3",
-      "from": [
-        5,
-        16.003,
-        11
-      ],
-      "to": [
-        9,
-        16.09,
-        12
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            5,
-            11,
-            9,
-            12
-          ]
         }
       }
     }
-  ],
-  "render_type": "neoforge:cutout"
+  ]
 }
