@@ -1,76 +1,584 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "all": "logos_dimension:block/cloudsea_lantern_bud",
-    "particle": "logos_dimension:block/cloudsea_lantern_bud"
+    "particle": "logos_dimension:block/cloudsea_lantern_bud",
+    "body": "logos_dimension:block/cloudsea_lantern_bud",
+    "rib": "logos_dimension:block/cloudsea_lantern_bud_rib",
+    "glow": "logos_dimension:block/cloudsea_lantern_bud_core"
   },
-  "render_type": "neoforge:cutout",
   "elements": [
     {
+      "name": "pendant_stem",
       "from": [
-        7,
-        8,
-        7
+        7.5,
+        11,
+        7.5
       ],
       "to": [
-        9,
+        8.5,
         16,
-        9
+        8.5
       ],
       "faces": {
-        "north": {
-          "texture": "#all"
-        },
-        "south": {
-          "texture": "#all"
-        },
-        "west": {
-          "texture": "#all"
-        },
-        "east": {
-          "texture": "#all"
-        },
         "up": {
-          "texture": "#all"
+          "texture": "#rib",
+          "uv": [
+            7.5,
+            7.5,
+            8.5,
+            8.5
+          ]
         },
         "down": {
-          "texture": "#all"
+          "texture": "#rib",
+          "uv": [
+            7.5,
+            7.5,
+            8.5,
+            8.5
+          ]
+        },
+        "north": {
+          "texture": "#rib",
+          "uv": [
+            7.5,
+            0,
+            8.5,
+            5
+          ]
+        },
+        "south": {
+          "texture": "#rib",
+          "uv": [
+            7.5,
+            0,
+            8.5,
+            5
+          ]
+        },
+        "east": {
+          "texture": "#rib",
+          "uv": [
+            7.5,
+            0,
+            8.5,
+            5
+          ]
+        },
+        "west": {
+          "texture": "#rib",
+          "uv": [
+            7.5,
+            0,
+            8.5,
+            5
+          ]
         }
       }
     },
     {
+      "name": "upper_shell",
       "from": [
         5,
-        2,
+        9,
         5
       ],
       "to": [
         11,
-        8,
+        11,
         11
       ],
       "faces": {
-        "north": {
-          "texture": "#all"
-        },
-        "south": {
-          "texture": "#all"
-        },
-        "west": {
-          "texture": "#all"
-        },
-        "east": {
-          "texture": "#all"
-        },
         "up": {
-          "texture": "#all"
+          "texture": "#body",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
         },
         "down": {
-          "texture": "#all"
+          "texture": "#body",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            5,
+            5,
+            11,
+            7
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            5,
+            5,
+            11,
+            7
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            5,
+            5,
+            11,
+            7
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            5,
+            5,
+            11,
+            7
+          ]
+        }
+      }
+    },
+    {
+      "name": "bud_tip",
+      "from": [
+        6.5,
+        1.5,
+        6.5
+      ],
+      "to": [
+        9.5,
+        4,
+        9.5
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            6.5,
+            6.5,
+            9.5,
+            9.5
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            6.5,
+            6.5,
+            9.5,
+            9.5
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            6.5,
+            12,
+            9.5,
+            14.5
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            6.5,
+            12,
+            9.5,
+            14.5
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            6.5,
+            12,
+            9.5,
+            14.5
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            6.5,
+            12,
+            9.5,
+            14.5
+          ]
+        }
+      }
+    },
+    {
+      "name": "warm_heart",
+      "from": [
+        6,
+        4.5,
+        6
+      ],
+      "to": [
+        10,
+        10.5,
+        10
+      ],
+      "faces": {
+        "up": {
+          "texture": "#glow",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        },
+        "down": {
+          "texture": "#glow",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        },
+        "north": {
+          "texture": "#glow",
+          "uv": [
+            6,
+            5.5,
+            10,
+            11.5
+          ]
+        },
+        "south": {
+          "texture": "#glow",
+          "uv": [
+            6,
+            5.5,
+            10,
+            11.5
+          ]
+        },
+        "east": {
+          "texture": "#glow",
+          "uv": [
+            6,
+            5.5,
+            10,
+            11.5
+          ]
+        },
+        "west": {
+          "texture": "#glow",
+          "uv": [
+            6,
+            5.5,
+            10,
+            11.5
+          ]
         }
       },
       "shade": false,
       "light_emission": 12
+    },
+    {
+      "name": "open_sepal_-1",
+      "from": [
+        3,
+        10,
+        6
+      ],
+      "to": [
+        8,
+        10.7,
+        10
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            3,
+            6,
+            8,
+            10
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            3,
+            6,
+            8,
+            10
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            8,
+            5.300000000000001,
+            13,
+            6
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            3,
+            5.300000000000001,
+            8,
+            6
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            6,
+            5.300000000000001,
+            10,
+            6
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            6,
+            5.300000000000001,
+            10,
+            6
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "z",
+        "angle": -22.5
+      }
+    },
+    {
+      "name": "open_sepal_1",
+      "from": [
+        8,
+        10,
+        6
+      ],
+      "to": [
+        13,
+        10.7,
+        10
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            8,
+            6,
+            13,
+            10
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            8,
+            6,
+            13,
+            10
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            3,
+            5.300000000000001,
+            8,
+            6
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            8,
+            5.300000000000001,
+            13,
+            6
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            6,
+            5.300000000000001,
+            10,
+            6
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            6,
+            5.300000000000001,
+            10,
+            6
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "z",
+        "angle": 22.5
+      }
+    },
+    {
+      "name": "shell_left",
+      "from": [
+        4.5,
+        4,
+        5
+      ],
+      "to": [
+        5.5,
+        9,
+        11
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            4.5,
+            5,
+            5.5,
+            11
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            4.5,
+            5,
+            5.5,
+            11
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            10.5,
+            7,
+            11.5,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            4.5,
+            7,
+            5.5,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            5,
+            7,
+            11,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            5,
+            7,
+            11,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "shell_right",
+      "from": [
+        10.5,
+        4,
+        5
+      ],
+      "to": [
+        11.5,
+        9,
+        11
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            10.5,
+            5,
+            11.5,
+            11
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            10.5,
+            5,
+            11.5,
+            11
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            4.5,
+            7,
+            5.5,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            10.5,
+            7,
+            11.5,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            5,
+            7,
+            11,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            5,
+            7,
+            11,
+            12
+          ]
+        }
+      }
     }
-  ]
+  ],
+  "render_type": "neoforge:cutout"
 }

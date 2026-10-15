@@ -23,15 +23,21 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 /** The liquid is a portal surface; the solid rim and hollow basin remain real collision geometry. */
 public final class AlchemicalCauldronBlock extends Block {
     public static final MapCodec<AlchemicalCauldronBlock> CODEC = simpleCodec(AlchemicalCauldronBlock::new);
+    public static final double MODEL_SCALE = 1.5;
+    public static final double RIM_HEIGHT = 13.0 * MODEL_SCALE / 16;
     private static final VoxelShape SHAPE = Shapes.or(
-            box(1, 3, 1, 15, 4, 15),
-            box(1, 4, 1, 2, 11, 15), box(14, 4, 1, 15, 11, 15),
-            box(2, 4, 1, 14, 11, 2), box(2, 4, 14, 14, 11, 15),
-            box(0, 11, 0, 16, 13, 2), box(0, 11, 14, 16, 13, 16),
-            box(0, 11, 2, 2, 13, 14), box(14, 11, 2, 16, 13, 14),
-            box(2, 0, 2, 4, 3, 4), box(12, 0, 2, 14, 3, 4),
-            box(2, 0, 12, 4, 3, 14), box(12, 0, 12, 14, 3, 14));
-    private static final VoxelShape BASIN = box(2, 4, 2, 14, 9, 14);
+            scaledBox(1, 3, 1, 15, 4, 15),
+            scaledBox(1, 4, 1, 2, 11, 15), scaledBox(14, 4, 1, 15, 11, 15),
+            scaledBox(2, 4, 1, 14, 11, 2), scaledBox(2, 4, 14, 14, 11, 15),
+            scaledBox(0, 11, 0, 16, 13, 2), scaledBox(0, 11, 14, 16, 13, 16),
+            scaledBox(0, 11, 2, 2, 13, 14), scaledBox(14, 11, 2, 16, 13, 14),
+            scaledBox(2, 0, 2, 4, 3, 4), scaledBox(12, 0, 2, 14, 3, 4),
+            scaledBox(2, 0, 12, 4, 3, 14), scaledBox(12, 0, 12, 14, 3, 14));
+    private static final VoxelShape BASIN = scaledBox(2, 4, 2, 14, 9, 14);
+    private static VoxelShape scaledBox(double x1,double y1,double z1,double x2,double y2,double z2) {
+        return box(8+(x1-8)*MODEL_SCALE,y1*MODEL_SCALE,8+(z1-8)*MODEL_SCALE,
+                8+(x2-8)*MODEL_SCALE,y2*MODEL_SCALE,8+(z2-8)*MODEL_SCALE);
+    }
     public AlchemicalCauldronBlock(BlockBehaviour.Properties properties) { super(properties); }
     @Override public MapCodec<AlchemicalCauldronBlock> codec() { return CODEC; }
     @Override protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) { return SHAPE; }
@@ -52,8 +58,9 @@ public final class AlchemicalCauldronBlock extends Block {
     }
     private static boolean insideLiquid(Entity entity, BlockPos pos) {
         double x = entity.getX() - pos.getX(), y = entity.getY() - pos.getY(), z = entity.getZ() - pos.getZ();
-        return x > 2.0 / 16 && x < 14.0 / 16 && z > 2.0 / 16 && z < 14.0 / 16
-                && y >= 4.0 / 16 - .01 && y < 9.0 / 16;
+        double min=(8-6*MODEL_SCALE)/16, max=(8+6*MODEL_SCALE)/16;
+        return x > min && x < max && z > min && z < max
+                && y >= 4.0 * MODEL_SCALE / 16 - .01 && y < 9.0 * MODEL_SCALE / 16;
     }
     private static Vec3 safeReturn(ServerPlayer player, BlockPos pos) {
         var level = player.level();
@@ -68,12 +75,12 @@ public final class AlchemicalCauldronBlock extends Block {
             }
         }
         // A cauldron on a narrow pillar still offers a solid rim to stand on; never save inside the liquid.
-        return new Vec3(pos.getX() + .5, pos.getY() + 13.0 / 16 + .001, pos.getZ() + .125);
+        return new Vec3(pos.getX() + .5, pos.getY() + RIM_HEIGHT + .001, pos.getZ() - .12);
     }
     @Override public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         double angle = level.getGameTime() * .12 + random.nextDouble() * Math.PI * 2;
-        level.addParticle(ParticleTypes.END_ROD, pos.getX() + .5 + Math.cos(angle) * .28,
-                pos.getY() + .57, pos.getZ() + .5 + Math.sin(angle) * .28,
+        level.addParticle(ParticleTypes.END_ROD, pos.getX() + .5 + Math.cos(angle) * .28 * MODEL_SCALE,
+                pos.getY() + .57 * MODEL_SCALE, pos.getZ() + .5 + Math.sin(angle) * .28 * MODEL_SCALE,
                 -Math.sin(angle) * .012, .012, Math.cos(angle) * .012);
     }
 }

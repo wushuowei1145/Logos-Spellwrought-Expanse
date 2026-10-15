@@ -1,7 +1,666 @@
 {
-  "parent": "minecraft:block/cross",
+  "parent": "minecraft:block/block",
   "textures": {
-    "cross": "logos_dimension:block/amber_seeds"
+    "particle": "logos_dimension:block/amber_seeds",
+    "body": "logos_dimension:block/amber_seeds",
+    "rib": "logos_dimension:block/amber_seeds_rib",
+    "glow": "logos_dimension:block/amber_seeds_core"
   },
+  "elements": [
+    {
+      "name": "root_0",
+      "from": [
+        3,
+        4,
+        5
+      ],
+      "to": [
+        3.65,
+        16,
+        5.65
+      ],
+      "faces": {
+        "up": {
+          "texture": "#rib",
+          "uv": [
+            3,
+            5,
+            3.65,
+            5.65
+          ]
+        },
+        "down": {
+          "texture": "#rib",
+          "uv": [
+            3,
+            10.35,
+            3.65,
+            11
+          ]
+        },
+        "north": {
+          "texture": "#rib",
+          "uv": [
+            12.35,
+            0,
+            13,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#rib",
+          "uv": [
+            3,
+            0,
+            3.65,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#rib",
+          "uv": [
+            10.35,
+            0,
+            11,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#rib",
+          "uv": [
+            5,
+            0,
+            5.65,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "fork_0",
+      "from": [
+        2.6,
+        4,
+        5
+      ],
+      "to": [
+        3.3,
+        9,
+        5.7
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            2.6,
+            5,
+            3.3,
+            5.7
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            2.6,
+            10.3,
+            3.3,
+            11
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            12.7,
+            7,
+            13.4,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            2.6,
+            7,
+            3.3,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            10.3,
+            7,
+            11,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            5,
+            7,
+            5.7,
+            12
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "z",
+        "angle": -22.5
+      }
+    },
+    {
+      "name": "root_pearl_0",
+      "from": [
+        2.65,
+        3.4000000000000004,
+        4.65
+      ],
+      "to": [
+        4,
+        4.75,
+        6
+      ],
+      "faces": {
+        "up": {
+          "texture": "#glow",
+          "uv": [
+            2.65,
+            4.65,
+            4,
+            6
+          ]
+        },
+        "down": {
+          "texture": "#glow",
+          "uv": [
+            2.65,
+            10,
+            4,
+            11.35
+          ]
+        },
+        "north": {
+          "texture": "#glow",
+          "uv": [
+            12,
+            11.25,
+            13.35,
+            12.6
+          ]
+        },
+        "south": {
+          "texture": "#glow",
+          "uv": [
+            2.65,
+            11.25,
+            4,
+            12.6
+          ]
+        },
+        "east": {
+          "texture": "#glow",
+          "uv": [
+            10,
+            11.25,
+            11.35,
+            12.6
+          ]
+        },
+        "west": {
+          "texture": "#glow",
+          "uv": [
+            4.65,
+            11.25,
+            6,
+            12.6
+          ]
+        }
+      },
+      "shade": false,
+      "light_emission": 6
+    },
+    {
+      "name": "root_1",
+      "from": [
+        8,
+        1,
+        10
+      ],
+      "to": [
+        8.65,
+        16,
+        10.65
+      ],
+      "faces": {
+        "up": {
+          "texture": "#rib",
+          "uv": [
+            8,
+            10,
+            8.65,
+            10.65
+          ]
+        },
+        "down": {
+          "texture": "#rib",
+          "uv": [
+            8,
+            5.35,
+            8.65,
+            6
+          ]
+        },
+        "north": {
+          "texture": "#rib",
+          "uv": [
+            7.35,
+            0,
+            8,
+            15
+          ]
+        },
+        "south": {
+          "texture": "#rib",
+          "uv": [
+            8,
+            0,
+            8.65,
+            15
+          ]
+        },
+        "east": {
+          "texture": "#rib",
+          "uv": [
+            5.35,
+            0,
+            6,
+            15
+          ]
+        },
+        "west": {
+          "texture": "#rib",
+          "uv": [
+            10,
+            0,
+            10.65,
+            15
+          ]
+        }
+      }
+    },
+    {
+      "name": "fork_1",
+      "from": [
+        7.6,
+        1,
+        10
+      ],
+      "to": [
+        8.3,
+        6,
+        10.7
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            7.6,
+            10,
+            8.3,
+            10.7
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            7.6,
+            5.300000000000001,
+            8.3,
+            6
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            7.699999999999999,
+            10,
+            8.4,
+            15
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            7.6,
+            10,
+            8.3,
+            15
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            5.300000000000001,
+            10,
+            6,
+            15
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            10,
+            10,
+            10.7,
+            15
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "z",
+        "angle": 22.5
+      }
+    },
+    {
+      "name": "root_pearl_1",
+      "from": [
+        7.65,
+        0.40000000000000036,
+        9.65
+      ],
+      "to": [
+        9,
+        1.75,
+        11
+      ],
+      "faces": {
+        "up": {
+          "texture": "#glow",
+          "uv": [
+            7.65,
+            9.65,
+            9,
+            11
+          ]
+        },
+        "down": {
+          "texture": "#glow",
+          "uv": [
+            7.65,
+            5,
+            9,
+            6.35
+          ]
+        },
+        "north": {
+          "texture": "#glow",
+          "uv": [
+            7,
+            14.25,
+            8.35,
+            15.6
+          ]
+        },
+        "south": {
+          "texture": "#glow",
+          "uv": [
+            7.65,
+            14.25,
+            9,
+            15.6
+          ]
+        },
+        "east": {
+          "texture": "#glow",
+          "uv": [
+            5,
+            14.25,
+            6.35,
+            15.6
+          ]
+        },
+        "west": {
+          "texture": "#glow",
+          "uv": [
+            9.65,
+            14.25,
+            11,
+            15.6
+          ]
+        }
+      },
+      "shade": false,
+      "light_emission": 6
+    },
+    {
+      "name": "root_2",
+      "from": [
+        12,
+        7,
+        3
+      ],
+      "to": [
+        12.65,
+        16,
+        3.65
+      ],
+      "faces": {
+        "up": {
+          "texture": "#rib",
+          "uv": [
+            12,
+            3,
+            12.65,
+            3.65
+          ]
+        },
+        "down": {
+          "texture": "#rib",
+          "uv": [
+            12,
+            12.35,
+            12.65,
+            13
+          ]
+        },
+        "north": {
+          "texture": "#rib",
+          "uv": [
+            3.3499999999999996,
+            0,
+            4,
+            9
+          ]
+        },
+        "south": {
+          "texture": "#rib",
+          "uv": [
+            12,
+            0,
+            12.65,
+            9
+          ]
+        },
+        "east": {
+          "texture": "#rib",
+          "uv": [
+            12.35,
+            0,
+            13,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#rib",
+          "uv": [
+            3,
+            0,
+            3.65,
+            9
+          ]
+        }
+      }
+    },
+    {
+      "name": "fork_2",
+      "from": [
+        11.6,
+        7,
+        3
+      ],
+      "to": [
+        12.3,
+        12,
+        3.7
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            11.6,
+            3,
+            12.3,
+            3.7
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            11.6,
+            12.3,
+            12.3,
+            13
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            3.6999999999999993,
+            4,
+            4.4,
+            9
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            11.6,
+            4,
+            12.3,
+            9
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            12.3,
+            4,
+            13,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            3,
+            4,
+            3.7,
+            9
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "z",
+        "angle": -22.5
+      }
+    },
+    {
+      "name": "root_pearl_2",
+      "from": [
+        11.65,
+        6.4,
+        2.65
+      ],
+      "to": [
+        13,
+        7.75,
+        4
+      ],
+      "faces": {
+        "up": {
+          "texture": "#glow",
+          "uv": [
+            11.65,
+            2.65,
+            13,
+            4
+          ]
+        },
+        "down": {
+          "texture": "#glow",
+          "uv": [
+            11.65,
+            12,
+            13,
+            13.35
+          ]
+        },
+        "north": {
+          "texture": "#glow",
+          "uv": [
+            3,
+            8.25,
+            4.35,
+            9.6
+          ]
+        },
+        "south": {
+          "texture": "#glow",
+          "uv": [
+            11.65,
+            8.25,
+            13,
+            9.6
+          ]
+        },
+        "east": {
+          "texture": "#glow",
+          "uv": [
+            12,
+            8.25,
+            13.35,
+            9.6
+          ]
+        },
+        "west": {
+          "texture": "#glow",
+          "uv": [
+            2.65,
+            8.25,
+            4,
+            9.6
+          ]
+        }
+      },
+      "shade": false,
+      "light_emission": 6
+    }
+  ],
   "render_type": "neoforge:cutout"
 }

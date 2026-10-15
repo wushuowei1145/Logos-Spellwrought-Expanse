@@ -32,9 +32,9 @@ public final class DimensionBlocks {
     public static final DeferredBlock<ReactiveMatterBlock> SALT_CRYSTAL = reactive("salt_crystal", MapColor.QUARTZ, SoundType.AMETHYST);
     public static final DeferredBlock<Block> FAN_TRUNK = solid("fan_trunk", MapColor.COLOR_BROWN, 2f, SoundType.WOOD);
     public static final DeferredBlock<Block> FAN_LEAVES = item("fan_leaves", BLOCKS.registerSimpleBlock("fan_leaves",
-            p -> p.mapColor(MapColor.COLOR_CYAN).strength(.25f).sound(SoundType.GRASS).noOcclusion()));
+            p -> p.mapColor(MapColor.COLOR_CYAN).strength(.25f).sound(SoundType.GRASS).noOcclusion().noCollision()));
     public static final DeferredBlock<Block> GLASS_LEAVES = item("glass_leaves", BLOCKS.registerBlock("glass_leaves", TransparentBlock::new,
-            p -> p.mapColor(MapColor.COLOR_LIGHT_BLUE).strength(.4f).sound(SoundType.GLASS).noOcclusion()));
+            p -> p.mapColor(MapColor.COLOR_LIGHT_BLUE).strength(.4f).sound(SoundType.GLASS).noOcclusion().noCollision()));
     public static final DeferredBlock<TransparentBlock> DISTILLATION_GLASS = item("distillation_glass", BLOCKS.registerBlock("distillation_glass", TransparentBlock::new,
             p -> p.mapColor(MapColor.NONE).strength(2f).sound(SoundType.GLASS).noOcclusion()));
     public static final DeferredBlock<Block> AMBER_SEEDS = item("amber_seeds", BLOCKS.registerSimpleBlock("amber_seeds",

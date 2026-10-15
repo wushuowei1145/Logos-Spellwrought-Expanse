@@ -1,7 +1,22 @@
 {
   "variants": {
-    "": {
-      "model": "logos_dimension:block/amber_seeds"
-    }
+    "": [
+      {
+        "model": "logos_dimension:block/amber_seeds",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/amber_seeds",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/amber_seeds",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/amber_seeds",
+        "y": 270
+      }
+    ]
   }
 }

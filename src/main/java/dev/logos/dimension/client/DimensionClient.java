@@ -32,18 +32,23 @@ import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
 /** Client render data is captured once, so the rotating sky never reads mutable world state during submission. */
 @EventBusSubscriber(modid = LogosDimension.ID, value = Dist.CLIENT)
 public final class DimensionClient {
-    private record Sky(double angle, int color) {}
+    private record Sky(double angle, int color, float pulse) {}
     private static final ContextKey<Sky> SKY = new ContextKey<>(LogosDimension.id("sky"));
     // Sky marks must survive distance fog, while still being occluded by terrain/clouds in front.
-    private static final RenderType ASTROLABE = RenderType.create("crucible_astrolabe", RenderSetup.builder(
+    private static RenderType engraving(String layer) {
+        return RenderType.create("crucible_astrolabe_" + layer, RenderSetup.builder(
             RenderPipeline.builder(RenderPipelines.MATRICES_PROJECTION_SNIPPET)
-                    .withLocation(LogosDimension.id("pipeline/astrolabe"))
+                    .withLocation(LogosDimension.id("pipeline/astrolabe_" + layer))
                     .withVertexShader("core/position_tex_color").withFragmentShader("core/position_tex_color")
                     .withSampler("Sampler0").withVertexFormat(DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS)
                     .withCull(false).withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, false))
                     .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT)).build())
-            .withTexture("Sampler0", LogosDimension.id("textures/environment/astrolabe.png"))
+            .withTexture("Sampler0", LogosDimension.id("textures/environment/astrolabe_" + layer + ".png"))
             .sortOnUpload().createRenderSetup());
+    }
+    private static final RenderType OUTER = engraving("outer");
+    private static final RenderType ORBITS = engraving("orbits");
+    private static final RenderType SEAL = engraving("seal");
 
     @SubscribeEvent static void fluids(RegisterFluidModelsEvent event) {
         event.register(new FluidModel.Unbaked(new Material(LogosDimension.id("block/mercury_still")),
@@ -57,26 +62,34 @@ public final class DimensionClient {
         if (!event.getLevel().dimension().equals(LogosDimension.CRUCIBLE)) return;
         long ticks = OpusPhase.ticks(event.getLevel());
         int color = switch (OpusPhase.at(ticks)) {
-            case NIGREDO -> 0xAAADB2BB; case ALBEDO -> 0xAAE4E8DE;
-            case CITRINITAS -> 0xAAE8D09A; case RUBEDO -> 0xAACFA096;
+            case NIGREDO -> 0xD9CBDDE9; case ALBEDO -> 0xEBF2F5EA;
+            case CITRINITAS -> 0xEBFFE9BA; case RUBEDO -> 0xEBDDBDB4;
         };
-        event.getRenderState().setRenderData(SKY, new Sky(Math.floorMod(ticks, OpusPhase.PERIOD_TICKS) * 360.0 / OpusPhase.PERIOD_TICKS, color));
+        event.getRenderState().setRenderData(SKY, new Sky(Math.floorMod(ticks, OpusPhase.PERIOD_TICKS) * 360.0 / OpusPhase.PERIOD_TICKS,
+                color, .90f + .10f * (float) Math.sin(ticks * .018)));
     }
     // Logos starts its shared shader overlay earlier in this event. Add our sky after that reset.
     @SubscribeEvent(priority = EventPriority.LOWEST) static void submit(SubmitCustomGeometryEvent event) {
         Sky sky = event.getLevelRenderState().getRenderData(SKY);
         if (sky == null) return;
         PoseStack pose = event.getPoseStack();
-        pose.pushPose(); pose.translate(0, 160, 0); pose.mulPose(Axis.YP.rotationDegrees((float) sky.angle));
-        LogosSkyOverlay.collector(event.getSubmitNodeCollector()).submitCustomGeometry(pose,
-                ASTROLABE,
-                (p, vertices) -> disc(p, vertices, sky.color));
+        layer(event, pose, OUTER, (float) sky.angle, 182, sky.color);
+        layer(event, pose, ORBITS, (float) -sky.angle * 1.65f, 178, sky.color);
+        int alpha = (int) ((sky.color >>> 24) * sky.pulse);
+        layer(event, pose, SEAL, (float) sky.angle * .35f, 174, (alpha << 24) | (sky.color & 0xFFFFFF));
+    }
+    private static void layer(SubmitCustomGeometryEvent event, PoseStack pose, RenderType material,
+                              float angle, float height, int color) {
+        pose.pushPose();
+        pose.translate(0, height, 0);
+        pose.mulPose(Axis.YP.rotationDegrees(angle));
+        LogosSkyOverlay.collector(event.getSubmitNodeCollector()).submitCustomGeometry(pose, material,
+                (p, vertices) -> disc(p, vertices, color));
         pose.popPose();
     }
     private static void disc(PoseStack.Pose pose, VertexConsumer vertices, int color) {
-        float[][] corners = {{-210, -210, 0, 0}, {210, -210, 1, 0}, {210, 210, 1, 1}, {-210, 210, 0, 1}};
+        float[][] corners = {{-245, -245, 0, 0}, {245, -245, 1, 0}, {245, 245, 1, 1}, {-245, 245, 0, 1}};
         for (int i = 0; i < 4; i++) vertex(pose, vertices, corners[i], color);
-        for (int i = 3; i >= 0; i--) vertex(pose, vertices, corners[i], color);
     }
     private static void vertex(PoseStack.Pose pose, VertexConsumer vertices, float[] c, int color) {
         vertices.addVertex(pose, c[0], 0, c[1]).setColor(color).setUv(c[2], c[3])

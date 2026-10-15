@@ -1,7 +1,22 @@
 {
   "variants": {
-    "": {
-      "model": "logos_dimension:block/star_blossom"
-    }
+    "": [
+      {
+        "model": "logos_dimension:block/star_blossom",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/star_blossom",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/star_blossom",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/star_blossom",
+        "y": 270
+      }
+    ]
   }
 }

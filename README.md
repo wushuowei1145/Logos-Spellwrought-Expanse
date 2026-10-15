@@ -2,9 +2,11 @@
 
 **Logos: Spellwrought Expanse** — 由咒术塑成的辽阔原野。
 
-Logos 的独立新维度附属 Mod。工程名 `LogosDimensionAddon`，Mod ID `logos_dimension`。当前版本为可运行的 **0.1.0 原型**，适合逐步调整世界生成和美术。
+Logos 的独立新维度附属 Mod。工程名 `LogosDimensionAddon`，Mod ID `logos_dimension`。当前版本为可运行的 **0.1.1 原型**，适合逐步调整世界生成和美术。
 
 新增第二维度 **天门云域**（`logos_dimension:cloudsea`）：24 个魔力地面群系、两个地下群系、厚云与剑开天门、天空魔鲸景象、异变植物及中世纪聚落。它使用独立的纯魔法美术和世界生成，不添加矿物或实体生物，也暂不设计进入方式。完整方向与本版边界见 [天门云域设计说明](docs/CLOUDSEA_DESIGN.md)。
+
+本轮完善两个维度的材料和植物模型，将咒械原天空法阵改为三层反向旋转纹样，并把炼金釜整体放大到 1.5 倍。详见 [模型与法阵调整](docs/MODEL_POLISH.md)。
 
 ![空岛下方的影雾](docs/screenshots/shadow-fog.png)
 

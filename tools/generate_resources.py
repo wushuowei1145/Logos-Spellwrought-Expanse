@@ -94,8 +94,11 @@ def texture(name, color, phase=None):
 def save_texture(name, im):
     path=assets/'textures/block'/f'{name}.png'; path.parent.mkdir(parents=True,exist_ok=True); im.save(path)
 
-zh={'itemGroup.logos_dimension':'炼金釜 · Logos 附属维度','message.logos_dimension.missing_dimension':'炼金维度未加载，请检查安装与世界数据。'}
-en={'itemGroup.logos_dimension':'The Crucible · Logos Addon','message.logos_dimension.missing_dimension':'The Crucible dimension is unavailable. Check the installation and world data.'}
+zh_path=assets/'lang/zh_cn.json'; en_path=assets/'lang/en_us.json'
+zh=json.loads(zh_path.read_text(encoding='utf-8')) if zh_path.exists() else {}
+en=json.loads(en_path.read_text(encoding='utf-8')) if en_path.exists() else {}
+zh.update({'itemGroup.logos_dimension':'炼金釜 · Logos 附属维度','message.logos_dimension.missing_dimension':'炼金维度未加载，请检查安装与世界数据。'})
+en.update({'itemGroup.logos_dimension':'The Crucible · Logos Addon','message.logos_dimension.missing_dimension':'The Crucible dimension is unavailable. Check the installation and world data.'})
 for name,(color,cn,english) in palette.items():
     zh[f'block.{ns}.{name}']=cn; en[f'block.{ns}.{name}']=english
     variants={}
@@ -263,3 +266,6 @@ for i,name in enumerate(palette):
     d.text((x+6,y+104),name,font=font,fill=(220,224,219))
 out=project/'build/asset-preview'; out.mkdir(parents=True,exist_ok=True); preview.save(out/'texture_palette.png')
 print(f'Generated {len(palette)} natural/block materials, 2 fluids, 5 biomes and the alchemical timeline.')
+
+from polish_models import polish_crucible
+polish_crucible()

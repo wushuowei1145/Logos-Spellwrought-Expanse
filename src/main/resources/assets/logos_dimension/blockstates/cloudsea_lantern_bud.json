@@ -1,7 +1,22 @@
 {
   "variants": {
-    "": {
-      "model": "logos_dimension:block/cloudsea_lantern_bud"
-    }
+    "": [
+      {
+        "model": "logos_dimension:block/cloudsea_lantern_bud",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/cloudsea_lantern_bud",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/cloudsea_lantern_bud",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/cloudsea_lantern_bud",
+        "y": 270
+      }
+    ]
   }
 }

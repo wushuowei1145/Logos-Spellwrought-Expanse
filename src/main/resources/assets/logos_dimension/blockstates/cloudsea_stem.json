@@ -1,7 +1,22 @@
 {
   "variants": {
-    "": {
-      "model": "logos_dimension:block/cloudsea_stem"
-    }
+    "": [
+      {
+        "model": "logos_dimension:block/cloudsea_stem",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/cloudsea_stem",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/cloudsea_stem",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/cloudsea_stem",
+        "y": 270
+      }
+    ]
   }
 }

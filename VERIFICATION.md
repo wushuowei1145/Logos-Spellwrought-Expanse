@@ -1,6 +1,19 @@
 # 首版验证记录
 
-目标环境：Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25；Logos 0.5.1，主模组源码基线 `f196960`。这是可运行的 0.1.0 原型。原炼金维度不包含建筑或 Boss；新增天门云域包含中世纪聚落，不包含 Boss。
+目标环境：Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25；Logos 0.5.1，主模组源码基线 `f196960`。当前安装包版本为 0.1.1。原炼金维度不包含建筑或 Boss；新增天门云域包含中世纪聚落，不包含 Boss。
+
+## 方块模型、天空法阵与放大炼金釜
+
+2026-10-15 完成本轮美术与交互范围检查。JUnit 13/13、GameTest 13/13 通过；炼金釜检查同步验证放大后的釜沿碰撞高度、内部中空、碰外壁/站釜沿不触发、延后传送及冷却。普通客户端、实际启用的 Complementary Reimagined r5.9.3 和 Photon Shader v1.3b 下，`group:model_polish` 各通过 **4/4 场景、6/6 检查**。
+
+四个实机场景包括材料画廊、立体植物画廊、法阵四阶段画面及炼金釜实际重力落入。分别检查模型加载日志，没有本附属的模型烘焙失败、缺失纹理或顶点属性异常；首轮发现的发光壳 UV 越界已修复后重新检查。主模组自带魔杖的粒子纹理警告与本轮无关。截图在 `docs/screenshots/model-polish/`，其中 `astrolabe-pattern.png` 是纹样合成预览，其他为普通渲染实机截图。
+
+两种光影会使用自己的云层与天空色，法阵背景明暗可以不同。没有对本轮未运行的其他客户端场景声称重新验证，也没有在本轮加入新群系、生物、Boss 或入口。
+
+```text
+./gradlew test runGameTestServer build -PlogosJar=/absolute/path/logos-0.5.1.jar
+./gradlew runClient -PlogosJar=/absolute/path/logos-0.5.1.jar -PldTest=group:model_polish -PldTestHeadless -PldTestWindow=1600x900
+```
 
 ## 天门云域验证
 

@@ -1,6 +1,112 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/block",
   "textures": {
-    "all": "logos_dimension:block/vortex"
-  }
+    "particle": "logos_dimension:block/vortex",
+    "body": "logos_dimension:block/vortex",
+    "side": "logos_dimension:block/vortex_side",
+    "liquid": "logos_dimension:block/cauldron_vortex"
+  },
+  "elements": [
+    {
+      "name": "material",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#liquid",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "up"
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "down"
+        },
+        "north": {
+          "texture": "#side",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#side",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "south"
+        },
+        "east": {
+          "texture": "#side",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "east"
+        },
+        "west": {
+          "texture": "#side",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "west"
+        }
+      }
+    },
+    {
+      "name": "raised_liquid_lens",
+      "from": [
+        2,
+        16.01,
+        2
+      ],
+      "to": [
+        14,
+        16.02,
+        14
+      ],
+      "faces": {
+        "up": {
+          "texture": "#liquid",
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ]
+        }
+      },
+      "shade": false,
+      "light_emission": 12
+    }
+  ]
 }

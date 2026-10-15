@@ -98,3 +98,6 @@ for i in range(900):
     draw.ellipse((x-r,y-r*.7,x+r,y+r*.7),fill=(c,min(255,c+8),min(255,c+13)))
 cloud=cloud.filter(ImageFilter.GaussianBlur(6));env=assets/'textures/environment';env.mkdir(parents=True,exist_ok=True);cloud.save(env/'cloudsea_clouds.png');Image.new('RGBA',(1,1),(255,255,255,255)).save(env/'cloudsea_white.png')
 print('Generated 24 surface + 2 depth biomes, 60 Cloudsea blocks, sky textures and test dimension.')
+
+from polish_models import polish_cloudsea
+polish_cloudsea()
