@@ -76,6 +76,11 @@ public final class DimensionClient {
         if (sky == null) return;
         PoseStack pose = event.getPoseStack();
         var motion = sky.motion;
+        // Enlarge around the array itself; scaling around the camera also scales its distance.
+        pose.pushPose();
+        pose.translate(0, GlassArcaneArray.HEIGHT, 0);
+        pose.scale(1.15f, 1.15f, 1.15f);
+        pose.translate(0, -GlassArcaneArray.HEIGHT, 0);
         GlassArcaneArray.submit(event,motion);
         pose.pushPose();
         pose.translate(0, GlassArcaneArray.HEIGHT-.9f, 0);
@@ -94,6 +99,7 @@ public final class DimensionClient {
         pose.translate(0, GlassArcaneArray.HEIGHT-16, 0);
         LogosSkyOverlay.collector(event.getSubmitNodeCollector()).submitCustomGeometry(pose, ENERGY,
                 (p, v) -> energy(p, v, motion));
+        pose.popPose();
         pose.popPose();
     }
     private static void layer(SubmitCustomGeometryEvent event, PoseStack pose, RenderType material,
