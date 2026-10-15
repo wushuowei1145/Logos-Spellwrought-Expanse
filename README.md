@@ -2,13 +2,15 @@
 
 **Logos: Spellwrought Expanse** — 由咒术塑成的辽阔原野。
 
-Logos 的独立新维度附属 Mod。工程名 `LogosDimensionAddon`，Mod ID `logos_dimension`。当前组合测试版本为可运行的 **0.1.3 原型**，适合逐步调整世界生成和美术。
+Logos 的独立新维度附属 Mod。工程名 `LogosDimensionAddon`，Mod ID `logos_dimension`。当前组合测试版本为可运行的 **0.1.4 原型**，适合逐步调整世界生成和美术。
 
 新增第二维度 **天门云域**（`logos_dimension:cloudsea`）：24 个魔力地面群系、两个地下群系、天空魔鲸景象、异变植物及中世纪聚落。**0.1.3 按要求移除了天空云海、云内雾及其后台网格生成，保留维度本身。** 它使用独立的纯魔法美术和世界生成，不添加矿物或实体生物，也暂不设计进入方式。完整方向与本版边界见 [天门云域设计说明](docs/CLOUDSEA_DESIGN.md)。
 
 本轮重做树木与材料：完整原木、连通分枝、成团树冠，清晰的像素叶簇与专用材料，减少地表重复浮雕和整片发光。咒械原法阵加入透明玻璃承载面、视角高光、边缘色散、清亮刻线与向外传播的施法波，保留展开重组动画。详见 [树木与材料](docs/NATURAL_TREES.md)、[逐种模型目录](docs/INDIVIDUAL_BLOCK_MODELS.md)、[玻璃法阵](docs/GLASS_ARCANE_ARRAY.md) 和 [云层移除说明](docs/CLOUD_VOLUME.md)。三项更新保持独立 PR，当前分支用于组合安装包验证。
 
 ![空岛下方的影雾](docs/screenshots/shadow-fog.png)
+
+0.1.4 进一步平滑法阵连线切换、光点循环和玻璃高光，减少逐帧数组分配；见 [连续过渡与实机视频](docs/SMOOTH_ARRAY.md)。
 
 ## 世界方向
 
