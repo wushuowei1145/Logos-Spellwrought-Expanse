@@ -8,456 +8,367 @@
   },
   "elements": [
     {
-      "name": "fold_-1_0",
+      "name": "fan_root",
       "from": [
-        1,
         6,
-        3
+        2,
+        6
       ],
       "to": [
-        15,
-        6.55,
-        8
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            1,
-            3,
-            15,
-            8
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            1,
-            8,
-            15,
-            13
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            1,
-            9.45,
-            15,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            1,
-            9.45,
-            15,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            8,
-            9.45,
-            13,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            3,
-            9.45,
-            8,
-            10
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "x",
-        "angle": -22.5
-      }
-    },
-    {
-      "name": "fold_-1_1",
-      "from": [
-        3,
-        8,
-        3
-      ],
-      "to": [
-        13,
-        8.55,
-        8
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            3,
-            3,
-            13,
-            8
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            3,
-            8,
-            13,
-            13
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            3,
-            7.449999999999999,
-            13,
-            8
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            3,
-            7.449999999999999,
-            13,
-            8
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            8,
-            7.449999999999999,
-            13,
-            8
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            3,
-            7.449999999999999,
-            8,
-            8
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "x",
-        "angle": -22.5
-      }
-    },
-    {
-      "name": "fold_1_0",
-      "from": [
-        1,
-        6,
-        8
-      ],
-      "to": [
-        15,
-        6.55,
-        13
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            1,
-            8,
-            15,
-            13
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            1,
-            3,
-            15,
-            8
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            1,
-            9.45,
-            15,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            1,
-            9.45,
-            15,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            3,
-            9.45,
-            8,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            8,
-            9.45,
-            13,
-            10
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "x",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "fold_1_1",
-      "from": [
-        3,
-        8,
-        8
-      ],
-      "to": [
-        13,
-        8.55,
-        13
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            3,
-            8,
-            13,
-            13
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            3,
-            3,
-            13,
-            8
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            3,
-            7.449999999999999,
-            13,
-            8
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            3,
-            7.449999999999999,
-            13,
-            8
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            3,
-            7.449999999999999,
-            8,
-            8
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            8,
-            7.449999999999999,
-            13,
-            8
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "x",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "midrib",
-      "from": [
-        1,
-        6.6,
-        7.7
-      ],
-      "to": [
-        15,
-        7.2,
-        8.3
-      ],
-      "faces": {
-        "up": {
-          "texture": "#rib",
-          "uv": [
-            1,
-            7.7,
-            15,
-            8.3
-          ]
-        },
-        "down": {
-          "texture": "#rib",
-          "uv": [
-            1,
-            7.699999999999999,
-            15,
-            8.3
-          ]
-        },
-        "north": {
-          "texture": "#rib",
-          "uv": [
-            1,
-            8.8,
-            15,
-            9.4
-          ]
-        },
-        "south": {
-          "texture": "#rib",
-          "uv": [
-            1,
-            8.8,
-            15,
-            9.4
-          ]
-        },
-        "east": {
-          "texture": "#rib",
-          "uv": [
-            7.699999999999999,
-            8.8,
-            8.3,
-            9.4
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            7.7,
-            8.8,
-            8.3,
-            9.4
-          ]
-        }
-      }
-    },
-    {
-      "name": "vein_light",
-      "from": [
+        10,
         4,
-        7.25,
-        7.85
-      ],
-      "to": [
-        12,
-        7.35,
-        8.15
+        10
       ],
       "faces": {
         "up": {
-          "texture": "#glow",
+          "texture": "#rib",
           "uv": [
-            4,
-            7.85,
-            12,
-            8.15
+            6,
+            6,
+            10,
+            10
           ]
         },
         "down": {
-          "texture": "#glow",
+          "texture": "#rib",
           "uv": [
-            4,
-            7.85,
-            12,
-            8.15
+            6,
+            6,
+            10,
+            10
           ]
         },
         "north": {
-          "texture": "#glow",
+          "texture": "#rib",
           "uv": [
-            4,
-            8.65,
+            6,
             12,
-            8.75
+            10,
+            14
           ]
         },
         "south": {
-          "texture": "#glow",
+          "texture": "#rib",
           "uv": [
-            4,
-            8.65,
+            6,
             12,
-            8.75
+            10,
+            14
           ]
         },
         "east": {
-          "texture": "#glow",
+          "texture": "#rib",
           "uv": [
-            7.85,
-            8.65,
-            8.15,
-            8.75
+            6,
+            12,
+            10,
+            14
           ]
         },
         "west": {
-          "texture": "#glow",
+          "texture": "#rib",
           "uv": [
-            7.85,
-            8.65,
-            8.15,
-            8.75
+            6,
+            12,
+            10,
+            14
+          ]
+        }
+      }
+    },
+    {
+      "name": "fan_left",
+      "from": [
+        1,
+        6,
+        6
+      ],
+      "to": [
+        7,
+        6.6,
+        10
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            1,
+            6,
+            7,
+            10
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            1,
+            6,
+            7,
+            10
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            9,
+            9.4,
+            15,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            1,
+            9.4,
+            7,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            6,
+            9.4,
+            10,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            6,
+            9.4,
+            10,
+            10
           ]
         }
       },
-      "shade": false,
-      "light_emission": 5
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "z",
+        "angle": -22.5
+      }
+    },
+    {
+      "name": "fan_middle",
+      "from": [
+        5,
+        8,
+        5
+      ],
+      "to": [
+        11,
+        8.6,
+        11
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            5,
+            7.4,
+            11,
+            8
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            5,
+            7.4,
+            11,
+            8
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            5,
+            7.4,
+            11,
+            8
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            5,
+            7.4,
+            11,
+            8
+          ]
+        }
+      }
+    },
+    {
+      "name": "fan_right",
+      "from": [
+        9,
+        6,
+        6
+      ],
+      "to": [
+        15,
+        6.6,
+        10
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            9,
+            6,
+            15,
+            10
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            9,
+            6,
+            15,
+            10
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            1,
+            9.4,
+            7,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            9,
+            9.4,
+            15,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            6,
+            9.4,
+            10,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            6,
+            9.4,
+            10,
+            10
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "z",
+        "angle": 22.5
+      }
+    },
+    {
+      "name": "fan_spine",
+      "from": [
+        7.6,
+        3,
+        7.6
+      ],
+      "to": [
+        8.4,
+        12,
+        8.4
+      ],
+      "faces": {
+        "up": {
+          "texture": "#rib",
+          "uv": [
+            7.6,
+            7.6,
+            8.4,
+            8.4
+          ]
+        },
+        "down": {
+          "texture": "#rib",
+          "uv": [
+            7.6,
+            7.6,
+            8.4,
+            8.4
+          ]
+        },
+        "north": {
+          "texture": "#rib",
+          "uv": [
+            7.6,
+            4,
+            8.4,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#rib",
+          "uv": [
+            7.6,
+            4,
+            8.4,
+            13
+          ]
+        },
+        "east": {
+          "texture": "#rib",
+          "uv": [
+            7.6,
+            4,
+            8.4,
+            13
+          ]
+        },
+        "west": {
+          "texture": "#rib",
+          "uv": [
+            7.6,
+            4,
+            8.4,
+            13
+          ]
+        }
+      }
     }
   ],
   "render_type": "neoforge:cutout"

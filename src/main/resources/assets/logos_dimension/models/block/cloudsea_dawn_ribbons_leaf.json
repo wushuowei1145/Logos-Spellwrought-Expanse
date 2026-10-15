@@ -8,70 +8,70 @@
   },
   "elements": [
     {
-      "name": "fold_-1_0",
+      "name": "sun_wing_left",
       "from": [
-        1,
-        6,
-        5
+        0,
+        8,
+        6
       ],
       "to": [
-        15,
-        6.55,
-        8
+        8,
+        8.5,
+        10
       ],
       "faces": {
         "up": {
           "texture": "#body",
           "uv": [
-            1,
-            5,
-            15,
-            8
+            0,
+            6,
+            8,
+            10
           ]
         },
         "down": {
           "texture": "#body",
           "uv": [
-            1,
+            0,
+            6,
             8,
-            15,
-            11
+            10
           ]
         },
         "north": {
           "texture": "#body",
           "uv": [
-            1,
-            9.45,
-            15,
-            10
+            8,
+            7.5,
+            16,
+            8
           ]
         },
         "south": {
           "texture": "#body",
           "uv": [
-            1,
-            9.45,
-            15,
-            10
+            0,
+            7.5,
+            8,
+            8
           ]
         },
         "east": {
           "texture": "#body",
           "uv": [
-            8,
-            9.45,
-            11,
-            10
+            6,
+            7.5,
+            10,
+            8
           ]
         },
         "west": {
           "texture": "#body",
           "uv": [
-            5,
-            9.45,
-            8,
-            10
+            6,
+            7.5,
+            10,
+            8
           ]
         }
       },
@@ -81,74 +81,74 @@
           8,
           8
         ],
-        "axis": "x",
+        "axis": "z",
         "angle": -22.5
       }
     },
     {
-      "name": "fold_-1_1",
+      "name": "sun_wing_right",
       "from": [
-        3,
         8,
-        5
+        8,
+        6
       ],
       "to": [
-        13,
-        8.55,
-        8
+        16,
+        8.5,
+        10
       ],
       "faces": {
         "up": {
           "texture": "#body",
           "uv": [
-            3,
-            5,
-            13,
-            8
+            8,
+            6,
+            16,
+            10
           ]
         },
         "down": {
           "texture": "#body",
           "uv": [
-            3,
             8,
-            13,
-            11
+            6,
+            16,
+            10
           ]
         },
         "north": {
           "texture": "#body",
           "uv": [
-            3,
-            7.449999999999999,
-            13,
+            0,
+            7.5,
+            8,
             8
           ]
         },
         "south": {
           "texture": "#body",
           "uv": [
-            3,
-            7.449999999999999,
-            13,
+            8,
+            7.5,
+            16,
             8
           ]
         },
         "east": {
           "texture": "#body",
           "uv": [
-            8,
-            7.449999999999999,
-            11,
+            6,
+            7.5,
+            10,
             8
           ]
         },
         "west": {
           "texture": "#body",
           "uv": [
-            5,
-            7.449999999999999,
-            8,
+            6,
+            7.5,
+            10,
             8
           ]
         }
@@ -159,152 +159,74 @@
           8,
           8
         ],
-        "axis": "x",
-        "angle": -22.5
+        "axis": "z",
+        "angle": 22.5
       }
     },
     {
-      "name": "fold_1_0",
+      "name": "sun_disk",
       "from": [
-        1,
         6,
-        8
-      ],
-      "to": [
-        15,
-        6.55,
-        11
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            1,
-            8,
-            15,
-            11
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            1,
-            5,
-            15,
-            8
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            1,
-            9.45,
-            15,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            1,
-            9.45,
-            15,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            5,
-            9.45,
-            8,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            8,
-            9.45,
-            11,
-            10
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "x",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "fold_1_1",
-      "from": [
-        3,
         8,
-        8
+        7
       ],
       "to": [
-        13,
-        8.55,
-        11
+        10,
+        12,
+        9
       ],
       "faces": {
         "up": {
-          "texture": "#body",
+          "texture": "#glow",
           "uv": [
-            3,
-            8,
-            13,
-            11
+            6,
+            7,
+            10,
+            9
           ]
         },
         "down": {
-          "texture": "#body",
+          "texture": "#glow",
           "uv": [
-            3,
-            5,
-            13,
-            8
+            6,
+            7,
+            10,
+            9
           ]
         },
         "north": {
-          "texture": "#body",
+          "texture": "#glow",
           "uv": [
-            3,
-            7.449999999999999,
-            13,
+            6,
+            4,
+            10,
             8
           ]
         },
         "south": {
-          "texture": "#body",
+          "texture": "#glow",
           "uv": [
-            3,
-            7.449999999999999,
-            13,
+            6,
+            4,
+            10,
             8
           ]
         },
         "east": {
-          "texture": "#body",
+          "texture": "#glow",
           "uv": [
-            5,
-            7.449999999999999,
-            8,
+            7,
+            4,
+            9,
             8
           ]
         },
         "west": {
-          "texture": "#body",
+          "texture": "#glow",
           "uv": [
-            8,
-            7.449999999999999,
-            11,
+            7,
+            4,
+            9,
             8
           ]
         }
@@ -315,149 +237,158 @@
           8,
           8
         ],
-        "axis": "x",
-        "angle": 22.5
-      }
+        "axis": "z",
+        "angle": 45
+      },
+      "shade": false,
+      "light_emission": 7
     },
     {
-      "name": "midrib",
+      "name": "sun_ray",
       "from": [
-        1,
-        6.6,
+        7.7,
+        3,
         7.7
       ],
       "to": [
-        15,
-        7.2,
+        8.3,
+        16,
         8.3
       ],
       "faces": {
         "up": {
           "texture": "#rib",
           "uv": [
-            1,
             7.7,
-            15,
+            7.7,
+            8.3,
             8.3
           ]
         },
         "down": {
           "texture": "#rib",
           "uv": [
-            1,
+            7.7,
             7.699999999999999,
-            15,
+            8.3,
             8.3
           ]
         },
         "north": {
           "texture": "#rib",
           "uv": [
-            1,
-            8.8,
-            15,
-            9.4
+            7.699999999999999,
+            0,
+            8.3,
+            13
           ]
         },
         "south": {
           "texture": "#rib",
           "uv": [
-            1,
-            8.8,
-            15,
-            9.4
+            7.7,
+            0,
+            8.3,
+            13
           ]
         },
         "east": {
           "texture": "#rib",
           "uv": [
             7.699999999999999,
-            8.8,
+            0,
             8.3,
-            9.4
+            13
           ]
         },
         "west": {
           "texture": "#rib",
           "uv": [
             7.7,
-            8.8,
+            0,
             8.3,
-            9.4
+            13
           ]
         }
       }
     },
     {
-      "name": "vein_light",
+      "name": "silken_tail",
       "from": [
         4,
-        7.25,
-        7.85
+        2,
+        7.3
       ],
       "to": [
-        12,
-        7.35,
-        8.15
+        7,
+        6,
+        8.7
       ],
       "faces": {
         "up": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
             4,
-            7.85,
-            12,
-            8.15
+            7.3,
+            7,
+            8.7
           ]
         },
         "down": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
             4,
-            7.85,
-            12,
-            8.15
+            7.300000000000001,
+            7,
+            8.7
           ]
         },
         "north": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
-            4,
-            8.65,
+            9,
+            10,
             12,
-            8.75
+            14
           ]
         },
         "south": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
             4,
-            8.65,
-            12,
-            8.75
+            10,
+            7,
+            14
           ]
         },
         "east": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
-            7.85,
-            8.65,
-            8.15,
-            8.75
+            7.300000000000001,
+            10,
+            8.7,
+            14
           ]
         },
         "west": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
-            7.85,
-            8.65,
-            8.15,
-            8.75
+            7.3,
+            10,
+            8.7,
+            14
           ]
         }
       },
-      "shade": false,
-      "light_emission": 5
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "z",
+        "angle": 22.5
+      }
     }
   ],
   "render_type": "neoforge:cutout"

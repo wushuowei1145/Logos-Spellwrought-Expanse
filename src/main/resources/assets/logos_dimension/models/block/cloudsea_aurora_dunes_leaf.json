@@ -8,451 +8,444 @@
   },
   "elements": [
     {
-      "name": "fold_-1_0",
+      "name": "aurora_west",
       "from": [
-        1,
-        6,
-        3
+        2,
+        2,
+        7
       ],
       "to": [
-        15,
-        6.55,
-        8
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            1,
-            3,
-            15,
-            8
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            1,
-            8,
-            15,
-            13
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            1,
-            9.45,
-            15,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            1,
-            9.45,
-            15,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            8,
-            9.45,
-            13,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            3,
-            9.45,
-            8,
-            10
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "x",
-        "angle": -22.5
-      }
-    },
-    {
-      "name": "fold_-1_1",
-      "from": [
-        3,
-        8,
-        3
-      ],
-      "to": [
-        13,
-        8.55,
-        8
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            3,
-            3,
-            13,
-            8
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            3,
-            8,
-            13,
-            13
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            3,
-            7.449999999999999,
-            13,
-            8
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            3,
-            7.449999999999999,
-            13,
-            8
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            8,
-            7.449999999999999,
-            13,
-            8
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            3,
-            7.449999999999999,
-            8,
-            8
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "x",
-        "angle": -22.5
-      }
-    },
-    {
-      "name": "fold_1_0",
-      "from": [
-        1,
-        6,
-        8
-      ],
-      "to": [
-        15,
-        6.55,
-        13
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            1,
-            8,
-            15,
-            13
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            1,
-            3,
-            15,
-            8
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            1,
-            9.45,
-            15,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            1,
-            9.45,
-            15,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            3,
-            9.45,
-            8,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            8,
-            9.45,
-            13,
-            10
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "x",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "fold_1_1",
-      "from": [
-        3,
-        8,
-        8
-      ],
-      "to": [
-        13,
-        8.55,
-        13
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            3,
-            8,
-            13,
-            13
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            3,
-            3,
-            13,
-            8
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            3,
-            7.449999999999999,
-            13,
-            8
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            3,
-            7.449999999999999,
-            13,
-            8
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            3,
-            7.449999999999999,
-            8,
-            8
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            8,
-            7.449999999999999,
-            13,
-            8
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "x",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "midrib",
-      "from": [
-        1,
-        6.6,
-        7.7
-      ],
-      "to": [
-        15,
-        7.2,
-        8.3
-      ],
-      "faces": {
-        "up": {
-          "texture": "#rib",
-          "uv": [
-            1,
-            7.7,
-            15,
-            8.3
-          ]
-        },
-        "down": {
-          "texture": "#rib",
-          "uv": [
-            1,
-            7.699999999999999,
-            15,
-            8.3
-          ]
-        },
-        "north": {
-          "texture": "#rib",
-          "uv": [
-            1,
-            8.8,
-            15,
-            9.4
-          ]
-        },
-        "south": {
-          "texture": "#rib",
-          "uv": [
-            1,
-            8.8,
-            15,
-            9.4
-          ]
-        },
-        "east": {
-          "texture": "#rib",
-          "uv": [
-            7.699999999999999,
-            8.8,
-            8.3,
-            9.4
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            7.7,
-            8.8,
-            8.3,
-            9.4
-          ]
-        }
-      }
-    },
-    {
-      "name": "vein_light",
-      "from": [
         4,
-        7.25,
-        7.85
+        13,
+        7.6
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            2,
+            7,
+            4,
+            7.6
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            2,
+            8.4,
+            4,
+            9
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            12,
+            3,
+            14,
+            14
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            2,
+            3,
+            4,
+            14
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            8.4,
+            3,
+            9,
+            14
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            7,
+            3,
+            7.6,
+            14
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "z",
+        "angle": -22.5
+      }
+    },
+    {
+      "name": "aurora_center",
+      "from": [
+        7,
+        1,
+        6
       ],
       "to": [
+        9,
+        16,
+        6.6
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            7,
+            6,
+            9,
+            6.6
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            7,
+            9.4,
+            9,
+            10
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            7,
+            0,
+            9,
+            15
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            7,
+            0,
+            9,
+            15
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            9.4,
+            0,
+            10,
+            15
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            6,
+            0,
+            6.6,
+            15
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "z",
+        "angle": 22.5
+      }
+    },
+    {
+      "name": "aurora_east",
+      "from": [
         12,
-        7.35,
-        8.15
+        3,
+        8
+      ],
+      "to": [
+        14,
+        14,
+        8.6
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            12,
+            8,
+            14,
+            8.6
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            12,
+            7.4,
+            14,
+            8
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            2,
+            2,
+            4,
+            13
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            12,
+            2,
+            14,
+            13
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            7.4,
+            2,
+            8,
+            13
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            8,
+            2,
+            8.6,
+            13
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "z",
+        "angle": -22.5
+      }
+    },
+    {
+      "name": "aurora_base",
+      "from": [
+        3,
+        1,
+        6
+      ],
+      "to": [
+        13,
+        2,
+        10
+      ],
+      "faces": {
+        "up": {
+          "texture": "#rib",
+          "uv": [
+            3,
+            6,
+            13,
+            10
+          ]
+        },
+        "down": {
+          "texture": "#rib",
+          "uv": [
+            3,
+            6,
+            13,
+            10
+          ]
+        },
+        "north": {
+          "texture": "#rib",
+          "uv": [
+            3,
+            14,
+            13,
+            15
+          ]
+        },
+        "south": {
+          "texture": "#rib",
+          "uv": [
+            3,
+            14,
+            13,
+            15
+          ]
+        },
+        "east": {
+          "texture": "#rib",
+          "uv": [
+            6,
+            14,
+            10,
+            15
+          ]
+        },
+        "west": {
+          "texture": "#rib",
+          "uv": [
+            6,
+            14,
+            10,
+            15
+          ]
+        }
+      }
+    },
+    {
+      "name": "aurora_light",
+      "from": [
+        7.8,
+        3,
+        5.85
+      ],
+      "to": [
+        8.2,
+        14,
+        6
       ],
       "faces": {
         "up": {
           "texture": "#glow",
           "uv": [
-            4,
-            7.85,
-            12,
-            8.15
+            7.8,
+            5.85,
+            8.2,
+            6
           ]
         },
         "down": {
           "texture": "#glow",
           "uv": [
-            4,
-            7.85,
-            12,
-            8.15
+            7.8,
+            10,
+            8.2,
+            10.15
           ]
         },
         "north": {
           "texture": "#glow",
           "uv": [
-            4,
-            8.65,
-            12,
-            8.75
+            7.800000000000001,
+            2,
+            8.2,
+            13
           ]
         },
         "south": {
           "texture": "#glow",
           "uv": [
-            4,
-            8.65,
-            12,
-            8.75
+            7.8,
+            2,
+            8.2,
+            13
           ]
         },
         "east": {
           "texture": "#glow",
           "uv": [
-            7.85,
-            8.65,
-            8.15,
-            8.75
+            10,
+            2,
+            10.15,
+            13
           ]
         },
         "west": {
           "texture": "#glow",
           "uv": [
-            7.85,
-            8.65,
-            8.15,
-            8.75
+            5.85,
+            2,
+            6,
+            13
+          ]
+        }
+      },
+      "shade": false,
+      "light_emission": 6
+    },
+    {
+      "name": "aurora_tip",
+      "from": [
+        7,
+        14.5,
+        6
+      ],
+      "to": [
+        9,
+        16,
+        8
+      ],
+      "faces": {
+        "up": {
+          "texture": "#glow",
+          "uv": [
+            7,
+            6,
+            9,
+            8
+          ]
+        },
+        "down": {
+          "texture": "#glow",
+          "uv": [
+            7,
+            8,
+            9,
+            10
+          ]
+        },
+        "north": {
+          "texture": "#glow",
+          "uv": [
+            7,
+            0,
+            9,
+            1.5
+          ]
+        },
+        "south": {
+          "texture": "#glow",
+          "uv": [
+            7,
+            0,
+            9,
+            1.5
+          ]
+        },
+        "east": {
+          "texture": "#glow",
+          "uv": [
+            8,
+            0,
+            10,
+            1.5
+          ]
+        },
+        "west": {
+          "texture": "#glow",
+          "uv": [
+            6,
+            0,
+            8,
+            1.5
           ]
         }
       },

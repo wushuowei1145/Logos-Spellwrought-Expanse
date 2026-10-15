@@ -242,6 +242,9 @@ def polish_cloudsea():
     material_block('cloudsea_lit_window',(223,204,153),'window',True,False)
     for name,color,kind in (('stem',(139,187,181),'stem'),('lantern_bud',(231,213,151),'lantern'),('hanging_root',(139,195,202),'root'),('eye_fern',(144,179,202),'eye'),('demon_reed',(177,105,137),'reed')):
         flora('cloudsea_'+name,color,kind)
+    from individual_block_models import cloudsea_models, catalogue
+    cloudsea_models()
+    catalogue()
 
 
 def astrolabe():
@@ -350,6 +353,8 @@ def polish_crucible():
         spec['display']['gui']['scale']=[.65,.65,.65]
         write(path,spec)
     astrolabe()
+    from individual_block_models import crucible_models
+    crucible_models()
 
 
 if __name__=='__main__':
