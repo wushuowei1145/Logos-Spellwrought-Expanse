@@ -148,9 +148,12 @@ def leaves():
 
 def refine_surface(name, motif, rectangles):
     path=ASSETS/'models/block'/f'{name}.json';spec=json.loads(path.read_text(encoding='utf-8'))
-    body=spec['elements'][0]; body['name']=motif+'_foundation';body['to'][1]=15.88
+    body=spec['elements'][0]; body['name']=motif+'_foundation';body['to'][1]=16
     # Geometric relief is deliberately shallow so repeated terrain stays walkable and quiet.
-    parts=[part(f'{motif}_{i}',(x1,15.88,z1,x2,16,z2)) for i,(x1,z1,x2,z2) in enumerate(rectangles)]
+    parts=[part(f'{motif}_{i}',(x1,16.003,z1,x2,16.09,z2)) for i,(x1,z1,x2,z2) in enumerate(rectangles)]
+    # The body stays a complete opaque cube. These tiny inlaid facets only expose their
+    # top; subpixel vertical faces would self-shadow into black dashes at terrain scale.
+    for element in parts:element['faces']={'up':element['faces']['up']}
     spec['elements']+=parts
     write(path,spec)
 
