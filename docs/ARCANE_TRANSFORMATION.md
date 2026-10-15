@@ -5,3 +5,13 @@
 动画读取维度时钟及帧内插值，离开视野、重新进入游戏不会从头播放。外环约三分钟旋转一周，中层约两分钟；形态展开在数秒内即可看见。四阶段色调保留，不改变服务端炼金周期或玩家世界。
 
 使用完整 UV、颜色、法线、光照、overlay 的自定义几何，与 Logos 的 ShaderPackOverlay 共用收集器。没有注册额外实体、逐帧生成纹理或加入大量粒子。开发场景 `group:arcane_animation` 连续截取真实游戏画面，用于检查实际运动。
+
+## 2026-10-15 实机记录
+
+下图均来自实际开发客户端。0.1.2 组合版本在普通渲染、Complementary Reimagined r5.9.3、Photon Shader v1.3b 下，各通过 8/8 场景、12/12 检查；每套保留 41 张原始截图。组合检查同时包含法阵、方块和云海，不能作为未运行场景的验证。
+
+![法阵连续实机帧：起始](screenshots/refinement/array-00.png)
+
+![法阵连续实机帧：展开](screenshots/refinement/array-08.png)
+
+![法阵连续实机帧：重组](screenshots/refinement/array-16.png)
