@@ -9,3 +9,13 @@
 现有方块注册 ID 不变。已有区块的材质与叶片模型立即更新；新的分枝树形在新生成区块出现。不会自动拆除玩家已建造的木头与树叶。
 
 资源入口为 `tools/individual_block_models.py`，具体材质方案在 `tools/natural_block_art.py`，目录由脚本生成。实机检查使用 `group:natural_trees`，展示完整树木；数学检查验证树枝连通、树冠体积、种子稳定与边界，世界检查验证原木方向和完整碰撞。
+
+## 0.1.3 实机验证
+
+0.1.3 组合验证：18/18 单元测试、14/14 GameTest；普通渲染、实际启用的 Complementary Reimagined r5.9.3 与 Photon Shader v1.3b，各通过 10/10 场景、15/15 检查，各保留 26 张实机截图。 下图来自实际客户端，不是概念图。
+
+![圆冠、针叶与伞冠完整树木](screenshots/revision-0.1.3/tree-round-conifer.png)
+
+![伞冠、垂冠与圆冠完整树木](screenshots/revision-0.1.3/tree-umbrella-weeping.png)
+
+![材质与方块实机](screenshots/revision-0.1.3/materials.png)
