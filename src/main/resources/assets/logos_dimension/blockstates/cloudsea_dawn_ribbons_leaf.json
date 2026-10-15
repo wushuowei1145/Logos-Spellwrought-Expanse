@@ -1,7 +1,22 @@
 {
   "variants": {
-    "": {
-      "model": "logos_dimension:block/cloudsea_dawn_ribbons_leaf"
-    }
+    "": [
+      {
+        "model": "logos_dimension:block/cloudsea_dawn_ribbons_leaf",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/cloudsea_dawn_ribbons_leaf",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/cloudsea_dawn_ribbons_leaf",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/cloudsea_dawn_ribbons_leaf",
+        "y": 270
+      }
+    ]
   }
 }

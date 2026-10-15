@@ -1,7 +1,22 @@
 {
   "variants": {
-    "": {
-      "model": "logos_dimension:block/cloudsea_demon_reed"
-    }
+    "": [
+      {
+        "model": "logos_dimension:block/cloudsea_demon_reed",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/cloudsea_demon_reed",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/cloudsea_demon_reed",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/cloudsea_demon_reed",
+        "y": 270
+      }
+    ]
   }
 }

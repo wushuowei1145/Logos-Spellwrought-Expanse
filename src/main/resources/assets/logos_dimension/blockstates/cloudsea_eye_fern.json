@@ -1,7 +1,22 @@
 {
   "variants": {
-    "": {
-      "model": "logos_dimension:block/cloudsea_eye_fern"
-    }
+    "": [
+      {
+        "model": "logos_dimension:block/cloudsea_eye_fern",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/cloudsea_eye_fern",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/cloudsea_eye_fern",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/cloudsea_eye_fern",
+        "y": 270
+      }
+    ]
   }
 }

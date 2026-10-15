@@ -11,7 +11,7 @@ import net.minecraft.world.phys.Vec3;
 
 /** Real client gravity must carry a player across the liquid surface, rather than calling the portal directly. */
 @LDLRegisterClient(name="crucible_cauldron", group="logos_dimension", registry=UIScenario.REGISTRY, environment=RegistrationEnvironment.DEV_ONLY)
-public final class CauldronView implements UIScenario {
+public class CauldronView implements UIScenario {
     private BlockPos pot;
     @Override public void configure(ScenarioOptions o) { o.tags("logos_dimension", "portal").scenarioTimeoutMs(90_000).defaultTimeoutMs(40_000); }
     @Override public void define(ScenarioBuilder s) {
@@ -24,14 +24,14 @@ public final class CauldronView implements UIScenario {
                         for (int y=0; y<6; y++) level.removeBlock(pot.offset(x,y,z), false);
                     }
                     level.setBlockAndUpdate(pot, DimensionBlocks.ALCHEMICAL_CAULDRON.get().defaultBlockState());
-                    DimensionTravel.teleport(p, level, new Vec3(.5,102.25,3.8),180,38);
+                    DimensionTravel.teleport(p, level, new Vec3(2.8,103.1,4.5),150,30);
                     p.getAbilities().flying=true; p.onUpdateAbilities();
                 }).step("hide HUD", ctx -> Minecraft.getInstance().options.hideGui=true)
                 .waitUntil("client receives the cauldron", ctx -> Minecraft.getInstance().level.getBlockState(pot).is(DimensionBlocks.ALCHEMICAL_CAULDRON.get()))
                 .ticks(30).screenshot("alchemical_cauldron")
                 .server("stand on the solid rim", ctx -> {
                     var p=ctx.player(); p.setGameMode(GameType.SURVIVAL);
-                    DimensionTravel.teleport(p,p.level(),new Vec3(.125,101.82,.5),0,0);
+                    DimensionTravel.teleport(p,p.level(),new Vec3(-.15,101+dev.logos.dimension.block.AlchemicalCauldronBlock.RIM_HEIGHT+.002,.5),0,0);
                 }).ticks(25)
                 .checkServer("rim does not trigger portal", ctx -> !ctx.player().level().dimension().equals(LogosDimension.CRUCIBLE))
                 .server("drop through the open mouth", ctx -> DimensionTravel.teleport(ctx.player(),ctx.player().level(),new Vec3(.5,103,.5),0,0))

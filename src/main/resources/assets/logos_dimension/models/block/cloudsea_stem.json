@@ -1,12 +1,14 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "all": "logos_dimension:block/cloudsea_stem",
-    "particle": "logos_dimension:block/cloudsea_stem"
+    "particle": "logos_dimension:block/cloudsea_stem",
+    "body": "logos_dimension:block/cloudsea_stem",
+    "rib": "logos_dimension:block/cloudsea_stem_rib",
+    "glow": "logos_dimension:block/cloudsea_stem_core"
   },
-  "render_type": "neoforge:cutout",
   "elements": [
     {
+      "name": "stalk",
       "from": [
         7,
         0,
@@ -18,27 +20,202 @@
         9
       ],
       "faces": {
-        "north": {
-          "texture": "#all"
-        },
-        "south": {
-          "texture": "#all"
-        },
-        "west": {
-          "texture": "#all"
-        },
-        "east": {
-          "texture": "#all"
-        },
         "up": {
-          "texture": "#all"
+          "texture": "#body",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ]
         },
         "down": {
-          "texture": "#all"
+          "texture": "#body",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            7,
+            0,
+            9,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            7,
+            0,
+            9,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            7,
+            0,
+            9,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            7,
+            0,
+            9,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "node_collar",
+      "from": [
+        6.5,
+        6,
+        6.5
+      ],
+      "to": [
+        9.5,
+        7,
+        9.5
+      ],
+      "faces": {
+        "up": {
+          "texture": "#rib",
+          "uv": [
+            6.5,
+            6.5,
+            9.5,
+            9.5
+          ]
+        },
+        "down": {
+          "texture": "#rib",
+          "uv": [
+            6.5,
+            6.5,
+            9.5,
+            9.5
+          ]
+        },
+        "north": {
+          "texture": "#rib",
+          "uv": [
+            6.5,
+            9,
+            9.5,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#rib",
+          "uv": [
+            6.5,
+            9,
+            9.5,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#rib",
+          "uv": [
+            6.5,
+            9,
+            9.5,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#rib",
+          "uv": [
+            6.5,
+            9,
+            9.5,
+            10
+          ]
+        }
+      }
+    },
+    {
+      "name": "light_channel",
+      "from": [
+        7.7,
+        0,
+        6.95
+      ],
+      "to": [
+        8.3,
+        16,
+        7
+      ],
+      "faces": {
+        "up": {
+          "texture": "#glow",
+          "uv": [
+            7.7,
+            6.95,
+            8.3,
+            7
+          ]
+        },
+        "down": {
+          "texture": "#glow",
+          "uv": [
+            7.7,
+            9,
+            8.3,
+            9.05
+          ]
+        },
+        "north": {
+          "texture": "#glow",
+          "uv": [
+            7.699999999999999,
+            0,
+            8.3,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#glow",
+          "uv": [
+            7.7,
+            0,
+            8.3,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#glow",
+          "uv": [
+            9,
+            0,
+            9.05,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#glow",
+          "uv": [
+            6.95,
+            0,
+            7,
+            16
+          ]
         }
       },
       "shade": false,
-      "light_emission": 2
+      "light_emission": 4
     }
-  ]
+  ],
+  "render_type": "neoforge:cutout"
 }

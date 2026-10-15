@@ -1,7 +1,22 @@
 {
   "variants": {
-    "": {
-      "model": "logos_dimension:block/glass_leaves"
-    }
+    "": [
+      {
+        "model": "logos_dimension:block/glass_leaves",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/glass_leaves",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/glass_leaves",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/glass_leaves",
+        "y": 270
+      }
+    ]
   }
 }

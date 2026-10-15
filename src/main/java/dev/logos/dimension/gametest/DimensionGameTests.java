@@ -195,11 +195,12 @@ public final class DimensionGameTests {
         level.setBlockAndUpdate(pos, state);
         var collision = state.getCollisionShape(level, pos);
         h.assertTrue(collision.toAabbs().stream().noneMatch(box -> box.contains(.5, .5, .5)), "Basin has no hollow interior");
-        h.assertTrue(collision.toAabbs().stream().anyMatch(box -> box.contains(.05, .75, .5)), "Rim has no physical collision");
+        h.assertTrue(collision.toAabbs().stream().anyMatch(box -> box.contains(-.2, 1.1, .5)), "Enlarged rim has no physical collision");
+        h.assertTrue(Math.abs(collision.max(net.minecraft.core.Direction.Axis.Y) - dev.logos.dimension.block.AlchemicalCauldronBlock.RIM_HEIGHT) < .001, "Enlarged model and collision height disagree");
         var player = h.makeMockServerPlayerInLevel(); player.connection.markClientLoaded();
         var original = player.level().dimension();
         var effects = new net.minecraft.world.entity.InsideBlockEffectApplier.StepBasedCollector();
-        player.setPos(pos.getX() + .02, pos.getY() + .5, pos.getZ() + .5);
+        player.setPos(pos.getX() - .2, pos.getY() + .7, pos.getZ() + .5);
         state.entityInside(level, pos, player, effects, true); effects.applyAndClear(player);
         h.assertTrue(player.level().dimension().equals(original), "Outside wall triggered portal");
         player.setPos(pos.getX() + .5, pos.getY() + .9, pos.getZ() + .5);
