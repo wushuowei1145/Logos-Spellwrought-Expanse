@@ -22,9 +22,11 @@ void main() {
     vec2 axis = vec2(cos(time * 0.13), sin(time * 0.13));
     float band = dot(p, axis) - sin(time * 0.19) * 0.72;
     float broad = exp(-band * band * 45.0);
-    float sharp = exp(-band * band * 1600.0);
+    float glintWidth = max(0.025, fwidth(band) * 1.25);
+    float sharp = exp(-band * band / (glintWidth * glintWidth));
     float edge = min(abs(r-1.0), min(abs(r-0.745), min(abs(r-0.733), min(abs(r-0.316),abs(r-0.324)))));
-    float bevel = 1.0 - smoothstep(0.002, 0.014, edge);
+    float edgeAA = max(fwidth(r), 0.001);
+    float bevel = 1.0 - smoothstep(max(0.0,0.008-edgeAA), 0.008+edgeAA, edge);
     float angular = atan(p.y,p.x);
     vec3 prism = 0.5 + 0.5*cos(angular*2.0 + time*0.2 + vec3(0.0,2.1,4.2));
     vec3 color = vertexColor.rgb * 0.70 + vec3(0.16,0.23,0.27);
