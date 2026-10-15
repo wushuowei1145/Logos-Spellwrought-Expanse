@@ -1,6 +1,21 @@
 # 首版验证记录
 
-目标环境：Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25；Logos 0.5.1，主模组源码基线 `f196960`。当前安装包版本为 0.1.1。原炼金维度不包含建筑或 Boss；新增天门云域包含中世纪聚落，不包含 Boss。
+目标环境：Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25；Logos 0.5.1，主模组源码基线 `f196960`。当前组合安装包版本为 0.1.2。原炼金维度不包含建筑或 Boss；新增天门云域包含中世纪聚落，不包含 Boss。
+
+## 0.1.2 法阵变化、独立模型与立体云海
+
+2026-10-15 完成三项改动的组合验证。JUnit **18/18**、GameTest **13/13** 通过。最终几何修正后，普通渲染、实际启用的 Complementary Reimagined r5.9.3 和 Photon Shader v1.3b，各通过 **8/8 场景、12/12 检查**，各保留 41 张实机截图。GameTest 后的修正仅涉及客户端云轮廓透明度与地表模型浅刻面的自遮挡；最终三套客户端均包含这两项修正。
+
+客户端场景覆盖三组共 24 种悬叶、材料画廊、32 帧连续法阵变化、云上、穿入/离开云体、剑开天门与魔鲸。没有本附属的模型烘焙失败、缺失纹理或顶点属性异常。80 种方块的几何布局均不同（四阶段材料共输出 95 份模型），资源脚本重复生成一致。云密度场另外检查实际厚度、缺口、负坐标、相邻网格边界与法线；法阵检查短时间可见变化及连续插值。
+
+实机截图见 `docs/screenshots/refinement/`，不是概念图。云采用三维密度场生成的有厚度网格，玩家可穿过；它不是全屏体积光线步进。光影包可覆盖局部雾色、天空和远云，没有对所有硬件帧率或未测试光影作承诺。未加入 Boss、云端平台、矿物或新的实体生物。
+
+```text
+./gradlew test runGameTestServer build -PlogosJar=/absolute/path/logos-0.5.1.jar
+./gradlew runClient -PlogosJar=/absolute/path/logos-0.5.1.jar -PldTest=group:refinement -PldTestHeadless -PldTestWindow=1600x900
+```
+
+三个独立 PR 分支分别提供 `group:arcane_animation`、`group:individual_models`、`group:cloud_volume`。`group:refinement` 位于组合版本分支 `release/refinement-0.1.2`，引用三项实现；组合安装包对应此分支。
 
 ## 方块模型、天空法阵与放大炼金釜
 
