@@ -14,5 +14,20 @@ public final class ArcaneArrayMotion {
         return new Frame(ticks, unfold, fracture, opening, glow,
                 (float) ((ticks % 3600) * .10), (float) (-(ticks % 2400) * .15), (float) ((ticks % 6000) * .06));
     }
+    /** Both star polygons overlap briefly instead of replacing all eight connections in one frame. */
+    public static float starBlend(Frame f) { return ease((f.opening()-.32f)/.36f); }
+    public static float progress(double time,double period,double offset) {
+        double p=time/period+offset;return (float)(p-Math.floor(p));
+    }
+    /** A travelling glint is invisible before its position wraps to the next lap. */
+    public static float travelOpacity(float progress) {
+        return ease(progress/.16f)*ease((1-progress)/.16f);
+    }
+    public static float waveOpacity(float progress) {
+        float s=(float)Math.sin(progress*Math.PI);return s*s;
+    }
+    private static float ease(float x) {
+        x=Math.clamp(x,0,1);return Math.clamp(x*x*x*(x*(x*6-15)+10),0,1);
+    }
     private ArcaneArrayMotion() {}
 }

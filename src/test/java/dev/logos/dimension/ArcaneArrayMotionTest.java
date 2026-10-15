@@ -23,4 +23,28 @@ class ArcaneArrayMotionTest {
             assertTrue(Math.abs(f.unfold()-n.unfold())<.002);
         }
     }
+    @Test void starTopologyCrossfadesWithoutAThresholdJump(){
+        int intermediate=0;
+        for(double t=0;t<720;t+=.05){
+            float a=ArcaneArrayMotion.starBlend(ArcaneArrayMotion.sample(t));
+            float b=ArcaneArrayMotion.starBlend(ArcaneArrayMotion.sample(t+.05));
+            assertTrue(a>=0&&a<=1);
+            assertTrue(Math.abs(a-b)<.003,"No single-frame polygon replacement");
+            if(a>.05&&a<.95)intermediate++;
+        }
+        assertTrue(intermediate>1000,"Transition must last long enough to see");
+    }
+    @Test void glintsAndWavesFadeBeforeTheirPositionsWrap(){
+        for(float p:new float[]{0,1}){
+            assertEquals(0,ArcaneArrayMotion.travelOpacity(p),.00001);
+            assertEquals(0,ArcaneArrayMotion.waveOpacity(p),.00001);
+        }
+        assertEquals(1,ArcaneArrayMotion.travelOpacity(.5f),.00001);
+        assertTrue(ArcaneArrayMotion.travelOpacity(.001f)<.00001);
+        assertTrue(ArcaneArrayMotion.waveOpacity(.001f)<.00001);
+        for(int t=-1000;t<1000;t++){
+            float p=ArcaneArrayMotion.progress(t,85,.375);
+            assertTrue(p>=0&&p<1);assertTrue(ArcaneArrayMotion.travelOpacity(p)>=0);
+        }
+    }
 }

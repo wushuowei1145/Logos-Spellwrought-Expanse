@@ -132,21 +132,9 @@ public final class DimensionClient {
     private static void energy(PoseStack.Pose pose, VertexConsumer out, ArcaneArrayMotion.Frame frame) {
         // Filaments move between orbiting nodes and become a different star polygon as the seal opens.
         float radius = 116 + frame.opening() * 30;
-        int stride = frame.opening() > .5 ? 3 : 2;
-        for (int i = 0; i < 8; i++) {
-            double a = i * Math.PI / 4 + frame.time() * .003;
-            double b = (i + stride) * Math.PI / 4 + frame.time() * .003;
-            float x1 = (float) Math.cos(a) * radius, z1 = (float) Math.sin(a) * radius;
-            float x2 = (float) Math.cos(b) * radius, z2 = (float) Math.sin(b) * radius;
-            filament(pose, out, x1, z1, x2, z2, 1.15f, 0x298ECAD8);
-            filament(pose, out, x1, z1, x2, z2, .30f, 0xB8DCFAFF);
-            float progress = (float) ((frame.time() / 85 + i / 8.0) % 1);
-            float x = x1 + (x2 - x1) * progress, z = z1 + (z2 - z1) * progress;
-            filament(pose, out, x - 2, z, x + 2, z, .8f, 0xEFFFF1C9);
-            filament(pose, out, x, z - 2, x, z + 2, .8f, 0xEFFFF1C9);
-            float orb = 2.5f + frame.glow() * 1.6f;
-            filament(pose, out, x1-orb, z1, x1+orb, z1, orb*.55f, 0xC9FFE5A5);
-        }
+        float blend=ArcaneArrayMotion.starBlend(frame);
+        star(pose,out,frame,radius,2,1-blend);
+        star(pose,out,frame,radius,3,blend);
         // Three counter-rotating arc sweeps trace the spell's energy circulation.
         for (int sweep = 0; sweep < 3; sweep++) for (int step = 0; step < 18; step++) {
             double a = frame.time() * .012 + sweep * Math.PI * 2 / 3 + step * .035;
@@ -155,30 +143,49 @@ public final class DimensionClient {
             filament(pose, out, (float)Math.cos(a)*r, (float)Math.sin(a)*r,
                     (float)Math.cos(b)*r, (float)Math.sin(b)*r, .70f, (alpha<<24)|0xE7FAFF);
         }
-        // Anime-style activation fronts propagate through the nested seal, then dissolve.
         for(int pulse=0;pulse<2;pulse++){
-            float progress=(float)((frame.time()/160+pulse*.5)%1);float r=36+progress*138;
-            int color=((int)(Math.sin(progress*Math.PI)*90)<<24)|0xABEAFF;
+            float progress=ArcaneArrayMotion.progress(frame.time(),160,pulse*.5);float r=36+progress*138;
+            int color=((int)(ArcaneArrayMotion.waveOpacity(progress)*90)<<24)|0xABEAFF;
             for(int i=0;i<64;i++){
                 double a=i*Math.PI/32,b=(i+1)*Math.PI/32;
                 filament(pose,out,(float)Math.cos(a)*r,(float)Math.sin(a)*r,(float)Math.cos(b)*r,(float)Math.sin(b)*r,.45f,color);
             }
         }
     }
+    private static void star(PoseStack.Pose pose,VertexConsumer out,ArcaneArrayMotion.Frame frame,float radius,int stride,float opacity){
+        if(opacity<=0)return;
+        for (int i = 0; i < 8; i++) {
+            double a = i * Math.PI / 4 + frame.time() * .003;
+            double b = (i + stride) * Math.PI / 4 + frame.time() * .003;
+            float x1 = (float) Math.cos(a) * radius, z1 = (float) Math.sin(a) * radius;
+            float x2 = (float) Math.cos(b) * radius, z2 = (float) Math.sin(b) * radius;
+            filament(pose, out, x1, z1, x2, z2, 1.15f, fade(0x298ECAD8,opacity));
+            filament(pose, out, x1, z1, x2, z2, .30f, fade(0xB8DCFAFF,opacity));
+            float progress=ArcaneArrayMotion.progress(frame.time(),85,i/8.0);
+            int glint=fade(0xEFFFF1C9,opacity*ArcaneArrayMotion.travelOpacity(progress));
+            float x = x1 + (x2 - x1) * progress, z = z1 + (z2 - z1) * progress;
+            filament(pose, out, x - 2, z, x + 2, z, .8f, glint);
+            filament(pose, out, x, z - 2, x, z + 2, .8f, glint);
+            float orb = 2.5f + frame.glow() * 1.6f;
+            filament(pose, out, x1-orb, z1, x1+orb, z1, orb*.55f, fade(0xC9FFE5A5,opacity));
+        }
+    }
+    private static int fade(int color,float opacity){return ((int)((color>>>24)*opacity)<<24)|(color&0xFFFFFF);}
     private static void filament(PoseStack.Pose pose, VertexConsumer out, float x1, float z1,
                                   float x2, float z2, float width, int color) {
+        if((color>>>24)==0)return;
         float dx=x2-x1, dz=z2-z1, length=(float)Math.sqrt(dx*dx+dz*dz);
         if(length<.001)return;
         float nx=-dz/length*width, nz=dx/length*width;
-        float[][] corners={{x1+nx,z1+nz,0,0},{x2+nx,z2+nz,1,0},{x2-nx,z2-nz,1,1},{x1-nx,z1-nz,0,1}};
-        for(var corner:corners)vertex(pose,out,corner,color);
+        vertex(pose,out,x1+nx,z1+nz,0,0,color);vertex(pose,out,x2+nx,z2+nz,1,0,color);
+        vertex(pose,out,x2-nx,z2-nz,1,1,color);vertex(pose,out,x1-nx,z1-nz,0,1,color);
     }
     private static void disc(PoseStack.Pose pose, VertexConsumer vertices, int color) {
-        float[][] corners = {{-245, -245, 0, 0}, {245, -245, 1, 0}, {245, 245, 1, 1}, {-245, 245, 0, 1}};
-        for (int i = 0; i < 4; i++) vertex(pose, vertices, corners[i], color);
+        vertex(pose,vertices,-245,-245,0,0,color);vertex(pose,vertices,245,-245,1,0,color);
+        vertex(pose,vertices,245,245,1,1,color);vertex(pose,vertices,-245,245,0,1,color);
     }
-    private static void vertex(PoseStack.Pose pose, VertexConsumer vertices, float[] c, int color) {
-        vertices.addVertex(pose, c[0], 0, c[1]).setColor(color).setUv(c[2], c[3])
+    private static void vertex(PoseStack.Pose pose, VertexConsumer vertices, float x,float z,float u,float v,int color) {
+        vertices.addVertex(pose,x,0,z).setColor(color).setUv(u,v)
                 .setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightCoordsUtil.FULL_BRIGHT).setNormal(pose, 0, -1, 0);
     }
     private DimensionClient() {}
