@@ -41,7 +41,10 @@ public abstract class CloudseaViews implements UIScenario {
     @LDLRegisterClient(name="cloudsea_ribbons",group="cloudsea",registry=UIScenario.REGISTRY,environment=RegistrationEnvironment.DEV_ONLY)
     public static class Ribbons extends CloudseaViews {protected String shot(){return "floating_ribbons";}protected CloudseaBiome kind(){return CloudseaBiome.STAR_RIBBONS;}}
     @LDLRegisterClient(name="cloudsea_sky",group="cloudsea",registry=UIScenario.REGISTRY,environment=RegistrationEnvironment.DEV_ONLY)
-    public static class Sky extends CloudseaViews {protected String shot(){return "sky_cleft_whale";}protected float pitch(){return -55;}protected float yaw(){return 35;}protected CloudseaBiome kind(){return CloudseaBiome.PEARL_BASINS;}}
+    public static class Sky extends CloudseaViews {
+        protected String shot(){return "sky_cleft_whale";}protected float pitch(){return -63;}protected float yaw(){return 35;}
+        protected Vec3 viewpoint(CloudseaChunkGenerator gen){received=new BlockPos(0,gen.terrain().column(0,0).ground(),0);return new Vec3(.5,received.getY()+18,.5);}
+    }
     @LDLRegisterClient(name="cloudsea_village",group="cloudsea",registry=UIScenario.REGISTRY,environment=RegistrationEnvironment.DEV_ONLY)
     public static class Village extends CloudseaViews {
         protected String shot(){return "medieval_settlement";}

@@ -30,51 +30,36 @@ public final class CloudseaClient {
     public static final ResourceKey<WorldClock> CLOCK=ResourceKey.create(Registries.WORLD_CLOCK,LogosDimension.id("cloudsea"));
     private static final ContextKey<Frame> FRAME=new ContextKey<>(LogosDimension.id("cloudsea_frame"));
     private static CloudseaBiome lastBiome;
-    private record Frame(float travel,float visibility,float beat,float eyeY,int shadowY){}
+    private record Frame(float travel,float visibility,float beat,float eyeY,int shadowY,double x,double z){}
     private static RenderType material(String name,boolean depthWrite){return RenderType.create(name,RenderSetup.builder(RenderPipeline.builder(RenderPipelines.MATRICES_PROJECTION_SNIPPET)
             .withLocation(LogosDimension.id("pipeline/"+name)).withVertexShader("core/position_tex_color").withFragmentShader("core/position_tex_color")
             .withSampler("Sampler0").withVertexFormat(DefaultVertexFormat.BLOCK,VertexFormat.Mode.QUADS).withCull(false)
             .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL,depthWrite)).withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT)).build())
-            .withTexture("Sampler0",LogosDimension.id("textures/environment/"+(name.equals("cloudsea_clouds")?name:"cloudsea_white")+".png")).sortOnUpload().createRenderSetup());}
-    private static final RenderType CLOUDS=material("cloudsea_clouds",true),VOLUME=material("cloudsea_cloud_volume",true),WHALE=material("cloudsea_whale",false),SHADOW=material("cloudsea_whale_shadow",false);
+            .withTexture("Sampler0",LogosDimension.id("textures/environment/cloudsea_white.png")).sortOnUpload().createRenderSetup());}
+    private static final RenderType WHALE=material("cloudsea_whale",false),SHADOW=material("cloudsea_whale_shadow",false);
     public static long ticks(Level level){return level.clockManager().getTotalTicks(level.registryAccess().lookupOrThrow(Registries.WORLD_CLOCK).getOrThrow(CLOCK));}
     public static float whaleVisibility(long ticks){int t=(int)Math.floorMod(ticks,3600);return t<480?Math.min(1,Math.min(t/60f,(480-t)/60f)):0;}
     @SubscribeEvent static void extract(ExtractLevelRenderStateEvent e){
         if(!e.getLevel().dimension().equals(LogosDimension.CLOUDSEA))return;
         var cam=e.getRenderState().cameraRenderState;long time=ticks(e.getLevel());float vis=whaleVisibility(time);
-        int x=(int)cam.pos.x,z=(int)cam.pos.z,ground=e.getLevel().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,x,z);
-        e.getRenderState().setRenderData(FRAME,new Frame(((time%3600)/480f-.5f)*380,vis,time*.025f,(float)cam.pos.y,ground));
+        float partial=e.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        float travel=(((time%3600)+partial)/480f-.5f)*380;
+        double whaleZ=180+travel*.5,wx=-.5735764364*whaleZ,wz=.8191520443*whaleZ;
+        int ground=e.getLevel().hasChunk((int)Math.floor(wx)>>4,(int)Math.floor(wz)>>4)
+                ?e.getLevel().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,(int)Math.floor(wx),(int)Math.floor(wz)):0;
+        e.getRenderState().setRenderData(FRAME,new Frame(travel,vis,(time+partial)*.025f,(float)cam.pos.y,ground,cam.pos.x,cam.pos.z));
     }
     @SubscribeEvent(priority=EventPriority.LOWEST) static void submit(SubmitCustomGeometryEvent e){
         var f=e.getLevelRenderState().getRenderData(FRAME);if(f==null||f.eyeY<0)return;
         var pose=e.getPoseStack();var out=LogosSkyOverlay.collector(e.getSubmitNodeCollector());
-        pose.pushPose();pose.mulPose(Axis.YP.rotationDegrees(-35));
-        out.submitCustomGeometry(pose,CLOUDS,(p,v)->{
-            for(int i=0;i<32;i++){
-                float z0=-1600+i*100,z1=z0+100,edge0=58+(float)Math.sin(i*.79)*12,edge1=58+(float)Math.sin((i+1)*.79)*12;
-                for(int side:new int[]{-1,1}){
-                    float a=side*edge0,b=side*edge1,outer=side*1800;
-                    quad(p,v,new float[][]{{a,174,z0,0,0},{outer,184,z0,1,0},{outer,184,z1,1,1},{b,174,z1,0,1}},0xFFF0F5F7);
-                    quad(p,v,new float[][]{{a,155,z0,0,0},{a,174,z0,0,1},{b,174,z1,1,1},{b,155,z1,1,0}},0xFFD3E0E7);
-                }
-            }
-        });
-        out.submitCustomGeometry(pose,VOLUME,(p,v)->{
-            for(int side:new int[]{-1,1})for(int row=0;row<2;row++)for(int k=-4;k<=4;k++){
-                float cx=side*(140+row*280),cz=k*150+(row%2)*70,rx=row==0?70:220,rz=row==0?105:190,ry=22+(k*k%5)*3;
-                for(int i=0;i<5;i++)for(int j=0;j<10;j++){
-                    float[] a=cloudPoint(cx,cz,rx,ry,rz,i,j),b=cloudPoint(cx,cz,rx,ry,rz,i+1,j),c=cloudPoint(cx,cz,rx,ry,rz,i+1,j+1),d=cloudPoint(cx,cz,rx,ry,rz,i,j+1);
-                    int shade=208+i*8;quad(p,v,new float[][]{a,b,c,d},0xFF000000|(shade<<16)|((shade+5)<<8)|(shade+9));
-                }
-            }
-        });
         if(f.visibility>0){
-            pose.pushPose();pose.translate(0,208,180+f.travel*.5);pose.mulPose(Axis.XP.rotationDegrees((float)Math.sin(f.beat)*3));
+            pose.pushPose();pose.translate(-f.x,497-f.eyeY,-f.z);pose.mulPose(Axis.YP.rotationDegrees(-35));
+            pose.translate(0,0,180+f.travel*.5);pose.mulPose(Axis.XP.rotationDegrees((float)Math.sin(f.beat)*3));
             out.submitCustomGeometry(pose,WHALE,(p,v)->whale(p,v,f));pose.popPose();
         }
-        pose.popPose();
-        if(f.visibility>0&&f.shadowY>0&&f.eyeY<f.shadowY+55){
-            pose.pushPose();pose.translate(-Math.sin(Math.toRadians(35))*f.travel*.08,f.shadowY-f.eyeY+.03,Math.cos(Math.toRadians(35))*f.travel*.08);pose.mulPose(Axis.YP.rotationDegrees(-35));
+        double whaleZ=180+f.travel*.5,wx=-.5735764364*whaleZ,wz=.8191520443*whaleZ;
+        if(f.visibility>0&&f.shadowY>0&&f.eyeY<f.shadowY+55&&Math.hypot(wx-f.x,wz-f.z)<200){
+            pose.pushPose();pose.translate(wx-f.x,f.shadowY-f.eyeY+.03,wz-f.z);pose.mulPose(Axis.YP.rotationDegrees(-35));
             out.submitCustomGeometry(pose,SHADOW,(p,v)->{
                 for(int i=0;i<12;i++){float z0=-50+i*9,z1=z0+9,r0=(float)Math.sin(i*Math.PI/12)*34,r1=(float)Math.sin((i+1)*Math.PI/12)*34;
                     quad(p,v,new float[][]{{-r0,0,z0,0,0},{r0,0,z0,1,0},{r1,0,z1,1,1},{-r1,0,z1,0,1}},((int)(f.visibility*34)<<24)|0x24324D);}
@@ -99,7 +84,6 @@ public final class CloudseaClient {
         float nx=uy*wz-uz*wy,ny=uz*wx-ux*wz,nz=ux*wy-uy*wx,len=(float)Math.sqrt(nx*nx+ny*ny+nz*nz);if(len<.00001f){ny=1;len=1;}
         for(var q:a)v.addVertex(p,q[0],q[1],q[2]).setColor(color).setUv(q[3],q[4]).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightCoordsUtil.FULL_BRIGHT).setNormal(p,nx/len,ny/len,nz/len);
     }
-    private static float[] cloudPoint(float x,float z,float rx,float ry,float rz,int i,int j){double a=i*Math.PI/5,b=j*Math.PI/5;return new float[]{x+(float)(Math.sin(a)*Math.cos(b))*rx,177+(float)Math.cos(a)*ry,z+(float)(Math.sin(a)*Math.sin(b))*rz,0,0};}
     @SubscribeEvent static void tick(ClientTickEvent.Post e){
         var mc=Minecraft.getInstance();if(mc.level==null||mc.player==null||!mc.level.dimension().equals(LogosDimension.CLOUDSEA)){lastBiome=null;return;}
         long t=ticks(mc.level);var p=mc.player.position();var random=mc.level.getRandom();
@@ -112,6 +96,9 @@ public final class CloudseaClient {
         if(t%3600==90)mc.level.playLocalSound(p.x,p.y+70,p.z,SoundEvents.DOLPHIN_AMBIENT,SoundSource.AMBIENT,.25f,.4f,false);
         if(t%600==0)mc.level.playLocalSound(p.x,p.y,p.z,SoundEvents.NOTE_BLOCK_CHIME.value(),SoundSource.AMBIENT,.10f,.7f,false);
     }
-    @SubscribeEvent static void fog(ViewportEvent.ComputeFogColor e){var mc=Minecraft.getInstance();if(mc.level==null||mc.player==null||!mc.level.dimension().equals(LogosDimension.CLOUDSEA))return;if(mc.player.getY()<-65){e.setRed(.22f);e.setGreen(.17f);e.setBlue(.28f);}}
+    @SubscribeEvent static void fog(ViewportEvent.ComputeFogColor e){
+        var mc=Minecraft.getInstance();if(mc.level==null||mc.player==null||!mc.level.dimension().equals(LogosDimension.CLOUDSEA))return;
+        if(mc.player.getY()<-65){e.setRed(.22f);e.setGreen(.17f);e.setBlue(.28f);}
+    }
     private CloudseaClient(){}
 }

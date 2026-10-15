@@ -91,12 +91,9 @@ write(data/'timeline/cloudsea.json',{'clock':f'{ns}:cloudsea','period_ticks':720
 dimtype=data/'dimension_type/cloudsea.json';spec=json.loads(dimtype.read_text(encoding='utf-8'));spec['attributes'].update({'minecraft:visual/ambient_light_color':'#52636c','minecraft:visual/cloud_height':2048.0,'minecraft:visual/sky_color':'#7096b9','minecraft:visual/fog_color':'#9cb7ca'});write(dimtype,spec)
 test=project/'gametest-packs/crucible/data/minecraft/worldgen/world_preset/flat.json';preset=json.loads(test.read_text(encoding='utf-8'));preset['dimensions'][f'{ns}:cloudsea']=stem;write(test,preset)
 tag=res/'data/minecraft/tags/block/mineable/pickaxe.json';value=json.loads(tag.read_text(encoding='utf-8'));value['values']+= [f'{ns}:{n}' for n in special if n not in {'cloudsea_stem','cloudsea_lantern_bud','cloudsea_hanging_root','cloudsea_eye_fern','cloudsea_demon_reed'}]+[f'{ns}:cloudsea_{b[0].lower()}_ground' for b in biomes];value['values']=list(dict.fromkeys(value['values']));write(tag,value)
-# A full-coverage cloud-bank texture, deliberately opaque: the cleft is a real gap in sky geometry.
-cloud=Image.new('RGB',(512,512),(211,222,232));draw=ImageDraw.Draw(cloud);rng=random.Random(813)
-for i in range(900):
-    x=rng.randrange(-40,512);y=rng.randrange(-40,512);r=rng.randrange(12,55);c=rng.randrange(190,244)
-    draw.ellipse((x-r,y-r*.7,x+r,y+r*.7),fill=(c,min(255,c+8),min(255,c+13)))
-cloud=cloud.filter(ImageFilter.GaussianBlur(6));env=assets/'textures/environment';env.mkdir(parents=True,exist_ok=True);cloud.save(env/'cloudsea_clouds.png');Image.new('RGBA',(1,1),(255,255,255,255)).save(env/'cloudsea_white.png')
+# White sample for the occasional sky whale; the removed cloud cover has no resources or jobs.
+env=assets/'textures/environment';env.mkdir(parents=True,exist_ok=True)
+Image.new('RGBA',(1,1),(255,255,255,255)).save(env/'cloudsea_white.png')
 print('Generated 24 surface + 2 depth biomes, 60 Cloudsea blocks, sky textures and test dimension.')
 
 from polish_models import polish_cloudsea
