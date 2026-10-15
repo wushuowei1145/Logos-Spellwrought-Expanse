@@ -8,10 +8,469 @@
   },
   "elements": [
     {
-      "name": "spine",
+      "name": "frost_needle",
+      "from": [
+        7,
+        0,
+        7
+      ],
+      "to": [
+        9,
+        16,
+        9
+      ],
+      "faces": {
+        "up": {
+          "texture": "#rib",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ]
+        },
+        "down": {
+          "texture": "#rib",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ]
+        },
+        "north": {
+          "texture": "#rib",
+          "uv": [
+            7,
+            0,
+            9,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#rib",
+          "uv": [
+            7,
+            0,
+            9,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#rib",
+          "uv": [
+            7,
+            0,
+            9,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#rib",
+          "uv": [
+            7,
+            0,
+            9,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "frost_west",
+      "from": [
+        2,
+        6,
+        7
+      ],
+      "to": [
+        7,
+        7,
+        9
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            2,
+            7,
+            7,
+            9
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            2,
+            7,
+            7,
+            9
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            9,
+            9,
+            14,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            2,
+            9,
+            7,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            7,
+            9,
+            9,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            7,
+            9,
+            9,
+            10
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "z",
+        "angle": 45
+      }
+    },
+    {
+      "name": "frost_east",
+      "from": [
+        9,
+        6,
+        7
+      ],
+      "to": [
+        14,
+        7,
+        9
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            9,
+            7,
+            14,
+            9
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            9,
+            7,
+            14,
+            9
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            2,
+            9,
+            7,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            9,
+            9,
+            14,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            7,
+            9,
+            9,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            7,
+            9,
+            9,
+            10
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "z",
+        "angle": -45
+      }
+    },
+    {
+      "name": "frost_rear",
+      "from": [
+        7,
+        6,
+        2
+      ],
+      "to": [
+        9,
+        7,
+        7
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            7,
+            2,
+            9,
+            7
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            7,
+            9,
+            9,
+            14
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            7,
+            9,
+            9,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            7,
+            9,
+            9,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            9,
+            9,
+            14,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            2,
+            9,
+            7,
+            10
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "x",
+        "angle": -45
+      }
+    },
+    {
+      "name": "frost_front",
+      "from": [
+        7,
+        6,
+        9
+      ],
+      "to": [
+        9,
+        7,
+        14
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            7,
+            9,
+            9,
+            14
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            7,
+            2,
+            9,
+            7
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            7,
+            9,
+            9,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            7,
+            9,
+            9,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            2,
+            9,
+            7,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            9,
+            9,
+            14,
+            10
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "x",
+        "angle": 45
+      }
+    },
+    {
+      "name": "frost_lens",
+      "from": [
+        6,
+        8,
+        6
+      ],
+      "to": [
+        10,
+        12,
+        10
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            6,
+            4,
+            10,
+            8
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            6,
+            4,
+            10,
+            8
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            6,
+            4,
+            10,
+            8
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            6,
+            4,
+            10,
+            8
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "frost_tip",
       "from": [
         7.4,
-        0,
+        12,
         7.4
       ],
       "to": [
@@ -21,7 +480,7 @@
       ],
       "faces": {
         "up": {
-          "texture": "#rib",
+          "texture": "#glow",
           "uv": [
             7.4,
             7.4,
@@ -30,7 +489,7 @@
           ]
         },
         "down": {
-          "texture": "#rib",
+          "texture": "#glow",
           "uv": [
             7.4,
             7.4,
@@ -39,264 +498,39 @@
           ]
         },
         "north": {
-          "texture": "#rib",
-          "uv": [
-            7.4,
-            0,
-            8.6,
-            16
-          ]
-        },
-        "south": {
-          "texture": "#rib",
-          "uv": [
-            7.4,
-            0,
-            8.6,
-            16
-          ]
-        },
-        "east": {
-          "texture": "#rib",
-          "uv": [
-            7.4,
-            0,
-            8.6,
-            16
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            7.4,
-            0,
-            8.6,
-            16
-          ]
-        }
-      }
-    },
-    {
-      "name": "crystal_mid",
-      "from": [
-        5.7,
-        4,
-        5.7
-      ],
-      "to": [
-        10.3,
-        12,
-        10.3
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            5.7,
-            5.7,
-            10.3,
-            10.3
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            5.7,
-            5.699999999999999,
-            10.3,
-            10.3
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            5.699999999999999,
-            4,
-            10.3,
-            12
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            5.7,
-            4,
-            10.3,
-            12
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            5.699999999999999,
-            4,
-            10.3,
-            12
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            5.7,
-            4,
-            10.3,
-            12
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "y",
-        "angle": 45
-      }
-    },
-    {
-      "name": "crystal_crown",
-      "from": [
-        6.5,
-        11,
-        6.5
-      ],
-      "to": [
-        9.5,
-        15,
-        9.5
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            6.5,
-            6.5,
-            9.5,
-            9.5
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            6.5,
-            6.5,
-            9.5,
-            9.5
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            6.5,
-            1,
-            9.5,
-            5
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            6.5,
-            1,
-            9.5,
-            5
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6.5,
-            1,
-            9.5,
-            5
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6.5,
-            1,
-            9.5,
-            5
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "y",
-        "angle": 45
-      }
-    },
-    {
-      "name": "core",
-      "from": [
-        7.3,
-        5,
-        7.3
-      ],
-      "to": [
-        8.7,
-        12,
-        8.7
-      ],
-      "faces": {
-        "up": {
           "texture": "#glow",
           "uv": [
-            7.3,
-            7.3,
-            8.7,
-            8.7
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            7.3,
-            7.300000000000001,
-            8.7,
-            8.7
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            7.300000000000001,
-            4,
-            8.7,
-            11
+            7.4,
+            0,
+            8.6,
+            4
           ]
         },
         "south": {
           "texture": "#glow",
           "uv": [
-            7.3,
-            4,
-            8.7,
-            11
+            7.4,
+            0,
+            8.6,
+            4
           ]
         },
         "east": {
           "texture": "#glow",
           "uv": [
-            7.300000000000001,
-            4,
-            8.7,
-            11
+            7.4,
+            0,
+            8.6,
+            4
           ]
         },
         "west": {
           "texture": "#glow",
           "uv": [
-            7.3,
-            4,
-            8.7,
-            11
+            7.4,
+            0,
+            8.6,
+            4
           ]
         }
       },

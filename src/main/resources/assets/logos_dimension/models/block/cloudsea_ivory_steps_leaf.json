@@ -8,585 +8,345 @@
   },
   "elements": [
     {
-      "name": "stem",
+      "name": "terrace_low",
       "from": [
-        7.7,
-        0,
-        7.7
-      ],
-      "to": [
-        8.3,
-        15,
-        8.3
-      ],
-      "faces": {
-        "up": {
-          "texture": "#rib",
-          "uv": [
-            7.7,
-            7.7,
-            8.3,
-            8.3
-          ]
-        },
-        "down": {
-          "texture": "#rib",
-          "uv": [
-            7.7,
-            7.699999999999999,
-            8.3,
-            8.3
-          ]
-        },
-        "north": {
-          "texture": "#rib",
-          "uv": [
-            7.699999999999999,
-            1,
-            8.3,
-            16
-          ]
-        },
-        "south": {
-          "texture": "#rib",
-          "uv": [
-            7.7,
-            1,
-            8.3,
-            16
-          ]
-        },
-        "east": {
-          "texture": "#rib",
-          "uv": [
-            7.699999999999999,
-            1,
-            8.3,
-            16
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            7.7,
-            1,
-            8.3,
-            16
-          ]
-        }
-      }
-    },
-    {
-      "name": "bell_leaf_0",
-      "from": [
-        2,
-        3,
-        6
-      ],
-      "to": [
-        8,
-        3.6,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            2,
-            6,
-            8,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            2,
-            6,
-            8,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            8,
-            12.4,
-            14,
-            13
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            2,
-            12.4,
-            8,
-            13
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            12.4,
-            10,
-            13
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            12.4,
-            10,
-            13
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": -22.5
-      }
-    },
-    {
-      "name": "bell_drop_0",
-      "from": [
-        3.4,
         1,
-        7.4
-      ],
-      "to": [
-        4.6,
         3,
-        8.6
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            3.4,
-            7.4,
-            4.6,
-            8.6
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            3.4,
-            7.4,
-            4.6,
-            8.6
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            11.4,
-            13,
-            12.6,
-            15
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            3.4,
-            13,
-            4.6,
-            15
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            7.4,
-            13,
-            8.6,
-            15
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            7.4,
-            13,
-            8.6,
-            15
-          ]
-        }
-      },
-      "shade": false,
-      "light_emission": 5
-    },
-    {
-      "name": "bell_leaf_1",
-      "from": [
-        8,
-        6,
-        6
+        3
       ],
       "to": [
-        14,
-        6.6,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            8,
-            6,
-            14,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            8,
-            6,
-            14,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            2,
-            9.4,
-            8,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            8,
-            9.4,
-            14,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            9.4,
-            10,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            9.4,
-            10,
-            10
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "bell_drop_1",
-      "from": [
-        11.4,
+        15,
         4,
-        7.4
-      ],
-      "to": [
-        12.6,
-        6,
-        8.6
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            11.4,
-            7.4,
-            12.6,
-            8.6
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            11.4,
-            7.4,
-            12.6,
-            8.6
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            3.4000000000000004,
-            10,
-            4.6,
-            12
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            11.4,
-            10,
-            12.6,
-            12
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            7.4,
-            10,
-            8.6,
-            12
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            7.4,
-            10,
-            8.6,
-            12
-          ]
-        }
-      },
-      "shade": false,
-      "light_emission": 5
-    },
-    {
-      "name": "bell_leaf_2",
-      "from": [
-        2,
-        9,
-        6
-      ],
-      "to": [
-        8,
-        9.6,
-        10
+        13
       ],
       "faces": {
         "up": {
           "texture": "#body",
           "uv": [
-            2,
-            6,
-            8,
-            10
+            1,
+            3,
+            15,
+            13
           ]
         },
         "down": {
           "texture": "#body",
           "uv": [
-            2,
-            6,
-            8,
-            10
+            1,
+            3,
+            15,
+            13
           ]
         },
         "north": {
           "texture": "#body",
           "uv": [
-            8,
-            6.4,
-            14,
-            7
+            1,
+            12,
+            15,
+            13
           ]
         },
         "south": {
           "texture": "#body",
           "uv": [
-            2,
-            6.4,
-            8,
-            7
+            1,
+            12,
+            15,
+            13
           ]
         },
         "east": {
           "texture": "#body",
           "uv": [
-            6,
-            6.4,
-            10,
-            7
+            3,
+            12,
+            13,
+            13
           ]
         },
         "west": {
           "texture": "#body",
           "uv": [
-            6,
-            6.4,
-            10,
-            7
+            3,
+            12,
+            13,
+            13
           ]
         }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": -22.5
       }
     },
     {
-      "name": "bell_drop_2",
+      "name": "terrace_middle",
       "from": [
-        3.4,
+        3,
         7,
-        7.4
+        4
       ],
       "to": [
-        4.6,
-        9,
-        8.6
+        13,
+        8,
+        12
       ],
       "faces": {
         "up": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
-            3.4,
-            7.4,
-            4.6,
-            8.6
+            3,
+            4,
+            13,
+            12
           ]
         },
         "down": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
-            3.4,
-            7.4,
-            4.6,
-            8.6
+            3,
+            4,
+            13,
+            12
           ]
         },
         "north": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
-            11.4,
-            7,
-            12.6,
+            3,
+            8,
+            13,
             9
           ]
         },
         "south": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
-            3.4,
-            7,
-            4.6,
+            3,
+            8,
+            13,
             9
           ]
         },
         "east": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
-            7.4,
-            7,
-            8.6,
+            4,
+            8,
+            12,
             9
           ]
         },
         "west": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
-            7.4,
-            7,
-            8.6,
+            4,
+            8,
+            12,
             9
           ]
         }
-      },
-      "shade": false,
-      "light_emission": 5
+      }
     },
     {
-      "name": "bell_leaf_3",
+      "name": "terrace_high",
       "from": [
-        8,
-        12,
-        6
+        5,
+        11,
+        5
       ],
       "to": [
-        14,
-        12.6,
-        10
+        11,
+        12,
+        11
       ],
       "faces": {
         "up": {
           "texture": "#body",
           "uv": [
-            8,
-            6,
-            14,
-            10
+            5,
+            5,
+            11,
+            11
           ]
         },
         "down": {
           "texture": "#body",
           "uv": [
-            8,
-            6,
-            14,
-            10
+            5,
+            5,
+            11,
+            11
           ]
         },
         "north": {
           "texture": "#body",
           "uv": [
-            2,
-            3.4000000000000004,
-            8,
-            4
+            5,
+            4,
+            11,
+            5
           ]
         },
         "south": {
           "texture": "#body",
           "uv": [
-            8,
-            3.4000000000000004,
-            14,
-            4
+            5,
+            4,
+            11,
+            5
           ]
         },
         "east": {
           "texture": "#body",
           "uv": [
-            6,
-            3.4000000000000004,
-            10,
-            4
+            5,
+            4,
+            11,
+            5
           ]
         },
         "west": {
           "texture": "#body",
           "uv": [
-            6,
-            3.4000000000000004,
-            10,
+            5,
+            4,
+            11,
+            5
+          ]
+        }
+      }
+    },
+    {
+      "name": "tier_stem",
+      "from": [
+        7.2,
+        0,
+        7.2
+      ],
+      "to": [
+        8.8,
+        12,
+        8.8
+      ],
+      "faces": {
+        "up": {
+          "texture": "#rib",
+          "uv": [
+            7.2,
+            7.2,
+            8.8,
+            8.8
+          ]
+        },
+        "down": {
+          "texture": "#rib",
+          "uv": [
+            7.2,
+            7.199999999999999,
+            8.8,
+            8.8
+          ]
+        },
+        "north": {
+          "texture": "#rib",
+          "uv": [
+            7.199999999999999,
+            4,
+            8.8,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#rib",
+          "uv": [
+            7.2,
+            4,
+            8.8,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#rib",
+          "uv": [
+            7.199999999999999,
+            4,
+            8.8,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#rib",
+          "uv": [
+            7.2,
+            4,
+            8.8,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "ivory_crown",
+      "from": [
+        6.5,
+        12,
+        6.5
+      ],
+      "to": [
+        9.5,
+        14,
+        9.5
+      ],
+      "faces": {
+        "up": {
+          "texture": "#glow",
+          "uv": [
+            6.5,
+            6.5,
+            9.5,
+            9.5
+          ]
+        },
+        "down": {
+          "texture": "#glow",
+          "uv": [
+            6.5,
+            6.5,
+            9.5,
+            9.5
+          ]
+        },
+        "north": {
+          "texture": "#glow",
+          "uv": [
+            6.5,
+            2,
+            9.5,
+            4
+          ]
+        },
+        "south": {
+          "texture": "#glow",
+          "uv": [
+            6.5,
+            2,
+            9.5,
+            4
+          ]
+        },
+        "east": {
+          "texture": "#glow",
+          "uv": [
+            6.5,
+            2,
+            9.5,
+            4
+          ]
+        },
+        "west": {
+          "texture": "#glow",
+          "uv": [
+            6.5,
+            2,
+            9.5,
             4
           ]
         }
@@ -597,80 +357,80 @@
           8,
           8
         ],
-        "axis": "z",
-        "angle": 22.5
-      }
+        "axis": "y",
+        "angle": 45
+      },
+      "shade": false,
+      "light_emission": 6
     },
     {
-      "name": "bell_drop_3",
+      "name": "ivory_tassel",
       "from": [
-        11.4,
-        10,
-        7.4
+        12,
+        1,
+        7.5
       ],
       "to": [
-        12.6,
-        12,
-        8.6
+        13,
+        6,
+        8.5
       ],
       "faces": {
         "up": {
-          "texture": "#glow",
+          "texture": "#rib",
           "uv": [
-            11.4,
-            7.4,
-            12.6,
-            8.6
+            12,
+            7.5,
+            13,
+            8.5
           ]
         },
         "down": {
-          "texture": "#glow",
+          "texture": "#rib",
           "uv": [
-            11.4,
-            7.4,
-            12.6,
-            8.6
+            12,
+            7.5,
+            13,
+            8.5
           ]
         },
         "north": {
-          "texture": "#glow",
+          "texture": "#rib",
           "uv": [
-            3.4000000000000004,
+            3,
+            10,
             4,
-            4.6,
-            6
+            15
           ]
         },
         "south": {
-          "texture": "#glow",
+          "texture": "#rib",
           "uv": [
-            11.4,
-            4,
-            12.6,
-            6
+            12,
+            10,
+            13,
+            15
           ]
         },
         "east": {
-          "texture": "#glow",
+          "texture": "#rib",
           "uv": [
-            7.4,
-            4,
-            8.6,
-            6
+            7.5,
+            10,
+            8.5,
+            15
           ]
         },
         "west": {
-          "texture": "#glow",
+          "texture": "#rib",
           "uv": [
-            7.4,
-            4,
-            8.6,
-            6
+            7.5,
+            10,
+            8.5,
+            15
           ]
         }
-      },
-      "shade": false,
-      "light_emission": 5
+      }
     }
   ],
   "render_type": "neoforge:cutout"

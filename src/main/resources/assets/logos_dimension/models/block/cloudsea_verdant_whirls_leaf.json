@@ -8,304 +8,226 @@
   },
   "elements": [
     {
-      "name": "petal_-45",
+      "name": "feather_a",
       "from": [
-        4,
-        6,
-        2
-      ],
-      "to": [
-        12,
-        6.6,
-        14
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            4,
-            2,
-            12,
-            14
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            4,
-            2,
-            12,
-            14
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            4,
-            9.4,
-            12,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            4,
-            9.4,
-            12,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            2,
-            9.4,
-            14,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            2,
-            9.4,
-            14,
-            10
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "y",
-        "angle": -45
-      }
-    },
-    {
-      "name": "petal_0",
-      "from": [
-        4,
-        6,
-        2
-      ],
-      "to": [
-        12,
-        6.6,
-        14
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            4,
-            2,
-            12,
-            14
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            4,
-            2,
-            12,
-            14
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            4,
-            9.4,
-            12,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            4,
-            9.4,
-            12,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            2,
-            9.4,
-            14,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            2,
-            9.4,
-            14,
-            10
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "y",
-        "angle": 0
-      }
-    },
-    {
-      "name": "petal_45",
-      "from": [
-        4,
-        6,
-        2
-      ],
-      "to": [
-        12,
-        6.6,
-        14
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            4,
-            2,
-            12,
-            14
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            4,
-            2,
-            12,
-            14
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            4,
-            9.4,
-            12,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            4,
-            9.4,
-            12,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            2,
-            9.4,
-            14,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            2,
-            9.4,
-            14,
-            10
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "y",
-        "angle": 45
-      }
-    },
-    {
-      "name": "cup_lip_left",
-      "from": [
-        2,
+        1,
         7,
         5
       ],
       "to": [
-        4,
+        13,
         7.6,
+        8
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            1,
+            5,
+            13,
+            8
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            1,
+            8,
+            13,
+            11
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            3,
+            8.4,
+            15,
+            9
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            1,
+            8.4,
+            13,
+            9
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            8,
+            8.4,
+            11,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            5,
+            8.4,
+            8,
+            9
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "y",
+        "angle": 22.5
+      }
+    },
+    {
+      "name": "feather_b",
+      "from": [
+        3,
+        9,
+        8
+      ],
+      "to": [
+        15,
+        9.6,
         11
       ],
       "faces": {
         "up": {
           "texture": "#body",
           "uv": [
-            2,
-            5,
-            4,
+            3,
+            8,
+            15,
             11
           ]
         },
         "down": {
           "texture": "#body",
           "uv": [
-            2,
+            3,
             5,
-            4,
-            11
+            15,
+            8
           ]
         },
         "north": {
           "texture": "#body",
           "uv": [
-            12,
-            8.4,
-            14,
-            9
+            1,
+            6.4,
+            13,
+            7
           ]
         },
         "south": {
           "texture": "#body",
           "uv": [
-            2,
-            8.4,
-            4,
-            9
+            3,
+            6.4,
+            15,
+            7
           ]
         },
         "east": {
           "texture": "#body",
           "uv": [
             5,
-            8.4,
-            11,
-            9
+            6.4,
+            8,
+            7
           ]
         },
         "west": {
           "texture": "#body",
           "uv": [
-            5,
-            8.4,
+            8,
+            6.4,
             11,
+            7
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "y",
+        "angle": -22.5
+      }
+    },
+    {
+      "name": "ascending_frond",
+      "from": [
+        5,
+        5,
+        7
+      ],
+      "to": [
+        7,
+        14,
+        9
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body",
+          "uv": [
+            5,
+            7,
+            7,
             9
+          ]
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            5,
+            7,
+            7,
+            9
+          ]
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            9,
+            2,
+            11,
+            11
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            5,
+            2,
+            7,
+            11
+          ]
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            7,
+            2,
+            9,
+            11
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            7,
+            2,
+            9,
+            11
           ]
         }
       },
@@ -320,70 +242,70 @@
       }
     },
     {
-      "name": "cup_lip_right",
+      "name": "descending_frond",
       "from": [
-        12,
-        7,
-        5
+        10,
+        3,
+        7
       ],
       "to": [
-        14,
-        7.6,
-        11
+        12,
+        12,
+        9
       ],
       "faces": {
         "up": {
           "texture": "#body",
           "uv": [
+            10,
+            7,
             12,
-            5,
-            14,
-            11
+            9
           ]
         },
         "down": {
           "texture": "#body",
           "uv": [
+            10,
+            7,
             12,
-            5,
-            14,
-            11
+            9
           ]
         },
         "north": {
           "texture": "#body",
           "uv": [
-            2,
-            8.4,
             4,
-            9
+            4,
+            6,
+            13
           ]
         },
         "south": {
           "texture": "#body",
           "uv": [
+            10,
+            4,
             12,
-            8.4,
-            14,
-            9
+            13
           ]
         },
         "east": {
           "texture": "#body",
           "uv": [
-            5,
-            8.4,
-            11,
-            9
+            7,
+            4,
+            9,
+            13
           ]
         },
         "west": {
           "texture": "#body",
           "uv": [
-            5,
-            8.4,
-            11,
-            9
+            7,
+            4,
+            9,
+            13
           ]
         }
       },
@@ -394,19 +316,97 @@
           8
         ],
         "axis": "z",
-        "angle": 22.5
+        "angle": -22.5
       }
     },
     {
-      "name": "luminous_seed",
+      "name": "twined_knot",
+      "from": [
+        6,
+        7,
+        6
+      ],
+      "to": [
+        10,
+        10,
+        10
+      ],
+      "faces": {
+        "up": {
+          "texture": "#rib",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        },
+        "down": {
+          "texture": "#rib",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        },
+        "north": {
+          "texture": "#rib",
+          "uv": [
+            6,
+            6,
+            10,
+            9
+          ]
+        },
+        "south": {
+          "texture": "#rib",
+          "uv": [
+            6,
+            6,
+            10,
+            9
+          ]
+        },
+        "east": {
+          "texture": "#rib",
+          "uv": [
+            6,
+            6,
+            10,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#rib",
+          "uv": [
+            6,
+            6,
+            10,
+            9
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8,
+          8
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "green_heart",
       "from": [
         7,
-        6.7,
+        9.7,
         7
       ],
       "to": [
         9,
-        8,
+        10.5,
         9
       ],
       "faces": {
@@ -432,41 +432,41 @@
           "texture": "#glow",
           "uv": [
             7,
-            8,
+            5.5,
             9,
-            9.3
+            6.300000000000001
           ]
         },
         "south": {
           "texture": "#glow",
           "uv": [
             7,
-            8,
+            5.5,
             9,
-            9.3
+            6.300000000000001
           ]
         },
         "east": {
           "texture": "#glow",
           "uv": [
             7,
-            8,
+            5.5,
             9,
-            9.3
+            6.300000000000001
           ]
         },
         "west": {
           "texture": "#glow",
           "uv": [
             7,
-            8,
+            5.5,
             9,
-            9.3
+            6.300000000000001
           ]
         }
       },
       "shade": false,
-      "light_emission": 7
+      "light_emission": 5
     }
   ],
   "render_type": "neoforge:cutout"
