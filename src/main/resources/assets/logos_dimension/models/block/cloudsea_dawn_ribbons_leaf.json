@@ -2,394 +2,85 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/cloudsea_dawn_ribbons_leaf",
-    "body": "logos_dimension:block/cloudsea_dawn_ribbons_leaf",
-    "rib": "logos_dimension:block/cloudsea_dawn_ribbons_leaf_rib",
-    "glow": "logos_dimension:block/cloudsea_dawn_ribbons_leaf_core"
+    "body": "logos_dimension:block/cloudsea_dawn_ribbons_leaf"
   },
   "elements": [
     {
-      "name": "sun_wing_left",
+      "name": "full_leaf_cluster",
       "from": [
         0,
-        8,
-        6
-      ],
-      "to": [
-        8,
-        8.5,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            0,
-            6,
-            8,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            0,
-            6,
-            8,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            8,
-            7.5,
-            16,
-            8
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            0,
-            7.5,
-            8,
-            8
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            7.5,
-            10,
-            8
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            7.5,
-            10,
-            8
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": -22.5
-      }
-    },
-    {
-      "name": "sun_wing_right",
-      "from": [
-        8,
-        8,
-        6
+        0,
+        0
       ],
       "to": [
         16,
-        8.5,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            8,
-            6,
-            16,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            8,
-            6,
-            16,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            0,
-            7.5,
-            8,
-            8
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            8,
-            7.5,
-            16,
-            8
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            7.5,
-            10,
-            8
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            7.5,
-            10,
-            8
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "sun_disk",
-      "from": [
-        6,
-        8,
-        7
-      ],
-      "to": [
-        10,
-        12,
-        9
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            6,
-            7,
-            10,
-            9
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            6,
-            7,
-            10,
-            9
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            6,
-            4,
-            10,
-            8
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            6,
-            4,
-            10,
-            8
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            4,
-            9,
-            8
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            4,
-            9,
-            8
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": 45
-      },
-      "shade": false,
-      "light_emission": 7
-    },
-    {
-      "name": "sun_ray",
-      "from": [
-        7.7,
-        3,
-        7.7
-      ],
-      "to": [
-        8.3,
         16,
-        8.3
-      ],
-      "faces": {
-        "up": {
-          "texture": "#rib",
-          "uv": [
-            7.7,
-            7.7,
-            8.3,
-            8.3
-          ]
-        },
-        "down": {
-          "texture": "#rib",
-          "uv": [
-            7.7,
-            7.699999999999999,
-            8.3,
-            8.3
-          ]
-        },
-        "north": {
-          "texture": "#rib",
-          "uv": [
-            7.699999999999999,
-            0,
-            8.3,
-            13
-          ]
-        },
-        "south": {
-          "texture": "#rib",
-          "uv": [
-            7.7,
-            0,
-            8.3,
-            13
-          ]
-        },
-        "east": {
-          "texture": "#rib",
-          "uv": [
-            7.699999999999999,
-            0,
-            8.3,
-            13
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            7.7,
-            0,
-            8.3,
-            13
-          ]
-        }
-      }
-    },
-    {
-      "name": "silken_tail",
-      "from": [
-        4,
-        2,
-        7.3
-      ],
-      "to": [
-        7,
-        6,
-        8.7
+        16
       ],
       "faces": {
         "up": {
           "texture": "#body",
           "uv": [
-            4,
-            7.3,
-            7,
-            8.7
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "up"
         },
         "down": {
           "texture": "#body",
           "uv": [
-            4,
-            7.300000000000001,
-            7,
-            8.7
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "down"
         },
         "north": {
           "texture": "#body",
           "uv": [
-            9,
-            10,
-            12,
-            14
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "north"
         },
         "south": {
           "texture": "#body",
           "uv": [
-            4,
-            10,
-            7,
-            14
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "south"
         },
         "east": {
           "texture": "#body",
           "uv": [
-            7.300000000000001,
-            10,
-            8.7,
-            14
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "east"
         },
         "west": {
           "texture": "#body",
           "uv": [
-            7.3,
-            10,
-            8.7,
-            14
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "west"
         }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": 22.5
       }
     }
   ],
-  "render_type": "neoforge:cutout"
+  "render_type": "neoforge:cutout",
+  "ambientocclusion": false
 }

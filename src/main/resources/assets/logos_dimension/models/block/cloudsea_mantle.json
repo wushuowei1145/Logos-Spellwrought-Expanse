@@ -2,12 +2,11 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/cloudsea_mantle",
-    "body": "logos_dimension:block/cloudsea_mantle",
-    "side": "logos_dimension:block/cloudsea_mantle_side"
+    "body": "logos_dimension:block/cloudsea_mantle"
   },
   "elements": [
     {
-      "name": "断层封板_foundation",
+      "name": "continuous_strata",
       "from": [
         0,
         0,
@@ -40,7 +39,7 @@
           "cullface": "down"
         },
         "north": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -50,7 +49,7 @@
           "cullface": "north"
         },
         "south": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -60,7 +59,7 @@
           "cullface": "south"
         },
         "east": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -70,7 +69,7 @@
           "cullface": "east"
         },
         "west": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -78,78 +77,6 @@
             16
           ],
           "cullface": "west"
-        }
-      }
-    },
-    {
-      "name": "断层封板_0",
-      "from": [
-        0,
-        16.003,
-        0
-      ],
-      "to": [
-        16,
-        16.09,
-        4
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            0,
-            0,
-            16,
-            4
-          ]
-        }
-      }
-    },
-    {
-      "name": "断层封板_1",
-      "from": [
-        0,
-        16.003,
-        5
-      ],
-      "to": [
-        11,
-        16.09,
-        9
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            0,
-            5,
-            11,
-            9
-          ]
-        }
-      }
-    },
-    {
-      "name": "断层封板_2",
-      "from": [
-        5,
-        16.003,
-        10
-      ],
-      "to": [
-        16,
-        16.09,
-        15
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            5,
-            10,
-            16,
-            15
-          ]
         }
       }
     }

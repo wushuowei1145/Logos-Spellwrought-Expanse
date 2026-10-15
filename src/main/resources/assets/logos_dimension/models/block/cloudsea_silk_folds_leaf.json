@@ -2,385 +2,85 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/cloudsea_silk_folds_leaf",
-    "body": "logos_dimension:block/cloudsea_silk_folds_leaf",
-    "rib": "logos_dimension:block/cloudsea_silk_folds_leaf_rib",
-    "glow": "logos_dimension:block/cloudsea_silk_folds_leaf_core"
+    "body": "logos_dimension:block/cloudsea_silk_folds_leaf"
   },
   "elements": [
     {
-      "name": "lower_pleat",
+      "name": "full_leaf_cluster",
       "from": [
-        1,
-        5,
-        5
+        0,
+        0,
+        0
       ],
       "to": [
-        15,
-        5.5,
-        11
+        16,
+        16,
+        16
       ],
       "faces": {
         "up": {
           "texture": "#body",
           "uv": [
-            1,
-            5,
-            15,
-            11
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "up"
         },
         "down": {
           "texture": "#body",
           "uv": [
-            1,
-            5,
-            15,
-            11
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "down"
         },
         "north": {
           "texture": "#body",
           "uv": [
-            1,
-            10.5,
-            15,
-            11
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "north"
         },
         "south": {
           "texture": "#body",
           "uv": [
-            1,
-            10.5,
-            15,
-            11
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "south"
         },
         "east": {
           "texture": "#body",
           "uv": [
-            5,
-            10.5,
-            11,
-            11
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "east"
         },
         "west": {
           "texture": "#body",
           "uv": [
-            5,
-            10.5,
-            11,
-            11
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "x",
-        "angle": -22.5
-      }
-    },
-    {
-      "name": "middle_pleat",
-      "from": [
-        2,
-        8,
-        4
-      ],
-      "to": [
-        14,
-        8.5,
-        12
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            2,
-            4,
-            14,
-            12
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            2,
-            4,
-            14,
-            12
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            2,
-            7.5,
-            14,
-            8
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            2,
-            7.5,
-            14,
-            8
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            4,
-            7.5,
-            12,
-            8
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            4,
-            7.5,
-            12,
-            8
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "x",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "upper_fold",
-      "from": [
-        4,
-        11,
-        5
-      ],
-      "to": [
-        12,
-        11.5,
-        11
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            4,
-            5,
-            12,
-            11
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            4,
-            5,
-            12,
-            11
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            4,
-            4.5,
-            12,
-            5
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            4,
-            4.5,
-            12,
-            5
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            5,
-            4.5,
-            11,
-            5
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            5,
-            4.5,
-            11,
-            5
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "x",
-        "angle": -22.5
-      }
-    },
-    {
-      "name": "longitudinal_keel",
-      "from": [
-        1,
-        7.6,
-        7.6
-      ],
-      "to": [
-        15,
-        8.2,
-        8.4
-      ],
-      "faces": {
-        "up": {
-          "texture": "#rib",
-          "uv": [
-            1,
-            7.6,
-            15,
-            8.4
-          ]
-        },
-        "down": {
-          "texture": "#rib",
-          "uv": [
-            1,
-            7.6,
-            15,
-            8.4
-          ]
-        },
-        "north": {
-          "texture": "#rib",
-          "uv": [
-            1,
-            7.800000000000001,
-            15,
-            8.4
-          ]
-        },
-        "south": {
-          "texture": "#rib",
-          "uv": [
-            1,
-            7.800000000000001,
-            15,
-            8.4
-          ]
-        },
-        "east": {
-          "texture": "#rib",
-          "uv": [
-            7.6,
-            7.800000000000001,
-            8.4,
-            8.4
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            7.6,
-            7.800000000000001,
-            8.4,
-            8.4
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "west"
         }
       }
-    },
-    {
-      "name": "silk_seam",
-      "from": [
-        4,
-        8.3,
-        7.8
-      ],
-      "to": [
-        12,
-        8.45,
-        8.2
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            4,
-            7.8,
-            12,
-            8.2
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            4,
-            7.800000000000001,
-            12,
-            8.2
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            4,
-            7.550000000000001,
-            12,
-            7.699999999999999
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            4,
-            7.550000000000001,
-            12,
-            7.699999999999999
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            7.800000000000001,
-            7.550000000000001,
-            8.2,
-            7.699999999999999
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            7.8,
-            7.550000000000001,
-            8.2,
-            7.699999999999999
-          ]
-        }
-      },
-      "shade": false,
-      "light_emission": 5
     }
   ],
-  "render_type": "neoforge:cutout"
+  "render_type": "neoforge:cutout",
+  "ambientocclusion": false
 }

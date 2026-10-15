@@ -2,12 +2,11 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/sulfur_deposit_2",
-    "body": "logos_dimension:block/sulfur_deposit_2",
-    "side": "logos_dimension:block/sulfur_deposit_2_side"
+    "body": "logos_dimension:block/sulfur_deposit_2"
   },
   "elements": [
     {
-      "name": "硫质团壳_foundation",
+      "name": "continuous_crystal",
       "from": [
         0,
         0,
@@ -40,7 +39,7 @@
           "cullface": "down"
         },
         "north": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -50,7 +49,7 @@
           "cullface": "north"
         },
         "south": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -60,7 +59,7 @@
           "cullface": "south"
         },
         "east": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -70,7 +69,7 @@
           "cullface": "east"
         },
         "west": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -78,102 +77,6 @@
             16
           ],
           "cullface": "west"
-        }
-      }
-    },
-    {
-      "name": "硫质团壳_0",
-      "from": [
-        1,
-        16.003,
-        2
-      ],
-      "to": [
-        7,
-        16.09,
-        8
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            1,
-            2,
-            7,
-            8
-          ]
-        }
-      }
-    },
-    {
-      "name": "硫质团壳_1",
-      "from": [
-        8,
-        16.003,
-        1
-      ],
-      "to": [
-        15,
-        16.09,
-        6
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            8,
-            1,
-            15,
-            6
-          ]
-        }
-      }
-    },
-    {
-      "name": "硫质团壳_2",
-      "from": [
-        7,
-        16.003,
-        9
-      ],
-      "to": [
-        14,
-        16.09,
-        15
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            7,
-            9,
-            14,
-            15
-          ]
-        }
-      }
-    },
-    {
-      "name": "硫质团壳_3",
-      "from": [
-        1,
-        16.003,
-        11
-      ],
-      "to": [
-        5,
-        16.09,
-        15
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            1,
-            11,
-            5,
-            15
-          ]
         }
       }
     }

@@ -4,6 +4,8 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import dev.logos.dimension.world.NaturalTreeShape;
+import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.core.*;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.*;
@@ -28,16 +30,22 @@ public final class CloudseaChunkGenerator extends ChunkGenerator {
     @Override public void buildSurface(WorldGenRegion level,StructureManager structures,RandomState random,ChunkAccess chunk){}
     @Override public void spawnOriginalMobs(WorldGenRegion region){}
     @Override public int getMinY(){return CloudseaTerrain.MIN_Y;}@Override public int getGenDepth(){return CloudseaTerrain.HEIGHT;}@Override public int getSeaLevel(){return CloudseaTerrain.WATER_LEVEL;}
-    private record Plant(int x,int z,int base,int height,int radius,CloudseaBiome kind,boolean exists){}
+    private record Plant(int x,int z,int base,CloudseaBiome kind,NaturalTreeShape.Blueprint shape){}
     private Plant plant(int x,int z){
-        int gx=Math.floorDiv(x,16),gz=Math.floorDiv(z,16),ax=gx*16+8,az=gz*16+8;var c=terrain.column(ax,az);
-        double chance=CloudseaNoise.unit(CloudseaNoise.hash(gx,0,gz,terrain.seed()+491));
-        return new Plant(ax,az,c.highest()+1,10+(int)(chance*12),4+(int)(chance*2),c.biome(),chance<c.biome().flora&&c.ground()>=getSeaLevel());
+        int gx=Math.floorDiv(x,16),gz=Math.floorDiv(z,16);long seed=CloudseaNoise.hash(gx,0,gz,terrain.seed()+491);
+        int ax=gx*16+6+(int)((seed>>>8)&3),az=gz*16+6+(int)((seed>>>12)&3);var c=terrain.column(ax,az);
+        double chance=CloudseaNoise.unit(seed);
+        var form=switch(c.biome().form){case SPIRE,STEPS->NaturalTreeShape.Form.CONIFER;case RIBBON,DUNE->NaturalTreeShape.Form.UMBRELLA;case HANGING->NaturalTreeShape.Form.WEEPING;default->NaturalTreeShape.Form.ROUND;};
+        int height=(form==NaturalTreeShape.Form.CONIFER?11:7)+(int)((seed>>>18)&3);
+        var shape=chance<c.biome().flora&&c.ground()>=getSeaLevel()?NaturalTreeShape.create(form,height,seed):null;
+        return new Plant(ax,az,c.highest()+1,c.biome(),shape);
     }
     @Override public CompletableFuture<ChunkAccess> fillFromNoise(Blender blend,RandomState random,StructureManager structures,ChunkAccess chunk){
         var p=new BlockPos.MutableBlockPos();var floor=chunk.getOrCreateHeightmapUnprimed(Heightmap.Types.OCEAN_FLOOR_WG);var surface=chunk.getOrCreateHeightmapUnprimed(Heightmap.Types.WORLD_SURFACE_WG);
+        // The tree anchor and blueprint are shared by all 256 columns of this chunk.
+        var plant=plant(chunk.getPos().getMinBlockX()+8,chunk.getPos().getMinBlockZ()+8);
         for(int z=0;z<16;z++)for(int x=0;x<16;x++){
-            int wx=chunk.getPos().getMinBlockX()+x,wz=chunk.getPos().getMinBlockZ()+z;var c=terrain.column(wx,wz);var plant=plant(wx,wz);var village=settlements.sample(wx,wz);
+            int wx=chunk.getPos().getMinBlockX()+x,wz=chunk.getPos().getMinBlockZ()+z;var c=terrain.column(wx,wz);var village=settlements.sample(wx,wz);
             int top=Math.max(c.highest()+25,getSeaLevel());if(village!=null)for(var h:village.houses())top=Math.max(top,h.y()+27);
             for(int y=getMinY();y<=top;y++){var state=stateAt(wx,y,wz,c,plant,village);if(state.isAir())continue;chunk.setBlockState(p.set(wx,y,wz),state);floor.update(x,y,z,state);surface.update(x,y,z,state);}
         }
@@ -51,12 +59,16 @@ public final class CloudseaChunkGenerator extends ChunkGenerator {
         if(c.sheet(y))return y==c.lowerTop()||y==c.upperTop()?CloudseaBlocks.GROUND.get(c.biome()).get().defaultBlockState():CloudseaBlocks.PORCELAIN.get().defaultBlockState();
         if(y>c.ground()){
             if(c.biome().form==CloudseaBiome.Form.BASIN&&y<=getSeaLevel())return Blocks.WATER.defaultBlockState();
-            if(p.exists){
+            if(p.shape!=null){
                 int dx=x-p.x,dz=z-p.z,dy=y-p.base;
-                if(dx==0&&dz==0&&dy>=0&&dy<p.height)return CloudseaBlocks.STEM.get().defaultBlockState();
-                for(int i=0;i<3;i++){int leafY=p.height-i*4+(dx*dx)/(p.radius*p.radius/2+1);int radius=p.radius-i;
-                    if(dy==leafY&&dx*dx+dz*dz<=radius*radius&&Math.abs(dx)+Math.abs(dz)>1)return CloudseaBlocks.LEAVES.get(p.kind).get().defaultBlockState();
-                    if(dy==leafY-2&&Math.abs(dx)+Math.abs(dz)==radius&&(dx+dz)%2==0)return CloudseaBlocks.LANTERN.get().defaultBlockState();}
+                var part=p.shape.at(dx,dy,dz);
+                if(part==NaturalTreeShape.Part.LEAF)return CloudseaBlocks.LEAVES.get(p.kind).get().defaultBlockState();
+                if(part!=NaturalTreeShape.Part.AIR){
+                    var axis=part==NaturalTreeShape.Part.WOOD_X?Direction.Axis.X:part==NaturalTreeShape.Part.WOOD_Z?Direction.Axis.Z:Direction.Axis.Y;
+                    return CloudseaBlocks.STEM.get().defaultBlockState().setValue(RotatedPillarBlock.AXIS,axis);
+                }
+                if(p.kind.form==CloudseaBiome.Form.HANGING&&p.shape.at(dx,dy+1,dz)==NaturalTreeShape.Part.LEAF&&Math.floorMod(dx*7+dz*11,19)==0)
+                    return CloudseaBlocks.LANTERN.get().defaultBlockState();
             }
             if(y==c.upperBottom()-1&&(CloudseaNoise.hash(x,y,z,terrain.seed())&7)==0)return CloudseaBlocks.ROOT.get().defaultBlockState();
             return Blocks.AIR.defaultBlockState();

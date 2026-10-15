@@ -2,527 +2,85 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/cloudsea_lilac_steps_leaf",
-    "body": "logos_dimension:block/cloudsea_lilac_steps_leaf",
-    "rib": "logos_dimension:block/cloudsea_lilac_steps_leaf_rib",
-    "glow": "logos_dimension:block/cloudsea_lilac_steps_leaf_core"
+    "body": "logos_dimension:block/cloudsea_lilac_steps_leaf"
   },
   "elements": [
     {
-      "name": "flower_branch",
+      "name": "full_leaf_cluster",
       "from": [
-        7.6,
         0,
-        7.6
+        0,
+        0
       ],
       "to": [
-        8.4,
-        15,
-        8.4
+        16,
+        16,
+        16
       ],
       "faces": {
         "up": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            7.6,
-            7.6,
-            8.4,
-            8.4
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "up"
         },
         "down": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            7.6,
-            7.6,
-            8.4,
-            8.4
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "down"
         },
         "north": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            7.6,
-            1,
-            8.4,
+            0,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "north"
         },
         "south": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            7.6,
-            1,
-            8.4,
+            0,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "south"
         },
         "east": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            7.6,
-            1,
-            8.4,
+            0,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "east"
         },
         "west": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            7.6,
-            1,
-            8.4,
+            0,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "west"
         }
       }
-    },
-    {
-      "name": "lower_petals",
-      "from": [
-        2,
-        4,
-        5
-      ],
-      "to": [
-        8,
-        4.6,
-        11
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            2,
-            5,
-            8,
-            11
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            2,
-            5,
-            8,
-            11
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            8,
-            11.4,
-            14,
-            12
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            2,
-            11.4,
-            8,
-            12
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            5,
-            11.4,
-            11,
-            12
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            5,
-            11.4,
-            11,
-            12
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": -22.5
-      }
-    },
-    {
-      "name": "middle_petals",
-      "from": [
-        8,
-        8,
-        5
-      ],
-      "to": [
-        14,
-        8.6,
-        11
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            8,
-            5,
-            14,
-            11
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            8,
-            5,
-            14,
-            11
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            2,
-            7.4,
-            8,
-            8
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            8,
-            7.4,
-            14,
-            8
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            5,
-            7.4,
-            11,
-            8
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            5,
-            7.4,
-            11,
-            8
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "upper_petals",
-      "from": [
-        5,
-        12,
-        6
-      ],
-      "to": [
-        11,
-        12.6,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            5,
-            6,
-            11,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            5,
-            6,
-            11,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            5,
-            3.4000000000000004,
-            11,
-            4
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            5,
-            3.4000000000000004,
-            11,
-            4
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            3.4000000000000004,
-            10,
-            4
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            3.4000000000000004,
-            10,
-            4
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "y",
-        "angle": 45
-      }
-    },
-    {
-      "name": "lower_bud",
-      "from": [
-        3,
-        5,
-        7
-      ],
-      "to": [
-        5,
-        7,
-        9
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            3,
-            7,
-            5,
-            9
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            3,
-            7,
-            5,
-            9
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            11,
-            9,
-            13,
-            11
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            3,
-            9,
-            5,
-            11
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            9,
-            9,
-            11
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            9,
-            9,
-            11
-          ]
-        }
-      },
-      "shade": false,
-      "light_emission": 5
-    },
-    {
-      "name": "middle_bud",
-      "from": [
-        11,
-        9,
-        7
-      ],
-      "to": [
-        13,
-        11,
-        9
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            11,
-            7,
-            13,
-            9
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            11,
-            7,
-            13,
-            9
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            3,
-            5,
-            5,
-            7
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            11,
-            5,
-            13,
-            7
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            5,
-            9,
-            7
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            5,
-            9,
-            7
-          ]
-        }
-      },
-      "shade": false,
-      "light_emission": 5
-    },
-    {
-      "name": "upper_bud",
-      "from": [
-        7,
-        13,
-        7
-      ],
-      "to": [
-        9,
-        15,
-        9
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            1,
-            9,
-            3
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            1,
-            9,
-            3
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            1,
-            9,
-            3
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            1,
-            9,
-            3
-          ]
-        }
-      },
-      "shade": false,
-      "light_emission": 5
     }
   ],
-  "render_type": "neoforge:cutout"
+  "render_type": "neoforge:cutout",
+  "ambientocclusion": false
 }

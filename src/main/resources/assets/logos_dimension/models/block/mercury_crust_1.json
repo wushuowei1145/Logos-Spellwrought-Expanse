@@ -2,14 +2,11 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/mercury_crust_1",
-    "body": "logos_dimension:block/mercury_crust_1",
-    "side": "logos_dimension:block/mercury_crust_1_side",
-    "glow": "logos_dimension:block/mercury_crust_1_glow",
-    "side_glow": "logos_dimension:block/mercury_crust_1_side_glow"
+    "body": "logos_dimension:block/mercury_crust_1"
   },
   "elements": [
     {
-      "name": "凝汞褶边_foundation",
+      "name": "continuous_metal",
       "from": [
         0,
         0,
@@ -42,7 +39,7 @@
           "cullface": "down"
         },
         "north": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -52,7 +49,7 @@
           "cullface": "north"
         },
         "south": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -62,7 +59,7 @@
           "cullface": "south"
         },
         "east": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -72,7 +69,7 @@
           "cullface": "east"
         },
         "west": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -80,182 +77,8 @@
             16
           ],
           "cullface": "west"
-        }
-      }
-    },
-    {
-      "name": "inlaid_mana",
-      "from": [
-        -0.004,
-        -0.004,
-        -0.004
-      ],
-      "to": [
-        16.004,
-        16.004,
-        16.004
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "up"
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "down"
-        },
-        "north": {
-          "texture": "#side_glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "north"
-        },
-        "south": {
-          "texture": "#side_glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "south"
-        },
-        "east": {
-          "texture": "#side_glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "east"
-        },
-        "west": {
-          "texture": "#side_glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "west"
-        }
-      },
-      "shade": false,
-      "light_emission": 5
-    },
-    {
-      "name": "凝汞褶边_0",
-      "from": [
-        1,
-        16.003,
-        1
-      ],
-      "to": [
-        3,
-        16.09,
-        14
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            1,
-            1,
-            3,
-            14
-          ]
-        }
-      }
-    },
-    {
-      "name": "凝汞褶边_1",
-      "from": [
-        4,
-        16.003,
-        3
-      ],
-      "to": [
-        6,
-        16.09,
-        16
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            4,
-            3,
-            6,
-            16
-          ]
-        }
-      }
-    },
-    {
-      "name": "凝汞褶边_2",
-      "from": [
-        8,
-        16.003,
-        0
-      ],
-      "to": [
-        11,
-        16.09,
-        13
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            8,
-            0,
-            11,
-            13
-          ]
-        }
-      }
-    },
-    {
-      "name": "凝汞褶边_3",
-      "from": [
-        13,
-        16.003,
-        2
-      ],
-      "to": [
-        15,
-        16.09,
-        15
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            13,
-            2,
-            15,
-            15
-          ]
         }
       }
     }
-  ],
-  "render_type": "neoforge:cutout"
+  ]
 }

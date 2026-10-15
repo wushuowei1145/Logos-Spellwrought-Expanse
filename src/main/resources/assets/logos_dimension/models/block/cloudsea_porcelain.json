@@ -2,12 +2,11 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/cloudsea_porcelain",
-    "body": "logos_dimension:block/cloudsea_porcelain",
-    "side": "logos_dimension:block/cloudsea_porcelain_side"
+    "body": "logos_dimension:block/cloudsea_porcelain"
   },
   "elements": [
     {
-      "name": "云瓷斜切面_foundation",
+      "name": "continuous_marble",
       "from": [
         0,
         0,
@@ -40,7 +39,7 @@
           "cullface": "down"
         },
         "north": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -50,7 +49,7 @@
           "cullface": "north"
         },
         "south": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -60,7 +59,7 @@
           "cullface": "south"
         },
         "east": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -70,7 +69,7 @@
           "cullface": "east"
         },
         "west": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -78,78 +77,6 @@
             16
           ],
           "cullface": "west"
-        }
-      }
-    },
-    {
-      "name": "云瓷斜切面_0",
-      "from": [
-        1,
-        16.003,
-        1
-      ],
-      "to": [
-        7,
-        16.09,
-        4
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            1,
-            1,
-            7,
-            4
-          ]
-        }
-      }
-    },
-    {
-      "name": "云瓷斜切面_1",
-      "from": [
-        8,
-        16.003,
-        8
-      ],
-      "to": [
-        15,
-        16.09,
-        11
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            8,
-            8,
-            15,
-            11
-          ]
-        }
-      }
-    },
-    {
-      "name": "云瓷斜切面_2",
-      "from": [
-        3,
-        16.003,
-        12
-      ],
-      "to": [
-        11,
-        16.09,
-        15
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            3,
-            12,
-            11,
-            15
-          ]
         }
       }
     }

@@ -2,532 +2,85 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/cloudsea_opal_dunes_leaf",
-    "body": "logos_dimension:block/cloudsea_opal_dunes_leaf",
-    "rib": "logos_dimension:block/cloudsea_opal_dunes_leaf_rib",
-    "glow": "logos_dimension:block/cloudsea_opal_dunes_leaf_core"
+    "body": "logos_dimension:block/cloudsea_opal_dunes_leaf"
   },
   "elements": [
     {
-      "name": "fan_one",
+      "name": "full_leaf_cluster",
       "from": [
-        1,
-        3,
-        7
-      ],
-      "to": [
-        4,
-        11,
-        8
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            1,
-            7,
-            4,
-            8
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            1,
-            8,
-            4,
-            9
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            12,
-            5,
-            15,
-            13
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            1,
-            5,
-            4,
-            13
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            8,
-            5,
-            9,
-            13
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            7,
-            5,
-            8,
-            13
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": -45
-      }
-    },
-    {
-      "name": "fan_two",
-      "from": [
-        4,
-        2,
-        6.5
-      ],
-      "to": [
-        6,
-        14,
-        8
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            4,
-            6.5,
-            6,
-            8
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            4,
-            8,
-            6,
-            9.5
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            10,
-            2,
-            12,
-            14
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            4,
-            2,
-            6,
-            14
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            8,
-            2,
-            9.5,
-            14
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6.5,
-            2,
-            8,
-            14
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": -22.5
-      }
-    },
-    {
-      "name": "fan_three",
-      "from": [
-        7,
-        1,
-        7
-      ],
-      "to": [
-        9,
-        16,
-        9
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            7,
-            0,
-            9,
-            15
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            7,
-            0,
-            9,
-            15
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            7,
-            0,
-            9,
-            15
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            7,
-            0,
-            9,
-            15
-          ]
-        }
-      }
-    },
-    {
-      "name": "fan_four",
-      "from": [
-        10,
-        2,
-        7
-      ],
-      "to": [
-        12,
-        14,
-        8.5
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            10,
-            7,
-            12,
-            8.5
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            10,
-            7.5,
-            12,
-            9
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            4,
-            2,
-            6,
-            14
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            10,
-            2,
-            12,
-            14
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            7.5,
-            2,
-            9,
-            14
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            7,
-            2,
-            8.5,
-            14
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "fan_five",
-      "from": [
-        12,
-        3,
-        8
-      ],
-      "to": [
-        15,
-        11,
-        9
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            12,
-            8,
-            15,
-            9
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            12,
-            7,
-            15,
-            8
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            1,
-            5,
-            4,
-            13
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            12,
-            5,
-            15,
-            13
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            7,
-            5,
-            8,
-            13
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            8,
-            5,
-            9,
-            13
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": 45
-      }
-    },
-    {
-      "name": "opal_base",
-      "from": [
-        5,
         0,
-        5
+        0,
+        0
       ],
       "to": [
-        11,
-        2,
-        11
+        16,
+        16,
+        16
       ],
       "faces": {
         "up": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            5,
-            5,
-            11,
-            11
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "up"
         },
         "down": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            5,
-            5,
-            11,
-            11
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "down"
         },
         "north": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            5,
-            14,
-            11,
+            0,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "north"
         },
         "south": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            5,
-            14,
-            11,
+            0,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "south"
         },
         "east": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            5,
-            14,
-            11,
+            0,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "east"
         },
         "west": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            5,
-            14,
-            11,
+            0,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "west"
         }
       }
-    },
-    {
-      "name": "opal_seed",
-      "from": [
-        7,
-        2,
-        7
-      ],
-      "to": [
-        9,
-        6,
-        9
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            10,
-            9,
-            14
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            10,
-            9,
-            14
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            10,
-            9,
-            14
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            10,
-            9,
-            14
-          ]
-        }
-      },
-      "shade": false,
-      "light_emission": 5
     }
   ],
-  "render_type": "neoforge:cutout"
+  "render_type": "neoforge:cutout",
+  "ambientocclusion": false
 }

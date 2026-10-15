@@ -16,6 +16,8 @@ import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -181,18 +183,18 @@ public final class AlchemicalChunkGenerator extends ChunkGenerator {
     }
 
     private void fanTree(ChunkAccess chunk, int x, int y, int z, long salt) {
-        int height = 10 + (int) ((salt >>> 9) & 5);
-        for (int i = 0; i < height; i++) decorate(chunk, x, y + i, z, DimensionBlocks.FAN_TRUNK.get().defaultBlockState());
-        for (int layer = 0; layer < 3; layer++) {
-            int crownY = y + height - layer * 3;
-            int radius = layer == 0 ? 4 : 3;
-            for (int dx = -radius; dx <= radius; dx++) for (int dz = -radius; dz <= radius; dz++) {
-                if (dx * dx + dz * dz > radius * radius + 1) continue;
-                int fold = Math.max(Math.abs(dx), Math.abs(dz)) >= radius - 1 ? 1 : 0;
-                decorate(chunk, x + dx, crownY + fold, z + dz, DimensionBlocks.FAN_LEAVES.get().defaultBlockState());
-                if (layer == 0 && Math.abs(dx) + Math.abs(dz) == radius && ((dx + dz) & 1) == 0)
-                    decorate(chunk, x + dx, crownY - 1, z + dz, DimensionBlocks.AMBER_SEEDS.get().defaultBlockState());
+        var tree=NaturalTreeShape.create(NaturalTreeShape.Form.UMBRELLA,7+(int)((salt>>>9)&3),salt);
+        for(var v:tree.voxels()){
+            BlockState state;
+            if(v.part()==NaturalTreeShape.Part.LEAF)state=DimensionBlocks.FAN_LEAVES.get().defaultBlockState();
+            else{
+                var axis=v.part()==NaturalTreeShape.Part.WOOD_X?Direction.Axis.X:v.part()==NaturalTreeShape.Part.WOOD_Z?Direction.Axis.Z:Direction.Axis.Y;
+                state=DimensionBlocks.FAN_TRUNK.get().defaultBlockState().setValue(RotatedPillarBlock.AXIS,axis);
             }
+            decorate(chunk,x+v.x(),y+v.y(),z+v.z(),state);
+            if(v.part()==NaturalTreeShape.Part.LEAF&&tree.at(v.x(),v.y()-1,v.z())==NaturalTreeShape.Part.AIR
+                    &&Math.floorMod(v.x()*7+v.z()*11+(int)salt,31)==0)
+                decorate(chunk,x+v.x(),y+v.y()-1,z+v.z(),DimensionBlocks.AMBER_SEEDS.get().defaultBlockState());
         }
     }
     private void decorate(ChunkAccess chunk, int x, int y, int z, BlockState state) {

@@ -2,454 +2,85 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/cloudsea_moon_folds_leaf",
-    "body": "logos_dimension:block/cloudsea_moon_folds_leaf",
-    "rib": "logos_dimension:block/cloudsea_moon_folds_leaf_rib",
-    "glow": "logos_dimension:block/cloudsea_moon_folds_leaf_core"
+    "body": "logos_dimension:block/cloudsea_moon_folds_leaf"
   },
   "elements": [
     {
-      "name": "moon_heel",
+      "name": "full_leaf_cluster",
       "from": [
-        3,
-        2,
-        7
+        0,
+        0,
+        0
       ],
       "to": [
-        8,
-        3,
-        9
+        16,
+        16,
+        16
       ],
       "faces": {
         "up": {
           "texture": "#body",
           "uv": [
-            3,
-            7,
-            8,
-            9
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "up"
         },
         "down": {
           "texture": "#body",
           "uv": [
-            3,
-            7,
-            8,
-            9
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "down"
         },
         "north": {
           "texture": "#body",
           "uv": [
-            8,
-            13,
-            13,
-            14
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "north"
         },
         "south": {
           "texture": "#body",
           "uv": [
-            3,
-            13,
-            8,
-            14
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "south"
         },
         "east": {
           "texture": "#body",
           "uv": [
-            7,
-            13,
-            9,
-            14
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "east"
         },
         "west": {
           "texture": "#body",
           "uv": [
-            7,
-            13,
-            9,
-            14
-          ]
-        }
-      }
-    },
-    {
-      "name": "moon_lower",
-      "from": [
-        1,
-        4,
-        6
-      ],
-      "to": [
-        4,
-        8,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            1,
-            6,
-            4,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            1,
-            6,
-            4,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            12,
-            8,
-            15,
-            12
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            1,
-            8,
-            4,
-            12
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            8,
-            10,
-            12
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            8,
-            10,
-            12
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": -22.5
-      }
-    },
-    {
-      "name": "moon_upper",
-      "from": [
-        2,
-        8,
-        6
-      ],
-      "to": [
-        5,
-        13,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            2,
-            6,
-            5,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            2,
-            6,
-            5,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            11,
-            3,
-            14,
-            8
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            2,
-            3,
-            5,
-            8
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            3,
-            10,
-            8
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            3,
-            10,
-            8
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "moon_tip",
-      "from": [
-        4,
-        13,
-        7
-      ],
-      "to": [
-        10,
-        14,
-        9
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            4,
-            7,
-            10,
-            9
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            4,
-            7,
-            10,
-            9
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            6,
-            2,
-            12,
-            3
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            4,
-            2,
-            10,
-            3
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            7,
-            2,
-            9,
-            3
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            7,
-            2,
-            9,
-            3
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "moon_tear",
-      "from": [
-        10,
-        7,
-        7.4
-      ],
-      "to": [
-        11,
-        11,
-        8.6
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            10,
-            7.4,
-            11,
-            8.6
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            10,
-            7.4,
-            11,
-            8.6
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            5,
-            5,
-            6,
-            9
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            10,
-            5,
-            11,
-            9
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            7.4,
-            5,
-            8.6,
-            9
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            7.4,
-            5,
-            8.6,
-            9
-          ]
-        }
-      },
-      "shade": false,
-      "light_emission": 6
-    },
-    {
-      "name": "suspended_vein",
-      "from": [
-        4,
-        5,
-        8
-      ],
-      "to": [
-        5,
-        11,
-        8.5
-      ],
-      "faces": {
-        "up": {
-          "texture": "#rib",
-          "uv": [
-            4,
-            8,
-            5,
-            8.5
-          ]
-        },
-        "down": {
-          "texture": "#rib",
-          "uv": [
-            4,
-            7.5,
-            5,
-            8
-          ]
-        },
-        "north": {
-          "texture": "#rib",
-          "uv": [
-            11,
-            5,
-            12,
-            11
-          ]
-        },
-        "south": {
-          "texture": "#rib",
-          "uv": [
-            4,
-            5,
-            5,
-            11
-          ]
-        },
-        "east": {
-          "texture": "#rib",
-          "uv": [
-            7.5,
-            5,
-            8,
-            11
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            8,
-            5,
-            8.5,
-            11
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "west"
         }
       }
     }
   ],
-  "render_type": "neoforge:cutout"
+  "render_type": "neoforge:cutout",
+  "ambientocclusion": false
 }

@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "logos_dimension:fan_trunk"
+    "logos_dimension:fan_trunk",
+    "logos_dimension:cloudsea_stem"
   ]
 }

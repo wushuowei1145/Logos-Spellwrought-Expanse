@@ -2,636 +2,85 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/cloudsea_blue_bell_steps_leaf",
-    "body": "logos_dimension:block/cloudsea_blue_bell_steps_leaf",
-    "rib": "logos_dimension:block/cloudsea_blue_bell_steps_leaf_rib",
-    "glow": "logos_dimension:block/cloudsea_blue_bell_steps_leaf_core"
+    "body": "logos_dimension:block/cloudsea_blue_bell_steps_leaf"
   },
   "elements": [
     {
-      "name": "stem",
+      "name": "full_leaf_cluster",
       "from": [
-        7.7,
         0,
-        7.7
+        0,
+        0
       ],
       "to": [
-        8.3,
         16,
-        8.3
+        16,
+        16
       ],
       "faces": {
         "up": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            7.7,
-            7.7,
-            8.3,
-            8.3
-          ]
-        },
-        "down": {
-          "texture": "#rib",
-          "uv": [
-            7.7,
-            7.699999999999999,
-            8.3,
-            8.3
-          ]
-        },
-        "north": {
-          "texture": "#rib",
-          "uv": [
-            7.699999999999999,
             0,
-            8.3,
-            16
-          ]
-        },
-        "south": {
-          "texture": "#rib",
-          "uv": [
-            7.7,
             0,
-            8.3,
+            16,
             16
-          ]
+          ],
+          "cullface": "up"
         },
-        "east": {
-          "texture": "#rib",
+        "down": {
+          "texture": "#body",
           "uv": [
-            7.699999999999999,
             0,
-            8.3,
-            16
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            7.7,
             0,
-            8.3,
+            16,
             16
-          ]
+          ],
+          "cullface": "down"
+        },
+        "north": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "south"
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "east"
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "west"
         }
       }
-    },
-    {
-      "name": "branch_low",
-      "from": [
-        2,
-        4,
-        7.4
-      ],
-      "to": [
-        8,
-        5,
-        8.6
-      ],
-      "faces": {
-        "up": {
-          "texture": "#rib",
-          "uv": [
-            2,
-            7.4,
-            8,
-            8.6
-          ]
-        },
-        "down": {
-          "texture": "#rib",
-          "uv": [
-            2,
-            7.4,
-            8,
-            8.6
-          ]
-        },
-        "north": {
-          "texture": "#rib",
-          "uv": [
-            8,
-            11,
-            14,
-            12
-          ]
-        },
-        "south": {
-          "texture": "#rib",
-          "uv": [
-            2,
-            11,
-            8,
-            12
-          ]
-        },
-        "east": {
-          "texture": "#rib",
-          "uv": [
-            7.4,
-            11,
-            8.6,
-            12
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            7.4,
-            11,
-            8.6,
-            12
-          ]
-        }
-      }
-    },
-    {
-      "name": "branch_mid",
-      "from": [
-        8,
-        8,
-        7.4
-      ],
-      "to": [
-        14,
-        9,
-        8.6
-      ],
-      "faces": {
-        "up": {
-          "texture": "#rib",
-          "uv": [
-            8,
-            7.4,
-            14,
-            8.6
-          ]
-        },
-        "down": {
-          "texture": "#rib",
-          "uv": [
-            8,
-            7.4,
-            14,
-            8.6
-          ]
-        },
-        "north": {
-          "texture": "#rib",
-          "uv": [
-            2,
-            7,
-            8,
-            8
-          ]
-        },
-        "south": {
-          "texture": "#rib",
-          "uv": [
-            8,
-            7,
-            14,
-            8
-          ]
-        },
-        "east": {
-          "texture": "#rib",
-          "uv": [
-            7.4,
-            7,
-            8.6,
-            8
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            7.4,
-            7,
-            8.6,
-            8
-          ]
-        }
-      }
-    },
-    {
-      "name": "branch_top",
-      "from": [
-        4,
-        12,
-        7.4
-      ],
-      "to": [
-        8,
-        13,
-        8.6
-      ],
-      "faces": {
-        "up": {
-          "texture": "#rib",
-          "uv": [
-            4,
-            7.4,
-            8,
-            8.6
-          ]
-        },
-        "down": {
-          "texture": "#rib",
-          "uv": [
-            4,
-            7.4,
-            8,
-            8.6
-          ]
-        },
-        "north": {
-          "texture": "#rib",
-          "uv": [
-            8,
-            3,
-            12,
-            4
-          ]
-        },
-        "south": {
-          "texture": "#rib",
-          "uv": [
-            4,
-            3,
-            8,
-            4
-          ]
-        },
-        "east": {
-          "texture": "#rib",
-          "uv": [
-            7.4,
-            3,
-            8.6,
-            4
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            7.4,
-            3,
-            8.6,
-            4
-          ]
-        }
-      }
-    },
-    {
-      "name": "bell_one",
-      "from": [
-        1,
-        2,
-        6
-      ],
-      "to": [
-        4,
-        4,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            1,
-            6,
-            4,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            1,
-            6,
-            4,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            12,
-            12,
-            15,
-            14
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            1,
-            12,
-            4,
-            14
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            12,
-            10,
-            14
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            12,
-            10,
-            14
-          ]
-        }
-      }
-    },
-    {
-      "name": "bell_two",
-      "from": [
-        12,
-        6,
-        6
-      ],
-      "to": [
-        15,
-        8,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            12,
-            6,
-            15,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            12,
-            6,
-            15,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            1,
-            8,
-            4,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            12,
-            8,
-            15,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            8,
-            10,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            8,
-            10,
-            10
-          ]
-        }
-      }
-    },
-    {
-      "name": "bell_three",
-      "from": [
-        3,
-        10,
-        6
-      ],
-      "to": [
-        6,
-        12,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            3,
-            6,
-            6,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            3,
-            6,
-            6,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            10,
-            4,
-            13,
-            6
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            3,
-            4,
-            6,
-            6
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            4,
-            10,
-            6
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            4,
-            10,
-            6
-          ]
-        }
-      }
-    },
-    {
-      "name": "chime_one",
-      "from": [
-        2,
-        1,
-        7
-      ],
-      "to": [
-        3,
-        3,
-        9
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            2,
-            7,
-            3,
-            9
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            2,
-            7,
-            3,
-            9
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            13,
-            13,
-            14,
-            15
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            2,
-            13,
-            3,
-            15
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            13,
-            9,
-            15
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            13,
-            9,
-            15
-          ]
-        }
-      },
-      "shade": false,
-      "light_emission": 5
-    },
-    {
-      "name": "chime_two",
-      "from": [
-        13,
-        5,
-        7
-      ],
-      "to": [
-        14,
-        7,
-        9
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            13,
-            7,
-            14,
-            9
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            13,
-            7,
-            14,
-            9
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            2,
-            9,
-            3,
-            11
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            13,
-            9,
-            14,
-            11
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            9,
-            9,
-            11
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            9,
-            9,
-            11
-          ]
-        }
-      },
-      "shade": false,
-      "light_emission": 5
     }
   ],
-  "render_type": "neoforge:cutout"
+  "render_type": "neoforge:cutout",
+  "ambientocclusion": false
 }
