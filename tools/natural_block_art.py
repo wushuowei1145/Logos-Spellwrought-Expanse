@@ -95,9 +95,9 @@ def foliage(name,color,family,seed):
         w,h=(rng.randrange(3,7),rng.randrange(2,5)) if family not in ('SPIRE','STEPS') else (rng.randrange(2,4),rng.randrange(4,7))
         d.ellipse((x,y,x+w,y+h),fill=shade(color,rng.choice((.79,.9,1.0))))
         d.line((x+1,y+1,x+w-1,y+1),fill=shade(color,1.10,mix=(224,234,201),amount=.10))
-    for _ in range(10):
+    for _ in range(7):
         x,y=rng.randrange(16),rng.randrange(16)
-        d.rectangle((x,y,x+rng.randrange(1,3),y+1),fill=(0,0,0,0))
+        d.point((x,y),fill=(0,0,0,0))
     if family in ('PETAL','HANGING'):
         for _ in range(3):
             x,y=rng.randrange(14),rng.randrange(14)

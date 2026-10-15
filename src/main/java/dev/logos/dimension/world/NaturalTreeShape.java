@@ -44,8 +44,8 @@ public final class NaturalTreeShape {
             }
             case CONIFER -> {
                 for(int y=3;y<=height+1;y++){
-                    int radius=y>=height?1:Math.min(4,1+(height-y)/3);
-                    if(y%3==0&&y<height-1)radius=Math.max(1,radius-1);
+                    int radius=Math.max(0,Math.round((height+1-y)*4f/(height-2)));
+                    if(y%3==0&&y<height-2)radius=Math.max(1,radius-1);
                     for(int z=-radius;z<=radius;z++)for(int x=-radius;x<=radius;x++)
                         if(x*x+z*z<=radius*radius+1)b.put(x,y,z,Part.LEAF);
                     if(y%3==1&&radius>1)for(int side=0;side<4;side++)branch(b,side,y,radius-1);
