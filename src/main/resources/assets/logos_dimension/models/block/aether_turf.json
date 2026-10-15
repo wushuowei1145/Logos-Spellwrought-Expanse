@@ -7,7 +7,7 @@
   },
   "elements": [
     {
-      "name": "material",
+      "name": "continuous_turf",
       "from": [
         0,
         0,

@@ -3,219 +3,83 @@
   "textures": {
     "particle": "logos_dimension:block/cloudsea_stem",
     "body": "logos_dimension:block/cloudsea_stem",
-    "rib": "logos_dimension:block/cloudsea_stem_rib",
-    "glow": "logos_dimension:block/cloudsea_stem_core"
+    "end": "logos_dimension:block/cloudsea_stem_end"
   },
   "elements": [
     {
-      "name": "stalk",
+      "name": "full_structural_log",
       "from": [
-        7,
         0,
-        7
+        0,
+        0
       ],
       "to": [
-        9,
         16,
-        9
+        16,
+        16
       ],
       "faces": {
         "up": {
-          "texture": "#body",
+          "texture": "#end",
           "uv": [
-            7,
-            7,
-            9,
-            9
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "up"
         },
         "down": {
-          "texture": "#body",
+          "texture": "#end",
           "uv": [
-            7,
-            7,
-            9,
-            9
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "down"
         },
         "north": {
           "texture": "#body",
           "uv": [
-            7,
             0,
-            9,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "north"
         },
         "south": {
           "texture": "#body",
           "uv": [
-            7,
             0,
-            9,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "south"
         },
         "east": {
           "texture": "#body",
           "uv": [
-            7,
             0,
-            9,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "east"
         },
         "west": {
           "texture": "#body",
           "uv": [
-            7,
             0,
-            9,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "west"
         }
       }
-    },
-    {
-      "name": "node_collar",
-      "from": [
-        6.5,
-        6,
-        6.5
-      ],
-      "to": [
-        9.5,
-        7,
-        9.5
-      ],
-      "faces": {
-        "up": {
-          "texture": "#rib",
-          "uv": [
-            6.5,
-            6.5,
-            9.5,
-            9.5
-          ]
-        },
-        "down": {
-          "texture": "#rib",
-          "uv": [
-            6.5,
-            6.5,
-            9.5,
-            9.5
-          ]
-        },
-        "north": {
-          "texture": "#rib",
-          "uv": [
-            6.5,
-            9,
-            9.5,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#rib",
-          "uv": [
-            6.5,
-            9,
-            9.5,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#rib",
-          "uv": [
-            6.5,
-            9,
-            9.5,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            6.5,
-            9,
-            9.5,
-            10
-          ]
-        }
-      }
-    },
-    {
-      "name": "light_channel",
-      "from": [
-        7.7,
-        0,
-        6.95
-      ],
-      "to": [
-        8.3,
-        16,
-        7
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            7.7,
-            6.95,
-            8.3,
-            7
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            7.7,
-            9,
-            8.3,
-            9.05
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            7.699999999999999,
-            0,
-            8.3,
-            16
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            7.7,
-            0,
-            8.3,
-            16
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            9,
-            0,
-            9.05,
-            16
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            6.95,
-            0,
-            7,
-            16
-          ]
-        }
-      },
-      "shade": false,
-      "light_emission": 4
     }
-  ],
-  "render_type": "neoforge:cutout"
+  ]
 }

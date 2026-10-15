@@ -1,7 +1,16 @@
 {
   "variants": {
-    "": {
+    "axis=y": {
       "model": "logos_dimension:block/fan_trunk"
+    },
+    "axis=x": {
+      "model": "logos_dimension:block/fan_trunk",
+      "x": 90,
+      "y": 90
+    },
+    "axis=z": {
+      "model": "logos_dimension:block/fan_trunk",
+      "x": 90
     }
   }
 }

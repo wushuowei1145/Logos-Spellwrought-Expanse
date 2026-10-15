@@ -2,14 +2,11 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/cloudsea_lit_window",
-    "body": "logos_dimension:block/cloudsea_lit_window",
-    "side": "logos_dimension:block/cloudsea_lit_window",
-    "glow": "logos_dimension:block/cloudsea_lit_window_glow",
-    "side_glow": "logos_dimension:block/cloudsea_lit_window_glow"
+    "body": "logos_dimension:block/cloudsea_lit_window"
   },
   "elements": [
     {
-      "name": "material",
+      "name": "recessed_window",
       "from": [
         0,
         0,
@@ -42,7 +39,7 @@
           "cullface": "down"
         },
         "north": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -52,7 +49,7 @@
           "cullface": "north"
         },
         "south": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -62,7 +59,7 @@
           "cullface": "south"
         },
         "east": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -72,82 +69,7 @@
           "cullface": "east"
         },
         "west": {
-          "texture": "#side",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "west"
-        }
-      }
-    },
-    {
-      "name": "inlaid_mana",
-      "from": [
-        -0.004,
-        -0.004,
-        -0.004
-      ],
-      "to": [
-        16.004,
-        16.004,
-        16.004
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "up"
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "down"
-        },
-        "north": {
-          "texture": "#side_glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "north"
-        },
-        "south": {
-          "texture": "#side_glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "south"
-        },
-        "east": {
-          "texture": "#side_glow",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "east"
-        },
-        "west": {
-          "texture": "#side_glow",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -158,8 +80,7 @@
         }
       },
       "shade": false,
-      "light_emission": 5
+      "light_emission": 4
     }
-  ],
-  "render_type": "neoforge:cutout"
+  ]
 }

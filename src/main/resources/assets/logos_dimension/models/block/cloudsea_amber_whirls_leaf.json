@@ -2,472 +2,85 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/cloudsea_amber_whirls_leaf",
-    "body": "logos_dimension:block/cloudsea_amber_whirls_leaf",
-    "rib": "logos_dimension:block/cloudsea_amber_whirls_leaf_rib",
-    "glow": "logos_dimension:block/cloudsea_amber_whirls_leaf_core"
+    "body": "logos_dimension:block/cloudsea_amber_whirls_leaf"
   },
   "elements": [
     {
-      "name": "petal_-45",
+      "name": "full_leaf_cluster",
       "from": [
-        4,
-        6,
-        2
+        0,
+        0,
+        0
       ],
       "to": [
-        12,
-        6.6,
-        14
+        16,
+        16,
+        16
       ],
       "faces": {
         "up": {
           "texture": "#body",
           "uv": [
-            4,
-            2,
-            12,
-            14
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "up"
         },
         "down": {
           "texture": "#body",
           "uv": [
-            4,
-            2,
-            12,
-            14
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "down"
         },
         "north": {
           "texture": "#body",
           "uv": [
-            4,
-            9.4,
-            12,
-            10
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "north"
         },
         "south": {
           "texture": "#body",
           "uv": [
-            4,
-            9.4,
-            12,
-            10
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "south"
         },
         "east": {
           "texture": "#body",
           "uv": [
-            2,
-            9.4,
-            14,
-            10
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "east"
         },
         "west": {
           "texture": "#body",
           "uv": [
-            2,
-            9.4,
-            14,
-            10
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "west"
         }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "y",
-        "angle": -45
       }
-    },
-    {
-      "name": "petal_0",
-      "from": [
-        4,
-        6,
-        2
-      ],
-      "to": [
-        12,
-        6.6,
-        14
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            4,
-            2,
-            12,
-            14
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            4,
-            2,
-            12,
-            14
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            4,
-            9.4,
-            12,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            4,
-            9.4,
-            12,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            2,
-            9.4,
-            14,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            2,
-            9.4,
-            14,
-            10
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "y",
-        "angle": 0
-      }
-    },
-    {
-      "name": "petal_45",
-      "from": [
-        4,
-        6,
-        2
-      ],
-      "to": [
-        12,
-        6.6,
-        14
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            4,
-            2,
-            12,
-            14
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            4,
-            2,
-            12,
-            14
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            4,
-            9.4,
-            12,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            4,
-            9.4,
-            12,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            2,
-            9.4,
-            14,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            2,
-            9.4,
-            14,
-            10
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "y",
-        "angle": 45
-      }
-    },
-    {
-      "name": "cup_lip_left",
-      "from": [
-        2,
-        7,
-        5
-      ],
-      "to": [
-        4,
-        7.6,
-        11
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            2,
-            5,
-            4,
-            11
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            2,
-            5,
-            4,
-            11
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            12,
-            8.4,
-            14,
-            9
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            2,
-            8.4,
-            4,
-            9
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            5,
-            8.4,
-            11,
-            9
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            5,
-            8.4,
-            11,
-            9
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": -22.5
-      }
-    },
-    {
-      "name": "cup_lip_right",
-      "from": [
-        12,
-        7,
-        5
-      ],
-      "to": [
-        14,
-        7.6,
-        11
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            12,
-            5,
-            14,
-            11
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            12,
-            5,
-            14,
-            11
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            2,
-            8.4,
-            4,
-            9
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            12,
-            8.4,
-            14,
-            9
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            5,
-            8.4,
-            11,
-            9
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            5,
-            8.4,
-            11,
-            9
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "luminous_seed",
-      "from": [
-        7,
-        6.7,
-        7
-      ],
-      "to": [
-        9,
-        8,
-        9
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            7,
-            9,
-            9
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            8,
-            9,
-            9.3
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            8,
-            9,
-            9.3
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            8,
-            9,
-            9.3
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            7,
-            8,
-            9,
-            9.3
-          ]
-        }
-      },
-      "shade": false,
-      "light_emission": 7
     }
   ],
-  "render_type": "neoforge:cutout"
+  "render_type": "neoforge:cutout",
+  "ambientocclusion": false
 }

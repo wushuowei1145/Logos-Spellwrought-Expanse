@@ -2,619 +2,85 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/cloudsea_cloudroot_shelves_leaf",
-    "body": "logos_dimension:block/cloudsea_cloudroot_shelves_leaf",
-    "rib": "logos_dimension:block/cloudsea_cloudroot_shelves_leaf_rib",
-    "glow": "logos_dimension:block/cloudsea_cloudroot_shelves_leaf_core"
+    "body": "logos_dimension:block/cloudsea_cloudroot_shelves_leaf"
   },
   "elements": [
     {
-      "name": "hanging_stalk",
+      "name": "full_leaf_cluster",
       "from": [
-        7.65,
-        2,
-        7.65
-      ],
-      "to": [
-        8.35,
-        16,
-        8.35
-      ],
-      "faces": {
-        "up": {
-          "texture": "#rib",
-          "uv": [
-            7.65,
-            7.65,
-            8.35,
-            8.35
-          ]
-        },
-        "down": {
-          "texture": "#rib",
-          "uv": [
-            7.65,
-            7.65,
-            8.35,
-            8.35
-          ]
-        },
-        "north": {
-          "texture": "#rib",
-          "uv": [
-            7.65,
-            0,
-            8.35,
-            14
-          ]
-        },
-        "south": {
-          "texture": "#rib",
-          "uv": [
-            7.65,
-            0,
-            8.35,
-            14
-          ]
-        },
-        "east": {
-          "texture": "#rib",
-          "uv": [
-            7.65,
-            0,
-            8.35,
-            14
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            7.65,
-            0,
-            8.35,
-            14
-          ]
-        }
-      }
-    },
-    {
-      "name": "drooping_leaf_0_-1",
-      "from": [
-        3,
-        3,
-        6
-      ],
-      "to": [
-        8,
-        3.55,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            3,
-            6,
-            8,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            3,
-            6,
-            8,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            8,
-            12.45,
-            13,
-            13
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            3,
-            12.45,
-            8,
-            13
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            12.45,
-            10,
-            13
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            12.45,
-            10,
-            13
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "drooping_leaf_0_1",
-      "from": [
-        8,
-        3,
-        6
-      ],
-      "to": [
-        13,
-        3.55,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            8,
-            6,
-            13,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            8,
-            6,
-            13,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            3,
-            12.45,
-            8,
-            13
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            8,
-            12.45,
-            13,
-            13
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            12.45,
-            10,
-            13
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            12.45,
-            10,
-            13
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": -22.5
-      }
-    },
-    {
-      "name": "drooping_leaf_1_-1",
-      "from": [
-        3,
-        7,
-        6
-      ],
-      "to": [
-        8,
-        7.55,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            3,
-            6,
-            8,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            3,
-            6,
-            8,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            8,
-            8.45,
-            13,
-            9
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            3,
-            8.45,
-            8,
-            9
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            8.45,
-            10,
-            9
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            8.45,
-            10,
-            9
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "drooping_leaf_1_1",
-      "from": [
-        8,
-        7,
-        6
-      ],
-      "to": [
-        13,
-        7.55,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            8,
-            6,
-            13,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            8,
-            6,
-            13,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            3,
-            8.45,
-            8,
-            9
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            8,
-            8.45,
-            13,
-            9
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            8.45,
-            10,
-            9
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            8.45,
-            10,
-            9
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": -22.5
-      }
-    },
-    {
-      "name": "drooping_leaf_2_-1",
-      "from": [
-        3,
-        11,
-        6
-      ],
-      "to": [
-        8,
-        11.55,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            3,
-            6,
-            8,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            3,
-            6,
-            8,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            8,
-            4.449999999999999,
-            13,
-            5
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            3,
-            4.449999999999999,
-            8,
-            5
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            4.449999999999999,
-            10,
-            5
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            4.449999999999999,
-            10,
-            5
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": 22.5
-      }
-    },
-    {
-      "name": "drooping_leaf_2_1",
-      "from": [
-        8,
-        11,
-        6
-      ],
-      "to": [
-        13,
-        11.55,
-        10
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            8,
-            6,
-            13,
-            10
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            8,
-            6,
-            13,
-            10
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            3,
-            4.449999999999999,
-            8,
-            5
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            8,
-            4.449999999999999,
-            13,
-            5
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6,
-            4.449999999999999,
-            10,
-            5
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6,
-            4.449999999999999,
-            10,
-            5
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": -22.5
-      }
-    },
-    {
-      "name": "hanging_light",
-      "from": [
-        7,
         0,
-        7
+        0,
+        0
       ],
       "to": [
-        9,
-        2,
-        9
+        16,
+        16,
+        16
       ],
       "faces": {
         "up": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
-            7,
-            7,
-            9,
-            9
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "up"
         },
         "down": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
-            7,
-            7,
-            9,
-            9
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "down"
         },
         "north": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
-            7,
-            14,
-            9,
+            0,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "north"
         },
         "south": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
-            7,
-            14,
-            9,
+            0,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "south"
         },
         "east": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
-            7,
-            14,
-            9,
+            0,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "east"
         },
         "west": {
-          "texture": "#glow",
+          "texture": "#body",
           "uv": [
-            7,
-            14,
-            9,
+            0,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "west"
         }
-      },
-      "shade": false,
-      "light_emission": 7
+      }
     }
   ],
-  "render_type": "neoforge:cutout"
+  "render_type": "neoforge:cutout",
+  "ambientocclusion": false
 }

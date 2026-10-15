@@ -2,13 +2,11 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/cloudsea_dark_timber",
-    "body": "logos_dimension:block/cloudsea_dark_timber",
-    "side": "logos_dimension:block/cloudsea_dark_timber",
-    "end": "logos_dimension:block/cloudsea_dark_timber_end"
+    "body": "logos_dimension:block/cloudsea_dark_timber"
   },
   "elements": [
     {
-      "name": "material",
+      "name": "continuous_bark",
       "from": [
         0,
         0,
@@ -21,7 +19,7 @@
       ],
       "faces": {
         "up": {
-          "texture": "#end",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -31,7 +29,7 @@
           "cullface": "up"
         },
         "down": {
-          "texture": "#end",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -41,7 +39,7 @@
           "cullface": "down"
         },
         "north": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -51,7 +49,7 @@
           "cullface": "north"
         },
         "south": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -61,7 +59,7 @@
           "cullface": "south"
         },
         "east": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -71,7 +69,7 @@
           "cullface": "east"
         },
         "west": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,

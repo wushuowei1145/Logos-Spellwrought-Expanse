@@ -2,307 +2,85 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "logos_dimension:block/cloudsea_halo_spires_leaf",
-    "body": "logos_dimension:block/cloudsea_halo_spires_leaf",
-    "rib": "logos_dimension:block/cloudsea_halo_spires_leaf_rib",
-    "glow": "logos_dimension:block/cloudsea_halo_spires_leaf_core"
+    "body": "logos_dimension:block/cloudsea_halo_spires_leaf"
   },
   "elements": [
     {
-      "name": "spine",
+      "name": "full_leaf_cluster",
       "from": [
-        7.4,
         0,
-        7.4
+        0,
+        0
       ],
       "to": [
-        8.6,
         16,
-        8.6
+        16,
+        16
       ],
       "faces": {
         "up": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            7.4,
-            7.4,
-            8.6,
-            8.6
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "up"
         },
         "down": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            7.4,
-            7.4,
-            8.6,
-            8.6
-          ]
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "down"
         },
         "north": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            7.4,
             0,
-            8.6,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "north"
         },
         "south": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            7.4,
             0,
-            8.6,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "south"
         },
         "east": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            7.4,
             0,
-            8.6,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "east"
         },
         "west": {
-          "texture": "#rib",
+          "texture": "#body",
           "uv": [
-            7.4,
             0,
-            8.6,
+            0,
+            16,
             16
-          ]
+          ],
+          "cullface": "west"
         }
       }
-    },
-    {
-      "name": "crystal_mid",
-      "from": [
-        5.7,
-        4,
-        5.7
-      ],
-      "to": [
-        10.3,
-        12,
-        10.3
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            5.7,
-            5.7,
-            10.3,
-            10.3
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            5.7,
-            5.699999999999999,
-            10.3,
-            10.3
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            5.699999999999999,
-            4,
-            10.3,
-            12
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            5.7,
-            4,
-            10.3,
-            12
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            5.699999999999999,
-            4,
-            10.3,
-            12
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            5.7,
-            4,
-            10.3,
-            12
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "y",
-        "angle": 45
-      }
-    },
-    {
-      "name": "crystal_crown",
-      "from": [
-        6.5,
-        11,
-        6.5
-      ],
-      "to": [
-        9.5,
-        15,
-        9.5
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            6.5,
-            6.5,
-            9.5,
-            9.5
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            6.5,
-            6.5,
-            9.5,
-            9.5
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            6.5,
-            1,
-            9.5,
-            5
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            6.5,
-            1,
-            9.5,
-            5
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            6.5,
-            1,
-            9.5,
-            5
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            6.5,
-            1,
-            9.5,
-            5
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "y",
-        "angle": 45
-      }
-    },
-    {
-      "name": "core",
-      "from": [
-        7.3,
-        5,
-        7.3
-      ],
-      "to": [
-        8.7,
-        12,
-        8.7
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            7.3,
-            7.3,
-            8.7,
-            8.7
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            7.3,
-            7.300000000000001,
-            8.7,
-            8.7
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            7.300000000000001,
-            4,
-            8.7,
-            11
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            7.3,
-            4,
-            8.7,
-            11
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            7.300000000000001,
-            4,
-            8.7,
-            11
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            7.3,
-            4,
-            8.7,
-            11
-          ]
-        }
-      },
-      "shade": false,
-      "light_emission": 7
     }
   ],
-  "render_type": "neoforge:cutout"
+  "render_type": "neoforge:cutout",
+  "ambientocclusion": false
 }

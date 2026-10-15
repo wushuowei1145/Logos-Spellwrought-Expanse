@@ -9,6 +9,7 @@ import java.util.List;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.TransparentBlock;
+import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.neoforge.registries.DeferredBlock;
@@ -30,9 +31,10 @@ public final class DimensionBlocks {
     public static final DeferredBlock<ReactiveMatterBlock> MERCURY_CRUST = reactive("mercury_crust", MapColor.METAL, SoundType.METAL);
     public static final DeferredBlock<ReactiveMatterBlock> SALT_CRUST = reactive("salt_crust", MapColor.QUARTZ, SoundType.CALCITE);
     public static final DeferredBlock<ReactiveMatterBlock> SALT_CRYSTAL = reactive("salt_crystal", MapColor.QUARTZ, SoundType.AMETHYST);
-    public static final DeferredBlock<Block> FAN_TRUNK = solid("fan_trunk", MapColor.COLOR_BROWN, 2f, SoundType.WOOD);
-    public static final DeferredBlock<Block> FAN_LEAVES = item("fan_leaves", BLOCKS.registerSimpleBlock("fan_leaves",
-            p -> p.mapColor(MapColor.COLOR_CYAN).strength(.25f).sound(SoundType.GRASS).noOcclusion().noCollision()));
+    public static final DeferredBlock<Block> FAN_TRUNK = item("fan_trunk", BLOCKS.<Block>registerBlock("fan_trunk", RotatedPillarBlock::new,
+            p -> p.mapColor(MapColor.COLOR_BROWN).strength(2f).sound(SoundType.WOOD)));
+    public static final DeferredBlock<Block> FAN_LEAVES = item("fan_leaves", BLOCKS.<Block>registerBlock("fan_leaves", TransparentBlock::new,
+            p -> p.mapColor(MapColor.COLOR_CYAN).strength(.25f).sound(SoundType.GRASS).noOcclusion()));
     public static final DeferredBlock<Block> GLASS_LEAVES = item("glass_leaves", BLOCKS.registerBlock("glass_leaves", TransparentBlock::new,
             p -> p.mapColor(MapColor.COLOR_LIGHT_BLUE).strength(.4f).sound(SoundType.GLASS).noOcclusion().noCollision()));
     public static final DeferredBlock<TransparentBlock> DISTILLATION_GLASS = item("distillation_glass", BLOCKS.registerBlock("distillation_glass", TransparentBlock::new,

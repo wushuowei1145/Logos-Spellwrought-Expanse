@@ -3,12 +3,11 @@
   "textures": {
     "particle": "logos_dimension:block/fan_trunk",
     "body": "logos_dimension:block/fan_trunk",
-    "side": "logos_dimension:block/fan_trunk",
     "end": "logos_dimension:block/fan_trunk_end"
   },
   "elements": [
     {
-      "name": "material",
+      "name": "full_structural_log",
       "from": [
         0,
         0,
@@ -41,7 +40,7 @@
           "cullface": "down"
         },
         "north": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -51,7 +50,7 @@
           "cullface": "north"
         },
         "south": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -61,7 +60,7 @@
           "cullface": "south"
         },
         "east": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
@@ -71,7 +70,7 @@
           "cullface": "east"
         },
         "west": {
-          "texture": "#side",
+          "texture": "#body",
           "uv": [
             0,
             0,
