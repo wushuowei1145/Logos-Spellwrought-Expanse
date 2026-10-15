@@ -2,11 +2,11 @@
 
 **Logos: Spellwrought Expanse** — 由咒术塑成的辽阔原野。
 
-Logos 的独立新维度附属 Mod。工程名 `LogosDimensionAddon`，Mod ID `logos_dimension`。当前组合测试版本为可运行的 **0.1.2 原型**，适合逐步调整世界生成和美术。
+Logos 的独立新维度附属 Mod。工程名 `LogosDimensionAddon`，Mod ID `logos_dimension`。当前组合测试版本为可运行的 **0.1.3 原型**，适合逐步调整世界生成和美术。
 
-新增第二维度 **天门云域**（`logos_dimension:cloudsea`）：24 个魔力地面群系、两个地下群系、厚云与剑开天门、天空魔鲸景象、异变植物及中世纪聚落。它使用独立的纯魔法美术和世界生成，不添加矿物或实体生物，也暂不设计进入方式。完整方向与本版边界见 [天门云域设计说明](docs/CLOUDSEA_DESIGN.md)。
+新增第二维度 **天门云域**（`logos_dimension:cloudsea`）：24 个魔力地面群系、两个地下群系、天空魔鲸景象、异变植物及中世纪聚落。**0.1.3 按要求移除了天空云海、云内雾及其后台网格生成，保留维度本身。** 它使用独立的纯魔法美术和世界生成，不添加矿物或实体生物，也暂不设计进入方式。完整方向与本版边界见 [天门云域设计说明](docs/CLOUDSEA_DESIGN.md)。
 
-本轮为 80 种方块制作独立几何，将咒械原天空法阵改为展开、错位、重组与能量流动的连续动画，并将天门云域的云海重做为固定在世界中的可穿行立体云体。三项分别提交 PR，当前分支用于组合安装包验证。详见 [逐种模型目录](docs/INDIVIDUAL_BLOCK_MODELS.md)、[模型实机截图](docs/INDIVIDUAL_BLOCK_MODEL_VIEWS.md)、[法阵变化](docs/ARCANE_TRANSFORMATION.md) 和 [立体云海](docs/CLOUD_VOLUME.md)。上一轮放大炼金釜等内容见 [模型与法阵调整](docs/MODEL_POLISH.md)。
+本轮重做树木与材料：完整原木、连通分枝、成团树冠，清晰的像素叶簇与专用材料，减少地表重复浮雕和整片发光。咒械原法阵加入透明玻璃承载面、视角高光、边缘色散、清亮刻线与向外传播的施法波，保留展开重组动画。详见 [树木与材料](docs/NATURAL_TREES.md)、[逐种模型目录](docs/INDIVIDUAL_BLOCK_MODELS.md)、[玻璃法阵](docs/GLASS_ARCANE_ARRAY.md) 和 [云层移除说明](docs/CLOUD_VOLUME.md)。三项更新保持独立 PR，当前分支用于组合安装包验证。
 
 ![空岛下方的影雾](docs/screenshots/shadow-fog.png)
 
@@ -62,7 +62,7 @@ Logos 的独立新维度附属 Mod。工程名 `LogosDimensionAddon`，Mod ID `l
 /execute in logos_dimension:cloudsea run tp @s 0 400 0
 ```
 
-云层主体约在 Y=350–465，可以飞入并穿过；Y=480 附近便于观察云顶。云没有碰撞，Boss 和云端平台尚未制作。
+0.1.3 中 Y=350–465 的旧云层已经移除，现在是开放空域。Boss 和空中平台尚未制作。新的树形在新生成区块出现；旧区块更新材质与叶块外观，不自动拆改玩家放置的树木。
 
 **不引用 26.1 原版硫磺方块，不添加任何原版主世界矿物生成。** `logos_dimension:sulfur_deposit` 是独立方块，方便以后移植资源与地形逻辑；当前 Java API 和构建仍针对上述 Minecraft 版本，跨版本仍需适配。
 

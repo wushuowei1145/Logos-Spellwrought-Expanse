@@ -5,3 +5,11 @@
 这是一种解析光照的玻璃观感，不采样场景颜色，不做屏幕空间折射或实时环境反射。没有新增粒子实体、帧缓存复制、全屏后处理或云体网格。玻璃使用 352 个固定四边形，覆盖有限环带；线条与能量波另有限量几何。顶点属性完整，沿用 Logos 的光影合成后收集器。
 
 开发场景 `group:glass_array` 记录 16 张连续实机截图；截图应分别检查普通画面和实际启用的光影包。纹样入口仍为 `tools/polish_models.py` 的 `astrolabe()`，支持资源重生成。
+
+## 0.1.3 实机验证
+
+0.1.3 组合验证：18/18 单元测试、14/14 GameTest；普通渲染、实际启用的 Complementary Reimagined r5.9.3 与 Photon Shader v1.3b，各通过 10/10 场景、15/15 检查，各保留 26 张实机截图。 下图来自实际客户端，不是概念图。
+
+![普通渲染玻璃法阵](screenshots/revision-0.1.3/glass-array.png)
+
+![实际启用 Photon 的玻璃法阵](screenshots/revision-0.1.3/glass-array-photon.png)
