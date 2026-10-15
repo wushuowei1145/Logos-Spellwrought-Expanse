@@ -6,7 +6,6 @@ import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.cloudsea.CloudseaBiome;
-import dev.logos.dimension.cloudsea.CloudseaCloudField;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.*;
@@ -31,13 +30,13 @@ public final class CloudseaClient {
     public static final ResourceKey<WorldClock> CLOCK=ResourceKey.create(Registries.WORLD_CLOCK,LogosDimension.id("cloudsea"));
     private static final ContextKey<Frame> FRAME=new ContextKey<>(LogosDimension.id("cloudsea_frame"));
     private static CloudseaBiome lastBiome;
-    private record Frame(float travel,float visibility,float beat,float eyeY,int shadowY,double x,double z,CloudseaCloudRenderer.Frame clouds){}
+    private record Frame(float travel,float visibility,float beat,float eyeY,int shadowY,double x,double z){}
     private static RenderType material(String name,boolean depthWrite){return RenderType.create(name,RenderSetup.builder(RenderPipeline.builder(RenderPipelines.MATRICES_PROJECTION_SNIPPET)
             .withLocation(LogosDimension.id("pipeline/"+name)).withVertexShader("core/position_tex_color").withFragmentShader("core/position_tex_color")
             .withSampler("Sampler0").withVertexFormat(DefaultVertexFormat.BLOCK,VertexFormat.Mode.QUADS).withCull(false)
             .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL,depthWrite)).withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT)).build())
-            .withTexture("Sampler0",LogosDimension.id("textures/environment/"+(name.equals("cloudsea_clouds")?name:"cloudsea_white")+".png")).sortOnUpload().createRenderSetup());}
-    private static final RenderType VOLUME=material("cloudsea_cloud_volume",false),WHALE=material("cloudsea_whale",false),SHADOW=material("cloudsea_whale_shadow",false);
+            .withTexture("Sampler0",LogosDimension.id("textures/environment/cloudsea_white.png")).sortOnUpload().createRenderSetup());}
+    private static final RenderType WHALE=material("cloudsea_whale",false),SHADOW=material("cloudsea_whale_shadow",false);
     public static long ticks(Level level){return level.clockManager().getTotalTicks(level.registryAccess().lookupOrThrow(Registries.WORLD_CLOCK).getOrThrow(CLOCK));}
     public static float whaleVisibility(long ticks){int t=(int)Math.floorMod(ticks,3600);return t<480?Math.min(1,Math.min(t/60f,(480-t)/60f)):0;}
     @SubscribeEvent static void extract(ExtractLevelRenderStateEvent e){
@@ -48,13 +47,11 @@ public final class CloudseaClient {
         double whaleZ=180+travel*.5,wx=-.5735764364*whaleZ,wz=.8191520443*whaleZ;
         int ground=e.getLevel().hasChunk((int)Math.floor(wx)>>4,(int)Math.floor(wz)>>4)
                 ?e.getLevel().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,(int)Math.floor(wx),(int)Math.floor(wz)):0;
-        var clouds=cam.pos.y<0?null:CloudseaCloudRenderer.capture(cam.pos.x,cam.pos.y,cam.pos.z,time+partial);
-        e.getRenderState().setRenderData(FRAME,new Frame(travel,vis,(time+partial)*.025f,(float)cam.pos.y,ground,cam.pos.x,cam.pos.z,clouds));
+        e.getRenderState().setRenderData(FRAME,new Frame(travel,vis,(time+partial)*.025f,(float)cam.pos.y,ground,cam.pos.x,cam.pos.z));
     }
     @SubscribeEvent(priority=EventPriority.LOWEST) static void submit(SubmitCustomGeometryEvent e){
         var f=e.getLevelRenderState().getRenderData(FRAME);if(f==null||f.eyeY<0)return;
         var pose=e.getPoseStack();var out=LogosSkyOverlay.collector(e.getSubmitNodeCollector());
-        out.submitCustomGeometry(pose,VOLUME,(p,v)->CloudseaCloudRenderer.draw(p,v,f.clouds));
         if(f.visibility>0){
             pose.pushPose();pose.translate(-f.x,497-f.eyeY,-f.z);pose.mulPose(Axis.YP.rotationDegrees(-35));
             pose.translate(0,0,180+f.travel*.5);pose.mulPose(Axis.XP.rotationDegrees((float)Math.sin(f.beat)*3));
@@ -101,14 +98,7 @@ public final class CloudseaClient {
     }
     @SubscribeEvent static void fog(ViewportEvent.ComputeFogColor e){
         var mc=Minecraft.getInstance();if(mc.level==null||mc.player==null||!mc.level.dimension().equals(LogosDimension.CLOUDSEA))return;
-        if(mc.player.getY()<-65){e.setRed(.22f);e.setGreen(.17f);e.setBlue(.28f);return;}
-        var p=e.getCamera().position();float density=(float)Math.clamp(CloudseaCloudField.density(p.x,p.y,p.z)*1.4,0,1);
-        e.setRed(e.getRed()*(1-density)+.79f*density);e.setGreen(e.getGreen()*(1-density)+.85f*density);e.setBlue(e.getBlue()*(1-density)+.90f*density);
-    }
-    @SubscribeEvent static void cloudFog(ViewportEvent.RenderFog e){
-        var mc=Minecraft.getInstance();if(mc.level==null||mc.player==null||!mc.level.dimension().equals(LogosDimension.CLOUDSEA))return;
-        var p=e.getCamera().position();double density=CloudseaCloudField.density(p.x,p.y,p.z);
-        if(density>.03){e.setNearPlaneDistance(0);e.setFarPlaneDistance(Math.min(e.getFarPlaneDistance(),(float)(85-Math.min(1,density)*57)));}
+        if(mc.player.getY()<-65){e.setRed(.22f);e.setGreen(.17f);e.setBlue(.28f);}
     }
     private CloudseaClient(){}
 }

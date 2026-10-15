@@ -17,9 +17,9 @@ public final class RefinementViews {
     @LDLRegisterClient(name="refinement_materials",group="refinement",registry=UIScenario.REGISTRY,environment=RegistrationEnvironment.DEV_ONLY)
     public static class Materials extends ModelPolishViews.Materials {}
     @LDLRegisterClient(name="refinement_cloud_top",group="refinement",registry=UIScenario.REGISTRY,environment=RegistrationEnvironment.DEV_ONLY)
-    public static class CloudTop extends CloudVolumeViews.Upper {}
+    public static class CloudTop extends OpenSkyViews.Upper {}
     @LDLRegisterClient(name="refinement_cloud_inside",group="refinement",registry=UIScenario.REGISTRY,environment=RegistrationEnvironment.DEV_ONLY)
-    public static class CloudInside extends CloudVolumeViews.Inside {}
+    public static class CloudInside extends OpenSkyViews.Middle {}
     @LDLRegisterClient(name="refinement_cleft",group="refinement",registry=UIScenario.REGISTRY,environment=RegistrationEnvironment.DEV_ONLY)
-    public static class Cleft extends CloudVolumeViews.Cleft {}
+    public static class Cleft extends OpenSkyViews.Whale {}
 }
