@@ -9,3 +9,15 @@
 网格在单个后台线程生成，只读取确定性数学密度，不访问世界。工作队列最多 64 项，网格缓存最多 81 格；每帧使用缓存的邻近 49 格网格。相邻网格共享同一密度场，地表细节、法线和渐隐均有明确上限。不是全屏体积 raymarch，未对所有硬件作帧率保证。
 
 普通渲染与光影分别检查，光影包可能覆盖局部雾色或绘制自己的远云。开发检查组为 `group:cloud_volume`，覆盖云上俯视、穿入和离开、地面看天门与魔鲸。玩家世界不增加测试相机或测试平台。
+
+## 2026-10-15 实机记录
+
+下图均来自实际开发客户端。0.1.2 组合版本在普通渲染、Complementary Reimagined r5.9.3、Photon Shader v1.3b 下，各通过 8/8 场景、12/12 检查；每套保留 41 张原始截图。组合检查同时包含法阵、方块和云海，不能作为未运行场景的验证。
+
+![普通渲染：云顶和天门侧缘](screenshots/refinement/cloud-top.png)
+
+![普通渲染：穿入云内](screenshots/refinement/cloud-inside.png)
+
+![普通渲染：剑开天门与天空魔鲸](screenshots/refinement/cloud-cleft.png)
+
+![实际启用 Photon v1.3b：云顶](screenshots/refinement/cloud-top-photon.png)
