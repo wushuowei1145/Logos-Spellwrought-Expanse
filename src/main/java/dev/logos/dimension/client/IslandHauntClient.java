@@ -59,7 +59,7 @@ public final class IslandHauntClient {
     }
     @SubscribeEvent static void tick(ClientTickEvent.Post event) {
         var mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null || !mc.level.dimension().equals(LogosDimension.CRUCIBLE)) {
+        if (mc.level == null || mc.player == null || !LogosDimension.isCrucible(mc.level.dimension())) {
             region = HauntPayload.CLEAR; density = 0; SHADES.clear(); return;
         }
         if (++stale > 60) region = HauntPayload.CLEAR;
@@ -96,7 +96,7 @@ public final class IslandHauntClient {
         event.setFarPlaneDistance(event.getFarPlaneDistance() * (1 - blend) + 24 * blend);
     }
     @SubscribeEvent static void extract(ExtractLevelRenderStateEvent event) {
-        if (!region.veiled() || !event.getLevel().dimension().equals(LogosDimension.CRUCIBLE)) return;
+        if (!region.veiled() || !LogosDimension.isCrucible(event.getLevel().dimension())) return;
         event.getRenderState().setRenderData(FRAME, new Frame(region, event.getLevel().getGameTime() * .035f,
                 SHADES.stream().map(s -> new Figure(s.at, s.alpha(), s.height)).toList()));
     }

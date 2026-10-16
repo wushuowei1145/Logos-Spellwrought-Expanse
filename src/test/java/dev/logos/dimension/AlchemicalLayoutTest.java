@@ -26,17 +26,40 @@ class AlchemicalLayoutTest {
         }
         for (int c : count) assertTrue(c > 75, "Ring ordering distorted");
     }
-    @Test void centersRepeatAcrossNegativeCoordinates() {
+    @Test void oneIslandRemainsAtOriginAcrossAllCoordinates() {
         var layout = new AlchemicalLayout(732, 20_000);
+        var origin = layout.center(0, 0);
+        var terrain = new AlchemicalTerrain(layout);
         for (int z = -4; z <= 4; z++) for (int x = -4; x <= 4; x++) {
-            var center = layout.center(x, z);
-            assertEquals(center, layout.nearest(center.x(), center.z()));
-            assertTrue(new AlchemicalTerrain(layout).column(center.x(), center.z()).hasIsland());
+            assertEquals(origin, layout.center(x, z));
+            assertEquals(origin, layout.nearest(x * 20_000, z * 20_000));
+            assertEquals(x == 0 && z == 0, terrain.column(x * 20_000, z * 20_000).hasIsland());
+        }
+    }
+    @Test void finiteBoundsAreExactlyTwentyThousandBlocks() {
+        var layout = new AlchemicalLayout(732, 20_000);
+        assertTrue(layout.contains(-10_000, -10_000));
+        assertTrue(layout.contains(9_999, 9_999));
+        for (int outside : new int[]{-10_001, 10_000, -20_000, 20_000, Integer.MIN_VALUE, Integer.MAX_VALUE}) {
+            assertFalse(layout.contains(outside, 0));
+            assertFalse(layout.contains(0, outside));
+        }
+    }
+    @Test void entryRingIsOuterAetherInsideTheBoundary() {
+        for (long seed : new long[]{0, 1, 49, 7193, -34903}) {
+            var layout = new AlchemicalLayout(seed, 20_000);
+            for (int angle = 0; angle < 32; angle++) {
+                double a = angle * Math.PI / 16;
+                int x = (int) (layout.spacing() * .465 * Math.cos(a));
+                int z = (int) (layout.spacing() * .465 * Math.sin(a));
+                assertTrue(layout.contains(x, z));
+                assertEquals(AlchemicalLayout.Region.AETHER, layout.sample(x, z).region());
+            }
         }
     }
     @Test void seedChangesTerrainWithoutBreakingCenters() {
         var a = new AlchemicalLayout(1, 20_000); var b = new AlchemicalLayout(2, 20_000);
-        assertNotEquals(a.center(1, -1), b.center(1, -1));
+        assertNotEquals(a.center(0, 0).salt(), b.center(0, 0).salt());
         assertEquals(0, a.center(0, 0).x()); assertEquals(0, b.center(0, 0).z());
         assertEquals(new AlchemicalTerrain(a).column(7743, -5432), new AlchemicalTerrain(new AlchemicalLayout(1, 20_000)).column(7743, -5432));
     }
@@ -52,7 +75,7 @@ class AlchemicalLayoutTest {
     }
     @Test void allTerrainFitsTheDimension() {
         var terrain = new AlchemicalTerrain(new AlchemicalLayout(393, 20_000));
-        for (int z = -20_000; z < 20_000; z += 500) for (int x = -20_000; x < 20_000; x += 500) {
+        for (int z = -10_000; z < 10_000; z += 500) for (int x = -10_000; x < 10_000; x += 500) {
             var c = terrain.column(x, z);
             assertTrue(c.ground() > 0 && c.ground() < 240);
             if (c.hasIsland()) assertTrue(c.islandBottom() > c.ground() && c.islandTop() < 400);

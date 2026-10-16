@@ -61,7 +61,7 @@ public final class DimensionClient {
                 (net.neoforged.neoforge.client.fluid.FluidTintSource) null), DimensionFluids.MOLTEN_GLASS, DimensionFluids.FLOWING_GLASS);
     }
     @SubscribeEvent static void extract(ExtractLevelRenderStateEvent event) {
-        if (!event.getLevel().dimension().equals(LogosDimension.CRUCIBLE)) return;
+        if (!LogosDimension.isCrucible(event.getLevel().dimension())) return;
         long ticks = OpusPhase.ticks(event.getLevel());
         int color = switch (OpusPhase.at(ticks)) {
             case NIGREDO -> 0xD9CBDDE9; case ALBEDO -> 0xEBF2F5EA;

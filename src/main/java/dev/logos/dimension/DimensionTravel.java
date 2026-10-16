@@ -5,8 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.logos.dimension.world.AlchemicalChunkGenerator;
 import dev.logos.dimension.world.AlchemicalLayout;
 import dev.logos.dimension.world.AlchemicalTerrain;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -30,14 +29,31 @@ public final class DimensionTravel {
                 Codec.FLOAT.fieldOf("pitch").forGetter(ReturnPoint::pitch)).apply(i, ReturnPoint::new));
     }
     public static final class Returns extends SavedData {
-        static final Codec<Returns> CODEC = Codec.unboundedMap(Codec.STRING, ReturnPoint.CODEC).fieldOf("homes").codec().xmap(Returns::new, r -> r.homes);
+        public static final Codec<Returns> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.unboundedMap(Codec.STRING, ReturnPoint.CODEC).fieldOf("homes").forGetter((Returns r) -> r.homes),
+                Codec.unboundedMap(Codec.STRING, ReturnPoint.CODEC.listOf()).optionalFieldOf("paths", Map.of()).forGetter((Returns r) -> r.paths)
+        ).apply(i, Returns::new));
         static final SavedDataType<Returns> TYPE = new SavedDataType<>(LogosDimension.id("returns"), Returns::new, CODEC);
         private final Map<String, ReturnPoint> homes;
-        public Returns() { this(Map.of()); }
-        private Returns(Map<String, ReturnPoint> homes) { this.homes = new HashMap<>(homes); }
-        public void put(String id, ReturnPoint point) { homes.put(id, point); setDirty(); }
+        private final Map<String, List<ReturnPoint>> paths;
+        public Returns() { this(Map.of(), Map.of()); }
+        private Returns(Map<String, ReturnPoint> homes, Map<String, List<ReturnPoint>> paths) {
+            this.homes = new HashMap<>(homes); this.paths = new HashMap<>();
+            paths.forEach((id, points) -> this.paths.put(id, new ArrayList<>(points)));
+        }
+        public void put(String id, ReturnPoint point) {
+            var previous = homes.put(id, point);
+            if (previous != null) paths.computeIfAbsent(id, key -> new ArrayList<>()).add(previous);
+            setDirty();
+        }
         public ReturnPoint get(String id) { return homes.get(id); }
-        public void remove(String id) { homes.remove(id); setDirty(); }
+        public void remove(String id) {
+            var path = paths.get(id);
+            if (path == null || path.isEmpty()) homes.remove(id);
+            else { homes.put(id, path.removeLast()); if (path.isEmpty()) paths.remove(id); }
+            setDirty();
+        }
+        public void clear(String id) { homes.remove(id); paths.remove(id); setDirty(); }
     }
     private DimensionTravel() {}
 
@@ -47,12 +63,18 @@ public final class DimensionTravel {
 
     /** A physical entrance may save a safe position beside its basin instead of inside its portal. */
     public static boolean enter(ServerPlayer player, Vec3 returnPosition) {
-        if (player.level().dimension().equals(LogosDimension.CRUCIBLE)) return leave(player);
+        if (LogosDimension.isCrucible(player.level().dimension())) return leave(player);
         var server = player.level().getServer();
         var target = server.getLevel(LogosDimension.CRUCIBLE);
+        return enterTarget(player, target, returnPosition);
+    }
+
+    /** Enter a cauldron's own world and retain the actual departure point for the return trip. */
+    public static boolean enterTarget(ServerPlayer player, ServerLevel target, Vec3 returnPosition) {
         if (target == null || !(target.getChunkSource().getGenerator() instanceof AlchemicalChunkGenerator generator)) {
             player.sendSystemMessage(Component.translatable("message.logos_dimension.missing_dimension")); return false;
         }
+        var server = player.level().getServer();
         var home = new ReturnPoint(player.level().dimension().identifier().toString(), returnPosition.x, returnPosition.y, returnPosition.z, player.getYRot(), player.getXRot());
         var center = generator.terrain().layout().center(0, 0);
         var landing = findLanding(target, center, AlchemicalLayout.Region.AETHER);
@@ -65,16 +87,22 @@ public final class DimensionTravel {
     public static boolean leave(ServerPlayer player) {
         var server = player.level().getServer();
         var returns = server.overworld().getDataStorage().computeIfAbsent(Returns.TYPE);
-        var home = returns.get(player.getUUID().toString());
-        if (home != null) {
+        String playerId = player.getUUID().toString();
+        ReturnPoint home;
+        while ((home = returns.get(playerId)) != null) {
             Identifier id = Identifier.tryParse(home.dimension);
             var target = id == null ? null : server.getLevel(ResourceKey.create(Registries.DIMENSION, id));
-            if (target != null && teleport(player, target, new Vec3(home.x, home.y, home.z), home.yaw, home.pitch)) {
-                returns.remove(player.getUUID().toString()); return true;
+            boolean deleted = id != null && LogosDimension.isCrucible(ResourceKey.create(Registries.DIMENSION, id))
+                    && !id.equals(LogosDimension.CRUCIBLE.identifier())
+                    && dev.logos.dimension.instance.CauldronWorlds.isDestroyed(server, UUID.fromString(id.getPath()));
+            if (target != null && target != player.level() && !deleted) {
+                if (!teleport(player, target, new Vec3(home.x, home.y, home.z), home.yaw, home.pitch)) return false;
+                returns.remove(playerId); return true;
             }
+            returns.remove(playerId);
         }
         boolean moved = player.teleport(TeleportTransition.createDefault(player, TeleportTransition.PLAY_PORTAL_SOUND.then(TeleportTransition.PLACE_PORTAL_TICKET))) != null;
-        if (moved) returns.remove(player.getUUID().toString());
+        if (moved) returns.clear(playerId);
         return moved;
     }
 
@@ -82,12 +110,13 @@ public final class DimensionTravel {
         var generator = (AlchemicalChunkGenerator) target.getChunkSource().getGenerator();
         var terrain = generator.terrain();
         double radius = terrain.layout().spacing() * switch (region) {
-            case SULFUR -> .09; case MERCURY -> .23; case SALT -> .375; default -> .165;
+            case SULFUR -> .09; case MERCURY -> .23; case SALT -> .375; default -> .465;
         };
         for (int angle = 0; angle < 32; angle++) for (int offset = 0; offset < 9; offset++) {
             double a = angle * Math.PI / 16;
             int x = center.x() + (int) ((radius + offset * 24) * Math.cos(a));
             int z = center.z() + (int) ((radius + offset * 24) * Math.sin(a));
+            if (!terrain.layout().contains(x, z)) continue;
             var c = terrain.column(x, z);
             if (c.geography().region() != region || c.liquid() != AlchemicalTerrain.Liquid.NONE) continue;
             target.getChunk(x >> 4, z >> 4);

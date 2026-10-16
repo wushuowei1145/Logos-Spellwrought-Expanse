@@ -8,7 +8,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 
-/** Each repeated island keeps its own permanent Boss completion flag across server restarts. */
+/** Each cauldron world keeps its own permanent Boss completion flag across server restarts. */
 public final class IslandProgress extends SavedData {
     public static final Codec<IslandProgress> CODEC = Codec.STRING.listOf().fieldOf("defeated_islands").codec()
             .xmap(list -> new IslandProgress(new HashSet<>(list)), data -> data.defeated.stream().sorted().toList());

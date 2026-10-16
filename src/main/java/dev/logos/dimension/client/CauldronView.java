@@ -33,10 +33,10 @@ public class CauldronView implements UIScenario {
                     var p=ctx.player(); p.setGameMode(GameType.SURVIVAL);
                     DimensionTravel.teleport(p,p.level(),new Vec3(-.15,101+dev.logos.dimension.block.AlchemicalCauldronBlock.RIM_HEIGHT+.002,.5),0,0);
                 }).ticks(25)
-                .checkServer("rim does not trigger portal", ctx -> !ctx.player().level().dimension().equals(LogosDimension.CRUCIBLE))
+                .checkServer("rim does not trigger portal", ctx -> !LogosDimension.isCrucible(ctx.player().level().dimension()))
                 .server("drop through the open mouth", ctx -> DimensionTravel.teleport(ctx.player(),ctx.player().level(),new Vec3(.5,103,.5),0,0))
-                .waitUntil("jump enters the dimension",ctx -> Minecraft.getInstance().level.dimension().equals(LogosDimension.CRUCIBLE))
-                .checkServer("server reached Crucible and cooldown is active",ctx -> ctx.player().level().dimension().equals(LogosDimension.CRUCIBLE) && ctx.player().isOnPortalCooldown())
+                .waitUntil("jump enters the dimension",ctx -> LogosDimension.isCrucible(Minecraft.getInstance().level.dimension()))
+                .checkServer("server reached Crucible and cooldown is active",ctx -> LogosDimension.isCrucible(ctx.player().level().dimension()) && ctx.player().isOnPortalCooldown())
                 .ticks(20).screenshot("cauldron_arrival")
                 .teardown("restore HUD",ctx -> Minecraft.getInstance().options.hideGui=false);
     }

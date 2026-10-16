@@ -5,10 +5,10 @@ config="logos_dimension.mixins.json"
 
 [[mods]]
 modId="logos_dimension"
-version="0.1.1"
+version="0.3.0"
 displayName="Logos: The Alchemical Crucible"
 description='''
-A world being transmuted: repeating colossal empty sky islands, sulfur, mercury and salt belts, linked by living aether wilderness. Requires Logos.
+Each alchemical cauldron binds a finite UUID world of sulfur, mercury, salt and aether, with one empty central sky island. Also includes a temperate journey continent. Requires Logos.
 '''
 
 [[dependencies.logos_dimension]]
