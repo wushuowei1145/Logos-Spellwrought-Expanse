@@ -5,7 +5,7 @@ config="logos_dimension.mixins.json"
 
 [[mods]]
 modId="logos_dimension"
-version="0.1.4"
+version="0.2.0"
 displayName="Logos: The Alchemical Crucible"
 description='''
 A world being transmuted: repeating colossal empty sky islands, sulfur, mercury and salt belts, linked by living aether wilderness. Requires Logos.
