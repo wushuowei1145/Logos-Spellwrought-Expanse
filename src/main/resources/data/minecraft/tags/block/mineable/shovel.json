@@ -1,0 +1,29 @@
+{
+  "replace": false,
+  "values": [
+    "logos_dimension:cloudsea_amber_whirls_ground",
+    "logos_dimension:cloudsea_aurora_dunes_ground",
+    "logos_dimension:cloudsea_blue_bell_steps_ground",
+    "logos_dimension:cloudsea_cloudroot_shelves_ground",
+    "logos_dimension:cloudsea_dawn_ribbons_ground",
+    "logos_dimension:cloudsea_dream_basins_ground",
+    "logos_dimension:cloudsea_echo_folds_ground",
+    "logos_dimension:cloudsea_frost_spires_ground",
+    "logos_dimension:cloudsea_glass_lagoons_ground",
+    "logos_dimension:cloudsea_halo_spires_ground",
+    "logos_dimension:cloudsea_ivory_steps_ground",
+    "logos_dimension:cloudsea_jade_whirls_ground",
+    "logos_dimension:cloudsea_lantern_shelves_ground",
+    "logos_dimension:cloudsea_lilac_steps_ground",
+    "logos_dimension:cloudsea_moon_folds_ground",
+    "logos_dimension:cloudsea_opal_dunes_ground",
+    "logos_dimension:cloudsea_pale_spires_ground",
+    "logos_dimension:cloudsea_pearl_basins_ground",
+    "logos_dimension:cloudsea_reverse_gardens_ground",
+    "logos_dimension:cloudsea_rose_dunes_ground",
+    "logos_dimension:cloudsea_silk_folds_ground",
+    "logos_dimension:cloudsea_star_ribbons_ground",
+    "logos_dimension:cloudsea_tide_ribbons_ground",
+    "logos_dimension:cloudsea_verdant_whirls_ground"
+  ]
+}

@@ -1,7 +1,16 @@
 {
   "variants": {
-    "": {
-      "model": "logos_dimension:block/cloudsea_amber_whirls_ground"
+    "season=0": {
+      "model": "logos_dimension:block/cloudsea_amber_whirls_ground_0"
+    },
+    "season=1": {
+      "model": "logos_dimension:block/cloudsea_amber_whirls_ground_1"
+    },
+    "season=2": {
+      "model": "logos_dimension:block/cloudsea_amber_whirls_ground_2"
+    },
+    "season=3": {
+      "model": "logos_dimension:block/cloudsea_amber_whirls_ground_3"
     }
   }
 }

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "logos_dimension:block/cloudsea_rose_dunes_ground_3",
+    "side": "logos_dimension:block/cloudsea_rose_dunes_side_3",
+    "bottom": "minecraft:block/dirt"
+  }
+}

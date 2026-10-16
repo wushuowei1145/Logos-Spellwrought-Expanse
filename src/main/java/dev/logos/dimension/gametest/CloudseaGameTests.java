@@ -22,8 +22,9 @@ public final class CloudseaGameTests {
         FUNCTIONS.register("cloudsea_terrain",()->CloudseaGameTests::terrain);
         FUNCTIONS.register("cloudsea_village",()->CloudseaGameTests::village);
         FUNCTIONS.register("cloudsea_tree_blocks",()->CloudseaGameTests::treeBlocks);
+        FUNCTIONS.register("journey_seasons",()->CloudseaGameTests::seasons);
         FUNCTIONS.register(bus);
-        bus.addListener((RegisterGameTestsEvent e)->{Holder<TestEnvironmentDefinition<?>> env=e.registerEnvironment(LogosDimension.id("cloudsea_default"),new TestEnvironmentDefinition.AllOf());for(String name:List.of("cloudsea_registry","cloudsea_terrain","cloudsea_village","cloudsea_tree_blocks"))e.registerTest(LogosDimension.id(name),new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION,LogosDimension.id(name)),new TestData<>(env,Identifier.withDefaultNamespace("empty"),600,0,true,Rotation.NONE,false,1,1,false,16)));});
+        bus.addListener((RegisterGameTestsEvent e)->{Holder<TestEnvironmentDefinition<?>> env=e.registerEnvironment(LogosDimension.id("cloudsea_default"),new TestEnvironmentDefinition.AllOf());for(String name:List.of("cloudsea_registry","cloudsea_terrain","cloudsea_village","cloudsea_tree_blocks","journey_seasons"))e.registerTest(LogosDimension.id(name),new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION,LogosDimension.id(name)),new TestData<>(env,Identifier.withDefaultNamespace("empty"),600,0,true,Rotation.NONE,false,1,1,false,16)));});
     }
     private static ServerLevel level(GameTestHelper h){var level=h.getLevel().getServer().getLevel(LogosDimension.CLOUDSEA);h.assertTrue(level!=null,"Cloudsea did not load");return level;}
     private static void treeBlocks(GameTestHelper h){
@@ -39,7 +40,54 @@ public final class CloudseaGameTests {
         level.removeBlock(pos,false);h.succeed();
     }
     private static void registry(GameTestHelper h){var level=level(h);h.assertTrue(level.getChunkSource().getGenerator() instanceof CloudseaChunkGenerator,"Wrong generator");var biomes=level.registryAccess().lookupOrThrow(Registries.BIOME);for(var b:CloudseaBiome.values()){var actual=biomes.getOrThrow(ResourceKey.create(Registries.BIOME,LogosDimension.id(b.id())));h.assertTrue(actual.value().getMobSettings().getMobs(net.minecraft.world.entity.MobCategory.MONSTER).isEmpty(),"New biome has mobs");}h.assertTrue(!BuiltInRegistries.ITEM.containsKey(LogosDimension.id("cloudsea_portal")),"Entrance was added");h.succeed();}
-    private static void terrain(GameTestHelper h){var level=level(h);var gen=(CloudseaChunkGenerator)level.getChunkSource().getGenerator();int plants=0,air=0;for(int x=16;x<32;x++)for(int z=16;z<32;z++){var c=gen.terrain().column(x,z);level.getChunk(x>>4,z>>4);for(int y=-124;y<=c.highest()+24;y++){var state=level.getBlockState(new BlockPos(x,y,z));String id=BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();h.assertTrue(!id.startsWith("minecraft:")||id.equals("minecraft:air")||id.equals("minecraft:water")||id.equals("minecraft:bedrock"),"Vanilla material or mineral generated: "+id);if(y<0&&state.isAir())air++;if(y<0&&(state.is(CloudseaBlocks.ROOT.get())||state.is(CloudseaBlocks.EYE_FERN.get())||state.is(CloudseaBlocks.DEMON_REED.get())))plants++;}}h.assertTrue(air>100,"Underground has no caves");h.assertTrue(plants>0,"Cave flora is absent");h.assertTrue(level.getBiome(new BlockPos(20,-90,20)).is(LogosDimension.id("cloudsea_demon_depths")),"Core biome missing");h.succeed();}
-    private static void village(GameTestHelper h){var level=level(h);var gen=(CloudseaChunkGenerator)level.getChunkSource().getGenerator();CloudseaSettlements.Village v=null;for(int z=-3;z<=3&&v==null;z++)for(int x=-3;x<=3&&v==null;x++)v=gen.settlements().village(gen.terrain().region(x,z));h.assertTrue(v!=null,"No settlement found");var house=v.houses().getFirst();level.getChunk(house.x()>>4,house.z()>>4);h.assertTrue(level.getBlockState(new BlockPos(house.x(),house.y(),house.z())).is(CloudseaBlocks.DARK_TIMBER.get()),"House has no floor");h.assertTrue(level.isEmptyBlock(new BlockPos(house.x(),house.y()+1,house.z()-5)),"Doorway is blocked");h.assertTrue(level.getBlockState(new BlockPos(house.x(),house.y()+10,house.z())).is(CloudseaBlocks.SLATE.get()),"Gabled roof missing");h.succeed();}
+    private static void terrain(GameTestHelper h){
+        var level=level(h);var gen=(CloudseaChunkGenerator)level.getChunkSource().getGenerator();int air=0;
+        for(int x=16;x<32;x++)for(int z=16;z<32;z++){
+            var c=gen.terrain().column(x,z);level.getChunk(x>>4,z>>4);
+            for(int y=-124;y<=c.highest()+24;y++){
+                var state=level.getBlockState(new BlockPos(x,y,z));String id=BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+                h.assertTrue(!id.contains("_ore")&&!id.equals("minecraft:raw_copper_block")&&!id.equals("minecraft:raw_iron_block"),"Vanilla ore generated: "+id);
+                h.assertTrue(!state.is(CloudseaBlocks.DEMONSTONE.get())&&!state.is(CloudseaBlocks.ROOT.get()),"Old magical underground remains");
+                if(y<0&&state.isAir())air++;
+            }
+        }
+        h.assertTrue(air>100,"No underground caves");
+        h.assertTrue(level.registryAccess().lookupOrThrow(Registries.BIOME).getOrThrow(ResourceKey.create(Registries.BIOME,LogosDimension.id("cloudsea_root_caves"))).value().getGenerationSettings().getCarvers().iterator().hasNext(),"Native carvers missing");
+        h.succeed();
+    }
+    private static void village(GameTestHelper h){
+        var level=level(h);var gen=(CloudseaChunkGenerator)level.getChunkSource().getGenerator();CloudseaSettlements.Village village=null;
+        for(int z=-2;z<=0&&village==null;z++)for(int x=-4;x<=4&&village==null;x++)village=gen.settlements().village(gen.terrain().region(x,z));
+        h.assertTrue(village!=null,"No suitable settlement");var house=village.houses().getFirst();
+        var template=JourneyTemplates.get(house.template());int solid=0,air=0;
+        for(int z=0;z<template.depth();z++)for(int x=0;x<template.width();x++)for(int y=0;y<template.height();y++){var state=template.at(x,y,z);if(state!=null){if(state.isAir())air++;else solid++;}}
+        h.assertTrue(solid>100&&air>20,"Internet blueprint has no shell or interior");
+        h.assertTrue(gen.terrain().riverDistance(village.x(),village.z())<160,"Settlement is not by water");
+        h.assertTrue(CloudseaTerrain.REGION_SIZE>=6000,"Civilization density is too high");
+        for(var building:village.houses())h.assertTrue(building.y()>gen.terrain().column(building.x(),building.z()).water(),"Building is submerged");
+        level.getChunk(house.x()>>4,house.z()>>4);h.assertTrue(!level.getBlockState(new BlockPos(house.x(),house.y(),house.z())).isAir(),"Generated building floor is missing");
+        h.succeed();
+    }
+    private static void seasons(GameTestHelper h){
+        var level=level(h);var registry=level.registryAccess().lookupOrThrow(Registries.BIOME);
+        var biome=registry.getOrThrow(ResourceKey.create(Registries.BIOME,LogosDimension.id(CloudseaBiome.SILK_FOLDS.id()))).value();
+        var pos=new BlockPos(12,100,12);var clock=level.registryAccess().lookupOrThrow(Registries.WORLD_CLOCK).getOrThrow(JourneySeasons.CLOCK);
+        long previous=level.clockManager().getTotalTicks(clock);
+        try{
+            level.clockManager().setTotalTicks(clock,0);JourneySeasons.enter(level);
+            h.assertTrue(biome.getPrecipitationAt(pos,80)==net.minecraft.world.level.biome.Biome.Precipitation.RAIN,"Spring is not rainy");
+            level.clockManager().setTotalTicks(clock,JourneySeasons.SEASON_TICKS*3);JourneySeasons.enter(level);
+            h.assertTrue(biome.getPrecipitationAt(pos,80)==net.minecraft.world.level.biome.Biome.Precipitation.SNOW,"Winter temperature does not produce snow");
+            JourneySeasons.CONTEXT.remove();
+            h.assertTrue(biome.getPrecipitationAt(pos,80)==net.minecraft.world.level.biome.Biome.Precipitation.RAIN,"Season context leaked outside the dimension tick");
+            var leaf=CloudseaBlocks.LEAVES.get(CloudseaBiome.SILK_FOLDS).get();level.setBlockAndUpdate(pos,leaf.defaultBlockState());
+            leaf.defaultBlockState().randomTick(level,pos,net.minecraft.util.RandomSource.create(1));
+            h.assertTrue(level.getBlockState(pos).getValue(SeasonalLeavesBlock.SEASON)==3,"Leaves do not update to winter");
+            level.removeBlock(pos,false);
+        }finally{JourneySeasons.CONTEXT.remove();level.clockManager().setTotalTicks(clock,previous);}
+        var mineshaft=level.registryAccess().lookupOrThrow(Registries.STRUCTURE).getOrThrow(ResourceKey.create(Registries.STRUCTURE,Identifier.withDefaultNamespace("mineshaft"))).value();
+        h.assertTrue(mineshaft.biomes().contains(registry.getOrThrow(ResourceKey.create(Registries.BIOME,LogosDimension.id("cloudsea_root_caves")))),"Native mineshafts do not accept this dimension");
+        h.succeed();
+    }
     private CloudseaGameTests(){}
 }

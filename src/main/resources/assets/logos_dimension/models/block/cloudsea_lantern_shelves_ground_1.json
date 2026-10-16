@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "logos_dimension:block/cloudsea_lantern_shelves_ground_1",
+    "side": "logos_dimension:block/cloudsea_lantern_shelves_side_1",
+    "bottom": "minecraft:block/dirt"
+  }
+}

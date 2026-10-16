@@ -1,13 +1,17 @@
 {
-  "has_precipitation": false,
-  "temperature": 0.7,
-  "downfall": 0,
+  "has_precipitation": true,
+  "temperature": -0.15,
+  "downfall": 0.45,
   "effects": {
-    "water_color": "#87b6c9",
-    "grass_color": "#c1d5d6",
-    "foliage_color": "#a8c9d5"
+    "water_color": "#567d91",
+    "grass_color": "#d5dad8",
+    "foliage_color": "#77918b"
   },
-  "carvers": [],
+  "carvers": [
+    "minecraft:cave",
+    "minecraft:cave_extra_underground",
+    "minecraft:canyon"
+  ],
   "features": [
     [],
     [],
