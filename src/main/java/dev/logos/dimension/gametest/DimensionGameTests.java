@@ -27,7 +27,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 /** Tests load the real addon's dimension and use actual registry data, chunks and spawn events. */
 public final class DimensionGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS = DeferredRegister.create(Registries.TEST_FUNCTION, LogosDimension.ID);
-    private static final List<String> NAMES = List.of("registry_compatibility", "empty_island", "island_spawn_guard", "custom_materials", "phase_clock", "travel_round_trip", "reactive_matter", "fluids_flow", "island_boss_progress", "cauldron_portal");
+    private static final List<String> NAMES = List.of("registry_compatibility", "empty_island", "island_spawn_guard", "custom_materials", "phase_clock", "travel_round_trip", "reactive_matter", "fluids_flow", "fluid_movement", "fluid_placement", "fluid_hazards", "island_boss_progress", "cauldron_portal");
     public static void register(IEventBus bus) {
         FUNCTIONS.register("registry_compatibility", () -> DimensionGameTests::registry);
         FUNCTIONS.register("empty_island", () -> DimensionGameTests::island);
@@ -37,6 +37,9 @@ public final class DimensionGameTests {
         FUNCTIONS.register("travel_round_trip", () -> DimensionGameTests::travel);
         FUNCTIONS.register("reactive_matter", () -> DimensionGameTests::reaction);
         FUNCTIONS.register("fluids_flow", () -> DimensionGameTests::flow);
+        FUNCTIONS.register("fluid_movement", () -> DimensionGameTests::fluidMovement);
+        FUNCTIONS.register("fluid_placement", () -> DimensionGameTests::fluidPlacement);
+        FUNCTIONS.register("fluid_hazards", () -> DimensionGameTests::fluidHazards);
         FUNCTIONS.register("island_boss_progress", () -> DimensionGameTests::progress);
         FUNCTIONS.register("cauldron_portal", () -> DimensionGameTests::cauldron);
         FUNCTIONS.register(bus);
@@ -166,6 +169,59 @@ public final class DimensionGameTests {
             h.assertTrue(bucket.is(DimensionFluids.MERCURY_BUCKET.get()), "Source cannot be collected into the custom bucket");
             h.succeed();
         });
+    }
+    private static void fluidMovement(GameTestHelper h) {
+        var level=h.getLevel();
+        var player=h.makeMockServerPlayerInLevel();
+        for(var block:List.of(DimensionFluids.MERCURY_BLOCK.get(),DimensionFluids.GLASS_BLOCK.get())) {
+            var pos=h.absolutePos(new BlockPos(5,3,5));
+            for(int y=-1;y<=1;y++)for(int x=-2;x<=2;x++)for(int z=-2;z<=2;z++)
+                level.setBlockAndUpdate(pos.offset(x,y,z),y<0?net.minecraft.world.level.block.Blocks.STONE.defaultBlockState():block.defaultBlockState());
+            player.setPos(pos.getX()+.5,pos.getY()+.1,pos.getZ()+.5);
+            player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+            player.getFluidInteraction().update(player,player::isPushedByFluid);
+            h.assertTrue(player.getFluidHeight(block.fluid.getFluidType())>1,"Test player is not submerged");
+            double x=player.getX();
+            player.travel(new net.minecraft.world.phys.Vec3(1,0,0));
+            h.assertTrue(player.getX()>x+.015,"Movement input is ignored in "+block);
+            h.assertTrue(player.getDeltaMovement().y<0,"Lava-like gravity was not applied");
+            double velocity=player.getDeltaMovement().y;
+            player.jumpInFluid(block.fluid.getFluidType());
+            h.assertTrue(player.getDeltaMovement().y>velocity,"Cannot rise in fluid");
+        }
+        h.succeed();
+    }
+    private static void fluidPlacement(GameTestHelper h) {
+        var level=h.getLevel();var player=h.makeMockServerPlayerInLevel();
+        player.setPos(h.absoluteVec(new net.minecraft.world.phys.Vec3(12,4,12)));
+        var pos=h.absolutePos(new BlockPos(4,3,4));
+        level.setBlockAndUpdate(pos.below(),net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
+        for(var block:List.of(DimensionFluids.MERCURY_BLOCK.get(),DimensionFluids.GLASS_BLOCK.get()))for(int fluidLevel:new int[]{0,3,8}) {
+            level.setBlockAndUpdate(pos,block.defaultBlockState().setValue(net.minecraft.world.level.block.LiquidBlock.LEVEL,fluidLevel));
+            var item=new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COBBLESTONE);
+            player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,item);
+            var context=new net.minecraft.world.item.context.BlockPlaceContext(player,net.minecraft.world.InteractionHand.MAIN_HAND,item,
+                    new net.minecraft.world.phys.BlockHitResult(pos.getBottomCenter(),net.minecraft.core.Direction.UP,pos.below(),false));
+            ((net.minecraft.world.item.BlockItem)item.getItem()).place(context);
+            h.assertTrue(level.getBlockState(pos).is(net.minecraft.world.level.block.Blocks.COBBLESTONE),"Cannot fill source/flowing fluid with a block: "+block+" level "+fluidLevel);
+        }
+        h.succeed();
+    }
+    private static void fluidHazards(GameTestHelper h) {
+        var level=h.getLevel();var player=h.spawn(EntityType.PIG,new BlockPos(5,3,5));
+        var effects=new net.minecraft.world.entity.InsideBlockEffectApplier.StepBasedCollector();
+        var pos=h.absolutePos(new BlockPos(5,3,5));player.setPos(pos.getBottomCenter());
+        for(var fluid:List.of(DimensionFluids.MERCURY.get(),DimensionFluids.FLOWING_MERCURY.get())) {
+            player.removeAllEffects();player.clearFire();
+            fluid.defaultFluidState().entityInside(level,pos,player,effects);effects.applyAndClear(player);
+            h.assertTrue(player.getEffect(net.minecraft.world.effect.MobEffects.POISON).getDuration()==80,"Mercury poison duration wrong");
+            h.assertTrue(player.getEffect(net.minecraft.world.effect.MobEffects.WEAKNESS).getDuration()==160,"Mercury weakness duration wrong");
+            h.assertTrue(!player.isOnFire(),"Mercury ignites entities");
+        }
+        player.removeAllEffects();float health=player.getHealth();
+        DimensionFluids.MOLTEN_GLASS.get().defaultFluidState().entityInside(level,pos,player,effects);effects.applyAndClear(player);
+        h.assertTrue(player.isOnFire()&&player.getHealth()<health,"Molten glass lacks vanilla lava contact damage");
+        h.succeed();
     }
     private static void progress(GameTestHelper h) {
         var level = dimension(h);
