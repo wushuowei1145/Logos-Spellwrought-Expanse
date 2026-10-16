@@ -2,6 +2,6 @@
   "required": true,
   "package": "dev.logos.dimension.mixin",
   "compatibilityLevel": "JAVA_25",
-  "mixins": ["JourneyTemperatureMixin"],
+  "mixins": ["JourneyTemperatureMixin", "MinecraftServerAccess"],
   "injectors": {"defaultRequire": 1}
 }

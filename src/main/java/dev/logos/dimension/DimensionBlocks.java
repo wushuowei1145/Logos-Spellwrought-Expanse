@@ -4,6 +4,7 @@ import dev.logos.dimension.block.AetherPlantBlock;
 import dev.logos.dimension.block.AlchemicalCauldronBlock;
 import dev.logos.dimension.block.ReactiveMatterBlock;
 import dev.logos.dimension.block.VortexBlock;
+import dev.logos.dimension.instance.BoundCauldronItem;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.world.level.block.Block;
@@ -47,8 +48,13 @@ public final class DimensionBlocks {
             p -> p.mapColor(MapColor.COLOR_CYAN).instabreak().noCollision().noOcclusion().sound(SoundType.GRASS)));
     public static final DeferredBlock<VortexBlock> VORTEX = item("vortex", BLOCKS.registerBlock("vortex", VortexBlock::new,
             p -> p.mapColor(MapColor.GOLD).strength(2f).sound(SoundType.AMETHYST).noOcclusion().lightLevel(s -> 8)));
-    public static final DeferredBlock<AlchemicalCauldronBlock> ALCHEMICAL_CAULDRON = item("alchemical_cauldron", BLOCKS.registerBlock("alchemical_cauldron", AlchemicalCauldronBlock::new,
-            p -> p.mapColor(MapColor.COLOR_BLACK).strength(3f).sound(SoundType.METAL).noOcclusion().lightLevel(s -> 10)));
+    public static final DeferredBlock<AlchemicalCauldronBlock> ALCHEMICAL_CAULDRON = BLOCKS.registerBlock("alchemical_cauldron", AlchemicalCauldronBlock::new,
+            p -> p.mapColor(MapColor.COLOR_BLACK).strength(3f).sound(SoundType.METAL).noOcclusion().lightLevel(s -> 10));
+    static {
+        ITEMS.registerItem("alchemical_cauldron", properties -> new BoundCauldronItem(ALCHEMICAL_CAULDRON.get(), properties),
+                properties -> properties.stacksTo(1).useBlockDescriptionPrefix());
+        PALETTE.add(ALCHEMICAL_CAULDRON);
+    }
 
     private static DeferredBlock<Block> solid(String name, MapColor color, float strength, SoundType sound) {
         return item(name, BLOCKS.registerSimpleBlock(name, p -> p.mapColor(color).strength(strength).sound(sound)));

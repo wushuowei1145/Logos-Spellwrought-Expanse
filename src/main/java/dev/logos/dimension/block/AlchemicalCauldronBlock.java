@@ -1,27 +1,33 @@
 package dev.logos.dimension.block;
 
 import com.mojang.serialization.MapCodec;
-import dev.logos.dimension.DimensionTravel;
+import dev.logos.dimension.instance.BoundCauldronBlockEntity;
+import dev.logos.dimension.instance.CauldronWorlds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.minecraft.world.entity.InsideBlockEffectType;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /** The liquid is a portal surface; the solid rim and hollow basin remain real collision geometry. */
-public final class AlchemicalCauldronBlock extends Block {
+public final class AlchemicalCauldronBlock extends Block implements EntityBlock {
     public static final MapCodec<AlchemicalCauldronBlock> CODEC = simpleCodec(AlchemicalCauldronBlock::new);
     public static final double MODEL_SCALE = 1.5;
     public static final double RIM_HEIGHT = 13.0 * MODEL_SCALE / 16;
@@ -40,6 +46,21 @@ public final class AlchemicalCauldronBlock extends Block {
     }
     public AlchemicalCauldronBlock(BlockBehaviour.Properties properties) { super(properties); }
     @Override public MapCodec<AlchemicalCauldronBlock> codec() { return CODEC; }
+    @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new BoundCauldronBlockEntity(pos, state); }
+
+    @Override public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player,
+                                                  ItemStack toolStack, boolean willHarvest, FluidState fluid) {
+        if (!(level.getBlockEntity(pos) instanceof BoundCauldronBlockEntity binding)) {
+            return super.onDestroyedByPlayer(state, level, pos, player, toolStack, willHarvest, fluid);
+        }
+        // Scope this flag to actual removal, so a cancelled mining attempt cannot suppress later destruction.
+        binding.setBeingMined(true, player.preventsBlockDrops());
+        try {
+            return super.onDestroyedByPlayer(state, level, pos, player, toolStack, willHarvest, fluid);
+        } finally {
+            binding.setBeingMined(false, false);
+        }
+    }
     @Override protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) { return SHAPE; }
     @Override protected VoxelShape getEntityInsideCollisionShape(BlockState state, BlockGetter level, BlockPos pos, Entity entity) { return BASIN; }
 
@@ -51,7 +72,8 @@ public final class AlchemicalCauldronBlock extends Block {
             if (e instanceof ServerPlayer p && p.level() == level && insideLiquid(p, pos)
                     && p.canUsePortal(false) && !p.isSpectator() && !p.isOnPortalCooldown()) {
                 Vec3 home = safeReturn(p, pos);
-                boolean moved = DimensionTravel.enter(p, home);
+                boolean moved = level.getBlockEntity(pos) instanceof BoundCauldronBlockEntity binding
+                        && CauldronWorlds.enter(p, binding, home);
                 p.setPortalCooldown(moved ? 80 : 20);
             }
         });

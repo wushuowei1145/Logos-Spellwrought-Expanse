@@ -16,7 +16,7 @@ public final class UnderIslandHaunt {
     public static final TagKey<EntityType<?>> ISLAND_BOSSES = TagKey.create(Registries.ENTITY_TYPE, LogosDimension.id("island_bosses"));
 
     public static HauntPayload state(ServerLevel level, double x, double y, double z) {
-        if (!level.dimension().equals(LogosDimension.CRUCIBLE)
+        if (!LogosDimension.isCrucible(level.dimension())
                 || !(level.getChunkSource().getGenerator() instanceof AlchemicalChunkGenerator gen)) return HauntPayload.CLEAR;
         var terrain = gen.terrain(); var center = terrain.layout().nearest((int) Math.floor(x), (int) Math.floor(z));
         double radius = terrain.layout().islandRadius();
@@ -35,7 +35,7 @@ public final class UnderIslandHaunt {
         // LOGOS_DIMENSION_ISLAND_BOSS_HOOK: add the future Boss entity to this tag, no placeholder mob is registered.
         if (!(event.getEntity().level() instanceof ServerLevel level)
                 || !event.getEntity().getType().builtInRegistryHolder().is(ISLAND_BOSSES)
-                || !level.dimension().equals(LogosDimension.CRUCIBLE)
+                || !LogosDimension.isCrucible(level.dimension())
                 || !(level.getChunkSource().getGenerator() instanceof AlchemicalChunkGenerator gen)) return;
         var boss = event.getEntity(); var center = gen.terrain().layout().nearest(boss.getBlockX(), boss.getBlockZ());
         if (Math.hypot(boss.getX() - center.x(), boss.getZ() - center.z()) <= gen.terrain().layout().islandRadius())

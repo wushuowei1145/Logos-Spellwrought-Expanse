@@ -21,7 +21,7 @@ public final class DimensionCommands {
         var regions = Commands.literal("region");
         for (var region : AlchemicalLayout.Region.values()) regions.then(Commands.literal(region.name().toLowerCase(java.util.Locale.ROOT)).executes(c -> {
             var player = c.getSource().getPlayerOrException();
-            if (!player.level().dimension().equals(LogosDimension.CRUCIBLE) && !DimensionTravel.enter(player)) return 0;
+            if (!LogosDimension.isCrucible(player.level().dimension()) && !DimensionTravel.enter(player)) return 0;
             var target = player.level();
             var generator = (AlchemicalChunkGenerator) target.getChunkSource().getGenerator();
             var center = generator.terrain().layout().nearest(player.getBlockX(), player.getBlockZ());
@@ -31,11 +31,12 @@ public final class DimensionCommands {
         root.then(regions);
         var phases = Commands.literal("phase").executes(c -> {
             var player = c.getSource().getPlayerOrException();
-            if (!player.level().dimension().equals(LogosDimension.CRUCIBLE)) return 0;
+            if (!LogosDimension.isCrucible(player.level().dimension())) return 0;
             player.sendSystemMessage(Component.translatable(OpusPhase.of(player.level()).key())); return 1;
         });
         for (var phase : OpusPhase.values()) phases.then(Commands.literal(phase.name().toLowerCase(java.util.Locale.ROOT)).executes(c -> {
-            var level = c.getSource().getServer().getLevel(LogosDimension.CRUCIBLE);
+            var level = c.getSource().getLevel();
+            if(!LogosDimension.isCrucible(level.dimension()))level=c.getSource().getServer().getLevel(LogosDimension.CRUCIBLE);
             if (level == null) return 0;
             var clock = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.WORLD_CLOCK).getOrThrow(OpusPhase.CLOCK);
             var manager = c.getSource().getServer().clockManager();
@@ -47,7 +48,7 @@ public final class DimensionCommands {
         var bossState = Commands.literal("boss");
         for (boolean defeated : new boolean[] {true, false}) bossState.then(Commands.literal(defeated ? "defeated" : "reset").executes(c -> {
             var p = c.getSource().getPlayerOrException();
-            if (!p.level().dimension().equals(LogosDimension.CRUCIBLE)) return 0;
+            if (!LogosDimension.isCrucible(p.level().dimension())) return 0;
             var gen = (AlchemicalChunkGenerator) p.level().getChunkSource().getGenerator();
             IslandProgress.of(p.level()).setDefeated(gen.terrain().layout().nearest(p.getBlockX(), p.getBlockZ()), defeated);
             return 1;
@@ -56,7 +57,8 @@ public final class DimensionCommands {
         event.getDispatcher().register(root);
     }
     private static int island(net.minecraft.server.level.ServerPlayer player, int gx, int gz) {
-        if (!player.level().dimension().equals(LogosDimension.CRUCIBLE) && !DimensionTravel.enter(player)) return 0;
+        if(gx!=0||gz!=0){player.sendSystemMessage(Component.literal("每个咒械原世界只有一座中心空岛。"));return 0;}
+        if (!LogosDimension.isCrucible(player.level().dimension()) && !DimensionTravel.enter(player)) return 0;
         var target = player.level();
         var terrain = ((AlchemicalChunkGenerator) target.getChunkSource().getGenerator()).terrain();
         var center = terrain.layout().center(gx, gz);

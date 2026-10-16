@@ -20,7 +20,13 @@ neoForge {
     version = neo_version
     runs {
         client { client() }
-        server { server(); programArgument '--nogui' }
+        server {
+            server(); programArgument '--nogui'
+            if (project.hasProperty('cauldronPersistenceStage')) {
+                gameDirectory = file('runs/cauldronPersistence')
+                systemProperty 'logos_dimension.persistence_stage', project.property('cauldronPersistenceStage')
+            }
+        }
         gameTestServer {
             type = 'gameTestServer'
             systemProperty 'neoforge.enabledGameTestNamespaces', mod_id

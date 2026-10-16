@@ -28,7 +28,7 @@ public class ReactiveMatterBlock extends Block {
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) { builder.add(NATURAL, PHASE); }
 
     @Override protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        if (!level.dimension().equals(LogosDimension.CRUCIBLE) || !state.getValue(NATURAL)) return;
+        if (!LogosDimension.isCrucible(level.dimension()) || !state.getValue(NATURAL)) return;
         int phase = OpusPhase.of(level).ordinal();
         if (state.getValue(PHASE) != phase) level.setBlock(pos, state.setValue(PHASE, phase), Block.UPDATE_ALL);
         if (this == DimensionBlocks.SALT_CRUST.get() && phase == OpusPhase.ALBEDO.ordinal()

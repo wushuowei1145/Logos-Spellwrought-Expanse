@@ -6,7 +6,14 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "logos_dimension:alchemical_cauldron"
+          "name": "logos_dimension:alchemical_cauldron",
+          "functions": [
+            {
+              "function": "minecraft:copy_components",
+              "source": "block_entity",
+              "include": ["logos_dimension:cauldron_world"]
+            }
+          ]
         }
       ],
       "conditions": [

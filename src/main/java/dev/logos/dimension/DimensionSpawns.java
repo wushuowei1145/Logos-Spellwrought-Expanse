@@ -19,7 +19,7 @@ final class DimensionSpawns {
         EntityType<Mob> type = (EntityType<Mob>) BuiltInRegistries.ENTITY_TYPE.getValue(key);
         if (SpawnPlacements.getPlacementType(type) == SpawnPlacementTypes.NO_RESTRICTIONS) {
             event.register(type, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                    (entity, level, reason, pos, random) -> level.getLevel().dimension().equals(LogosDimension.CRUCIBLE)
+                    (entity, level, reason, pos, random) -> LogosDimension.isCrucible(level.getLevel().dimension())
                             && !IslandSanctum.contains(level.getLevel(), pos)
                             && level.getDifficulty() != Difficulty.PEACEFUL
                             && level.getRawBrightness(pos, 0) <= 7,

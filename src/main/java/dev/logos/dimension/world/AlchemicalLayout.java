@@ -1,6 +1,6 @@
 package dev.logos.dimension.world;
 
-/** Seeded, repeatable geography shared by terrain and biome selection, including negative coordinates. */
+/** One finite, seeded geography shared by terrain and biome selection. */
 public final class AlchemicalLayout {
     public static final int DEFAULT_SPACING = 20_000;
     public enum Region { AETHER, SULFUR, MERCURY, SALT }
@@ -19,30 +19,19 @@ public final class AlchemicalLayout {
     public long seed() { return seed; }
     public int spacing() { return spacing; }
     public double islandRadius() { return spacing * 0.06; }
+    public boolean contains(int x, int z) {
+        int min = -spacing / 2;
+        int max = min + spacing;
+        return x >= min && x < max && z >= min && z < max;
+    }
 
+    /** Legacy grid arguments resolve to this world's sole island, never another repeated pattern. */
     public Center center(long gx, long gz) {
-        long salt = hash(gx, gz, seed);
-        int x = (int) (gx * spacing);
-        int z = (int) (gz * spacing);
-        // The first island is addressable at the origin; the other centers have stable offsets.
-        if (gx != 0 || gz != 0) {
-            x += (int) (unit(salt) * spacing * 0.06);
-            z += (int) (unit(mix(salt)) * spacing * 0.06);
-        }
-        return new Center(gx, gz, x, z, salt);
+        return new Center(0, 0, 0, 0, hash(0, 0, seed));
     }
 
     public Center nearest(int x, int z) {
-        long gx = Math.floorDiv(x + spacing / 2, spacing);
-        long gz = Math.floorDiv(z + spacing / 2, spacing);
-        Center best = null;
-        double distance = Double.POSITIVE_INFINITY;
-        for (long dz = -1; dz <= 1; dz++) for (long dx = -1; dx <= 1; dx++) {
-            Center c = center(gx + dx, gz + dz);
-            double d = squared(x - (double) c.x, z - (double) c.z);
-            if (d < distance) { distance = d; best = c; }
-        }
-        return best;
+        return center(0, 0);
     }
 
     public Sample sample(int x, int z) {

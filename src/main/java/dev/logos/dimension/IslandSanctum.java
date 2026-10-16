@@ -9,7 +9,7 @@ import net.neoforged.neoforge.event.entity.living.MobSpawnEvent;
 /** Empty spawn tables plus placement guards reserve the island for future scripted bosses. */
 public final class IslandSanctum {
     public static boolean contains(ServerLevel level, BlockPos pos) {
-        if (!level.dimension().equals(LogosDimension.CRUCIBLE)
+        if (!LogosDimension.isCrucible(level.dimension())
                 || !(level.getChunkSource().getGenerator() instanceof AlchemicalChunkGenerator generator)) return false;
         var c = generator.terrain().column(pos.getX(), pos.getZ());
         return c.hasIsland() && pos.getY() >= c.islandBottom() - 8;

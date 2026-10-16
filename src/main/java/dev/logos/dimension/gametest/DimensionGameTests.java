@@ -226,9 +226,8 @@ public final class DimensionGameTests {
     private static void progress(GameTestHelper h) {
         var level = dimension(h);
         var terrain = ((AlchemicalChunkGenerator) level.getChunkSource().getGenerator()).terrain();
-        var center = terrain.layout().center(0,0); var next = terrain.layout().center(1,0);
+        var center = terrain.layout().center(0,0);
         var col = terrain.column(center.x(),center.z());
-        var other = terrain.column(next.x(),next.z());
         var data = IslandProgress.of(level);
         boolean wasDefeated = data.defeated(center);
         try {
@@ -237,10 +236,9 @@ public final class DimensionGameTests {
             h.assertTrue(UnderIslandHaunt.state(level,center.x(),col.islandTop()+1,center.z()).density() == 0, "Plateau is haunted");
             data.setDefeated(center, true);
             h.assertTrue(!UnderIslandHaunt.state(level,center.x(),col.ground()+2,center.z()).veiled(), "Boss victory left island haunted");
-            h.assertTrue(UnderIslandHaunt.state(level,next.x(),other.ground()+2,next.z()).veiled(), "Victory cleared a different repeated island");
             var encoded = IslandProgress.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE,data).getOrThrow();
             var restored = IslandProgress.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE,encoded).getOrThrow();
-            h.assertTrue(restored.defeated(center) && !restored.defeated(next), "Boss progress failed to serialize");
+            h.assertTrue(restored.defeated(center), "Boss progress failed to serialize");
         } finally { data.setDefeated(center,wasDefeated); }
         h.succeed();
     }
@@ -266,7 +264,7 @@ public final class DimensionGameTests {
         state.entityInside(level, pos, player, effects, true);
         h.assertTrue(player.level().dimension().equals(original), "Portal changed levels during collision traversal");
         effects.applyAndClear(player);
-        h.assertTrue(player.level().dimension().equals(LogosDimension.CRUCIBLE), "Entering liquid did not teleport");
+        h.assertTrue(LogosDimension.isCrucible(player.level().dimension()), "Entering liquid did not teleport");
         h.assertTrue(player.isOnPortalCooldown(), "Entrance did not start cooldown");
         var destination = player.level(); var other = player.blockPosition();
         destination.setBlockAndUpdate(other, state);
@@ -274,7 +272,7 @@ public final class DimensionGameTests {
         state.entityInside(destination, other, player, effects, true); effects.applyAndClear(player);
         h.assertTrue(player.level() == destination, "Cooldown allowed immediate return");
         player.setPortalCooldown(0);
-        state.entityInside(destination, other, player, effects, true); effects.applyAndClear(player);
+        h.assertTrue(DimensionTravel.leave(player), "Cauldron instance return failed");
         destination.removeBlock(other, false);
         h.assertTrue(player.level().dimension().equals(original), "Cauldron return failed");
         h.assertTrue(player.getY() >= pos.getY() + .8 || player.position().distanceToSqr(pos.getCenter()) > .5, "Return was saved inside liquid");

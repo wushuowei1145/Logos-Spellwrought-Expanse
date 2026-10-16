@@ -29,6 +29,12 @@ public final class AlchemicalBiomeSource extends BiomeSource {
     }
     public void bindSeed(long seed) { layout = new AlchemicalLayout(seed, spacing); }
     public AlchemicalLayout layout() { return layout; }
+    /** Instance generators must not share mutable seed bindings with the template or other cauldrons. */
+    public AlchemicalBiomeSource copyForInstance() {
+        var copy = new AlchemicalBiomeSource(aether, sulfur, mercury, salt, sanctum, AlchemicalLayout.DEFAULT_SPACING);
+        copy.bindSeed(layout.seed());
+        return copy;
+    }
     @Override protected MapCodec<? extends BiomeSource> codec() { return CODEC; }
     @Override protected Stream<Holder<Biome>> collectPossibleBiomes() { return Stream.of(aether, sulfur, mercury, salt, sanctum); }
     @Override public Holder<Biome> getNoiseBiome(int quartX, int quartY, int quartZ, Climate.Sampler sampler) {

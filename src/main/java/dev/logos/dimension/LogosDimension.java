@@ -43,12 +43,14 @@ public final class LogosDimension {
     }
     public LogosDimension(IEventBus bus) {
         DimensionFluids.init();
+        dev.logos.dimension.instance.CauldronBinding.register(bus);
         dev.logos.dimension.cloudsea.CloudseaBlocks.init();
         DimensionBlocks.BLOCKS.register(bus); DimensionBlocks.ITEMS.register(bus);
         DimensionFluids.TYPES.register(bus); DimensionFluids.FLUIDS.register(bus);
         GENERATORS.register(bus); BIOME_SOURCES.register(bus); TABS.register(bus);
         DimensionGameTests.register(bus);
         dev.logos.dimension.gametest.CloudseaGameTests.register(bus);
+        dev.logos.dimension.gametest.CauldronInstanceGameTests.register(bus);
         bus.addListener(DimensionSpawns::register);
         bus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
                 event.registrar("1").playToClient(dev.logos.dimension.net.HauntPayload.TYPE, dev.logos.dimension.net.HauntPayload.CODEC));
@@ -59,4 +61,15 @@ public final class LogosDimension {
         NeoForge.EVENT_BUS.addListener(UnderIslandHaunt::death);
     }
     public static Identifier id(String path) { return Identifier.fromNamespaceAndPath(ID, path); }
+    public static boolean isCrucible(ResourceKey<Level> dimension) {
+        if(dimension.equals(CRUCIBLE))return true;
+        var id=dimension.identifier();if(!id.getNamespace().equals(ID))return false;
+        String path=id.getPath();if(path.length()!=36)return false;
+        for(int i=0;i<36;i++){
+            char c=path.charAt(i);
+            if(i==8||i==13||i==18||i==23){if(c!='-')return false;}
+            else if(!(c>='0'&&c<='9'||c>='a'&&c<='f'))return false;
+        }
+        return true;
+    }
 }

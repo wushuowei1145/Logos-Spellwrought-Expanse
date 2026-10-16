@@ -62,6 +62,7 @@ public final class AlchemicalChunkGenerator extends ChunkGenerator {
         var surface = chunk.getOrCreateHeightmapUnprimed(Heightmap.Types.WORLD_SURFACE_WG);
         for (int z = 0; z < 16; z++) for (int x = 0; x < 16; x++) {
             int wx = chunk.getPos().getMinBlockX() + x, wz = chunk.getPos().getMinBlockZ() + z;
+            if (!terrain.layout().contains(wx, wz)) continue;
             var column = terrain.column(wx, wz);
             for (int y = getMinY(); y < getMinY() + getGenDepth(); y++) {
                 BlockState state = stateAt(wx, y, wz, column);
@@ -74,6 +75,7 @@ public final class AlchemicalChunkGenerator extends ChunkGenerator {
     }
 
     public BlockState stateAt(int x, int y, int z, AlchemicalTerrain.Column c) {
+        if (!terrain.layout().contains(x, z)) return Blocks.AIR.defaultBlockState();
         if (c.hasIsland() && y >= c.islandBottom() && y <= c.islandTop()) return DimensionBlocks.ISLAND_STONE.get().defaultBlockState();
         if (c.hasMetalIsland() && y >= c.metalBottom() && y <= c.metalTop()) return DimensionBlocks.MERCURY_METAL.get().defaultBlockState();
         BlockState apparatus = apparatus(x, y, z, c.geography().center());
@@ -144,6 +146,7 @@ public final class AlchemicalChunkGenerator extends ChunkGenerator {
         // Start only exposed fluid edges. Interior lake sources do not need thousands of idle ticks.
         for (int dz = 0; dz < 16; dz++) for (int dx = 0; dx < 16; dx++) {
             int px = chunk.getPos().getMinBlockX() + dx, pz = chunk.getPos().getMinBlockZ() + dz;
+            if (!terrain.layout().contains(px, pz)) continue;
             var col = terrain.column(px, pz);
             if (col.liquid() != AlchemicalTerrain.Liquid.NONE) {
                 var p = new BlockPos(px, col.liquidTop(), pz);
@@ -161,7 +164,7 @@ public final class AlchemicalChunkGenerator extends ChunkGenerator {
                 level.scheduleTick(neck, DimensionFluids.MERCURY.get(), 15);
         }
         // Island tops are deliberately never decorated, including their peripheral slopes.
-        if (c.geography().region() == AlchemicalLayout.Region.AETHER && c.liquid() == AlchemicalTerrain.Liquid.NONE) {
+        if (terrain.layout().contains(x, z) && c.geography().region() == AlchemicalLayout.Region.AETHER && c.liquid() == AlchemicalTerrain.Liquid.NONE) {
             if (AlchemicalLayout.unit(salt) > .15 && terrain.layout().noise(x / 320.0, z / 320.0, 733) > -.15)
                 fanTree(chunk, x, c.ground() + 1, z, salt);
             for (int i = 0; i < 4; i++) {
@@ -172,7 +175,7 @@ public final class AlchemicalChunkGenerator extends ChunkGenerator {
                     decorate(chunk, px, ground.ground() + 1, pz, (h & 7) == 0 ? DimensionBlocks.STAR_BLOSSOM.get().defaultBlockState() : DimensionBlocks.AETHER_FERN.get().defaultBlockState());
             }
         }
-        if (c.geography().region() == AlchemicalLayout.Region.SALT && AlchemicalLayout.unit(salt) > .76) {
+        if (terrain.layout().contains(x, z) && c.geography().region() == AlchemicalLayout.Region.SALT && AlchemicalLayout.unit(salt) > .76) {
             int height = 4 + (int) (salt & 7);
             for (int y = c.ground() + 1; y <= c.ground() + height; y++)
                 decorate(chunk, x, y, z, natural(DimensionBlocks.SALT_CRYSTAL.get()));
@@ -198,6 +201,7 @@ public final class AlchemicalChunkGenerator extends ChunkGenerator {
         }
     }
     private void decorate(ChunkAccess chunk, int x, int y, int z, BlockState state) {
+        if (!terrain.layout().contains(x, z)) return;
         var c = terrain.column(x, z);
         if (c.hasIsland() && y >= c.islandBottom()) return;
         BlockPos pos = new BlockPos(x, y, z);
