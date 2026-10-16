@@ -1,0 +1,7 @@
+{
+  "required": true,
+  "package": "dev.logos.dimension.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": ["JourneyTemperatureMixin"],
+  "injectors": {"defaultRequire": 1}
+}

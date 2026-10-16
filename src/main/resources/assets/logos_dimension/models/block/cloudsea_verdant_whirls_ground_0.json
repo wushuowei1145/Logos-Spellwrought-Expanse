@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "logos_dimension:block/cloudsea_verdant_whirls_ground_0",
+    "side": "logos_dimension:block/cloudsea_verdant_whirls_side_0",
+    "bottom": "minecraft:block/dirt"
+  }
+}

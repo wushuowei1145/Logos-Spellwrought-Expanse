@@ -17,5 +17,5 @@ public final class CloudseaBiomeSource extends BiomeSource {
     public void bindSeed(long seed){terrain=new CloudseaTerrain(seed);}public CloudseaTerrain terrain(){return terrain;}
     @Override protected MapCodec<? extends BiomeSource> codec(){return CODEC;}
     @Override protected Stream<Holder<Biome>> collectPossibleBiomes(){return biomes.values().stream();}
-    @Override public Holder<Biome> getNoiseBiome(int x,int y,int z,Climate.Sampler sampler){return require(y*4<-65?"cloudsea_demon_depths":y*4<0?"cloudsea_root_caves":terrain.nearest(x*4,z*4).biome().id());}
+    @Override public Holder<Biome> getNoiseBiome(int x,int y,int z,Climate.Sampler sampler){return require(y*4<-65?"cloudsea_demon_depths":y*4<0?"cloudsea_root_caves":terrain.column(x*4,z*4).biome().id());}
 }

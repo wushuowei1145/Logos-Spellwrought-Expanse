@@ -1,0 +1,124 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "plant": "logos_dimension:block/journey_meadow_grass",
+    "particle": "logos_dimension:block/journey_meadow_grass"
+  },
+  "render_type": "neoforge:cutout",
+  "elements": [
+    {
+      "from": [
+        0.0,
+        0,
+        8
+      ],
+      "to": [
+        16.0,
+        13,
+        8
+      ],
+      "faces": {
+        "north": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        0.0,
+        0,
+        8
+      ],
+      "to": [
+        16.0,
+        14,
+        8
+      ],
+      "faces": {
+        "north": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          0,
+          8
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "from": [
+        0.0,
+        0,
+        8
+      ],
+      "to": [
+        16.0,
+        12,
+        8
+      ],
+      "faces": {
+        "north": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          0,
+          8
+        ],
+        "axis": "y",
+        "angle": -45
+      }
+    }
+  ]
+}

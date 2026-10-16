@@ -1,31 +1,57 @@
 {
-  "has_skylight": true,
-  "has_ceiling": false,
-  "has_ender_dragon_fight": false,
-  "coordinate_scale": 1.0,
-  "ambient_light": 0.35,
-  "min_y": -128,
-  "height": 640,
-  "logical_height": 640,
-  "infiniburn": "#minecraft:infiniburn_overworld",
-  "monster_spawn_light_level": 0,
-  "monster_spawn_block_light_limit": 0,
-  "skybox": "none",
-  "default_clock": "logos_dimension:cloudsea",
-  "timelines": [
-    "logos_dimension:cloudsea"
-  ],
+  "ambient_light": 0.0,
   "attributes": {
-    "minecraft:visual/cloud_height": 2048.0,
-    "minecraft:visual/sky_color": "#7096b9",
-    "minecraft:visual/fog_color": "#9cb7ca",
+    "minecraft:audio/ambient_sounds": {
+      "mood": {
+        "block_search_extent": 8,
+        "offset": 2.0,
+        "sound": "minecraft:ambient.cave",
+        "tick_delay": 6000
+      }
+    },
+    "minecraft:audio/background_music": {
+      "creative": {
+        "max_delay": 24000,
+        "min_delay": 12000,
+        "sound": "minecraft:music.creative"
+      },
+      "default": {
+        "max_delay": 24000,
+        "min_delay": 12000,
+        "sound": "minecraft:music.game"
+      }
+    },
     "minecraft:gameplay/bed_rule": {
       "can_set_spawn": "always",
-      "can_sleep": "never",
+      "can_sleep": "when_dark",
       "error_message": {
         "translate": "block.minecraft.bed.no_sleep"
       }
     },
-    "minecraft:visual/ambient_light_color": "#52636c"
-  }
+    "minecraft:gameplay/nether_portal_spawns_piglin": true,
+    "minecraft:gameplay/respawn_anchor_works": false,
+    "minecraft:visual/ambient_light_color": "#0a0a0a",
+    "minecraft:visual/cloud_color": "#ccffffff",
+    "minecraft:visual/cloud_height": 480.0,
+    "minecraft:visual/fog_color": "#bacbd5",
+    "minecraft:visual/sky_color": "#88acd2"
+  },
+  "coordinate_scale": 1.0,
+  "default_clock": "logos_dimension:cloudsea",
+  "has_ceiling": false,
+  "has_ender_dragon_fight": false,
+  "has_skylight": true,
+  "height": 640,
+  "infiniburn": "#minecraft:infiniburn_overworld",
+  "logical_height": 640,
+  "min_y": -128,
+  "monster_spawn_block_light_limit": 0,
+  "monster_spawn_light_level": {
+    "type": "minecraft:uniform",
+    "max_inclusive": 7,
+    "min_inclusive": 0
+  },
+  "timelines": [
+    "logos_dimension:cloudsea"
+  ]
 }

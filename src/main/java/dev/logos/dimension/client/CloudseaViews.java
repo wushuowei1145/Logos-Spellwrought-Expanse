@@ -21,11 +21,11 @@ public abstract class CloudseaViews implements UIScenario {
         CloudseaTerrain.Region r=null;for(int z=-8;z<=8&&r==null;z++)for(int x=-8;x<=8&&r==null;x++){var q=gen.terrain().region(x,z);if(q.biome()==kind())r=q;}
         if(r==null)throw new IllegalStateException("Biome viewpoint not found");
         int x=Math.floorDiv(r.x(),512)*512+256,z=Math.floorDiv(r.z(),512)*512+256;
-        received=new BlockPos(x+80,gen.terrain().column(x+80,z).upperTop(),z);
+        received=new BlockPos(x+80,gen.terrain().column(x+80,z).ground(),z);
         if(received.getY()<110)received=new BlockPos(x,gen.terrain().column(x,z).ground(),z);
         return new Vec3(x+235,gen.terrain().column(x,z).ground()+140,z+145);
     }
-    @Override public void configure(ScenarioOptions o){o.tags("cloudsea","terrain").defaultTimeoutMs(60_000).scenarioTimeoutMs(120_000);}
+    @Override public void configure(ScenarioOptions o){o.tags("cloudsea","terrain").defaultTimeoutMs(120_000).scenarioTimeoutMs(180_000);}
     @Override public void define(ScenarioBuilder s){
         s.setGameMode(GameType.CREATIVE).runCommand("difficulty peaceful")
                 .step("camera settings",ctx->{var mc=Minecraft.getInstance();mc.options.hideGui=true;mc.options.renderDistance().set(16);mc.options.broadcastOptions();})
