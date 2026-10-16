@@ -76,11 +76,11 @@ public final class DimensionTravel {
         }
         var server = player.level().getServer();
         var home = new ReturnPoint(player.level().dimension().identifier().toString(), returnPosition.x, returnPosition.y, returnPosition.z, player.getYRot(), player.getXRot());
-        var center = generator.terrain().layout().center(0, 0);
-        var landing = findLanding(target, center, AlchemicalLayout.Region.AETHER);
-        if (landing == null) return false;
-        if (!teleport(player, target, landing, player.getYRot(), 0)) return false;
+        var gate = ReturnGate.prepare(target);
+        if (gate == null) return false;
+        if (!teleport(player, target, gate.feet().getBottomCenter(), player.getYRot(), 0)) return false;
         server.overworld().getDataStorage().computeIfAbsent(Returns.TYPE).put(player.getUUID().toString(), home);
+        ReturnGate.tell(player, gate);
         return true;
     }
 
