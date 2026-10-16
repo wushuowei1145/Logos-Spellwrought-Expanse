@@ -208,8 +208,7 @@ public final class DimensionGameTests {
         h.succeed();
     }
     private static void fluidHazards(GameTestHelper h) {
-        var level=h.getLevel();var player=h.makeMockServerPlayerInLevel();
-        player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+        var level=h.getLevel();var player=h.spawn(EntityType.PIG,new BlockPos(5,3,5));
         var effects=new net.minecraft.world.entity.InsideBlockEffectApplier.StepBasedCollector();
         var pos=h.absolutePos(new BlockPos(5,3,5));player.setPos(pos.getBottomCenter());
         for(var fluid:List.of(DimensionFluids.MERCURY.get(),DimensionFluids.FLOWING_MERCURY.get())) {
