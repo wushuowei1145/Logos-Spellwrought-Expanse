@@ -75,7 +75,8 @@
             "cloudsea_root_caves": "logos_dimension:cloudsea_root_caves",
             "cloudsea_demon_depths": "logos_dimension:cloudsea_demon_depths"
           }
-        }
+        },
+        "settings": "minecraft:overworld"
       }
     }
   }

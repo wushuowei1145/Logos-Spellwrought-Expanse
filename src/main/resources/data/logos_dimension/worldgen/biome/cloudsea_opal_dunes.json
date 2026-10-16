@@ -1,13 +1,17 @@
 {
-  "has_precipitation": false,
-  "temperature": 0.7,
-  "downfall": 0,
+  "has_precipitation": true,
+  "temperature": 0.65,
+  "downfall": 0.45,
   "effects": {
-    "water_color": "#87b6c9",
-    "grass_color": "#ddcbc1",
-    "foliage_color": "#b9c7dc"
+    "water_color": "#567d91",
+    "grass_color": "#c5c3ae",
+    "foliage_color": "#69815a"
   },
-  "carvers": [],
+  "carvers": [
+    "minecraft:cave",
+    "minecraft:cave_extra_underground",
+    "minecraft:canyon"
+  ],
   "features": [
     [],
     [],
@@ -21,6 +25,21 @@
     [],
     []
   ],
-  "spawners": {},
+  "spawners": {
+    "creature": [
+      {
+        "type": "minecraft:sheep",
+        "weight": 8,
+        "minCount": 2,
+        "maxCount": 4
+      },
+      {
+        "type": "minecraft:cow",
+        "weight": 6,
+        "minCount": 2,
+        "maxCount": 3
+      }
+    ]
+  },
   "spawn_costs": {}
 }

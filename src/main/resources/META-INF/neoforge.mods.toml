@@ -1,5 +1,8 @@
 license="All Rights Reserved"
 
+[[mixins]]
+config="logos_dimension.mixins.json"
+
 [[mods]]
 modId="logos_dimension"
 version="0.1.4"
