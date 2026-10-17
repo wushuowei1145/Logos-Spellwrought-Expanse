@@ -235,3 +235,5 @@ p=ROOT/'gametest-packs/crucible/data/minecraft/worldgen/world_preset/flat.json';
 print('Native data: both noise generators, 32 journey biomes, 8 seasonal plants, tree/cover features, finite-instance template and jigsaw structures.')
 
 write(D/'tags/worldgen/structure/journey_settlements.json',{'values':['logos_dimension:journey_hamlet','logos_dimension:journey_town']})
+runpy.run_path(str(ROOT/'tools/journey_art.py'))
+runpy.run_path(str(ROOT/'tools/grape_resources.py'))

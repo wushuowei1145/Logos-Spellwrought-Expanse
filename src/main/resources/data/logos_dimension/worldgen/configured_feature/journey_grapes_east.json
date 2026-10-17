@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:simple_block",
+  "config": {
+    "to_place": {
+      "type": "minecraft:simple_state_provider",
+      "state": {
+        "Name": "logos_dimension:journey_grapevine",
+        "Properties": {
+          "east": "true",
+          "age": "1",
+          "foliage": "true"
+        }
+      }
+    }
+  }
+}

@@ -32,7 +32,10 @@ public final class LogosDimension {
         BIOME_SOURCES.register("cloudsea", () -> LegacyWorldgenCodecs.CLOUDSEA);
         TABS.register("cloudsea", () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.logos_dimension.cloudsea"))
                 .icon(() -> dev.logos.dimension.cloudsea.CloudseaBlocks.PORCELAIN.get().asItem().getDefaultInstance())
-                .displayItems((p,out) -> dev.logos.dimension.cloudsea.CloudseaBlocks.PALETTE.forEach(b -> out.accept(b.get()))).build());
+                .displayItems((p,out) -> {
+                    dev.logos.dimension.cloudsea.CloudseaBlocks.PALETTE.forEach(b -> out.accept(b.get()));
+                    out.accept(dev.logos.dimension.cloudsea.CloudseaBlocks.GRAPES.get());out.accept(dev.logos.dimension.cloudsea.CloudseaBlocks.GRAPE_LEAF.get());
+                }).build());
         TABS.register("crucible", () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.logos_dimension"))
                 .icon(() -> DimensionBlocks.SALT_CRYSTAL.get().asItem().getDefaultInstance())
                 .displayItems((p, out) -> {
@@ -50,6 +53,7 @@ public final class LogosDimension {
         DimensionGameTests.register(bus);
         dev.logos.dimension.gametest.CloudseaGameTests.register(bus);
         dev.logos.dimension.gametest.CauldronInstanceGameTests.register(bus);
+        dev.logos.dimension.gametest.GrapeGameTests.register(bus);
         bus.addListener(DimensionSpawns::register);
         bus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
                 event.registrar("1").playToClient(dev.logos.dimension.net.HauntPayload.TYPE, dev.logos.dimension.net.HauntPayload.CODEC));

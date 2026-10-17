@@ -1,31 +1,24 @@
 {
   "parent": "minecraft:block/block",
-  "render_type": "neoforge:cutout",
+  "ambientocclusion": false,
   "textures": {
+    "particle": "logos_dimension:block/journey_moonbell_2",
     "plant": "logos_dimension:block/journey_moonbell_2",
-    "particle": "logos_dimension:block/journey_moonbell_2"
+    "stem": "logos_dimension:block/journey_botanical_stem",
+    "bark": "logos_dimension:block/journey_botanical_bark"
   },
   "elements": [
     {
       "from": [
-        1.0,
+        1.5,
         0,
-        8
+        5
       ],
       "to": [
-        15.0,
+        14.5,
         14,
-        8
+        5
       ],
-      "rotation": {
-        "origin": [
-          8,
-          0,
-          8
-        ],
-        "axis": "y",
-        "angle": 45
-      },
       "faces": {
         "north": {
           "texture": "#plant",
@@ -37,6 +30,88 @@
           ]
         },
         "south": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "axis": "y",
+        "angle": 45,
+        "origin": [
+          8,
+          0,
+          5
+        ]
+      }
+    },
+    {
+      "from": [
+        1.5,
+        0,
+        11
+      ],
+      "to": [
+        14.5,
+        16,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "axis": "y",
+        "angle": -45,
+        "origin": [
+          8,
+          0,
+          11
+        ]
+      }
+    },
+    {
+      "from": [
+        8,
+        0,
+        1.0
+      ],
+      "to": [
+        8,
+        13,
+        15.0
+      ],
+      "faces": {
+        "east": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
           "texture": "#plant",
           "uv": [
             0,
@@ -49,27 +124,18 @@
     },
     {
       "from": [
-        1.0,
+        7.7,
         0,
-        8
+        7.7
       ],
       "to": [
-        15.0,
-        14,
-        8
+        8.3,
+        12,
+        8.3
       ],
-      "rotation": {
-        "origin": [
-          8,
-          0,
-          8
-        ],
-        "axis": "y",
-        "angle": -45
-      },
       "faces": {
         "north": {
-          "texture": "#plant",
+          "texture": "#stem",
           "uv": [
             0,
             0,
@@ -78,7 +144,25 @@
           ]
         },
         "south": {
-          "texture": "#plant",
+          "texture": "#stem",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#stem",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#stem",
           "uv": [
             0,
             0,
@@ -88,5 +172,6 @@
         }
       }
     }
-  ]
+  ],
+  "render_type": "neoforge:cutout"
 }

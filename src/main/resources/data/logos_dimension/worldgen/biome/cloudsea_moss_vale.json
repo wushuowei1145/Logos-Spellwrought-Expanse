@@ -24,7 +24,11 @@
     [],
     [
       "logos_dimension:trees_cloudsea_moss_vale",
-      "logos_dimension:woodland_floor"
+      "logos_dimension:woodland_floor",
+      "logos_dimension:journey_grapes_north",
+      "logos_dimension:journey_grapes_south",
+      "logos_dimension:journey_grapes_east",
+      "logos_dimension:journey_grapes_west"
     ],
     []
   ],
