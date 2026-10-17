@@ -132,5 +132,6 @@
   "block.logos_dimension.journey_lupine": "羽扇豆",
   "block.logos_dimension.journey_meadow_grass": "原野牧草",
   "block.logos_dimension.journey_river_reed": "河岸芦苇",
-  "block.logos_dimension.journey_grapevine": "葡萄藤架"
+  "block.logos_dimension.journey_grapevine": "葡萄藤架",
+  "message.logos_dimension.return_gate": "回程漩涡位于 %s, %s, %s，右键即可返回来时的炼金釜旁。"
 }

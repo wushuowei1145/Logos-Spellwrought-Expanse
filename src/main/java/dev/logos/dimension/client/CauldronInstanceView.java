@@ -25,6 +25,7 @@ public final class CauldronInstanceView implements UIScenario {
     private static final BlockPos FIRST = new BlockPos(-8, 101, 0);
     private static final BlockPos SECOND = new BlockPos(8, 101, 0);
     private volatile UUID firstId, secondId;
+    private volatile BlockPos returnPortal;
     private long firstSeed;
 
     @Override public void configure(ScenarioOptions options) {
@@ -68,6 +69,7 @@ public final class CauldronInstanceView implements UIScenario {
             .server("remember the first bound world",ctx->{
                 firstId=((BoundCauldronBlockEntity)ctx.server().overworld().getBlockEntity(FIRST)).worldId();
                 firstSeed=ctx.player().level().getSeed();
+                returnPortal=dev.logos.dimension.ReturnGate.prepare(ctx.player().level()).portal();
             })
             .checkServer("first arrival is outer Aether inside the finite border",ctx->{
                 var p=ctx.player();var level=p.level();var gen=(AlchemicalChunkGenerator)level.getChunkSource().getGenerator();
@@ -78,12 +80,13 @@ public final class CauldronInstanceView implements UIScenario {
             })
             .check("client renders the UUID named world",ctx->firstId!=null&&Minecraft.getInstance().level.dimension().equals(CauldronWorlds.key(firstId)))
             .ticks(100).screenshot("first_cauldron_outer_aether")
-            .server("jump into a bound return cauldron",ctx->{
-                var p=ctx.player();var level=p.level();var pos=p.blockPosition().offset(4,0,0);
-                platform(level,pos).setWorldId(firstId);
-                drop(p,level,pos);
+            .waitUntil("client receives the automatically generated exit",ctx->returnPortal!=null&&Minecraft.getInstance().level.getBlockState(returnPortal).is(DimensionBlocks.VORTEX.get()))
+            .step("right click the generated return vortex",ctx->{
+                var mc=Minecraft.getInstance();
+                mc.gameMode.useItemOn(mc.player,net.minecraft.world.InteractionHand.MAIN_HAND,
+                        new net.minecraft.world.phys.BlockHitResult(returnPortal.getCenter(),net.minecraft.core.Direction.UP,returnPortal,false));
             })
-            .waitUntil("return cauldron reaches the overworld",ctx->Minecraft.getInstance().level!=null&&Minecraft.getInstance().level.dimension().equals(Level.OVERWORLD))
+            .waitUntil("return vortex reaches the overworld",ctx->Minecraft.getInstance().level!=null&&Minecraft.getInstance().level.dimension().equals(Level.OVERWORLD))
             .checkServer("physical return saved a point next to the original cauldron",ctx->
                 ctx.player().level()==ctx.server().overworld()&&ctx.player().position().distanceToSqr(FIRST.getCenter())<25)
             .server("jump into the original cauldron again",ctx->drop(ctx.player(),ctx.server().overworld(),FIRST))

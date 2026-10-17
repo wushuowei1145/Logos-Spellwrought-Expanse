@@ -132,5 +132,6 @@
   "block.logos_dimension.journey_lupine": "Lupine",
   "block.logos_dimension.journey_meadow_grass": "Meadow Grass",
   "block.logos_dimension.journey_river_reed": "River Reed",
-  "block.logos_dimension.journey_grapevine": "Grapevine"
+  "block.logos_dimension.journey_grapevine": "Grapevine",
+  "message.logos_dimension.return_gate": "Return vortex: %s, %s, %s. Right-click to return to your entrance cauldron."
 }

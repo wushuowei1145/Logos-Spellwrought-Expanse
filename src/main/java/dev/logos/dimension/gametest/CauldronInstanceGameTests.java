@@ -107,6 +107,11 @@ public final class CauldronInstanceGameTests {
             h.assertTrue(target.getWorldBorder().getCenterX() == 0 && target.getWorldBorder().getCenterZ() == 0, "Border is not centered on the sole island");
             h.assertTrue(target.getWorldBorder().isWithinBounds(p.blockPosition()), "Entrance placed player beyond the border");
             var gen = (AlchemicalChunkGenerator) target.getChunkSource().getGenerator();
+            var gate=dev.logos.dimension.ReturnGate.prepare(target);
+            h.assertTrue(gate!=null && target.getBlockState(gate.portal()).is(DimensionBlocks.VORTEX.get()) && gate.portal().distSqr(p.blockPosition())<=25,
+                    "First arrival did not create a reachable return vortex");
+            var savedGate=dev.logos.dimension.ReturnGate.CODEC.encodeStart(JsonOps.INSTANCE,target.getDataStorage().computeIfAbsent(dev.logos.dimension.ReturnGate.TYPE)).getOrThrow();
+            h.assertTrue(dev.logos.dimension.ReturnGate.CODEC.parse(JsonOps.INSTANCE,savedGate).result().isPresent(),"Return gate cannot be saved");
             h.assertTrue(Math.hypot(p.getX(), p.getZ()) > 8500 && gen.terrain().column(p.blockPosition().getX(), p.blockPosition().getZ()).geography().region() == AlchemicalLayout.Region.AETHER,
                     "Default arrival is not in the outer Aether wilderness");
             long seed = target.getSeed();
@@ -124,6 +129,10 @@ public final class CauldronInstanceGameTests {
             h.assertTrue(CauldronWorlds.enter(p, first, home) && first.worldId().equals(a) && p.level() == target && p.level().getSeed() == seed,
                     "Reentry generated a different instance or seed");
             h.assertTrue(target.getBlockState(marker).is(Blocks.LODESTONE), "Reentry reset existing chunks");
+            h.assertTrue(dev.logos.dimension.ReturnGate.prepare(target).equals(gate),"Reentry created another return gate or moved the arrival");
+            target.removeBlock(gate.portal(),false);
+            h.assertTrue(!CauldronWorlds.isDestroyed(server,a),"Breaking the exit destroyed its cauldron world");
+            h.assertTrue(dev.logos.dimension.ReturnGate.prepare(target).equals(gate)&&target.getBlockState(gate.portal()).is(DimensionBlocks.VORTEX.get()),"Missing return gate was not repaired on entry");
             h.assertTrue(dev.logos.dimension.IslandProgress.of(target).defeated(gen.terrain().layout().center(0, 0)), "Reentry lost this world's Boss completion");
             var encoded = CauldronWorlds.Worlds.CODEC.encodeStart(JsonOps.INSTANCE, CauldronWorlds.data(server)).getOrThrow();
             var decoded = CauldronWorlds.Worlds.CODEC.parse(JsonOps.INSTANCE, encoded).getOrThrow();
