@@ -70,15 +70,7 @@ for name,(color,kind) in solids.items():
     stone_texture(name,color,kind);elements=[cube([0,0,0],[16,16,16],cull=True)];textures={'body':local(name)}
     if name=='journey_limestone':
         stone_texture(name+'_top','#b7bab9','limestone')
-        # Recessed bedding joint, solid outline and culled internal faces.
-        elements=[cube([0,0,0],[16,16,16],cull=True,sides=('east','west','up','down'))]
-        for side in ['north','south']:
-            for y,h,inset in [(0,6,0),(6,4,.22),(10,6,0)]:
-                z=inset if side=='north' else 16-inset
-                elements.append({'from':[0,y,z],'to':[16,y+h,z],'faces':{side:face('body',[0,16-y-h,16,16-y],side)}})
-            for y,normal in [(6,'up'),(10,'down')]:
-                elements.append({'from':[0,y,0 if side=='north' else 15.78],'to':[16,y,.22 if side=='north' else 16],
-                                 'faces':{normal:face('body',[0,0,16,.22],side)}})
+        # Continuous exterior planes match the full-cube occlusion shape. Bedding stays in the texture.
         elements[0]['faces']['up']['texture']='#top';textures['top']=local(name+'_top')
     elif name=='journey_timber_frame':
         textures['beam']=local('cloudsea_dark_timber')
