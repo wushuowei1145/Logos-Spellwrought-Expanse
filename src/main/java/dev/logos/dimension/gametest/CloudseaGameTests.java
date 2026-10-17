@@ -72,8 +72,12 @@ public final class CloudseaGameTests {
             h.assertTrue(biome.getPrecipitationAt(pos,80)==net.minecraft.world.level.biome.Biome.Precipitation.SNOW,"Winter temperature does not produce snow");
             JourneySeasons.CONTEXT.remove();
             h.assertTrue(biome.getPrecipitationAt(pos,80)==net.minecraft.world.level.biome.Biome.Precipitation.RAIN,"Season context leaked outside the dimension tick");
-            var leaf=CloudseaBlocks.LEAVES.get(CloudseaBiome.SILK_FOLDS).get();level.setBlockAndUpdate(pos,leaf.defaultBlockState());
-            leaf.defaultBlockState().randomTick(level,pos,net.minecraft.util.RandomSource.create(1));
+            var leaf=CloudseaBlocks.LEAVES.get(CloudseaBiome.SILK_FOLDS).get();
+            var healthy=leaf.defaultBlockState().setValue(net.minecraft.world.level.block.LeavesBlock.DISTANCE,1).setValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT,true);
+            h.assertTrue(healthy.isRandomlyTicking(),"Healthy and player-placed leaves are excluded from seasonal random ticks");
+            level.setBlockAndUpdate(pos,healthy);
+            for(int attempt=0;attempt<32&&level.getBlockState(pos).getValue(SeasonalLeavesBlock.SEASON)!=3;attempt++)
+                level.tickChunk(level.getChunkAt(pos),4096);
             h.assertTrue(level.getBlockState(pos).getValue(SeasonalLeavesBlock.SEASON)==3,"Leaves do not update to winter");
             level.removeBlock(pos,false);
         }finally{JourneySeasons.CONTEXT.remove();level.clockManager().setTotalTicks(clock,previous);}

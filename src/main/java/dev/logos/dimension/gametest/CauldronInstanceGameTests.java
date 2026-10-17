@@ -46,13 +46,14 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 /** Exercise real level creation, item mining/placement and damage destruction, not just UUID math. */
 public final class CauldronInstanceGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS = DeferredRegister.create(Registries.TEST_FUNCTION, LogosDimension.ID);
-    private static final List<String> NAMES = List.of("cauldron_uuid_worlds", "cauldron_mining_binding", "cauldron_world_destruction", "cauldron_return_storage");
+    private static final List<String> NAMES = List.of("cauldron_uuid_worlds", "cauldron_mining_binding", "cauldron_world_destruction", "cauldron_return_storage", "cauldron_obstructed_gate");
 
     public static void register(IEventBus bus) {
         FUNCTIONS.register(NAMES.get(0), () -> CauldronInstanceGameTests::worlds);
         FUNCTIONS.register(NAMES.get(1), () -> CauldronInstanceGameTests::mining);
         FUNCTIONS.register(NAMES.get(2), () -> CauldronInstanceGameTests::destruction);
         FUNCTIONS.register(NAMES.get(3), () -> CauldronInstanceGameTests::returns);
+        FUNCTIONS.register(NAMES.get(4), () -> CauldronInstanceGameTests::obstructedGate);
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
             Holder<TestEnvironmentDefinition<?>> env = event.registerEnvironment(LogosDimension.id("cauldron_instances"), new TestEnvironmentDefinition.AllOf());
@@ -140,6 +141,24 @@ public final class CauldronInstanceGameTests {
         } finally {
             dispose(server, p, first.worldId(), second.worldId());
         }
+        h.succeed();
+    }
+
+    private static void obstructedGate(GameTestHelper h) {
+        var server=h.getLevel().getServer();UUID id=UUID.randomUUID();var level=CauldronWorlds.load(server,id);
+        try {
+            var first=DimensionTravel.findLanding(level,dev.logos.dimension.NativeWorlds.center(),AlchemicalLayout.Region.AETHER);
+            h.assertTrue(first!=null,"No test arrival found");var feet=BlockPos.containing(first);
+            var occupied=new java.util.HashSet<BlockPos>();
+            for(int distance=2;distance<=4;distance++)for(var direction:net.minecraft.core.Direction.Plane.HORIZONTAL)for(int dy:new int[]{0,1,-1,2,-2}) {
+                var pos=feet.relative(direction,distance).above(dy);occupied.add(pos);level.setBlockAndUpdate(pos,Blocks.OBSIDIAN.defaultBlockState());
+            }
+            h.assertTrue(level.isEmptyBlock(feet)&&level.isEmptyBlock(feet.above()),"Fixture blocked the arrival itself");
+            var gate=dev.logos.dimension.ReturnGate.prepare(level);
+            h.assertTrue(gate!=null,"An obstructed first landing permanently prevents cauldron entry");
+            h.assertTrue(!gate.feet().equals(feet)&&level.getBlockState(gate.portal()).is(DimensionBlocks.VORTEX.get()),"Exit was not relocated to another safe landing");
+            for(var pos:occupied)h.assertTrue(level.getBlockState(pos).is(Blocks.OBSIDIAN),"Exit repair overwrote player construction");
+        } finally {CauldronWorlds.requestDestroy(server,id);CauldronWorlds.processPending(server);}
         h.succeed();
     }
 

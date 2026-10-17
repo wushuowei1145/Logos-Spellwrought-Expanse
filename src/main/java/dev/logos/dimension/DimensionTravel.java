@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.logos.dimension.world.AlchemicalLayout;
 import java.util.*;
+import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -107,6 +108,11 @@ public final class DimensionTravel {
     }
 
     public static Vec3 findLanding(ServerLevel target, AlchemicalLayout.Center center, AlchemicalLayout.Region region) {
+        return findLanding(target,center,region,feet->true);
+    }
+
+    /** Reject unsuitable surroundings as well as unsafe feet, so callers can keep searching. */
+    public static Vec3 findLanding(ServerLevel target, AlchemicalLayout.Center center, AlchemicalLayout.Region region,Predicate<BlockPos> suitable) {
         double radius = 20_000 * switch (region) {
             case SULFUR -> .09; case MERCURY -> .23; case SALT -> .375; default -> .465;
         };
@@ -122,7 +128,7 @@ public final class DimensionTravel {
             int height=target.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,x,z);
             BlockPos feet = new BlockPos(x,height,z);
             if(target.getFluidState(feet.below()).isEmpty()&&target.getBlockState(feet.below()).isFaceSturdy(target,feet.below(),net.minecraft.core.Direction.UP)
-                    && target.isEmptyBlock(feet) && target.isEmptyBlock(feet.above())) return feet.getBottomCenter();
+                    && target.isEmptyBlock(feet) && target.isEmptyBlock(feet.above()) && suitable.test(feet)) return feet.getBottomCenter();
         }
         return null;
     }

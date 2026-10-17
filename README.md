@@ -1,6 +1,8 @@
 # 维度-咒械原
 
-**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.4.0**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.4.1**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+
+0.4.1 修复健康/玩家放置树叶无法换季，以及首个落点附近出口被阻挡就无法跳釜的问题。出口会继续寻找有空位的安全落点，保留原处建筑。
 
 ## 原版数据包生成
 
