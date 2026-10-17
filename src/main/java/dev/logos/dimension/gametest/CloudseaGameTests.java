@@ -48,6 +48,7 @@ public final class CloudseaGameTests {
                 var state=level.getBlockState(new BlockPos(x,y,z));var block=state.getBlock();
                 if(state.is(net.minecraft.tags.BlockTags.LOGS))logs++;
                 if(block instanceof SeasonalLeavesBlock)leaves++;
+                if(block instanceof JourneyPlantBlock)h.assertTrue(state.canSurvive(level,new BlockPos(x,y,z)),"Native plant has unsuitable ground at "+x+","+y+","+z+": "+state);
                 if(block instanceof JourneyPlantBlock||state.is(net.minecraft.world.level.block.Blocks.MOSS_CARPET)||state.is(net.minecraft.world.level.block.Blocks.LEAF_LITTER))plant=true;
             }if(plant)covered++;
         }
