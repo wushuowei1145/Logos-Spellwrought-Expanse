@@ -1,6 +1,8 @@
 # 维度-咒械原
 
-**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.5.2**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.6.0**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+
+0.6.0 新增环境萤火虫、季节浮光和植物微光。温暖季节的黄昏与夜晚有小群萤火虫，白天为柔和浮光，冬季为冷色霜光；详见 [环境微光](docs/JOURNEY_AMBIENCE.md)。
 
 0.5.2 修复普通植物可以种在石头、木板等任意实心方块上的问题。19 种地生植物统一采用原版植物的土壤支撑规则，失去土壤即脱落；旧存档中的误种植物在加载后随随机刻逐步脱落。葡萄藤继续沿用表面附着规则。
 
