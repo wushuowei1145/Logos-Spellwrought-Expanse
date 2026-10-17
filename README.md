@@ -1,6 +1,8 @@
 # 维度-咒械原
 
-**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.5.0**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.5.1**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+
+0.5.1 再次重画全部 32 种草皮：按草原、落叶林地、湿苔、松针、高山、寒地、海岸、积雪和湿地分别处理，草根与泥土自然过渡。每种四季草皮使用三套纹理和原版随机旋转，冬季改为柔和霜色；详见 [草皮重做](docs/JOURNEY_TURF.md)。
 
 0.5.0 重做远行大陆全部 96 种方块的模型或材质：灰白层理石灰岩、带叶簇边缘的树叶、铺满方块面的牧草，以及分枝、花穗和蕨叶。葡萄藤使用原版藤蔓的表面附着与攀爬规则，结出可采摘的葡萄和葡萄叶，详见 [方块与葡萄藤](docs/JOURNEY_BLOCK_ART.md)。保留 0.4.1 的换季和安全出口修复。
 

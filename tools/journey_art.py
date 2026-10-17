@@ -1,7 +1,7 @@
 """Final, deterministic block art pass. Static baked geometry; no per-plant renderers."""
 from pathlib import Path
 from PIL import Image, ImageDraw
-import json, math, random, re
+import json, math, random, re, runpy
 
 ROOT=Path(__file__).resolve().parent.parent
 R=ROOT/'src/main/resources';A=R/'assets/logos_dimension';D=R/'data/logos_dimension'
@@ -120,24 +120,9 @@ for key,title,ground,leaf in biomes:
         elements=[cube([0,0,0],[16,16,16],cull=True)]
         elements += [blade(8,8,1,16,14,angle=45,tex='fringe',cull=True),horizontal(14.9,'fringe',cull=True)]
         model(name,elements,{'body':local(name),'fringe':local(name+'_fringe')},True)
-        # Soil sides and a full grassy footprint stay cheap six-face blocks.
-        c=rgb(ground);c=tint(c,4 if season==0 else -2 if season==1 else -7)
-        if season==2:c=(min(180,c[0]+10),c[1],max(45,c[2]-8))
-        if season==3:c=(201,210,200)
-        top=Image.new('RGBA',(32,32),c+(255,));q=ImageDraw.Draw(top)
-        for n in range(170):
-            x=rng.randrange(32);y=rng.randrange(32);shade=tint(c,rng.randrange(-15,16))+(255,)
-            q.line((x,y,x+1,y-2),fill=shade,width=1)
-        save(top,f'{bid}_ground_{season}')
-        side=Image.new('RGBA',(32,32),'#79654c');q=ImageDraw.Draw(side)
-        for n in range(100):
-            x=rng.randrange(32);y=rng.randrange(32);q.line((x,y,x+2,y),fill=rng.choice(['#6c5945','#8a7356','#a08a66']))
-        for x in range(32):
-            for y in range(5+(x*11%5)):side.putpixel((x,y),top.getpixel((x,y)))
-        save(side,f'{bid}_side_{season}')
-        # Explicit six-face model per ground material, preserving face culling.
-        model(f'{bid}_ground_{season}',[cube([0,0,0],[16,16,16],cull=True)],{'body':local(f'{bid}_side_{season}'),'top':local(f'{bid}_ground_{season}'),'bottom':'minecraft:block/dirt'})
-        p=A/'models/block'/f'{bid}_ground_{season}.json';d=json.loads(p.read_text());d['elements'][0]['faces']['up']['texture']='#top';d['elements'][0]['faces']['down']['texture']='#bottom';write(p,d)
+        # Preserve the historical leaf RNG stream after moving turf art to its own generator.
+        for _ in range(170):rng.randrange(32);rng.randrange(32);rng.randrange(-15,16)
+        for _ in range(100):rng.randrange(32);rng.randrange(32);rng.randrange(3)
 
 stone_texture('journey_botanical_stem','#62764a','wood');stone_texture('journey_botanical_bark','#786144','bark')
 stone_texture('journey_botanical_leaf','#647d48','plaster')
@@ -234,3 +219,4 @@ for kind in base_plants:
     write(A/'blockstates'/f'{name}.json',{'variants':{'':[{'model':local(name),'y':y} for y in [0,90,180,270]]}})
 
 print('Journey art: all 32 turf/leaf families, 12 solids, 43 plant models; culled leaf fringes and full-footprint grass.')
+runpy.run_path(str(ROOT/'tools/journey_turf.py'))

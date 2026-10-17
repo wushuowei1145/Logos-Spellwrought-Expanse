@@ -2,10 +2,10 @@
   "parent": "minecraft:block/block",
   "ambientocclusion": true,
   "textures": {
-    "particle": "logos_dimension:block/cloudsea_pearl_basins_side_1",
-    "body": "logos_dimension:block/cloudsea_pearl_basins_side_1",
+    "particle": "logos_dimension:block/cloudsea_pearl_basins_ground_1",
     "top": "logos_dimension:block/cloudsea_pearl_basins_ground_1",
-    "bottom": "minecraft:block/dirt"
+    "side": "logos_dimension:block/cloudsea_pearl_basins_side_1",
+    "soil": "logos_dimension:block/journey_turf_soil_coast"
   },
   "elements": [
     {
@@ -21,7 +21,7 @@
       ],
       "faces": {
         "north": {
-          "texture": "#body",
+          "texture": "#side",
           "uv": [
             0,
             0,
@@ -31,7 +31,7 @@
           "cullface": "north"
         },
         "south": {
-          "texture": "#body",
+          "texture": "#side",
           "uv": [
             0,
             0,
@@ -41,7 +41,7 @@
           "cullface": "south"
         },
         "east": {
-          "texture": "#body",
+          "texture": "#side",
           "uv": [
             0,
             0,
@@ -51,7 +51,7 @@
           "cullface": "east"
         },
         "west": {
-          "texture": "#body",
+          "texture": "#side",
           "uv": [
             0,
             0,
@@ -71,7 +71,7 @@
           "cullface": "up"
         },
         "down": {
-          "texture": "#bottom",
+          "texture": "#soil",
           "uv": [
             0,
             0,
