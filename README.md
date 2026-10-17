@@ -1,6 +1,8 @@
 # 维度-咒械原
 
-**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.6.0**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.6.1**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+
+0.6.1 修复石灰岩侧面中部凹缝的透视问题，六个外表面连续封闭，岩层裂隙保留在贴图中。
 
 0.6.0 新增环境萤火虫、季节浮光和植物微光。温暖季节的黄昏与夜晚有小群萤火虫，白天为柔和浮光，冬季为冷色霜光；详见 [环境微光](docs/JOURNEY_AMBIENCE.md)。
 

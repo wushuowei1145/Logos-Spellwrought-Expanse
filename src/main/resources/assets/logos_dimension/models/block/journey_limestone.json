@@ -19,6 +19,26 @@
         16
       ],
       "faces": {
+        "north": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "south"
+        },
         "east": {
           "texture": "#body",
           "uv": [
@@ -58,246 +78,6 @@
             16
           ],
           "cullface": "down"
-        }
-      }
-    },
-    {
-      "from": [
-        0,
-        0,
-        0
-      ],
-      "to": [
-        16,
-        6,
-        0
-      ],
-      "faces": {
-        "north": {
-          "texture": "#body",
-          "uv": [
-            0,
-            10,
-            16,
-            16
-          ],
-          "cullface": "north"
-        }
-      }
-    },
-    {
-      "from": [
-        0,
-        6,
-        0.22
-      ],
-      "to": [
-        16,
-        10,
-        0.22
-      ],
-      "faces": {
-        "north": {
-          "texture": "#body",
-          "uv": [
-            0,
-            6,
-            16,
-            10
-          ],
-          "cullface": "north"
-        }
-      }
-    },
-    {
-      "from": [
-        0,
-        10,
-        0
-      ],
-      "to": [
-        16,
-        16,
-        0
-      ],
-      "faces": {
-        "north": {
-          "texture": "#body",
-          "uv": [
-            0,
-            0,
-            16,
-            6
-          ],
-          "cullface": "north"
-        }
-      }
-    },
-    {
-      "from": [
-        0,
-        6,
-        0
-      ],
-      "to": [
-        16,
-        6,
-        0.22
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            0,
-            0,
-            16,
-            0.22
-          ],
-          "cullface": "north"
-        }
-      }
-    },
-    {
-      "from": [
-        0,
-        10,
-        0
-      ],
-      "to": [
-        16,
-        10,
-        0.22
-      ],
-      "faces": {
-        "down": {
-          "texture": "#body",
-          "uv": [
-            0,
-            0,
-            16,
-            0.22
-          ],
-          "cullface": "north"
-        }
-      }
-    },
-    {
-      "from": [
-        0,
-        0,
-        16
-      ],
-      "to": [
-        16,
-        6,
-        16
-      ],
-      "faces": {
-        "south": {
-          "texture": "#body",
-          "uv": [
-            0,
-            10,
-            16,
-            16
-          ],
-          "cullface": "south"
-        }
-      }
-    },
-    {
-      "from": [
-        0,
-        6,
-        15.78
-      ],
-      "to": [
-        16,
-        10,
-        15.78
-      ],
-      "faces": {
-        "south": {
-          "texture": "#body",
-          "uv": [
-            0,
-            6,
-            16,
-            10
-          ],
-          "cullface": "south"
-        }
-      }
-    },
-    {
-      "from": [
-        0,
-        10,
-        16
-      ],
-      "to": [
-        16,
-        16,
-        16
-      ],
-      "faces": {
-        "south": {
-          "texture": "#body",
-          "uv": [
-            0,
-            0,
-            16,
-            6
-          ],
-          "cullface": "south"
-        }
-      }
-    },
-    {
-      "from": [
-        0,
-        6,
-        15.78
-      ],
-      "to": [
-        16,
-        6,
-        16
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            0,
-            0,
-            16,
-            0.22
-          ],
-          "cullface": "south"
-        }
-      }
-    },
-    {
-      "from": [
-        0,
-        10,
-        15.78
-      ],
-      "to": [
-        16,
-        10,
-        16
-      ],
-      "faces": {
-        "down": {
-          "texture": "#body",
-          "uv": [
-            0,
-            0,
-            16,
-            0.22
-          ],
-          "cullface": "south"
         }
       }
     }
