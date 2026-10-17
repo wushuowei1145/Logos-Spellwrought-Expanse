@@ -67,6 +67,7 @@ for i,(key,title,g,l) in enumerate(biomes):
         write(A/'blockstates'/f'{bid}_{kind}.json',{'variants':{f'season={s}':{'model':f'logos_dimension:block/{bid}_{kind}_{s}'} for s in range(4)}})
         write(A/'items'/f'{bid}_{kind}.json',{'model':{'type':'minecraft:model','model':f'logos_dimension:block/{bid}_{kind}_0'}})
         zh[f'block.logos_dimension.{bid}_{kind}']=title+('草皮' if kind=='ground' else '树叶')
+        en[f'block.logos_dimension.{bid}_{kind}']=english[i]+(' Turf' if kind=='ground' else ' Leaves')
     zh[f'biome.logos_dimension.{bid}']=title;en[f'biome.logos_dimension.{bid}']=english[i]
     cold=i in [3,13,19,21,22];alpine=i in [7,15,23];ocean=i in [2,20]
     mobs={'creature':[{'type':'minecraft:sheep','weight':8,'minCount':2,'maxCount':4},{'type':'minecraft:cow','weight':6,'minCount':2,'maxCount':3}]} if not ocean and not alpine else {}

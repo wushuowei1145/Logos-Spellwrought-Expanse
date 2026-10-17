@@ -18,6 +18,9 @@ public final class SeasonalLeavesBlock extends LeavesBlock {
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> builder){super.createBlockStateDefinition(builder);builder.add(SEASON);}
     // Native leaves only tick when eligible to decay; supported and placed leaves must also change season.
     @Override protected boolean isRandomlyTicking(BlockState state){return true;}
+    @Override protected boolean skipRendering(BlockState state,BlockState neighbor,net.minecraft.core.Direction direction){
+        return neighbor.getBlock() instanceof SeasonalLeavesBlock||super.skipRendering(state,neighbor,direction);
+    }
     @Override protected void randomTick(BlockState state,ServerLevel level,BlockPos pos,RandomSource random){
         if(level.dimension().equals(LogosDimension.CLOUDSEA)&&!CloudseaBlocks.isEvergreen(this)){
             int season=JourneySeasons.of(level);if(state.getValue(SEASON)!=season)level.setBlock(pos,state.setValue(SEASON,season),Block.UPDATE_CLIENTS);

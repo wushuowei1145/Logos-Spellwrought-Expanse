@@ -1,7 +1,163 @@
 {
-  "parent": "minecraft:block/leaves",
-  "render_type": "neoforge:cutout",
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
   "textures": {
-    "all": "logos_dimension:block/cloudsea_lantern_shelves_leaf_2"
-  }
+    "particle": "logos_dimension:block/cloudsea_lantern_shelves_leaf_2",
+    "body": "logos_dimension:block/cloudsea_lantern_shelves_leaf_2",
+    "fringe": "logos_dimension:block/cloudsea_lantern_shelves_leaf_2_fringe"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "south"
+        },
+        "east": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "east"
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "west"
+        },
+        "up": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "up"
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "from": [
+        0.0,
+        1,
+        8
+      ],
+      "to": [
+        16.0,
+        15,
+        8
+      ],
+      "faces": {
+        "north": {
+          "texture": "#fringe",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#fringe",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "south"
+        }
+      },
+      "rotation": {
+        "axis": "y",
+        "angle": 45,
+        "origin": [
+          8,
+          1,
+          8
+        ]
+      }
+    },
+    {
+      "from": [
+        0,
+        14.9,
+        0
+      ],
+      "to": [
+        16,
+        14.9,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#fringe",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "up"
+        },
+        "down": {
+          "texture": "#fringe",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "down"
+        }
+      }
+    }
+  ],
+  "render_type": "neoforge:cutout"
 }

@@ -1,0 +1,43 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "render_type": "neoforge:cutout",
+  "textures": {
+    "particle": "logos_dimension:block/journey_grape_leaves",
+    "vine": "logos_dimension:block/journey_grape_stems"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0.08
+      ],
+      "to": [
+        16,
+        16,
+        0.08
+      ],
+      "faces": {
+        "north": {
+          "texture": "#vine",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#vine",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ]
+}

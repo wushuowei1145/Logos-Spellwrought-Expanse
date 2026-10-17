@@ -24,7 +24,10 @@ public final class CloudseaBlocks {
     public static final DeferredBlock<Block> DARK_TIMBER=solid("cloudsea_dark_timber",MapColor.COLOR_BROWN,SoundType.WOOD,0);
     public static final DeferredBlock<Block> SLATE=solid("cloudsea_blue_slate",MapColor.COLOR_BLUE,SoundType.STONE,0);
     public static final DeferredBlock<Block> WINDOW=solid("cloudsea_lit_window",MapColor.SAND,SoundType.GLASS,9);
-    public static final DeferredBlock<Block> FERN=flora("journey_woodland_fern",0),BRACKEN=flora("journey_bracken",0),BLUEBELL=flora("journey_bluebell",0),FOXGLOVE=flora("journey_foxglove",0),LUPINE=flora("journey_lupine",0),MEADOW_GRASS=flora("journey_meadow_grass",0),REED=flora("journey_river_reed",0),GRAPEVINE=flora("journey_grapevine",0);
+    public static final DeferredBlock<Block> FERN=flora("journey_woodland_fern",0),BRACKEN=flora("journey_bracken",0),BLUEBELL=flora("journey_bluebell",0),FOXGLOVE=flora("journey_foxglove",0),LUPINE=flora("journey_lupine",0),MEADOW_GRASS=flora("journey_meadow_grass",0),REED=flora("journey_river_reed",0);
+    public static final DeferredBlock<Block> GRAPEVINE=grapevine();
+    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> GRAPES=DimensionBlocks.ITEMS.registerSimpleItem("journey_grapes",p->p.food(new net.minecraft.world.food.FoodProperties.Builder().nutrition(2).saturationModifier(.2f).build()));
+    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> GRAPE_LEAF=DimensionBlocks.ITEMS.registerSimpleItem("journey_grape_leaf");
     public static final DeferredBlock<Block> ANEMONE=seasonal("journey_silver_anemone"),MOONBELL=seasonal("journey_moonbell"),GLOWCAP=seasonal("journey_glowcap"),HEATHER=seasonal("journey_heather"),STAGHORN=seasonal("journey_amber_fern"),HELLEBORE=seasonal("journey_winter_hellebore"),FIREWEED=seasonal("journey_fireweed"),BRAMBLE=seasonal("journey_berry_bramble");
     public static final List<DeferredBlock<Block>> SEASONAL_PLANTS=List.of(ANEMONE,MOONBELL,GLOWCAP,HEATHER,STAGHORN,HELLEBORE,FIREWEED,BRAMBLE);
     public static final DeferredBlock<Block> LIMESTONE=solid("journey_limestone",MapColor.QUARTZ,SoundType.STONE,0),PLASTER=solid("journey_lime_plaster",MapColor.SAND,SoundType.STONE,0),TIMBER_FRAME=solid("journey_timber_frame",MapColor.COLOR_BROWN,SoundType.WOOD,0),ROOF_TILE=solid("journey_roof_tile",MapColor.TERRACOTTA_RED,SoundType.STONE,0);
@@ -37,6 +40,10 @@ public final class CloudseaBlocks {
     private static DeferredBlock<Block> wood(String id){
         var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,RotatedPillarBlock::new,p->p.mapColor(MapColor.COLOR_BROWN).strength(2f).sound(SoundType.WOOD));
         DimensionBlocks.ITEMS.registerSimpleBlockItem(id,block);PALETTE.add(block);return block;
+    }
+    private static DeferredBlock<Block> grapevine(){
+        var block=DimensionBlocks.BLOCKS.<Block>registerBlock("journey_grapevine",GrapeVineBlock::new,p->p.mapColor(MapColor.PLANT).strength(.2f).sound(SoundType.VINE).noCollision().noOcclusion().randomTicks().replaceable());
+        DimensionBlocks.ITEMS.registerSimpleBlockItem("journey_grapevine",block);PALETTE.add(block);return block;
     }
     private static DeferredBlock<Block> canopy(String id){
         var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,SeasonalLeavesBlock::new,p->p.mapColor(MapColor.PLANT).strength(.2f).sound(SoundType.GRASS).noOcclusion().randomTicks());
