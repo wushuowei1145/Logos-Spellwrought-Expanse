@@ -73,12 +73,9 @@ public final class CauldronWorlds {
         var worlds=data(server);var entry=worlds.entries.get(id.toString());
         if(entry!=null&&entry.deleted())return null;
         var existing=server.getLevel(key(id));if(existing!=null)return existing;
-        var original=server.getLevel(LogosDimension.CRUCIBLE);
-        if(original==null||!(original.getChunkSource().getGenerator().getBiomeSource() instanceof AlchemicalBiomeSource source))return null;
-        if(entry==null){entry=new Entry(AlchemicalLayout.mix(id.getMostSignificantBits()^id.getLeastSignificantBits()^original.getSeed()),false,false);worlds.put(id,entry);}
-        var generator=new AlchemicalChunkGenerator(source.copyForInstance());
-        var type=original.dimensionTypeRegistration();
-        var stem=new LevelStem(type,generator,OptionalLong.of(entry.seed()));
+        var template=NativeWorlds.crucible(server);
+        if(entry==null){entry=new Entry(AlchemicalLayout.mix(id.getMostSignificantBits()^id.getLeastSignificantBits()^server.overworld().getSeed()),false,false);worlds.put(id,entry);}
+        var stem=new LevelStem(template.type(),template.generator(),OptionalLong.of(entry.seed()));
         var level=new ServerLevel(server,Util.backgroundExecutor(),((MinecraftServerAccess)server).logosDimensionStorage(),
                 new DerivedLevelData(server.getWorldData(),server.getWorldData().overworldData()),key(id),stem,false,
                 BiomeManager.obfuscateSeed(entry.seed()),List.of(),false);
@@ -143,11 +140,19 @@ public final class CauldronWorlds {
     }
     @SubscribeEvent static void starting(ServerStartingEvent event){
         var server=event.getServer();var worlds=data(server);
+        retireLegacy(server);
         for(var record:worlds.snapshot().entrySet()){
             UUID id=UUID.fromString(record.getKey());if(record.getValue().deleted()){if(!record.getValue().purged())worlds.pending.add(id);}else load(server,id);
         }
-        var original=server.getLevel(LogosDimension.CRUCIBLE);if(original!=null)configureBorder(original);
         processPending(server);
+    }
+    @SuppressWarnings("deprecation") private static void retireLegacy(MinecraftServer server){
+        var old=server.getLevel(LogosDimension.CRUCIBLE);if(old==null)return;
+        try{
+            for(var player:List.copyOf(old.players()))if(!DimensionTravel.leave(player))throw new IOException("Cannot evacuate legacy dimension");
+            old.save(null,true,false);NeoForge.EVENT_BUS.post(new LevelEvent.Unload(old));
+            server.forgeGetWorldMap().remove(LogosDimension.CRUCIBLE);server.markWorldsDirty();old.close();
+        }catch(IOException error){throw new IllegalStateException("Cannot retire legacy crucible dimension",error);}
     }
     @SubscribeEvent static void tick(ServerTickEvent.Post event){processPending(event.getServer());}
     @SubscribeEvent static void stopping(ServerStoppingEvent event){processPending(event.getServer());}

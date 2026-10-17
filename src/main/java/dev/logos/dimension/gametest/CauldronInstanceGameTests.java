@@ -8,7 +8,7 @@ import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.instance.BoundCauldronBlockEntity;
 import dev.logos.dimension.instance.CauldronBinding;
 import dev.logos.dimension.instance.CauldronWorlds;
-import dev.logos.dimension.world.AlchemicalChunkGenerator;
+
 import dev.logos.dimension.world.AlchemicalLayout;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.nio.file.Files;
@@ -46,13 +46,14 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 /** Exercise real level creation, item mining/placement and damage destruction, not just UUID math. */
 public final class CauldronInstanceGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS = DeferredRegister.create(Registries.TEST_FUNCTION, LogosDimension.ID);
-    private static final List<String> NAMES = List.of("cauldron_uuid_worlds", "cauldron_mining_binding", "cauldron_world_destruction", "cauldron_return_storage");
+    private static final List<String> NAMES = List.of("cauldron_uuid_worlds", "cauldron_mining_binding", "cauldron_world_destruction", "cauldron_return_storage", "cauldron_obstructed_gate");
 
     public static void register(IEventBus bus) {
         FUNCTIONS.register(NAMES.get(0), () -> CauldronInstanceGameTests::worlds);
         FUNCTIONS.register(NAMES.get(1), () -> CauldronInstanceGameTests::mining);
         FUNCTIONS.register(NAMES.get(2), () -> CauldronInstanceGameTests::destruction);
         FUNCTIONS.register(NAMES.get(3), () -> CauldronInstanceGameTests::returns);
+        FUNCTIONS.register(NAMES.get(4), () -> CauldronInstanceGameTests::obstructedGate);
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
             Holder<TestEnvironmentDefinition<?>> env = event.registerEnvironment(LogosDimension.id("cauldron_instances"), new TestEnvironmentDefinition.AllOf());
@@ -106,25 +107,25 @@ public final class CauldronInstanceGameTests {
             h.assertTrue(Math.abs(target.getWorldBorder().getSize() - 20_000) < .01, "Instance does not have a 20,000 block border");
             h.assertTrue(target.getWorldBorder().getCenterX() == 0 && target.getWorldBorder().getCenterZ() == 0, "Border is not centered on the sole island");
             h.assertTrue(target.getWorldBorder().isWithinBounds(p.blockPosition()), "Entrance placed player beyond the border");
-            var gen = (AlchemicalChunkGenerator) target.getChunkSource().getGenerator();
+
             var gate=dev.logos.dimension.ReturnGate.prepare(target);
             h.assertTrue(gate!=null && target.getBlockState(gate.portal()).is(DimensionBlocks.VORTEX.get()) && gate.portal().distSqr(p.blockPosition())<=25,
                     "First arrival did not create a reachable return vortex");
             var savedGate=dev.logos.dimension.ReturnGate.CODEC.encodeStart(JsonOps.INSTANCE,target.getDataStorage().computeIfAbsent(dev.logos.dimension.ReturnGate.TYPE)).getOrThrow();
             h.assertTrue(dev.logos.dimension.ReturnGate.CODEC.parse(JsonOps.INSTANCE,savedGate).result().isPresent(),"Return gate cannot be saved");
-            h.assertTrue(Math.hypot(p.getX(), p.getZ()) > 8500 && gen.terrain().column(p.blockPosition().getX(), p.blockPosition().getZ()).geography().region() == AlchemicalLayout.Region.AETHER,
+            h.assertTrue(Math.hypot(p.getX(), p.getZ()) > 8500 && target.getBiome(p.blockPosition()).is(LogosDimension.id("aether")),
                     "Default arrival is not in the outer Aether wilderness");
             long seed = target.getSeed();
             BlockPos marker = p.blockPosition().below();
             target.setBlockAndUpdate(marker, Blocks.LODESTONE.defaultBlockState());
-            dev.logos.dimension.IslandProgress.of(target).setDefeated(gen.terrain().layout().center(0, 0), true);
+            dev.logos.dimension.IslandProgress.of(target).setDefeated(dev.logos.dimension.NativeWorlds.center(), true);
             h.assertTrue(DimensionTravel.leave(p) && p.level() == h.getLevel() && p.position().distanceToSqr(home) < .01, "First round trip lost the original home");
             h.assertTrue(CauldronWorlds.enter(p, second, home), "Second cauldron entrance failed");
             UUID b = second.worldId();
             h.assertTrue(b != null && !b.equals(a) && p.level() != target, "Separate cauldrons share a world");
             h.assertTrue(p.level().getSeed() != seed, "Separate UUIDs share the same terrain seed");
-            var secondGen = (AlchemicalChunkGenerator) p.level().getChunkSource().getGenerator();
-            h.assertTrue(!dev.logos.dimension.IslandProgress.of(p.level()).defeated(secondGen.terrain().layout().center(0, 0)), "Boss completion leaked into a different UUID world");
+
+            h.assertTrue(!dev.logos.dimension.IslandProgress.of(p.level()).defeated(dev.logos.dimension.NativeWorlds.center()), "Boss completion leaked into a different UUID world");
             h.assertTrue(DimensionTravel.leave(p), "Second cauldron return failed");
             h.assertTrue(CauldronWorlds.enter(p, first, home) && first.worldId().equals(a) && p.level() == target && p.level().getSeed() == seed,
                     "Reentry generated a different instance or seed");
@@ -133,13 +134,31 @@ public final class CauldronInstanceGameTests {
             target.removeBlock(gate.portal(),false);
             h.assertTrue(!CauldronWorlds.isDestroyed(server,a),"Breaking the exit destroyed its cauldron world");
             h.assertTrue(dev.logos.dimension.ReturnGate.prepare(target).equals(gate)&&target.getBlockState(gate.portal()).is(DimensionBlocks.VORTEX.get()),"Missing return gate was not repaired on entry");
-            h.assertTrue(dev.logos.dimension.IslandProgress.of(target).defeated(gen.terrain().layout().center(0, 0)), "Reentry lost this world's Boss completion");
+            h.assertTrue(dev.logos.dimension.IslandProgress.of(target).defeated(dev.logos.dimension.NativeWorlds.center()), "Reentry lost this world's Boss completion");
             var encoded = CauldronWorlds.Worlds.CODEC.encodeStart(JsonOps.INSTANCE, CauldronWorlds.data(server)).getOrThrow();
             var decoded = CauldronWorlds.Worlds.CODEC.parse(JsonOps.INSTANCE, encoded).getOrThrow();
             h.assertTrue(decoded.snapshot().get(a.toString()).seed() == seed && !decoded.snapshot().get(a.toString()).deleted(), "Saved UUID metadata lost the seed or live state");
         } finally {
             dispose(server, p, first.worldId(), second.worldId());
         }
+        h.succeed();
+    }
+
+    private static void obstructedGate(GameTestHelper h) {
+        var server=h.getLevel().getServer();UUID id=UUID.randomUUID();var level=CauldronWorlds.load(server,id);
+        try {
+            var first=DimensionTravel.findLanding(level,dev.logos.dimension.NativeWorlds.center(),AlchemicalLayout.Region.AETHER);
+            h.assertTrue(first!=null,"No test arrival found");var feet=BlockPos.containing(first);
+            var occupied=new java.util.HashSet<BlockPos>();
+            for(int distance=2;distance<=4;distance++)for(var direction:net.minecraft.core.Direction.Plane.HORIZONTAL)for(int dy:new int[]{0,1,-1,2,-2}) {
+                var pos=feet.relative(direction,distance).above(dy);occupied.add(pos);level.setBlockAndUpdate(pos,Blocks.OBSIDIAN.defaultBlockState());
+            }
+            h.assertTrue(level.isEmptyBlock(feet)&&level.isEmptyBlock(feet.above()),"Fixture blocked the arrival itself");
+            var gate=dev.logos.dimension.ReturnGate.prepare(level);
+            h.assertTrue(gate!=null,"An obstructed first landing permanently prevents cauldron entry");
+            h.assertTrue(!gate.feet().equals(feet)&&level.getBlockState(gate.portal()).is(DimensionBlocks.VORTEX.get()),"Exit was not relocated to another safe landing");
+            for(var pos:occupied)h.assertTrue(level.getBlockState(pos).is(Blocks.OBSIDIAN),"Exit repair overwrote player construction");
+        } finally {CauldronWorlds.requestDestroy(server,id);CauldronWorlds.processPending(server);}
         h.succeed();
     }
 
@@ -173,6 +192,10 @@ public final class CauldronInstanceGameTests {
                     if (id.equals(item.get(CauldronBinding.WORLD_ID.get()))) { stack = p.getInventory().removeItemNoUpdate(slot); break; }
                 }
                 h.assertTrue(!stack.isEmpty(), "Pickup lost the world component");
+                h.assertTrue(stack.getHoverName().getString().contains(id.toString()),"Bound cauldron name hides its UUID world");
+                var lines=new java.util.ArrayList<net.minecraft.network.chat.Component>();
+                stack.getItem().appendHoverText(stack,net.minecraft.world.item.Item.TooltipContext.of(h.getLevel()),net.minecraft.world.item.component.TooltipDisplay.DEFAULT,lines::add,net.minecraft.world.item.TooltipFlag.NORMAL);
+                h.assertTrue(lines.stream().anyMatch(line->line.getString().contains(CauldronWorlds.key(id).identifier().toString())),"Cauldron tooltip hides its full dimension name");
                 p.setItemInHand(InteractionHand.MAIN_HAND, stack);
                 var context = new BlockPlaceContext(p, InteractionHand.MAIN_HAND, stack,
                         new BlockHitResult(pos.getBottomCenter(), net.minecraft.core.Direction.UP, pos.below(), false));

@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "logos_dimension:journey_berry_bramble"
+        }
+      ]
+    }
+  ]
+}

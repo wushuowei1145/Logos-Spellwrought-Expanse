@@ -2,8 +2,7 @@ package dev.logos.dimension;
 
 import com.mojang.serialization.MapCodec;
 import dev.logos.dimension.gametest.DimensionGameTests;
-import dev.logos.dimension.world.AlchemicalBiomeSource;
-import dev.logos.dimension.world.AlchemicalChunkGenerator;
+import dev.logos.dimension.world.LegacyWorldgenCodecs;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -27,10 +26,10 @@ public final class LogosDimension {
     private static final DeferredRegister<MapCodec<? extends BiomeSource>> BIOME_SOURCES = DeferredRegister.create(Registries.BIOME_SOURCE, ID);
     private static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, ID);
     static {
-        GENERATORS.register("crucible", () -> AlchemicalChunkGenerator.CODEC);
-        BIOME_SOURCES.register("alchemical", () -> AlchemicalBiomeSource.CODEC);
-        GENERATORS.register("cloudsea", () -> dev.logos.dimension.cloudsea.CloudseaChunkGenerator.CODEC);
-        BIOME_SOURCES.register("cloudsea", () -> dev.logos.dimension.cloudsea.CloudseaBiomeSource.CODEC);
+        GENERATORS.register("crucible", () -> LegacyWorldgenCodecs.generator("crucible"));
+        BIOME_SOURCES.register("alchemical", () -> LegacyWorldgenCodecs.ALCHEMICAL);
+        GENERATORS.register("cloudsea", () -> LegacyWorldgenCodecs.generator("journey"));
+        BIOME_SOURCES.register("cloudsea", () -> LegacyWorldgenCodecs.CLOUDSEA);
         TABS.register("cloudsea", () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.logos_dimension.cloudsea"))
                 .icon(() -> dev.logos.dimension.cloudsea.CloudseaBlocks.PORCELAIN.get().asItem().getDefaultInstance())
                 .displayItems((p,out) -> dev.logos.dimension.cloudsea.CloudseaBlocks.PALETTE.forEach(b -> out.accept(b.get()))).build());
@@ -62,7 +61,6 @@ public final class LogosDimension {
     }
     public static Identifier id(String path) { return Identifier.fromNamespaceAndPath(ID, path); }
     public static boolean isCrucible(ResourceKey<Level> dimension) {
-        if(dimension.equals(CRUCIBLE))return true;
         var id=dimension.identifier();if(!id.getNamespace().equals(ID))return false;
         String path=id.getPath();if(path.length()!=36)return false;
         for(int i=0;i<36;i++){

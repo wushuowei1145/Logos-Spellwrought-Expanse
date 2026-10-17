@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:simple_block",
+  "config": {
+    "to_place": {
+      "type": "minecraft:weighted_state_provider",
+      "entries": [
+        {
+          "data": {
+            "Name": "logos_dimension:salt_crystal",
+            "Properties": {
+              "natural": "true",
+              "phase": "0"
+            }
+          },
+          "weight": 1
+        }
+      ]
+    }
+  }
+}

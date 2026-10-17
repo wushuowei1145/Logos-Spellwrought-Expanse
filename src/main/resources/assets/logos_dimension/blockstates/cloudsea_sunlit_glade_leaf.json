@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "season=0": {
+      "model": "logos_dimension:block/cloudsea_sunlit_glade_leaf_0"
+    },
+    "season=1": {
+      "model": "logos_dimension:block/cloudsea_sunlit_glade_leaf_1"
+    },
+    "season=2": {
+      "model": "logos_dimension:block/cloudsea_sunlit_glade_leaf_2"
+    },
+    "season=3": {
+      "model": "logos_dimension:block/cloudsea_sunlit_glade_leaf_3"
+    }
+  }
+}

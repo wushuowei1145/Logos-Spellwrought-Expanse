@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:simple_block",
+  "config": {
+    "to_place": {
+      "type": "minecraft:weighted_state_provider",
+      "entries": [
+        {
+          "data": {
+            "Name": "logos_dimension:aether_fern"
+          },
+          "weight": 5
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:star_blossom"
+          },
+          "weight": 1
+        }
+      ]
+    }
+  }
+}

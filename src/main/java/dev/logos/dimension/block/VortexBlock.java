@@ -20,7 +20,10 @@ public final class VortexBlock extends Block {
     public VortexBlock(BlockBehaviour.Properties properties) { super(properties); }
     @Override public MapCodec<VortexBlock> codec() { return CODEC; }
     @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (player instanceof ServerPlayer serverPlayer) DimensionTravel.enter(serverPlayer);
+        if (player instanceof ServerPlayer serverPlayer){
+            if(dev.logos.dimension.LogosDimension.isCrucible(level.dimension()))DimensionTravel.leave(serverPlayer);
+            else serverPlayer.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.logos_dimension.use_cauldron"));
+        }
         return InteractionResult.SUCCESS;
     }
     @Override public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {

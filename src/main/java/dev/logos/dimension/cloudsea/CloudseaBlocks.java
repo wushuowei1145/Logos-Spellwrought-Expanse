@@ -25,6 +25,8 @@ public final class CloudseaBlocks {
     public static final DeferredBlock<Block> SLATE=solid("cloudsea_blue_slate",MapColor.COLOR_BLUE,SoundType.STONE,0);
     public static final DeferredBlock<Block> WINDOW=solid("cloudsea_lit_window",MapColor.SAND,SoundType.GLASS,9);
     public static final DeferredBlock<Block> FERN=flora("journey_woodland_fern",0),BRACKEN=flora("journey_bracken",0),BLUEBELL=flora("journey_bluebell",0),FOXGLOVE=flora("journey_foxglove",0),LUPINE=flora("journey_lupine",0),MEADOW_GRASS=flora("journey_meadow_grass",0),REED=flora("journey_river_reed",0),GRAPEVINE=flora("journey_grapevine",0);
+    public static final DeferredBlock<Block> ANEMONE=seasonal("journey_silver_anemone"),MOONBELL=seasonal("journey_moonbell"),GLOWCAP=seasonal("journey_glowcap"),HEATHER=seasonal("journey_heather"),STAGHORN=seasonal("journey_amber_fern"),HELLEBORE=seasonal("journey_winter_hellebore"),FIREWEED=seasonal("journey_fireweed"),BRAMBLE=seasonal("journey_berry_bramble");
+    public static final List<DeferredBlock<Block>> SEASONAL_PLANTS=List.of(ANEMONE,MOONBELL,GLOWCAP,HEATHER,STAGHORN,HELLEBORE,FIREWEED,BRAMBLE);
     public static final DeferredBlock<Block> LIMESTONE=solid("journey_limestone",MapColor.QUARTZ,SoundType.STONE,0),PLASTER=solid("journey_lime_plaster",MapColor.SAND,SoundType.STONE,0),TIMBER_FRAME=solid("journey_timber_frame",MapColor.COLOR_BROWN,SoundType.WOOD,0),ROOF_TILE=solid("journey_roof_tile",MapColor.TERRACOTTA_RED,SoundType.STONE,0);
     static { for(var b:CloudseaBiome.values()){
         var ground=DimensionBlocks.BLOCKS.<Block>registerBlock(b.id()+"_ground",SeasonalTurfBlock::new,p->p.mapColor(MapColor.GRASS).strength(.6f).sound(SoundType.GRASS).randomTicks());
@@ -46,6 +48,11 @@ public final class CloudseaBlocks {
     }
     private static DeferredBlock<Block> flora(String id,int light) {
         var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,p->id.startsWith("journey_")?new JourneyPlantBlock(p):new Block(p),p->p.mapColor(MapColor.PLANT).strength(.25f).sound(SoundType.GRASS).noCollision().noOcclusion().lightLevel(s->light));
+        DimensionBlocks.ITEMS.registerSimpleBlockItem(id,block);PALETTE.add(block);return block;
+    }
+    private static DeferredBlock<Block> seasonal(String id){
+        var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,SeasonalPlantBlock::new,p->p.mapColor(MapColor.PLANT).strength(.15f).sound(SoundType.GRASS).noCollision().noOcclusion().randomTicks()
+                .lightLevel(s->{int season=s.getValue(SeasonalLeavesBlock.SEASON);return id.endsWith("glowcap")&&(season==1||season==2)?4:id.endsWith("moonbell")&&season<2?2:id.endsWith("hellebore")&&season==3?3:0;}));
         DimensionBlocks.ITEMS.registerSimpleBlockItem(id,block);PALETTE.add(block);return block;
     }
     public static void init() {}

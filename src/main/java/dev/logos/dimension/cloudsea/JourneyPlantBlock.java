@@ -8,7 +8,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.*;
 
 /** Small selectable foliage, with proper support removal rather than a full-cube outline. */
-public final class JourneyPlantBlock extends Block {
+public class JourneyPlantBlock extends Block {
     private static final VoxelShape SHAPE=Shapes.box(.12,0,.12,.88,.94,.88);
     public JourneyPlantBlock(Properties properties){super(properties);}
     @Override protected VoxelShape getShape(BlockState state,BlockGetter level,BlockPos pos,CollisionContext context){return SHAPE;}

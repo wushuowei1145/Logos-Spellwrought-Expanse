@@ -2,10 +2,9 @@ package dev.logos.dimension;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.logos.dimension.world.AlchemicalChunkGenerator;
 import dev.logos.dimension.world.AlchemicalLayout;
-import dev.logos.dimension.world.AlchemicalTerrain;
 import java.util.*;
+import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -64,14 +63,16 @@ public final class DimensionTravel {
     /** A physical entrance may save a safe position beside its basin instead of inside its portal. */
     public static boolean enter(ServerPlayer player, Vec3 returnPosition) {
         if (LogosDimension.isCrucible(player.level().dimension())) return leave(player);
-        var server = player.level().getServer();
-        var target = server.getLevel(LogosDimension.CRUCIBLE);
-        return enterTarget(player, target, returnPosition);
+        var origin=player.blockPosition();
+        for(var pos:BlockPos.betweenClosed(origin.offset(-6,-4,-6),origin.offset(6,4,6)))
+            if(player.level().getBlockEntity(pos) instanceof dev.logos.dimension.instance.BoundCauldronBlockEntity binding)
+                return dev.logos.dimension.instance.CauldronWorlds.enter(player,binding,returnPosition);
+        player.sendSystemMessage(Component.translatable("message.logos_dimension.use_cauldron"));return false;
     }
 
     /** Enter a cauldron's own world and retain the actual departure point for the return trip. */
     public static boolean enterTarget(ServerPlayer player, ServerLevel target, Vec3 returnPosition) {
-        if (target == null || !(target.getChunkSource().getGenerator() instanceof AlchemicalChunkGenerator generator)) {
+        if (target == null || !NativeWorlds.vanilla(target) || !LogosDimension.isCrucible(target.dimension())) {
             player.sendSystemMessage(Component.translatable("message.logos_dimension.missing_dimension")); return false;
         }
         var server = player.level().getServer();
@@ -107,21 +108,27 @@ public final class DimensionTravel {
     }
 
     public static Vec3 findLanding(ServerLevel target, AlchemicalLayout.Center center, AlchemicalLayout.Region region) {
-        var generator = (AlchemicalChunkGenerator) target.getChunkSource().getGenerator();
-        var terrain = generator.terrain();
-        double radius = terrain.layout().spacing() * switch (region) {
+        return findLanding(target,center,region,feet->true);
+    }
+
+    /** Reject unsuitable surroundings as well as unsafe feet, so callers can keep searching. */
+    public static Vec3 findLanding(ServerLevel target, AlchemicalLayout.Center center, AlchemicalLayout.Region region,Predicate<BlockPos> suitable) {
+        double radius = 20_000 * switch (region) {
             case SULFUR -> .09; case MERCURY -> .23; case SALT -> .375; default -> .465;
         };
-        for (int angle = 0; angle < 32; angle++) for (int offset = 0; offset < 9; offset++) {
-            double a = angle * Math.PI / 16;
-            int x = center.x() + (int) ((radius + offset * 24) * Math.cos(a));
-            int z = center.z() + (int) ((radius + offset * 24) * Math.sin(a));
-            if (!terrain.layout().contains(x, z)) continue;
-            var c = terrain.column(x, z);
-            if (c.geography().region() != region || c.liquid() != AlchemicalTerrain.Liquid.NONE) continue;
+        var key=ResourceKey.create(Registries.BIOME,LogosDimension.id(region.name().toLowerCase(java.util.Locale.ROOT)));
+        for (int angle = 0; angle < 64; angle++) for (int offset = 0; offset < 12; offset++) {
+            double a = angle * Math.PI / 32;
+            int x = center.x() + (int) ((radius + offset * 36) * Math.cos(a));
+            int z = center.z() + (int) ((radius + offset * 36) * Math.sin(a));
+            if (Math.abs(x)>=9995||Math.abs(z)>=9995)continue;
+            var biome=target.getChunkSource().getGenerator().getBiomeSource().getNoiseBiome(x>>2,24,z>>2,target.getChunkSource().randomState().sampler());
+            if(!biome.is(key))continue;
             target.getChunk(x >> 4, z >> 4);
-            BlockPos feet = new BlockPos(x, c.ground() + 1, z);
-            if (target.isEmptyBlock(feet) && target.isEmptyBlock(feet.above())) return feet.getBottomCenter();
+            int height=target.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,x,z);
+            BlockPos feet = new BlockPos(x,height,z);
+            if(target.getFluidState(feet.below()).isEmpty()&&target.getBlockState(feet.below()).isFaceSturdy(target,feet.below(),net.minecraft.core.Direction.UP)
+                    && target.isEmptyBlock(feet) && target.isEmptyBlock(feet.above()) && suitable.test(feet)) return feet.getBottomCenter();
         }
         return null;
     }

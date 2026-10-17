@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "logos_dimension:journey_town",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 224,
+    "separation": 200,
+    "salt": 7627
+  }
+}

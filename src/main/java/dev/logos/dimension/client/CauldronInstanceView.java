@@ -8,7 +8,7 @@ import dev.logos.dimension.DimensionTravel;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.instance.BoundCauldronBlockEntity;
 import dev.logos.dimension.instance.CauldronWorlds;
-import dev.logos.dimension.world.AlchemicalChunkGenerator;
+
 import dev.logos.dimension.world.AlchemicalLayout;
 import java.util.UUID;
 import net.minecraft.client.Minecraft;
@@ -72,11 +72,11 @@ public final class CauldronInstanceView implements UIScenario {
                 returnPortal=dev.logos.dimension.ReturnGate.prepare(ctx.player().level()).portal();
             })
             .checkServer("first arrival is outer Aether inside the finite border",ctx->{
-                var p=ctx.player();var level=p.level();var gen=(AlchemicalChunkGenerator)level.getChunkSource().getGenerator();
+                var p=ctx.player();var level=p.level();
                 return firstId!=null&&level.dimension().equals(CauldronWorlds.key(firstId))&&p.isOnPortalCooldown()
                     &&Math.abs(level.getWorldBorder().getSize()-20_000)<.01&&level.getWorldBorder().isWithinBounds(p.blockPosition())
                     &&Math.hypot(p.getX(),p.getZ())>8500
-                    &&gen.terrain().column(p.blockPosition().getX(),p.blockPosition().getZ()).geography().region()==AlchemicalLayout.Region.AETHER;
+                    &&level.getBiome(p.blockPosition()).is(LogosDimension.id("aether"));
             })
             .check("client renders the UUID named world",ctx->firstId!=null&&Minecraft.getInstance().level.dimension().equals(CauldronWorlds.key(firstId)))
             .ticks(100).screenshot("first_cauldron_outer_aether")

@@ -32,10 +32,10 @@ def tile(name,c,kind='stone'):
 
 text=(ROOT/'src/main/java/dev/logos/dimension/cloudsea/CloudseaBiome.java').read_text(encoding='utf-8')
 biomes=re.findall(r'([A-Z_]+)\("([^"]+)",0x([A-F0-9]+),0x([A-F0-9]+)',text)
-assert len(biomes)==24
+assert len(biomes)==32
 zh=json.loads((A/'lang/zh_cn.json').read_text(encoding='utf-8'));en=json.loads((A/'lang/en_us.json').read_text(encoding='utf-8'))
 zh['itemGroup.logos_dimension.cloudsea']='远行大陆';en['itemGroup.logos_dimension.cloudsea']='The Wayfarer Lands'
-english=['Windbound Plains','Beech Woods','Shallow Sandbars','Northern Birchwood','River Valley','Highland Meadow','Chalk Coast','Bare Ridges','Old River Gorge','Oak Woodland','Stillwater Lake','Deep Broadleaf Woods','Open Downs','Northern Firwood','Wildflower Meadow','Glacier Ridge','Alpine River','Pasture Slopes','Reed Wetland','Mountain Pinewood','Southern Bay','Silver Birch Heath','Cold Heath','Snowbound Summit']
+english=['Windbound Plains','Beech Woods','Shallow Sandbars','Northern Birchwood','River Valley','Highland Meadow','Chalk Coast','Bare Ridges','Old River Gorge','Oak Woodland','Stillwater Lake','Deep Broadleaf Woods','Open Downs','Northern Firwood','Wildflower Meadow','Glacier Ridge','Alpine River','Pasture Slopes','Reed Wetland','Mountain Pinewood','Southern Bay','Silver Birch Heath','Cold Heath','Snowbound Summit','Ancient Beechwood','Fernwood','Moonlit Birch Grove','Fir Heartwood','Mossy Vale','Copper Copse','Sunlit Glade','Starbell Glade']
 all_ids=[]
 for i,(key,title,g,l) in enumerate(biomes):
     bid='cloudsea_'+key.lower();all_ids.append(bid);base=color(g);leaf=color(l)
@@ -204,4 +204,4 @@ def convert(name,out):
         encoded.append(pal.index(v))
     write(D/'journey_templates'/f'{out}.json',{'width':w,'height':h,'depth':d,'palette':pal,'blocks':encoded})
 for name,out in [('playersmallhouse','cottage'),('bakery','bakery'),('guardhouse','guardhouse'),('inn','inn'),('farm','farm'),('playersmallhouse','townhouse'),('playersmallhouse','townhouse_three'),('playersmallhouse','townhouse_four')]:convert(name,out)
-print('Generated 24 temperate biomes, seasonal turf/leaves, eight modeled plants, six adapted blueprints and native sky data.')
+print('Generated 32 temperate biomes, seasonal turf/leaves, eight modeled plants, six adapted blueprints and native sky data.')

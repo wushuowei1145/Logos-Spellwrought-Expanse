@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "season=0": {
+      "model": "logos_dimension:block/journey_silver_anemone_0"
+    },
+    "season=1": {
+      "model": "logos_dimension:block/journey_silver_anemone_1"
+    },
+    "season=2": {
+      "model": "logos_dimension:block/journey_silver_anemone_2"
+    },
+    "season=3": {
+      "model": "logos_dimension:block/journey_silver_anemone_3"
+    }
+  }
+}

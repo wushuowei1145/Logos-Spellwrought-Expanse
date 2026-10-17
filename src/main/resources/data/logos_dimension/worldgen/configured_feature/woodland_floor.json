@@ -1,0 +1,61 @@
+{
+  "type": "minecraft:simple_block",
+  "config": {
+    "to_place": {
+      "type": "minecraft:weighted_state_provider",
+      "entries": [
+        {
+          "data": {
+            "Name": "logos_dimension:journey_woodland_fern"
+          },
+          "weight": 20
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_bracken"
+          },
+          "weight": 8
+        },
+        {
+          "data": {
+            "Name": "minecraft:moss_carpet"
+          },
+          "weight": 20
+        },
+        {
+          "data": {
+            "Name": "minecraft:leaf_litter"
+          },
+          "weight": 22
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_berry_bramble",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 5
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_glowcap",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 3
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_amber_fern",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 3
+        }
+      ]
+    }
+  }
+}

@@ -2,7 +2,7 @@ package dev.logos.dimension;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.logos.dimension.world.AlchemicalChunkGenerator;
+
 import dev.logos.dimension.world.AlchemicalLayout;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
@@ -30,7 +30,7 @@ public final class ReturnGate extends SavedData {
     private @Nullable Landing landing;
     private ReturnGate(@Nullable Landing landing){this.landing=landing;}
     public static @Nullable Landing prepare(ServerLevel level){
-        if(!(level.getChunkSource().getGenerator() instanceof AlchemicalChunkGenerator generator))return null;
+        if(!NativeWorlds.vanilla(level)||!LogosDimension.isCrucible(level.dimension()))return null;
         var data=level.getDataStorage().computeIfAbsent(TYPE);
         var saved=data.landing;
         if(saved!=null){
@@ -40,15 +40,20 @@ public final class ReturnGate extends SavedData {
                 return saved;
             }
         }
-        var at=DimensionTravel.findLanding(level,generator.terrain().layout().center(0,0),AlchemicalLayout.Region.AETHER);
+        var at=DimensionTravel.findLanding(level,NativeWorlds.center(),AlchemicalLayout.Region.AETHER,feet->portalNear(level,feet)!=null);
         if(at==null)return null;
         var feet=BlockPos.containing(at);
+        var portal=portalNear(level,feet);
+        if(portal==null)return null;
+        level.setBlockAndUpdate(portal,DimensionBlocks.VORTEX.get().defaultBlockState());
+        data.landing=new Landing(feet,portal);data.setDirty();return data.landing;
+    }
+    private static @Nullable BlockPos portalNear(ServerLevel level,BlockPos feet){
         for(int distance=2;distance<=4;distance++)for(var direction:Direction.Plane.HORIZONTAL)for(int dy:new int[]{0,1,-1,2,-2}){
             var portal=feet.relative(direction,distance).above(dy);
             level.getChunk(portal);
             if(!safeFeet(level,feet)||!freePortal(level,portal))continue;
-            level.setBlockAndUpdate(portal,DimensionBlocks.VORTEX.get().defaultBlockState());
-            data.landing=new Landing(feet,portal);data.setDirty();return data.landing;
+            return portal;
         }
         return null;
     }
