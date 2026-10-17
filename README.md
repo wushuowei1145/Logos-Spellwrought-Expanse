@@ -1,6 +1,8 @@
 # 维度-咒械原
 
-**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.5.1**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.5.2**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+
+0.5.2 修复普通植物可以种在石头、木板等任意实心方块上的问题。19 种地生植物统一采用原版植物的土壤支撑规则，失去土壤即脱落；旧存档中的误种植物在加载后随随机刻逐步脱落。葡萄藤继续沿用表面附着规则。
 
 0.5.1 再次重画全部 32 种草皮：按草原、落叶林地、湿苔、松针、高山、寒地、海岸、积雪和湿地分别处理，草根与泥土自然过渡。每种四季草皮使用三套纹理和原版随机旋转，冬季改为柔和霜色；详见 [草皮重做](docs/JOURNEY_TURF.md)。
 

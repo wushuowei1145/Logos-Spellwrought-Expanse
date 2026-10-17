@@ -54,7 +54,7 @@ public final class CloudseaBlocks {
         DimensionBlocks.ITEMS.registerSimpleBlockItem(id,block);PALETTE.add(block);return block;
     }
     private static DeferredBlock<Block> flora(String id,int light) {
-        var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,p->id.startsWith("journey_")?new JourneyPlantBlock(p):new Block(p),p->p.mapColor(MapColor.PLANT).strength(.25f).sound(SoundType.GRASS).noCollision().noOcclusion().lightLevel(s->light));
+        var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,JourneyPlantBlock::new,p->p.mapColor(MapColor.PLANT).strength(.25f).sound(SoundType.GRASS).noCollision().noOcclusion().randomTicks().lightLevel(s->light));
         DimensionBlocks.ITEMS.registerSimpleBlockItem(id,block);PALETTE.add(block);return block;
     }
     private static DeferredBlock<Block> seasonal(String id){
