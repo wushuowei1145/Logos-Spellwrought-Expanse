@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/leaves",
+  "render_type": "neoforge:cutout",
+  "textures": {
+    "all": "logos_dimension:block/cloudsea_starflower_glade_leaf_3"
+  }
+}

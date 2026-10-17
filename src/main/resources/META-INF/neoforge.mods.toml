@@ -5,10 +5,10 @@ config="logos_dimension.mixins.json"
 
 [[mods]]
 modId="logos_dimension"
-version="0.3.1"
+version="0.4.0"
 displayName="Logos: The Alchemical Crucible"
 description='''
-Each alchemical cauldron binds a finite UUID world of sulfur, mercury, salt and aether, with one empty central sky island. Also includes a temperate journey continent. Requires Logos.
+Native data-driven terrain: finite UUID cauldron worlds and a seasonal journey continent with dense woodlands, glades and sparse medieval settlements. Requires Logos.
 '''
 
 [[dependencies.logos_dimension]]

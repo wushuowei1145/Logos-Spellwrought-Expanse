@@ -1,94 +1,58 @@
 # 维度-咒械原
 
-**Logos: Spellwrought Expanse** — 由咒术塑成的辽阔原野。
+**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.4.0**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
 
-Logos 的独立新维度附属 Mod。工程名 `LogosDimensionAddon`，Mod ID `logos_dimension`。当前组合测试版本为可运行的 **0.3.1 原型**，适合逐步调整世界生成和美术。
+## 原版数据包生成
 
-第二维度 `logos_dimension:cloudsea` 已改为 **远行大陆**：开阔的温带草原、橡木与山毛榉林、白桦林、北方针叶林和雪山，南方是河湾与石灰岩海岸。取消原有的悬浮岩带、魔鲸、魔法粒子与魔气地心，以长途旅行和稀疏的中世纪聚落为重点。保留原维度与群系 ID；旧区块不自动重建，建议在新存档或新生成区块体验。
+两个维度都使用原版 `minecraft:noise` 地形、`minecraft:multi_noise` 群系选择、原版树木与植物 Feature、标准 NBT/jigsaw 结构。删除手写 Java 地形、种树与建筑填块生成器。数据随 Mod 内置，正常安装不需要额外下载数据包，存档数据包可以覆盖同名资源。见 [生成数据与迁移](docs/NATIVE_WORLDGEN.md)。
 
-四季每季 8 个游戏日，树叶与草皮逐步换季，冬季低地降雪；使用普通昼夜、蓝天、薄云和原版天气。地下接入原版洞穴、峡谷与废弃矿井，不运行任何矿物生成。城镇与村落靠近河流，麦田、葡萄架和果园集中在乡村周围。完整说明见 [远行大陆](docs/TEMPERATE_JOURNEY.md)。
+- **咒械原**：每口炼金釜首次进入创建一个 `logos_dimension:<UUID>` 世界，20,000×20,000 格边界，以太为主要环境，硫、汞、盐为大尺度自然群系。
+- **远行大陆**：保留 `logos_dimension:cloudsea` ID，32 个地表群系和独立地下群系。湿润气候形成连续密林，林隙与花甸独立成群系；林下有蕨、苔毯、落叶、灌木和季节植物。正常天空、昼夜与天气，四季各 8 个游戏日。
+- **无原版矿物**：关闭原版矿脉，移除矿物装饰 Feature，保留原版洞穴、含水层与废弃矿井。炼金硫沉积是本附属自有方块，不引用 26.1 原版硫磺。
+- **稀疏中世纪聚落**：使用原版 jigsaw/random_spread，可用 `/locate structure logos_dimension:journey_hamlet` 或 `journey_town` 寻找。素材与许可见 [第三方说明](third_party/millenaire/SOURCE.md)。
 
-本轮重做树木与材料：完整原木、连通分枝、成团树冠，清晰的像素叶簇与专用材料，减少地表重复浮雕和整片发光。咒械原法阵加入透明玻璃承载面、视角高光、边缘色散、清亮刻线与向外传播的施法波，保留展开重组动画。详见 [树木与材料](docs/NATURAL_TREES.md)、[逐种模型目录](docs/INDIVIDUAL_BLOCK_MODELS.md)、[玻璃法阵](docs/GLASS_ARCANE_ARRAY.md) 和 [云层移除说明](docs/CLOUD_VOLUME.md)。三项更新保持独立 PR，当前分支用于组合安装包验证。
+原版生成重设计了布局：不再保证硫→汞→盐的精确同心顺序，也不固定雪山/海岸坐标。中心空岛现为约 **126 格直径、顶面 Y=320** 的原版 NBT 预留平台，原 2,400 格手写岛与玻璃巨构不再生成。岛面不放建筑或植被，拦截自然及刷怪笼生成，宫殿和 Boss 尚未制作。
 
-![空岛下方的影雾](docs/screenshots/shadow-fog.png)
+## 安装与进出
 
-0.1.4 进一步平滑法阵连线切换、光点循环和玻璃高光，减少逐帧数组分配；见 [连续过渡与实机视频](docs/SMOOTH_ARRAY.md)。
+将本附属与 Logos 及其依赖一起放入 `mods`，本包不内嵌主模组或第三方 JAR。
 
-## 世界方向
+8 块玻璃围住 `logos:tainted_mana_shard` 合成炼金漩涡，再与原版炼药锅合成炼金釜。**跳入釜内液面**进入独立世界，默认寻找外围以太区安全地面；首次到达在旁边自动生成回程漩涡，右键返回原釜旁，重入复用出口。
 
-世界是一座仍在工作的巨大炼金釜。**每口炼金釜首次进入时生成一个独立 UUID 世界，大小固定 20,000 × 20,000 格**，坐标范围为 X/Z ∈ [-10,000, 10,000)，边缘设置世界边界，外侧不再重复生成地貌。世界只有一座直径约 2,400 格的中心空岛。地面由内向外依次是硫、汞、盐三条宽广区域，以太荒野占多数并穿插连通各区。默认抵达距中心约 9,300 格的外围以太区，区块按需生成，不一次性预生成全图。
+已绑定釜的物品名称显示 UUID，悬浮提示和对放置的釜右键显示完整维度名。挖掘、拾取、再放置保留绑定；真正损毁釜或其掉落物才撤离玩家并销毁对应 UUID 世界。见 [炼金釜与回程](docs/CAULDRON_WORLDS.md)。
 
-- 以太：灰绿地层、扇冠树、琥珀种穗、星形花与河谷。
-- 硫：焦化岩、朱砂、附属 Mod 自有的炼金硫沉积、深裂谷与熔融玻璃。
-- 汞：凝汞地壳、真实可流动的液态汞、少量悬浮金属岩台。
-- 盐：盐壳台地、透明盐晶、白化时的天然盐晶生长。
-- 环境巨物：倒悬玻璃蒸馏瓶生态岛、巨型透明液体导管、缓慢旋转的天空星盘。
-- 时间：独立的黑化、白化、黄化、红化周期，每阶段 24,000 tick。天空、雾、天然材料随周期变化。
-
-![倒悬蒸馏瓶原型](docs/screenshots/glass-retort.png)
-
-**中心空岛不生成建筑、植被或小怪，平整顶面预留给后续 Boss 宫殿。** 专属 `sanctum` 生物群系没有自然刷怪表，额外拦截自动刷怪和刷怪笼。脚本与命令召唤保留给后续 Boss。岛下面的地面仍可有正常生态。
-
-## 空岛下方的影雾
-
-击败对应空岛 Boss 前，岛下开放空间被灰黑雾笼罩。进入会看到边缘浮现的细长影子、短暂苍白眼点，并听到低沉回声；靠近或近距离直视时影子消散。影子属于视觉幻象，不攻击、不碰撞、没有掉落，也不会在存档中堆积。离开雾区后清除。
-
-每口炼金釜的独立世界分别持久保存中心空岛的 Boss 完成状态。以后把 Boss 的实体 ID 加入 `logos_dimension:island_bosses` 实体类型标签，其在对应岛范围内死亡时便会解除该岛的雾与幻象。
-
-搜索占位入口：**`LOGOS_DIMENSION_ISLAND_BOSS_HOOK`**。目前标签为空，宫殿及 Boss 尚未制作。管理员可用下面的命令验证完成与重置状态。
-
-## 安装与进入
-
-当前构建目标：Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**。与独立安装的 Logos 0.5.0+ 一起放入 `mods`；开发验证使用 Logos **0.5.1**，主仓库基线 `f196960`。Logos 自身所需的 LDLib2、Photon、KilaGraph、GeckoLib 也需按主模组要求安装。本附属不内嵌这些模组。
-
-生存入口：8 块玻璃围住一个现有 `logos:tainted_mana_shard`，合成「炼金漩涡」；再与原版炼药锅合成「炼金釜」。釜内的金银漩涡缓慢旋转并发光，跳入釜内液面即可传送到咒械原。釜壁与釜沿有实际碰撞，碰外壁或站釜沿不会触发。返回位置保存在釜旁的安全地面，狭窄位置则落在实心釜沿；传送后有 4 秒冷却。**挖掘炼金釜掉落带 UUID 的釜，重新放置仍进入原世界；创造模式挖掘已绑定釜也保留掉落。** 釜或其掉落物被真正摧毁（爆炸、岩浆/火焰、虚空、自然消失等）时，先撤离其中在线玩家，再卸载并删除该 UUID 的世界数据，其他世界不受影响。拾取和区块卸载不视为损毁。进入时会在外围落点旁自动生成「回程漩涡」，右键即可沿原路返回，无需自带材料；在某世界内放置绑定同一 UUID 的釜也可返回，新造的未绑定釜则会开启新世界。旧炼金漩涡在外界仍保留兼容入口。详见 [炼金釜独立世界](docs/CAULDRON_WORLDS.md)。朱砂与盐晶的材料掉落同样复用这个 Logos 注册 ID，没有重复注册污染碎片。
+**取消旧固定 `logos_dimension:crucible` 的注册与入口**，不能再用 `/execute in` 进入空模板。升级存档若仍加载它，启动时撤离玩家、保存并卸载；保留旧目录，避免删除旧建筑。UUID 实例继续使用。
 
 管理员命令：
-
-![炼金釜实机截图](docs/screenshots/alchemical-cauldron.png)
 
 ```text
 /alchemy enter
 /alchemy return
-/alchemy island [grid_x grid_z]
+/alchemy island 0 0
 /alchemy region aether|sulfur|mercury|salt
 /alchemy phase nigredo|albedo|citrinitas|rubedo
 /alchemy boss defeated
 /alchemy boss reset
 ```
 
-`boss` 命令只修改玩家所在 UUID 世界的状态。`island` 只接受原点（0, 0），不再存在其他重复空岛。命令与旧漩涡仍可进入固定的管理测试维度，实体炼金釜始终创建自己的实例。普通玩家不能执行管理员命令。首次远距离传送需生成目的地区块。
-
-天门云域暂未制作生存入口。管理员可先切创造模式，再传送到中央天门附近：
+`enter` 需要附近有实体炼金釜，不再打开公共模板。`region` 查找原版群系中的安全位置，有限边界和特定种子内可能找不到目标。远行大陆仍无生存入口，管理员可先切创造模式，再用：
 
 ```text
-/gamemode creative
-/execute in logos_dimension:cloudsea run tp @s 0 400 0
+/execute in logos_dimension:cloudsea run tp @s 0 250 0
 ```
 
-原云海、魔鲸与天空缺口已取消，改用普通天空。管理员仍可用上述命令先进入空域，再飞向地面。南方海岸大约在 Z=6,800 一带，北方雪山在 Z=-6,600 一带，具体随种子与 X 坐标变化。没有添加本维度的生存入口。
+岛下影雾保留，每个 UUID 世界独立记录 Boss 状态。搜索接口 `LOGOS_DIMENSION_ISLAND_BOSS_HOOK`，当前标签为空。动态玻璃法阵和流体行为沿用上一版。
 
-**不引用 26.1 原版硫磺方块，不添加任何原版主世界矿物生成。** `logos_dimension:sulfur_deposit` 是独立方块，方便以后移植资源与地形逻辑；当前 Java API 和构建仍针对上述 Minecraft 版本，跨版本仍需适配。
+## 升级和检查
 
-## 开发和检查
+旧区块保留，新区块使用原版生成，边缘可能出现接缝。旧生成器 ID 仅负责存档解码迁移，解码结果直接是原版生成器。推荐新存档或新炼金釜体验完整布局。
+
+20,000 格限制由原版世界边界实现；管理员越界命令仍可能生成边界外区块，不承诺边界外为空。区块按需生成，不预生成整张地图。
 
 ```text
 ./gradlew test runGameTestServer build -PlogosJar=/absolute/path/logos.jar
-./gradlew runClient -PlogosJar=/absolute/path/logos.jar -PldTest=group:logos_dimension -PldTestHeadless -PldTestWindow=1280x720
+./gradlew runClient -PlogosJar=/absolute/path/logos.jar -PldTest=group:journey -PldTestHeadless -PldTestWindow=1280x720
+./gradlew runClient -PlogosJar=/absolute/path/logos.jar -PldTest=group:cauldron_instances -PldTestHeadless -PldTestWindow=1280x720
 ```
 
-GameTest 的专用数据包仅在测试时加载，因为 26.1 的 GameTestServer 默认剔除数据包维度。它不进入发行 JAR。源码内的客户端场景由 LDLib2 的 DEV_ONLY 注册，仅在开发环境运行。
-
-咒械原地理比例、单一中心与边界、种子变化、平台留空、禁刷怪、流体流动与收集、天然材料换相、维度往返、各岛 Boss 状态序列化均有检查。客户端输出在 `build/ldlib2-uitest/`。
-
-天空和影雾的自定义几何写全顶点属性。当前 Logos 的 `ShaderPackOverlay` 可用时，共用其光影合成后收集器；早期 Logos 没有该 API 时使用普通渲染。光影包兼容结果请见 `VERIFICATION.md`。
-
-## 原型边界
-
-镜面汞目前采用动画金属贴图，没有真正的实时镜面反射。大型地貌、美术、流体和影雾已是可运行底层；移动元素风暴、完整物质转化链、区域独有生物、探索奖励、建筑、宫殿及 Boss 留待后续逐项制作。当前没有原版主世界矿物，不会把主模组本体改成新维度模组。
-
-## 0.2.0 同步修复
-
-咒械原玻璃法阵以自身高度为中心等比放大 15%。熔融玻璃和汞实现原版岩浆式移动、上浮与越岸，源头和流动格均可用方块填平。熔融玻璃采用原版岩浆接触点燃和伤害；汞采用中毒 I（残留 4 秒）与虚弱 I（残留 8 秒），接触持续刷新，不附加直接伤害。遵循原版药效免疫和创造/旁观规则。
-
-中世纪建筑使用 [Millénaire 公开诺曼投影](https://github.com/Zoythrus/Content/tree/1.x.x/cultures/norman/buildings/core) 改作，MIT 原许可、固定版本和修改说明保存在 `third_party/millenaire/`；发行 JAR 包含相应许可。新素材脚本为 `tools/journey_resources.py`，需要 Pillow 与本地 Minecraft 源码资料。生成文件已提交，正常构建不联网取图，也不需要运行资源脚本。
+验证结果见 [VERIFICATION.md](VERIFICATION.md)，生态方向见 [远行大陆](docs/TEMPERATE_JOURNEY.md)。`tools/native_worldgen.py` 输出的 JSON/NBT/PNG 已提交，普通构建不需要运行资源脚本。

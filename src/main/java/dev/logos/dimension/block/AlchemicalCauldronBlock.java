@@ -47,6 +47,14 @@ public final class AlchemicalCauldronBlock extends Block implements EntityBlock 
     public AlchemicalCauldronBlock(BlockBehaviour.Properties properties) { super(properties); }
     @Override public MapCodec<AlchemicalCauldronBlock> codec() { return CODEC; }
     @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new BoundCauldronBlockEntity(pos, state); }
+    @Override protected net.minecraft.world.InteractionResult useWithoutItem(BlockState state,Level level,BlockPos pos,Player player,net.minecraft.world.phys.BlockHitResult hit){
+        if(player instanceof ServerPlayer serverPlayer&&level.getBlockEntity(pos) instanceof BoundCauldronBlockEntity binding){
+            var id=binding.worldId();
+            serverPlayer.sendSystemMessage(id==null?net.minecraft.network.chat.Component.translatable("message.logos_dimension.unbound_cauldron"):
+                    net.minecraft.network.chat.Component.translatable("message.logos_dimension.bound_dimension",CauldronWorlds.key(id).identifier().toString()));
+        }
+        return net.minecraft.world.InteractionResult.SUCCESS;
+    }
 
     @Override public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player,
                                                   ItemStack toolStack, boolean willHarvest, FluidState fluid) {

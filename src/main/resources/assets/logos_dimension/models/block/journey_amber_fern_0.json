@@ -1,0 +1,133 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "neoforge:cutout",
+  "textures": {
+    "plant": "logos_dimension:block/journey_amber_fern_0",
+    "particle": "logos_dimension:block/journey_amber_fern_0"
+  },
+  "elements": [
+    {
+      "from": [
+        1.0,
+        0,
+        8
+      ],
+      "to": [
+        15.0,
+        14,
+        8
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          0,
+          8
+        ],
+        "axis": "y",
+        "angle": 45
+      },
+      "faces": {
+        "north": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        1.0,
+        0,
+        8
+      ],
+      "to": [
+        15.0,
+        14,
+        8
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          0,
+          8
+        ],
+        "axis": "y",
+        "angle": -45
+      },
+      "faces": {
+        "north": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        1.5,
+        0,
+        8
+      ],
+      "to": [
+        14.5,
+        10,
+        8
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          0,
+          8
+        ],
+        "axis": "y",
+        "angle": 0
+      },
+      "faces": {
+        "north": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ]
+}

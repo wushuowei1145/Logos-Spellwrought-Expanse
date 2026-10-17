@@ -34,7 +34,7 @@ public final class DimensionBlocks {
     public static final DeferredBlock<ReactiveMatterBlock> SALT_CRYSTAL = reactive("salt_crystal", MapColor.QUARTZ, SoundType.AMETHYST);
     public static final DeferredBlock<Block> FAN_TRUNK = item("fan_trunk", BLOCKS.<Block>registerBlock("fan_trunk", RotatedPillarBlock::new,
             p -> p.mapColor(MapColor.COLOR_BROWN).strength(2f).sound(SoundType.WOOD)));
-    public static final DeferredBlock<Block> FAN_LEAVES = item("fan_leaves", BLOCKS.<Block>registerBlock("fan_leaves", TransparentBlock::new,
+    public static final DeferredBlock<Block> FAN_LEAVES = item("fan_leaves", BLOCKS.<Block>registerBlock("fan_leaves", dev.logos.dimension.cloudsea.SeasonalLeavesBlock::new,
             p -> p.mapColor(MapColor.COLOR_CYAN).strength(.25f).sound(SoundType.GRASS).noOcclusion()));
     public static final DeferredBlock<Block> GLASS_LEAVES = item("glass_leaves", BLOCKS.registerBlock("glass_leaves", TransparentBlock::new,
             p -> p.mapColor(MapColor.COLOR_LIGHT_BLUE).strength(.4f).sound(SoundType.GLASS).noOcclusion().noCollision()));

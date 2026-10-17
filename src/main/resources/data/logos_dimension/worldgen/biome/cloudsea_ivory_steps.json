@@ -22,7 +22,10 @@
     [],
     [],
     [],
-    [],
+    [
+      "logos_dimension:trees_cloudsea_ivory_steps",
+      "logos_dimension:woodland_floor"
+    ],
     []
   ],
   "spawners": {

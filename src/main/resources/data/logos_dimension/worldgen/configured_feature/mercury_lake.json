@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:lake",
+  "config": {
+    "fluid": {
+      "type": "minecraft:simple_state_provider",
+      "state": {
+        "Name": "logos_dimension:mercury"
+      }
+    },
+    "barrier": {
+      "type": "minecraft:simple_state_provider",
+      "state": {
+        "Name": "logos_dimension:mercury_metal"
+      }
+    }
+  }
+}

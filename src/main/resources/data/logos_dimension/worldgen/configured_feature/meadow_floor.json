@@ -1,0 +1,100 @@
+{
+  "type": "minecraft:simple_block",
+  "config": {
+    "to_place": {
+      "type": "minecraft:weighted_state_provider",
+      "entries": [
+        {
+          "data": {
+            "Name": "logos_dimension:journey_meadow_grass"
+          },
+          "weight": 65
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_bluebell"
+          },
+          "weight": 8
+        },
+        {
+          "data": {
+            "Name": "minecraft:oxeye_daisy"
+          },
+          "weight": 4
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_silver_anemone",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 4
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_moonbell",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 4
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_glowcap",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 4
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_heather",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 4
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_amber_fern",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 4
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_winter_hellebore",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 4
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_fireweed",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 4
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_berry_bramble",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 4
+        }
+      ]
+    }
+  }
+}

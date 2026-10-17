@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "season=0": {
+      "model": "logos_dimension:block/cloudsea_ancient_beech_ground_0"
+    },
+    "season=1": {
+      "model": "logos_dimension:block/cloudsea_ancient_beech_ground_1"
+    },
+    "season=2": {
+      "model": "logos_dimension:block/cloudsea_ancient_beech_ground_2"
+    },
+    "season=3": {
+      "model": "logos_dimension:block/cloudsea_ancient_beech_ground_3"
+    }
+  }
+}

@@ -22,7 +22,10 @@
     [],
     [],
     [],
-    [],
+    [
+      "logos_dimension:trees_cloudsea_echo_folds",
+      "logos_dimension:meadow_floor"
+    ],
     []
   ],
   "spawners": {
