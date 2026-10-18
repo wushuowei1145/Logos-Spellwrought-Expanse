@@ -45,4 +45,13 @@ class NativeDataPolicyTest {
             assertEquals("logos_dimension:"+b.id()+"_leaf",config.getAsJsonObject("foliage_provider").getAsJsonObject("state").get("Name").getAsString());
         }
     }
+    @Test void tallTreesRemainSparseNativeFeatures()throws Exception{
+        for(String name:new String[]{"ancient_beech","jade_whirls","fernwood","moss_vale","fir_heart","lilac_steps","cloudroot_shelves"}){
+            String id="tall_trees_cloudsea_"+name;var tree=data("worldgen/configured_feature/"+id);
+            assertEquals("minecraft:tree",tree.get("type").getAsString());
+            var config=tree.getAsJsonObject("config");assertEquals("logos_dimension:cloudsea_"+name+"_log",config.getAsJsonObject("trunk_provider").getAsJsonObject("state").get("Name").getAsString());
+            int base=config.getAsJsonObject("trunk_placer").get("base_height").getAsInt();assertTrue(base>=16&&base<=22);
+            var placed=data("worldgen/placed_feature/"+id);assertEquals(3,placed.getAsJsonArray("placement").get(0).getAsJsonObject().get("chance").getAsInt());
+        }
+    }
 }

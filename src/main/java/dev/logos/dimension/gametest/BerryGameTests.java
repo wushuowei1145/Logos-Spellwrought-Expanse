@@ -44,12 +44,13 @@ public final class BerryGameTests {
         var l=h.getLevel();var pos=h.absolutePos(new BlockPos(5,4,5));var block=(JourneyBerryBushBlock)CloudseaBlocks.BRAMBLE.get();
         for(int x=-2;x<=2;x++)for(int z=-2;z<=2;z++)for(int y=0;y<=3;y++)l.setBlockAndUpdate(pos.offset(x,y,z),Blocks.STONE.defaultBlockState());
         l.setBlockAndUpdate(pos.below(),Blocks.DIRT.defaultBlockState());l.removeBlock(pos.above(),false);l.setBlockAndUpdate(pos,block.defaultBlockState());
-        h.runAfterDelay(10,()->{
-        h.assertTrue(l.getRawBrightness(pos.above(),0)<9,"Dark growth fixture leaks light");
+        h.startSequence().thenWaitUntil(()->h.assertTrue(l.getRawBrightness(pos.above(),0)<9,"Waiting for dark fixture light propagation"))
+        .thenExecute(()->{
         for(int i=0;i<32;i++)l.tickChunk(l.getChunkAt(pos),4096);
         h.assertTrue(l.getBlockState(pos).getValue(SweetBerryBushBlock.AGE)==0,"Bush grows without native light requirement");
         l.setBlockAndUpdate(pos.above().east(),Blocks.GLOWSTONE.defaultBlockState());
-        h.runAfterDelay(10,()->{
+        }).thenWaitUntil(()->h.assertTrue(l.getRawBrightness(pos.above(),0)>=9,"Waiting for glowstone light propagation"))
+        .thenExecute(()->{
         for(int i=0;i<96&&l.getBlockState(pos).getValue(SweetBerryBushBlock.AGE)<3;i++)l.tickChunk(l.getChunkAt(pos),4096);
         h.assertTrue(l.getBlockState(pos).getValue(SweetBerryBushBlock.AGE)==3,"Native random tick growth never matures berries");
         h.assertTrue(!block.isValidBonemealTarget(l,pos,l.getBlockState(pos)),"Bone meal accepts ripe bush");
@@ -57,8 +58,8 @@ public final class BerryGameTests {
         l.setBlockAndUpdate(pos,l.getBlockState(pos).setValue(SweetBerryBushBlock.AGE,1));
         for(int i=0;i<2;i++)block.performBonemeal(l,l.getRandom(),pos,l.getBlockState(pos));
         h.assertTrue(l.getBlockState(pos).getValue(SweetBerryBushBlock.AGE)==3,"Native bone meal does not regrow fruit");
-        l.setBlockAndUpdate(pos.below(),Blocks.STONE.defaultBlockState());h.assertTrue(l.isEmptyBlock(pos),"Mature bush survives stone support");h.succeed();
-        });});
+        l.setBlockAndUpdate(pos.below(),Blocks.STONE.defaultBlockState());h.assertTrue(l.isEmptyBlock(pos),"Mature bush survives stone support");
+        }).thenSucceed();
     }
     private static void harvest(GameTestHelper h){
         var l=h.getLevel();var pos=h.absolutePos(new BlockPos(5,4,5));var block=CloudseaBlocks.BRAMBLE.get();var p=player(h);

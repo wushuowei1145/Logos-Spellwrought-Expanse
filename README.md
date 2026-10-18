@@ -1,6 +1,8 @@
 # 维度-咒械原
 
-**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.8.0**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.8.1**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+
+0.8.1 在七种现有林地中稀疏混入高冠阔叶树和高塔冷杉，继续用原版树木 Feature 与已有对应木材。每三个适用区块平均一次候选尝试，保留普通树和林下植被；详见 [高大树木](docs/JOURNEY_TALL_TREES.md)。
 
 0.8.0 为远行大陆补充魔法生态细节：靠近植物的星点与小符纹、菌蕨孢子、水面银环和会避让的小游光。新增星露草、萤灯蕨，只有露珠与叶尖自发光，方块照明为 2/3 级。继续使用现有地形，装饰自然生成采用原版数据；详见 [魔法生态细节](docs/JOURNEY_MAGIC_DETAILS.md)。
 
