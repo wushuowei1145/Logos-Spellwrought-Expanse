@@ -171,6 +171,7 @@ for bid in ['aether','sulfur','mercury','salt','sanctum']:
 # Native tags let vanilla saplings, carvers and tree placers understand the custom palette.
 def tag(name,values):write(R/'data/minecraft/tags/block'/f'{name}.json',{'replace':False,'values':values})
 tag('dirt',['logos_dimension:'+b+'_ground' for b in ids]+['logos_dimension:aether_turf','logos_dimension:aether_soil'])
+tag('supports_vegetation',['logos_dimension:'+b+'_ground' for b in ids]+['logos_dimension:aether_turf','logos_dimension:aether_soil'])
 tag('leaves',['logos_dimension:'+b+'_leaf' for b in ids]+['logos_dimension:fan_leaves'])
 tag('logs',['logos_dimension:cloudsea_stem','logos_dimension:fan_trunk'])
 tag('replaceable_by_trees',['logos_dimension:journey_'+p[0] for p in plants]+['logos_dimension:journey_woodland_fern','logos_dimension:journey_bracken','logos_dimension:journey_meadow_grass','logos_dimension:aether_fern','logos_dimension:star_blossom'])

@@ -1,6 +1,21 @@
 # 首版验证记录
 
-目标环境：Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25；Logos 0.5.1，主模组源码基线 `f196960`。当前安装包版本为 0.5.1。原炼金维度不包含建筑或 Boss；远行大陆包含中世纪聚落，不包含 Boss。
+目标环境：Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25；Logos 0.5.1，主模组源码基线 `f196960`。当前安装包版本为 0.5.2。原炼金维度不包含建筑或 Boss；远行大陆包含中世纪聚落，不包含 Boss。
+
+## 0.5.2 植物土壤支撑修复
+
+2026-10-17：先新增回归测试，复现石头上可种植、土壤替换为石头后植物不脱落、基础植物不参加旧状态清理三项失败。原因是 JourneyPlantBlock 只检查坚固顶面，另外四种旧地生植物仍注册为普通 Block。现在 19 种地生植物统一继承原版 VegetationBlock，使用 `supports_vegetation` 与 NeoForge 土壤支撑决定。32 种自定义草皮加入原版标签；葡萄藤和以太植物仍保留原有附着/专用土壤规则。
+
+最终构建、8/8 单元及 30/30 GameTest 通过。新增三项世界测试包括：19 种植物在 42 种合法基底和 12 种非法基底上的 1,026 次实际 BlockItem 放置，拒绝时不扣物品；季节状态不改变合法支撑；土壤换成石头或移除后立即脱落；以跳过邻居校验的方式构造旧错误状态，然后通过 ServerLevel.tickChunk 的真实随机采样清理全部 19 种植物。后者模拟旧区块状态，不是服务器重启升级测试。自然森林样本中逐株检查植物 canSurvive，原生植被覆盖与葡萄、流体、炼金釜回归仍通过。
+
+普通实际客户端 `group:plant_support`：1/1 场景、3/3 检查通过。实际发送右键交互，确认石头上不能种蕨且物品保留，泥土上成功并消耗一个物品，随后把泥土换成石头，客户端和服务端均确认植物脱落。截图见 `docs/screenshots/plant-support/`。本轮没有重跑全部美术场景、光影或服务器重启；没有新增地形、模型或植被扫描线程。
+
+完整资源脚本再运行后 2,638 个资源文件字节一致，土壤标签不会被生成脚本覆盖回旧值。旧存档中的非法植物仅在已加载区块随随机刻逐步脱落；关闭随机刻时仍由邻居支撑更新清理，不扫描整张地图。有效植物与玩家建筑保留。
+
+```text
+./gradlew test runGameTestServer build -PlogosJar=/absolute/path/logos-0.5.1.jar
+./gradlew runClient -PlogosJar=/absolute/path/logos-0.5.1.jar -PldTest=group:plant_support -PldTestHeadless -PldTestWindow=1280x720
+```
 
 ## 0.5.1 草皮整体重做
 
