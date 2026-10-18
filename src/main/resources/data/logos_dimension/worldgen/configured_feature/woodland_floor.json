@@ -55,6 +55,18 @@
             }
           },
           "weight": 3
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_stardew"
+          },
+          "weight": 1
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_lumen_fern"
+          },
+          "weight": 2
         }
       ]
     }

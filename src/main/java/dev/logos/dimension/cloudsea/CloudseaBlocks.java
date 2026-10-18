@@ -25,6 +25,7 @@ public final class CloudseaBlocks {
     public static final DeferredBlock<Block> SLATE=solid("cloudsea_blue_slate",MapColor.COLOR_BLUE,SoundType.STONE,0);
     public static final DeferredBlock<Block> WINDOW=solid("cloudsea_lit_window",MapColor.SAND,SoundType.GLASS,9);
     public static final DeferredBlock<Block> FERN=flora("journey_woodland_fern",0),BRACKEN=flora("journey_bracken",0),BLUEBELL=flora("journey_bluebell",0),FOXGLOVE=flora("journey_foxglove",0),LUPINE=flora("journey_lupine",0),MEADOW_GRASS=flora("journey_meadow_grass",0),REED=flora("journey_river_reed",0);
+    public static final DeferredBlock<Block> STARDEW=flora("journey_stardew",2),LUMEN_FERN=flora("journey_lumen_fern",3);
     public static final DeferredBlock<Block> GRAPEVINE=grapevine();
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> GRAPES=DimensionBlocks.ITEMS.registerSimpleItem("journey_grapes",p->p.food(new net.minecraft.world.food.FoodProperties.Builder().nutrition(2).saturationModifier(.2f).build()));
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> GRAPE_LEAF=DimensionBlocks.ITEMS.registerSimpleItem("journey_grape_leaf");

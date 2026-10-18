@@ -203,5 +203,7 @@
   "block.logos_dimension.cloudsea_copper_copse_log": "铜叶林丘原木",
   "block.logos_dimension.cloudsea_sunlit_glade_log": "曦光林隙原木",
   "block.logos_dimension.cloudsea_starflower_glade_log": "星铃花甸原木",
-  "item.logos_dimension.journey_berry_bramble": "林地蓝莓"
+  "item.logos_dimension.journey_berry_bramble": "林地蓝莓",
+  "block.logos_dimension.journey_stardew": "星露草",
+  "block.logos_dimension.journey_lumen_fern": "萤灯蕨"
 }

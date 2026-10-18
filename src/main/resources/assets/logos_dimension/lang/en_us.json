@@ -203,5 +203,7 @@
   "block.logos_dimension.cloudsea_copper_copse_log": "Copper Copse Log",
   "block.logos_dimension.cloudsea_sunlit_glade_log": "Sunlit Glade Log",
   "block.logos_dimension.cloudsea_starflower_glade_log": "Starbell Glade Log",
-  "item.logos_dimension.journey_berry_bramble": "Woodland Blueberries"
+  "item.logos_dimension.journey_berry_bramble": "Woodland Blueberries",
+  "block.logos_dimension.journey_stardew": "Stardew Grass",
+  "block.logos_dimension.journey_lumen_fern": "Glimmer Fern"
 }

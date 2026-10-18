@@ -244,3 +244,5 @@ runpy.run_path(str(ROOT/'tools/ambient_particles.py'))
 runpy.run_path(str(ROOT/'tools/journey_tree_art.py'))
 
 runpy.run_path(str(ROOT/'tools/berry_resources.py'))
+
+runpy.run_path(str(ROOT/'tools/magic_flora.py'))

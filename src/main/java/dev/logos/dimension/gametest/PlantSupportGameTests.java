@@ -38,7 +38,7 @@ public final class PlantSupportGameTests {
     }
     private static List<Block> plants(){
         var result=new ArrayList<Block>(List.of(CloudseaBlocks.FERN.get(),CloudseaBlocks.BRACKEN.get(),CloudseaBlocks.BLUEBELL.get(),CloudseaBlocks.FOXGLOVE.get(),CloudseaBlocks.LUPINE.get(),CloudseaBlocks.MEADOW_GRASS.get(),CloudseaBlocks.REED.get(),CloudseaBlocks.LANTERN.get(),CloudseaBlocks.ROOT.get(),CloudseaBlocks.EYE_FERN.get(),CloudseaBlocks.DEMON_REED.get()));
-        CloudseaBlocks.SEASONAL_PLANTS.forEach(p->result.add(p.get()));return result;
+        CloudseaBlocks.SEASONAL_PLANTS.forEach(p->result.add(p.get()));result.add(CloudseaBlocks.STARDEW.get());result.add(CloudseaBlocks.LUMEN_FERN.get());return result;
     }
     private static ServerPlayer player(GameTestHelper h){
         var cookie=CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(),"plant-test"),false);

@@ -93,6 +93,12 @@
             }
           },
           "weight": 4
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_stardew"
+          },
+          "weight": 1
         }
       ]
     }
