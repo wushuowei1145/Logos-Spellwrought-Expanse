@@ -1,6 +1,8 @@
 # 维度-咒械原
 
-**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.7.0**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.7.1**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+
+0.7.1 将林莓灌丛改为放大的甜浆果式蓝莓灌木，成熟约 1.25 格宽、1.375 格高；四段生长、四季外观、可食用的蓝莓同时用于种植。继承原版甜浆果的土壤、光照、骨粉与荆棘机制，右键采摘后重新结果。保留原方块与物品 ID，详见 [林地蓝莓](docs/WOODLAND_BLUEBERRIES.md)。
 
 0.7.0 为全部 32 种树叶添加对应的独立原木、树皮和年轮，叶块内部补入三向叶簇。26 种有树群系在新生成区块使用对应树干，旧原版树干保留；详见 [原木与叶心](docs/JOURNEY_TREE_FAMILIES.md)。
 

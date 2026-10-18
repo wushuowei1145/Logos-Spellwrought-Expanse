@@ -39,7 +39,7 @@ public final class JourneyAtmosphere {
             boolean warm=biome!=null&&!biome.barren()&&!biome.conifer()&&biome!=CloudseaBiome.AURORA_DUNES;
             boolean fireflies=AmbientMotion.fireflies(season,JourneySeasons.ticks(level),warm,level.isRaining());
             var here=level.getBlockState(pos);var below=level.getBlockState(pos.below());
-            boolean plant=here.getBlock() instanceof JourneyPlantBlock||below.getBlock() instanceof JourneyPlantBlock||here.is(CloudseaBlocks.GRAPEVINE.get());
+            boolean plant=here.getBlock() instanceof JourneyPlantBlock||below.getBlock() instanceof JourneyPlantBlock||here.is(CloudseaBlocks.GRAPEVINE.get())||here.is(CloudseaBlocks.BRAMBLE.get())||below.is(CloudseaBlocks.BRAMBLE.get());
             double px=x+random.nextDouble(),pz=z+random.nextDouble();
             if(fireflies&&random.nextFloat()<.75f){
                 for(int i=0;i<2;i++)level.addParticle(DimensionParticles.FIREFLY.get(),px+random.nextDouble()*.8-.4,pos.getY()+.45+random.nextDouble()*1.4,pz+random.nextDouble()*.8-.4,0,0,0);

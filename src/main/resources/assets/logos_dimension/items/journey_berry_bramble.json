@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "logos_dimension:block/journey_berry_bramble_0"
+    "model": "logos_dimension:item/journey_berry_bramble"
   }
 }
