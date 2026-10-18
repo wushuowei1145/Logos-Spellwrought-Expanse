@@ -49,6 +49,7 @@ public final class LogosDimension {
         dev.logos.dimension.cloudsea.CloudseaBlocks.init();
         DimensionBlocks.BLOCKS.register(bus); DimensionBlocks.ITEMS.register(bus);
         DimensionFluids.TYPES.register(bus); DimensionFluids.FLUIDS.register(bus);
+        DimensionParticles.register(bus);
         GENERATORS.register(bus); BIOME_SOURCES.register(bus); TABS.register(bus);
         DimensionGameTests.register(bus);
         dev.logos.dimension.gametest.CloudseaGameTests.register(bus);
