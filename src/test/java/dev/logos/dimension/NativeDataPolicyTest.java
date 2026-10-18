@@ -37,4 +37,12 @@ class NativeDataPolicyTest {
         assertEquals(0,JourneySeasons.at(0));assertEquals(1,JourneySeasons.at(192000));
         assertEquals(3,JourneySeasons.at(-1));assertEquals(0,JourneySeasons.at(768000));
     }
+    @Test void nativeTreesUseTheMatchingLogAndLeaves()throws Exception{
+        for(var b:dev.logos.dimension.cloudsea.CloudseaBiome.values())if(!b.barren()){
+            var tree=data("worldgen/configured_feature/trees_"+b.id());assertEquals("minecraft:tree",tree.get("type").getAsString());
+            var config=tree.getAsJsonObject("config");
+            assertEquals("logos_dimension:"+b.id()+"_log",config.getAsJsonObject("trunk_provider").getAsJsonObject("state").get("Name").getAsString());
+            assertEquals("logos_dimension:"+b.id()+"_leaf",config.getAsJsonObject("foliage_provider").getAsJsonObject("state").get("Name").getAsString());
+        }
+    }
 }

@@ -150,7 +150,7 @@ for bid in ids:
         tree=copy.deepcopy(TREES['spruce' if bid in conifers else 'birch' if bid in birches else 'fancy_oak' if bid in forests else 'oak'])
         config=tree['config'];config['foliage_provider']=provider('logos_dimension:'+bid+'_leaf',distance=7,persistent=False,waterlogged=False,season=0)
         config['trunk_placer']['base_height']=9 if bid in conifers else 8 if bid in forests else 5
-        if bid in {'cloudsea_ancient_beech','cloudsea_jade_whirls'}:config['trunk_provider']=provider('logos_dimension:cloudsea_stem',axis='y')
+        config['trunk_provider']=provider('logos_dimension:'+bid+'_log',axis='y')
         if config['foliage_placer']['type']=='minecraft:blob_foliage_placer':config['foliage_placer']['radius']=3
         configured('trees_'+bid,tree);placed('trees_'+bid,'trees_'+bid,12 if bid in forests else 0 if bid in glades else 1,'OCEAN_FLOOR_WG')
         features[9]=['logos_dimension:trees_'+bid,'logos_dimension:woodland_floor' if bid in forests else 'logos_dimension:meadow_floor']
@@ -173,7 +173,9 @@ def tag(name,values):write(R/'data/minecraft/tags/block'/f'{name}.json',{'replac
 tag('dirt',['logos_dimension:'+b+'_ground' for b in ids]+['logos_dimension:aether_turf','logos_dimension:aether_soil'])
 tag('supports_vegetation',['logos_dimension:'+b+'_ground' for b in ids]+['logos_dimension:aether_turf','logos_dimension:aether_soil'])
 tag('leaves',['logos_dimension:'+b+'_leaf' for b in ids]+['logos_dimension:fan_leaves'])
-tag('logs',['logos_dimension:cloudsea_stem','logos_dimension:fan_trunk'])
+tag('logs',['logos_dimension:cloudsea_stem','logos_dimension:fan_trunk']+['logos_dimension:'+b+'_log' for b in ids])
+tag('logs_that_burn',['logos_dimension:cloudsea_stem','logos_dimension:fan_trunk']+['logos_dimension:'+b+'_log' for b in ids])
+tag('mineable/axe',['logos_dimension:cloudsea_stem','logos_dimension:fan_trunk']+['logos_dimension:'+b+'_log' for b in ids])
 tag('replaceable_by_trees',['logos_dimension:journey_'+p[0] for p in plants]+['logos_dimension:journey_woodland_fern','logos_dimension:journey_bracken','logos_dimension:journey_meadow_grass','logos_dimension:aether_fern','logos_dimension:star_blossom'])
 tag('overworld_carver_replaceables',['logos_dimension:strata_stone','logos_dimension:charred_stone','logos_dimension:mercury_metal'])
 
@@ -239,3 +241,4 @@ write(D/'tags/worldgen/structure/journey_settlements.json',{'values':['logos_dim
 runpy.run_path(str(ROOT/'tools/journey_art.py'))
 runpy.run_path(str(ROOT/'tools/grape_resources.py'))
 runpy.run_path(str(ROOT/'tools/ambient_particles.py'))
+runpy.run_path(str(ROOT/'tools/journey_tree_art.py'))

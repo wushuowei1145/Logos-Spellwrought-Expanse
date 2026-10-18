@@ -14,7 +14,7 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 /** Decorative materials and living flora only; this catalogue deliberately registers no ores or entities. */
 public final class CloudseaBlocks {
     public static final List<DeferredBlock<Block>> PALETTE=new ArrayList<>();
-    public static final EnumMap<CloudseaBiome,DeferredBlock<Block>> GROUND=new EnumMap<>(CloudseaBiome.class),LEAVES=new EnumMap<>(CloudseaBiome.class);
+    public static final EnumMap<CloudseaBiome,DeferredBlock<Block>> GROUND=new EnumMap<>(CloudseaBiome.class),LEAVES=new EnumMap<>(CloudseaBiome.class),TRUNKS=new EnumMap<>(CloudseaBiome.class);
     public static final DeferredBlock<Block> PORCELAIN=solid("cloudsea_porcelain",MapColor.QUARTZ,SoundType.CALCITE,0);
     public static final DeferredBlock<Block> MANTLE=solid("cloudsea_mantle",MapColor.COLOR_LIGHT_BLUE,SoundType.STONE,0);
     public static final DeferredBlock<Block> STEM=wood("cloudsea_stem"),LANTERN=flora("cloudsea_lantern_bud",8);
@@ -35,6 +35,7 @@ public final class CloudseaBlocks {
         var ground=DimensionBlocks.BLOCKS.<Block>registerBlock(b.id()+"_ground",SeasonalTurfBlock::new,p->p.mapColor(MapColor.GRASS).strength(.6f).sound(SoundType.GRASS).randomTicks());
         DimensionBlocks.ITEMS.registerSimpleBlockItem(b.id()+"_ground",ground);PALETTE.add(ground);GROUND.put(b,ground);
         LEAVES.put(b,canopy(b.id()+"_leaf"));
+        TRUNKS.put(b,wood(b.id()+"_log"));
     } }
     public static boolean isEvergreen(Block block){for(var b:CloudseaBiome.values())if(b.conifer()&&LEAVES.get(b).get()==block)return true;return false;}
     private static DeferredBlock<Block> wood(String id){
