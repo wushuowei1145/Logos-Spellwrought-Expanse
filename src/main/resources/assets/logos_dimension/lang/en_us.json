@@ -149,7 +149,7 @@
   "block.logos_dimension.journey_amber_fern": "Amber Staghorn",
   "block.logos_dimension.journey_winter_hellebore": "Winter Hellebore",
   "block.logos_dimension.journey_fireweed": "Rosefire Willowherb",
-  "block.logos_dimension.journey_berry_bramble": "Woodland Bramble",
+  "block.logos_dimension.journey_berry_bramble": "Woodland Blueberry Bush",
   "message.logos_dimension.unbound_cauldron": "Unbound: jump in to create its dimension.",
   "message.logos_dimension.bound_dimension": "Bound dimension: %s",
   "message.logos_dimension.use_cauldron": "Jump into a cauldron to enter its bound world. Vortices are return exits only.",
@@ -202,5 +202,6 @@
   "block.logos_dimension.cloudsea_moss_vale_log": "Mossy Vale Log",
   "block.logos_dimension.cloudsea_copper_copse_log": "Copper Copse Log",
   "block.logos_dimension.cloudsea_sunlit_glade_log": "Sunlit Glade Log",
-  "block.logos_dimension.cloudsea_starflower_glade_log": "Starbell Glade Log"
+  "block.logos_dimension.cloudsea_starflower_glade_log": "Starbell Glade Log",
+  "item.logos_dimension.journey_berry_bramble": "Woodland Blueberries"
 }

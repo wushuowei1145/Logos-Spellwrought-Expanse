@@ -1,16 +1,292 @@
 {
   "variants": {
-    "season=0": {
-      "model": "logos_dimension:block/journey_berry_bramble_0"
-    },
-    "season=1": {
-      "model": "logos_dimension:block/journey_berry_bramble_1"
-    },
-    "season=2": {
-      "model": "logos_dimension:block/journey_berry_bramble_2"
-    },
-    "season=3": {
-      "model": "logos_dimension:block/journey_berry_bramble_3"
-    }
+    "age=0,season=0": [
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s0_a0",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s0_a0",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s0_a0",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s0_a0",
+        "y": 270
+      }
+    ],
+    "age=1,season=0": [
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s0_a1",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s0_a1",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s0_a1",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s0_a1",
+        "y": 270
+      }
+    ],
+    "age=2,season=0": [
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s0_a2",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s0_a2",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s0_a2",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s0_a2",
+        "y": 270
+      }
+    ],
+    "age=3,season=0": [
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s0_a3",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s0_a3",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s0_a3",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s0_a3",
+        "y": 270
+      }
+    ],
+    "age=0,season=1": [
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s1_a0",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s1_a0",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s1_a0",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s1_a0",
+        "y": 270
+      }
+    ],
+    "age=1,season=1": [
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s1_a1",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s1_a1",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s1_a1",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s1_a1",
+        "y": 270
+      }
+    ],
+    "age=2,season=1": [
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s1_a2",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s1_a2",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s1_a2",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s1_a2",
+        "y": 270
+      }
+    ],
+    "age=3,season=1": [
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s1_a3",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s1_a3",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s1_a3",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s1_a3",
+        "y": 270
+      }
+    ],
+    "age=0,season=2": [
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s2_a0",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s2_a0",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s2_a0",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s2_a0",
+        "y": 270
+      }
+    ],
+    "age=1,season=2": [
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s2_a1",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s2_a1",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s2_a1",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s2_a1",
+        "y": 270
+      }
+    ],
+    "age=2,season=2": [
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s2_a2",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s2_a2",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s2_a2",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s2_a2",
+        "y": 270
+      }
+    ],
+    "age=3,season=2": [
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s2_a3",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s2_a3",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s2_a3",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s2_a3",
+        "y": 270
+      }
+    ],
+    "age=0,season=3": [
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s3_a0",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s3_a0",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s3_a0",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s3_a0",
+        "y": 270
+      }
+    ],
+    "age=1,season=3": [
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s3_a1",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s3_a1",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s3_a1",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s3_a1",
+        "y": 270
+      }
+    ],
+    "age=2,season=3": [
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s3_a2",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s3_a2",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s3_a2",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s3_a2",
+        "y": 270
+      }
+    ],
+    "age=3,season=3": [
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s3_a3",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s3_a3",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s3_a3",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_berry_bramble_s3_a3",
+        "y": 270
+      }
+    ]
   }
 }

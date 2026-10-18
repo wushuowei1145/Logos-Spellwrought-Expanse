@@ -32,7 +32,8 @@
           "data": {
             "Name": "logos_dimension:journey_berry_bramble",
             "Properties": {
-              "season": "0"
+              "season": "0",
+              "age": "3"
             }
           },
           "weight": 5

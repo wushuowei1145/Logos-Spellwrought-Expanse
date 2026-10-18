@@ -165,7 +165,7 @@
   "block.logos_dimension.journey_amber_fern": "琥珀鹿角蕨",
   "block.logos_dimension.journey_winter_hellebore": "冬星嚏根草",
   "block.logos_dimension.journey_fireweed": "霞穗柳兰",
-  "block.logos_dimension.journey_berry_bramble": "林莓灌丛",
+  "block.logos_dimension.journey_berry_bramble": "林地蓝莓灌木",
   "message.logos_dimension.unbound_cauldron": "未绑定：首次跳入后创建独立维度。",
   "message.logos_dimension.bound_dimension": "绑定维度：%s",
   "message.logos_dimension.use_cauldron": "请跳入炼金釜进入它绑定的世界；回程漩涡仅用于返回。",
@@ -202,5 +202,6 @@
   "block.logos_dimension.cloudsea_moss_vale_log": "雾苔溪林原木",
   "block.logos_dimension.cloudsea_copper_copse_log": "铜叶林丘原木",
   "block.logos_dimension.cloudsea_sunlit_glade_log": "曦光林隙原木",
-  "block.logos_dimension.cloudsea_starflower_glade_log": "星铃花甸原木"
+  "block.logos_dimension.cloudsea_starflower_glade_log": "星铃花甸原木",
+  "item.logos_dimension.journey_berry_bramble": "林地蓝莓"
 }

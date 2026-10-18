@@ -28,7 +28,7 @@ public final class CloudseaBlocks {
     public static final DeferredBlock<Block> GRAPEVINE=grapevine();
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> GRAPES=DimensionBlocks.ITEMS.registerSimpleItem("journey_grapes",p->p.food(new net.minecraft.world.food.FoodProperties.Builder().nutrition(2).saturationModifier(.2f).build()));
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> GRAPE_LEAF=DimensionBlocks.ITEMS.registerSimpleItem("journey_grape_leaf");
-    public static final DeferredBlock<Block> ANEMONE=seasonal("journey_silver_anemone"),MOONBELL=seasonal("journey_moonbell"),GLOWCAP=seasonal("journey_glowcap"),HEATHER=seasonal("journey_heather"),STAGHORN=seasonal("journey_amber_fern"),HELLEBORE=seasonal("journey_winter_hellebore"),FIREWEED=seasonal("journey_fireweed"),BRAMBLE=seasonal("journey_berry_bramble");
+    public static final DeferredBlock<Block> ANEMONE=seasonal("journey_silver_anemone"),MOONBELL=seasonal("journey_moonbell"),GLOWCAP=seasonal("journey_glowcap"),HEATHER=seasonal("journey_heather"),STAGHORN=seasonal("journey_amber_fern"),HELLEBORE=seasonal("journey_winter_hellebore"),FIREWEED=seasonal("journey_fireweed"),BRAMBLE=bramble();
     public static final List<DeferredBlock<Block>> SEASONAL_PLANTS=List.of(ANEMONE,MOONBELL,GLOWCAP,HEATHER,STAGHORN,HELLEBORE,FIREWEED,BRAMBLE);
     public static final DeferredBlock<Block> LIMESTONE=solid("journey_limestone",MapColor.QUARTZ,SoundType.STONE,0),PLASTER=solid("journey_lime_plaster",MapColor.SAND,SoundType.STONE,0),TIMBER_FRAME=solid("journey_timber_frame",MapColor.COLOR_BROWN,SoundType.WOOD,0),ROOF_TILE=solid("journey_roof_tile",MapColor.TERRACOTTA_RED,SoundType.STONE,0);
     static { for(var b:CloudseaBiome.values()){
@@ -45,6 +45,13 @@ public final class CloudseaBlocks {
     private static DeferredBlock<Block> grapevine(){
         var block=DimensionBlocks.BLOCKS.<Block>registerBlock("journey_grapevine",GrapeVineBlock::new,p->p.mapColor(MapColor.PLANT).strength(.2f).sound(SoundType.VINE).noCollision().noOcclusion().randomTicks().replaceable());
         DimensionBlocks.ITEMS.registerSimpleBlockItem("journey_grapevine",block);PALETTE.add(block);return block;
+    }
+    private static DeferredBlock<Block> bramble(){
+        String id="journey_berry_bramble";
+        var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,JourneyBerryBushBlock::new,p->p.mapColor(MapColor.PLANT).strength(.2f).sound(SoundType.SWEET_BERRY_BUSH).noCollision().noOcclusion().randomTicks());
+        // Keep the existing item ID; the berries themselves plant the bush, like vanilla.
+        DimensionBlocks.ITEMS.registerItem(id,p->new net.minecraft.world.item.BlockItem(block.get(),p.food(new net.minecraft.world.food.FoodProperties.Builder().nutrition(2).saturationModifier(.1f).build())));
+        PALETTE.add(block);return block;
     }
     private static DeferredBlock<Block> canopy(String id){
         var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,SeasonalLeavesBlock::new,p->p.mapColor(MapColor.PLANT).strength(.2f).sound(SoundType.GRASS).noOcclusion().randomTicks());
