@@ -24,11 +24,12 @@ public final class JourneyAtmosphere {
     static long frame(){return frame;}
     @SubscribeEvent static void tick(ClientTickEvent.Post event){
         var mc=Minecraft.getInstance();
-        if(mc.level!=previousLevel){JourneyAmbientParticle.clear();previousLevel=mc.level;}
-        if(mc.level==null||mc.player==null||!mc.level.dimension().equals(LogosDimension.CLOUDSEA)){JourneyAmbientParticle.clear();return;}
+        if(mc.level!=previousLevel){JourneyAmbientParticle.clear();JourneyMagicDetails.clear();previousLevel=mc.level;}
+        if(mc.level==null||mc.player==null||!mc.level.dimension().equals(LogosDimension.CLOUDSEA)){JourneyAmbientParticle.clear();JourneyMagicDetails.clear();return;}
         if(mc.isPaused())return;
         frame++;int setting=mc.options.particles().get().ordinal(),capacity=AmbientMotion.capacity(setting);
         JourneyAmbientParticle.trim(capacity);
+        JourneyMagicDetails.tick(mc.level);
         if(capacity==0||frame%AmbientMotion.interval(setting)!=0||JourneyAmbientParticle.active()>=capacity)return;
         var level=mc.level;var random=level.getRandom();var origin=mc.player.blockPosition();
         for(int attempt=0;attempt<4;attempt++){

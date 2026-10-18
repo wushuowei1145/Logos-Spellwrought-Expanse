@@ -5,6 +5,20 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AmbientMotionTest {
+    @Test void detailsShareTheExistingBudget(){
+        for(int setting=0;setting<3;setting++){
+            int total=0;for(var kind:AmbientMotion.Kind.values())total+=AmbientMotion.kindCapacity(kind,setting);
+            assertTrue(total<=AmbientMotion.capacity(setting));
+        }
+    }
+    @Test void surfaceMagicStaysFlatAndRipplesExpandContinuously(){
+        float previous=AmbientMotion.size(AmbientMotion.Kind.RIPPLE,0,100);
+        for(double t=0;t<=100;t+=.1){
+            assertEquals(0,AmbientMotion.sample(AmbientMotion.Kind.SIGIL,t,100,2).y());
+            assertEquals(0,AmbientMotion.sample(AmbientMotion.Kind.RIPPLE,t,100,2).y());
+            float size=AmbientMotion.size(AmbientMotion.Kind.RIPPLE,t,100);assertTrue(size>=previous&&size-previous<.003);previous=size;
+        }
+    }
     @Test void firefliesBelongToWarmDryNights(){
         assertTrue(AmbientMotion.fireflies(1,18000,true,false));
         assertFalse(AmbientMotion.fireflies(3,18000,true,false));

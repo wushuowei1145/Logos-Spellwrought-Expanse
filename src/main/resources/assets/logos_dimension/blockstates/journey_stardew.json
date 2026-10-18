@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "logos_dimension:block/journey_stardew",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_stardew",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_stardew",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_stardew",
+        "y": 270
+      }
+    ]
+  }
+}

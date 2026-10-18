@@ -15,7 +15,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class CloudseaGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS=DeferredRegister.create(Registries.TEST_FUNCTION,LogosDimension.ID);
     public static void register(IEventBus bus){
-        var tests=Map.<String,Consumer<GameTestHelper>>of("cloudsea_registry",CloudseaGameTests::registry,"cloudsea_terrain",CloudseaGameTests::terrain,"cloudsea_village",CloudseaGameTests::village,"cloudsea_tree_blocks",CloudseaGameTests::forest,"journey_seasons",CloudseaGameTests::seasons,"journey_log_families",CloudseaGameTests::logFamilies);
+        var tests=Map.<String,Consumer<GameTestHelper>>of("cloudsea_registry",CloudseaGameTests::registry,"cloudsea_terrain",CloudseaGameTests::terrain,"cloudsea_village",CloudseaGameTests::village,"cloudsea_tree_blocks",CloudseaGameTests::forest,"journey_seasons",CloudseaGameTests::seasons,"journey_log_families",CloudseaGameTests::logFamilies,"journey_luminous_plants",CloudseaGameTests::luminousPlants);
         tests.forEach((name,test)->FUNCTIONS.register(name,()->test));FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent e)->{var env=e.registerEnvironment(LogosDimension.id("cloudsea_default"),new TestEnvironmentDefinition.AllOf());for(String name:tests.keySet())e.registerTest(LogosDimension.id(name),new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION,LogosDimension.id(name)),new TestData<>(env,Identifier.withDefaultNamespace("empty"),1600,0,true,Rotation.NONE,false,1,1,false,16)));});
     }
@@ -37,7 +37,7 @@ public final class CloudseaGameTests {
         h.assertTrue(air>30,"Native caves missing");h.succeed();
     }
     private static void forest(GameTestHelper h){
-        var level=level(h);var at=NativeWorlds.locateBiome(level,CloudseaBiome.ANCIENT_BEECH.id());int logs=0,leaves=0,covered=0,eligible=0,water=0;var seen=new java.util.HashMap<String,Integer>();
+        var level=level(h);var at=NativeWorlds.locateBiome(level,CloudseaBiome.ANCIENT_BEECH.id());int logs=0,leaves=0,covered=0,eligible=0,water=0,luminous=0;var seen=new java.util.HashMap<String,Integer>();
         for(int x=at.getX()-16;x<at.getX()+16;x++)for(int z=at.getZ()-16;z<at.getZ()+16;z++){
             boolean plant=false;
             int gy=level.getChunkSource().getGenerator().getBaseHeight(x,z,net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG,level,level.getChunkSource().randomState());
@@ -51,18 +51,29 @@ public final class CloudseaGameTests {
                     h.assertTrue(state.is(CloudseaBlocks.TRUNKS.get(CloudseaBiome.ANCIENT_BEECH).get()),"Native beech woodland uses an unrelated trunk: "+state);
                 }
                 if(block instanceof SeasonalLeavesBlock)leaves++;
+                if(state.is(CloudseaBlocks.STARDEW.get())||state.is(CloudseaBlocks.LUMEN_FERN.get()))luminous++;
                 if(block instanceof JourneyPlantBlock)h.assertTrue(state.canSurvive(level,new BlockPos(x,y,z)),"Native plant has unsuitable ground at "+x+","+y+","+z+": "+state);
                 if(block instanceof JourneyPlantBlock||state.is(net.minecraft.world.level.block.Blocks.MOSS_CARPET)||state.is(net.minecraft.world.level.block.Blocks.LEAF_LITTER))plant=true;
             }if(plant)covered++;
         }
         h.assertTrue(logs>70&&leaves>500,"Native features did not produce a dense connected woodland: "+logs+"/"+leaves);
-        System.out.println("NATIVE_FOREST "+at+" logs="+logs+" leaves="+leaves+" covered="+covered+" eligible="+eligible+" water="+water+" biomes="+seen);
-        h.assertTrue(covered>400,"Forest floor lacks vegetation: "+covered);h.succeed();
+        System.out.println("NATIVE_FOREST "+at+" logs="+logs+" leaves="+leaves+" luminous="+luminous+" covered="+covered+" eligible="+eligible+" water="+water+" biomes="+seen);
+        h.assertTrue(luminous>0,"Native woodland lacks luminous plants");h.assertTrue(covered>400,"Forest floor lacks vegetation: "+covered);h.succeed();
     }
     private static void village(GameTestHelper h){
         var level=level(h);var registry=level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
         h.assertTrue(registry.getOrThrow(ResourceKey.create(Registries.STRUCTURE,LogosDimension.id("journey_hamlet"))).value() instanceof net.minecraft.world.level.levelgen.structure.structures.JigsawStructure,"Hamlet does not use native jigsaw structures");
         h.assertTrue(registry.getOrThrow(ResourceKey.create(Registries.STRUCTURE,LogosDimension.id("journey_town"))).value() instanceof net.minecraft.world.level.levelgen.structure.structures.JigsawStructure,"Town missing");h.succeed();
+    }
+    private static void luminousPlants(GameTestHelper h){
+        var l=h.getLevel();var a=h.absolutePos(new BlockPos(3,4,3));var b=h.absolutePos(new BlockPos(10,4,10));
+        l.setBlockAndUpdate(a.below(),net.minecraft.world.level.block.Blocks.DIRT.defaultBlockState());l.setBlockAndUpdate(b.below(),net.minecraft.world.level.block.Blocks.DIRT.defaultBlockState());
+        l.setBlockAndUpdate(a,CloudseaBlocks.STARDEW.get().defaultBlockState());l.setBlockAndUpdate(b,CloudseaBlocks.LUMEN_FERN.get().defaultBlockState());
+        h.assertTrue(l.getBlockState(a).getLightEmission()==2&&l.getBlockState(b).getLightEmission()==3,"Plants lack subtle block light");
+        h.runAfterDelay(15,()->{
+            h.assertTrue(l.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,a)>=2&&l.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,a.east())>=1,"Stardew does not illuminate nearby ground");
+            h.assertTrue(l.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,b)>=3&&l.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,b.east())>=2,"Fern does not illuminate nearby ground");h.succeed();
+        });
     }
     private static void logFamilies(GameTestHelper h){
         var level=h.getLevel();var leaves=new java.util.ArrayList<BlockPos>();int i=0;

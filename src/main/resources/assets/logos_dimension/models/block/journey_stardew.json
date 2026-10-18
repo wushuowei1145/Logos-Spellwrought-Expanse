@@ -1,0 +1,264 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "neoforge:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "logos_dimension:block/journey_stardew",
+    "plant": "logos_dimension:block/journey_stardew",
+    "glow": "logos_dimension:block/journey_stardew_glow"
+  },
+  "elements": [
+    {
+      "from": [
+        1.0,
+        0,
+        6.7
+      ],
+      "to": [
+        15.0,
+        9,
+        6.7
+      ],
+      "rotation": {
+        "axis": "y",
+        "angle": -45,
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        1.0,
+        0,
+        6.7250000000000005
+      ],
+      "to": [
+        15.0,
+        9,
+        6.7250000000000005
+      ],
+      "rotation": {
+        "axis": "y",
+        "angle": -45,
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "light_emission": 12,
+      "shade": false
+    },
+    {
+      "from": [
+        1.0,
+        0,
+        8.0
+      ],
+      "to": [
+        15.0,
+        9,
+        8.0
+      ],
+      "rotation": {
+        "axis": "y",
+        "angle": 0,
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        1.0,
+        0,
+        8.025
+      ],
+      "to": [
+        15.0,
+        9,
+        8.025
+      ],
+      "rotation": {
+        "axis": "y",
+        "angle": 0,
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "light_emission": 12,
+      "shade": false
+    },
+    {
+      "from": [
+        1.0,
+        0,
+        9.3
+      ],
+      "to": [
+        15.0,
+        9,
+        9.3
+      ],
+      "rotation": {
+        "axis": "y",
+        "angle": 45,
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        1.0,
+        0,
+        9.325000000000001
+      ],
+      "to": [
+        15.0,
+        9,
+        9.325000000000001
+      ],
+      "rotation": {
+        "axis": "y",
+        "angle": 45,
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      },
+      "faces": {
+        "north": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#glow",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "light_emission": 12,
+      "shade": false
+    }
+  ]
+}

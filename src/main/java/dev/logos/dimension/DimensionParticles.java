@@ -13,6 +13,10 @@ public final class DimensionParticles {
     public static final DeferredHolder<ParticleType<?>,SimpleParticleType> FIREFLY=TYPES.register("journey_firefly",()->new SimpleParticleType(false));
     public static final DeferredHolder<ParticleType<?>,SimpleParticleType> MOTE=TYPES.register("journey_mana_mote",()->new SimpleParticleType(false));
     public static final DeferredHolder<ParticleType<?>,SimpleParticleType> GLIMMER=TYPES.register("journey_plant_glimmer",()->new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>,SimpleParticleType> SPORE=TYPES.register("journey_luminous_spore",()->new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>,SimpleParticleType> SIGIL=TYPES.register("journey_woodland_sigil",()->new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>,SimpleParticleType> RIPPLE=TYPES.register("journey_silver_ripple",()->new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>,SimpleParticleType> WISP=TYPES.register("journey_water_wisp",()->new SimpleParticleType(false));
     public static void register(IEventBus bus){TYPES.register(bus);}
     private DimensionParticles(){}
 }
