@@ -57,6 +57,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.GrapeGameTests.register(bus);
         dev.logos.dimension.gametest.PlantSupportGameTests.register(bus);
         dev.logos.dimension.gametest.BerryGameTests.register(bus);
+        dev.logos.dimension.gametest.TallTreeGameTests.register(bus);
         bus.addListener(DimensionSpawns::register);
         bus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
                 event.registrar("1").playToClient(dev.logos.dimension.net.HauntPayload.TYPE, dev.logos.dimension.net.HauntPayload.CODEC));
