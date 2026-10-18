@@ -15,7 +15,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class CloudseaGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS=DeferredRegister.create(Registries.TEST_FUNCTION,LogosDimension.ID);
     public static void register(IEventBus bus){
-        var tests=Map.<String,Consumer<GameTestHelper>>of("cloudsea_registry",CloudseaGameTests::registry,"cloudsea_terrain",CloudseaGameTests::terrain,"cloudsea_village",CloudseaGameTests::village,"cloudsea_tree_blocks",CloudseaGameTests::forest,"journey_seasons",CloudseaGameTests::seasons);
+        var tests=Map.<String,Consumer<GameTestHelper>>of("cloudsea_registry",CloudseaGameTests::registry,"cloudsea_terrain",CloudseaGameTests::terrain,"cloudsea_village",CloudseaGameTests::village,"cloudsea_tree_blocks",CloudseaGameTests::forest,"journey_seasons",CloudseaGameTests::seasons,"journey_log_families",CloudseaGameTests::logFamilies);
         tests.forEach((name,test)->FUNCTIONS.register(name,()->test));FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent e)->{var env=e.registerEnvironment(LogosDimension.id("cloudsea_default"),new TestEnvironmentDefinition.AllOf());for(String name:tests.keySet())e.registerTest(LogosDimension.id(name),new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION,LogosDimension.id(name)),new TestData<>(env,Identifier.withDefaultNamespace("empty"),1600,0,true,Rotation.NONE,false,1,1,false,16)));});
     }
@@ -46,7 +46,10 @@ public final class CloudseaGameTests {
             seen.merge(level.getBiome(gp).unwrapKey().orElseThrow().identifier().getPath(),1,Integer::sum);
             for(int y=35;y<250;y++){
                 var state=level.getBlockState(new BlockPos(x,y,z));var block=state.getBlock();
-                if(state.is(net.minecraft.tags.BlockTags.LOGS))logs++;
+                if(state.is(net.minecraft.tags.BlockTags.LOGS)){
+                    logs++;
+                    h.assertTrue(state.is(CloudseaBlocks.TRUNKS.get(CloudseaBiome.ANCIENT_BEECH).get()),"Native beech woodland uses an unrelated trunk: "+state);
+                }
                 if(block instanceof SeasonalLeavesBlock)leaves++;
                 if(block instanceof JourneyPlantBlock)h.assertTrue(state.canSurvive(level,new BlockPos(x,y,z)),"Native plant has unsuitable ground at "+x+","+y+","+z+": "+state);
                 if(block instanceof JourneyPlantBlock||state.is(net.minecraft.world.level.block.Blocks.MOSS_CARPET)||state.is(net.minecraft.world.level.block.Blocks.LEAF_LITTER))plant=true;
@@ -60,6 +63,19 @@ public final class CloudseaGameTests {
         var level=level(h);var registry=level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
         h.assertTrue(registry.getOrThrow(ResourceKey.create(Registries.STRUCTURE,LogosDimension.id("journey_hamlet"))).value() instanceof net.minecraft.world.level.levelgen.structure.structures.JigsawStructure,"Hamlet does not use native jigsaw structures");
         h.assertTrue(registry.getOrThrow(ResourceKey.create(Registries.STRUCTURE,LogosDimension.id("journey_town"))).value() instanceof net.minecraft.world.level.levelgen.structure.structures.JigsawStructure,"Town missing");h.succeed();
+    }
+    private static void logFamilies(GameTestHelper h){
+        var level=h.getLevel();var leaves=new java.util.ArrayList<BlockPos>();int i=0;
+        h.assertTrue(CloudseaBlocks.TRUNKS.size()==32,"Missing named log families");
+        for(var b:CloudseaBiome.values()){
+            var trunk=CloudseaBlocks.TRUNKS.get(b).get();var state=trunk.defaultBlockState();
+            h.assertTrue(trunk instanceof net.minecraft.world.level.block.RotatedPillarBlock&&state.is(net.minecraft.tags.BlockTags.LOGS),"Log lacks native pillar or leaves support: "+b);
+            for(var axis:Direction.Axis.values())h.assertTrue(state.setValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS,axis).is(net.minecraft.tags.BlockTags.MINEABLE_WITH_AXE),"Log does not support axes: "+b);
+            var pos=h.absolutePos(new BlockPos(2+i%6*2,3,2+i/6*2));i++;
+            level.setBlockAndUpdate(pos.above(),CloudseaBlocks.LEAVES.get(b).get().defaultBlockState());
+            level.setBlockAndUpdate(pos,state);leaves.add(pos.above());
+        }
+        h.runAfterDelay(4,()->{for(var p:leaves)h.assertTrue(level.getBlockState(p).getValue(net.minecraft.world.level.block.LeavesBlock.DISTANCE)==1,"Matching leaves do not recognise new log support at "+p+": "+level.getBlockState(p));h.succeed();});
     }
     private static void seasons(GameTestHelper h){
         var level=level(h);var registry=level.registryAccess().lookupOrThrow(Registries.BIOME);
