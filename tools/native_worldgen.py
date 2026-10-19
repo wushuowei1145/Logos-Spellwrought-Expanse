@@ -215,23 +215,7 @@ for y in range(65):
         for x in range(128):
             if (x-64)**2+(z-64)**2<=radius*radius:cells[x,y,z]=state('logos_dimension:island_stone')
 nbt('crucible_island',[128,65,128],cells);structure('crucible_island',['aether','sulfur','mercury','salt','sanctum'],321,anchor=True)
-for town in [False,True]:
-    cells={};size=112 if town else 96
-    houses=[(x,z,'townhouse_three' if (x+z)%3==0 else 'townhouse') for x in [8,27,65,84] for z in [8,30,64,85]] if town else [(9,10,'cottage'),(60,12,'farm'),(12,61,'bakery'),(62,60,'inn')]
-    for x,z,name in houses:
-        spec=json.loads((D/'journey_templates'/f'{name}.json').read_text());w,h,d=spec['width'],spec['height'],spec['depth']
-        for yy in range(h):
-            for zz in range(d):
-                for xx in range(w):
-                    idx=spec['blocks'][(yy*d+zz)*w+xx]
-                    if idx>=0:cells[x+xx,yy+2,z+zz]=spec['palette'][idx]
-        for xx in range(w):
-            for zz in range(d):
-                for yy in range(2):cells[x+xx,yy,z+zz]=state('logos_dimension:journey_limestone')
-    for x in range(4,size-4):
-        for z in range(size//2-2,size//2+3):cells[x,1,z]=state('minecraft:gravel')
-    max_y=max(p[1] for p in cells)+2;name='journey_town' if town else 'journey_hamlet'
-    nbt(name,[size,max_y,size],cells);structure(name,[b for b in ids if b not in barren],0,224 if town else 160)
+# Journey settlements are authored by settlements.py after the material/plant passes below.
 for dim in ['cloudsea','crucible']:
     p=D/'dimension_type'/f'{dim}.json';data=json.loads(p.read_text());data.update(min_y=-64,height=512 if dim=='crucible' else 384,logical_height=512 if dim=='crucible' else 384);write(p,data)
 p=ROOT/'gametest-packs/crucible/data/minecraft/worldgen/world_preset/flat.json';data=json.loads(p.read_text());data['dimensions'].pop('logos_dimension:crucible',None);data['dimensions']['logos_dimension:cloudsea']=cloud;write(p,data)
@@ -248,3 +232,5 @@ runpy.run_path(str(ROOT/'tools/berry_resources.py'))
 runpy.run_path(str(ROOT/'tools/magic_flora.py'))
 
 runpy.run_path(str(ROOT/'tools/tall_trees.py'))
+
+runpy.run_path(str(ROOT/'tools/settlements.py'))

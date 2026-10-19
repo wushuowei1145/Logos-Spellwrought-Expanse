@@ -1,12 +1,12 @@
 {
-  "name": "logos_dimension:journey_hamlet",
+  "name": "logos_dimension:settlement/compact",
   "fallback": "minecraft:empty",
   "elements": [
     {
       "weight": 1,
       "element": {
         "element_type": "minecraft:single_pool_element",
-        "location": "logos_dimension:journey_hamlet",
+        "location": "logos_dimension:settlement/house_stone_cottage",
         "processors": "minecraft:empty",
         "projection": "rigid"
       }

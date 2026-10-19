@@ -1,6 +1,8 @@
 # 维度-咒械原
 
-**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.8.1**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.9.0**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+
+0.9.0 按用户提供的七份蓝图重做林隙村镇，村落 16 个住宅地块、小镇 24 个，配井台、市场、院落和原版村民。村外接最多四片 **52×56 格**大稻田，含田埂、灌渠、桥与粮棚，新增可种植收割的浅水水稻。全部使用原版 jigsaw 数据，仅在四个开放群系生成；实际部件数受原版地形与碰撞约束，详见 [林隙村镇与稻田](docs/JOURNEY_SETTLEMENTS.md)。
 
 0.8.1 在七种现有林地中稀疏混入高冠阔叶树和高塔冷杉，继续用原版树木 Feature 与已有对应木材。每三个适用区块平均一次候选尝试，保留普通树和林下植被；详见 [高大树木](docs/JOURNEY_TALL_TREES.md)。
 
@@ -29,7 +31,7 @@
 - **咒械原**：每口炼金釜首次进入创建一个 `logos_dimension:<UUID>` 世界，20,000×20,000 格边界，以太为主要环境，硫、汞、盐为大尺度自然群系。
 - **远行大陆**：保留 `logos_dimension:cloudsea` ID，32 个地表群系和独立地下群系。湿润气候形成连续密林，林隙与花甸独立成群系；林下有蕨、苔毯、落叶、灌木和季节植物。正常天空、昼夜与天气，四季各 8 个游戏日。
 - **无原版矿物**：关闭原版矿脉，移除矿物装饰 Feature，保留原版洞穴、含水层与废弃矿井。炼金硫沉积是本附属自有方块，不引用 26.1 原版硫磺。
-- **稀疏中世纪聚落**：使用原版 jigsaw/random_spread，可用 `/locate structure logos_dimension:journey_hamlet` 或 `journey_town` 寻找。素材与许可见 [第三方说明](third_party/millenaire/SOURCE.md)。
+- **稀疏中世纪聚落**：使用原版 jigsaw/random_spread，可用 `/locate structure logos_dimension:journey_hamlet` 或 `journey_town` 寻找。新聚落依据 [用户提供的蓝图](references/user_blueprints/README.md) 改造；历史旧模板来源保留在 [第三方说明](third_party/millenaire/SOURCE.md)。
 
 原版生成重设计了布局：不再保证硫→汞→盐的精确同心顺序，也不固定雪山/海岸坐标。中心空岛现为约 **126 格直径、顶面 Y=320** 的原版 NBT 预留平台，原 2,400 格手写岛与玻璃巨构不再生成。岛面不放建筑或植被，拦截自然及刷怪笼生成，宫殿和 Boss 尚未制作。
 

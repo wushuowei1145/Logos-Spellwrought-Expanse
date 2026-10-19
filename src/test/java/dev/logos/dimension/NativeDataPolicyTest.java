@@ -37,6 +37,17 @@ class NativeDataPolicyTest {
         assertEquals(0,JourneySeasons.at(0));assertEquals(1,JourneySeasons.at(192000));
         assertEquals(3,JourneySeasons.at(-1));assertEquals(0,JourneySeasons.at(768000));
     }
+    @Test void settlementsUseBoundedNativePoolsAndOnlyOpenBiomes()throws Exception{
+        for(String name:new String[]{"hamlet","town"}){
+            var structure=data("worldgen/structure/journey_"+name);assertEquals("minecraft:jigsaw",structure.get("type").getAsString());
+            assertEquals(4,structure.get("size").getAsInt());assertEquals(112,structure.get("max_distance_from_center").getAsInt());
+            var allowed=java.util.Set.of("sunlit_glade","starflower_glade","silk_folds","rose_dunes");
+            for(var b:structure.getAsJsonArray("biomes"))assertTrue(allowed.contains(b.getAsString().replace("logos_dimension:cloudsea_","")));
+            assertNull(getClass().getResource("/data/logos_dimension/structure/journey_"+name+".nbt"),"Obsolete monolithic structure remains active");
+        }
+        var fields=data("settlement_manifest");assertEquals(7,fields.get("sources").getAsInt());
+        for(String n:new String[]{"rice_paddy_0","rice_paddy_1"})assertTrue(fields.getAsJsonObject("native_templates").getAsJsonObject(n).get("rice").getAsInt()>1500);
+    }
     @Test void nativeTreesUseTheMatchingLogAndLeaves()throws Exception{
         for(var b:dev.logos.dimension.cloudsea.CloudseaBiome.values())if(!b.barren()){
             var tree=data("worldgen/configured_feature/trees_"+b.id());assertEquals("minecraft:tree",tree.get("type").getAsString());

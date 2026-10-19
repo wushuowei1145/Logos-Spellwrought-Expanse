@@ -32,7 +32,7 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
             // 26.1's GameTestServer deliberately ignores datapack LevelStems. Supply a test-only
             // flat preset containing the real generator; this pack is never shipped with the mod.
-            programArguments.addAll '--tests', "${mod_id}:*", '--packs', file('gametest-packs').absolutePath,
+            programArguments.addAll '--tests', providers.gradleProperty('dimensionTests').getOrElse("${mod_id}:*"), '--packs', file('gametest-packs').absolutePath,
                     '--report', file('build/gametest-results.xml').absolutePath
         }
         configureEach { logLevel = org.slf4j.event.Level.INFO }
