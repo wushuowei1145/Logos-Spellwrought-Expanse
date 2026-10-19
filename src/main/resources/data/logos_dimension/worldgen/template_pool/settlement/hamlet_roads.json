@@ -1,14 +1,14 @@
 {
-  "name": "logos_dimension:journey_town",
+  "name": "logos_dimension:settlement/hamlet_roads",
   "fallback": "minecraft:empty",
   "elements": [
     {
       "weight": 1,
       "element": {
         "element_type": "minecraft:single_pool_element",
-        "location": "logos_dimension:journey_town",
+        "location": "logos_dimension:settlement/hamlet_road",
         "processors": "minecraft:empty",
-        "projection": "rigid"
+        "projection": "terrain_matching"
       }
     }
   ]
