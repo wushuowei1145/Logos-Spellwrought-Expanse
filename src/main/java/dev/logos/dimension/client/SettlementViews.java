@@ -17,7 +17,7 @@ import net.minecraft.world.phys.Vec3;
 
 /** Native assembly on generated terrain, invoked explicitly for development screenshots only. */
 public abstract class SettlementViews implements UIScenario {
-    private BlockPos received;private long homes,fields;private int wheat;protected boolean town(){return false;}protected boolean close(){return false;}
+    private BlockPos received,roofMark;private Vec3 lookTarget;private long homes,fields;private int wheat;protected boolean town(){return false;}protected boolean close(){return false;}protected boolean well(){return false;}
     @Override public void configure(ScenarioOptions o){o.tags("blueprint_settlements").defaultTimeoutMs(300000).scenarioTimeoutMs(600000);}
     private static BlockPos flatGlade(ServerLevel l,boolean town){
         var origin=NativeWorlds.locateBiome(l,(town?CloudseaBiome.SUNLIT_GLADE:CloudseaBiome.SILK_FOLDS).id());var gen=l.getChunkSource().getGenerator();var random=l.getChunkSource().randomState();
@@ -54,7 +54,11 @@ public abstract class SettlementViews implements UIScenario {
                 int top=l.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,x,z);
                 for(int y=top-1;y<=top+1;y++){var pos=new BlockPos(x,y,z);if(!originalCrops.contains(pos)&&l.getBlockState(pos).is(net.minecraft.world.level.block.Blocks.WHEAT))crops.add(pos);}
             }
-            wheat=crops.size();Vec3 eye=target.add(112,85,118);float yaw=136,pitch=27;
+            wheat=crops.size();Vec3 eye=target.add(36,24,40);float yaw,pitch;
+            if(well()){
+                target=new Vec3(root.getCenter().getX()+.5,root.minY()+6,root.getCenter().getZ()+.5);
+                eye=target.add(8,3,10);
+            }
             if(close()){
                 crops.sort(java.util.Comparator.comparingDouble(p->p.distSqr(root.getCenter())));
                 boolean framed=false;
@@ -65,24 +69,32 @@ public abstract class SettlementViews implements UIScenario {
                         if(!l.noCollision(ctx.player(),new net.minecraft.world.phys.AABB(point.x-.3,point.y,point.z-.3,point.x+.3,point.y+1.9,point.z+.3)))continue;
                         var ray=l.clip(new net.minecraft.world.level.ClipContext(cameraEye,look,net.minecraft.world.level.ClipContext.Block.COLLIDER,net.minecraft.world.level.ClipContext.Fluid.NONE,ctx.player()));
                         if(ray.getType()!=net.minecraft.world.phys.HitResult.Type.MISS)continue;
-                        target=look;eye=point;yaw=(float)Math.toDegrees(Math.atan2(point.x-look.x,look.z-point.z));pitch=(float)Math.toDegrees(Math.atan2(cameraEye.y-look.y,Math.hypot(point.x-look.x,point.z-look.z)));framed=true;break outer;
+                        target=look;eye=point;framed=true;break outer;
                     }
                 }
                 if(!framed)throw new IllegalStateException("No unobstructed view of terrain-following wheat");
             }
-            received=BlockPos.containing(target);
+            received=BlockPos.containing(target);lookTarget=target;
+            roofMark=new BlockPos(root.getCenter().getX(),root.minY()+11,root.getCenter().getZ());
+            yaw=(float)Math.toDegrees(Math.atan2(eye.x-target.x,target.z-eye.z));pitch=(float)Math.toDegrees(Math.atan2(eye.y+ctx.player().getEyeHeight()-target.y,Math.hypot(eye.x-target.x,eye.z-target.z)));
             DimensionTravel.teleport(ctx.player(),l,eye,yaw,pitch);ctx.player().getAbilities().flying=true;ctx.player().onUpdateAbilities();
             l.clockManager().setTotalTicks(l.registryAccess().lookupOrThrow(Registries.WORLD_CLOCK).getOrThrow(JourneySeasons.CLOCK),JourneySeasons.SEASON_TICKS+6000);l.getWeatherData().setRaining(false);l.getWeatherData().setThundering(false);
             System.out.println("SETTLEMENT_CLIENT town="+town()+" houses="+homes+" fields="+fields+" vanilla_wheat="+wheat+" target="+target);
-        }).waitUntil("village terrain visible",ctx->{var l=Minecraft.getInstance().level;return l!=null&&l.dimension().equals(LogosDimension.CLOUDSEA)&&l.hasChunk(received.getX()>>4,received.getZ()>>4);}).ticks(240)
+        }).waitUntil("well roof reached client",ctx->{var l=Minecraft.getInstance().level;return l!=null&&l.dimension().equals(LogosDimension.CLOUDSEA)&&l.getBlockState(roofMark).is(net.minecraft.world.level.block.Blocks.SPRUCE_SLAB);}).ticks(240)
+        .step("aim development camera at actual buildings",ctx->{
+            var p=Minecraft.getInstance().player;var v=lookTarget.subtract(p.getEyePosition());
+            p.setYRot((float)Math.toDegrees(Math.atan2(-v.x,v.z)));p.setXRot((float)-Math.toDegrees(Math.atan2(v.y,Math.hypot(v.x,v.z))));p.yRotO=p.getYRot();p.xRotO=p.getXRot();
+        }).ticks(20)
         .checkServer("native noise world",ctx->NativeWorlds.vanilla(ctx.player().level()))
         .check("large housing layout",ctx->homes>=(town()?20:14))
         .check("vanilla wheat scattered beside homes",ctx->fields>=16&&wheat>=20)
         .check("camera outside blocks",ctx->{var m=Minecraft.getInstance();var pos=BlockPos.containing(m.player.getEyePosition());return m.level.getBlockState(pos).getCollisionShape(m.level,pos).isEmpty();})
-        .screenshot(close()?"terrain_following_vanilla_wheat":town()?"blueprint_market_town":"blueprint_glade_village")
+        .check("camera points at the settlement",ctx->{var p=Minecraft.getInstance().player;return p.getLookAngle().dot(lookTarget.subtract(p.getEyePosition()).normalize())>.98;})
+        .screenshot(well()?"covered_stone_well":close()?"terrain_following_vanilla_wheat":town()?"blueprint_market_town":"blueprint_glade_village")
         .teardown("restore HUD",ctx->Minecraft.getInstance().options.hideGui=false);
     }
     @LDLRegisterClient(name="blueprint_village",group="blueprint_settlements",registry=UIScenario.REGISTRY,environment=RegistrationEnvironment.DEV_ONLY)public static class Village extends SettlementViews{}
     @LDLRegisterClient(name="blueprint_town",group="blueprint_settlements",registry=UIScenario.REGISTRY,environment=RegistrationEnvironment.DEV_ONLY)public static class Town extends SettlementViews{protected boolean town(){return true;}}
     @LDLRegisterClient(name="blueprint_wheat",group="blueprint_settlements",registry=UIScenario.REGISTRY,environment=RegistrationEnvironment.DEV_ONLY)public static class Wheat extends Town{protected boolean close(){return true;}}
+    @LDLRegisterClient(name="blueprint_well",group="blueprint_settlements",registry=UIScenario.REGISTRY,environment=RegistrationEnvironment.DEV_ONLY)public static class Well extends SettlementViews{protected boolean well(){return true;}}
 }

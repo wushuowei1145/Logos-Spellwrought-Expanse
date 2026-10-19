@@ -70,7 +70,7 @@ for i,(key,title,g,l) in enumerate(biomes):
         en[f'block.logos_dimension.{bid}_{kind}']=english[i]+(' Turf' if kind=='ground' else ' Leaves')
     zh[f'biome.logos_dimension.{bid}']=title;en[f'biome.logos_dimension.{bid}']=english[i]
     cold=i in [3,13,19,21,22];alpine=i in [7,15,23];ocean=i in [2,20]
-    mobs={'creature':[{'type':'minecraft:sheep','weight':8,'minCount':2,'maxCount':4},{'type':'minecraft:cow','weight':6,'minCount':2,'maxCount':3}]} if not ocean and not alpine else {}
+    mobs={} # No generated animals, either with the terrain or through ambient spawning.
     write(D/'worldgen/biome'/f'{bid}.json',{'has_precipitation':True,'temperature':-.15 if alpine else .15 if cold else .65,'downfall':.75 if i in [1,9,11,18] else .45,'effects':{'water_color':'#567d91','grass_color':'#'+g.lower(),'foliage_color':'#'+l.lower()},'carvers':['minecraft:cave','minecraft:cave_extra_underground','minecraft:canyon'],'features':[[] for _ in range(11)],'spawners':mobs,'spawn_costs':{}})
 
 materials={

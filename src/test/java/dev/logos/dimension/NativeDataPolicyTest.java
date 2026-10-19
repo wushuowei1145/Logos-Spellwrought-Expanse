@@ -53,6 +53,21 @@ class NativeDataPolicyTest {
         var layers=planting.getAsJsonObject("config").getAsJsonArray("layers");assertEquals(2,layers.size());
         assertEquals("minecraft:farmland",layers.get(0).getAsJsonObject().getAsJsonObject("provider").getAsJsonObject("state").get("Name").getAsString());
     }
+    @Test void settlementAirIsNotIgnoredAndAnimalsAreDisabled()throws Exception{
+        var processors=data("worldgen/processor_list/settlement_preserve_void").getAsJsonArray("processors");
+        assertEquals(1,processors.size());
+        assertEquals("minecraft:block_ignore",processors.get(0).getAsJsonObject().get("processor_type").getAsString());
+        var ignored=processors.get(0).getAsJsonObject().getAsJsonArray("blocks");assertEquals(1,ignored.size());
+        assertEquals("minecraft:structure_void",ignored.get(0).getAsJsonObject().get("Name").getAsString());
+        assertFalse(data("settlement_manifest").get("entities").getAsBoolean());
+        for(var biome:dev.logos.dimension.cloudsea.CloudseaBiome.values())
+            assertTrue(data("worldgen/biome/"+biome.id()).getAsJsonObject("spawners").isEmpty(),"Animal spawns remain in "+biome.id());
+        for(String name:new String[]{"hamlet","town"}){
+            var structure=data("worldgen/structure/journey_"+name);
+            assertEquals(-3,structure.getAsJsonObject("start_height").get("absolute").getAsInt());
+            assertTrue(structure.getAsJsonObject("spawn_overrides").getAsJsonObject("creature").getAsJsonArray("spawns").isEmpty());
+        }
+    }
     @Test void nativeTreesUseTheMatchingLogAndLeaves()throws Exception{
         for(var b:dev.logos.dimension.cloudsea.CloudseaBiome.values())if(!b.barren()){
             var tree=data("worldgen/configured_feature/trees_"+b.id());assertEquals("minecraft:tree",tree.get("type").getAsString());

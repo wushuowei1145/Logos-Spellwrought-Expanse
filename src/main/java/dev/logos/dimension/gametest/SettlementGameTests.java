@@ -15,6 +15,8 @@ import net.minecraft.world.item.context.DirectionalPlaceContext;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.levelgen.structure.*;
+import net.minecraft.world.level.levelgen.structure.pools.*;
+import net.minecraft.world.level.levelgen.structure.templatesystem.*;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -23,7 +25,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class SettlementGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS=DeferredRegister.create(Registries.TEST_FUNCTION,LogosDimension.ID);
     public static void register(IEventBus bus){
-        var tests=Map.<String,Consumer<GameTestHelper>>of("settlement_native_assembly",SettlementGameTests::assembly,"settlement_wheat_follows_surface",SettlementGameTests::wheat);
+        var tests=Map.<String,Consumer<GameTestHelper>>of("settlement_native_assembly",SettlementGameTests::assembly,"settlement_wheat_follows_surface",SettlementGameTests::wheat,"settlement_air_and_void",SettlementGameTests::airAndVoid,"settlement_covered_well",SettlementGameTests::well);
         tests.forEach((name,test)->FUNCTIONS.register(name,()->test));FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event)->{
             var env=event.registerEnvironment(LogosDimension.id("settlements"),new TestEnvironmentDefinition.AllOf());
@@ -99,6 +101,48 @@ public final class SettlementGameTests {
         }
         h.assertTrue(crops>=75&&heights.size()>=4,"Wheat failed to follow multiple slope heights: "+crops+" / "+heights);
         System.out.println("WHEAT_SURFACE crops="+crops+" heights="+heights+" protected_snapshot="+before.size());h.succeed();
+    }
+    private static void airAndVoid(GameTestHelper h){
+        var l=Objects.requireNonNull(h.getLevel().getServer().getLevel(LogosDimension.CLOUDSEA));
+        var registry=l.registryAccess().lookupOrThrow(Registries.TEMPLATE_POOL);
+        var houses=new ArrayList<StructurePoolElement>();
+        for(String name:new String[]{"compact","houses"})houses.addAll(registry.getOrThrow(ResourceKey.create(Registries.TEMPLATE_POOL,LogosDimension.id("settlement/"+name))).value().getShuffledTemplates(RandomSource.create(3)));
+        int samples=0,cleared=0,preserved=0;
+        for(var element:houses)for(var rotation:Rotation.values()){
+            var single=(SinglePoolElement)element;var template=l.getStructureManager().getOrCreate(single.getTemplateLocation());
+            var at=new BlockPos(1003000+(samples%7)*80,235,1003000+(samples/7)*80);samples++;
+            var settings=new StructurePlaceSettings().setRotation(rotation);
+            var air=new ArrayList<>(template.filterBlocks(at,settings,Blocks.AIR));
+            var exterior=new ArrayList<>(template.filterBlocks(at,settings,Blocks.STRUCTURE_VOID));
+            Collections.shuffle(air,new Random(11));Collections.shuffle(exterior,new Random(12));
+            air=new ArrayList<>(air.subList(0,Math.min(32,air.size())));exterior=new ArrayList<>(exterior.subList(0,Math.min(32,exterior.size())));
+            h.assertTrue(air.size()==32&&exterior.size()==32,"House lacks meaningful interior/exterior masks");
+            var protectedBlocks=new HashMap<BlockPos,net.minecraft.world.level.block.state.BlockState>();
+            for(int i=0;i<air.size();i++)l.setBlock(air.get(i).pos(),(i%2==0?Blocks.STONE:Blocks.WATER).defaultBlockState(),Block.UPDATE_CLIENTS);
+            for(int i=0;i<exterior.size();i++){
+                var pos=exterior.get(i).pos();var state=(i%2==0?Blocks.DIRT:Blocks.WATER).defaultBlockState();
+                l.setBlock(pos,state,Block.UPDATE_CLIENTS);protectedBlocks.put(pos,state);
+            }
+            h.assertTrue(element.place(l.getStructureManager(),l,l.structureManager(),l.getChunkSource().getGenerator(),at,at,rotation,BoundingBox.infinite(),RandomSource.create(81),LiquidSettings.APPLY_WATERLOGGING,false),"Native pool placement failed");
+            for(var block:air){h.assertTrue(l.getBlockState(block.pos()).isAir(),"Room retained stone/water instead of explicit AIR at "+block.pos());cleared++;}
+            for(var entry:protectedBlocks.entrySet()){h.assertTrue(l.getBlockState(entry.getKey()).equals(entry.getValue()),"Structure void altered exterior terrain/water at "+entry.getKey());preserved++;}
+            h.assertTrue(l.getEntitiesOfClass(net.minecraft.world.entity.Mob.class,net.minecraft.world.phys.AABB.of(element.getBoundingBox(l.getStructureManager(),at,rotation))).isEmpty(),"Blueprint generated villagers/animals");
+        }
+        System.out.println("SETTLEMENT_MASKS templates="+houses.size()+" rotations="+samples+" cleared_stone_water="+cleared+" preserved_exterior="+preserved+" generated_mobs=0");h.succeed();
+    }
+    private static void well(GameTestHelper h){
+        var l=Objects.requireNonNull(h.getLevel().getServer().getLevel(LogosDimension.CLOUDSEA));var at=new BlockPos(1005000,235,1005000);
+        var pool=l.registryAccess().lookupOrThrow(Registries.TEMPLATE_POOL).getOrThrow(ResourceKey.create(Registries.TEMPLATE_POOL,LogosDimension.id("settlement/hamlet_start"))).value().getRandomTemplate(RandomSource.create(3));
+        h.assertTrue(pool.place(l.getStructureManager(),l,l.structureManager(),l.getChunkSource().getGenerator(),at,at,Rotation.NONE,BoundingBox.infinite(),RandomSource.create(81),LiquidSettings.APPLY_WATERLOGGING,false),"Well placement failed");
+        for(int x=11;x<=12;x++)for(int z=11;z<=12;z++){
+            h.assertTrue(!l.getBlockState(at.offset(x,0,z)).getCollisionShape(l,at.offset(x,0,z)).isEmpty(),"Well bottom is open");
+            h.assertTrue(l.getBlockState(at.offset(x,1,z)).is(Blocks.WATER),"Well water missing");
+            h.assertTrue(l.getBlockState(at.offset(x,2,z)).isAir(),"Well shaft is obstructed");
+        }
+        int posts=0;for(int x:new int[]{9,14})for(int z:new int[]{10,13})for(int y=5;y<=7;y++)if(l.getBlockState(at.offset(x,y,z)).is(Blocks.STRIPPED_SPRUCE_LOG))posts++;
+        h.assertTrue(posts==12&&l.getBlockState(at.offset(11,11,11)).is(Blocks.SPRUCE_SLAB),"Four-post roof is incomplete");
+        h.assertTrue(l.getBlockState(at.offset(11,7,11)).is(Blocks.DARK_OAK_LOG)&&l.getBlockState(at.offset(11,5,11)).is(Blocks.IRON_CHAIN),"Well pulley is missing");
+        System.out.println("SETTLEMENT_WELL sealed_water=4 timber_posts=4 roof_and_pulley=true");h.succeed();
     }
     private SettlementGameTests(){}
 }

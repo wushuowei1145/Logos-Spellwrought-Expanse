@@ -28,21 +28,6 @@
     ],
     []
   ],
-  "spawners": {
-    "creature": [
-      {
-        "type": "minecraft:sheep",
-        "weight": 8,
-        "minCount": 2,
-        "maxCount": 4
-      },
-      {
-        "type": "minecraft:cow",
-        "weight": 6,
-        "minCount": 2,
-        "maxCount": 3
-      }
-    ]
-  },
+  "spawners": {},
   "spawn_costs": {}
 }
