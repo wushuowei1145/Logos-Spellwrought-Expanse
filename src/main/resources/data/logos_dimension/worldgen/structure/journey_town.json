@@ -8,7 +8,7 @@
   ],
   "step": "surface_structures",
   "spawn_overrides": {},
-  "terrain_adaptation": "beard_thin",
+  "terrain_adaptation": "none",
   "start_pool": "logos_dimension:settlement/town_start",
   "size": 4,
   "start_height": {

@@ -7,26 +7,15 @@
         27,
         35
       ],
-      "blocks": 30625,
-      "rice": 0
+      "blocks": 30625
     },
     "farm_reference_01": {
       "size": [
         35,
         27,
-        40
+        35
       ],
-      "blocks": 35000,
-      "rice": 0
-    },
-    "farm_reference_01_yard": {
-      "size": [
-        35,
-        27,
-        40
-      ],
-      "blocks": 35000,
-      "rice": 0
+      "blocks": 30625
     },
     "house_reference_02": {
       "size": [
@@ -34,26 +23,15 @@
         38,
         38
       ],
-      "blocks": 49096,
-      "rice": 0
+      "blocks": 49096
     },
     "farm_reference_02": {
       "size": [
-        40,
+        34,
         38,
         38
       ],
-      "blocks": 57760,
-      "rice": 0
-    },
-    "farm_reference_02_yard": {
-      "size": [
-        40,
-        38,
-        38
-      ],
-      "blocks": 57760,
-      "rice": 0
+      "blocks": 49096
     },
     "house_stone_cottage": {
       "size": [
@@ -61,26 +39,15 @@
         22,
         22
       ],
-      "blocks": 10648,
-      "rice": 0
+      "blocks": 10648
     },
     "farm_stone_cottage": {
       "size": [
-        40,
+        22,
         22,
         22
       ],
-      "blocks": 19360,
-      "rice": 0
-    },
-    "farm_stone_cottage_yard": {
-      "size": [
-        40,
-        22,
-        22
-      ],
-      "blocks": 19360,
-      "rice": 0
+      "blocks": 10648
     },
     "house_long_house": {
       "size": [
@@ -88,26 +55,15 @@
         25,
         42
       ],
-      "blocks": 22176,
-      "rice": 0
+      "blocks": 22176
     },
     "farm_long_house": {
       "size": [
         22,
         25,
-        40
+        42
       ],
-      "blocks": 21120,
-      "rice": 0
-    },
-    "farm_long_house_yard": {
-      "size": [
-        22,
-        25,
-        40
-      ],
-      "blocks": 21120,
-      "rice": 0
+      "blocks": 22176
     },
     "house_gabled_house": {
       "size": [
@@ -115,26 +71,15 @@
         37,
         37
       ],
-      "blocks": 46546,
-      "rice": 0
+      "blocks": 46546
     },
     "farm_gabled_house": {
       "size": [
-        40,
+        34,
         37,
         37
       ],
-      "blocks": 54760,
-      "rice": 0
-    },
-    "farm_gabled_house_yard": {
-      "size": [
-        40,
-        37,
-        37
-      ],
-      "blocks": 54760,
-      "rice": 0
+      "blocks": 46546
     },
     "house_timber_house": {
       "size": [
@@ -142,26 +87,15 @@
         39,
         20
       ],
-      "blocks": 24320,
-      "rice": 0
+      "blocks": 24320
     },
     "farm_timber_house": {
       "size": [
         32,
         39,
-        40
+        20
       ],
-      "blocks": 48640,
-      "rice": 0
-    },
-    "farm_timber_house_yard": {
-      "size": [
-        32,
-        39,
-        40
-      ],
-      "blocks": 48640,
-      "rice": 0
+      "blocks": 24320
     },
     "house_garden_house": {
       "size": [
@@ -169,44 +103,15 @@
         27,
         32
       ],
-      "blocks": 25056,
-      "rice": 0
+      "blocks": 25056
     },
     "farm_garden_house": {
       "size": [
         29,
         27,
-        40
+        32
       ],
-      "blocks": 31320,
-      "rice": 0
-    },
-    "farm_garden_house_yard": {
-      "size": [
-        29,
-        27,
-        40
-      ],
-      "blocks": 31320,
-      "rice": 0
-    },
-    "rice_paddy_0": {
-      "size": [
-        52,
-        18,
-        56
-      ],
-      "blocks": 52416,
-      "rice": 1523
-    },
-    "rice_paddy_1": {
-      "size": [
-        52,
-        18,
-        56
-      ],
-      "blocks": 52416,
-      "rice": 1523
+      "blocks": 25056
     },
     "hamlet_plaza": {
       "size": [
@@ -214,8 +119,7 @@
         9,
         24
       ],
-      "blocks": 5184,
-      "rice": 0
+      "blocks": 5184
     },
     "hamlet_road": {
       "size": [
@@ -223,8 +127,7 @@
         7,
         83
       ],
-      "blocks": 5229,
-      "rice": 0
+      "blocks": 5229
     },
     "town_plaza": {
       "size": [
@@ -232,8 +135,7 @@
         9,
         24
       ],
-      "blocks": 5184,
-      "rice": 0
+      "blocks": 5184
     },
     "town_road": {
       "size": [
@@ -241,8 +143,7 @@
         7,
         97
       ],
-      "blocks": 6111,
-      "rice": 0
+      "blocks": 6111
     }
   },
   "adaptation_counts": {
@@ -253,9 +154,8 @@
     "hamlet": 16,
     "town": 24
   },
-  "paddy_size": [
-    52,
-    56
-  ],
-  "note": "Native jigsaw collisions and terrain may reduce piece counts. Fields contain actual water-rooted rice; no imported inventories/entities/commands."
+  "crop": "minecraft:wheat",
+  "planting": "native feature on existing soil and empty air only",
+  "terrain_adaptation": "none",
+  "note": "No standalone fields, water, fill layers or terrain flattening. Legacy rice registration is retained only for existing saves."
 }

@@ -23,7 +23,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class SettlementGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS=DeferredRegister.create(Registries.TEST_FUNCTION,LogosDimension.ID);
     public static void register(IEventBus bus){
-        var tests=Map.<String,Consumer<GameTestHelper>>of("settlement_native_assembly",SettlementGameTests::assembly,"rice_water_soil_growth",SettlementGameTests::rice);
+        var tests=Map.<String,Consumer<GameTestHelper>>of("settlement_native_assembly",SettlementGameTests::assembly,"settlement_wheat_follows_surface",SettlementGameTests::wheat);
         tests.forEach((name,test)->FUNCTIONS.register(name,()->test));FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event)->{
             var env=event.registerEnvironment(LogosDimension.id("settlements"),new TestEnvironmentDefinition.AllOf());
@@ -37,6 +37,7 @@ public final class SettlementGameTests {
     }
     public static long count(StructureStart start,String name){return start.getPieces().stream().filter(p->p instanceof PoolElementStructurePiece pool&&pool.getElement().toString().contains("settlement/"+name)).count();}
     public static long homes(StructureStart start){return count(start,"house_")+count(start,"farm_");}
+    public static long wheatSeeds(StructureStart start){return start.getPieces().stream().filter(p->p instanceof PoolElementStructurePiece pool&&pool.getElement() instanceof net.minecraft.world.level.levelgen.structure.pools.FeaturePoolElement).count();}
     public static void place(ServerLevel l,StructureStart start){
         var b=start.getBoundingBox();var gen=l.getChunkSource().getGenerator();
         for(int x=b.minX()>>4;x<=b.maxX()>>4;x++)for(int z=b.minZ()>>4;z<=b.maxZ()>>4;z++)l.getChunk(x,z);
@@ -48,33 +49,56 @@ public final class SettlementGameTests {
     private static void assembly(GameTestHelper h){
         var l=Objects.requireNonNull(h.getLevel().getServer().getLevel(LogosDimension.CLOUDSEA));
         for(boolean town:new boolean[]{false,true})for(int seed=0;seed<4;seed++){
-            var start=assemble(l,town,new BlockPos(1536,80,1536),seed);long houses=homes(start),fields=count(start,"rice_paddy");
+            var start=assemble(l,town,new BlockPos(1536,80,1536),seed);long houses=homes(start),fields=wheatSeeds(start);
             System.out.println("SETTLEMENT_ASSEMBLY town="+town+" seed="+seed+" homes="+houses+" fields="+fields+" pieces="+start.getPieces().size()+" bounds="+start.getBoundingBox());
             h.assertTrue(start.isValid()&&count(start,(town?"town":"hamlet")+"_road")==4,"Four streets failed native assembly");
             h.assertTrue(houses==(town?24:16),"Native collision rejected housing lots in fixed assembly samples");
-            h.assertTrue(fields>=2,"Large rice paddies cannot connect to native lots");
+            h.assertTrue(fields>=16&&count(start,"rice_paddy")==0,"Wheat feature seeds missing or old paddy still generated");
+            h.assertTrue(start.getStructure().terrainAdaptation()==TerrainAdjustment.NONE,"Settlement still raises/buries terrain through Beardifier");
+            for(var p:start.getPieces())if(p instanceof PoolElementStructurePiece pool&&pool.getElement() instanceof net.minecraft.world.level.levelgen.structure.pools.FeaturePoolElement){
+                var b=p.getBoundingBox();h.assertTrue(b.getXSpan()==1&&b.getYSpan()==1&&b.getZSpan()==1,"Planting reserves a large terrain box");
+            }
             h.assertTrue(start.getBoundingBox().getXSpan()<=273&&start.getBoundingBox().getZSpan()<=273,"Settlement exceeds native bounded footprint");
         }
         h.succeed();
     }
-    private static void rice(GameTestHelper h){
-        var l=h.getLevel();var pos=h.absolutePos(new BlockPos(5,5,5));var block=(JourneyRiceBlock)CloudseaBlocks.RICE.get();
-        l.setBlockAndUpdate(pos.above().east(),Blocks.GLOWSTONE.defaultBlockState());
-        l.setBlockAndUpdate(pos.below(),Blocks.MUD.defaultBlockState());l.setBlockAndUpdate(pos,Blocks.WATER.defaultBlockState());
-        var context=new DirectionalPlaceContext(l,pos,Direction.DOWN,new ItemStack(block),Direction.UP);
-        var seedling=block.getStateForPlacement(context);h.assertTrue(seedling!=null,"Cannot plant rice in shallow water");
-        l.setBlockAndUpdate(pos,Objects.requireNonNull(seedling));
-        h.startSequence().thenWaitUntil(()->h.assertTrue(l.getRawBrightness(pos,0)>=8,"Wait for crop light"))
-        .thenExecute(()->{
-            h.assertTrue(l.getBlockState(pos).canSurvive(l,pos),"Rice rejects wet mud");
-            for(int i=0;i<4;i++)block.performBonemeal(l,l.getRandom(),pos,l.getBlockState(pos));
-            h.assertTrue(l.getBlockState(pos).getValue(CropBlock.AGE)==7&&!l.getFluidState(pos).isEmpty(),"Native growth loses water or maturity");
-            var loot=Block.getDrops(l.getBlockState(pos),l,pos,null);int grains=loot.stream().filter(s->s.is(block.asItem())).mapToInt(ItemStack::getCount).sum();
-            h.assertTrue(grains>=2&&grains<=4,"Mature rice fails harvest/replant yield");
-            l.setBlockAndUpdate(pos.below(),Blocks.STONE.defaultBlockState());h.assertTrue(!l.getBlockState(pos).is(block),"Rice survives stone support");
-            l.setBlockAndUpdate(pos.below(),Blocks.MUD.defaultBlockState());l.setBlockAndUpdate(pos,Blocks.AIR.defaultBlockState());
-            h.assertTrue(block.getStateForPlacement(context)==null,"Rice plants without shallow water");
-        }).thenSucceed();
+    public static final BlockPos WHEAT_STUDY=new BlockPos(1001000,235,1001000);
+    public static void wheatStudy(ServerLevel l){
+        // Dedicated test fixture only. The production feature never fills soil or clears air.
+        for(int x=-10;x<=10;x++)for(int z=-10;z<=10;z++){
+            int rise=Math.floorDiv(x+10,4)+Math.floorDiv(z+10,7);
+            for(int y=-3;y<=14;y++)l.setBlock(WHEAT_STUDY.offset(x,y,z),y<=rise?Blocks.DIRT.defaultBlockState():Blocks.AIR.defaultBlockState(),Block.UPDATE_CLIENTS);
+            var soil=WHEAT_STUDY.offset(x,rise,z);
+            l.setBlock(soil,(x%2==0?CloudseaBlocks.GROUND.get(CloudseaBiome.SUNLIT_GLADE).get():Blocks.GRASS_BLOCK).defaultBlockState(),Block.UPDATE_CLIENTS);
+            if(x==-5)l.setBlock(soil,Blocks.STONE.defaultBlockState(),Block.UPDATE_CLIENTS);
+            if(x==-3)l.setBlock(soil,Blocks.OAK_PLANKS.defaultBlockState(),Block.UPDATE_CLIENTS);
+            if(x==-1)l.setBlock(soil,Blocks.DIRT_PATH.defaultBlockState(),Block.UPDATE_CLIENTS);
+            if(x==1)l.setBlock(soil.above(),Blocks.SHORT_GRASS.defaultBlockState(),Block.UPDATE_CLIENTS);
+            if(x==3)l.setBlock(soil.above(),Blocks.CHEST.defaultBlockState(),Block.UPDATE_CLIENTS);
+            if(x==5)l.setBlock(soil.above(),Blocks.WATER.defaultBlockState(),Block.UPDATE_CLIENTS);
+        }
+    }
+    public static void plantWheat(ServerLevel l,BlockPos at,long seed){
+        var feature=l.registryAccess().lookupOrThrow(Registries.PLACED_FEATURE).getOrThrow(ResourceKey.create(Registries.PLACED_FEATURE,LogosDimension.id("settlement_wheat"))).value();
+        for(int i=0;i<12;i++)feature.place(l,l.getChunkSource().getGenerator(),RandomSource.create(seed+i),at);
+    }
+    private static void wheat(GameTestHelper h){
+        var l=Objects.requireNonNull(h.getLevel().getServer().getLevel(LogosDimension.CLOUDSEA));wheatStudy(l);
+        var before=new HashMap<BlockPos,net.minecraft.world.level.block.state.BlockState>();
+        for(var p:BlockPos.betweenClosed(WHEAT_STUDY.offset(-10,-3,-10),WHEAT_STUDY.offset(10,14,10)))before.put(p.immutable(),l.getBlockState(p));
+        plantWheat(l,WHEAT_STUDY,19);int crops=0;var heights=new HashSet<Integer>();
+        for(var e:before.entrySet()){
+            var p=e.getKey();var old=e.getValue();var now=l.getBlockState(p);
+            if(old.equals(now))continue;
+            if(now.is(Blocks.FARMLAND)){
+                h.assertTrue(old.is(Blocks.GRASS_BLOCK)||old.is(Blocks.DIRT)||old.is(CloudseaBlocks.GROUND.get(CloudseaBiome.SUNLIT_GLADE).get()),"Planting replaced protected soil/stone/road");
+                h.assertTrue(before.get(p.above()).isAir()&&l.getBlockState(p.above()).is(Blocks.WHEAT),"Farmland created without a safe wheat cell");
+            }else if(now.is(Blocks.WHEAT)){
+                h.assertTrue(old.isAir()&&l.getBlockState(p.below()).is(Blocks.FARMLAND),"Crop buried or replaced an existing block");crops++;heights.add(p.getY());
+            }else h.assertTrue(false,"Planting filled, cleared, flooded or moved terrain at "+p+": "+old+" -> "+now);
+        }
+        h.assertTrue(crops>=75&&heights.size()>=4,"Wheat failed to follow multiple slope heights: "+crops+" / "+heights);
+        System.out.println("WHEAT_SURFACE crops="+crops+" heights="+heights+" protected_snapshot="+before.size());h.succeed();
     }
     private SettlementGameTests(){}
 }
