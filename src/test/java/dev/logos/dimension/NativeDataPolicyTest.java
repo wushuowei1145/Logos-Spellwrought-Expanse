@@ -41,12 +41,32 @@ class NativeDataPolicyTest {
         for(String name:new String[]{"hamlet","town"}){
             var structure=data("worldgen/structure/journey_"+name);assertEquals("minecraft:jigsaw",structure.get("type").getAsString());
             assertEquals(4,structure.get("size").getAsInt());assertEquals(112,structure.get("max_distance_from_center").getAsInt());
+            assertEquals("none",structure.get("terrain_adaptation").getAsString(),"Farming must not alter terrain density");
             var allowed=java.util.Set.of("sunlit_glade","starflower_glade","silk_folds","rose_dunes");
             for(var b:structure.getAsJsonArray("biomes"))assertTrue(allowed.contains(b.getAsString().replace("logos_dimension:cloudsea_","")));
             assertNull(getClass().getResource("/data/logos_dimension/structure/journey_"+name+".nbt"),"Obsolete monolithic structure remains active");
         }
         var fields=data("settlement_manifest");assertEquals(7,fields.get("sources").getAsInt());
-        for(String n:new String[]{"rice_paddy_0","rice_paddy_1"})assertTrue(fields.getAsJsonObject("native_templates").getAsJsonObject(n).get("rice").getAsInt()>1500);
+        assertEquals("minecraft:wheat",fields.get("crop").getAsString());
+        for(String n:new String[]{"rice_paddy_0","rice_paddy_1"})assertNull(getClass().getResource("/data/logos_dimension/structure/settlement/"+n+".nbt"));
+        var planting=data("worldgen/configured_feature/settlement_wheat_column");assertEquals("minecraft:block_column",planting.get("type").getAsString());
+        var layers=planting.getAsJsonObject("config").getAsJsonArray("layers");assertEquals(2,layers.size());
+        assertEquals("minecraft:farmland",layers.get(0).getAsJsonObject().getAsJsonObject("provider").getAsJsonObject("state").get("Name").getAsString());
+    }
+    @Test void settlementAirIsNotIgnoredAndAnimalsAreDisabled()throws Exception{
+        var processors=data("worldgen/processor_list/settlement_preserve_void").getAsJsonArray("processors");
+        assertEquals(1,processors.size());
+        assertEquals("minecraft:block_ignore",processors.get(0).getAsJsonObject().get("processor_type").getAsString());
+        var ignored=processors.get(0).getAsJsonObject().getAsJsonArray("blocks");assertEquals(1,ignored.size());
+        assertEquals("minecraft:structure_void",ignored.get(0).getAsJsonObject().get("Name").getAsString());
+        assertFalse(data("settlement_manifest").get("entities").getAsBoolean());
+        for(var biome:dev.logos.dimension.cloudsea.CloudseaBiome.values())
+            assertTrue(data("worldgen/biome/"+biome.id()).getAsJsonObject("spawners").isEmpty(),"Animal spawns remain in "+biome.id());
+        for(String name:new String[]{"hamlet","town"}){
+            var structure=data("worldgen/structure/journey_"+name);
+            assertEquals(-3,structure.getAsJsonObject("start_height").get("absolute").getAsInt());
+            assertTrue(structure.getAsJsonObject("spawn_overrides").getAsJsonObject("creature").getAsJsonArray("spawns").isEmpty());
+        }
     }
     @Test void nativeTreesUseTheMatchingLogAndLeaves()throws Exception{
         for(var b:dev.logos.dimension.cloudsea.CloudseaBiome.values())if(!b.barren()){

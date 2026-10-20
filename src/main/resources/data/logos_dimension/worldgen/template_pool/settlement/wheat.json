@@ -1,0 +1,14 @@
+{
+  "name": "logos_dimension:settlement/wheat",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:feature_pool_element",
+        "feature": "logos_dimension:settlement_wheat",
+        "projection": "rigid"
+      }
+    }
+  ]
+}

@@ -49,8 +49,9 @@ public final class CloudseaBlocks {
         DimensionBlocks.ITEMS.registerSimpleBlockItem("journey_grapevine",block);PALETTE.add(block);return block;
     }
     private static DeferredBlock<Block> rice(){
+        // Save compatibility for 0.9.0 only. New settlements use vanilla wheat.
         var block=DimensionBlocks.BLOCKS.<Block>registerBlock("journey_rice",JourneyRiceBlock::new,p->p.mapColor(MapColor.PLANT).strength(0).sound(SoundType.CROP).noCollision().noOcclusion().randomTicks());
-        DimensionBlocks.ITEMS.registerSimpleBlockItem("journey_rice",block);PALETTE.add(block);return block;
+        DimensionBlocks.ITEMS.registerSimpleBlockItem("journey_rice",block);return block;
     }
     private static DeferredBlock<Block> bramble(){
         String id="journey_berry_bramble";
