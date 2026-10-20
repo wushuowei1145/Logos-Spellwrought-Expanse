@@ -1,0 +1,42 @@
+{
+  "type": "minecraft:jigsaw",
+  "biomes": [
+    "logos_dimension:aether",
+    "logos_dimension:sulfur",
+    "logos_dimension:mercury",
+    "logos_dimension:salt",
+    "logos_dimension:sanctum"
+  ],
+  "step": "surface_structures",
+  "spawn_overrides": {
+    "monster": {
+      "bounding_box": "full",
+      "spawns": []
+    },
+    "creature": {
+      "bounding_box": "full",
+      "spawns": []
+    },
+    "ambient": {
+      "bounding_box": "full",
+      "spawns": []
+    },
+    "water_creature": {
+      "bounding_box": "full",
+      "spawns": []
+    },
+    "water_ambient": {
+      "bounding_box": "full",
+      "spawns": []
+    }
+  },
+  "terrain_adaptation": "none",
+  "start_pool": "logos_dimension:crucible_island",
+  "size": 1,
+  "start_height": {
+    "absolute": 321
+  },
+  "max_distance_from_center": 128,
+  "use_expansion_hack": false,
+  "start_jigsaw_name": "logos_dimension:anchor"
+}

@@ -1,665 +1,140 @@
 {
   "parent": "minecraft:block/block",
+  "ambientocclusion": false,
   "textures": {
     "particle": "logos_dimension:block/cloudsea_demon_reed",
-    "body": "logos_dimension:block/cloudsea_demon_reed",
-    "rib": "logos_dimension:block/cloudsea_demon_reed_rib",
-    "glow": "logos_dimension:block/cloudsea_demon_reed_core"
+    "plant": "logos_dimension:block/cloudsea_demon_reed",
+    "stem": "logos_dimension:block/journey_botanical_stem",
+    "bark": "logos_dimension:block/journey_botanical_bark"
   },
   "elements": [
     {
-      "name": "reed_stem_0",
       "from": [
-        3.6,
+        0.0,
         0,
-        4.6
+        3
       ],
       "to": [
-        4.4,
-        9,
-        5.4
+        16.0,
+        14,
+        3
       ],
       "faces": {
-        "up": {
-          "texture": "#rib",
-          "uv": [
-            3.6,
-            4.6,
-            4.4,
-            5.4
-          ]
-        },
-        "down": {
-          "texture": "#rib",
-          "uv": [
-            3.6,
-            10.6,
-            4.4,
-            11.4
-          ]
-        },
         "north": {
-          "texture": "#rib",
+          "texture": "#plant",
           "uv": [
-            11.6,
-            7,
-            12.4,
+            0,
+            0,
+            16,
             16
           ]
         },
         "south": {
-          "texture": "#rib",
+          "texture": "#plant",
           "uv": [
-            3.6,
-            7,
-            4.4,
-            16
-          ]
-        },
-        "east": {
-          "texture": "#rib",
-          "uv": [
-            10.6,
-            7,
-            11.4,
-            16
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            4.6,
-            7,
-            5.4,
+            0,
+            0,
+            16,
             16
           ]
         }
       }
     },
     {
-      "name": "flame_calyx_0",
       "from": [
-        2.8,
-        7,
-        3.8
-      ],
-      "to": [
-        5.2,
-        11,
-        6.2
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            2.8,
-            3.8,
-            5.2,
-            6.2
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            2.8,
-            9.8,
-            5.2,
-            12.2
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            10.8,
-            5,
-            13.2,
-            9
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            2.8,
-            5,
-            5.2,
-            9
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            9.8,
-            5,
-            12.2,
-            9
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            3.8,
-            5,
-            6.2,
-            9
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "y",
-        "angle": 45
-      }
-    },
-    {
-      "name": "flame_0",
-      "from": [
-        3.45,
-        8,
-        4.45
-      ],
-      "to": [
-        4.55,
-        12,
-        5.55
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            3.45,
-            4.45,
-            4.55,
-            5.55
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            3.45,
-            10.45,
-            4.55,
-            11.55
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            11.45,
-            4,
-            12.55,
-            8
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            3.45,
-            4,
-            4.55,
-            8
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            10.45,
-            4,
-            11.55,
-            8
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            4.45,
-            4,
-            5.55,
-            8
-          ]
-        }
-      },
-      "shade": false,
-      "light_emission": 9
-    },
-    {
-      "name": "reed_stem_1",
-      "from": [
-        7.6,
+        0.0,
         0,
-        8.6
+        9
       ],
       "to": [
-        8.4,
-        13,
-        9.4
-      ],
-      "faces": {
-        "up": {
-          "texture": "#rib",
-          "uv": [
-            7.6,
-            8.6,
-            8.4,
-            9.4
-          ]
-        },
-        "down": {
-          "texture": "#rib",
-          "uv": [
-            7.6,
-            6.6,
-            8.4,
-            7.4
-          ]
-        },
-        "north": {
-          "texture": "#rib",
-          "uv": [
-            7.6,
-            3,
-            8.4,
-            16
-          ]
-        },
-        "south": {
-          "texture": "#rib",
-          "uv": [
-            7.6,
-            3,
-            8.4,
-            16
-          ]
-        },
-        "east": {
-          "texture": "#rib",
-          "uv": [
-            6.6,
-            3,
-            7.4,
-            16
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            8.6,
-            3,
-            9.4,
-            16
-          ]
-        }
-      }
-    },
-    {
-      "name": "flame_calyx_1",
-      "from": [
-        6.8,
-        11,
-        7.8
-      ],
-      "to": [
-        9.2,
-        15,
-        10.2
-      ],
-      "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            6.8,
-            7.8,
-            9.2,
-            10.2
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            6.8,
-            5.800000000000001,
-            9.2,
-            8.2
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            6.800000000000001,
-            1,
-            9.2,
-            5
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            6.8,
-            1,
-            9.2,
-            5
-          ]
-        },
-        "east": {
-          "texture": "#body",
-          "uv": [
-            5.800000000000001,
-            1,
-            8.2,
-            5
-          ]
-        },
-        "west": {
-          "texture": "#body",
-          "uv": [
-            7.8,
-            1,
-            10.2,
-            5
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "y",
-        "angle": 45
-      }
-    },
-    {
-      "name": "flame_1",
-      "from": [
-        7.45,
-        12,
-        8.45
-      ],
-      "to": [
-        8.55,
+        16.0,
         16,
-        9.55
+        9
       ],
       "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            7.45,
-            8.45,
-            8.55,
-            9.55
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            7.45,
-            6.449999999999999,
-            8.55,
-            7.550000000000001
-          ]
-        },
         "north": {
-          "texture": "#glow",
+          "texture": "#plant",
           "uv": [
-            7.449999999999999,
             0,
-            8.55,
-            4
+            0,
+            16,
+            16
           ]
         },
         "south": {
-          "texture": "#glow",
+          "texture": "#plant",
           "uv": [
-            7.45,
             0,
-            8.55,
-            4
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            6.449999999999999,
             0,
-            7.550000000000001,
-            4
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            8.45,
-            0,
-            9.55,
-            4
+            16,
+            16
           ]
         }
-      },
-      "shade": false,
-      "light_emission": 9
+      }
     },
     {
-      "name": "reed_stem_2",
       "from": [
-        11.6,
+        0.0,
         0,
-        4.6
+        14
       ],
       "to": [
-        12.4,
-        7,
-        5.4
+        16.0,
+        13,
+        14
       ],
       "faces": {
-        "up": {
-          "texture": "#rib",
-          "uv": [
-            11.6,
-            4.6,
-            12.4,
-            5.4
-          ]
-        },
-        "down": {
-          "texture": "#rib",
-          "uv": [
-            11.6,
-            10.6,
-            12.4,
-            11.4
-          ]
-        },
         "north": {
-          "texture": "#rib",
+          "texture": "#plant",
           "uv": [
-            3.5999999999999996,
-            9,
-            4.4,
+            0,
+            0,
+            16,
             16
           ]
         },
         "south": {
-          "texture": "#rib",
+          "texture": "#plant",
           "uv": [
-            11.6,
-            9,
-            12.4,
-            16
-          ]
-        },
-        "east": {
-          "texture": "#rib",
-          "uv": [
-            10.6,
-            9,
-            11.4,
-            16
-          ]
-        },
-        "west": {
-          "texture": "#rib",
-          "uv": [
-            4.6,
-            9,
-            5.4,
+            0,
+            0,
+            16,
             16
           ]
         }
       }
     },
     {
-      "name": "flame_calyx_2",
       "from": [
-        10.8,
-        5,
-        3.8
+        8,
+        0,
+        0.0
       ],
       "to": [
-        13.2,
-        9,
-        6.2
+        8,
+        15,
+        16.0
       ],
       "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            10.8,
-            3.8,
-            13.2,
-            6.2
-          ]
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            10.8,
-            9.8,
-            13.2,
-            12.2
-          ]
-        },
-        "north": {
-          "texture": "#body",
-          "uv": [
-            2.8000000000000007,
-            7,
-            5.199999999999999,
-            11
-          ]
-        },
-        "south": {
-          "texture": "#body",
-          "uv": [
-            10.8,
-            7,
-            13.2,
-            11
-          ]
-        },
         "east": {
-          "texture": "#body",
+          "texture": "#plant",
           "uv": [
-            9.8,
-            7,
-            12.2,
-            11
+            0,
+            0,
+            16,
+            16
           ]
         },
         "west": {
-          "texture": "#body",
+          "texture": "#plant",
           "uv": [
-            3.8,
-            7,
-            6.2,
-            11
+            0,
+            0,
+            16,
+            16
           ]
         }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "y",
-        "angle": 45
       }
-    },
-    {
-      "name": "flame_2",
-      "from": [
-        11.45,
-        6,
-        4.45
-      ],
-      "to": [
-        12.55,
-        10,
-        5.55
-      ],
-      "faces": {
-        "up": {
-          "texture": "#glow",
-          "uv": [
-            11.45,
-            4.45,
-            12.55,
-            5.55
-          ]
-        },
-        "down": {
-          "texture": "#glow",
-          "uv": [
-            11.45,
-            10.45,
-            12.55,
-            11.55
-          ]
-        },
-        "north": {
-          "texture": "#glow",
-          "uv": [
-            3.4499999999999993,
-            6,
-            4.550000000000001,
-            10
-          ]
-        },
-        "south": {
-          "texture": "#glow",
-          "uv": [
-            11.45,
-            6,
-            12.55,
-            10
-          ]
-        },
-        "east": {
-          "texture": "#glow",
-          "uv": [
-            10.45,
-            6,
-            11.55,
-            10
-          ]
-        },
-        "west": {
-          "texture": "#glow",
-          "uv": [
-            4.45,
-            6,
-            5.55,
-            10
-          ]
-        }
-      },
-      "shade": false,
-      "light_emission": 9
     }
   ],
   "render_type": "neoforge:cutout"

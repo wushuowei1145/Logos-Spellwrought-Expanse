@@ -27,20 +27,31 @@ public enum CloudseaBiome {
     TIDE_RIBBONS("南方海湾",0xB6BDAD,0x718B67,Form.RIBBON,159,35,.25),
     IVORY_STEPS("银桦疏林",0x91A17C,0x8DA16B,Form.STEPS,166,27,.31),
     AURORA_DUNES("寒带荒原",0xA1AA9B,0x677F67,Form.DUNE,158,31,.11),
-    PALE_SPIRES("积雪峰顶",0xD9DEDC,0x81918B,Form.SPIRE,170,72,.18);
+    PALE_SPIRES("积雪峰顶",0xD9DEDC,0x81918B,Form.SPIRE,170,72,.18),
+    ANCIENT_BEECH("古冠山毛榉林",0x74845C,0x526D41,Form.FOLD,160,25,.92),
+    FERNWOOD("翳蕨密林",0x71865B,0x47663F,Form.FOLD,160,25,.96),
+    MOON_BIRCH("月露白桦林",0x829470,0x7C9463,Form.FOLD,160,25,.90),
+    FIR_HEART("杉影深林",0x778471,0x365B4B,Form.FOLD,160,25,.88),
+    MOSS_VALE("雾苔溪林",0x718765,0x507252,Form.FOLD,160,25,.97),
+    COPPER_COPSE("铜叶林丘",0x829167,0x718149,Form.FOLD,160,25,.88),
+    SUNLIT_GLADE("曦光林隙",0x91A274,0x6F8853,Form.FOLD,160,25,.94),
+    STARFLOWER_GLADE("星铃花甸",0x889E75,0x70895A,Form.FOLD,160,25,.96);
 
     public enum Form { FOLD, PETAL, BASIN, HANGING, RIBBON, STEPS, DUNE, SPIRE }
     public final String title; public final int groundColor, leafColor, base, relief; public final Form form; public final double flora;
     CloudseaBiome(String title,int ground,int leaf,Form form,int base,int relief,double flora) {
         this.title=title;groundColor=ground;leafColor=leaf;this.form=form;this.base=base;this.relief=relief;this.flora=flora;
     }
-    public boolean conifer(){return this==LILAC_STEPS||this==CLOUDROOT_SHELVES||this==AURORA_DUNES;}
-    public boolean birch(){return this==REVERSE_GARDENS||this==IVORY_STEPS;}
+    public boolean conifer(){return this==LILAC_STEPS||this==CLOUDROOT_SHELVES||this==FIR_HEART;}
+    public boolean birch(){return this==REVERSE_GARDENS||this==IVORY_STEPS||this==MOON_BIRCH;}
+    public boolean glade(){return this==SUNLIT_GLADE||this==STARFLOWER_GLADE;}
+    public boolean forest(){return conifer()||birch()||this==JADE_WHIRLS||this==VERDANT_WHIRLS||this==LANTERN_SHELVES
+            ||this==ANCIENT_BEECH||this==FERNWOOD||this==MOSS_VALE||this==COPPER_COPSE;}
     public boolean barren(){return this==HALO_SPIRES||this==FROST_SPIRES||this==PALE_SPIRES||this==TIDE_RIBBONS||this==PEARL_BASINS||this==OPAL_DUNES;}
     public double treeDensity(){
         if(barren())return 0;
-        if(conifer())return .68;
-        if(this==JADE_WHIRLS||this==VERDANT_WHIRLS||this==LANTERN_SHELVES||birch())return .70;
+        if(glade())return 0;
+        if(forest())return .96;
         return this==SILK_FOLDS||this==ROSE_DUNES||this==DAWN_RIBBONS||this==AMBER_WHIRLS?.035:.15;
     }
     public String id() { return "cloudsea_"+name().toLowerCase(Locale.ROOT); }

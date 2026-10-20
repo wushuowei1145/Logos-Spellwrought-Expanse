@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "logos_dimension:journey_hamlet",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 128,
+    "separation": 96,
+    "salt": 84435
+  }
+}

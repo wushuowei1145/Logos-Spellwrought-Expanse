@@ -1,0 +1,34 @@
+{
+  "has_precipitation": true,
+  "temperature": 0.65,
+  "downfall": 0.45,
+  "effects": {
+    "water_color": "#567d91",
+    "grass_color": "#778471",
+    "foliage_color": "#365b4b"
+  },
+  "carvers": [
+    "minecraft:cave",
+    "minecraft:cave_extra_underground",
+    "minecraft:canyon"
+  ],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "logos_dimension:tall_trees_cloudsea_fir_heart",
+      "logos_dimension:trees_cloudsea_fir_heart",
+      "logos_dimension:woodland_floor"
+    ],
+    []
+  ],
+  "spawners": {},
+  "spawn_costs": {}
+}

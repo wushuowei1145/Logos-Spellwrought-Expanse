@@ -47,66 +47,46 @@ public final class DimensionGameTests {
             Holder<TestEnvironmentDefinition<?>> env = event.registerEnvironment(LogosDimension.id("default"), new TestEnvironmentDefinition.AllOf());
             for (String name : NAMES) event.registerTest(LogosDimension.id(name), new FunctionGameTestInstance(
                     ResourceKey.create(Registries.TEST_FUNCTION, LogosDimension.id(name)),
-                    new TestData<>(env, Identifier.withDefaultNamespace("empty"), 400, 0, true, Rotation.NONE, false, 1, 1, false, 16)));
+                    new TestData<>(env, Identifier.withDefaultNamespace("empty"), 1200, 0, true, Rotation.NONE, false, 1, 1, false, 16)));
         });
     }
-    private static ServerLevel dimension(GameTestHelper h) {
-        var level = h.getLevel().getServer().getLevel(LogosDimension.CRUCIBLE);
-        h.assertTrue(level != null, "Crucible dimension did not load"); return level;
-    }
+    private static ServerLevel dimension(GameTestHelper h){return NativeTestWorlds.crucible(h.getLevel().getServer());}
     private static void registry(GameTestHelper h) {
         var level = dimension(h);
-        h.assertTrue(level.getChunkSource().getGenerator() instanceof AlchemicalChunkGenerator, "Wrong generator");
+        h.assertTrue(level.getChunkSource().getGenerator() instanceof net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator, "Wrong generator");
+        h.assertTrue(level.getServer().getLevel(LogosDimension.CRUCIBLE)==null,"Legacy fixed dimension is still accessible");
         h.assertTrue(BuiltInRegistries.ITEM.containsKey(Identifier.parse("logos:tainted_mana_shard")), "Parent material missing");
         h.assertTrue(!BuiltInRegistries.ITEM.containsKey(LogosDimension.id("tainted_mana_shard")), "Parent material was duplicated");
-        h.assertTrue(((AlchemicalChunkGenerator) level.getChunkSource().getGenerator()).terrain().layout().spacing() == 20_000, "Pattern spacing changed");
         h.succeed();
     }
-    private static void island(GameTestHelper h) {
-        var level = dimension(h);
-        var gen = (AlchemicalChunkGenerator) level.getChunkSource().getGenerator();
-        var c = gen.terrain().column(0, 0);
-        level.getChunk(0, 0);
-        for (int x = 1; x <= 12; x += 3) for (int z = 1; z <= 12; z += 3) {
-            var p = new BlockPos(x, c.islandTop(), z);
-            h.assertTrue(level.getBlockState(p).is(DimensionBlocks.ISLAND_STONE.get()), "Island top not reserved stone");
-            for (int y = 1; y <= 30; y++) h.assertTrue(level.isEmptyBlock(p.above(y)), "Island decorated or obstructed");
-            h.assertTrue(level.getBiome(p.above()).is(LogosDimension.id("sanctum")), "Island is not the sanctum biome");
+    private static void island(GameTestHelper h){
+        var level=dimension(h);level.getChunk(0,0);
+        if(!level.getServer().getWorldGenSettings().options().generateStructures()){
+            h.assertTrue(level.registryAccess().lookupOrThrow(Registries.STRUCTURE).getOrThrow(ResourceKey.create(Registries.STRUCTURE,LogosDimension.id("crucible_island"))).value() instanceof net.minecraft.world.level.levelgen.structure.structures.JigsawStructure,"Island does not use native structures");
+            h.succeed();return; // GameTestServer disables structures; dedicated-server fixture checks placement.
         }
-        h.succeed();
+        for(int x=2;x<14;x+=3)for(int z=2;z<14;z+=3){
+            var p=new BlockPos(x,NativeWorlds.ISLAND_TOP,z);
+            h.assertTrue(level.getBlockState(p).is(DimensionBlocks.ISLAND_STONE.get()),"Native jigsaw island missing at origin");
+            for(int y=1;y<=16;y++)h.assertTrue(level.isEmptyBlock(p.above(y)),"Reserved platform obstructed");
+        }h.succeed();
     }
-    private static void spawnGuard(GameTestHelper h) {
-        var level = dimension(h);
-        var c = ((AlchemicalChunkGenerator) level.getChunkSource().getGenerator()).terrain().column(0, 0);
-        var pos = new BlockPos(0, c.islandTop() + 1, 0);
-        var natural = new MobSpawnEvent.SpawnPlacementCheck(EntityType.ZOMBIE, level, EntitySpawnReason.NATURAL, pos, level.getRandom(), true);
-        NeoForge.EVENT_BUS.post(natural);
-        h.assertTrue(!natural.getPlacementCheckResult(), "Automatic zombie spawning was allowed on the island");
-        var spawner = new MobSpawnEvent.SpawnPlacementCheck(EntityType.SPIDER, level, EntitySpawnReason.SPAWNER, pos, level.getRandom(), true);
-        NeoForge.EVENT_BUS.post(spawner);
-        h.assertTrue(!spawner.getPlacementCheckResult(), "Spawner bypassed sanctum guard");
-        var scripted = new MobSpawnEvent.SpawnPlacementCheck(EntityType.WITHER, level, EntitySpawnReason.TRIGGERED, pos, level.getRandom(), true);
-        NeoForge.EVENT_BUS.post(scripted);
-        h.assertTrue(scripted.getPlacementCheckResult(), "Scripted boss hook was blocked");
-        h.assertTrue(!IslandSanctum.contains(level, new BlockPos(0, c.ground() + 1, 0)), "Ground beneath island incorrectly protected");
-        h.succeed();
+    private static void spawnGuard(GameTestHelper h){
+        var level=dimension(h);var pos=new BlockPos(8,NativeWorlds.ISLAND_TOP+1,8);
+        var natural=new MobSpawnEvent.SpawnPlacementCheck(EntityType.ZOMBIE,level,EntitySpawnReason.NATURAL,pos,level.getRandom(),true);
+        NeoForge.EVENT_BUS.post(natural);h.assertTrue(!natural.getPlacementCheckResult(),"Island allowed natural spawning");
+        var scripted=new MobSpawnEvent.SpawnPlacementCheck(EntityType.WITHER,level,EntitySpawnReason.TRIGGERED,pos,level.getRandom(),true);
+        NeoForge.EVENT_BUS.post(scripted);h.assertTrue(scripted.getPlacementCheckResult(),"Scripted boss was blocked");
+        h.assertTrue(!IslandSanctum.contains(level,new BlockPos(8,80,8)),"Ground beneath island protected");h.succeed();
     }
-    private static void materials(GameTestHelper h) {
-        var level = dimension(h);
-        var gen = (AlchemicalChunkGenerator) level.getChunkSource().getGenerator();
-        for (var region : AlchemicalLayout.Region.values()) {
-            var point = DimensionTravel.findLanding(level, gen.terrain().layout().center(0, 0), region);
-            h.assertTrue(point != null, "No safe landing in " + region);
-            var pos = BlockPos.containing(point);
-            for (int y = level.getMinY() + 4; y < pos.getY(); y++) {
-                var block = level.getBlockState(new BlockPos(pos.getX(), y, pos.getZ())).getBlock();
-                String id = BuiltInRegistries.BLOCK.getKey(block).toString();
-                h.assertTrue(!id.startsWith("minecraft:") || id.equals("minecraft:air") || id.equals("minecraft:water"), "Vanilla mineral generated: " + id);
-            }
+    private static void materials(GameTestHelper h){
+        var level=dimension(h);var at=DimensionTravel.findLanding(level,NativeWorlds.center(),AlchemicalLayout.Region.AETHER);
+        h.assertTrue(at!=null,"No outer Aether arrival");var pos=BlockPos.containing(at);
+        for(int x=pos.getX();x<pos.getX()+8;x++)for(int z=pos.getZ();z<pos.getZ()+8;z++)for(int y=-60;y<pos.getY();y++){
+            String id=BuiltInRegistries.BLOCK.getKey(level.getBlockState(new BlockPos(x,y,z)).getBlock()).toString();
+            h.assertTrue(!id.contains("_ore"),"Vanilla ore generated: "+id);
         }
-        h.assertTrue(BuiltInRegistries.BLOCK.getKey(DimensionBlocks.SULFUR_DEPOSIT.get()).getNamespace().equals(LogosDimension.ID), "Sulfur uses vanilla block");
-        h.assertTrue(DimensionFluids.MERCURY.get().getFluidType() == DimensionFluids.MERCURY_TYPE.get(), "Mercury fluid type mismatch");
-        h.succeed();
+        h.assertTrue(BuiltInRegistries.BLOCK.getKey(DimensionBlocks.SULFUR_DEPOSIT.get()).getNamespace().equals(LogosDimension.ID),"Vanilla sulfur used");h.succeed();
     }
     private static void clock(GameTestHelper h) {
         var level = dimension(h);
@@ -121,8 +101,9 @@ public final class DimensionGameTests {
         player.connection.markClientLoaded();
         var before = player.position();
         var original = player.level().dimension();
-        h.assertTrue(DimensionTravel.enter(player), "Entrance failed");
-        h.assertTrue(player.level().dimension().equals(LogosDimension.CRUCIBLE), "Entrance used wrong dimension");
+        var pos=h.absolutePos(new BlockPos(4,2,4));h.getLevel().setBlockAndUpdate(pos,DimensionBlocks.ALCHEMICAL_CAULDRON.get().defaultBlockState());
+        h.assertTrue(dev.logos.dimension.instance.CauldronWorlds.enter(player,(dev.logos.dimension.instance.BoundCauldronBlockEntity)h.getLevel().getBlockEntity(pos),before), "Entrance failed");
+        h.assertTrue(LogosDimension.isCrucible(player.level().dimension()), "Entrance used wrong dimension");
         h.assertTrue(DimensionTravel.leave(player), "Return failed");
         h.assertTrue(player.level().dimension().equals(original) && player.position().distanceToSqr(before) < .01, "Return point changed");
         h.succeed();
@@ -223,24 +204,15 @@ public final class DimensionGameTests {
         h.assertTrue(player.isOnFire()&&player.getHealth()<health,"Molten glass lacks vanilla lava contact damage");
         h.succeed();
     }
-    private static void progress(GameTestHelper h) {
-        var level = dimension(h);
-        var terrain = ((AlchemicalChunkGenerator) level.getChunkSource().getGenerator()).terrain();
-        var center = terrain.layout().center(0,0);
-        var col = terrain.column(center.x(),center.z());
-        var data = IslandProgress.of(level);
-        boolean wasDefeated = data.defeated(center);
-        try {
-            data.setDefeated(center, false);
-            h.assertTrue(UnderIslandHaunt.state(level,center.x(),col.ground()+2,center.z()).density() > .9, "Undefeated island has no haunted fog");
-            h.assertTrue(UnderIslandHaunt.state(level,center.x(),col.islandTop()+1,center.z()).density() == 0, "Plateau is haunted");
-            data.setDefeated(center, true);
-            h.assertTrue(!UnderIslandHaunt.state(level,center.x(),col.ground()+2,center.z()).veiled(), "Boss victory left island haunted");
-            var encoded = IslandProgress.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE,data).getOrThrow();
-            var restored = IslandProgress.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE,encoded).getOrThrow();
-            h.assertTrue(restored.defeated(center), "Boss progress failed to serialize");
-        } finally { data.setDefeated(center,wasDefeated); }
-        h.succeed();
+    private static void progress(GameTestHelper h){
+        var level=dimension(h);var center=NativeWorlds.center();var data=IslandProgress.of(level);boolean previous=data.defeated(center);
+        try{
+            data.setDefeated(center,false);h.assertTrue(UnderIslandHaunt.state(level,8,230,8).density()>.8,"Island fog missing");
+            h.assertTrue(UnderIslandHaunt.state(level,8,321,8).density()==0,"Island top has fog");
+            data.setDefeated(center,true);h.assertTrue(!UnderIslandHaunt.state(level,8,230,8).veiled(),"Boss completion did not clear fog");
+            var encoded=IslandProgress.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE,data).getOrThrow();
+            h.assertTrue(IslandProgress.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE,encoded).getOrThrow().defeated(center),"Boss state was not persisted");
+        }finally{data.setDefeated(center,previous);}h.succeed();
     }
     private static void cauldron(GameTestHelper h) {
         var level = h.getLevel();

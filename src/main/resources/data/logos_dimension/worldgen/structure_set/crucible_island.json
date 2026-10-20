@@ -1,0 +1,16 @@
+{
+  "structures": [
+    {
+      "structure": "logos_dimension:crucible_island",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:concentric_rings",
+    "count": 1,
+    "distance": 0,
+    "spread": 1,
+    "preferred_biomes": [],
+    "salt": 7403
+  }
+}

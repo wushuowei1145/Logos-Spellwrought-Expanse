@@ -11,7 +11,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderFrameEvent;
 
-/** Native sun, weather and thin clouds; no custom sky meshes, whale or ambient magic particles. */
+/** Native sun, weather and thin clouds; native sky with local vegetation-bound magic particles. */
 @EventBusSubscriber(modid=LogosDimension.ID,value=Dist.CLIENT)
 public final class CloudseaClient {
     public static final ResourceKey<WorldClock> CLOCK=JourneySeasons.CLOCK;

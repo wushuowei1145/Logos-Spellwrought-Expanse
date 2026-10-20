@@ -1,12 +1,12 @@
 {
   "parent": "minecraft:block/block",
+  "ambientocclusion": true,
   "textures": {
     "particle": "logos_dimension:block/cloudsea_ivory_bricks",
     "body": "logos_dimension:block/cloudsea_ivory_bricks"
   },
   "elements": [
     {
-      "name": "continuous_bricks",
       "from": [
         0,
         0,
@@ -18,26 +18,6 @@
         16
       ],
       "faces": {
-        "up": {
-          "texture": "#body",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "up"
-        },
-        "down": {
-          "texture": "#body",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "cullface": "down"
-        },
         "north": {
           "texture": "#body",
           "uv": [
@@ -77,6 +57,26 @@
             16
           ],
           "cullface": "west"
+        },
+        "up": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "up"
+        },
+        "down": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "down"
         }
       }
     }

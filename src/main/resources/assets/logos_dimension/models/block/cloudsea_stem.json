@@ -1,7 +1,3 @@
 {
-  "parent": "minecraft:block/cube_column",
-  "textures": {
-    "side": "logos_dimension:block/cloudsea_stem",
-    "end": "minecraft:block/oak_log_top"
-  }
+  "parent": "logos_dimension:block/cloudsea_ancient_beech_log"
 }
