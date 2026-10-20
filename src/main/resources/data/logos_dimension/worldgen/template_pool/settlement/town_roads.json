@@ -1,0 +1,16 @@
+{
+  "name": "logos_dimension:settlement/town_roads",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "logos_dimension:settlement/town_road",
+        "processors": "logos_dimension:settlement_preserve_void",
+        "override_liquid_settings": "ignore_waterlogging",
+        "projection": "terrain_matching"
+      }
+    }
+  ]
+}

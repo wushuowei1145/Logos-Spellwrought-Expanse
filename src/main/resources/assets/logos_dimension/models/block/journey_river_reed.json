@@ -1,21 +1,23 @@
 {
   "parent": "minecraft:block/block",
+  "ambientocclusion": false,
   "textures": {
+    "particle": "logos_dimension:block/journey_river_reed",
     "plant": "logos_dimension:block/journey_river_reed",
-    "particle": "logos_dimension:block/journey_river_reed"
+    "stem": "logos_dimension:block/journey_botanical_stem",
+    "bark": "logos_dimension:block/journey_botanical_bark"
   },
-  "render_type": "neoforge:cutout",
   "elements": [
     {
       "from": [
         0.0,
         0,
-        8
+        3
       ],
       "to": [
         16.0,
-        16,
-        8
+        14,
+        3
       ],
       "faces": {
         "north": {
@@ -36,27 +38,18 @@
             16
           ]
         }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          0,
-          8
-        ],
-        "axis": "y",
-        "angle": 45
       }
     },
     {
       "from": [
         0.0,
         0,
-        8
+        9
       ],
       "to": [
         16.0,
         16,
-        8
+        9
       ],
       "faces": {
         "north": {
@@ -77,16 +70,72 @@
             16
           ]
         }
-      },
-      "rotation": {
-        "origin": [
-          8,
-          0,
-          8
-        ],
-        "axis": "y",
-        "angle": -45
+      }
+    },
+    {
+      "from": [
+        0.0,
+        0,
+        14
+      ],
+      "to": [
+        16.0,
+        13,
+        14
+      ],
+      "faces": {
+        "north": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        8,
+        0,
+        0.0
+      ],
+      "to": [
+        8,
+        15,
+        16.0
+      ],
+      "faces": {
+        "east": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
       }
     }
-  ]
+  ],
+  "render_type": "neoforge:cutout"
 }

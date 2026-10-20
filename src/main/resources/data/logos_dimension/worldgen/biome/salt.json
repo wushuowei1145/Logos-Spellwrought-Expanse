@@ -7,7 +7,10 @@
     "grass_color": "#8aab95",
     "foliage_color": "#99bdb3"
   },
-  "carvers": [],
+  "carvers": [
+    "minecraft:cave",
+    "minecraft:canyon"
+  ],
   "features": [
     [],
     [],
@@ -18,7 +21,9 @@
     [],
     [],
     [],
-    [],
+    [
+      "logos_dimension:salt_crystals"
+    ],
     []
   ],
   "spawners": {

@@ -32,10 +32,10 @@ def tile(name,c,kind='stone'):
 
 text=(ROOT/'src/main/java/dev/logos/dimension/cloudsea/CloudseaBiome.java').read_text(encoding='utf-8')
 biomes=re.findall(r'([A-Z_]+)\("([^"]+)",0x([A-F0-9]+),0x([A-F0-9]+)',text)
-assert len(biomes)==24
+assert len(biomes)==32
 zh=json.loads((A/'lang/zh_cn.json').read_text(encoding='utf-8'));en=json.loads((A/'lang/en_us.json').read_text(encoding='utf-8'))
 zh['itemGroup.logos_dimension.cloudsea']='远行大陆';en['itemGroup.logos_dimension.cloudsea']='The Wayfarer Lands'
-english=['Windbound Plains','Beech Woods','Shallow Sandbars','Northern Birchwood','River Valley','Highland Meadow','Chalk Coast','Bare Ridges','Old River Gorge','Oak Woodland','Stillwater Lake','Deep Broadleaf Woods','Open Downs','Northern Firwood','Wildflower Meadow','Glacier Ridge','Alpine River','Pasture Slopes','Reed Wetland','Mountain Pinewood','Southern Bay','Silver Birch Heath','Cold Heath','Snowbound Summit']
+english=['Windbound Plains','Beech Woods','Shallow Sandbars','Northern Birchwood','River Valley','Highland Meadow','Chalk Coast','Bare Ridges','Old River Gorge','Oak Woodland','Stillwater Lake','Deep Broadleaf Woods','Open Downs','Northern Firwood','Wildflower Meadow','Glacier Ridge','Alpine River','Pasture Slopes','Reed Wetland','Mountain Pinewood','Southern Bay','Silver Birch Heath','Cold Heath','Snowbound Summit','Ancient Beechwood','Fernwood','Moonlit Birch Grove','Fir Heartwood','Mossy Vale','Copper Copse','Sunlit Glade','Starbell Glade']
 all_ids=[]
 for i,(key,title,g,l) in enumerate(biomes):
     bid='cloudsea_'+key.lower();all_ids.append(bid);base=color(g);leaf=color(l)
@@ -67,9 +67,10 @@ for i,(key,title,g,l) in enumerate(biomes):
         write(A/'blockstates'/f'{bid}_{kind}.json',{'variants':{f'season={s}':{'model':f'logos_dimension:block/{bid}_{kind}_{s}'} for s in range(4)}})
         write(A/'items'/f'{bid}_{kind}.json',{'model':{'type':'minecraft:model','model':f'logos_dimension:block/{bid}_{kind}_0'}})
         zh[f'block.logos_dimension.{bid}_{kind}']=title+('草皮' if kind=='ground' else '树叶')
+        en[f'block.logos_dimension.{bid}_{kind}']=english[i]+(' Turf' if kind=='ground' else ' Leaves')
     zh[f'biome.logos_dimension.{bid}']=title;en[f'biome.logos_dimension.{bid}']=english[i]
     cold=i in [3,13,19,21,22];alpine=i in [7,15,23];ocean=i in [2,20]
-    mobs={'creature':[{'type':'minecraft:sheep','weight':8,'minCount':2,'maxCount':4},{'type':'minecraft:cow','weight':6,'minCount':2,'maxCount':3}]} if not ocean and not alpine else {}
+    mobs={} # No generated animals, either with the terrain or through ambient spawning.
     write(D/'worldgen/biome'/f'{bid}.json',{'has_precipitation':True,'temperature':-.15 if alpine else .15 if cold else .65,'downfall':.75 if i in [1,9,11,18] else .45,'effects':{'water_color':'#567d91','grass_color':'#'+g.lower(),'foliage_color':'#'+l.lower()},'carvers':['minecraft:cave','minecraft:cave_extra_underground','minecraft:canyon'],'features':[[] for _ in range(11)],'spawners':mobs,'spawn_costs':{}})
 
 materials={
@@ -204,4 +205,4 @@ def convert(name,out):
         encoded.append(pal.index(v))
     write(D/'journey_templates'/f'{out}.json',{'width':w,'height':h,'depth':d,'palette':pal,'blocks':encoded})
 for name,out in [('playersmallhouse','cottage'),('bakery','bakery'),('guardhouse','guardhouse'),('inn','inn'),('farm','farm'),('playersmallhouse','townhouse'),('playersmallhouse','townhouse_three'),('playersmallhouse','townhouse_four')]:convert(name,out)
-print('Generated 24 temperate biomes, seasonal turf/leaves, eight modeled plants, six adapted blueprints and native sky data.')
+print('Generated 32 temperate biomes, seasonal turf/leaves, eight modeled plants, six adapted blueprints and native sky data.')

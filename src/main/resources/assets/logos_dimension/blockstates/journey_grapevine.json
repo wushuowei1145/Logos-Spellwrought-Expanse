@@ -1,7 +1,205 @@
 {
-  "variants": {
-    "": {
-      "model": "logos_dimension:block/journey_grapevine"
+  "multipart": [
+    {
+      "when": {
+        "north": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_stems"
+      }
+    },
+    {
+      "when": {
+        "north": "true",
+        "foliage": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_leaves"
+      }
+    },
+    {
+      "when": {
+        "north": "true",
+        "foliage": "true",
+        "age": "2"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_green"
+      }
+    },
+    {
+      "when": {
+        "north": "true",
+        "foliage": "true",
+        "age": "3"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_ripe"
+      }
+    },
+    {
+      "when": {
+        "east": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_stems",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "foliage": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_leaves",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "foliage": "true",
+        "age": "2"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_green",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "foliage": "true",
+        "age": "3"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_ripe",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "south": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_stems",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "south": "true",
+        "foliage": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_leaves",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "south": "true",
+        "foliage": "true",
+        "age": "2"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_green",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "south": "true",
+        "foliage": "true",
+        "age": "3"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_ripe",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "west": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_stems",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "foliage": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_leaves",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "foliage": "true",
+        "age": "2"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_green",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "foliage": "true",
+        "age": "3"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_ripe",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "up": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_stems",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "up": "true",
+        "foliage": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_leaves",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "up": "true",
+        "foliage": "true",
+        "age": "2"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_green",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "up": "true",
+        "foliage": "true",
+        "age": "3"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_grape_ripe",
+        "x": 270
+      }
     }
-  }
+  ]
 }

@@ -1,0 +1,93 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "render_type": "neoforge:cutout",
+  "textures": {
+    "particle": "logos_dimension:block/journey_berry_bramble_s2_a0",
+    "bush": "logos_dimension:block/journey_berry_bramble_s2_a0"
+  },
+  "elements": [
+    {
+      "from": [
+        0.25,
+        0,
+        8
+      ],
+      "to": [
+        15.75,
+        10,
+        8
+      ],
+      "faces": {
+        "north": {
+          "texture": "#bush",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#bush",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "axis": "y",
+        "angle": -45,
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      }
+    },
+    {
+      "from": [
+        0.25,
+        0,
+        8
+      ],
+      "to": [
+        15.75,
+        10,
+        8
+      ],
+      "faces": {
+        "north": {
+          "texture": "#bush",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#bush",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "axis": "y",
+        "angle": 45,
+        "origin": [
+          8,
+          0,
+          8
+        ]
+      }
+    }
+  ]
+}

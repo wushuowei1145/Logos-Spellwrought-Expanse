@@ -2,7 +2,7 @@ package dev.logos.dimension.gametest;
 
 import dev.logos.dimension.*;
 import dev.logos.dimension.instance.*;
-import dev.logos.dimension.world.AlchemicalChunkGenerator;
+
 import java.nio.file.*;
 import java.util.*;
 import net.minecraft.core.BlockPos;
@@ -28,9 +28,29 @@ public final class CauldronPersistenceCheck {
                 UUID id=UUID.randomUUID(), deleted=UUID.randomUUID();
                 var level=CauldronWorlds.load(server,id);
                 if(level==null)throw new IllegalStateException("Cannot create fixture UUID world");
+                level.getChunk(0,0);
+                for(int x=-40;x<=40;x+=8)for(int z=-40;z<=40;z+=8){
+                    require(level.getBlockState(new BlockPos(x,NativeWorlds.ISLAND_TOP,z)).is(DimensionBlocks.ISLAND_STONE.get()),"Native island structure missing at "+x+","+z);
+                    require(level.isEmptyBlock(new BlockPos(x,NativeWorlds.ISLAND_TOP+1,z)),"Reserved island was decorated at "+x+","+z);
+                }
+                require(server.getLevel(LogosDimension.CRUCIBLE)==null,"Retired fixed dimension loaded after upgrade");
+                System.out.println("NATIVE_ISLAND_PLACEMENT PASS");
+                var journey=server.getLevel(LogosDimension.CLOUDSEA);
+                var structures=journey.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
+                var hamlet=structures.getOrThrow(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.STRUCTURE,LogosDimension.id("journey_hamlet")));
+                var settlement=journey.getChunkSource().getGenerator().findNearestMapStructure(journey,net.minecraft.core.HolderSet.direct(hamlet),BlockPos.ZERO,256,false);
+                require(settlement!=null,"Native hamlet could not be located");
+                var location=settlement.getFirst();journey.getChunk(location);
+                var start=journey.getChunk(location).getStartForStructure(hamlet.value());
+                require(start!=null&&start.isValid(),"Native hamlet start missing");
+                var box=start.getBoundingBox();int masonry=0;
+                for(int x=box.minX();x<=box.maxX();x+=4)for(int z=box.minZ();z<=box.maxZ();z+=4)for(int y=box.minY();y<=box.maxY();y++)
+                    if(journey.getBlockState(new BlockPos(x,y,z)).is(dev.logos.dimension.cloudsea.CloudseaBlocks.LIMESTONE.get()))masonry++;
+                require(masonry>10,"Native hamlet has no actual masonry: "+masonry);
+                System.out.println("NATIVE_HAMLET_PLACEMENT PASS blocks="+masonry);
                 level.getChunk(marker);level.setBlockAndUpdate(marker,Blocks.LODESTONE.defaultBlockState());
-                var generator=(AlchemicalChunkGenerator)level.getChunkSource().getGenerator();
-                IslandProgress.of(level).setDefeated(generator.terrain().layout().center(0,0),true);
+
+                IslandProgress.of(level).setDefeated(dev.logos.dimension.NativeWorlds.center(),true);
                 server.overworld().getChunk(pot);
                 server.overworld().setBlockAndUpdate(pot,DimensionBlocks.ALCHEMICAL_CAULDRON.get().defaultBlockState());
                 ((BoundCauldronBlockEntity)server.overworld().getBlockEntity(pot)).setWorldId(id);
@@ -46,8 +66,8 @@ public final class CauldronPersistenceCheck {
                 require(level.getSeed()==Long.parseLong(values.getProperty("seed")),"UUID seed changed after restart");
                 require(level.getBlockState(marker).is(Blocks.LODESTONE),"Saved UUID chunks were not restored");
                 require(server.overworld().getBlockEntity(pot) instanceof BoundCauldronBlockEntity bound && id.equals(bound.worldId()),"Placed cauldron lost its binding after restart");
-                var generator=(AlchemicalChunkGenerator)level.getChunkSource().getGenerator();
-                require(IslandProgress.of(level).defeated(generator.terrain().layout().center(0,0)),"Boss state was not saved in the UUID world");
+
+                require(IslandProgress.of(level).defeated(dev.logos.dimension.NativeWorlds.center()),"Boss state was not saved in the UUID world");
                 require(Math.abs(level.getWorldBorder().getSize()-20_000)<.01,"Restored border has incorrect size");
                 require(CauldronWorlds.isDestroyed(server,deleted)&&server.getLevel(CauldronWorlds.key(deleted))==null,"Deleted world resurrected after restart");
                 require(!Files.exists(CauldronWorlds.directory(server,deleted)),"Deleted world files returned after restart");

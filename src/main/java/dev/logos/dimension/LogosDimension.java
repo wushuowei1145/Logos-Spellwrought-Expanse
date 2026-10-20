@@ -2,8 +2,7 @@ package dev.logos.dimension;
 
 import com.mojang.serialization.MapCodec;
 import dev.logos.dimension.gametest.DimensionGameTests;
-import dev.logos.dimension.world.AlchemicalBiomeSource;
-import dev.logos.dimension.world.AlchemicalChunkGenerator;
+import dev.logos.dimension.world.LegacyWorldgenCodecs;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -27,13 +26,16 @@ public final class LogosDimension {
     private static final DeferredRegister<MapCodec<? extends BiomeSource>> BIOME_SOURCES = DeferredRegister.create(Registries.BIOME_SOURCE, ID);
     private static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, ID);
     static {
-        GENERATORS.register("crucible", () -> AlchemicalChunkGenerator.CODEC);
-        BIOME_SOURCES.register("alchemical", () -> AlchemicalBiomeSource.CODEC);
-        GENERATORS.register("cloudsea", () -> dev.logos.dimension.cloudsea.CloudseaChunkGenerator.CODEC);
-        BIOME_SOURCES.register("cloudsea", () -> dev.logos.dimension.cloudsea.CloudseaBiomeSource.CODEC);
+        GENERATORS.register("crucible", () -> LegacyWorldgenCodecs.generator("crucible"));
+        BIOME_SOURCES.register("alchemical", () -> LegacyWorldgenCodecs.ALCHEMICAL);
+        GENERATORS.register("cloudsea", () -> LegacyWorldgenCodecs.generator("journey"));
+        BIOME_SOURCES.register("cloudsea", () -> LegacyWorldgenCodecs.CLOUDSEA);
         TABS.register("cloudsea", () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.logos_dimension.cloudsea"))
                 .icon(() -> dev.logos.dimension.cloudsea.CloudseaBlocks.PORCELAIN.get().asItem().getDefaultInstance())
-                .displayItems((p,out) -> dev.logos.dimension.cloudsea.CloudseaBlocks.PALETTE.forEach(b -> out.accept(b.get()))).build());
+                .displayItems((p,out) -> {
+                    dev.logos.dimension.cloudsea.CloudseaBlocks.PALETTE.forEach(b -> out.accept(b.get()));
+                    out.accept(dev.logos.dimension.cloudsea.CloudseaBlocks.GRAPES.get());out.accept(dev.logos.dimension.cloudsea.CloudseaBlocks.GRAPE_LEAF.get());
+                }).build());
         TABS.register("crucible", () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.logos_dimension"))
                 .icon(() -> DimensionBlocks.SALT_CRYSTAL.get().asItem().getDefaultInstance())
                 .displayItems((p, out) -> {
@@ -47,10 +49,16 @@ public final class LogosDimension {
         dev.logos.dimension.cloudsea.CloudseaBlocks.init();
         DimensionBlocks.BLOCKS.register(bus); DimensionBlocks.ITEMS.register(bus);
         DimensionFluids.TYPES.register(bus); DimensionFluids.FLUIDS.register(bus);
+        DimensionParticles.register(bus);
         GENERATORS.register(bus); BIOME_SOURCES.register(bus); TABS.register(bus);
         DimensionGameTests.register(bus);
         dev.logos.dimension.gametest.CloudseaGameTests.register(bus);
         dev.logos.dimension.gametest.CauldronInstanceGameTests.register(bus);
+        dev.logos.dimension.gametest.GrapeGameTests.register(bus);
+        dev.logos.dimension.gametest.PlantSupportGameTests.register(bus);
+        dev.logos.dimension.gametest.BerryGameTests.register(bus);
+        dev.logos.dimension.gametest.TallTreeGameTests.register(bus);
+        dev.logos.dimension.gametest.SettlementGameTests.register(bus);
         bus.addListener(DimensionSpawns::register);
         bus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
                 event.registrar("1").playToClient(dev.logos.dimension.net.HauntPayload.TYPE, dev.logos.dimension.net.HauntPayload.CODEC));
@@ -62,7 +70,6 @@ public final class LogosDimension {
     }
     public static Identifier id(String path) { return Identifier.fromNamespaceAndPath(ID, path); }
     public static boolean isCrucible(ResourceKey<Level> dimension) {
-        if(dimension.equals(CRUCIBLE))return true;
         var id=dimension.identifier();if(!id.getNamespace().equals(ID))return false;
         String path=id.getPath();if(path.length()!=36)return false;
         for(int i=0;i<36;i++){

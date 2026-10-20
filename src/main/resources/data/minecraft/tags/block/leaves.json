@@ -1,8 +1,6 @@
 {
   "replace": false,
   "values": [
-    "logos_dimension:fan_leaves",
-    "logos_dimension:glass_leaves",
     "logos_dimension:cloudsea_silk_folds_leaf",
     "logos_dimension:cloudsea_jade_whirls_leaf",
     "logos_dimension:cloudsea_pearl_basins_leaf",
@@ -26,6 +24,15 @@
     "logos_dimension:cloudsea_tide_ribbons_leaf",
     "logos_dimension:cloudsea_ivory_steps_leaf",
     "logos_dimension:cloudsea_aurora_dunes_leaf",
-    "logos_dimension:cloudsea_pale_spires_leaf"
+    "logos_dimension:cloudsea_pale_spires_leaf",
+    "logos_dimension:cloudsea_ancient_beech_leaf",
+    "logos_dimension:cloudsea_fernwood_leaf",
+    "logos_dimension:cloudsea_moon_birch_leaf",
+    "logos_dimension:cloudsea_fir_heart_leaf",
+    "logos_dimension:cloudsea_moss_vale_leaf",
+    "logos_dimension:cloudsea_copper_copse_leaf",
+    "logos_dimension:cloudsea_sunlit_glade_leaf",
+    "logos_dimension:cloudsea_starflower_glade_leaf",
+    "logos_dimension:fan_leaves"
   ]
 }

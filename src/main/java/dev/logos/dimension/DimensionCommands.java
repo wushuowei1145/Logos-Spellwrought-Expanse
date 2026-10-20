@@ -1,7 +1,7 @@
 package dev.logos.dimension;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import dev.logos.dimension.world.AlchemicalChunkGenerator;
+
 import dev.logos.dimension.world.AlchemicalLayout;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -23,8 +23,7 @@ public final class DimensionCommands {
             var player = c.getSource().getPlayerOrException();
             if (!LogosDimension.isCrucible(player.level().dimension()) && !DimensionTravel.enter(player)) return 0;
             var target = player.level();
-            var generator = (AlchemicalChunkGenerator) target.getChunkSource().getGenerator();
-            var center = generator.terrain().layout().nearest(player.getBlockX(), player.getBlockZ());
+            var center = NativeWorlds.center();
             var landing = DimensionTravel.findLanding(target, center, region);
             return landing != null && DimensionTravel.teleport(player, target, landing, player.getYRot(), 0) ? 1 : 0;
         }));
@@ -36,8 +35,7 @@ public final class DimensionCommands {
         });
         for (var phase : OpusPhase.values()) phases.then(Commands.literal(phase.name().toLowerCase(java.util.Locale.ROOT)).executes(c -> {
             var level = c.getSource().getLevel();
-            if(!LogosDimension.isCrucible(level.dimension()))level=c.getSource().getServer().getLevel(LogosDimension.CRUCIBLE);
-            if (level == null) return 0;
+            if(!LogosDimension.isCrucible(level.dimension()))return 0;
             var clock = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.WORLD_CLOCK).getOrThrow(OpusPhase.CLOCK);
             var manager = c.getSource().getServer().clockManager();
             long current = manager.getTotalTicks(clock);
@@ -49,8 +47,7 @@ public final class DimensionCommands {
         for (boolean defeated : new boolean[] {true, false}) bossState.then(Commands.literal(defeated ? "defeated" : "reset").executes(c -> {
             var p = c.getSource().getPlayerOrException();
             if (!LogosDimension.isCrucible(p.level().dimension())) return 0;
-            var gen = (AlchemicalChunkGenerator) p.level().getChunkSource().getGenerator();
-            IslandProgress.of(p.level()).setDefeated(gen.terrain().layout().nearest(p.getBlockX(), p.getBlockZ()), defeated);
+            IslandProgress.of(p.level()).setDefeated(NativeWorlds.center(), defeated);
             return 1;
         }));
         root.then(bossState);
@@ -60,10 +57,7 @@ public final class DimensionCommands {
         if(gx!=0||gz!=0){player.sendSystemMessage(Component.literal("每个咒械原世界只有一座中心空岛。"));return 0;}
         if (!LogosDimension.isCrucible(player.level().dimension()) && !DimensionTravel.enter(player)) return 0;
         var target = player.level();
-        var terrain = ((AlchemicalChunkGenerator) target.getChunkSource().getGenerator()).terrain();
-        var center = terrain.layout().center(gx, gz);
-        var c = terrain.column(center.x(), center.z());
-        return DimensionTravel.teleport(player, target, new Vec3(center.x() + .5, c.islandTop() + 1, center.z() + .5), player.getYRot(), 0) ? 1 : 0;
+        return DimensionTravel.teleport(player,target,new Vec3(NativeWorlds.ISLAND_X+.5,NativeWorlds.ISLAND_TOP+1,NativeWorlds.ISLAND_Z+.5),player.getYRot(),0)?1:0;
     }
     private DimensionCommands() {}
 }

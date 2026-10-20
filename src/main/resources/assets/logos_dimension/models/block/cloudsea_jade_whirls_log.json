@@ -1,0 +1,213 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": true,
+  "textures": {
+    "particle": "logos_dimension:block/cloudsea_jade_whirls_log",
+    "bark": "logos_dimension:block/cloudsea_jade_whirls_log",
+    "end": "logos_dimension:block/cloudsea_jade_whirls_log_end"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#bark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#bark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "south"
+        },
+        "east": {
+          "texture": "#bark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "east"
+        },
+        "west": {
+          "texture": "#bark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "west"
+        },
+        "up": {
+          "texture": "#end",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "up"
+        },
+        "down": {
+          "texture": "#end",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "from": [
+        9,
+        7,
+        -0.11
+      ],
+      "to": [
+        14.0,
+        11,
+        0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#bark",
+          "uv": [
+            9,
+            5,
+            14.0,
+            9
+          ],
+          "cullface": "north"
+        },
+        "east": {
+          "texture": "#bark",
+          "uv": [
+            9,
+            5,
+            14.0,
+            9
+          ],
+          "cullface": "north"
+        },
+        "west": {
+          "texture": "#bark",
+          "uv": [
+            9,
+            5,
+            14.0,
+            9
+          ],
+          "cullface": "north"
+        },
+        "up": {
+          "texture": "#bark",
+          "uv": [
+            9,
+            5,
+            14.0,
+            9
+          ],
+          "cullface": "north"
+        },
+        "down": {
+          "texture": "#bark",
+          "uv": [
+            9,
+            5,
+            14.0,
+            9
+          ],
+          "cullface": "north"
+        }
+      }
+    },
+    {
+      "from": [
+        9,
+        7,
+        16
+      ],
+      "to": [
+        14.0,
+        11,
+        16.11
+      ],
+      "faces": {
+        "south": {
+          "texture": "#bark",
+          "uv": [
+            9,
+            5,
+            14.0,
+            9
+          ],
+          "cullface": "south"
+        },
+        "east": {
+          "texture": "#bark",
+          "uv": [
+            9,
+            5,
+            14.0,
+            9
+          ],
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#bark",
+          "uv": [
+            9,
+            5,
+            14.0,
+            9
+          ],
+          "cullface": "south"
+        },
+        "up": {
+          "texture": "#bark",
+          "uv": [
+            9,
+            5,
+            14.0,
+            9
+          ],
+          "cullface": "south"
+        },
+        "down": {
+          "texture": "#bark",
+          "uv": [
+            9,
+            5,
+            14.0,
+            9
+          ],
+          "cullface": "south"
+        }
+      }
+    }
+  ]
+}
