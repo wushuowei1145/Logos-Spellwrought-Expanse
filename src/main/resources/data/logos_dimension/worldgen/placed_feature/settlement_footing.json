@@ -1,0 +1,38 @@
+{
+  "feature": "logos_dimension:settlement_footing",
+  "placement": [
+    {
+      "type": "minecraft:random_offset",
+      "xz_spread": 0,
+      "y_spread": -2
+    },
+    {
+      "type": "minecraft:block_predicate_filter",
+      "predicate": {
+        "type": "minecraft:any_of",
+        "predicates": [
+          {
+            "type": "minecraft:not",
+            "predicate": {
+              "type": "minecraft:solid",
+              "offset": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "type": "minecraft:matching_block_tag",
+            "tag": "minecraft:leaves",
+            "offset": [
+              0,
+              0,
+              0
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

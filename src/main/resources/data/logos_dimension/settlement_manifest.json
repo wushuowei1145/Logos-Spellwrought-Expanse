@@ -9,7 +9,8 @@
       ],
       "blocks": 29400,
       "air": 1586,
-      "preserved_void": 23371
+      "preserved_void": 23371,
+      "footings": 127
     },
     "farm_reference_01": {
       "size": [
@@ -19,7 +20,8 @@
       ],
       "blocks": 29400,
       "air": 1586,
-      "preserved_void": 23367
+      "preserved_void": 23367,
+      "footings": 127
     },
     "house_reference_02": {
       "size": [
@@ -29,7 +31,8 @@
       ],
       "blocks": 45220,
       "air": 3947,
-      "preserved_void": 36523
+      "preserved_void": 36523,
+      "footings": 156
     },
     "farm_reference_02": {
       "size": [
@@ -39,7 +42,8 @@
       ],
       "blocks": 45220,
       "air": 3947,
-      "preserved_void": 36519
+      "preserved_void": 36519,
+      "footings": 156
     },
     "house_stone_cottage": {
       "size": [
@@ -49,7 +53,8 @@
       ],
       "blocks": 9196,
       "air": 342,
-      "preserved_void": 7807
+      "preserved_void": 7807,
+      "footings": 63
     },
     "farm_stone_cottage": {
       "size": [
@@ -59,7 +64,8 @@
       ],
       "blocks": 9196,
       "air": 342,
-      "preserved_void": 7803
+      "preserved_void": 7803,
+      "footings": 63
     },
     "house_long_house": {
       "size": [
@@ -69,7 +75,8 @@
       ],
       "blocks": 20328,
       "air": 1541,
-      "preserved_void": 14697
+      "preserved_void": 14697,
+      "footings": 127
     },
     "farm_long_house": {
       "size": [
@@ -79,7 +86,8 @@
       ],
       "blocks": 20328,
       "air": 1541,
-      "preserved_void": 14693
+      "preserved_void": 14693,
+      "footings": 127
     },
     "house_gabled_house": {
       "size": [
@@ -89,7 +97,8 @@
       ],
       "blocks": 42772,
       "air": 4962,
-      "preserved_void": 32951
+      "preserved_void": 32951,
+      "footings": 127
     },
     "farm_gabled_house": {
       "size": [
@@ -99,7 +108,8 @@
       ],
       "blocks": 42772,
       "air": 4962,
-      "preserved_void": 32947
+      "preserved_void": 32947,
+      "footings": 127
     },
     "house_timber_house": {
       "size": [
@@ -109,7 +119,8 @@
       ],
       "blocks": 23040,
       "air": 1052,
-      "preserved_void": 18611
+      "preserved_void": 18611,
+      "footings": 82
     },
     "farm_timber_house": {
       "size": [
@@ -119,7 +130,8 @@
       ],
       "blocks": 23040,
       "air": 1052,
-      "preserved_void": 18607
+      "preserved_void": 18607,
+      "footings": 82
     },
     "house_garden_house": {
       "size": [
@@ -129,7 +141,8 @@
       ],
       "blocks": 22272,
       "air": 983,
-      "preserved_void": 17638
+      "preserved_void": 17638,
+      "footings": 108
     },
     "farm_garden_house": {
       "size": [
@@ -139,7 +152,8 @@
       ],
       "blocks": 22272,
       "air": 983,
-      "preserved_void": 17634
+      "preserved_void": 17634,
+      "footings": 108
     },
     "hamlet_plaza": {
       "size": [
@@ -149,7 +163,8 @@
       ],
       "blocks": 8064,
       "air": 1338,
-      "preserved_void": 6197
+      "preserved_void": 6197,
+      "footings": 105
     },
     "hamlet_road": {
       "size": [
@@ -158,8 +173,9 @@
         83
       ],
       "blocks": 5229,
-      "air": 4437,
-      "preserved_void": 0
+      "air": 4371,
+      "preserved_void": 0,
+      "footings": 66
     },
     "town_plaza": {
       "size": [
@@ -169,7 +185,8 @@
       ],
       "blocks": 8064,
       "air": 1304,
-      "preserved_void": 6135
+      "preserved_void": 6135,
+      "footings": 107
     },
     "town_road": {
       "size": [
@@ -178,8 +195,9 @@
         97
       ],
       "blocks": 6111,
-      "air": 5187,
-      "preserved_void": 0
+      "air": 5112,
+      "preserved_void": 0,
+      "footings": 75
     }
   },
   "adaptation_counts": {
@@ -195,8 +213,8 @@
   "planting": "native feature on existing soil and empty air only",
   "terrain_adaptation": "none",
   "entities": false,
-  "foundation": "no copied terrain or extra earth slab",
+  "foundation": "native downward stone footings to the first solid block; no earth slab",
   "interior": "explicit air; exterior structure void ignored by native processor",
-  "paving": "non-falling stone bricks",
-  "note": "No standalone fields, fill layers, terrain flattening, villagers or animals. Raised architectural planters stay. Legacy rice registration is retained only for existing saves."
+  "paving": "non-falling stone bricks with bridge piers",
+  "note": "No standalone fields, earth fill layers, terrain flattening, villagers or animals. Footings extend only below actual building bases, plaza edges/grid and road bridge bents. Raised architectural planters stay. Legacy rice registration is retained only for existing saves."
 }

@@ -21,11 +21,11 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-/** Test/dev native assembly only. No production world-generation hook calls this class. */
+/** 仅供测试和开发使用的原版拼接；正式世界生成不会调用此类。 */
 public final class SettlementGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS=DeferredRegister.create(Registries.TEST_FUNCTION,LogosDimension.ID);
     public static void register(IEventBus bus){
-        var tests=Map.<String,Consumer<GameTestHelper>>of("settlement_native_assembly",SettlementGameTests::assembly,"settlement_wheat_follows_surface",SettlementGameTests::wheat,"settlement_air_and_void",SettlementGameTests::airAndVoid,"settlement_covered_well",SettlementGameTests::well);
+        var tests=Map.<String,Consumer<GameTestHelper>>of("settlement_native_assembly",SettlementGameTests::assembly,"settlement_wheat_follows_surface",SettlementGameTests::wheat,"settlement_air_and_void",SettlementGameTests::airAndVoid,"settlement_covered_well",SettlementGameTests::well,"settlement_grounded_footings",SettlementGameTests::footings);
         tests.forEach((name,test)->FUNCTIONS.register(name,()->test));FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event)->{
             var env=event.registerEnvironment(LogosDimension.id("settlements"),new TestEnvironmentDefinition.AllOf());
@@ -39,7 +39,12 @@ public final class SettlementGameTests {
     }
     public static long count(StructureStart start,String name){return start.getPieces().stream().filter(p->p instanceof PoolElementStructurePiece pool&&pool.getElement().toString().contains("settlement/"+name)).count();}
     public static long homes(StructureStart start){return count(start,"house_")+count(start,"farm_");}
-    public static long wheatSeeds(StructureStart start){return start.getPieces().stream().filter(p->p instanceof PoolElementStructurePiece pool&&pool.getElement() instanceof net.minecraft.world.level.levelgen.structure.pools.FeaturePoolElement).count();}
+    public static long wheatSeeds(StructureStart start){return start.getPieces().stream().filter(p->p instanceof PoolElementStructurePiece pool&&pool.getElement() instanceof FeaturePoolElement&&pool.getElement().toString().contains("settlement_wheat")).count();}
+    public static long footingSeeds(StructureStart start){return start.getPieces().stream().filter(p->p instanceof PoolElementStructurePiece pool&&pool.getElement() instanceof FeaturePoolElement&&pool.getElement().toString().contains("settlement_footing")).count();}
+    public static long unsupportedFootings(ServerLevel l,StructureStart start){
+        return start.getPieces().stream().filter(p->p instanceof PoolElementStructurePiece pool&&pool.getElement() instanceof FeaturePoolElement&&pool.getElement().toString().contains("settlement_footing"))
+                .map(p->((PoolElementStructurePiece)p).getPosition().below(2)).filter(p->!l.getBlockState(p).isSolid()||l.getBlockState(p).is(net.minecraft.tags.BlockTags.LEAVES)).count();
+    }
     public static void place(ServerLevel l,StructureStart start){
         var b=start.getBoundingBox();var gen=l.getChunkSource().getGenerator();
         for(int x=b.minX()>>4;x<=b.maxX()>>4;x++)for(int z=b.minZ()>>4;z<=b.maxZ()>>4;z++)l.getChunk(x,z);
@@ -56,6 +61,13 @@ public final class SettlementGameTests {
             h.assertTrue(start.isValid()&&count(start,(town?"town":"hamlet")+"_road")==4,"Four streets failed native assembly");
             h.assertTrue(houses==(town?24:16),"Native collision rejected housing lots in fixed assembly samples");
             h.assertTrue(fields>=16&&count(start,"rice_paddy")==0,"Wheat feature seeds missing or old paddy still generated");
+            h.assertTrue(footingSeeds(start)>=300,"Native building/bridge footing seeds missing");
+            long expectedFootings=0;
+            for(var piece:start.getPieces())if(piece instanceof PoolElementStructurePiece pool&&pool.getElement() instanceof SinglePoolElement single){
+                var template=l.getStructureManager().getOrCreate(single.getTemplateLocation());
+                expectedFootings+=template.filterBlocks(pool.getPosition(),new StructurePlaceSettings().setRotation(pool.getRotation()),Blocks.JIGSAW).stream().filter(b->b.nbt()!=null&&b.nbt().getStringOr("pool","").equals("logos_dimension:settlement/footings")&&!b.nbt().getStringOr("name","").endsWith("footing_backup")).count();
+            }
+            h.assertTrue(expectedFootings==footingSeeds(start),"Native collision rejected structural supports: "+footingSeeds(start)+" / "+expectedFootings);
             h.assertTrue(start.getStructure().terrainAdaptation()==TerrainAdjustment.NONE,"Settlement still raises/buries terrain through Beardifier");
             for(var p:start.getPieces())if(p instanceof PoolElementStructurePiece pool&&pool.getElement() instanceof net.minecraft.world.level.levelgen.structure.pools.FeaturePoolElement){
                 var b=p.getBoundingBox();h.assertTrue(b.getXSpan()==1&&b.getYSpan()==1&&b.getZSpan()==1,"Planting reserves a large terrain box");
@@ -66,7 +78,7 @@ public final class SettlementGameTests {
     }
     public static final BlockPos WHEAT_STUDY=new BlockPos(1001000,235,1001000);
     public static void wheatStudy(ServerLevel l){
-        // Dedicated test fixture only. The production feature never fills soil or clears air.
+        // 仅构造专用测试场景，正式种植特征不会填土或清空空气。
         for(int x=-10;x<=10;x++)for(int z=-10;z<=10;z++){
             int rise=Math.floorDiv(x+10,4)+Math.floorDiv(z+10,7);
             for(int y=-3;y<=14;y++)l.setBlock(WHEAT_STUDY.offset(x,y,z),y<=rise?Blocks.DIRT.defaultBlockState():Blocks.AIR.defaultBlockState(),Block.UPDATE_CLIENTS);
@@ -143,6 +155,27 @@ public final class SettlementGameTests {
         h.assertTrue(posts==12&&l.getBlockState(at.offset(11,11,11)).is(Blocks.SPRUCE_SLAB),"Four-post roof is incomplete");
         h.assertTrue(l.getBlockState(at.offset(11,7,11)).is(Blocks.DARK_OAK_LOG)&&l.getBlockState(at.offset(11,5,11)).is(Blocks.IRON_CHAIN),"Well pulley is missing");
         System.out.println("SETTLEMENT_WELL sealed_water=4 timber_posts=4 roof_and_pulley=true");h.succeed();
+    }
+    private static void footings(GameTestHelper h){
+        var l=Objects.requireNonNull(h.getLevel().getServer().getLevel(LogosDimension.CLOUDSEA));
+        var feature=l.registryAccess().lookupOrThrow(Registries.PLACED_FEATURE).getOrThrow(ResourceKey.create(Registries.PLACED_FEATURE,LogosDimension.id("settlement_footing"))).value();
+        var brick=Blocks.STONE_BRICKS.defaultBlockState();var top=new BlockPos(1006000,235,1006000);
+        int filled=0;
+        for(int column=0;column<6;column++){
+            var at=top.offset(column*3,0,0);int gap=new int[]{0,1,4,12,35,90}[column];var ground=at.below(gap+1);
+            for(int y=at.getY()+2;y>=ground.getY()-2;y--){
+                var p=new BlockPos(at.getX(),y,at.getZ());
+                l.setBlock(p,y<=ground.getY()?Blocks.DIRT.defaultBlockState():(column%2==0?Blocks.AIR:Blocks.WATER).defaultBlockState(),Block.UPDATE_CLIENTS);
+            }
+            l.setBlock(at,brick,Block.UPDATE_CLIENTS);
+            var side=at.offset(1,-Math.max(1,gap/2),0);l.setBlock(side,Blocks.CHEST.defaultBlockState(),Block.UPDATE_CLIENTS);
+            feature.place(l,l.getChunkSource().getGenerator(),RandomSource.create(9),at.above());
+            for(int y=at.getY()-1;y>ground.getY();y--){h.assertTrue(l.getBlockState(new BlockPos(at.getX(),y,at.getZ())).is(Blocks.STONE_BRICKS),"Footing left an air/water gap at height "+y+" gap="+gap);filled++;}
+            h.assertTrue(l.getBlockState(ground).is(Blocks.DIRT)&&l.getBlockState(ground.below()).is(Blocks.DIRT),"Footing dug through solid terrain");
+            h.assertTrue(l.getBlockState(at).is(Blocks.STONE_BRICKS)&&l.getBlockState(at.above()).is(column%2==0?Blocks.AIR:Blocks.WATER),"Footing altered building or headroom");
+            h.assertTrue(l.getBlockState(side).is(Blocks.CHEST),"Footing touched an adjacent column");
+        }
+        System.out.println("SETTLEMENT_FOOTINGS gaps=0,1,4,12,35,90 filled="+filled+" solid_terrain_and_neighbours_preserved=true");h.succeed();
     }
     private SettlementGameTests(){}
 }

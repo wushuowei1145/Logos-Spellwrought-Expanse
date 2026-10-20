@@ -1,6 +1,8 @@
 # 维度-咒械原
 
-**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.9.2**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.9.3**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+
+0.9.3 为村镇补上落地石基：建筑底部的外墙基础与内部支柱向下延伸，遇到实地停止；广场和井有基础，跨水道路有间隔支墩。全部使用原版 Feature 与 jigsaw，不铺整块土台，不抬高或削平原地形。新区块生效。
 
 0.9.2 去掉蓝图地表土层和生成脚本追加的整块土台，外部结构空位保留原地形，室内与入口保留显式空气以清除原有石头、水。重做石砌井筒、四柱木顶和辘轳，村镇道路全部采用不会下落的石材。模板不生成任何实体，远行大陆关闭自然动物生成；旧存档已有建筑与动物保留。详见 [林隙村镇](docs/JOURNEY_SETTLEMENTS.md)。
 
