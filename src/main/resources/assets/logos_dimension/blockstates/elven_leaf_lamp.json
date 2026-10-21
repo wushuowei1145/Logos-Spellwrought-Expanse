@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "logos_dimension:block/elven_leaf_lamp",
+      "y": 0
+    },
+    "facing=east": {
+      "model": "logos_dimension:block/elven_leaf_lamp",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "logos_dimension:block/elven_leaf_lamp",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "logos_dimension:block/elven_leaf_lamp",
+      "y": 270
+    }
+  }
+}

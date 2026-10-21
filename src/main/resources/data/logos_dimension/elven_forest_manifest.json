@@ -1,0 +1,53 @@
+{
+  "biome": "logos_dimension:elven_forest",
+  "climate_entries": 80,
+  "world_tree": {
+    "tiles": 343,
+    "root_footings": 1674,
+    "material_cells": 572857,
+    "root_tile": "tile_3_0_3",
+    "anchor": [
+      16,
+      4,
+      16
+    ],
+    "height_above_ground": 216,
+    "surrounding_giants": 8
+  },
+  "giants": [
+    {
+      "template": "giant_0",
+      "blocks": 17888,
+      "footings": 85,
+      "height": 68
+    },
+    {
+      "template": "giant_1",
+      "blocks": 20055,
+      "footings": 84,
+      "height": 72
+    },
+    {
+      "template": "giant_2",
+      "blocks": 23281,
+      "footings": 93,
+      "height": 77
+    },
+    {
+      "template": "giant_3",
+      "blocks": 16802,
+      "footings": 33,
+      "height": 85
+    },
+    {
+      "template": "giant_4",
+      "blocks": 18589,
+      "footings": 31,
+      "height": 90
+    }
+  ],
+  "generation": "minecraft:jigsaw / minecraft:noise / minecraft:multi_noise",
+  "entities": false,
+  "central_clear_diameter": 10,
+  "block_light_sources": true
+}
