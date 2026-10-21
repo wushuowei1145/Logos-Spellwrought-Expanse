@@ -6,7 +6,8 @@ from pathlib import Path
 import json
 import math
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from elven_tree_furnishings import Furnishings, COLORS, QUADS, lighting
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / 'docs/concepts/elven-forest'
@@ -179,6 +180,18 @@ def render(v, size, yaw=25, elevation=17, crop=None):
         mids.append(coords)
         mats.append(data[tuple(indices.T)])
         sides.append(np.full(len(coords), side, dtype=np.uint8))
+    furnishings=getattr(v,'furnishings',None)
+    if furnishings:
+        ceiling=float(np.flatnonzero(occupied.any(axis=(0,2))).max()+v.origin[1])
+        for part in furnishings.parts:
+            if part['points'][:,1].mean()>ceiling+1:continue
+            for quad,normal in zip(QUADS,part['normals']):
+                if normal@eye<=0:continue
+                vertices=part['points'][list(quad)]
+                faces.append(vertices[None,:,:]);mids.append(vertices.mean(axis=0)[None,:])
+                mats.append(np.array([part['material']],dtype=np.uint8))
+                side=1 if abs(normal[1])>.5 else 0 if abs(normal[0])>.5 else 2
+                sides.append(np.array([side],dtype=np.uint8))
     # 玩家按 1.8 格身高绘制，作为世界树和树心的实际尺度参照。
     if v.data.shape[0] > 150:
         px, pz, py = (5., -36., 1.) if crop is None else (0., 2., 2.)
@@ -205,7 +218,8 @@ def render(v, size, yaw=25, elevation=17, crop=None):
     noise = ((integers[:,0]*73856093 ^ integers[:,1]*19349663 ^ integers[:,2]*83492791) % 101)/100-.5
     woodgrain = np.sin(mids[:,0]*1.8+mids[:,2]*.7)*.08 + np.sin(mids[:,1]*.12+mids[:,0]*.5)*.025
     base = np.zeros((len(mats),3), dtype=float)
-    for material, color in {1:(116,100,77),2:(94,130,92),3:(82,116,77),4:(69,104,87),5:(125,116,91),6:(128,147,99),7:(198,165,127),8:(55,111,121),9:(60,66,77)}.items():
+    palette={1:(116,100,77),2:(94,130,92),3:(82,116,77),4:(69,104,87),5:(125,116,91),6:(128,147,99),7:(198,165,127),8:(55,111,121),9:(60,66,77),**COLORS}
+    for material, color in palette.items():
         base[mats==material] = color
     brightness = np.choose(sides, [.78, 1.10, .94])*(1+noise*.15)
     brightness += np.where(mats==1, woodgrain, .035*np.sin(mids[:,0]*.17+mids[:,2]*.11))
@@ -214,12 +228,24 @@ def render(v, size, yaw=25, elevation=17, crop=None):
         adjacent = mids+np.stack([sides==0,sides==1,-(sides==2).astype(int)],axis=1)
         inner_radius = np.where(adjacent[:,1]<82,13,13-(adjacent[:,1]-82)*.22)
         inner = (mats==1)&(adjacent[:,0]**2+adjacent[:,2]**2<inner_radius**2)&(adjacent[:,1]>=2)&(adjacent[:,1]<96)
-        brightness[inner] *= .38+.18*mids[inner,1]/96
+        if furnishings:
+            radiance=lighting(mids+.5,furnishings.lights)
+            base[inner]=(159,131,94)
+            brightness[inner]=.86+.26*radiance[inner]/(1+radiance[inner])+woodgrain[inner]*.8+noise[inner]*.04
+            decorative=mats>=10
+            brightness[decorative]=np.choose(sides[decorative],[.92,1.07,1.0])*(.86+.18*np.minimum(radiance[decorative],1.5))
+        else:brightness[inner] *= .38+.18*mids[inner,1]/96
+    brightness[(mats==17)|(mats==24)]=1
     colors = np.clip(base*brightness[:,None],0,255).astype(np.uint8)
     im = Image.new('RGBA', tuple(target.astype(int)))
     draw = ImageDraw.Draw(im)
+    glow=Image.new('RGBA',im.size) if furnishings else None
+    gd=ImageDraw.Draw(glow) if glow else None
     for i in order:
-        draw.polygon([tuple(p) for p in screen[i]], fill=tuple(colors[i])+(255,))
+        polygon=[tuple(p) for p in screen[i]]
+        draw.polygon(polygon, fill=tuple(colors[i])+(255,))
+        if gd:gd.polygon(polygon,fill=(255,227,156,92) if mats[i] in (17,24) else (0,0,0,0))
+    if glow:im=Image.alpha_composite(im,glow.filter(ImageFilter.GaussianBlur(float(max(2,scale*.22)))))
     result = im.resize(size, Image.Resampling.LANCZOS)
     if v.data.shape[0]>150:
         point=np.array([px,py,pz]);projected=np.array([point@right,-point@up])
@@ -235,6 +261,53 @@ def panel(draw, box):
     draw.rounded_rectangle(box, 20, fill='#e6ebe0', outline='#d7ded2', width=2)
 
 
+def draw_interior(world):
+    """单独放大树心下部，让家具细节和中央亮度清楚可见。"""
+    cut=world.data.copy()
+    xx,yy,zz=np.ogrid[-112:113,-4:230,-112:113]
+    cut[np.broadcast_to((abs(xx)>19)|(zz>19)|(zz<-14)|(yy>27),cut.shape)]=0
+    cut[:,6:,:112]=0
+    board=Image.new('RGB',(2400,1500),'#f4f2e8')
+    d=ImageDraw.Draw(board)
+    text(d,(66,38),'世界树 / 精灵起居厅',52,bold=True)
+    text(d,(70,111),'少量家具沿壁布置 · 中央明亮留空 · 暖白叶灯与自然曲木',25,MUTED)
+    panel(d,(42,175,1715,1395));panel(d,(1745,175,2355,1395))
+    scene=render(world,(1630,1150),yaw=19,elevation=30,crop=cut)
+    board.paste(scene,(60,215),scene)
+    text(d,(1783,210),'中央留空 / 家具靠边',29,bold=True)
+    # 平面示意与三维家具使用同一组中心坐标，不凭画面另画一套布局。
+    cx,cy,scale=2050,510,16.5
+    d.ellipse((cx-13*scale,cy-13*scale,cx+13*scale,cy+13*scale),fill='#b4a27f',outline='#8d8269',width=9)
+    d.ellipse((cx-12.2*scale,cy-12.2*scale,cx+12.2*scale,cy+12.2*scale),fill='#d5c59f')
+    d.ellipse((cx-5*scale,cy-5*scale,cx+5*scale,cy+5*scale),fill='#ebe0b9',outline='#eee8d7',width=3)
+    for obj in world.furnishings.objects:
+        x,_,z=obj['center'];sx,sy=cx+x*scale,cy-z*scale
+        if '长椅' in obj['name']:
+            d.rounded_rectangle((sx-9,sy-29,sx+9,sy+29),5,fill='#7f967c',outline='#ede5cd',width=3)
+        elif '藏书' in obj['name']:
+            d.rounded_rectangle((sx-27,sy-8,sx+27,sy+8),3,fill='#9b7958')
+        elif '阅览' in obj['name']:
+            d.rounded_rectangle((sx-23,sy-13,sx+23,sy+13),4,fill='#e3d4af',outline='#b09d76',width=2)
+        else:d.ellipse((sx-9,sy-9,sx+9,sy+9),fill='#7c9d77',outline='#e7eddd',width=3)
+    for a in np.linspace(0,math.tau,8,endpoint=False)+.16:
+        x,y=cx+math.cos(a)*11.1*scale,cy-math.sin(a)*11.1*scale
+        d.ellipse((x-5,y-5,x+5,y+5),fill='#fff3c4',outline='#c5b280',width=1)
+    text(d,(cx-62,cy-12),'通行空地',24)
+    text(d,(1790,773),'两张曲木叶背长椅',25)
+    text(d,(1790,820),'一组低书架与小阅览桌',25)
+    text(d,(1790,867),'两处白花花架',25)
+    d.line((1790,935,2300,935),fill='#bec8b6',width=2)
+    text(d,(1790,978),'中央主灯 + 环壁叶灯',27,bold=True)
+    text(d,(1790,1030),'暖白照亮中心，保留木色与绿意',22,MUTED)
+    text(d,(1790,1072),'高处另设吊藤叶灯，树心不压暗',22,MUTED)
+    for i,(c,label) in enumerate([('#dacdaa','浅木'),('#7a987b','叶绿'),('#f4e4b2','暖白'),('#b49958','少量柔金')]):
+        x=1790+i*130
+        d.rounded_rectangle((x,1170,x+95,1210),6,fill=c)
+        text(d,(x,1229),label,20,MUTED)
+    text(d,(70,1432),'代码绘制的家具与照明预览，非游戏实机；尚未接入群系生成。',23,MUTED)
+    board.save(OUT/'world-tree-interior.png')
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     world = world_tree()
@@ -246,6 +319,9 @@ def main():
     shell=(xx*xx+zz*zz>=13**2)&(xx*xx+zz*zz<=16**2)
     assert not world.data[:,6:86,:][np.broadcast_to(chamber[:,None,:],(225,80,225))].any()
     assert world.data[:,40:86,:][np.broadcast_to(shell[:,None,:],(225,46,225))].all()
+    world.furnishings=Furnishings().arrange(world)
+    metrics['interior']=world.furnishings.validate()
+    metrics['stage']='代码绘制的家具与照明研究，尚未接入游戏'
     print(json.dumps(metrics, ensure_ascii=False), flush=True)
     board = Image.new('RGB',(2400,1600),PAPER)
     d = ImageDraw.Draw(board)
@@ -267,10 +343,10 @@ def main():
     text(d,(1618,207),'林地巨木 / 约 60–90 格高',28,bold=True)
     text(d,(1625,937),'宽冠古木',28,bold=True);text(d,(2048,937),'高塔杉木',28,bold=True)
     text(d,(1620,988),'分叉粗干、层叠叶冠，保留林下通行空间',22,MUTED)
-    text(d,(1618,1090),'树心留白',30,bold=True)
-    text(d,(1620,1152),'净空直径约 26 格',27)
-    text(d,(1620,1202),'下部内厅净高至少 80 格',27)
-    text(d,(1620,1252),'根拱自然敞开，内部暂不放建筑',25)
+    text(d,(1618,1090),'明亮树心 / 沿壁少量家具',30,bold=True)
+    text(d,(1620,1152),'原始内厅直径约 26 格',27)
+    text(d,(1620,1202),'中央保留直径 10 格的通行空地',26)
+    text(d,(1620,1252),'曲木座椅、藏书架、白花与叶灯',25)
     colors=['#74644d','#52744d','#5e825c','#93a875','#bac9b1']
     for i,c in enumerate(colors):d.rounded_rectangle((1624+i*131,1335,1732+i*131,1380),8,fill=c)
     text(d,(1620,1410),'灰棕树皮 / 苔绿 / 鼠尾草绿 / 柔金叶缘',22,MUTED)
@@ -279,12 +355,12 @@ def main():
     # 剖切只移除前半侧树壳，保留后壁，展示实际留空的树心。
     cut = world.data.copy()
     cut[:,114:,:] = 0
-    cut[:,:,:112] = 0
+    cut[:,6:,:112] = 0
     cut[:,98:,:] = 0
     room = Image.new('RGB',(2100,1450),PAPER)
     dr=ImageDraw.Draw(room)
-    text(dr,(65,42),'世界树 / 树心剖面',50,bold=True)
-    text(dr,(68,114),'切去半侧树壳，保留自然后壁与根拱；内部不放房屋、阶梯或装饰。',25,MUTED)
+    text(dr,(65,42),'世界树 / 明亮树心剖面',50,bold=True)
+    text(dr,(68,114),'少量家具沿内壁布置，叶形灯具分层补光；中央保留空地。',25,MUTED)
     img=render(world,(1420,1180),yaw=12,elevation=16,crop=cut)
     room.paste(img,(10,195),img)
     hx,hy=img.info['player_position']+np.array([10,195])
@@ -293,17 +369,18 @@ def main():
     text(dr,(hx+111,hy+12),'玩家 1.8 格',22)
     text(dr,(1470,280),'预留给精灵族的家园',32,bold=True)
     text(dr,(1470,370),'内厅约 26 格宽',29)
-    text(dr,(1470,425),'可用净高至少 80 格',29)
-    text(dr,(1470,510),'厚树壳与外部棱脊',26)
-    text(dr,(1470,560),'低处根拱作为自然入口',26)
-    text(dr,(1470,610),'分枝从外壁向上生长',26)
-    text(dr,(1470,660),'内部空心已做几何校验',26)
+    text(dr,(1470,425),'中央通行空地直径 10 格',29)
+    text(dr,(1470,510),'浅木与鼠尾草绿坐垫',26)
+    text(dr,(1470,560),'叶背长椅、低书架、小阅览桌',26)
+    text(dr,(1470,610),'暖白叶灯与细藤吊灯',26)
+    text(dr,(1470,660),'高处叶灯分层照亮内厅',26)
     dr.line((1500,800,1900,800),fill='#b8c3b3',width=2)
-    text(dr,(1470,850),'先确认树形和尺度',30,bold=True)
-    text(dr,(1470,915),'通过后再制作原版数据包',25,MUTED)
-    text(dr,(1470,958),'群系、树木结构和定位入口',25,MUTED)
+    text(dr,(1470,850),'精灵风格 / 轻巧、自然',30,bold=True)
+    text(dr,(1470,915),'保留根拱与高挑树心',25,MUTED)
+    text(dr,(1470,958),'地面中央留给今后布置',25,MUTED)
     text(dr,(65,1385),'离线体积剖面，非实机截图；尚未向维度添加任何生成规则。',23,MUTED)
     room.save(OUT/'world-tree-cutaway.png')
+    draw_interior(world)
     (OUT/'dimensions.json').write_text(json.dumps(metrics,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print('TREE_STUDY_READY',OUT,flush=True)
 

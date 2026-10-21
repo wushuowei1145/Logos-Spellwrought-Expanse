@@ -1,5 +1,5 @@
 {
-  "stage": "代码绘制的树形研究，尚未接入游戏",
+  "stage": "代码绘制的家具与照明研究，尚未接入游戏",
   "world_tree": {
     "size": [
       198,
@@ -62,5 +62,60 @@
   },
   "hollow_clear_diameter": 26,
   "hollow_clear_height": 80,
-  "seed": 20261021
+  "seed": 20261021,
+  "interior": {
+    "furniture_objects": [
+      {
+        "name": "曲木叶背长椅",
+        "center": [
+          -9.1,
+          2,
+          3.7
+        ]
+      },
+      {
+        "name": "曲木叶背长椅",
+        "center": [
+          9.1,
+          2,
+          3.7
+        ]
+      },
+      {
+        "name": "低矮藏书架",
+        "center": [
+          -5.6,
+          2,
+          9.2
+        ]
+      },
+      {
+        "name": "小阅览桌椅",
+        "center": [
+          5.6,
+          2,
+          8.4
+        ]
+      },
+      {
+        "name": "白花绿叶花架",
+        "center": [
+          -10.2,
+          2,
+          0.1
+        ]
+      },
+      {
+        "name": "白花绿叶花架",
+        "center": [
+          10.2,
+          2,
+          0.1
+        ]
+      }
+    ],
+    "light_sources": 31,
+    "center_clear_diameter": 10,
+    "center_walk_height": 8
+  }
 }
