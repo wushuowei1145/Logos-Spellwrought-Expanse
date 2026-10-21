@@ -1,0 +1,66 @@
+{
+  "stage": "代码绘制的树形研究，尚未接入游戏",
+  "world_tree": {
+    "size": [
+      198,
+      220,
+      190
+    ],
+    "occupied_blocks": 913390,
+    "bounds": [
+      [
+        -99,
+        -3,
+        -94
+      ],
+      [
+        98,
+        216,
+        95
+      ]
+    ]
+  },
+  "canopy_tree": {
+    "size": [
+      60,
+      76,
+      58
+    ],
+    "occupied_blocks": 51746,
+    "bounds": [
+      [
+        -29,
+        -3,
+        -28
+      ],
+      [
+        30,
+        72,
+        29
+      ]
+    ]
+  },
+  "spire_fir": {
+    "size": [
+      39,
+      90,
+      40
+    ],
+    "occupied_blocks": 33081,
+    "bounds": [
+      [
+        -18,
+        -3,
+        -20
+      ],
+      [
+        20,
+        86,
+        19
+      ]
+    ]
+  },
+  "hollow_clear_diameter": 26,
+  "hollow_clear_height": 80,
+  "seed": 20261021
+}
