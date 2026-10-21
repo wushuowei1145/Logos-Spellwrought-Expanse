@@ -29,7 +29,7 @@ class NativeDataPolicyTest {
         var names=new java.util.HashSet<String>();
         for(var entry:entries)names.add(entry.getAsJsonObject().get("biome").getAsString().split(":")[1]);
         assertTrue(names.remove("cloudsea_root_caves"),"Native underground biome missing");
-        assertEquals(32,names.size());
+        assertEquals(33,names.size());
         for(String name:names)for(var step:data("worldgen/biome/"+name).getAsJsonArray("features"))for(var feature:step.getAsJsonArray())
             assertFalse(feature.getAsString().contains("ore_"),feature.toString());
     }
@@ -75,6 +75,14 @@ class NativeDataPolicyTest {
             assertEquals("logos_dimension:"+b.id()+"_log",config.getAsJsonObject("trunk_provider").getAsJsonObject("state").get("Name").getAsString());
             assertEquals("logos_dimension:"+b.id()+"_leaf",config.getAsJsonObject("foliage_provider").getAsJsonObject("state").get("Name").getAsString());
         }
+    }
+    @Test void elvenForestUsesNativeStructuresAndRealLights()throws Exception{
+        var biome=data("worldgen/biome/elven_forest");assertTrue(biome.getAsJsonObject("spawners").isEmpty());
+        var structure=data("worldgen/structure/elven_world_tree");assertEquals("minecraft:jigsaw",structure.get("type").getAsString());
+        var range=structure.getAsJsonObject("max_distance_from_center");assertEquals(128,range.get("horizontal").getAsInt());assertEquals(256,range.get("vertical").getAsInt());
+        assertEquals("none",structure.get("terrain_adaptation").getAsString());assertEquals("logos_dimension:elven_forest",structure.getAsJsonArray("biomes").get(0).getAsString());
+        var manifest=data("elven_forest_manifest");assertEquals(343,manifest.getAsJsonObject("world_tree").get("tiles").getAsInt());
+        assertEquals(8,manifest.getAsJsonObject("world_tree").get("surrounding_giants").getAsInt());assertTrue(manifest.get("block_light_sources").getAsBoolean());
     }
     @Test void tallTreesRemainSparseNativeFeatures()throws Exception{
         for(String name:new String[]{"ancient_beech","jade_whirls","fernwood","moss_vale","fir_heart","lilac_steps","cloudroot_shelves"}){

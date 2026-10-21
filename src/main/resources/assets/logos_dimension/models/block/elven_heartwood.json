@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "logos_dimension:block/elven_heartwood",
+    "end": "logos_dimension:block/elven_heartwood_end"
+  }
+}

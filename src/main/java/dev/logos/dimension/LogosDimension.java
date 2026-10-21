@@ -47,6 +47,7 @@ public final class LogosDimension {
         DimensionFluids.init();
         dev.logos.dimension.instance.CauldronBinding.register(bus);
         dev.logos.dimension.cloudsea.CloudseaBlocks.init();
+        dev.logos.dimension.elven.ElvenBlocks.init();
         DimensionBlocks.BLOCKS.register(bus); DimensionBlocks.ITEMS.register(bus);
         DimensionFluids.TYPES.register(bus); DimensionFluids.FLUIDS.register(bus);
         DimensionParticles.register(bus);
@@ -59,6 +60,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.BerryGameTests.register(bus);
         dev.logos.dimension.gametest.TallTreeGameTests.register(bus);
         dev.logos.dimension.gametest.SettlementGameTests.register(bus);
+        dev.logos.dimension.gametest.ElvenForestGameTests.register(bus);
         bus.addListener(DimensionSpawns::register);
         bus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
                 event.registrar("1").playToClient(dev.logos.dimension.net.HauntPayload.TYPE, dev.logos.dimension.net.HauntPayload.CODEC));

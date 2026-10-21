@@ -1,0 +1,56 @@
+{
+  "name": "logos_dimension:elven/giants",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "logos_dimension:elven/giant_0",
+        "processors": "logos_dimension:elven_preserve",
+        "override_liquid_settings": "ignore_waterlogging",
+        "projection": "rigid"
+      }
+    },
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "logos_dimension:elven/giant_1",
+        "processors": "logos_dimension:elven_preserve",
+        "override_liquid_settings": "ignore_waterlogging",
+        "projection": "rigid"
+      }
+    },
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "logos_dimension:elven/giant_2",
+        "processors": "logos_dimension:elven_preserve",
+        "override_liquid_settings": "ignore_waterlogging",
+        "projection": "rigid"
+      }
+    },
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "logos_dimension:elven/giant_3",
+        "processors": "logos_dimension:elven_preserve",
+        "override_liquid_settings": "ignore_waterlogging",
+        "projection": "rigid"
+      }
+    },
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "logos_dimension:elven/giant_4",
+        "processors": "logos_dimension:elven_preserve",
+        "override_liquid_settings": "ignore_waterlogging",
+        "projection": "rigid"
+      }
+    }
+  ]
+}

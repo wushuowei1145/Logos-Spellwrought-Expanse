@@ -206,5 +206,16 @@
   "item.logos_dimension.journey_berry_bramble": "Woodland Blueberries",
   "block.logos_dimension.journey_stardew": "Stardew Grass",
   "block.logos_dimension.journey_lumen_fern": "Glimmer Fern",
-  "block.logos_dimension.journey_rice": "Rice"
+  "block.logos_dimension.journey_rice": "Rice",
+  "block.logos_dimension.elven_heartwood": "Elven Heartwood",
+  "block.logos_dimension.elven_canopy": "Elven Canopy",
+  "block.logos_dimension.elven_pale_planks": "Pale Elven Planks",
+  "block.logos_dimension.elven_luminous_inlay": "Leaflight Inlay",
+  "block.logos_dimension.elven_leaf_seat": "Elven Leaf Seat",
+  "block.logos_dimension.elven_reading_table": "Elven Reading Table",
+  "block.logos_dimension.elven_flower_planter": "Elven Flower Planter",
+  "block.logos_dimension.elven_bookshelf": "Elven Bookshelf",
+  "block.logos_dimension.elven_leaf_lamp": "Warm Leaflight",
+  "block.logos_dimension.elven_lamp_vine": "Lantern Vine",
+  "biome.logos_dimension.elven_forest": "Elven Forest"
 }

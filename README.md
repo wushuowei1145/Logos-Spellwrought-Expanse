@@ -1,8 +1,10 @@
 # 维度-咒械原
 
-**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.9.3**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.10.0**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
 
 下载源码时请核对所选分支和 `gradle.properties` 中的 `mod_version`。GitHub 的 **Code → Download ZIP** 导出当前分支，不会自动包含其他分支上已合并的 PR；PR 只有合并到 `main` 后才会进入首页默认下载。源码 ZIP 需要构建，已打包 JAR 的版本以其 `META-INF/neoforge.mods.toml` 为准。
+
+0.10.0 加入独立的**精灵森林**群系，68–90 格巨木环绕 216 格高中空世界树，树心放置少量精灵家具、叶形吊灯和发光叶纹地板。中央保留十格宽通道，夜间最低采样方块光照为 9。使用原版噪声、NBT/jigsaw 和接地树根，没有 Java 种树器或村民/动物。进入远行大陆后用 `/locate biome logos_dimension:elven_forest`、`/locate structure logos_dimension:elven_world_tree` 寻找，详见 [精灵森林](docs/ELVEN_FOREST.md)。
 
 0.9.3 为村镇补上落地石基：建筑底部的外墙基础与内部支柱向下延伸，遇到实地停止；广场和井有基础，跨水道路有间隔支墩。全部使用原版 Feature 与 jigsaw，不铺整块土台，不抬高或削平原地形。新区块生效。
 
@@ -35,7 +37,7 @@
 两个维度都使用原版 `minecraft:noise` 地形、`minecraft:multi_noise` 群系选择、原版树木与植物 Feature、标准 NBT/jigsaw 结构。删除手写 Java 地形、种树与建筑填块生成器。数据随 Mod 内置，正常安装不需要额外下载数据包，存档数据包可以覆盖同名资源。见 [生成数据与迁移](docs/NATIVE_WORLDGEN.md)。
 
 - **咒械原**：每口炼金釜首次进入创建一个 `logos_dimension:<UUID>` 世界，20,000×20,000 格边界，以太为主要环境，硫、汞、盐为大尺度自然群系。
-- **远行大陆**：保留 `logos_dimension:cloudsea` ID，32 个地表群系和独立地下群系。湿润气候形成连续密林，林隙与花甸独立成群系；林下有蕨、苔毯、落叶、灌木和季节植物。正常天空、昼夜与天气，四季各 8 个游戏日。
+- **远行大陆**：保留 `logos_dimension:cloudsea` ID，33 个地表群系和独立地下群系。湿润气候形成连续密林，林隙与花甸独立成群系；林下有蕨、苔毯、落叶、灌木和季节植物。正常天空、昼夜与天气，四季各 8 个游戏日。
 - **无原版矿物**：关闭原版矿脉，移除矿物装饰 Feature，保留原版洞穴、含水层与废弃矿井。炼金硫沉积是本附属自有方块，不引用 26.1 原版硫磺。
 - **稀疏中世纪聚落**：使用原版 jigsaw/random_spread，可用 `/locate structure logos_dimension:journey_hamlet` 或 `journey_town` 寻找。新聚落依据 [用户提供的蓝图](references/user_blueprints/README.md) 改造；历史旧模板来源保留在 [第三方说明](third_party/millenaire/SOURCE.md)。
 

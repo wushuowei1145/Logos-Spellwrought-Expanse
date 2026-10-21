@@ -1,0 +1,18 @@
+{
+  "structures": [
+    {
+      "structure": "logos_dimension:elven_giant_tree",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 3,
+    "separation": 2,
+    "salt": 976126,
+    "exclusion_zone": {
+      "other_set": "logos_dimension:elven_world_trees",
+      "chunk_count": 8
+    }
+  }
+}

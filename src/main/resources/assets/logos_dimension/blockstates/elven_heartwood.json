@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "logos_dimension:block/elven_heartwood"
+    },
+    "axis=x": {
+      "model": "logos_dimension:block/elven_heartwood",
+      "x": 90,
+      "y": 90
+    },
+    "axis=z": {
+      "model": "logos_dimension:block/elven_heartwood",
+      "x": 90
+    }
+  }
+}

@@ -34,6 +34,14 @@
     "logos_dimension:cloudsea_moss_vale_log",
     "logos_dimension:cloudsea_copper_copse_log",
     "logos_dimension:cloudsea_sunlit_glade_log",
-    "logos_dimension:cloudsea_starflower_glade_log"
+    "logos_dimension:cloudsea_starflower_glade_log",
+    "logos_dimension:elven_heartwood",
+    "logos_dimension:elven_pale_planks",
+    "logos_dimension:elven_leaf_seat",
+    "logos_dimension:elven_reading_table",
+    "logos_dimension:elven_bookshelf",
+    "logos_dimension:elven_flower_planter",
+    "logos_dimension:elven_leaf_lamp",
+    "logos_dimension:elven_lamp_vine"
   ]
 }

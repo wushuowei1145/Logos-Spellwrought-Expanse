@@ -54,6 +54,7 @@ public final class JourneyAtmosphere {
     private static CloudseaBiome biome(ClientLevel level,BlockPos pos){
         var key=level.getBiome(pos).unwrapKey();if(key.isEmpty())return null;
         var id=key.get().identifier();if(!id.getNamespace().equals(LogosDimension.ID))return null;
+        if(id.getPath().equals("elven_forest"))return CloudseaBiome.ANCIENT_BEECH;
         for(var b:CloudseaBiome.values())if(b.id().equals(id.getPath()))return b;return null;
     }
     private static BlockPos anchor(ClientLevel level,int x,int z,int playerY){
