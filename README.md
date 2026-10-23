@@ -2,6 +2,8 @@
 
 **Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前版本 **0.10.0**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
 
+**安装包：[下载 logos_dimension-0.10.0.jar](https://github.com/wushuowei1145/Logos-Spellwrought-Expanse/releases/download/v0.10.0/logos_dimension-0.10.0.jar)** · [正式发布页与校验文件](https://github.com/wushuowei1145/Logos-Spellwrought-Expanse/releases/tag/v0.10.0)。联机时服务端和客户端都需安装同版附属；停服替换旧版后重新启动。Code → Download ZIP 和发布页的 Source code 是源码，需要构建后才能安装。
+
 下载源码时请核对所选分支和 `gradle.properties` 中的 `mod_version`。GitHub 的 **Code → Download ZIP** 导出当前分支，不会自动包含其他分支上已合并的 PR；PR 只有合并到 `main` 后才会进入首页默认下载。源码 ZIP 需要构建，已打包 JAR 的版本以其 `META-INF/neoforge.mods.toml` 为准。
 
 0.10.0 加入独立的**精灵森林**群系，68–90 格巨木环绕 216 格高中空世界树，树心放置少量精灵家具、叶形吊灯和发光叶纹地板。中央保留十格宽通道，夜间最低采样方块光照为 9。使用原版噪声、NBT/jigsaw 和接地树根，没有 Java 种树器或村民/动物。进入远行大陆后用 `/locate biome logos_dimension:elven_forest`、`/locate structure logos_dimension:elven_world_tree` 寻找，详见 [精灵森林](docs/ELVEN_FOREST.md)。
