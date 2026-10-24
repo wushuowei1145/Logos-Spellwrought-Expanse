@@ -187,6 +187,25 @@ def forest_floor(name,entries,count):
     write(path,spec)
 for bid,(count,pairs) in FOREST_FLOORS.items():
     forest_floor(bid+'_floor',floor_entries(pairs),count)
+
+# 倒木：用原版 minecraft:fallen_tree，树干取所在群系自己的原木。
+# 林地面积大、树多，倒木本来就该常见；沙丘、尖塔等非林地不加。
+def fallen_tree(name,log):
+    configured(name,{'type':'minecraft:fallen_tree','config':{
+        'trunk_provider':provider('logos_dimension:'+log,axis='y'),
+        'log_length':{'type':'minecraft:uniform','max_inclusive':7,'min_inclusive':4},
+        'stump_decorators':[],'log_decorators':[]}})
+    write(D/'worldgen/placed_feature'/f'{name}.json',{'feature':'logos_dimension:'+name,'placement':[
+        {'type':'minecraft:rarity_filter','chance':6},
+        {'type':'minecraft:in_square'},
+        {'type':'minecraft:heightmap','heightmap':'MOTION_BLOCKING_NO_LEAVES'},
+        {'type':'minecraft:environment_scan','direction_of_search':'down','max_steps':32,'target_condition':{'type':'minecraft:matching_block_tag','tag':'minecraft:dirt'}},
+        {'type':'minecraft:random_offset','xz_spread':0,'y_spread':1},
+        outside_island(),
+        {'type':'minecraft:block_predicate_filter','predicate':{'type':'minecraft:matching_blocks','blocks':['minecraft:air']}},
+        {'type':'minecraft:biome'}]})
+for bid in sorted(forests):
+    fallen_tree('fallen_tree_'+bid,bid+'_log')
 for bid in ids:
     data=json.loads((D/'worldgen/biome'/f'{bid}.json').read_text());features=[[] for _ in range(11)]
     if bid not in barren:
@@ -197,6 +216,7 @@ for bid in ids:
         if config['foliage_placer']['type']=='minecraft:blob_foliage_placer':config['foliage_placer']['radius']=3
         configured('trees_'+bid,tree);placed('trees_'+bid,'trees_'+bid,12 if bid in forests else 0 if bid in glades else 1,'OCEAN_FLOOR_WG')
         features[9]=['logos_dimension:trees_'+bid,'logos_dimension:'+(bid+'_floor' if bid in FOREST_FLOORS else 'meadow_floor')]
+        if bid in forests:features[9].append('logos_dimension:fallen_tree_'+bid)
     data['features']=features;write(D/'worldgen/biome'/f'{bid}.json',data)
 for bid in ['aether','sulfur','mercury','salt','sanctum']:
     data=json.loads((D/'worldgen/biome'/f'{bid}.json').read_text());data['carvers']=['minecraft:cave','minecraft:canyon'];data['features']=[[] for _ in range(11)]
