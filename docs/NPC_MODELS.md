@@ -91,8 +91,8 @@ YSM 不开源、模型文件加密，「YSM 风格」只指外观相近；它的
 
 - 先交付「常态」表情并通过模型验收，再添加其他表情。
 - 其他表情、眨眼按 TLM 的结构在 `Head` 下加 `Eyes` / `Eyelid` / `Mouth` 子骨骼，用显示/隐藏切换。
-- 附属模组的动画名用 `animation.<asset>.<action>`，例如 `animation.elodie.idle`。
-- 放进 TLM 包时，TLM 会把它自带的默认女仆动画（`idle`、`walk`、`run`、`sit`、`sleep`、`swim`、`attacked`、`use_mainhand` 等）合并到模型里，只补模型自己没定义的名字。所以 TLM 包可以不带动画；要覆盖哪个动作，就用 TLM 的动画名单独写。
+- 动画由 `NpcAnimations` 驱动，沿用 TLM 的控制器、动画名（`idle`、`walk`、`run`、`attacked`、`sit` 等，不加 `animation.<asset>.` 前缀）、优先级和手部条件名。制作要求见 [NPC 动画制作规范](NPC_ANIMATIONS.md)。
+- 放进 TLM 包时，TLM 会把自带的默认女仆动画合并进来，只补模型自己没定义的名字，所以 TLM 包可以不带动画；附属模组里则只播放 NPC 动画文件里有的名字。
 
 ## 7. 授权边界
 
