@@ -53,7 +53,8 @@ dependencies {
     implementation "com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:${ldlib2_version}"
     runtimeOnly("com.lowdragmc.photon:photon-neoforge-26.1:${photon_version}") { transitive = false }
     runtimeOnly("com.lowdragmc.kilagraph:kilagraph-neoforge-26.1:${kilagraph_version}") { transitive = false }
-    runtimeOnly "maven.modrinth:geckolib:${geckolib_version}"
+    // NPC 渲染器直接使用 GeckoLib 的类；Logos 本身也依赖它，所以玩家不需要另装
+    implementation "maven.modrinth:geckolib:${geckolib_version}"
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
