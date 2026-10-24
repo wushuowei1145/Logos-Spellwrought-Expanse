@@ -36,6 +36,13 @@ assert len(biomes)==32
 zh=json.loads((A/'lang/zh_cn.json').read_text(encoding='utf-8'));en=json.loads((A/'lang/en_us.json').read_text(encoding='utf-8'))
 zh['itemGroup.logos_dimension.cloudsea']='远行大陆';en['itemGroup.logos_dimension.cloudsea']='The Wayfarer Lands'
 english=['Windbound Plains','Beech Woods','Shallow Sandbars','Northern Birchwood','River Valley','Highland Meadow','Chalk Coast','Bare Ridges','Old River Gorge','Oak Woodland','Stillwater Lake','Deep Broadleaf Woods','Open Downs','Northern Firwood','Wildflower Meadow','Glacier Ridge','Alpine River','Pasture Slopes','Reed Wetland','Mountain Pinewood','Southern Bay','Silver Birch Heath','Cold Heath','Snowbound Summit','Ancient Beechwood','Fernwood','Moonlit Birch Grove','Fir Heartwood','Mossy Vale','Copper Copse','Sunlit Glade','Starbell Glade']
+# 只给三个最有辨识度的林地改雾色，天空与其余群系都不动。
+# 精灵森林的群系文件由 tools/elven_forest.py 覆盖生成，雾色写在那里。
+ATMOSPHERE={
+ 'cloudsea_fernwood':{'fog_color':'#9fb3aa'},
+ 'cloudsea_moss_vale':{'fog_color':'#c6d0c8','water_fog_color':'#b8c6c2'},
+ 'cloudsea_fir_heart':{'fog_color':'#aab9c4'},
+}
 all_ids=[]
 for i,(key,title,g,l) in enumerate(biomes):
     bid='cloudsea_'+key.lower();all_ids.append(bid);base=color(g);leaf=color(l)
@@ -71,7 +78,10 @@ for i,(key,title,g,l) in enumerate(biomes):
     zh[f'biome.logos_dimension.{bid}']=title;en[f'biome.logos_dimension.{bid}']=english[i]
     cold=i in [3,13,19,21,22];alpine=i in [7,15,23];ocean=i in [2,20]
     mobs={} # No generated animals, either with the terrain or through ambient spawning.
-    write(D/'worldgen/biome'/f'{bid}.json',{'has_precipitation':True,'temperature':-.15 if alpine else .15 if cold else .65,'downfall':.75 if i in [1,9,11,18] else .45,'effects':{'water_color':'#567d91','grass_color':'#'+g.lower(),'foliage_color':'#'+l.lower()},'carvers':['minecraft:cave','minecraft:cave_extra_underground','minecraft:canyon'],'features':[[] for _ in range(11)],'spawners':mobs,'spawn_costs':{}})
+    # 只有下面这几个群系做大气区分，其余保持默认，避免整个维度到处变色。
+    effects={'water_color':'#567d91','grass_color':'#'+g.lower(),'foliage_color':'#'+l.lower()}
+    effects.update(ATMOSPHERE.get(bid,{}))
+    write(D/'worldgen/biome'/f'{bid}.json',{'has_precipitation':True,'temperature':-.15 if alpine else .15 if cold else .65,'downfall':.75 if i in [1,9,11,18] else .45,'effects':effects,'carvers':['minecraft:cave','minecraft:cave_extra_underground','minecraft:canyon'],'features':[[] for _ in range(11)],'spawners':mobs,'spawn_costs':{}})
 
 materials={
  'journey_limestone':((191,189,169),'stone','石灰岩','Limestone'),
