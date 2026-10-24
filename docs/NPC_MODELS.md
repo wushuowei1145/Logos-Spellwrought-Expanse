@@ -71,7 +71,7 @@ NPC 采用车万女仆（Touhou Little Maid，下称 TLM）的 GeckoLib 女仆�
 
 「车万女仆 / YSM 风格」在附属模组里指下面这套组合，不是自定义着色器：
 
-- 渲染类型 `entityCutoutNoCull`：alpha 裁切，不剔除背面，薄发片、裙摆内侧两面都能看到；
+- 渲染类型 `RenderTypes.entityCutout`（26.1 中即旧版的 entityCutoutNoCull；`entityCutoutCull` 才剔除背面）：alpha 裁切，不剔除背面，薄发片、裙摆内侧两面都能看到；
 - 原版实体光照：两盏固定方向光加环境光，正面亮、侧面暗，不另加描边或卡通着色；
 - 使用世界光照（方块光与天空光），没有全亮；
 - 每帧按 GeckoLib 动画姿势绘制完整模型。
