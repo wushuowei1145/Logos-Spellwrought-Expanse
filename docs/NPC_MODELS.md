@@ -4,7 +4,7 @@
 
 NPC 采用车万女仆（Touhou Little Maid，下称 TLM）的 GeckoLib 女仆模型规范，目标有两个：
 
-1. 在附属模组里用与 TLM / YSM 相同的渲染风格显示 NPC；
+1. 在附属模组里用与 TLM 相同的渲染方式显示 NPC（外观接近 YSM，但 YSM 不开源，渲染细节无法核对）；
 2. 同一份几何和贴图不改动就能放进 TLM 的自定义模型包，作为女仆模型使用。
 
 ## 1. 格式
@@ -45,6 +45,7 @@ NPC 采用车万女仆（Touhou Little Maid，下称 TLM）的 GeckoLib 女仆�
 - 兽耳与尾巴：`Ear` → `Left_ear` / `Right_ear`（注意下划线写法沿用 TLM）；`Tail` → `Tail2` → `Tail3` …，挂在 `UpBody`。
 - 裙摆：`Skirt`，挂在 `DownBody`。
 - 表情：`Eyes`、`Eyelid`、`Mouth` 及其子骨骼，用显示/隐藏切换（见第 6 节）。
+- 发光部件：骨骼名以 `ysmGlow` 开头（区分大小写），例如 `ysmGlowEyes`、`ysmGlowRune`，见第 5 节。
 
 挂点（空骨骼，只读枢轴）：
 
@@ -69,14 +70,16 @@ NPC 采用车万女仆（Touhou Little Maid，下称 TLM）的 GeckoLib 女仆�
 
 ## 5. 渲染风格
 
-「车万女仆 / YSM 风格」在附属模组里指下面这套组合，不是自定义着色器：
+附属模组的 `NpcRenderer` 按 TLM 的 GeckoLib 女仆渲染方式实现（对照 TLM 1.21 分支源码 `GeckoEntityMaidRenderer`、`geckolib3/geo/IGeoRenderer`、`GeoBone`）：
 
-- 渲染类型 `entityCutoutNoCull`：alpha 裁切，不剔除背面，薄发片、裙摆内侧两面都能看到；
-- 原版实体光照：两盏固定方向光加环境光，正面亮、侧面暗，不另加描边或卡通着色；
-- 使用世界光照（方块光与天空光），没有全亮；
-- 每帧按 GeckoLib 动画姿势绘制完整模型。
+- 渲染类型：TLM 用 `RenderType.entityCutoutNoCull`；26.1 中同一种渲染类型叫 `RenderTypes.entityCutout`（`entityCutoutCull` 才剔除背面）。alpha 裁切，不剔除背面，薄发片、裙摆内侧两面都能看到；
+- 原版实体光照：两盏固定方向光加环境光，正面亮、侧面暗，没有自定义着色器，不另加描边或卡通着色；
+- 使用世界光照（方块光与天空光）；
+- 发光骨骼：名字以 `ysmGlow` 开头的骨骼（YSM 的约定，TLM 沿用），自身方块按满亮度（方块光、天空光均为 15）绘制，夜里也是亮的；子骨骼不受影响，被动画隐藏时仍然隐藏。颜色来自贴图，不叠加辉光或泛光。
 
-需要发光（眼睛、魔法饰品）时另做发光贴图层，并在说明里写明。只把颜色画亮不等于运行时发光。渲染器属于代码改动，按主模组规范另开 PR，不和美术 PR 混在一起。
+需要发光的部件（眼睛、魔法饰品）单独拆成 `ysmGlow…` 骨骼，并在说明里写明。只把颜色画亮、不放进发光骨骼，不会在暗处发光。
+
+YSM 不开源、模型文件加密，「YSM 风格」只指外观相近；它的渲染类型和光照没有核对过。渲染器属于代码改动，按主模组规范另开 PR，不和美术 PR 混在一起。
 
 ## 6. 表情与动画
 
