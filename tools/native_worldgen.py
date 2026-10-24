@@ -215,7 +215,7 @@ configured('forest_cave_lichen',{'type':'minecraft:multiface_growth','config':{
     'can_place_on_ceiling':True,'can_place_on_floor':False,'can_place_on_wall':True,
     'chance_of_spreading':.5,'search_range':20}})
 write(D/'worldgen/placed_feature/forest_cave_lichen.json',{'feature':'logos_dimension:forest_cave_lichen','placement':[
-    {'type':'minecraft:count','count':{'type':'minecraft:uniform','max_inclusive':48,'min_inclusive':24}},
+    {'type':'minecraft:count','count':{'type':'minecraft:uniform','max_inclusive':157,'min_inclusive':104}},
     {'type':'minecraft:height_range','height':{'type':'minecraft:uniform','max_inclusive':{'absolute':96},'min_inclusive':{'above_bottom':0}}},
     {'type':'minecraft:in_square'},
     {'type':'minecraft:surface_relative_threshold_filter','heightmap':'OCEAN_FLOOR_WG','max_inclusive':-13},
