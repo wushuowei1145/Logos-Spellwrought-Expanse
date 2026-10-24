@@ -9,6 +9,7 @@ ROOT=Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(ROOT/'tools'))
 from blueprint_nbt import write_structure
 from elven_tree_study import world_tree, broadleaf, fir
+from elven_habitation import tree_house, tree_lights, world_floors, assets as habitation_assets
 R=ROOT/'src/main/resources';D=R/'data/logos_dimension';A=R/'assets/logos_dimension'
 NS='logos_dimension:'
 
@@ -223,6 +224,7 @@ def furniture(cells):
 
 def world_assets():
     v=world_tree();data=trimmed(v)
+    homes=[]
     # 周边八棵巨木属于同一地标结构，世界树因此处在这片林冠的中央。
     for i,a in enumerate(np.linspace(0,math.tau,8,endpoint=False)):
         t=fir(80+i%2*6) if i%3==0 else broadleaf(66+i%3*4,4.5,11+i)
@@ -231,6 +233,7 @@ def world_assets():
         if i%3==0:values[values==1]=25
         dst=xyz-v.origin;inside=np.all((dst>=0)&(dst<np.array(data.shape)),axis=1)
         dst=dst[inside];values=values[inside];empty=data[tuple(dst.T)]==0;data[tuple(dst[empty].T)]=values[empty]
+        if i in [1,6]:homes.append((i,round(math.cos(a)*74),round(math.sin(a)*74)))
     cells={}
     for p in np.argwhere(data):
         x,y,z=(p+v.origin).tolist();cells[x,y,z]=base_state(int(data[tuple(p)]),y)
@@ -240,6 +243,9 @@ def world_assets():
             for z in range(-27,14):
                 if x*x+z*z<radius*radius or (y<35 and z<0 and (x/9)**2+(max(0,y-19)/16)**2<1):cells[x,y,z]=state('minecraft:air')
     furniture(cells)
+    levels=world_floors(cells)
+    house_specs=[tree_house(cells,i%3==0,i,(x,0,z)) for i,x,z in homes]
+    lights=tree_lights(cells,seed=37)
     # 只在根拱入口设置短木阶，不生成矩形土台。
     for z,y in [(-29,0),(-28,1)]:
         for x in range(-4,5):cells[x,y,z]=state('minecraft:oak_stairs',facing='south',half='bottom',shape='straight',waterlogged=False)
@@ -268,7 +274,7 @@ def world_assets():
         if p[1]==0:footings+=footing(c,e)
         name='tile_'+'_'.join(map(str,p));write_structure(D/'structure/elven'/f'{name}.nbt',[32,32,32],c,e,data_version=4790,entities=[]);pool(name,[name])
     pool('world_tree',['tile_3_0_3']);structure('elven_world_tree','world_tree',32,14,['elven_forest'],True)
-    return {'tiles':len(tiles),'root_footings':footings,'material_cells':len(cells),'root_tile':'tile_3_0_3','anchor':[16,4,16],'height_above_ground':216,'surrounding_giants':8}
+    return {'tiles':len(tiles),'root_footings':footings,'material_cells':len(cells),'root_tile':'tile_3_0_3','anchor':[16,4,16],'height_above_ground':216,'surrounding_giants':8,'tree_houses':house_specs,'interior':levels,'bough_lights':lights}
 
 
 def ordinary_assets():
@@ -279,18 +285,33 @@ def ordinary_assets():
         # 模板底部固定为原预览地表以下四格，原版高度投影保持根颈与地表一致。
         lo[1]=0
         for p in coords:
-            g=p+t.origin;cells[tuple((p-lo).tolist())]=base_state(int(data[tuple(p)]),int(g[1]))
-        tags={};count=footing(cells,tags);name='giant_'+str(i)
-        write_structure(D/'structure/elven'/f'{name}.nbt',(hi-lo+1).tolist(),cells,tags,data_version=4790,entities=[])
-        names.append(name);counts.append({'template':name,'blocks':len(cells),'footings':count,'height':int(hi[1]+t.origin[1])})
-    pool('giants',names);structure('elven_giant_tree','giants',3,1,['elven_forest'])
+            g=p+t.origin;material=int(data[tuple(p)])
+            if i>=3 and material==1:material=25
+            cells[tuple((p-lo).tolist())]=base_state(material,int(g[1]))
+        offset=tuple((-t.origin-lo).tolist());lights=tree_lights(cells,seed=i)
+        for furnished in [False,True]:
+            variant=copy.deepcopy(cells)
+            home=tree_house(variant,i>=3,i,offset) if furnished else None
+            tags={};count=footing(variant,tags);name='giant_'+str(i)+('_home' if furnished else '')
+            size=[max(p[axis] for p in variant)+1 for axis in range(3)]
+            assert all(min(p[axis] for p in variant)>=0 for axis in range(3))
+            write_structure(D/'structure/elven'/f'{name}.nbt',size,variant,tags,data_version=4790,entities=[])
+            names.append(name);counts.append({'template':name,'blocks':len(variant),'footings':count,'height':int(hi[1]+t.origin[1]),'house':home,'bough_lights':lights})
+    pool('giants',names)
+    p=D/'worldgen/template_pool/elven/giants.json';obj=json.loads(p.read_text())
+    # 2/(5+2)=28.6%，平均每三至四棵巨木一间屋，不把每棵树变成聚落。
+    for row in obj['elements']:row['weight']=2 if row['element']['location'].endswith('_home') else 5
+    write(p,obj);structure('elven_giant_tree','giants',3,1,['elven_forest'])
     return counts
 
 
 def biome():
     b=json.loads((D/'worldgen/biome/cloudsea_ancient_beech.json').read_text(encoding='utf-8'))
-    b['spawners']={};b['features'][9]=[NS+'trees_cloudsea_ancient_beech',NS+'woodland_floor'];b['temperature']=.6;b['downfall']=.8
+    b['spawners']={};b['features'][9]=[NS+'trees_cloudsea_ancient_beech',NS+'woodland_floor',NS+'elven_glow_grove'];b['temperature']=.6;b['downfall']=.8
     write(D/'worldgen/biome/elven_forest.json',b)
+    write(D/'worldgen/configured_feature/elven_glow_grove.json',{'type':'minecraft:simple_block','config':{'to_place':{'type':'minecraft:simple_state_provider','state':state('elven_bough_light')}}})
+    # 原版高度投影与土壤过滤，只在精灵森林地面空位添少量固定光源。
+    write(D/'worldgen/placed_feature/elven_glow_grove.json',{'feature':NS+'elven_glow_grove','placement':[{'type':'minecraft:count','count':8},{'type':'minecraft:in_square'},{'type':'minecraft:heightmap','heightmap':'MOTION_BLOCKING_NO_LEAVES'},{'type':'minecraft:environment_scan','direction_of_search':'down','max_steps':32,'target_condition':{'type':'minecraft:matching_block_tag','tag':'minecraft:dirt'}},{'type':'minecraft:random_offset','xz_spread':0,'y_spread':1},{'type':'minecraft:block_predicate_filter','predicate':{'type':'minecraft:all_of','predicates':[{'type':'minecraft:replaceable'},{'type':'minecraft:would_survive','state':state('elven_bough_light')}]}},{'type':'minecraft:biome'}]})
     for path in [D/'dimension/cloudsea.json',ROOT/'gametest-packs/crucible/data/minecraft/worldgen/world_preset/flat.json']:
         obj=json.loads(path.read_text(encoding='utf-8'))
         generator=obj['generator'] if 'generator' in obj else obj['dimensions'][NS+'cloudsea']['generator']
@@ -319,7 +340,7 @@ def biome():
 
 
 def main():
-    models();setup_footings();summary={'biome':NS+'elven_forest','climate_entries':biome(),'world_tree':world_assets(),'giants':ordinary_assets(),'generation':'minecraft:jigsaw / minecraft:noise / minecraft:multi_noise','entities':False,'central_clear_diameter':10,'block_light_sources':True}
+    models();habitation_assets(R);setup_footings();summary={'biome':NS+'elven_forest','climate_entries':biome(),'world_tree':world_assets(),'giants':ordinary_assets(),'generation':'minecraft:jigsaw / minecraft:noise / minecraft:multi_noise','entities':False,'central_clear_diameter':10,'block_light_sources':True,'tree_house_probability':2/7,'breath_cycle_ticks':120}
     write(D/'elven_forest_manifest.json',summary);print(json.dumps(summary,ensure_ascii=False),flush=True)
 
 

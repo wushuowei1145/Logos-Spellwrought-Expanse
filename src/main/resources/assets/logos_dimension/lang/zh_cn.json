@@ -217,5 +217,7 @@
   "block.logos_dimension.elven_bookshelf": "精灵藏书架",
   "block.logos_dimension.elven_leaf_lamp": "暖白叶灯",
   "block.logos_dimension.elven_lamp_vine": "吊灯细藤",
-  "biome.logos_dimension.elven_forest": "精灵森林"
+  "biome.logos_dimension.elven_forest": "精灵森林",
+  "block.logos_dimension.elven_climbing_rope": "精灵攀爬绳梯",
+  "block.logos_dimension.elven_bough_light": "枝间叶辉"
 }

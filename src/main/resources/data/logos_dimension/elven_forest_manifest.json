@@ -3,8 +3,8 @@
   "climate_entries": 80,
   "world_tree": {
     "tiles": 343,
-    "root_footings": 1674,
-    "material_cells": 572857,
+    "root_footings": 1670,
+    "material_cells": 574618,
     "root_tile": "tile_3_0_3",
     "anchor": [
       16,
@@ -12,42 +12,1141 @@
       16
     ],
     "height_above_ground": 216,
-    "surrounding_giants": 8
+    "surrounding_giants": 8,
+    "tree_houses": [
+      {
+        "kind": "broadleaf",
+        "floor": 26,
+        "rope": [
+          52,
+          2,
+          65
+        ],
+        "rope_top": 28
+      },
+      {
+        "kind": "fir",
+        "floor": 23,
+        "rope": [
+          0,
+          2,
+          -61
+        ],
+        "rope_top": 25
+      }
+    ],
+    "interior": {
+      "floors": [
+        17,
+        33,
+        49,
+        65,
+        81
+      ],
+      "stairs": [
+        [
+          -8,
+          1,
+          -10,
+          "top"
+        ],
+        [
+          -7,
+          2,
+          -10,
+          "bottom"
+        ],
+        [
+          -6,
+          2,
+          -10,
+          "top"
+        ],
+        [
+          -5,
+          3,
+          -10,
+          "bottom"
+        ],
+        [
+          -4,
+          3,
+          -10,
+          "top"
+        ],
+        [
+          -3,
+          4,
+          -10,
+          "bottom"
+        ],
+        [
+          -2,
+          4,
+          -10,
+          "top"
+        ],
+        [
+          -1,
+          5,
+          -10,
+          "bottom"
+        ],
+        [
+          0,
+          5,
+          -10,
+          "top"
+        ],
+        [
+          1,
+          6,
+          -10,
+          "bottom"
+        ],
+        [
+          2,
+          6,
+          -10,
+          "top"
+        ],
+        [
+          3,
+          7,
+          -10,
+          "bottom"
+        ],
+        [
+          4,
+          7,
+          -10,
+          "top"
+        ],
+        [
+          5,
+          8,
+          -10,
+          "bottom"
+        ],
+        [
+          6,
+          8,
+          -10,
+          "top"
+        ],
+        [
+          7,
+          9,
+          -10,
+          "bottom"
+        ],
+        [
+          8,
+          9,
+          -10,
+          "top"
+        ],
+        [
+          9,
+          10,
+          -9,
+          "bottom"
+        ],
+        [
+          10,
+          10,
+          -8,
+          "top"
+        ],
+        [
+          10,
+          11,
+          -7,
+          "bottom"
+        ],
+        [
+          10,
+          11,
+          -6,
+          "top"
+        ],
+        [
+          10,
+          12,
+          -5,
+          "bottom"
+        ],
+        [
+          10,
+          12,
+          -4,
+          "top"
+        ],
+        [
+          10,
+          13,
+          -3,
+          "bottom"
+        ],
+        [
+          10,
+          13,
+          -2,
+          "top"
+        ],
+        [
+          10,
+          14,
+          -1,
+          "bottom"
+        ],
+        [
+          10,
+          14,
+          0,
+          "top"
+        ],
+        [
+          10,
+          15,
+          1,
+          "bottom"
+        ],
+        [
+          10,
+          15,
+          2,
+          "top"
+        ],
+        [
+          10,
+          16,
+          3,
+          "bottom"
+        ],
+        [
+          10,
+          16,
+          4,
+          "top"
+        ],
+        [
+          10,
+          17,
+          5,
+          "bottom"
+        ],
+        [
+          10,
+          17,
+          6,
+          "top"
+        ],
+        [
+          10,
+          18,
+          7,
+          "bottom"
+        ],
+        [
+          10,
+          18,
+          8,
+          "top"
+        ],
+        [
+          9,
+          19,
+          9,
+          "bottom"
+        ],
+        [
+          8,
+          19,
+          10,
+          "top"
+        ],
+        [
+          7,
+          20,
+          10,
+          "bottom"
+        ],
+        [
+          6,
+          20,
+          10,
+          "top"
+        ],
+        [
+          5,
+          21,
+          10,
+          "bottom"
+        ],
+        [
+          4,
+          21,
+          10,
+          "top"
+        ],
+        [
+          3,
+          22,
+          10,
+          "bottom"
+        ],
+        [
+          2,
+          22,
+          10,
+          "top"
+        ],
+        [
+          1,
+          23,
+          10,
+          "bottom"
+        ],
+        [
+          0,
+          23,
+          10,
+          "top"
+        ],
+        [
+          -1,
+          24,
+          10,
+          "bottom"
+        ],
+        [
+          -2,
+          24,
+          10,
+          "top"
+        ],
+        [
+          -3,
+          25,
+          10,
+          "bottom"
+        ],
+        [
+          -4,
+          25,
+          10,
+          "top"
+        ],
+        [
+          -5,
+          26,
+          10,
+          "bottom"
+        ],
+        [
+          -6,
+          26,
+          10,
+          "top"
+        ],
+        [
+          -7,
+          27,
+          10,
+          "bottom"
+        ],
+        [
+          -8,
+          27,
+          10,
+          "top"
+        ],
+        [
+          -9,
+          28,
+          9,
+          "bottom"
+        ],
+        [
+          -10,
+          28,
+          8,
+          "top"
+        ],
+        [
+          -10,
+          29,
+          7,
+          "bottom"
+        ],
+        [
+          -10,
+          29,
+          6,
+          "top"
+        ],
+        [
+          -10,
+          30,
+          5,
+          "bottom"
+        ],
+        [
+          -10,
+          30,
+          4,
+          "top"
+        ],
+        [
+          -10,
+          31,
+          3,
+          "bottom"
+        ],
+        [
+          -10,
+          31,
+          2,
+          "top"
+        ],
+        [
+          -10,
+          32,
+          1,
+          "bottom"
+        ],
+        [
+          -10,
+          32,
+          0,
+          "top"
+        ],
+        [
+          -10,
+          33,
+          -1,
+          "bottom"
+        ],
+        [
+          -10,
+          33,
+          -2,
+          "top"
+        ],
+        [
+          -10,
+          34,
+          -3,
+          "bottom"
+        ],
+        [
+          -10,
+          34,
+          -4,
+          "top"
+        ],
+        [
+          -10,
+          35,
+          -5,
+          "bottom"
+        ],
+        [
+          -10,
+          35,
+          -6,
+          "top"
+        ],
+        [
+          -10,
+          36,
+          -7,
+          "bottom"
+        ],
+        [
+          -10,
+          36,
+          -8,
+          "top"
+        ],
+        [
+          -9,
+          37,
+          -9,
+          "bottom"
+        ],
+        [
+          -8,
+          37,
+          -10,
+          "top"
+        ],
+        [
+          -7,
+          38,
+          -10,
+          "bottom"
+        ],
+        [
+          -6,
+          38,
+          -10,
+          "top"
+        ],
+        [
+          -5,
+          39,
+          -10,
+          "bottom"
+        ],
+        [
+          -4,
+          39,
+          -10,
+          "top"
+        ],
+        [
+          -3,
+          40,
+          -10,
+          "bottom"
+        ],
+        [
+          -2,
+          40,
+          -10,
+          "top"
+        ],
+        [
+          -1,
+          41,
+          -10,
+          "bottom"
+        ],
+        [
+          0,
+          41,
+          -10,
+          "top"
+        ],
+        [
+          1,
+          42,
+          -10,
+          "bottom"
+        ],
+        [
+          2,
+          42,
+          -10,
+          "top"
+        ],
+        [
+          3,
+          43,
+          -10,
+          "bottom"
+        ],
+        [
+          4,
+          43,
+          -10,
+          "top"
+        ],
+        [
+          5,
+          44,
+          -10,
+          "bottom"
+        ],
+        [
+          6,
+          44,
+          -10,
+          "top"
+        ],
+        [
+          7,
+          45,
+          -10,
+          "bottom"
+        ],
+        [
+          8,
+          45,
+          -10,
+          "top"
+        ],
+        [
+          9,
+          46,
+          -9,
+          "bottom"
+        ],
+        [
+          10,
+          46,
+          -8,
+          "top"
+        ],
+        [
+          10,
+          47,
+          -7,
+          "bottom"
+        ],
+        [
+          10,
+          47,
+          -6,
+          "top"
+        ],
+        [
+          10,
+          48,
+          -5,
+          "bottom"
+        ],
+        [
+          10,
+          48,
+          -4,
+          "top"
+        ],
+        [
+          10,
+          49,
+          -3,
+          "bottom"
+        ],
+        [
+          10,
+          49,
+          -2,
+          "top"
+        ],
+        [
+          10,
+          50,
+          -1,
+          "bottom"
+        ],
+        [
+          10,
+          50,
+          0,
+          "top"
+        ],
+        [
+          10,
+          51,
+          1,
+          "bottom"
+        ],
+        [
+          10,
+          51,
+          2,
+          "top"
+        ],
+        [
+          10,
+          52,
+          3,
+          "bottom"
+        ],
+        [
+          10,
+          52,
+          4,
+          "top"
+        ],
+        [
+          10,
+          53,
+          5,
+          "bottom"
+        ],
+        [
+          10,
+          53,
+          6,
+          "top"
+        ],
+        [
+          10,
+          54,
+          7,
+          "bottom"
+        ],
+        [
+          10,
+          54,
+          8,
+          "top"
+        ],
+        [
+          9,
+          55,
+          9,
+          "bottom"
+        ],
+        [
+          8,
+          55,
+          10,
+          "top"
+        ],
+        [
+          7,
+          56,
+          10,
+          "bottom"
+        ],
+        [
+          6,
+          56,
+          10,
+          "top"
+        ],
+        [
+          5,
+          57,
+          10,
+          "bottom"
+        ],
+        [
+          4,
+          57,
+          10,
+          "top"
+        ],
+        [
+          3,
+          58,
+          10,
+          "bottom"
+        ],
+        [
+          2,
+          58,
+          10,
+          "top"
+        ],
+        [
+          1,
+          59,
+          10,
+          "bottom"
+        ],
+        [
+          0,
+          59,
+          10,
+          "top"
+        ],
+        [
+          -1,
+          60,
+          10,
+          "bottom"
+        ],
+        [
+          -2,
+          60,
+          10,
+          "top"
+        ],
+        [
+          -3,
+          61,
+          10,
+          "bottom"
+        ],
+        [
+          -4,
+          61,
+          10,
+          "top"
+        ],
+        [
+          -5,
+          62,
+          10,
+          "bottom"
+        ],
+        [
+          -6,
+          62,
+          10,
+          "top"
+        ],
+        [
+          -7,
+          63,
+          10,
+          "bottom"
+        ],
+        [
+          -8,
+          63,
+          10,
+          "top"
+        ],
+        [
+          -9,
+          64,
+          9,
+          "bottom"
+        ],
+        [
+          -10,
+          64,
+          8,
+          "top"
+        ],
+        [
+          -10,
+          65,
+          7,
+          "bottom"
+        ],
+        [
+          -10,
+          65,
+          6,
+          "top"
+        ],
+        [
+          -10,
+          66,
+          5,
+          "bottom"
+        ],
+        [
+          -10,
+          66,
+          4,
+          "top"
+        ],
+        [
+          -10,
+          67,
+          3,
+          "bottom"
+        ],
+        [
+          -10,
+          67,
+          2,
+          "top"
+        ],
+        [
+          -10,
+          68,
+          1,
+          "bottom"
+        ],
+        [
+          -10,
+          68,
+          0,
+          "top"
+        ],
+        [
+          -10,
+          69,
+          -1,
+          "bottom"
+        ],
+        [
+          -10,
+          69,
+          -2,
+          "top"
+        ],
+        [
+          -10,
+          70,
+          -3,
+          "bottom"
+        ],
+        [
+          -10,
+          70,
+          -4,
+          "top"
+        ],
+        [
+          -10,
+          71,
+          -5,
+          "bottom"
+        ],
+        [
+          -10,
+          71,
+          -6,
+          "top"
+        ],
+        [
+          -10,
+          72,
+          -7,
+          "bottom"
+        ],
+        [
+          -10,
+          72,
+          -8,
+          "top"
+        ],
+        [
+          -9,
+          73,
+          -9,
+          "bottom"
+        ],
+        [
+          -8,
+          73,
+          -10,
+          "top"
+        ],
+        [
+          -7,
+          74,
+          -10,
+          "bottom"
+        ],
+        [
+          -6,
+          74,
+          -10,
+          "top"
+        ],
+        [
+          -5,
+          75,
+          -10,
+          "bottom"
+        ],
+        [
+          -4,
+          75,
+          -10,
+          "top"
+        ],
+        [
+          -3,
+          76,
+          -10,
+          "bottom"
+        ],
+        [
+          -2,
+          76,
+          -10,
+          "top"
+        ],
+        [
+          -1,
+          77,
+          -10,
+          "bottom"
+        ],
+        [
+          0,
+          77,
+          -10,
+          "top"
+        ],
+        [
+          1,
+          78,
+          -10,
+          "bottom"
+        ],
+        [
+          2,
+          78,
+          -10,
+          "top"
+        ],
+        [
+          3,
+          79,
+          -10,
+          "bottom"
+        ],
+        [
+          4,
+          79,
+          -10,
+          "top"
+        ],
+        [
+          5,
+          80,
+          -10,
+          "bottom"
+        ],
+        [
+          6,
+          80,
+          -10,
+          "top"
+        ],
+        [
+          7,
+          81,
+          -10,
+          "bottom"
+        ],
+        [
+          8,
+          81,
+          -10,
+          "top"
+        ]
+      ],
+      "width": 3,
+      "central_lightwell_radius": 5.3
+    },
+    "bough_lights": 177
   },
   "giants": [
     {
       "template": "giant_0",
-      "blocks": 17888,
+      "blocks": 17894,
       "footings": 85,
-      "height": 68
+      "height": 68,
+      "house": null,
+      "bough_lights": 6
+    },
+    {
+      "template": "giant_0_home",
+      "blocks": 18794,
+      "footings": 85,
+      "height": 68,
+      "house": {
+        "kind": "broadleaf",
+        "floor": 27,
+        "rope": [
+          27,
+          6,
+          40
+        ],
+        "rope_top": 29
+      },
+      "bough_lights": 6
     },
     {
       "template": "giant_1",
-      "blocks": 20055,
+      "blocks": 20064,
       "footings": 84,
-      "height": 72
+      "height": 72,
+      "house": null,
+      "bough_lights": 9
+    },
+    {
+      "template": "giant_1_home",
+      "blocks": 20928,
+      "footings": 84,
+      "height": 72,
+      "house": {
+        "kind": "broadleaf",
+        "floor": 30,
+        "rope": [
+          29,
+          6,
+          42
+        ],
+        "rope_top": 32
+      },
+      "bough_lights": 9
     },
     {
       "template": "giant_2",
-      "blocks": 23281,
+      "blocks": 23289,
       "footings": 93,
-      "height": 77
+      "height": 77,
+      "house": null,
+      "bough_lights": 8
+    },
+    {
+      "template": "giant_2_home",
+      "blocks": 24054,
+      "footings": 92,
+      "height": 77,
+      "house": {
+        "kind": "broadleaf",
+        "floor": 33,
+        "rope": [
+          31,
+          6,
+          44
+        ],
+        "rope_top": 35
+      },
+      "bough_lights": 8
     },
     {
       "template": "giant_3",
-      "blocks": 16802,
+      "blocks": 16804,
       "footings": 33,
-      "height": 85
+      "height": 85,
+      "house": null,
+      "bough_lights": 2
+    },
+    {
+      "template": "giant_3_home",
+      "blocks": 17551,
+      "footings": 34,
+      "height": 85,
+      "house": {
+        "kind": "fir",
+        "floor": 27,
+        "rope": [
+          18,
+          6,
+          33
+        ],
+        "rope_top": 29
+      },
+      "bough_lights": 2
     },
     {
       "template": "giant_4",
-      "blocks": 18589,
+      "blocks": 18590,
       "footings": 31,
-      "height": 90
+      "height": 90,
+      "house": null,
+      "bough_lights": 1
+    },
+    {
+      "template": "giant_4_home",
+      "blocks": 19415,
+      "footings": 31,
+      "height": 90,
+      "house": {
+        "kind": "fir",
+        "floor": 30,
+        "rope": [
+          19,
+          6,
+          33
+        ],
+        "rope_top": 32
+      },
+      "bough_lights": 1
     }
   ],
   "generation": "minecraft:jigsaw / minecraft:noise / minecraft:multi_noise",
   "entities": false,
   "central_clear_diameter": 10,
-  "block_light_sources": true
+  "block_light_sources": true,
+  "tree_house_probability": 0.2857142857142857,
+  "breath_cycle_ticks": 120
 }

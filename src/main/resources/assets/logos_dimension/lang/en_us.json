@@ -217,5 +217,7 @@
   "block.logos_dimension.elven_bookshelf": "Elven Bookshelf",
   "block.logos_dimension.elven_leaf_lamp": "Warm Leaflight",
   "block.logos_dimension.elven_lamp_vine": "Lantern Vine",
-  "biome.logos_dimension.elven_forest": "Elven Forest"
+  "biome.logos_dimension.elven_forest": "Elven Forest",
+  "block.logos_dimension.elven_climbing_rope": "Elven Climbing Rope",
+  "block.logos_dimension.elven_bough_light": "Bough Light"
 }

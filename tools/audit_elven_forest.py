@@ -44,13 +44,14 @@ while q:
     visited.add(name);depth=max(depth,d);q.extend((c,d+1) for c in links[name])
 assert len(visited)==343 and depth<=14,(len(visited),depth)
 # 将树心所在的底部模板还原到全局坐标，校验十格宽主通道和家具位置。
-world={}
+world={};world_states={}
 for name in visited:
     if not name.startswith('tile_'):continue
     tile=list(map(int,name.split('_')[1:]));doc=templates[name]
     for b in doc['blocks']:
         p=tuple(b['pos'][i]+tile[i]*32-[112,4,112][i] for i in range(3))
         world[p]=b.get('nbt',{}).get('final_state',doc['palette'][b['state']]['Name']).split('[')[0]
+        world_states[p]=doc['palette'][b['state']]
 for x in range(-5,6):
     for z in range(-5,6):
         if x*x+z*z>=25:continue
@@ -72,3 +73,26 @@ for name in ['elven_world_tree','elven_giant_tree']:
     assert s['type']=='minecraft:jigsaw' and s['terrain_adaptation']=='none'
     assert all(not row['spawns'] for row in s['spawn_overrides'].values())
 print(f'ELVEN_AUDIT templates={len(templates)} connected_tiles={len(visited)} depth={depth} ports={ports} models=valid central_clear_diameter=10 entities=0 soil_plinth=0')
+manifest=json.loads((D/'elven_forest_manifest.json').read_text(encoding='utf-8'))
+interior=manifest['world_tree']['interior']
+assert len(interior['floors'])==5
+for floor in interior['floors']:
+    assert world[7,floor,0] in ['logos_dimension:elven_pale_planks','logos_dimension:elven_luminous_inlay']
+    assert world[0,floor,0]=='minecraft:air',('lightwell',floor)
+for i,(x,y,z,half) in enumerate(interior['stairs']):
+    assert world[x,y,z]=='minecraft:birch_slab',('missing stair',i,x,y,z)
+    assert world_states[x,y,z]['Properties']['type']==half,('incorrect slab half',i)
+    top=y+(1 if half=='top' else .5)
+    assert top==2+i*.5,('stair rise is not half a block',i,top)
+    for head in [y+1,y+2]:assert world.get((x,head,z)) in ['minecraft:air','logos_dimension:elven_lamp_vine','logos_dimension:elven_leaf_lamp','logos_dimension:elven_bough_light'],('blocked stair',i,x,head,z,world.get((x,head,z)))
+for home in manifest['world_tree']['tree_houses']:
+    x,y,z=home['rope']
+    for height in range(y,home['rope_top']+1):assert world[x,height,z]=='logos_dimension:elven_climbing_rope',('broken rope',x,height,z)
+for giant in manifest['giants']:
+    if not giant['house']:continue
+    doc=templates[giant['template']];cells={tuple(b['pos']):doc['palette'][b['state']]['Name'] for b in doc['blocks']}
+    x,y,z=giant['house']['rope']
+    for height in range(y,giant['house']['rope_top']+1):assert cells[x,height,z]=='logos_dimension:elven_climbing_rope'
+weights=pools['giants']['elements'];home_weight=sum(row['weight'] for row in weights if row['element']['location'].endswith('_home'))
+assert abs(home_weight/sum(row['weight'] for row in weights)-2/7)<1e-9
+print(f'ELVEN_HABITATION floors=5 stairs={len(interior["stairs"])} houses=7 probability=2/7 continuous_ropes=7')

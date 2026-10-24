@@ -19,12 +19,14 @@ public final class ElvenBlocks {
     public static final DeferredBlock<Block> BOOKCASE=add("elven_bookshelf",ElvenBookshelfBlock::new,true,0);
     public static final DeferredBlock<Block> LAMP=add("elven_leaf_lamp",ElvenDecorBlock::new,true,15);
     public static final DeferredBlock<Block> VINE=add("elven_lamp_vine",ElvenDecorBlock::new,true,0);
+    public static final DeferredBlock<Block> ROPE=add("elven_climbing_rope",ElvenRopeBlock::new,true,0);
+    public static final DeferredBlock<Block> BOUGH_LIGHT=add("elven_bough_light",ElvenBoughLightBlock::new,true,10);
     private static DeferredBlock<Block> add(String name,java.util.function.Function<net.minecraft.world.level.block.state.BlockBehaviour.Properties,Block> factory,boolean open,int light){
         var block=DimensionBlocks.BLOCKS.<Block>registerBlock(name,factory,p->{
             p.mapColor(MapColor.WOOD).strength(name.equals("elven_canopy")?.2f:1.8f).sound(name.equals("elven_canopy")?SoundType.GRASS:SoundType.WOOD).lightLevel(s->light);
             if(open)p.noOcclusion();
             if(name.equals("elven_canopy"))p.randomTicks();
-            if(name.equals("elven_leaf_lamp")||name.equals("elven_lamp_vine"))p.noCollision();
+            if(name.equals("elven_leaf_lamp")||name.equals("elven_lamp_vine")||name.equals("elven_climbing_rope")||name.equals("elven_bough_light"))p.noCollision();
             return p;
         });
         DimensionBlocks.ITEMS.registerSimpleBlockItem(name,block);CloudseaBlocks.PALETTE.add(block);return block;
