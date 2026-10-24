@@ -307,7 +307,7 @@ def ordinary_assets():
 
 def biome():
     b=json.loads((D/'worldgen/biome/cloudsea_ancient_beech.json').read_text(encoding='utf-8'))
-    b['spawners']={};b['features'][9]=[NS+'trees_cloudsea_ancient_beech',NS+'woodland_floor',NS+'elven_glow_grove'];b['temperature']=.6;b['downfall']=.8
+    b['spawners']={};b['features'][9]=[NS+'trees_cloudsea_ancient_beech',NS+'elven_forest_floor',NS+'elven_glow_grove'];b['temperature']=.6;b['downfall']=.8
     write(D/'worldgen/biome/elven_forest.json',b)
     write(D/'worldgen/configured_feature/elven_glow_grove.json',{'type':'minecraft:simple_block','config':{'to_place':{'type':'minecraft:simple_state_provider','state':state('elven_bough_light')}}})
     # 原版高度投影与土壤过滤，只在精灵森林地面空位添少量固定光源。

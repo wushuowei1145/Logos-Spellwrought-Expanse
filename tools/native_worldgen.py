@@ -144,6 +144,49 @@ floor_spec=json.loads(floor_path.read_text());floor_spec['placement'][3:3]=[
     {'type':'minecraft:random_offset','xz_spread':0,'y_spread':1}]
 write(floor_path,floor_spec)
 plant_feature('meadow_floor',[('logos_dimension:journey_meadow_grass',{},65),('logos_dimension:journey_bluebell',{},8),('minecraft:oxeye_daisy',{},4)]+[('logos_dimension:journey_'+p[0],{'season':0},4) for p in plants],360)
+
+# 森林地带各群系的地表植物群落。共享的 woodland_floor / meadow_floor 保留为基准定义
+# （其它群系与旧存档仍引用它），森林地带改用各自的 <biome>_floor：同样的生成阶段与
+# 尝试次数，只把组合与权重换成本群系自己的，让林地、林隙和精灵森林各有辨识度。
+SEASONAL_BLOCKS={'journey_silver_anemone','journey_moonbell','journey_glowcap','journey_heather','journey_amber_fern','journey_winter_hellebore','journey_fireweed','journey_berry_bramble'}
+FOREST_FLOORS={
+ # 针叶组：紫丁香阶地、云根层台、杉影深林
+ 'cloudsea_lilac_steps':(640,[('logos_dimension:journey_silver_anemone',20),('logos_dimension:journey_bluebell',16),('logos_dimension:journey_woodland_fern',18),('minecraft:moss_carpet',14),('minecraft:leaf_litter',10),('logos_dimension:journey_glowcap',6),('logos_dimension:journey_stardew',2)]),
+ 'cloudsea_cloudroot_shelves':(640,[('minecraft:moss_carpet',26),('logos_dimension:journey_woodland_fern',18),('logos_dimension:journey_lumen_fern',8),('logos_dimension:journey_glowcap',8),('logos_dimension:journey_bracken',8),('logos_dimension:journey_berry_bramble',8),('minecraft:leaf_litter',8)]),
+ 'cloudsea_fir_heart':(640,[('logos_dimension:journey_bracken',26),('minecraft:moss_carpet',22),('logos_dimension:journey_berry_bramble',18),('minecraft:leaf_litter',14),('logos_dimension:journey_woodland_fern',8),('logos_dimension:journey_amber_fern',4),('logos_dimension:journey_glowcap',2),('logos_dimension:journey_lumen_fern',1)]),
+ # 白桦组：逆生庭、象牙阶地、月露白桦林
+ 'cloudsea_reverse_gardens':(640,[('logos_dimension:journey_heather',20),('logos_dimension:journey_woodland_fern',18),('logos_dimension:journey_silver_anemone',16),('minecraft:moss_carpet',16),('minecraft:leaf_litter',14)]),
+ 'cloudsea_ivory_steps':(640,[('minecraft:leaf_litter',26),('logos_dimension:journey_woodland_fern',20),('minecraft:moss_carpet',16),('logos_dimension:journey_winter_hellebore',12),('logos_dimension:journey_moonbell',8),('logos_dimension:journey_glowcap',2)]),
+ 'cloudsea_moon_birch':(640,[('logos_dimension:journey_moonbell',22),('logos_dimension:journey_winter_hellebore',16),('logos_dimension:journey_silver_anemone',16),('logos_dimension:journey_woodland_fern',14),('minecraft:moss_carpet',10),('minecraft:leaf_litter',10),('logos_dimension:journey_stardew',3),('logos_dimension:journey_amber_fern',2)]),
+ # 阔叶组：翠玉旋涡、青翠旋涡、灯焰层台、古冠山毛榉林、翳蕨密林、雾苔溪林、铜叶林丘
+ 'cloudsea_jade_whirls':(640,[('logos_dimension:journey_bracken',26),('logos_dimension:journey_woodland_fern',22),('minecraft:moss_carpet',16),('logos_dimension:journey_berry_bramble',12),('logos_dimension:journey_amber_fern',8)]),
+ 'cloudsea_verdant_whirls':(640,[('logos_dimension:journey_woodland_fern',30),('logos_dimension:journey_meadow_grass',16),('minecraft:moss_carpet',14),('logos_dimension:journey_bluebell',12),('logos_dimension:journey_berry_bramble',12),('minecraft:leaf_litter',10)]),
+ 'cloudsea_lantern_shelves':(640,[('logos_dimension:journey_glowcap',20),('minecraft:moss_carpet',18),('logos_dimension:journey_woodland_fern',16),('logos_dimension:journey_lumen_fern',14),('minecraft:leaf_litter',10),('logos_dimension:journey_stardew',6),('logos_dimension:journey_amber_fern',4)]),
+ 'cloudsea_ancient_beech':(640,[('minecraft:leaf_litter',30),('minecraft:moss_carpet',16),('logos_dimension:journey_woodland_fern',12),('logos_dimension:journey_berry_bramble',8),('logos_dimension:journey_bracken',6),('logos_dimension:journey_glowcap',2),('logos_dimension:journey_amber_fern',2),('logos_dimension:journey_stardew',1)]),
+ 'cloudsea_fernwood':(640,[('logos_dimension:journey_woodland_fern',44),('logos_dimension:journey_bracken',20),('minecraft:leaf_litter',10),('minecraft:moss_carpet',8),('logos_dimension:journey_amber_fern',6),('logos_dimension:journey_berry_bramble',4),('logos_dimension:journey_glowcap',2),('logos_dimension:journey_lumen_fern',1)]),
+ 'cloudsea_moss_vale':(640,[('minecraft:moss_carpet',38),('logos_dimension:journey_glowcap',12),('logos_dimension:journey_woodland_fern',12),('minecraft:leaf_litter',12),('logos_dimension:journey_lumen_fern',8),('logos_dimension:journey_berry_bramble',4),('logos_dimension:journey_bracken',4),('logos_dimension:journey_stardew',3)]),
+ 'cloudsea_copper_copse':(640,[('logos_dimension:journey_heather',24),('minecraft:leaf_litter',22),('logos_dimension:journey_berry_bramble',20),('logos_dimension:journey_woodland_fern',12),('logos_dimension:journey_amber_fern',8),('minecraft:moss_carpet',8),('logos_dimension:journey_bracken',4),('logos_dimension:journey_stardew',1)]),
+ # 林隙：曦光林隙、星铃花甸（保留草甸的 360 次预算，只换组合）
+ 'cloudsea_sunlit_glade':(360,[('logos_dimension:journey_meadow_grass',50),('minecraft:oxeye_daisy',12),('logos_dimension:journey_bluebell',10),('logos_dimension:journey_silver_anemone',8),('logos_dimension:journey_heather',5),('logos_dimension:journey_fireweed',6),('logos_dimension:journey_glowcap',3),('logos_dimension:journey_stardew',2)]),
+ 'cloudsea_starflower_glade':(360,[('logos_dimension:journey_silver_anemone',26),('logos_dimension:journey_moonbell',22),('logos_dimension:journey_meadow_grass',22),('logos_dimension:journey_bluebell',16),('logos_dimension:journey_glowcap',6),('logos_dimension:journey_stardew',3)]),
+ # 精灵森林：星露草与萤灯蕨为主，配合铃兰、银星莲与苔
+ 'elven_forest':(640,[('logos_dimension:journey_stardew',20),('logos_dimension:journey_lumen_fern',16),('logos_dimension:journey_silver_anemone',14),('logos_dimension:journey_moonbell',12),('minecraft:moss_carpet',12),('logos_dimension:journey_woodland_fern',10),('logos_dimension:journey_glowcap',10),('minecraft:leaf_litter',6)]),
+}
+def floor_entries(pairs):
+    entries=[]
+    for block,weight in pairs:
+        short=block.split(':')[-1]
+        entries.append((block,{'season':0} if short in SEASONAL_BLOCKS else {},weight))
+    return entries
+def forest_floor(name,entries,count):
+    plant_feature(name,entries,count)
+    path=D/'worldgen/placed_feature'/f'{name}.json';spec=json.loads(path.read_text(encoding='utf-8'))
+    spec['placement'][3:3]=[
+        {'type':'minecraft:environment_scan','direction_of_search':'down','max_steps':32,'target_condition':{'type':'minecraft:matching_block_tag','tag':'minecraft:dirt'}},
+        {'type':'minecraft:random_offset','xz_spread':0,'y_spread':1}]
+    write(path,spec)
+for bid,(count,pairs) in FOREST_FLOORS.items():
+    forest_floor(bid+'_floor',floor_entries(pairs),count)
 for bid in ids:
     data=json.loads((D/'worldgen/biome'/f'{bid}.json').read_text());features=[[] for _ in range(11)]
     if bid not in barren:
@@ -153,7 +196,7 @@ for bid in ids:
         config['trunk_provider']=provider('logos_dimension:'+bid+'_log',axis='y')
         if config['foliage_placer']['type']=='minecraft:blob_foliage_placer':config['foliage_placer']['radius']=3
         configured('trees_'+bid,tree);placed('trees_'+bid,'trees_'+bid,12 if bid in forests else 0 if bid in glades else 1,'OCEAN_FLOOR_WG')
-        features[9]=['logos_dimension:trees_'+bid,'logos_dimension:woodland_floor' if bid in forests else 'logos_dimension:meadow_floor']
+        features[9]=['logos_dimension:trees_'+bid,'logos_dimension:'+(bid+'_floor' if bid in FOREST_FLOORS else 'meadow_floor')]
     data['features']=features;write(D/'worldgen/biome'/f'{bid}.json',data)
 for bid in ['aether','sulfur','mercury','salt','sanctum']:
     data=json.loads((D/'worldgen/biome'/f'{bid}.json').read_text());data['carvers']=['minecraft:cave','minecraft:canyon'];data['features']=[[] for _ in range(11)]

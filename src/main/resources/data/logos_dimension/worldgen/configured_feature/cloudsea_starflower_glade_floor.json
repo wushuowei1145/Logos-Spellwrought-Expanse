@@ -1,0 +1,55 @@
+{
+  "type": "minecraft:simple_block",
+  "config": {
+    "to_place": {
+      "type": "minecraft:weighted_state_provider",
+      "entries": [
+        {
+          "data": {
+            "Name": "logos_dimension:journey_silver_anemone",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 26
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_moonbell",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 22
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_meadow_grass"
+          },
+          "weight": 22
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_bluebell"
+          },
+          "weight": 16
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_glowcap",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 6
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_stardew"
+          },
+          "weight": 3
+        }
+      ]
+    }
+  }
+}

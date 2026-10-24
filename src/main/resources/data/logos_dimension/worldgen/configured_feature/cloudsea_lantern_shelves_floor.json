@@ -1,0 +1,58 @@
+{
+  "type": "minecraft:simple_block",
+  "config": {
+    "to_place": {
+      "type": "minecraft:weighted_state_provider",
+      "entries": [
+        {
+          "data": {
+            "Name": "logos_dimension:journey_glowcap",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 20
+        },
+        {
+          "data": {
+            "Name": "minecraft:moss_carpet"
+          },
+          "weight": 18
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_woodland_fern"
+          },
+          "weight": 16
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_lumen_fern"
+          },
+          "weight": 14
+        },
+        {
+          "data": {
+            "Name": "minecraft:leaf_litter"
+          },
+          "weight": 10
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_stardew"
+          },
+          "weight": 6
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_amber_fern",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 4
+        }
+      ]
+    }
+  }
+}
