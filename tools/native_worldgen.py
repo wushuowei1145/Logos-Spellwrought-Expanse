@@ -206,6 +206,20 @@ def fallen_tree(name,log):
         {'type':'minecraft:biome'}]})
 for bid in sorted(forests):
     fallen_tree('fallen_tree_'+bid,bid+'_log')
+
+# 林地地下：荧光苔。用原版 multiface_growth，只长在地表以下 13 格以下的洞壁上。
+# 一份特征被 13 个林地共用，不按群系拆分，避免再多出十几份几乎相同的文件。
+CAVERN_BLOCKS=['minecraft:stone','minecraft:deepslate','logos_dimension:journey_limestone','logos_dimension:island_stone','logos_dimension:strata_stone']
+configured('forest_cave_lichen',{'type':'minecraft:multiface_growth','config':{
+    'block':'minecraft:glow_lichen','can_be_placed_on':CAVERN_BLOCKS,
+    'can_place_on_ceiling':True,'can_place_on_floor':False,'can_place_on_wall':True,
+    'chance_of_spreading':.5,'search_range':20}})
+write(D/'worldgen/placed_feature/forest_cave_lichen.json',{'feature':'logos_dimension:forest_cave_lichen','placement':[
+    {'type':'minecraft:count','count':{'type':'minecraft:uniform','max_inclusive':48,'min_inclusive':24}},
+    {'type':'minecraft:height_range','height':{'type':'minecraft:uniform','max_inclusive':{'absolute':96},'min_inclusive':{'above_bottom':0}}},
+    {'type':'minecraft:in_square'},
+    {'type':'minecraft:surface_relative_threshold_filter','heightmap':'OCEAN_FLOOR_WG','max_inclusive':-13},
+    {'type':'minecraft:biome'}]})
 for bid in ids:
     data=json.loads((D/'worldgen/biome'/f'{bid}.json').read_text());features=[[] for _ in range(11)]
     if bid not in barren:
@@ -217,6 +231,8 @@ for bid in ids:
         configured('trees_'+bid,tree);placed('trees_'+bid,'trees_'+bid,12 if bid in forests else 0 if bid in glades else 1,'OCEAN_FLOOR_WG')
         features[9]=['logos_dimension:trees_'+bid,'logos_dimension:'+(bid+'_floor' if bid in FOREST_FLOORS else 'meadow_floor')]
         if bid in forests:features[9].append('logos_dimension:fallen_tree_'+bid)
+        # 洞穴荧光苔放在地下装饰阶段；只给有树的林地。
+        if bid in forests:features[7].append('logos_dimension:forest_cave_lichen')
     data['features']=features;write(D/'worldgen/biome'/f'{bid}.json',data)
 for bid in ['aether','sulfur','mercury','salt','sanctum']:
     data=json.loads((D/'worldgen/biome'/f'{bid}.json').read_text());data['carvers']=['minecraft:cave','minecraft:canyon'];data['features']=[[] for _ in range(11)]

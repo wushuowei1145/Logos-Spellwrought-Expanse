@@ -22,7 +22,9 @@
     [],
     [],
     [],
-    [],
+    [
+      "logos_dimension:forest_cave_lichen"
+    ],
     [],
     [
       "logos_dimension:trees_cloudsea_ancient_beech",
