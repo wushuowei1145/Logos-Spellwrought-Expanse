@@ -233,6 +233,9 @@ for bid in ids:
         if bid in forests:features[9].append('logos_dimension:fallen_tree_'+bid)
         # 洞穴荧光苔放在地下装饰阶段；只给有树的林地。
         if bid in forests:features[7].append('logos_dimension:forest_cave_lichen')
+        # 水边：直接引用原版的水边特征（甘蔗与睡莲），它们自带"必须挨着水"的判定，
+        # 所以在没有水的地方什么都不会发生，不必为附属另写一套。
+        if bid in forests:features[9].extend(['minecraft:patch_sugar_cane','minecraft:patch_waterlily'])
     data['features']=features;write(D/'worldgen/biome'/f'{bid}.json',data)
 for bid in ['aether','sulfur','mercury','salt','sanctum']:
     data=json.loads((D/'worldgen/biome'/f'{bid}.json').read_text());data['carvers']=['minecraft:cave','minecraft:canyon'];data['features']=[[] for _ in range(11)]

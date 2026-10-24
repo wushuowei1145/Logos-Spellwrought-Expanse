@@ -30,7 +30,9 @@
       "logos_dimension:trees_cloudsea_ancient_beech",
       "logos_dimension:elven_forest_floor",
       "logos_dimension:fallen_tree_cloudsea_ancient_beech",
-      "logos_dimension:elven_glow_grove"
+      "logos_dimension:elven_glow_grove",
+      "minecraft:patch_sugar_cane",
+      "minecraft:patch_waterlily"
     ],
     []
   ],
