@@ -31,3 +31,11 @@ type="required"
 versionRange="[0.5.0,)"
 ordering="AFTER"
 side="BOTH"
+
+[[dependencies.logos_dimension]]
+modId="geckolib"
+type="required"
+reason="NPC 模型渲染（车万女仆骨架规范）"
+versionRange="[5.5.2,)"
+ordering="AFTER"
+side="BOTH"
