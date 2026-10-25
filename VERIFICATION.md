@@ -2,6 +2,34 @@
 
 目标环境：Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25；Logos 0.5.1，主模组源码基线 `f196960`。当前开发安装包为 0.11.0。原炼金维度不包含建筑或 Boss；远行大陆包含中世纪聚落、精灵森林与世界树，不包含 Boss。
 
+## 0.11.0 森林地带的四层补充（地被 / 地物 / 水边 / 地下 / 雾）
+
+2026-10-25：森林地带从"只换树"改成四层结构，另加一层只覆盖四个群系的雾。全部数据包实现，无 Java 地形、种树或填块生成器，无新增方块。结构与边界见 [森林地带的四层结构](docs/FOREST_LAYERS.md)。
+
+- **地被**：16 个森林群系各有自己的 `<biome>_floor`，林地每区块 640 次、林隙 360 次，与共享层同预算；只用既有 19 种地生植物与原版苔毯/落叶/雏菊。
+- **倒木**：13 个林地各一份原版 `fallen_tree`，树干取本群系原木，长度 4–7、稀疏 1/6。
+- **岩石露头**：13 个林地共用原版 `block_pile` + `journey_limestone`，稀疏 1/8。
+- **水边**：13 个林地与精灵森林引用原版 `patch_sugar_cane` / `patch_waterlily`，零新增文件。
+- **地下**：13 个林地共用原版 `multiface_growth` + `glow_lichen`，地表以下 13 格以下，每区块 104–157 次。
+- **雾**：仅翳蕨密林、雾苔溪林、杉影深林、精灵森林；只改 `fog_color` / `water_fog_color`，**不动天空**，客户端 `ForestMist` 平滑过渡。
+
+验证：最终 **41/41 单元**通过（新增 5 个森林数据测试类、共 16 项断言）；**50/50 GameTest** 通过（新增 `fallen_log_placement`，断言倒木真的倒下）。雾的客户端场景 `group:elven_forest` 为 3/3 场景、15/15 检查通过，并人工查看了精灵森林与翳蕨密林的雾色截图。
+
+过程中的两个真实问题记录在案：`fallen_tree` 的 `log_length` 一开始写成 `{"type":"uniform","value":{...}}`，注册表直接报 `Not a number`，改成扁平写法才对；荧光苔最初密度 24–48 次/区块，扫描 80×80 找不到一块，改成原版档位后才稳定出现。
+
+没有验证的部分：自然林地的前后对照截图（取景随区块随机数变化，像素差不能当作地表差异的证据）、洞穴取景（传送进洞会被碰撞推到地表）、第三方光影、硬件帧率。所有内容只在新生成区块生效，旧区块不重建。
+
+```text
+python tools/native_worldgen.py
+python tools/tall_trees.py
+python tools/grape_resources.py
+python tools/magic_flora.py
+python tools/berry_resources.py
+python tools/elven_forest.py
+./gradlew test runGameTestServer build -PlogosJar=/absolute/path/logos-0.5.1.jar
+./gradlew runClient -PlogosJar=/absolute/path/logos-0.5.1.jar -PldTest=group:elven_forest -PldTestHeadless -PldTestWindow=1600x900
+```
+
 ## 0.11.0 精灵树屋、旋转回廊与呼吸光
 
 2026-10-24：五种巨木增加带屋变体，带屋与无屋权重为 2:5，平均每 3.5 棵巨木一间屋；世界树外围固定两间，针阔叶采用不同木材与屋顶。新增悬挂绳梯、枝间叶辉、五层回廊、三格宽旋转楼梯和有限范围的同步呼吸光。全部新增贴图、模型和软件预览由代码制作。与远程 main `72b8ba7` 整合，保留其 NPC 渲染与发光骨骼更新；没有改动 Logos 本体或混入之前未提交的前置对齐改动。
