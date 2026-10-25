@@ -233,6 +233,30 @@ write(D/'worldgen/placed_feature/forest_cave_moss.json',{'feature':'logos_dimens
     {'type':'minecraft:block_predicate_filter','predicate':{'type':'minecraft:matching_blocks','blocks':['minecraft:air']}},
     {'type':'minecraft:biome'}]})
 
+# 林地蘑菇：每种一份 simple_block 特征，按群系分配到植被阶段。
+# 稀有度分开：食用的三种常见，有毒的三种稀有；位置仍走原版的高度图 + 空中 + 可存活判定。
+MUSHROOM_BIOMES={
+ 'journey_field_mushroom':(24,14,['cloudsea_ancient_beech','cloudsea_verdant_whirls','cloudsea_jade_whirls','cloudsea_sunlit_glade','cloudsea_starflower_glade']),
+ 'journey_chanterelle':(32,10,['cloudsea_moon_birch','cloudsea_ivory_steps','cloudsea_reverse_gardens','cloudsea_ancient_beech']),
+ 'journey_bolete':(32,10,['cloudsea_fir_heart','cloudsea_cloudroot_shelves','cloudsea_lilac_steps','cloudsea_moss_vale']),
+ 'journey_fly_agaric':(96,5,['cloudsea_moon_birch','cloudsea_fir_heart','cloudsea_ivory_steps']),
+ 'journey_death_cap':(128,4,['cloudsea_moss_vale','cloudsea_fernwood']),
+ 'journey_false_chanterelle':(96,5,['cloudsea_copper_copse','cloudsea_ancient_beech'])}
+MUSHROOM_FOR={}
+for name,(chance,count,biome_ids) in MUSHROOM_BIOMES.items():
+    configured(name,{'type':'minecraft:simple_block','config':{'to_place':{'type':'minecraft:simple_state_provider',
+        'state':state('logos_dimension:'+name)}}})
+    write(D/'worldgen/placed_feature'/f'{name}.json',{'feature':'logos_dimension:'+name,'placement':[
+        {'type':'minecraft:rarity_filter','chance':chance},
+        {'type':'minecraft:in_square'},
+        {'type':'minecraft:heightmap','heightmap':'MOTION_BLOCKING_NO_LEAVES'},
+        {'type':'minecraft:biome'},
+        {'type':'minecraft:count','count':count},
+        {'type':'minecraft:random_offset','xz_spread':{'type':'minecraft:trapezoid','max':5,'min':-5,'plateau':0},'y_spread':{'type':'minecraft:trapezoid','max':1,'min':-1,'plateau':0}},
+        {'type':'minecraft:block_predicate_filter','predicate':{'type':'minecraft:matching_block_tag','tag':'minecraft:air'}},
+        {'type':'minecraft:block_predicate_filter','predicate':{'type':'minecraft:would_survive','state':state('logos_dimension:'+name)}}]})
+    for bid in biome_ids:MUSHROOM_FOR.setdefault(bid,[]).append('logos_dimension:'+name)
+
 # 林地岩石露头：原版 block_pile，用本附属的石灰岩堆成一小簇。
 # 一份特征被 13 个林地共用；非林地不加，避免整片大陆到处冒石头。
 configured('forest_rock_outcrop',{'type':'minecraft:block_pile','config':{
@@ -255,6 +279,8 @@ for bid in ids:
         configured('trees_'+bid,tree);placed('trees_'+bid,'trees_'+bid,12 if bid in forests else 0 if bid in glades else 1,'OCEAN_FLOOR_WG')
         features[9]=['logos_dimension:trees_'+bid,'logos_dimension:'+(bid+'_floor' if bid in FOREST_FLOORS else 'meadow_floor')]
         if bid in forests:features[9].append('logos_dimension:fallen_tree_'+bid)
+        # 蘑菇：按群系各自分配（食用常见、有毒稀有）。
+        features[9].extend(MUSHROOM_FOR.get(bid,[]))
         # 洞穴荧光苔放在地下装饰阶段；只给有树的林地。
         if bid in forests:features[7].extend(['logos_dimension:forest_cave_lichen','logos_dimension:forest_cave_moss'])
         # 水边：直接引用原版的水边特征（甘蔗与睡莲），它们自带"必须挨着水"的判定，
