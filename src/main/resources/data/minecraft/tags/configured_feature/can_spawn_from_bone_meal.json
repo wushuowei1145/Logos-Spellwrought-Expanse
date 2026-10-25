@@ -1,0 +1,23 @@
+{
+  "replace": false,
+  "values": [
+    "logos_dimension:meadow_floor",
+    "logos_dimension:woodland_floor",
+    "logos_dimension:cloudsea_lilac_steps_floor",
+    "logos_dimension:cloudsea_cloudroot_shelves_floor",
+    "logos_dimension:cloudsea_fir_heart_floor",
+    "logos_dimension:cloudsea_reverse_gardens_floor",
+    "logos_dimension:cloudsea_ivory_steps_floor",
+    "logos_dimension:cloudsea_moon_birch_floor",
+    "logos_dimension:cloudsea_jade_whirls_floor",
+    "logos_dimension:cloudsea_verdant_whirls_floor",
+    "logos_dimension:cloudsea_lantern_shelves_floor",
+    "logos_dimension:cloudsea_ancient_beech_floor",
+    "logos_dimension:cloudsea_fernwood_floor",
+    "logos_dimension:cloudsea_moss_vale_floor",
+    "logos_dimension:cloudsea_copper_copse_floor",
+    "logos_dimension:cloudsea_sunlit_glade_floor",
+    "logos_dimension:cloudsea_starflower_glade_floor",
+    "logos_dimension:elven_forest_floor"
+  ]
+}
