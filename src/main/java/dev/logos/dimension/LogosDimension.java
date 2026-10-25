@@ -69,6 +69,7 @@ public final class LogosDimension {
         bus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
                 event.registrar("1").playToClient(dev.logos.dimension.net.HauntPayload.TYPE, dev.logos.dimension.net.HauntPayload.CODEC));
         NeoForge.EVENT_BUS.addListener(DimensionCommands::register);
+        NeoForge.EVENT_BUS.addListener(dev.logos.dimension.wind.WindCommands::register);
         NeoForge.EVENT_BUS.addListener(IslandSanctum::placement);
         NeoForge.EVENT_BUS.addListener(IslandSanctum::position);
         NeoForge.EVENT_BUS.addListener(UnderIslandHaunt::tick);
