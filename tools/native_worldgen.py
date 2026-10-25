@@ -188,6 +188,14 @@ def forest_floor(name,entries,count):
 for bid,(count,pairs) in FOREST_FLOORS.items():
     forest_floor(bid+'_floor',floor_entries(pairs),count)
 
+# 平原群系的地表组合：与林地分开维护，一个一个群系做，避免一次改完分不清哪个
+# 群系的地表出了问题。长风草原以"风里的长草"为主：长草压过其它，野花只作点缀。
+PLAINS_FLOORS={
+ 'cloudsea_silk_folds':(420,[('logos_dimension:journey_meadow_grass',46),('minecraft:short_grass',18),('logos_dimension:journey_meadow_grass_young',10),('minecraft:oxeye_daisy',7),('logos_dimension:journey_fireweed',6),('logos_dimension:journey_silver_anemone',5),('logos_dimension:journey_heather',4)]),
+}
+for bid,(count,pairs) in PLAINS_FLOORS.items():
+    forest_floor(bid+'_floor',floor_entries(pairs),count)
+
 # 倒木：用原版 minecraft:fallen_tree，树干取所在群系自己的原木。
 # 林地面积大、树多，倒木本来就该常见；沙丘、尖塔等非林地不加。
 def fallen_tree(name,log):
@@ -277,7 +285,7 @@ for bid in ids:
         config['trunk_provider']=provider('logos_dimension:'+bid+'_log',axis='y')
         if config['foliage_placer']['type']=='minecraft:blob_foliage_placer':config['foliage_placer']['radius']=3
         configured('trees_'+bid,tree);placed('trees_'+bid,'trees_'+bid,12 if bid in forests else 0 if bid in glades else 1,'OCEAN_FLOOR_WG')
-        features[9]=['logos_dimension:trees_'+bid,'logos_dimension:'+(bid+'_floor' if bid in FOREST_FLOORS else 'meadow_floor')]
+        features[9]=['logos_dimension:trees_'+bid,'logos_dimension:'+(bid+'_floor' if bid in FOREST_FLOORS or bid in PLAINS_FLOORS else 'meadow_floor')]
         if bid in forests:features[9].append('logos_dimension:fallen_tree_'+bid)
         # 蘑菇：按群系各自分配（食用常见、有毒稀有）。
         # 洞穴荧光苔放在地下装饰阶段；只给有树的林地。
