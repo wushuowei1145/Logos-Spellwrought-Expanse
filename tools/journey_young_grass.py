@@ -1,8 +1,11 @@
-"""原野牧草的幼年体贴图与模型（代码绘制，不使用图像生成服务）。
+"""幼年原野牧草的贴图与模型（代码绘制，不使用图像生成服务）。
 
-幼年体是独立方块 ``journey_meadow_grass_young``：叶片更少更矮、颜色更嫩，
-带 ``age`` 属性（0–2），光照足够时自己长大，长到 2 之后变成成年原野牧草；
-撒骨粉会直接催熟一档。所以衰退符文按 age 逐级倒退，不会一刀切掉。
+形状直接照原版草（``minecraft:short_grass``）：16×16 的短草剪影，几片细叶从底部升起、
+高矮不一，用原版 ``block/cross`` 交叉面片，不做底面草根片、不做自定义几何。
+颜色仍是本维度的绿，不套原版草的颜色表（云海没有那张图）。
+
+幼年体是独立方块 ``journey_meadow_grass_young``，带 ``age``（0–2）：
+光照足够自己长，长满后换成成年原野牧草；撒骨粉催熟一档。
 
 用法：python tools/journey_young_grass.py
 """
@@ -10,7 +13,7 @@ from pathlib import Path
 import json
 import random
 
-from PIL import Image, ImageDraw
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 A = ROOT / "src/main/resources/assets/logos_dimension"
@@ -18,7 +21,7 @@ D = ROOT / "src/main/resources/data/logos_dimension"
 TAG = ROOT / "src/main/resources/data/logos/tags/block/fragile_plants.json"
 
 NAME = "journey_meadow_grass_young"
-MAT_NAME = "journey_meadow_grass_young_mat"
+PALETTE = ["#5c7a3f", "#6f8f4b", "#82a257", "#93b062"]
 
 
 def write(path, obj):
@@ -26,68 +29,46 @@ def write(path, obj):
     path.write_text(json.dumps(obj, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def draw_young():
-    """幼年牧草：三五根短叶，颜色比成年体嫩，根部一点土色。"""
-    im = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
-    q = ImageDraw.Draw(im)
+def draw_grass():
+    """照原版 short_grass 的形状画：底部一撮，5 片细叶，左右错开、高矮不一。"""
+    im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+    px = im.load()
     rng = random.Random("young_meadow_grass")
-    greens = ["#7d9a58", "#8fae66", "#6d8a4c"]
-    # 先铺一小片根部，让草看起来是成丛的。
-    for n in range(90):
-        x = rng.randrange(6, 27)
-        y = rng.randrange(26, 32)
-        q.point((x, y), fill=rng.choice(["#5f7a42", "#6f8a4d", "#7d9a58"]))
-    # 五片短叶：中间最高，两侧渐矮，叶尖向外偏。
-    blades = [(11, 20, -2), (15, 16, -1), (18, 14, 1), (22, 19, 2), (13, 23, -3)]
+
+    def put(x, y, color):
+        if 0 <= x < 16 and 0 <= y < 16:
+            px[x, y] = tuple(bytes.fromhex(color.lstrip("#"))) + (255,)
+
+    # 叶根：底部两行铺一层杂乱草根，和原版草一样不悬空。
+    for y in (14, 15):
+        for x in range(16):
+            if rng.random() < 0.78:
+                put(x, y, rng.choice(PALETTE[1:]))
+
+    # 叶片：从底部向上收窄，顶端偏移，模拟原版草那种自然弯曲。
+    blades = [(5, 6, -1), (7, 3, 0), (9, 4, 1), (11, 7, 2), (13, 9, 1)]
     for x, top, bend in blades:
-        q.line((x, 31, x, top), fill=greens[0], width=2)
-        q.line((x, 31, x + bend, top + 1), fill=greens[1], width=1)
-        q.point((x + bend, top), fill=greens[2])
-    return im
-
-
-def draw_mat():
-    """脚下的小片草根，铺在方块底面，避免幼草看起来悬空。"""
-    im = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
-    q = ImageDraw.Draw(im)
-    rng = random.Random("young_meadow_mat")
-    for n in range(230):
-        x = rng.randrange(32)
-        y = rng.randrange(32)
-        q.line((x, y, x + 1, y - 2), fill=rng.choice(["#6d8a4c", "#7d9a58", "#8fae66"]), width=1)
+        for y in range(15, top - 1, -1):
+            t = (15 - y) / max(1, 15 - top)
+            dx = int(round(bend * t))
+            put(x + dx, y, PALETTE[0] if (y + x) % 3 else PALETTE[2])
+            if t < 0.6:
+                put(x + dx - 1, y, PALETTE[1])
+        # 叶尖提亮一像素。
+        put(x + bend, top, PALETTE[3])
     return im
 
 
 def main():
-    tex = draw_young()
+    tex = draw_grass()
     png = A / "textures/block" / f"{NAME}.png"
     png.parent.mkdir(parents=True, exist_ok=True)
     tex.save(png)
-    mat = A / "textures/block" / f"{MAT_NAME}.png"
-    draw_mat().save(mat)
 
-    # 模型：三片短叶交叉 + 底面草根，高度只有成年牧草的一半左右。
-    elements = [
-        {"from": [6, 0, 8], "to": [26, 7, 8],
-         "faces": {"north": {"texture": "#plant", "uv": [0, 0, 16, 16]},
-                   "south": {"texture": "#plant", "uv": [0, 0, 16, 16]}}},
-        {"from": [8, 0, 6], "to": [8, 9, 26],
-         "faces": {"east": {"texture": "#plant", "uv": [0, 0, 16, 16]},
-                   "west": {"texture": "#plant", "uv": [0, 0, 16, 16]}}},
-        {"from": [4, 0, 4], "to": [28, 6, 28], "rotation": {"axis": "y", "angle": 45, "origin": [16, 0, 16]},
-         "faces": {"north": {"texture": "#plant", "uv": [0, 0, 16, 16]},
-                   "south": {"texture": "#plant", "uv": [0, 0, 16, 16]}}},
-        {"from": [0, 0.15, 0], "to": [16, 0.15, 16],
-         "faces": {"up": {"texture": "#mat", "uv": [0, 0, 16, 16]},
-                   "down": {"texture": "#mat", "uv": [0, 0, 16, 16]}}},
-    ]
+    # 模型直接抄原版 short_grass：block/cross 两片交叉面片。
     write(A / "models/block" / f"{NAME}.json",
-          {"parent": "minecraft:block/block", "ambientocclusion": False,
-           "render_type": "neoforge:cutout",
-           "textures": {"particle": f"logos_dimension:block/{NAME}",
-                        "plant": f"logos_dimension:block/{NAME}",
-                        "mat": f"logos_dimension:block/{MAT_NAME}"},
-           "elements": elements})
+          {"parent": "minecraft:block/cross", "render_type": "neoforge:cutout",
+           "textures": {"cross": f"logos_dimension:block/{NAME}"}})
     # 三个生长阶段共用同一模型；年龄只影响行为，观感靠成年体区分。
     write(A / "blockstates" / f"{NAME}.json",
           {"variants": {f"age={age}": {"model": f"logos_dimension:block/{NAME}"} for age in range(3)}})
@@ -111,7 +92,11 @@ def main():
     if f"logos_dimension:{NAME}" not in tag["values"]:
         tag["values"].append(f"logos_dimension:{NAME}")
     TAG.write_text(json.dumps(tag, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print("幼年原野牧草：贴图 / 草根 / 模型 / 三个年龄的方块状态 / 物品模型 / 掉落表 / 语言 / fragile_plants")
+    # 旧的草根底片不再使用，删掉免得留孤儿贴图。
+    orphan = A / "textures/block" / "journey_meadow_grass_young_mat.png"
+    if orphan.exists():
+        orphan.unlink()
+    print("幼年原野牧草：原版草形状的 16×16 贴图 / block/cross 模型 / 方块状态 / 物品模型 / 掉落表 / 语言 / fragile_plants")
 
 
 if __name__ == "__main__":
