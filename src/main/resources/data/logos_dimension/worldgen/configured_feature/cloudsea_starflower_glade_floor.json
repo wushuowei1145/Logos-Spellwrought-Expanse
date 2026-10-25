@@ -6,6 +6,12 @@
       "entries": [
         {
           "data": {
+            "Name": "logos_dimension:journey_meadow_grass_young"
+          },
+          "weight": 16
+        },
+        {
+          "data": {
             "Name": "logos_dimension:journey_silver_anemone",
             "Properties": {
               "season": "0"

@@ -143,7 +143,7 @@ floor_spec=json.loads(floor_path.read_text());floor_spec['placement'][3:3]=[
     {'type':'minecraft:environment_scan','direction_of_search':'down','max_steps':32,'target_condition':{'type':'minecraft:matching_block_tag','tag':'minecraft:dirt'}},
     {'type':'minecraft:random_offset','xz_spread':0,'y_spread':1}]
 write(floor_path,floor_spec)
-plant_feature('meadow_floor',[('logos_dimension:journey_meadow_grass',{},65),('logos_dimension:journey_bluebell',{},8),('minecraft:oxeye_daisy',{},4)]+[('logos_dimension:journey_'+p[0],{'season':0},4) for p in plants],360)
+plant_feature('meadow_floor',[('logos_dimension:journey_meadow_grass',{},65),('logos_dimension:journey_meadow_grass_young',{},12),('logos_dimension:journey_bluebell',{},8),('minecraft:oxeye_daisy',{},4)]+[('logos_dimension:journey_'+p[0],{'season':0},4) for p in plants],360)
 
 # 森林地带各群系的地表植物群落。共享的 woodland_floor / meadow_floor 保留为基准定义
 # （其它群系与旧存档仍引用它），森林地带改用各自的 <biome>_floor：同样的生成阶段与
@@ -167,8 +167,8 @@ FOREST_FLOORS={
  'cloudsea_moss_vale':(640,[('minecraft:moss_carpet',38),('logos_dimension:journey_glowcap',12),('logos_dimension:journey_woodland_fern',12),('minecraft:leaf_litter',12),('logos_dimension:journey_lumen_fern',8),('logos_dimension:journey_berry_bramble',4),('logos_dimension:journey_bracken',4),('logos_dimension:journey_stardew',3)]),
  'cloudsea_copper_copse':(640,[('logos_dimension:journey_heather',24),('minecraft:leaf_litter',22),('logos_dimension:journey_berry_bramble',20),('logos_dimension:journey_woodland_fern',12),('logos_dimension:journey_amber_fern',8),('minecraft:moss_carpet',8),('logos_dimension:journey_bracken',4),('logos_dimension:journey_stardew',1)]),
  # 林隙：曦光林隙、星铃花甸（保留草甸的 360 次预算，只换组合）
- 'cloudsea_sunlit_glade':(360,[('logos_dimension:journey_meadow_grass',50),('minecraft:oxeye_daisy',12),('logos_dimension:journey_bluebell',10),('logos_dimension:journey_silver_anemone',8),('logos_dimension:journey_heather',5),('logos_dimension:journey_fireweed',6),('logos_dimension:journey_glowcap',3),('logos_dimension:journey_stardew',2)]),
- 'cloudsea_starflower_glade':(360,[('logos_dimension:journey_silver_anemone',26),('logos_dimension:journey_moonbell',22),('logos_dimension:journey_meadow_grass',22),('logos_dimension:journey_bluebell',16),('logos_dimension:journey_glowcap',6),('logos_dimension:journey_stardew',3)]),
+ 'cloudsea_sunlit_glade':(360,[('logos_dimension:journey_meadow_grass',50),('logos_dimension:journey_meadow_grass_young',14),('minecraft:oxeye_daisy',12),('logos_dimension:journey_bluebell',10),('logos_dimension:journey_silver_anemone',8),('logos_dimension:journey_heather',5),('logos_dimension:journey_fireweed',6),('logos_dimension:journey_glowcap',3),('logos_dimension:journey_stardew',2)]),
+ 'cloudsea_starflower_glade':(360,[('logos_dimension:journey_meadow_grass_young',16),('logos_dimension:journey_silver_anemone',26),('logos_dimension:journey_moonbell',22),('logos_dimension:journey_meadow_grass',22),('logos_dimension:journey_bluebell',16),('logos_dimension:journey_glowcap',6),('logos_dimension:journey_stardew',3)]),
  # 精灵森林：星露草与萤灯蕨为主，配合铃兰、银星莲与苔
  'elven_forest':(640,[('logos_dimension:journey_stardew',20),('logos_dimension:journey_lumen_fern',16),('logos_dimension:journey_silver_anemone',14),('logos_dimension:journey_moonbell',12),('minecraft:moss_carpet',12),('logos_dimension:journey_woodland_fern',10),('logos_dimension:journey_glowcap',10),('minecraft:leaf_litter',6)]),
 }
