@@ -219,5 +219,8 @@
   "block.logos_dimension.elven_lamp_vine": "Lantern Vine",
   "biome.logos_dimension.elven_forest": "Elven Forest",
   "block.logos_dimension.elven_climbing_rope": "Elven Climbing Rope",
-  "block.logos_dimension.elven_bough_light": "Bough Light"
+  "block.logos_dimension.elven_bough_light": "Bough Light",
+  "block.logos_dimension.journey_field_mushroom": "Field Mushroom",
+  "block.logos_dimension.journey_chanterelle": "Chanterelle",
+  "block.logos_dimension.journey_bolete": "Bolete"
 }

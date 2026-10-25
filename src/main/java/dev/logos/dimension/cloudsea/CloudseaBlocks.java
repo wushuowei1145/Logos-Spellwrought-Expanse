@@ -31,6 +31,9 @@ public final class CloudseaBlocks {
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> GRAPES=DimensionBlocks.ITEMS.registerSimpleItem("journey_grapes",p->p.food(new net.minecraft.world.food.FoodProperties.Builder().nutrition(2).saturationModifier(.2f).build()));
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> GRAPE_LEAF=DimensionBlocks.ITEMS.registerSimpleItem("journey_grape_leaf");
     public static final DeferredBlock<Block> ANEMONE=seasonal("journey_silver_anemone"),MOONBELL=seasonal("journey_moonbell"),GLOWCAP=seasonalFood("journey_glowcap",2,.15f),HEATHER=seasonal("journey_heather"),STAGHORN=seasonal("journey_amber_fern"),HELLEBORE=seasonal("journey_winter_hellebore"),FIREWEED=seasonal("journey_fireweed"),BRAMBLE=bramble();
+    /** 林地三种无毒蘑菇：可食用，各回一格饱食度；方块可放置，掉落自己。 */
+    public static final DeferredBlock<Block> FIELD_MUSHROOM=floraFood("journey_field_mushroom",2,.15f),
+            CHANTERELLE=floraFood("journey_chanterelle",2,.15f),BOLETE=floraFood("journey_bolete",2,.15f);
     public static final List<DeferredBlock<Block>> SEASONAL_PLANTS=List.of(ANEMONE,MOONBELL,GLOWCAP,HEATHER,STAGHORN,HELLEBORE,FIREWEED,BRAMBLE);
     public static final DeferredBlock<Block> LIMESTONE=solid("journey_limestone",MapColor.QUARTZ,SoundType.STONE,0),PLASTER=solid("journey_lime_plaster",MapColor.SAND,SoundType.STONE,0),TIMBER_FRAME=solid("journey_timber_frame",MapColor.COLOR_BROWN,SoundType.WOOD,0),ROOF_TILE=solid("journey_roof_tile",MapColor.TERRACOTTA_RED,SoundType.STONE,0);
     static { for(var b:CloudseaBiome.values()){
@@ -71,6 +74,13 @@ public final class CloudseaBlocks {
     private static DeferredBlock<Block> flora(String id,int light) {
         var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,JourneyPlantBlock::new,p->p.mapColor(MapColor.PLANT).strength(.25f).sound(SoundType.GRASS).noCollision().noOcclusion().randomTicks().lightLevel(s->light));
         DimensionBlocks.ITEMS.registerSimpleBlockItem(id,block);PALETTE.add(block);return block;
+    }
+    /** 可食用的地生小植物：方块照常放置，物品带食用属性。 */
+    private static DeferredBlock<Block> floraFood(String id,int nutrition,float saturation) {
+        var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,JourneyPlantBlock::new,p->p.mapColor(MapColor.PLANT).strength(.25f).sound(SoundType.GRASS).noCollision().noOcclusion().randomTicks());
+        DimensionBlocks.ITEMS.registerItem(id,p->new net.minecraft.world.item.BlockItem(block.get(),p
+                .food(new net.minecraft.world.food.FoodProperties.Builder().nutrition(nutrition).saturationModifier(saturation).build())));
+        PALETTE.add(block);return block;
     }
     private static DeferredBlock<Block> seasonal(String id){
         var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,SeasonalPlantBlock::new,p->p.mapColor(MapColor.PLANT).strength(.15f).sound(SoundType.GRASS).noCollision().noOcclusion().randomTicks()

@@ -34,7 +34,8 @@ public final class MushroomGameTests {
 
     public static void register(IEventBus bus){
         var tests=Map.<String,Consumer<GameTestHelper>>of(
-            "glowcap_food",MushroomGameTests::glowcapFood);
+            "glowcap_food",MushroomGameTests::glowcapFood,
+            "woodland_mushroom_food",MushroomGameTests::woodlandMushrooms);
         tests.forEach((name,test)->FUNCTIONS.register(name,()->test));FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event)->{
             var env=event.registerEnvironment(LogosDimension.id("mushrooms"),new TestEnvironmentDefinition.AllOf());
@@ -53,6 +54,28 @@ public final class MushroomGameTests {
             var remainder=stack.finishUsingItem(h.getLevel(),player);
             h.assertTrue(player.getFoodData().getFoodLevel()==12&&remainder.getCount()==1,
                 "吃掉一份露灯菌没有回满一格饱食度或没有消耗物品");
+        }finally{h.getLevel().getServer().getPlayerList().remove(player);}
+        h.succeed();
+    }
+
+    /** 三种林地无毒蘑菇：营养值都是 2，吃一份回一格饱食度并消耗一个。 */
+    private static void woodlandMushrooms(GameTestHelper h){
+        var player=mockPlayer(h);
+        try{
+            var mushrooms=new net.minecraft.world.item.Item[]{
+                CloudseaBlocks.FIELD_MUSHROOM.get().asItem(),
+                CloudseaBlocks.CHANTERELLE.get().asItem(),
+                CloudseaBlocks.BOLETE.get().asItem()};
+            for(var item:mushrooms){
+                player.getFoodData().setFoodLevel(10);
+                player.getFoodData().setSaturation(0);
+                var stack=new ItemStack(item,2);
+                h.assertTrue(stack.has(DataComponents.CONSUMABLE)&&stack.get(DataComponents.FOOD).nutrition()==2,
+                    item+" 没有一格饱食度的营养值");
+                var remainder=stack.finishUsingItem(h.getLevel(),player);
+                h.assertTrue(player.getFoodData().getFoodLevel()==12&&remainder.getCount()==1,
+                    item+" 没有正确回复饱食度或没有消耗");
+            }
         }finally{h.getLevel().getServer().getPlayerList().remove(player);}
         h.succeed();
     }
