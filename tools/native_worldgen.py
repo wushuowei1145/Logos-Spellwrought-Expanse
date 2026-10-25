@@ -280,7 +280,6 @@ for bid in ids:
         features[9]=['logos_dimension:trees_'+bid,'logos_dimension:'+(bid+'_floor' if bid in FOREST_FLOORS else 'meadow_floor')]
         if bid in forests:features[9].append('logos_dimension:fallen_tree_'+bid)
         # 蘑菇：按群系各自分配（食用常见、有毒稀有）。
-        features[9].extend(MUSHROOM_FOR.get(bid,[]))
         # 洞穴荧光苔放在地下装饰阶段；只给有树的林地。
         if bid in forests:features[7].extend(['logos_dimension:forest_cave_lichen','logos_dimension:forest_cave_moss'])
         # 水边：直接引用原版的水边特征（甘蔗与睡莲），它们自带"必须挨着水"的判定，
@@ -288,6 +287,10 @@ for bid in ids:
         if bid in forests:features[9].extend(['minecraft:patch_sugar_cane','minecraft:patch_waterlily'])
         # 岩石露头：只给有树的林地。
         if bid in forests:features[9].append('logos_dimension:forest_rock_outcrop')
+        # 蘑菇放在最后：同一份特征在不同群系里的相对顺序必须一致，否则 FeatureSorter
+        # 会报 "Feature order cycle found" 并直接让区块生成失败。精灵森林的 step9 是
+        # [树, 地表, 倒木, 光林, 甘蔗, 睡莲, 露头, 白伞菇]，这里必须保持同样的先后。
+        features[9].extend(MUSHROOM_FOR.get(bid,[]))
     data['features']=features;write(D/'worldgen/biome'/f'{bid}.json',data)
 for bid in ['aether','sulfur','mercury','salt','sanctum']:
     data=json.loads((D/'worldgen/biome'/f'{bid}.json').read_text());data['carvers']=['minecraft:cave','minecraft:canyon'];data['features']=[[] for _ in range(11)]
