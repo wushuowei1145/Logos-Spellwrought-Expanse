@@ -191,7 +191,7 @@ for bid,(count,pairs) in FOREST_FLOORS.items():
 # 平原群系的地表组合：与林地分开维护，一个一个群系做，避免一次改完分不清哪个
 # 群系的地表出了问题。长风草原以"风里的长草"为主：长草压过其它，野花只作点缀。
 PLAINS_FLOORS={
- 'cloudsea_silk_folds':(420,[('logos_dimension:journey_meadow_grass',46),('minecraft:short_grass',18),('logos_dimension:journey_meadow_grass_young',10),('minecraft:oxeye_daisy',7),('logos_dimension:journey_fireweed',6),('logos_dimension:journey_silver_anemone',5),('logos_dimension:journey_heather',4)]),
+ 'cloudsea_silk_folds':(420,[('logos_dimension:journey_meadow_grass_short',46),('minecraft:short_grass',18),('logos_dimension:journey_meadow_grass_young',10),('minecraft:oxeye_daisy',7),('logos_dimension:journey_fireweed',6),('logos_dimension:journey_silver_anemone',5),('logos_dimension:journey_heather',4)]),
 }
 for bid,(count,pairs) in PLAINS_FLOORS.items():
     forest_floor(bid+'_floor',floor_entries(pairs),count)
