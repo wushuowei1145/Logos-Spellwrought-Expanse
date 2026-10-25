@@ -30,7 +30,7 @@ public final class CloudseaBlocks {
     public static final DeferredBlock<Block> GRAPEVINE=grapevine();
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> GRAPES=DimensionBlocks.ITEMS.registerSimpleItem("journey_grapes",p->p.food(new net.minecraft.world.food.FoodProperties.Builder().nutrition(2).saturationModifier(.2f).build()));
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> GRAPE_LEAF=DimensionBlocks.ITEMS.registerSimpleItem("journey_grape_leaf");
-    public static final DeferredBlock<Block> ANEMONE=seasonal("journey_silver_anemone"),MOONBELL=seasonal("journey_moonbell"),GLOWCAP=seasonal("journey_glowcap"),HEATHER=seasonal("journey_heather"),STAGHORN=seasonal("journey_amber_fern"),HELLEBORE=seasonal("journey_winter_hellebore"),FIREWEED=seasonal("journey_fireweed"),BRAMBLE=bramble();
+    public static final DeferredBlock<Block> ANEMONE=seasonal("journey_silver_anemone"),MOONBELL=seasonal("journey_moonbell"),GLOWCAP=seasonalFood("journey_glowcap",2,.15f),HEATHER=seasonal("journey_heather"),STAGHORN=seasonal("journey_amber_fern"),HELLEBORE=seasonal("journey_winter_hellebore"),FIREWEED=seasonal("journey_fireweed"),BRAMBLE=bramble();
     public static final List<DeferredBlock<Block>> SEASONAL_PLANTS=List.of(ANEMONE,MOONBELL,GLOWCAP,HEATHER,STAGHORN,HELLEBORE,FIREWEED,BRAMBLE);
     public static final DeferredBlock<Block> LIMESTONE=solid("journey_limestone",MapColor.QUARTZ,SoundType.STONE,0),PLASTER=solid("journey_lime_plaster",MapColor.SAND,SoundType.STONE,0),TIMBER_FRAME=solid("journey_timber_frame",MapColor.COLOR_BROWN,SoundType.WOOD,0),ROOF_TILE=solid("journey_roof_tile",MapColor.TERRACOTTA_RED,SoundType.STONE,0);
     static { for(var b:CloudseaBiome.values()){
@@ -76,6 +76,17 @@ public final class CloudseaBlocks {
         var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,SeasonalPlantBlock::new,p->p.mapColor(MapColor.PLANT).strength(.15f).sound(SoundType.GRASS).noCollision().noOcclusion().randomTicks()
                 .lightLevel(s->{int season=s.getValue(SeasonalLeavesBlock.SEASON);return id.endsWith("glowcap")&&(season==1||season==2)?4:id.endsWith("moonbell")&&season<2?2:id.endsWith("hellebore")&&season==3?3:0;}));
         DimensionBlocks.ITEMS.registerSimpleBlockItem(id,block);PALETTE.add(block);return block;
+    }
+    /**
+     * 可食用的季节性植物。方块与物品同一个 ID，物品带食用属性：
+     * 手上拿着它对着空气右键就是吃，对着地面右键仍然是放置方块（和原版食物物品一致）。
+     */
+    private static DeferredBlock<Block> seasonalFood(String id,int nutrition,float saturation){
+        var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,SeasonalPlantBlock::new,p->p.mapColor(MapColor.PLANT).strength(.15f).sound(SoundType.GRASS).noCollision().noOcclusion().randomTicks()
+                .lightLevel(s->{int season=s.getValue(SeasonalLeavesBlock.SEASON);return (season==1||season==2)?4:0;}));
+        DimensionBlocks.ITEMS.registerItem(id,p->new net.minecraft.world.item.BlockItem(block.get(),p
+                .food(new net.minecraft.world.food.FoodProperties.Builder().nutrition(nutrition).saturationModifier(saturation).build())));
+        PALETTE.add(block);return block;
     }
     public static void init() {}
     private CloudseaBlocks() {}
