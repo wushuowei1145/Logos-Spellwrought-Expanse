@@ -215,10 +215,22 @@ configured('forest_cave_lichen',{'type':'minecraft:multiface_growth','config':{
     'can_place_on_ceiling':True,'can_place_on_floor':False,'can_place_on_wall':True,
     'chance_of_spreading':.5,'search_range':20}})
 write(D/'worldgen/placed_feature/forest_cave_lichen.json',{'feature':'logos_dimension:forest_cave_lichen','placement':[
-    {'type':'minecraft:count','count':{'type':'minecraft:uniform','max_inclusive':157,'min_inclusive':104}},
+    {'type':'minecraft:count','count':{'type':'minecraft:uniform','max_inclusive':220,'min_inclusive':160}},
     {'type':'minecraft:height_range','height':{'type':'minecraft:uniform','max_inclusive':{'absolute':96},'min_inclusive':{'above_bottom':0}}},
     {'type':'minecraft:in_square'},
     {'type':'minecraft:surface_relative_threshold_filter','heightmap':'OCEAN_FLOOR_WG','max_inclusive':-13},
+    {'type':'minecraft:biome'}]})
+
+# 林地地下的苔藓地面：原版 block_pile + moss_block，只在地下、有支撑才放。
+# 和荧光苔一起构成"潮湿洞穴"的观感：脚下是苔堆，墙上是发光苔。
+configured('forest_cave_moss',{'type':'minecraft:block_pile','config':{
+    'state_provider':{'type':'minecraft:simple_state_provider','state':{'Name':'minecraft:moss_block'}}}})
+write(D/'worldgen/placed_feature/forest_cave_moss.json',{'feature':'logos_dimension:forest_cave_moss','placement':[
+    {'type':'minecraft:count','count':{'type':'minecraft:uniform','max_inclusive':14,'min_inclusive':6}},
+    {'type':'minecraft:height_range','height':{'type':'minecraft:uniform','max_inclusive':{'absolute':96},'min_inclusive':{'above_bottom':0}}},
+    {'type':'minecraft:in_square'},
+    {'type':'minecraft:surface_relative_threshold_filter','heightmap':'OCEAN_FLOOR_WG','max_inclusive':-13},
+    {'type':'minecraft:block_predicate_filter','predicate':{'type':'minecraft:matching_blocks','blocks':['minecraft:air']}},
     {'type':'minecraft:biome'}]})
 
 # 林地岩石露头：原版 block_pile，用本附属的石灰岩堆成一小簇。
@@ -244,7 +256,7 @@ for bid in ids:
         features[9]=['logos_dimension:trees_'+bid,'logos_dimension:'+(bid+'_floor' if bid in FOREST_FLOORS else 'meadow_floor')]
         if bid in forests:features[9].append('logos_dimension:fallen_tree_'+bid)
         # 洞穴荧光苔放在地下装饰阶段；只给有树的林地。
-        if bid in forests:features[7].append('logos_dimension:forest_cave_lichen')
+        if bid in forests:features[7].extend(['logos_dimension:forest_cave_lichen','logos_dimension:forest_cave_moss'])
         # 水边：直接引用原版的水边特征（甘蔗与睡莲），它们自带"必须挨着水"的判定，
         # 所以在没有水的地方什么都不会发生，不必为附属另写一套。
         if bid in forests:features[9].extend(['minecraft:patch_sugar_cane','minecraft:patch_waterlily'])
