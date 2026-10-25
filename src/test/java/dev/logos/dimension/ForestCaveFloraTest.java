@@ -38,7 +38,35 @@ class ForestCaveFloraTest {
             for(var feature:stage)names.add(feature.getAsString());
             assertTrue(names.contains("logos_dimension:forest_cave_lichen"),
                 biome+" 的地下阶段没有引用荧光苔");
+            assertTrue(names.contains("logos_dimension:forest_cave_moss"),
+                biome+" 的地下阶段没有引用苔藓地面");
         }
+    }
+
+    /** 地面苔藓：原版 block_pile + moss_block，同样只在地下。 */
+    @Test void caveFloorGetsMossPiles()throws Exception{
+        var config=data("worldgen/configured_feature/forest_cave_moss");
+        assertEquals("minecraft:block_pile",config.get("type").getAsString());
+        assertEquals("minecraft:moss_block",
+            config.getAsJsonObject("config").getAsJsonObject("state_provider")
+                .getAsJsonObject("state").get("Name").getAsString(),
+            "地面苔藓必须是原版苔藓块，不另造方块");
+
+        var placement=data("worldgen/placed_feature/forest_cave_moss").getAsJsonArray("placement");
+        var types=new ArrayList<String>();
+        boolean belowSurface=false, airOnly=false;
+        for(var step:placement){
+            var object=step.getAsJsonObject();
+            var type=object.get("type").getAsString();
+            types.add(type);
+            if(type.equals("minecraft:surface_relative_threshold_filter"))
+                belowSurface=object.get("max_inclusive").getAsInt()<0;
+            if(type.equals("minecraft:block_predicate_filter"))airOnly=true;
+        }
+        assertTrue(types.contains("minecraft:height_range"),"缺少高度区间限制");
+        assertTrue(belowSurface,"必须以负的地表相对阈值限制在地下");
+        assertTrue(airOnly,"只应放在空气位置，避免替换掉岩体");
+        assertEquals("minecraft:biome",types.get(types.size()-1),"必须以群系过滤结尾");
     }
 
     @Test void lichenOnlyGrowsOnCaveWalls()throws Exception{
