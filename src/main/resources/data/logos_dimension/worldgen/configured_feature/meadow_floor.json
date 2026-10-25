@@ -12,6 +12,12 @@
         },
         {
           "data": {
+            "Name": "logos_dimension:journey_meadow_grass_young"
+          },
+          "weight": 12
+        },
+        {
+          "data": {
             "Name": "logos_dimension:journey_bluebell"
           },
           "weight": 8

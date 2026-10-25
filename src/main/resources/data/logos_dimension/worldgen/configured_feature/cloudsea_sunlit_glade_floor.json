@@ -12,6 +12,12 @@
         },
         {
           "data": {
+            "Name": "logos_dimension:journey_meadow_grass_young"
+          },
+          "weight": 14
+        },
+        {
+          "data": {
             "Name": "minecraft:oxeye_daisy"
           },
           "weight": 12

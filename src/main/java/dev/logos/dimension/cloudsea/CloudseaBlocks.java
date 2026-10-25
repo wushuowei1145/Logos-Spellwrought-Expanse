@@ -26,6 +26,8 @@ public final class CloudseaBlocks {
     public static final DeferredBlock<Block> WINDOW=solid("cloudsea_lit_window",MapColor.SAND,SoundType.GLASS,9);
     public static final DeferredBlock<Block> FERN=flora("journey_woodland_fern",0),BRACKEN=flora("journey_bracken",0),BLUEBELL=flora("journey_bluebell",0),FOXGLOVE=flora("journey_foxglove",0),LUPINE=flora("journey_lupine",0),MEADOW_GRASS=flora("journey_meadow_grass",0),REED=flora("journey_river_reed",0);
     public static final DeferredBlock<Block> STARDEW=flora("journey_stardew",2),LUMEN_FERN=flora("journey_lumen_fern",3);
+    /** 幼年原野牧草：会自己长大的小草，带 age 属性。 */
+    public static final DeferredBlock<Block> MEADOW_GRASS_YOUNG=youngGrass("journey_meadow_grass_young");
     public static final DeferredBlock<Block> RICE=rice();
     public static final DeferredBlock<Block> GRAPEVINE=grapevine();
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> GRAPES=DimensionBlocks.ITEMS.registerSimpleItem("journey_grapes",p->p.food(new net.minecraft.world.food.FoodProperties.Builder().nutrition(2).saturationModifier(.2f).build()));
@@ -63,6 +65,10 @@ public final class CloudseaBlocks {
     private static DeferredBlock<Block> grapevine(){
         var block=DimensionBlocks.BLOCKS.<Block>registerBlock("journey_grapevine",GrapeVineBlock::new,p->p.mapColor(MapColor.PLANT).strength(.2f).sound(SoundType.VINE).noCollision().noOcclusion().randomTicks().replaceable());
         DimensionBlocks.ITEMS.registerSimpleBlockItem("journey_grapevine",block);PALETTE.add(block);return block;
+    }
+    private static DeferredBlock<Block> youngGrass(String id){
+        var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,JourneyYoungGrassBlock::new,p->p.mapColor(MapColor.PLANT).strength(0).sound(SoundType.GRASS).noCollision().noOcclusion().randomTicks());
+        DimensionBlocks.ITEMS.registerSimpleBlockItem(id,block);PALETTE.add(block);return block;
     }
     private static DeferredBlock<Block> rice(){
         // Save compatibility for 0.9.0 only. New settlements use vanilla wheat.
