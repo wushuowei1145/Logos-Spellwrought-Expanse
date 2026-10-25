@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "logos_dimension:block/journey_death_cap"
+    "model": "logos_dimension:item/journey_death_cap"
   }
 }

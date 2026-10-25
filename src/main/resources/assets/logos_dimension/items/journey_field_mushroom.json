@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "logos_dimension:block/journey_field_mushroom"
+    "model": "logos_dimension:item/journey_field_mushroom"
   }
 }
