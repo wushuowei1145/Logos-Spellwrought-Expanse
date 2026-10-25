@@ -59,6 +59,9 @@
     "logos_dimension:cloudsea_sunlit_glade_leaf",
     "logos_dimension:cloudsea_starflower_glade_leaf",
     "logos_dimension:fan_leaves",
-    "logos_dimension:elven_canopy"
+    "logos_dimension:elven_canopy",
+    "logos_dimension:journey_field_mushroom",
+    "logos_dimension:journey_chanterelle",
+    "logos_dimension:journey_bolete"
   ]
 }
