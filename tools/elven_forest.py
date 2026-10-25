@@ -307,7 +307,7 @@ def ordinary_assets():
 
 def biome():
     b=json.loads((D/'worldgen/biome/cloudsea_ancient_beech.json').read_text(encoding='utf-8'))
-    b['spawners']={};b['features'][9]=[NS+'trees_cloudsea_ancient_beech',NS+'elven_forest_floor',NS+'fallen_tree_cloudsea_ancient_beech',NS+'elven_glow_grove','minecraft:patch_sugar_cane','minecraft:patch_waterlily'];b['temperature']=.6;b['downfall']=.8
+    b['spawners']={};b['features'][9]=[NS+'trees_cloudsea_ancient_beech',NS+'elven_forest_floor',NS+'fallen_tree_cloudsea_ancient_beech',NS+'elven_glow_grove','minecraft:patch_sugar_cane','minecraft:patch_waterlily',NS+'forest_rock_outcrop'];b['temperature']=.6;b['downfall']=.8
     # 精灵森林只改雾色，不动天空；其余群系不跟随，避免整个大陆到处变色。
     b['effects'].update({'fog_color':'#a9cdb4','water_fog_color':'#a2c4bb'})
     write(D/'worldgen/biome/elven_forest.json',b)
