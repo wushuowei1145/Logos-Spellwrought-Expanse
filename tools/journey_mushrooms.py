@@ -1,9 +1,10 @@
 """画林地蘑菇的贴图与模型（代码绘制，不使用图像生成服务）。
 
-三种无毒蘑菇：白伞菇、鸡油菌、牛肝菌。都是 32×32 的 billboard 贴图，
-用原版 cross 模型，物品走 item/generated，掉自己。
+六种蘑菇（三种食用、三种有毒）共用一套 64×64 的 billboard 画法：
+菌盖按行做量化明暗（左上受光、右下背光），帽檐、菌褶、菌柄纤维分开画，
+最后留足透明边距，让它只占方块六成高——草丛里是一小丛，不是一块牌子。
 
-后续有毒蘑菇在设计上复用同一套画法，只要在 SPECIES 里加条目并重跑本脚本。
+模型用原版 cross 交叉面片，物品走 block 模型，掉落表掉自己。
 
 用法：python tools/journey_mushrooms.py
 """
@@ -17,79 +18,153 @@ A = ROOT / "src/main/resources/assets/logos_dimension"
 D = ROOT / "src/main/resources/data/logos_dimension"
 TAG = ROOT / "src/main/resources/data/logos/tags/block/fragile_plants.json"
 
-# (id, 中文名, 英文名, 主色, 次色, 菌柄色, 画法)
+# (id, 中文名, 英文名, 帽色, 帽暗部, 柄色, 画法, 帽半径, 帽高, 柄高, 柄半宽)
 SPECIES = [
-    ("journey_field_mushroom", "白伞菇", "Field Mushroom", (236, 231, 214), (206, 199, 178), (214, 203, 181), "cap"),
-    ("journey_chanterelle", "鸡油菌", "Chanterelle", (232, 176, 66), (196, 138, 42), (226, 200, 142), "funnel"),
-    ("journey_bolete", "牛肝菌", "Bolete", (146, 96, 54), (110, 70, 38), (226, 210, 184), "bolete"),
-    # 有毒的三种：画法另起（红伞白点 / 苍白帽 / 假鸡油菌），吃了会挂负面效果。
-    ("journey_fly_agaric", "毒蝇伞", "Fly Agaric", (196, 58, 52), (150, 36, 34), (232, 224, 206), "amanita"),
-    ("journey_death_cap", "死帽菇", "Death Cap", (170, 182, 132), (128, 142, 96), (236, 232, 214), "deathcap"),
-    ("journey_false_chanterelle", "毒粉褶菌", "False Chanterelle", (206, 132, 58), (150, 92, 40), (222, 200, 150), "falsechanterelle"),
+    ("journey_field_mushroom", "白伞菇", "Field Mushroom",
+     (240, 236, 222), (168, 160, 138), (224, 214, 192), "dome", 12, 11, 17, 3),
+    ("journey_chanterelle", "鸡油菌", "Chanterelle",
+     (232, 172, 60), (168, 108, 24), (230, 206, 152), "funnel", 12, 9, 16, 4),
+    ("journey_bolete", "牛肝菌", "Bolete",
+     (138, 90, 50), (92, 56, 28), (228, 214, 190), "bolete", 12, 11, 16, 4),
+    ("journey_fly_agaric", "毒蝇伞", "Fly Agaric",
+     (192, 50, 44), (132, 24, 22), (238, 230, 212), "amanita", 12, 11, 19, 3),
+    ("journey_death_cap", "死帽菇", "Death Cap",
+     (176, 188, 136), (114, 128, 80), (240, 236, 220), "deathcap", 11, 10, 21, 2),
+    ("journey_false_chanterelle", "毒粉褶菌", "False Chanterelle",
+     (206, 130, 52), (136, 78, 30), (228, 206, 158), "falsechanterelle", 12, 9, 18, 3),
 ]
+
+SIZE = 64
+GROUND = 59        # 蘑菇底部所在行
+SHADE_LEVELS = 5   # 明暗量化档数，保持像素画质感
 
 
 def shade(color, delta):
     return tuple(max(0, min(255, c + delta)) for c in color)
 
 
-def draw_mushroom(style, cap, cap_dark, stem):
-    im = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+def mix(a, b, t):
+    return tuple(int(round(a[i] + (b[i] - a[i]) * t)) for i in range(3))
+
+
+def quantize(t):
+    return round(max(0.0, min(1.0, t)) * SHADE_LEVELS) / SHADE_LEVELS
+
+
+def in_cap(x, y, cx, cy, rx, ry):
+    """菌盖区域：以 (cx, cy) 为中心、上半部略扁的椭圆，加上一点帽檐。"""
+    nx = (x - cx) / rx
+    ny = (y - cy) / ry
+    return nx * nx + ny * ny <= 1.0 and y <= cy + ry * 0.24
+
+
+def draw_cap(im, cx, cy, rx, ry, cap, cap_dark, spots=(), rim=True):
+    """按行铺色：左上亮、右下暗，量化成几档，避免出现明显的内部接缝。"""
     q = ImageDraw.Draw(im)
-    # 菌柄：不论哪种都从底部中间往上，底部略宽。
-    q.polygon([(14, 30), (18, 30), (17, 19), (15, 19)], fill=stem + (255,))
-    q.line((15, 30, 16, 20), fill=shade(stem, -24) + (255,))
-    if style == "cap":
-        # 圆顶伞：半椭圆帽 + 几片浅色鳞片。
-        q.pieslice((5, 8, 27, 26), 180, 360, fill=cap + (255,))
-        q.rectangle((5, 17, 27, 19), fill=cap + (255,))
-        q.arc((5, 8, 27, 26), 180, 360, fill=shade(cap_dark, -18) + (255,))
-        for x, y, r in [(11, 14, 2), (17, 11, 2), (22, 15, 2), (15, 16, 1)]:
-            q.ellipse((x - r, y - r, x + r, y + r), fill=shade(cap, 18) + (255,))
-        q.line((6, 18, 26, 18), fill=cap_dark + (255,))
-    elif style == "funnel":
-        # 漏斗形：上宽下窄，边缘翻卷，纵向纤维纹。
-        q.polygon([(4, 9), (28, 9), (23, 20), (9, 20)], fill=cap + (255,))
-        q.polygon([(9, 20), (23, 20), (19, 24), (13, 24)], fill=cap_dark + (255,))
-        q.arc((4, 4, 28, 16), 200, 340, fill=shade(cap, -30) + (255,))
-        for x in range(8, 26, 4):
-            q.line((x, 10, x + 1, 19), fill=shade(cap_dark, -10) + (255,))
-    elif style == "bolete":
-        # 牛肝菌：厚帽 + 粗柄，帽下有一圈浅色菌管。
-        q.rectangle((11, 19, 21, 30), fill=stem + (255,))
-        q.pieslice((4, 7, 28, 25), 180, 360, fill=cap + (255,))
-        q.rectangle((4, 16, 28, 20), fill=shade(cap, -16) + (255,))
-        q.rectangle((6, 20, 26, 22), fill=(228, 214, 186, 255))
-        q.arc((4, 7, 28, 25), 180, 360, fill=shade(cap_dark, -22) + (255,))
-        for y in range(21, 22):
-            for x in range(7, 26, 2):
-                q.point((x, y), fill=(206, 190, 160, 255))
+    top, bottom = int(cy - ry), int(cy + ry * 0.24)
+    for y in range(top, bottom + 1):
+        for x in range(int(cx - rx), int(cx + rx) + 1):
+            if not in_cap(x + 0.5, y + 0.5, cx, cy, rx, ry):
+                continue
+            nx = (x + 0.5 - cx) / rx
+            ny = (y + 0.5 - top) / max(1.0, bottom - top)
+            # 越靠下越暗，越靠右越暗；顶部再加一点高光。
+            light = 0.92 - 0.42 * ny - 0.22 * max(0.0, nx) + 0.10 * max(0.0, -ny * 1.6)
+            color = mix(cap_dark, cap, quantize(light))
+            q.point((x, y), fill=color + (255,))
+    # 帽檐：底部一条深色收边，把帽和柄分开。
+    if rim:
+        for x in range(int(cx - rx * 0.92), int(cx + rx * 0.92) + 1):
+            if in_cap(x + 0.5, bottom - 0.5, cx, cy, rx, ry):
+                q.point((x, bottom), fill=shade(cap_dark, -26) + (255,))
+    # 斑点（毒蝇伞的白点、白伞菇的浅鳞片）。
+    for ox, oy, r, color in spots:
+        sx, sy = cx + rx * ox, cy - ry * 0.35 + ry * oy
+        for dy in range(-r, r + 1):
+            for dx in range(-r, r + 1):
+                if dx * dx + dy * dy > r * r:
+                    continue
+                if in_cap(sx + dx, sy + dy, cx, cy, rx, ry):
+                    q.point((int(sx + dx), int(sy + dy)), fill=color + (255,))
+
+
+def draw_gills(q, cx, cy, rx, count=7, length=2, color=(120, 110, 92)):
+    """菌褶：帽底朝下的一圈短线，短而疏，不要拖成裙子。"""
+    for i in range(count):
+        t = (i + 0.5) / count * 2 - 1
+        x = cx + t * rx * 0.82
+        for k in range(length):
+            q.point((int(round(x + t * k * 0.35)), int(round(cy + 1 + k))), fill=color + (255,))
+
+
+def draw_stem(q, cx, base_y, top_y, half_w, stem):
+    """菌柄：下粗上细，左侧一像素亮边、右侧一像素暗边。"""
+    for y in range(top_y, base_y + 1):
+        t = (y - top_y) / max(1, base_y - top_y)
+        w = half_w * (0.78 + 0.22 * t)
+        left, right = int(round(cx - w)), int(round(cx + w))
+        q.line((left, y, right, y), fill=stem + (255,))
+        q.point((left, y), fill=shade(stem, 26) + (255,))
+        q.point((right, y), fill=shade(stem, -34) + (255,))
+    # 纵向纤维：三两条即可。
+    for off in (-0.4, 0.15, 0.5):
+        x = int(round(cx + half_w * off))
+        q.line((x, top_y + 2, x, base_y - 2), fill=shade(stem, -20) + (255,))
+
+
+def draw_mushroom(style, cap, cap_dark, stem, rx, ry, stem_h, stem_w):
+    im = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
+    q = ImageDraw.Draw(im)
+    cx = SIZE / 2
+    base_y = GROUND
+    cap_cy = base_y - stem_h
+    top_y = cap_cy - ry
+    if top_y < 2:
+        cap_cy += 2 - top_y
+
+    # 地面阴影与苔痕先画，免得压住菌柄。
+    q.ellipse((cx - rx * 0.8, base_y, cx + rx * 0.8, base_y + 4), fill=(0, 0, 0, 60))
+    for ox, w in ((-0.45, 4), (0.1, 3), (0.5, 3)):
+        x = cx + rx * ox
+        q.ellipse((x - w / 2, base_y - 1, x + w / 2, base_y + 2), fill=(92, 126, 74, 200))
+
+    # 菌柄。
+    draw_stem(q, cx, base_y, cap_cy, stem_w, stem)
+    # 菌褶在帽檐下。
+    draw_gills(q, cx, cap_cy + int(ry * 0.18), rx, color=shade(cap_dark, -30))
+
+    if style == "dome":
+        draw_cap(im, cx, cap_cy, rx, ry, cap, cap_dark,
+                 spots=((-0.5, 0.32, 1, shade(cap, 26)), (0.02, 0.12, 2, shade(cap, 22)),
+                        (0.5, 0.36, 1, shade(cap, 26)), (-0.15, 0.6, 1, shade(cap, 18))))
     elif style == "amanita":
-        # 毒蝇伞：红帽白点，白色菌环与菌托。
-        q.pieslice((4, 7, 28, 26), 180, 360, fill=cap + (255,))
-        q.rectangle((4, 16, 28, 18), fill=shade(cap_dark, -10) + (255,))
-        for x, y, r in [(10, 13, 2), (16, 10, 2), (22, 14, 2), (13, 17, 1), (20, 18, 1)]:
-            q.ellipse((x - r, y - r, x + r, y + r), fill=(240, 236, 224, 255))
-        q.rectangle((11, 18, 21, 27), fill=stem + (255,))
-        q.rectangle((9, 21, 23, 23), fill=shade(stem, -22) + (255,))
-        q.ellipse((8, 26, 24, 30), fill=shade(stem, -14) + (255,))
+        draw_cap(im, cx, cap_cy, rx, ry, cap, cap_dark,
+                 spots=((-0.46, 0.26, 2, (244, 240, 228)), (0.04, 0.06, 2, (244, 240, 228)),
+                        (0.46, 0.3, 1, (240, 236, 224)), (-0.1, 0.55, 1, (238, 234, 222))))
     elif style == "deathcap":
-        # 死帽菇：苍白偏绿的帽，菌环明显，柄细长。
-        q.pieslice((5, 8, 27, 25), 180, 360, fill=cap + (255,))
-        q.rectangle((5, 16, 27, 18), fill=shade(cap_dark, -6) + (255,))
-        q.arc((5, 8, 27, 25), 180, 360, fill=shade(cap_dark, -18) + (255,))
-        q.rectangle((13, 18, 19, 29), fill=stem + (255,))
-        q.polygon([(10, 20), (22, 20), (21, 23), (11, 23)], fill=shade(stem, -10) + (255,))
+        draw_cap(im, cx, cap_cy, rx, ry, cap, cap_dark,
+                 spots=((-0.4, 0.2, 1, shade(cap, 30)), (0.3, 0.35, 1, shade(cap, 24))))
+    elif style == "funnel":
+        # 鸡油菌：把菌盖压扁成漏斗，边缘往下翻一圈。
+        draw_cap(im, cx, cap_cy, rx, ry, cap, cap_dark)
+        for i in range(-4, 5):
+            x = cx + i * (rx / 5.2)
+            q.line((int(round(x * 0.78 + cx * 0.22)), int(cap_cy + ry * 0.22),
+                    int(round(x * 0.6 + cx * 0.4)), int(cap_cy + ry * 0.62)),
+                   fill=shade(cap_dark, -14) + (255,))
+    elif style == "bolete":
+        # 牛肝菌：帽下先铺一层浅色菌管，再压帽。
+        q.rectangle((int(cx - rx * 0.84), int(cap_cy + ry * 0.2), int(cx + rx * 0.84), int(cap_cy + ry * 0.44)),
+                    fill=(214, 200, 172, 255))
+        for x in range(int(cx - rx * 0.78), int(cx + rx * 0.78), 3):
+            q.line((x, int(cap_cy + ry * 0.24), x, int(cap_cy + ry * 0.42)), fill=(188, 172, 146, 255))
+        draw_cap(im, cx, cap_cy, rx, ry, cap, cap_dark)
     elif style == "falsechanterelle":
-        # 毒粉褶菌：偏橙的平帽 + 明显菌褶，冒充鸡油菌。
-        q.pieslice((4, 10, 28, 24), 180, 360, fill=cap + (255,))
-        q.rectangle((4, 16, 28, 18), fill=shade(cap_dark, -12) + (255,))
-        for x in range(6, 27, 3):
-            q.line((x, 18, x, 22), fill=shade(cap_dark, -26) + (255,))
-        q.rectangle((12, 18, 20, 28), fill=stem + (255,))
-        q.arc((4, 10, 28, 24), 180, 360, fill=shade(cap_dark, -30) + (255,))
-    # 地面阴影，让它在草丛里"坐得住"。
-    q.ellipse((8, 27, 24, 31), fill=(0, 0, 0, 56))
+        draw_cap(im, cx, cap_cy, rx, ry, cap, cap_dark)
+        for i in range(-6, 7):
+            x = cx + i * (rx / 6.5)
+            q.line((int(round(x)), int(cap_cy + ry * 0.24), int(round(x + i * 0.08)), int(cap_cy + ry * 0.5)),
+                   fill=shade(cap_dark, -22) + (255,))
     return im
 
 
@@ -102,31 +177,43 @@ def main():
     zh = json.loads((A / "lang/zh_cn.json").read_text(encoding="utf-8"))
     en = json.loads((A / "lang/en_us.json").read_text(encoding="utf-8"))
     tag = json.loads(TAG.read_text(encoding="utf-8"))
-    for slug, cn, eng, cap, cap_dark, stem, style in SPECIES:
-        name = slug
-        tex = draw_mushroom(style, cap, cap_dark, stem)
-        png = A / "textures/block" / f"{name}.png"
+    for slug, cn, eng, cap, cap_dark, stem, style, rx, ry, stem_h, stem_w in SPECIES:
+        tex = draw_mushroom(style, cap, cap_dark, stem, rx, ry, stem_h, stem_w)
+        png = A / "textures/block" / f"{slug}.png"
         png.parent.mkdir(parents=True, exist_ok=True)
         tex.save(png)
-        # 原版 cross 模型：两片交叉面片，贴图整张映射。
-        write(A / "models/block" / f"{name}.json",
+        write(A / "models/block" / f"{slug}.json",
               {"parent": "minecraft:block/cross", "render_type": "neoforge:cutout",
-               "textures": {"cross": f"logos_dimension:block/{name}"}})
-        write(A / "blockstates" / f"{name}.json", {"variants": {"": {"model": f"logos_dimension:block/{name}"}}})
-        write(A / "items" / f"{name}.json",
-              {"model": {"type": "minecraft:model", "model": f"logos_dimension:block/{name}"}})
-        write(D / "loot_table/blocks" / f"{name}.json",
+               "textures": {"cross": f"logos_dimension:block/{slug}"}})
+        write(A / "blockstates" / f"{slug}.json", {"variants": {"": {"model": f"logos_dimension:block/{slug}"}}})
+        # 物品图标：裁出蘑菇本体放大到 64×64，背包里才看得清。
+        bbox = tex.getbbox()
+        icon = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
+        if bbox:
+            crop = tex.crop(bbox)
+            scale = min(SIZE / crop.width, SIZE / crop.height) * 0.94
+            crop = crop.resize((max(1, int(crop.width * scale)), max(1, int(crop.height * scale))), Image.NEAREST)
+            icon.alpha_composite(crop, ((SIZE - crop.width) // 2, (SIZE - crop.height) // 2))
+        icon_path = A / "textures/item" / f"{slug}.png"
+        icon_path.parent.mkdir(parents=True, exist_ok=True)
+        icon.save(icon_path)
+        write(A / "models/item" / f"{slug}.json",
+              {"parent": "minecraft:item/generated",
+               "textures": {"layer0": f"logos_dimension:item/{slug}"}})
+        write(A / "items" / f"{slug}.json",
+              {"model": {"type": "minecraft:model", "model": f"logos_dimension:item/{slug}"}})
+        write(D / "loot_table/blocks" / f"{slug}.json",
               {"type": "minecraft:block", "pools": [{"rolls": 1,
                 "conditions": [{"condition": "minecraft:survives_explosion"}],
-                "entries": [{"type": "minecraft:item", "name": f"logos_dimension:{name}"}]}]})
-        zh[f"block.logos_dimension.{name}"] = cn
-        en[f"block.logos_dimension.{name}"] = eng
-        if f"logos_dimension:{name}" not in tag["values"]:
-            tag["values"].append(f"logos_dimension:{name}")
+                "entries": [{"type": "minecraft:item", "name": f"logos_dimension:{slug}"}]}]})
+        zh[f"block.logos_dimension.{slug}"] = cn
+        en[f"block.logos_dimension.{slug}"] = eng
+        if f"logos_dimension:{slug}" not in tag["values"]:
+            tag["values"].append(f"logos_dimension:{slug}")
     (A / "lang/zh_cn.json").write_text(json.dumps(zh, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (A / "lang/en_us.json").write_text(json.dumps(en, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     TAG.write_text(json.dumps(tag, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"蘑菇资源：{len(SPECIES)} 种（贴图 / 模型 / 方块状态 / 物品模型 / 掉落表 / 语言 / fragile_plants 标签）")
+    print(f"蘑菇资源：{len(SPECIES)} 种（64×64 贴图 / cross 模型 / 方块状态 / 物品模型 / 掉落表 / 语言 / 标签）")
 
 
 if __name__ == "__main__":
