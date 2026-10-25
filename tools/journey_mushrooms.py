@@ -22,6 +22,10 @@ SPECIES = [
     ("journey_field_mushroom", "白伞菇", "Field Mushroom", (236, 231, 214), (206, 199, 178), (214, 203, 181), "cap"),
     ("journey_chanterelle", "鸡油菌", "Chanterelle", (232, 176, 66), (196, 138, 42), (226, 200, 142), "funnel"),
     ("journey_bolete", "牛肝菌", "Bolete", (146, 96, 54), (110, 70, 38), (226, 210, 184), "bolete"),
+    # 有毒的三种：画法另起（红伞白点 / 苍白帽 / 假鸡油菌），吃了会挂负面效果。
+    ("journey_fly_agaric", "毒蝇伞", "Fly Agaric", (196, 58, 52), (150, 36, 34), (232, 224, 206), "amanita"),
+    ("journey_death_cap", "死帽菇", "Death Cap", (170, 182, 132), (128, 142, 96), (236, 232, 214), "deathcap"),
+    ("journey_false_chanterelle", "毒粉褶菌", "False Chanterelle", (206, 132, 58), (150, 92, 40), (222, 200, 150), "falsechanterelle"),
 ]
 
 
@@ -50,7 +54,7 @@ def draw_mushroom(style, cap, cap_dark, stem):
         q.arc((4, 4, 28, 16), 200, 340, fill=shade(cap, -30) + (255,))
         for x in range(8, 26, 4):
             q.line((x, 10, x + 1, 19), fill=shade(cap_dark, -10) + (255,))
-    else:
+    elif style == "bolete":
         # 牛肝菌：厚帽 + 粗柄，帽下有一圈浅色菌管。
         q.rectangle((11, 19, 21, 30), fill=stem + (255,))
         q.pieslice((4, 7, 28, 25), 180, 360, fill=cap + (255,))
@@ -60,6 +64,30 @@ def draw_mushroom(style, cap, cap_dark, stem):
         for y in range(21, 22):
             for x in range(7, 26, 2):
                 q.point((x, y), fill=(206, 190, 160, 255))
+    elif style == "amanita":
+        # 毒蝇伞：红帽白点，白色菌环与菌托。
+        q.pieslice((4, 7, 28, 26), 180, 360, fill=cap + (255,))
+        q.rectangle((4, 16, 28, 18), fill=shade(cap_dark, -10) + (255,))
+        for x, y, r in [(10, 13, 2), (16, 10, 2), (22, 14, 2), (13, 17, 1), (20, 18, 1)]:
+            q.ellipse((x - r, y - r, x + r, y + r), fill=(240, 236, 224, 255))
+        q.rectangle((11, 18, 21, 27), fill=stem + (255,))
+        q.rectangle((9, 21, 23, 23), fill=shade(stem, -22) + (255,))
+        q.ellipse((8, 26, 24, 30), fill=shade(stem, -14) + (255,))
+    elif style == "deathcap":
+        # 死帽菇：苍白偏绿的帽，菌环明显，柄细长。
+        q.pieslice((5, 8, 27, 25), 180, 360, fill=cap + (255,))
+        q.rectangle((5, 16, 27, 18), fill=shade(cap_dark, -6) + (255,))
+        q.arc((5, 8, 27, 25), 180, 360, fill=shade(cap_dark, -18) + (255,))
+        q.rectangle((13, 18, 19, 29), fill=stem + (255,))
+        q.polygon([(10, 20), (22, 20), (21, 23), (11, 23)], fill=shade(stem, -10) + (255,))
+    elif style == "falsechanterelle":
+        # 毒粉褶菌：偏橙的平帽 + 明显菌褶，冒充鸡油菌。
+        q.pieslice((4, 10, 28, 24), 180, 360, fill=cap + (255,))
+        q.rectangle((4, 16, 28, 18), fill=shade(cap_dark, -12) + (255,))
+        for x in range(6, 27, 3):
+            q.line((x, 18, x, 22), fill=shade(cap_dark, -26) + (255,))
+        q.rectangle((12, 18, 20, 28), fill=stem + (255,))
+        q.arc((4, 10, 28, 24), 180, 360, fill=shade(cap_dark, -30) + (255,))
     # 地面阴影，让它在草丛里"坐得住"。
     q.ellipse((8, 27, 24, 31), fill=(0, 0, 0, 56))
     return im

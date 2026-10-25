@@ -222,5 +222,8 @@
   "block.logos_dimension.elven_bough_light": "枝间叶辉",
   "block.logos_dimension.journey_field_mushroom": "白伞菇",
   "block.logos_dimension.journey_chanterelle": "鸡油菌",
-  "block.logos_dimension.journey_bolete": "牛肝菌"
+  "block.logos_dimension.journey_bolete": "牛肝菌",
+  "block.logos_dimension.journey_fly_agaric": "毒蝇伞",
+  "block.logos_dimension.journey_death_cap": "死帽菇",
+  "block.logos_dimension.journey_false_chanterelle": "毒粉褶菌"
 }

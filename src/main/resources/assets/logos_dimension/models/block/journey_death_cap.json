@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cross",
+  "render_type": "neoforge:cutout",
+  "textures": {
+    "cross": "logos_dimension:block/journey_death_cap"
+  }
+}
