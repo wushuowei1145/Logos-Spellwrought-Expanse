@@ -220,6 +220,18 @@ write(D/'worldgen/placed_feature/forest_cave_lichen.json',{'feature':'logos_dime
     {'type':'minecraft:in_square'},
     {'type':'minecraft:surface_relative_threshold_filter','heightmap':'OCEAN_FLOOR_WG','max_inclusive':-13},
     {'type':'minecraft:biome'}]})
+
+# 林地岩石露头：原版 block_pile，用本附属的石灰岩堆成一小簇。
+# 一份特征被 13 个林地共用；非林地不加，避免整片大陆到处冒石头。
+configured('forest_rock_outcrop',{'type':'minecraft:block_pile','config':{
+    'state_provider':{'type':'minecraft:simple_state_provider','state':{'Name':'logos_dimension:journey_limestone'}}}})
+write(D/'worldgen/placed_feature/forest_rock_outcrop.json',{'feature':'logos_dimension:forest_rock_outcrop','placement':[
+    {'type':'minecraft:rarity_filter','chance':8},
+    {'type':'minecraft:in_square'},
+    {'type':'minecraft:heightmap','heightmap':'MOTION_BLOCKING_NO_LEAVES'},
+    outside_island(),
+    {'type':'minecraft:block_predicate_filter','predicate':{'type':'minecraft:matching_blocks','blocks':['minecraft:air']}},
+    {'type':'minecraft:biome'}]})
 for bid in ids:
     data=json.loads((D/'worldgen/biome'/f'{bid}.json').read_text());features=[[] for _ in range(11)]
     if bid not in barren:
@@ -236,6 +248,8 @@ for bid in ids:
         # 水边：直接引用原版的水边特征（甘蔗与睡莲），它们自带"必须挨着水"的判定，
         # 所以在没有水的地方什么都不会发生，不必为附属另写一套。
         if bid in forests:features[9].extend(['minecraft:patch_sugar_cane','minecraft:patch_waterlily'])
+        # 岩石露头：只给有树的林地。
+        if bid in forests:features[9].append('logos_dimension:forest_rock_outcrop')
     data['features']=features;write(D/'worldgen/biome'/f'{bid}.json',data)
 for bid in ['aether','sulfur','mercury','salt','sanctum']:
     data=json.loads((D/'worldgen/biome'/f'{bid}.json').read_text());data['carvers']=['minecraft:cave','minecraft:canyon'];data['features']=[[] for _ in range(11)]
