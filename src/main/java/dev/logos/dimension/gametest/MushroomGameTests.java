@@ -35,7 +35,8 @@ public final class MushroomGameTests {
     public static void register(IEventBus bus){
         var tests=Map.<String,Consumer<GameTestHelper>>of(
             "glowcap_food",MushroomGameTests::glowcapFood,
-            "woodland_mushroom_food",MushroomGameTests::woodlandMushrooms);
+            "woodland_mushroom_food",MushroomGameTests::woodlandMushrooms,
+            "toxic_mushroom_food",MushroomGameTests::toxicMushrooms);
         tests.forEach((name,test)->FUNCTIONS.register(name,()->test));FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event)->{
             var env=event.registerEnvironment(LogosDimension.id("mushrooms"),new TestEnvironmentDefinition.AllOf());
@@ -75,6 +76,35 @@ public final class MushroomGameTests {
                 var remainder=stack.finishUsingItem(h.getLevel(),player);
                 h.assertTrue(player.getFoodData().getFoodLevel()==12&&remainder.getCount()==1,
                     item+" 没有正确回复饱食度或没有消耗");
+            }
+        }finally{h.getLevel().getServer().getPlayerList().remove(player);}
+        h.succeed();
+    }
+
+    /** 三种有毒蘑菇：营养只有 1，吃完必须挂上中毒、反胃、饥饿。 */
+    private static void toxicMushrooms(GameTestHelper h){
+        var player=mockPlayer(h);
+        try{
+            record Toxic(net.minecraft.world.item.Item item,String label){}
+            var mushrooms=new Toxic[]{
+                new Toxic(CloudseaBlocks.FLY_AGARIC.get().asItem(),"毒蝇伞"),
+                new Toxic(CloudseaBlocks.DEATH_CAP.get().asItem(),"死帽菇"),
+                new Toxic(CloudseaBlocks.FALSE_CHANTERELLE.get().asItem(),"毒粉褶菌")};
+            for(var mushroom:mushrooms){
+                player.removeAllEffects();
+                player.getFoodData().setFoodLevel(10);
+                player.getFoodData().setSaturation(0);
+                var stack=new ItemStack(mushroom.item(),2);
+                h.assertTrue(stack.has(DataComponents.CONSUMABLE)&&stack.get(DataComponents.FOOD).nutrition()==1,
+                    mushroom.label()+" 的营养值应当只有 1");
+                var remainder=stack.finishUsingItem(h.getLevel(),player);
+                h.assertTrue(remainder.getCount()==1,mushroom.label()+" 没有消耗物品");
+                h.assertTrue(player.hasEffect(net.minecraft.world.effect.MobEffects.POISON),
+                    mushroom.label()+" 没有造成中毒");
+                h.assertTrue(player.hasEffect(net.minecraft.world.effect.MobEffects.NAUSEA),
+                    mushroom.label()+" 没有造成反胃");
+                h.assertTrue(player.hasEffect(net.minecraft.world.effect.MobEffects.HUNGER),
+                    mushroom.label()+" 没有造成饥饿");
             }
         }finally{h.getLevel().getServer().getPlayerList().remove(player);}
         h.succeed();

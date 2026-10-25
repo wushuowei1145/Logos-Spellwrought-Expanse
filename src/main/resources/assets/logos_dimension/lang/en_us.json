@@ -222,5 +222,8 @@
   "block.logos_dimension.elven_bough_light": "Bough Light",
   "block.logos_dimension.journey_field_mushroom": "Field Mushroom",
   "block.logos_dimension.journey_chanterelle": "Chanterelle",
-  "block.logos_dimension.journey_bolete": "Bolete"
+  "block.logos_dimension.journey_bolete": "Bolete",
+  "block.logos_dimension.journey_fly_agaric": "Fly Agaric",
+  "block.logos_dimension.journey_death_cap": "Death Cap",
+  "block.logos_dimension.journey_false_chanterelle": "False Chanterelle"
 }

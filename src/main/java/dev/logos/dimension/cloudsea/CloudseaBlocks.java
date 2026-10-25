@@ -34,6 +34,19 @@ public final class CloudseaBlocks {
     /** 林地三种无毒蘑菇：可食用，各回一格饱食度；方块可放置，掉落自己。 */
     public static final DeferredBlock<Block> FIELD_MUSHROOM=floraFood("journey_field_mushroom",2,.15f),
             CHANTERELLE=floraFood("journey_chanterelle",2,.15f),BOLETE=floraFood("journey_bolete",2,.15f);
+    /** 林地三种有毒蘑菇：营养只有 1，吃下去中毒、反胃、饥饿。 */
+    public static final DeferredBlock<Block> FLY_AGARIC=floraToxic("journey_fly_agaric",1.6f,
+            new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.POISON,160,0),
+            new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.NAUSEA,200,0),
+            new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.HUNGER,300,0)),
+        DEATH_CAP=floraToxic("journey_death_cap",2.0f,
+            new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.POISON,240,1),
+            new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.NAUSEA,300,0),
+            new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.HUNGER,400,0)),
+        FALSE_CHANTERELLE=floraToxic("journey_false_chanterelle",1.6f,
+            new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.POISON,100,0),
+            new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.NAUSEA,200,0),
+            new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.HUNGER,300,0));
     public static final List<DeferredBlock<Block>> SEASONAL_PLANTS=List.of(ANEMONE,MOONBELL,GLOWCAP,HEATHER,STAGHORN,HELLEBORE,FIREWEED,BRAMBLE);
     public static final DeferredBlock<Block> LIMESTONE=solid("journey_limestone",MapColor.QUARTZ,SoundType.STONE,0),PLASTER=solid("journey_lime_plaster",MapColor.SAND,SoundType.STONE,0),TIMBER_FRAME=solid("journey_timber_frame",MapColor.COLOR_BROWN,SoundType.WOOD,0),ROOF_TILE=solid("journey_roof_tile",MapColor.TERRACOTTA_RED,SoundType.STONE,0);
     static { for(var b:CloudseaBiome.values()){
@@ -74,6 +87,17 @@ public final class CloudseaBlocks {
     private static DeferredBlock<Block> flora(String id,int light) {
         var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,JourneyPlantBlock::new,p->p.mapColor(MapColor.PLANT).strength(.25f).sound(SoundType.GRASS).noCollision().noOcclusion().randomTicks().lightLevel(s->light));
         DimensionBlocks.ITEMS.registerSimpleBlockItem(id,block);PALETTE.add(block);return block;
+    }
+    /** 有毒的地生小植物：营养 1，吃下去按顺序挂上给定的负面效果。 */
+    private static DeferredBlock<Block> floraToxic(String id,float consumeSeconds,net.minecraft.world.effect.MobEffectInstance... effects) {
+        var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,JourneyPlantBlock::new,p->p.mapColor(MapColor.PLANT).strength(.25f).sound(SoundType.GRASS).noCollision().noOcclusion().randomTicks());
+        var consumable=net.minecraft.world.item.component.Consumable.builder()
+                .consumeSeconds(consumeSeconds)
+                .onConsume(new net.minecraft.world.item.consume_effects.ApplyStatusEffectsConsumeEffect(java.util.List.of(effects),1f))
+                .build();
+        DimensionBlocks.ITEMS.registerItem(id,p->new net.minecraft.world.item.BlockItem(block.get(),p
+                .food(new net.minecraft.world.food.FoodProperties.Builder().nutrition(1).saturationModifier(.05f).build(),consumable)));
+        PALETTE.add(block);return block;
     }
     /** 可食用的地生小植物：方块照常放置，物品带食用属性。 */
     private static DeferredBlock<Block> floraFood(String id,int nutrition,float saturation) {
