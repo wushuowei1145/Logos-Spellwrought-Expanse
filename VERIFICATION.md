@@ -2,6 +2,31 @@
 
 目标环境：Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25；Logos 0.5.1，主模组源码基线 `f196960`。当前开发安装包为 0.11.0。原炼金维度不包含建筑或 Boss；远行大陆包含中世纪聚落、精灵森林与世界树，不包含 Boss。
 
+## 0.11.0 林地蘑菇、幼年牧草与草皮骨粉
+
+2026-10-25：森林侧收尾的一批小内容，全部数据包 + 少量方块类，无新美术服务、无内嵌前置。
+
+- **露灯菌可食用**：`journey_glowcap` 的方块物品带食用属性，营养 2（一格饱食度），饱和 0.15；对空气右键吃、对地面右键仍是放置。
+- **六种林地蘑菇**：白伞菇 / 鸡油菌 / 牛肝菌（营养 2）+ 毒蝇伞 / 死帽菇 / 毒粉褶菌（营养 1）。毒菌吃下挂中毒、反胃、饥饿，死帽菇最重（中毒 II）。贴图与模型由 `tools/journey_mushrooms.py` 代码绘制，64×64，单朵约占方块 0.48 高，物品另有 64×64 满格图标。
+- **蘑菇自然生成**：六种按群系分配，食用三种常见（1/24、1/32）、毒菌稀有（1/96–1/128）；非林地不加。
+- **幼年原野牧草**：`journey_meadow_grass_young`，形状照原版 `short_grass`（16×16 + `block/cross`），带 `age` 0–2；光照 ≥ 9 自己长，长满换成成年牧草，骨粉催熟一档；进入 `meadow_floor` 与两个林隙的地表组合。
+- **草皮骨粉修复**：`SeasonalTurfBlock` 实现 `BonemealableBlock`，候选来自群系的骨粉特征（`minecraft:can_spawn_from_bone_meal` 标签），所以撒骨粉长的是本群系自己的植物；新增该标签的追加文件（`replace:false`），覆盖 16 个林地、精灵森林与共享草地表；群系无候选时不消耗骨粉。
+- **上游同步工具**：`tools/check_logos_upstream.py` + [与主模组同步的检查清单](docs/UPSTREAM_SYNC.md)。
+
+验证：main 上 **53/53 单元测试**通过（强制重跑，Logos 0.6.0 的 jar）；定向 GameTest 全部通过——`glowcap_food`、`woodland_mushroom_food`、`toxic_mushroom_food`（各回饱食度 / 挂三种负面效果）、`young_grass_grows`（骨粉 0→1→2→成年牧草）、`turf_bonemeal`（放草皮撒 4 次骨粉后上方长出方块）。幼年牧草与草皮骨粉两处在 Logos **0.6.0** 的 jar 上重新跑过，不只是 0.5.1。六个蘑菇 / 幼草 / 草皮方块都进了 `logos:fragile_plants` 标签，衰退符文有效。
+
+已知问题：全套 GameTest 的 `elven_living_world_tree` 仍会失败（`树心中央方块光照不足：5`，等待光照传播超时）。该项在**未改动的 main 上同样复现**，属既有环境/时序问题，没有靠重跑掩盖，也未计入"通过"。
+
+没有验证的部分：蘑菇与幼草的实际观感（只有贴图/模型文件级核对，没有客户端截图）、自然生成密度手感、光影、硬件帧率。所有世界生成内容只在新区块生效。
+
+```text
+python tools/journey_mushrooms.py
+python tools/journey_young_grass.py
+python tools/check_logos_upstream.py
+./gradlew test build -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar -PdimensionTests=logos_dimension:young_grass_grows
+```
+
 ## 0.11.0 森林地带的四层补充（地被 / 地物 / 水边 / 地下 / 雾）
 
 2026-10-25：森林地带从"只换树"改成四层结构，另加一层只覆盖四个群系的雾。全部数据包实现，无 Java 地形、种树或填块生成器，无新增方块。结构与边界见 [森林地带的四层结构](docs/FOREST_LAYERS.md)。
