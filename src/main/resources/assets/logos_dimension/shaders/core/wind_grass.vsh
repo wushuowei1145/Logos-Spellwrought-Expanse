@@ -16,6 +16,7 @@ out vec4 vertexColor;
 out vec2 texCoord0;
 out float vHeight;
 out float vWind;
+out float vWave;
 
 void main() {
     vec2 world = vec2(UV2);          // 世界 xz（整数格）
@@ -27,7 +28,8 @@ void main() {
     gust = clamp(gust, 0.35, 1.35);
 
     // 草浪：沿风向的相位差让波峰从一侧扫到另一侧。
-    float phase = dot(world, vec2(0.62, 0.78)) - t * 4.0;
+    // 波长约 10 格、沿风向推进，波峰扫过整片草原。
+    float phase = dot(world, vec2(0.62, 0.78)) * 0.62 - t * 4.0;
     float wave = sin(phase);
 
     // Color.a 存的是"离地高度比例"，越靠叶尖摆得越多。
@@ -44,4 +46,5 @@ void main() {
     texCoord0 = UV0;
     vHeight = h;
     vWind = gust;
+    vWave = wave;
 }
