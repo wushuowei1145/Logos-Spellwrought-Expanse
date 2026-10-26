@@ -197,6 +197,8 @@ for bid,(count,pairs) in FOREST_FLOORS.items():
 # 群系的地表出了问题。长风草原以"风里的长草"为主：长草压过其它，野花只作点缀。
 PLAINS_FLOORS={
  'cloudsea_silk_folds':(420,[('minecraft:tall_grass',48),('logos_dimension:journey_meadow_grass_short',12),('minecraft:short_grass',14),('logos_dimension:journey_meadow_grass_young',8),('minecraft:oxeye_daisy',7),('logos_dimension:journey_fireweed',6),('logos_dimension:journey_silver_anemone',5),('logos_dimension:journey_heather',4)]),
+ # 野花草甸：野花压过草，是六个平原里最"花"的一个。
+ 'cloudsea_rose_dunes':(460,[('logos_dimension:journey_bluebell',18),('logos_dimension:journey_silver_anemone',16),('minecraft:oxeye_daisy',14),('logos_dimension:journey_meadow_grass_short',20),('logos_dimension:journey_fireweed',8),('logos_dimension:journey_stardew',6),('logos_dimension:journey_heather',6),('minecraft:short_grass',8)]),
  # 旷野丘陵：起伏草坡，草更短更碎，夹着砾石与卷叶蕨，野花很少。
  'cloudsea_dawn_ribbons':(500,[('logos_dimension:journey_meadow_grass_short',34),('minecraft:short_grass',22),('logos_dimension:journey_bracken',14),('logos_dimension:journey_meadow_grass',10),('minecraft:gravel',5),('logos_dimension:journey_heather',6),('minecraft:oxeye_daisy',4),('logos_dimension:journey_meadow_grass_young',5)]),
 }
