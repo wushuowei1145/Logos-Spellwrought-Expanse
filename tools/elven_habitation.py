@@ -83,6 +83,50 @@ def tree_house(cells, conifer=False, variant=0, offset=(0, 0, 0)):
     return {'kind': 'fir' if conifer else 'broadleaf', 'floor': oy+floor, 'rope': [ox, oy+2, oz+13], 'rope_top': oy+floor+2}
 
 
+RESIDENT = NS + 'forest_elf'
+
+
+def resident(x, y, z):
+    """结构模板里的一位森林精灵：放置时原版按 STRUCTURE 原因调用 finalizeSpawn，在那里抽外观、拿弓。"""
+    return {'pos': [x + .5, float(y), z + .5], 'blockPos': [x, y, z], 'nbt': {'id': RESIDENT}}
+
+
+def house_residents(offset, floor):
+    """树屋里两位：屋内书架与桌椅之间的空地，脚下是屋板。"""
+    ox, oy, oz = offset
+    return [resident(ox + x, oy + floor + 1, oz + 8) for x in (-2, 1)]
+
+
+def standable(cells, x, y, z):
+    below = cells.get((x, y - 1, z), {'Name': 'minecraft:air'})['Name']
+    if below == 'minecraft:air' or 'fence' in below or 'rope' in below:
+        return False
+    return all(cells.get((x, yy, z), {'Name': 'minecraft:air'})['Name'] == 'minecraft:air' for yy in (y, y + 1))
+
+
+def world_residents(cells, levels):
+    """世界树：大厅三位，上面三层回廊各两位（参照村庄：住处附近成群出现）。位置逐个检查脚下有地、头上两格是空气。"""
+    out = []
+    hall = [(3, 1), (-3, -2), (1, -4), (-4, 3), (4, -3)]
+    for x, z in hall:
+        for y in range(1, 10):
+            if standable(cells, x, y, z):
+                out.append(resident(x, y, z))
+                break
+        if len(out) == 3:
+            break
+    ring = [(0, 8), (8, 0), (0, -8), (-8, 0), (6, 6), (-6, -6), (6, -6), (-6, 6)]
+    for floor in levels['floors'][:3]:
+        placed = 0
+        for x, z in ring:
+            if standable(cells, x, floor + 1, z):
+                out.append(resident(x, floor + 1, z))
+                placed += 1
+            if placed == 2:
+                break
+    return out
+
+
 def tree_lights(cells, offset=(0, 0, 0), seed=0):
     """以固定空间哈希疏采树皮和枝条；不改变地形，也不生成实体。"""
     candidates = list(cells.items())

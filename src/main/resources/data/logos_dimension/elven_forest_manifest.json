@@ -1014,7 +1014,74 @@
       "width": 3,
       "central_lightwell_radius": 5.3
     },
-    "bough_lights": 177
+    "bough_lights": 177,
+    "residents": [
+      [
+        3,
+        2,
+        1
+      ],
+      [
+        -3,
+        2,
+        -2
+      ],
+      [
+        1,
+        2,
+        -4
+      ],
+      [
+        0,
+        18,
+        8
+      ],
+      [
+        8,
+        18,
+        0
+      ],
+      [
+        0,
+        34,
+        8
+      ],
+      [
+        8,
+        34,
+        0
+      ],
+      [
+        0,
+        50,
+        8
+      ],
+      [
+        8,
+        50,
+        0
+      ],
+      [
+        50,
+        27,
+        60
+      ],
+      [
+        53,
+        27,
+        60
+      ],
+      [
+        -2,
+        24,
+        -66
+      ],
+      [
+        1,
+        24,
+        -66
+      ]
+    ]
   },
   "giants": [
     {
@@ -1023,7 +1090,8 @@
       "footings": 85,
       "height": 68,
       "house": null,
-      "bough_lights": 6
+      "bough_lights": 6,
+      "residents": 0
     },
     {
       "template": "giant_0_home",
@@ -1040,7 +1108,8 @@
         ],
         "rope_top": 29
       },
-      "bough_lights": 6
+      "bough_lights": 6,
+      "residents": 2
     },
     {
       "template": "giant_1",
@@ -1048,7 +1117,8 @@
       "footings": 84,
       "height": 72,
       "house": null,
-      "bough_lights": 9
+      "bough_lights": 9,
+      "residents": 0
     },
     {
       "template": "giant_1_home",
@@ -1065,7 +1135,8 @@
         ],
         "rope_top": 32
       },
-      "bough_lights": 9
+      "bough_lights": 9,
+      "residents": 2
     },
     {
       "template": "giant_2",
@@ -1073,7 +1144,8 @@
       "footings": 93,
       "height": 77,
       "house": null,
-      "bough_lights": 8
+      "bough_lights": 8,
+      "residents": 0
     },
     {
       "template": "giant_2_home",
@@ -1090,7 +1162,8 @@
         ],
         "rope_top": 35
       },
-      "bough_lights": 8
+      "bough_lights": 8,
+      "residents": 2
     },
     {
       "template": "giant_3",
@@ -1098,7 +1171,8 @@
       "footings": 33,
       "height": 85,
       "house": null,
-      "bough_lights": 2
+      "bough_lights": 2,
+      "residents": 0
     },
     {
       "template": "giant_3_home",
@@ -1115,7 +1189,8 @@
         ],
         "rope_top": 29
       },
-      "bough_lights": 2
+      "bough_lights": 2,
+      "residents": 2
     },
     {
       "template": "giant_4",
@@ -1123,7 +1198,8 @@
       "footings": 31,
       "height": 90,
       "house": null,
-      "bough_lights": 1
+      "bough_lights": 1,
+      "residents": 0
     },
     {
       "template": "giant_4_home",
@@ -1140,11 +1216,12 @@
         ],
         "rope_top": 32
       },
-      "bough_lights": 1
+      "bough_lights": 1,
+      "residents": 2
     }
   ],
   "generation": "minecraft:jigsaw / minecraft:noise / minecraft:multi_noise",
-  "entities": false,
+  "entities": "forest_elf residents",
   "central_clear_diameter": 10,
   "block_light_sources": true,
   "tree_house_probability": 0.2857142857142857,

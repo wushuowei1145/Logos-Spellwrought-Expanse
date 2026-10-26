@@ -13,6 +13,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
 import dev.logos.dimension.npc.NpcParts;
+import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.util.RandomSource;
 
 class NpcPartsTest {
     private static final NpcParts.Race ELF = NpcParts.FOREST_ELF;
@@ -74,5 +77,55 @@ class NpcPartsTest {
                     || p.startsWith("eyes_") || p.startsWith("mouth_") || p.startsWith("outfit_"));
             if (partName && top) assertTrue(listed.contains(n), "模型里的零件组没登记：" + n);
         }
+    }
+
+    @Test void tableComesFromDataAndHasTheNewParts() {
+        assertNotNull(ELF.slot("hair").find("hair_hooded"));
+        assertNotNull(ELF.slot("hair").find("hair_short_bob"));
+        assertNotNull(ELF.slot("outfit").find("outfit_ranger"));
+        assertEquals("hair_straight_long", ELF.slot("hair").parts().getFirst().id(), "默认零件排第一个");
+        assertTrue(ELF.conflicts("hair_hooded", "headwear_twig_crown"));
+        assertFalse(ELF.conflicts("hair_short_bob", "headwear_twig_crown"));
+    }
+
+    /** 兜帽和枝冠互斥：随机抽不会同时出现；手动给出的组合会把后面的头饰换成 none。 */
+    @Test void conflictingPartsNeverAppearTogether() {
+        RandomSource random = RandomSource.create(42);
+        int hooded = 0;
+        for (int i = 0; i < 2000; i++) {
+            Map<String, String> a = ELF.random(random);
+            assertFalse("hair_hooded".equals(a.get("hair")) && "headwear_twig_crown".equals(a.get("headwear")), a.toString());
+            if ("hair_hooded".equals(a.get("hair"))) {
+                hooded++;
+                assertEquals(NpcParts.NONE, a.get("headwear"), "戴兜帽时头饰槽只能空着");
+            }
+        }
+        assertTrue(hooded > 0, "抽了 2000 次一次兜帽都没有");
+        Map<String, String> clash = ELF.defaults();
+        clash.put("hair", "hair_hooded");
+        clash.put("headwear", "headwear_twig_crown");
+        assertEquals(NpcParts.NONE, ELF.sanitize(clash).get("headwear"));
+    }
+
+    private static int residents(String template) throws Exception {
+        try (var in = NpcPartsTest.class.getResourceAsStream("/data/logos_dimension/structure/elven/" + template + ".nbt")) {
+            assertNotNull(in, template);
+            var entities = NbtIo.readCompressed(in, NbtAccounter.unlimitedHeap()).getListOrEmpty("entities");
+            int n = 0;
+            for (int i = 0; i < entities.size(); i++)
+                if ("logos_dimension:forest_elf".equals(entities.getCompoundOrEmpty(i).getCompoundOrEmpty("nbt").getStringOr("id", ""))) n++;
+            return n;
+        }
+    }
+
+    /** 生成脚本写进模板的居民：每间树屋两位，没有屋子的巨木没有；世界树（大厅三位、三层回廊各两位、两间树屋各两位）共十三位。 */
+    @Test void templatesCarryResidents() throws Exception {
+        for (int i = 0; i < 5; i++) {
+            assertEquals(2, residents("giant_" + i + "_home"), "giant_" + i + "_home");
+            assertEquals(0, residents("giant_" + i), "giant_" + i);
+        }
+        int world = 0;
+        for (int x = 0; x < 7; x++) for (int y = 0; y < 7; y++) for (int z = 0; z < 7; z++) world += residents("tile_" + x + "_" + y + "_" + z);
+        assertEquals(13, world);
     }
 }

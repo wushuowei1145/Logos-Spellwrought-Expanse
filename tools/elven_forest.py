@@ -9,7 +9,7 @@ ROOT=Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(ROOT/'tools'))
 from blueprint_nbt import write_structure
 from elven_tree_study import world_tree, broadleaf, fir
-from elven_habitation import tree_house, tree_lights, world_floors, assets as habitation_assets
+from elven_habitation import tree_house, tree_lights, world_floors, house_residents, world_residents, assets as habitation_assets
 R=ROOT/'src/main/resources';D=R/'data/logos_dimension';A=R/'assets/logos_dimension'
 NS='logos_dimension:'
 
@@ -245,6 +245,9 @@ def world_assets():
     furniture(cells)
     levels=world_floors(cells)
     house_specs=[tree_house(cells,i%3==0,i,(x,0,z)) for i,x,z in homes]
+    # 森林精灵：世界树大厅与上面几层、两间树屋，写进模板的实体列表（参照村庄的村民）。
+    residents=world_residents(cells,levels)
+    for (i,x,z),spec in zip(homes,house_specs):residents+=house_residents((x,0,z),spec['floor'])
     lights=tree_lights(cells,seed=37)
     # 只在根拱入口设置短木阶，不生成矩形土台。
     for z,y in [(-29,0),(-28,1)]:
@@ -256,7 +259,10 @@ def world_assets():
         for delta,face in directions:
             n=tuple(p[i]+delta[i] for i in range(3))
             if all(0<=c<7 for c in n) and n not in parent:parent[n]=(p,face);queue.append(n)
-    tiles={p:({}, {}) for p in order}
+    tiles={p:({}, {}) for p in order};tile_entities={p:[] for p in order}
+    for r in residents:
+        x,y,z=r['blockPos'];p=((x+112)//32,(y+4)//32,(z+112)//32);lx,ly,lz=(x+112)%32,(y+4)%32,(z+112)%32
+        tile_entities[p].append({'pos':[lx+.5,float(ly),lz+.5],'blockPos':[lx,ly,lz],'nbt':r['nbt']})
     for (x,y,z),s in cells.items():
         p=((x+112)//32,(y+4)//32,(z+112)//32)
         assert p in tiles,(x,y,z)
@@ -272,9 +278,9 @@ def world_assets():
     footings=0
     for p,(c,e) in tiles.items():
         if p[1]==0:footings+=footing(c,e)
-        name='tile_'+'_'.join(map(str,p));write_structure(D/'structure/elven'/f'{name}.nbt',[32,32,32],c,e,data_version=4790,entities=[]);pool(name,[name])
+        name='tile_'+'_'.join(map(str,p));write_structure(D/'structure/elven'/f'{name}.nbt',[32,32,32],c,e,data_version=4790,entities=tile_entities[p]);pool(name,[name])
     pool('world_tree',['tile_3_0_3']);structure('elven_world_tree','world_tree',32,14,['elven_forest'],True)
-    return {'tiles':len(tiles),'root_footings':footings,'material_cells':len(cells),'root_tile':'tile_3_0_3','anchor':[16,4,16],'height_above_ground':216,'surrounding_giants':8,'tree_houses':house_specs,'interior':levels,'bough_lights':lights}
+    return {'tiles':len(tiles),'root_footings':footings,'material_cells':len(cells),'root_tile':'tile_3_0_3','anchor':[16,4,16],'height_above_ground':216,'surrounding_giants':8,'tree_houses':house_specs,'interior':levels,'bough_lights':lights,'residents':[r['blockPos'] for r in residents]}
 
 
 def ordinary_assets():
@@ -292,11 +298,12 @@ def ordinary_assets():
         for furnished in [False,True]:
             variant=copy.deepcopy(cells)
             home=tree_house(variant,i>=3,i,offset) if furnished else None
+            residents=house_residents(offset,home['floor']-offset[1]) if furnished else []
             tags={};count=footing(variant,tags);name='giant_'+str(i)+('_home' if furnished else '')
             size=[max(p[axis] for p in variant)+1 for axis in range(3)]
             assert all(min(p[axis] for p in variant)>=0 for axis in range(3))
-            write_structure(D/'structure/elven'/f'{name}.nbt',size,variant,tags,data_version=4790,entities=[])
-            names.append(name);counts.append({'template':name,'blocks':len(variant),'footings':count,'height':int(hi[1]+t.origin[1]),'house':home,'bough_lights':lights})
+            write_structure(D/'structure/elven'/f'{name}.nbt',size,variant,tags,data_version=4790,entities=residents)
+            names.append(name);counts.append({'template':name,'blocks':len(variant),'footings':count,'height':int(hi[1]+t.origin[1]),'house':home,'bough_lights':lights,'residents':len(residents)})
     pool('giants',names)
     p=D/'worldgen/template_pool/elven/giants.json';obj=json.loads(p.read_text())
     # 2/(5+2)=28.6%，平均每三至四棵巨木一间屋，不把每棵树变成聚落。
@@ -342,7 +349,7 @@ def biome():
 
 
 def main():
-    models();habitation_assets(R);setup_footings();summary={'biome':NS+'elven_forest','climate_entries':biome(),'world_tree':world_assets(),'giants':ordinary_assets(),'generation':'minecraft:jigsaw / minecraft:noise / minecraft:multi_noise','entities':False,'central_clear_diameter':10,'block_light_sources':True,'tree_house_probability':2/7,'breath_cycle_ticks':120}
+    models();habitation_assets(R);setup_footings();summary={'biome':NS+'elven_forest','climate_entries':biome(),'world_tree':world_assets(),'giants':ordinary_assets(),'generation':'minecraft:jigsaw / minecraft:noise / minecraft:multi_noise','entities':'forest_elf residents','central_clear_diameter':10,'block_light_sources':True,'tree_house_probability':2/7,'breath_cycle_ticks':120}
     write(D/'elven_forest_manifest.json',summary);print(json.dumps(summary,ensure_ascii=False),flush=True)
 
 
