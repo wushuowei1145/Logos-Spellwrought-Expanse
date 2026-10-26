@@ -55,19 +55,22 @@ class PlainsFloorTest {
     /** 长风草原的招牌是"风里的长草"：牧草压过其它，短草与幼草补齐高度层次。 */
     @Test void silkFoldsIsWindsweptGrass()throws Exception{
         var w=weights(SILK+"_floor");
-        // 长风草原的地表现在用矮草（journey_meadow_grass_short）做主草，
-        // 叠加层的风摆草尖才不会被原版模型挡住；两种牧草都算"牧草权重"。
-        int grass=Math.max(w.getOrDefault("logos_dimension:journey_meadow_grass",0),
-                           w.getOrDefault("logos_dimension:journey_meadow_grass_short",0));
-        int shortGrass=w.getOrDefault("minecraft:short_grass",0);
+        // 长风草原的主草是原版高草丛（两格高、自带群系草色），我们的矮草与短草只是补层次；
+        // 高草丛的上端由渲染层的叠加几何带出摆动。
+        int tall=w.getOrDefault("minecraft:tall_grass",0);
+        int grass=tall
+                 +Math.max(w.getOrDefault("logos_dimension:journey_meadow_grass",0),
+                           w.getOrDefault("logos_dimension:journey_meadow_grass_short",0))
+                 +w.getOrDefault("minecraft:short_grass",0);
         int young=w.getOrDefault("logos_dimension:journey_meadow_grass_young",0);
         int flowers=0;
         for(var entry:w.entrySet())
-            if(!entry.getKey().contains("meadow_grass")&&!entry.getKey().equals("minecraft:short_grass"))
+            if(!entry.getKey().contains("meadow_grass")
+                &&!entry.getKey().equals("minecraft:short_grass")
+                &&!entry.getKey().equals("minecraft:tall_grass"))
                 flowers+=entry.getValue();
-        assertTrue(grass>=40,"牧草权重太低，长风草原会失去长草的样子");
-        assertTrue(grass>flowers,"牧草应当压过野花");
-        assertTrue(shortGrass>0,"缺少原版短草补层次");
+        assertTrue(tall>=40,"高草丛应该是长风草原的主草（现在 "+tall+"）");
+        assertTrue(grass>flowers*2,"草的权重应当明显压过野花");
         assertTrue(young>0,"缺少幼草");
     }
 

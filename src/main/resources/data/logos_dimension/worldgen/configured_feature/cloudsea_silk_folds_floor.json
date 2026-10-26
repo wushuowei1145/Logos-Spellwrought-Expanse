@@ -6,21 +6,27 @@
       "entries": [
         {
           "data": {
+            "Name": "minecraft:tall_grass"
+          },
+          "weight": 48
+        },
+        {
+          "data": {
             "Name": "logos_dimension:journey_meadow_grass_short"
           },
-          "weight": 46
+          "weight": 12
         },
         {
           "data": {
             "Name": "minecraft:short_grass"
           },
-          "weight": 18
+          "weight": 14
         },
         {
           "data": {
             "Name": "logos_dimension:journey_meadow_grass_young"
           },
-          "weight": 10
+          "weight": 8
         },
         {
           "data": {
