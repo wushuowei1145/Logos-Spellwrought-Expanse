@@ -229,5 +229,7 @@
   "block.logos_dimension.journey_meadow_grass_young": "幼年原野牧草",
   "item.logos_dimension.natures_force": "自然之力",
   "message.logos_dimension.natures_force.no_mana": "魔力不足（需要 %s），改为第二阶普通射击",
-  "block.logos_dimension.journey_meadow_grass_short": "草原矮草"
+  "block.logos_dimension.journey_meadow_grass_short": "草原矮草",
+  "block.logos_dimension.mercury": "水银",
+  "block.logos_dimension.molten_glass": "熔融玻璃"
 }
