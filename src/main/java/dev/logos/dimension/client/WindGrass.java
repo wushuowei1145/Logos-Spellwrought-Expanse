@@ -38,13 +38,16 @@ public final class WindGrass {
     /** 附近多少格内提交草尖。 */
     private static final int RADIUS = 14;
     /** 每帧最多提交多少片草尖（每片 2 个交叉四边形）。 */
-    private static final int MAX_BLADES = 2600;
+    /** 上限按"草片"算（每片 2 段），而不是按草丛记录算，避免实际片数失控。 */
+    private static final int MAX_SHEETS = 7000;
     private static final ContextKey<List<Grass>> GRASS = new ContextKey<>(LogosDimension.id("wind_grass_state"));
     private static final Identifier BLADE_TEXTURE = LogosDimension.id("textures/block/wind_blade.png");
 
     private record Grass(double x, double y, double z, int light, double distance) {}
 
     private static RenderType type;
+    /** 上一帧实际提交的草片数（调试用）。 */
+    public static volatile int lastSheets;
 
     private WindGrass() {}
 
@@ -86,11 +89,11 @@ public final class WindGrass {
             bright = 0.20f + 0.80f * Math.min(1f, bright);
             grass.add(new Grass(pos.getX() + .5, pos.getY(), pos.getZ() + .5,
                 Math.round(bright * 255), cam.distanceToSqr(pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5)));
-            if (grass.size() >= MAX_BLADES) break;
+            if (grass.size() >= MAX_SHEETS) break;
         }
         // 近处优先：远的草先被裁掉，视觉上"近密远疏"，开销也有上限。
         grass.sort(java.util.Comparator.comparingDouble(Grass::distance));
-        if (grass.size() > MAX_BLADES) grass.subList(MAX_BLADES, grass.size()).clear();
+        if (grass.size() > MAX_SHEETS) grass.subList(MAX_SHEETS, grass.size()).clear();
         event.getRenderState().setRenderData(GRASS, grass);
     }
 
@@ -101,6 +104,7 @@ public final class WindGrass {
         var cam = event.getLevelRenderState().cameraRenderState;
         var pose = event.getPoseStack();
         var out = LogosSkyOverlay.collector(event.getSubmitNodeCollector());
+        lastSheets = 0;
         // 专用草叶贴图，整张映射到叶片四边形上。
         float u0 = 0f, u1 = 1f, v0 = 0f, v1 = 1f;
         pose.pushPose();
@@ -109,10 +113,12 @@ public final class WindGrass {
                 int light = g.light();
                 // 世界 xz 塞进 UV2，顶点着色器用它算波浪相位（整数格）。
                 int wx = (int) Math.round(g.x()), wz = (int) Math.round(g.z());
-                int planes = g.distance() < 36 ? 6 : g.distance() < 100 ? 3 : 2;
+                int planes = g.distance() < 25 ? 9 : g.distance() < 64 ? 5 : 3;
+                planes = Math.min(planes, Math.max(0, (MAX_SHEETS - lastSheets) / 2));
                 for (int k = 0; k < planes; k++)
                     blade(p, v, g.x() - cam.pos.x, g.y() - cam.pos.y, g.z() - cam.pos.z, wx, wz, light,
                         u0, u1, v0, v1, k);
+                lastSheets += planes * 2;
             }
         });
         pose.popPose();
@@ -125,16 +131,22 @@ public final class WindGrass {
                               int plane) {
         int hash = (wx * 73856093) ^ (wz * 19349663) ^ (plane * 0x2C1B3C6D);
         float r = ((hash >>> 3) & 1023) / 1023f;
-        float half = .045f + .022f * r;
-        float baseOffset = .08f + .18f * r;
-        float height = .55f + .45f * r;
-        double ang = Math.toRadians(plane * 30 + r * 14);
+        // 叶宽、叶高、落点、朝向都随机：草地上是一蓬一蓬的草，不是一排韭菜。
+        float half = .10f + .07f * r;
+        float baseOffset = .05f + .22f * r;
+        float height = .42f + .40f * r;
+        // 在方块内随机挪落脚点（±0.34 格），避免所有叶子都从方块正中长出来。
+        float jx = (((hash >>> 11) & 255) / 255f - .5f) * .68f;
+        float jz = (((hash >>> 19) & 255) / 255f - .5f) * .68f;
+        double ang = Math.toRadians(((hash >>> 6) & 255) / 255.0 * 180.0);
         float cos = (float) Math.cos(ang), sin = (float) Math.sin(ang);
 
         // 根部亮一点、叶尖亮一点（叶尖受光），中段靠片元的渐变再拉开。
+        // 顶点色是 ARGB：alpha 必须写在高 8 位，着色器用 Color.a 当"离地高度比例"。
+        // 写成 0x00RRGGBB 会让所有顶点的高度权重都是 0，草就完全不动（上一版就是这个 bug）。
         int rootLevel = Math.max(18, (int) (bright * 0.52f));
-        int root = (rootLevel << 16) | (rootLevel << 8) | rootLevel;
-        int tip = (255) | (bright << 16) | (bright << 8) | bright;
+        int root = (0 << 24) | (rootLevel << 16) | (rootLevel << 8) | rootLevel;
+        int tip = (255 << 24) | (bright << 16) | (bright << 8) | bright;
 
         float baseY = (float) by + baseOffset;
         float midY = baseY + height * 0.55f;
@@ -142,8 +154,8 @@ public final class WindGrass {
         float midHalf = half * 0.62f;
         float tipHalf = half * 0.22f;
         // 中段先往外弯一点，叶尖再弯得更多，整体像被风压住。
-        float midBend = height * 0.10f, tipBend = height * 0.26f;
-        float bx1 = (float) bx, bz1 = (float) bz;
+        float midBend = height * 0.18f, tipBend = height * 0.52f;
+        float bx1 = (float) bx + jx, bz1 = (float) bz + jz;
         float dxb = cos * half, dzb = sin * half;
         float dxm = cos * midHalf, dzm = sin * midHalf;
         float dxt = cos * tipHalf, dzt = sin * tipHalf;
