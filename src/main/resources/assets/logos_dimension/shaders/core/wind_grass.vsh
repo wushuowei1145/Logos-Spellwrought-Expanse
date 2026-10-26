@@ -31,7 +31,7 @@ void main() {
 
     // Color.a 存的是"离地高度比例"，越靠叶尖摆得越多。
     float h = clamp(Color.a, 0.0, 1.0);
-    float sway = h * h * (gust * 0.42 + 0.24 * wave * gust);
+    float sway = h * h * (gust * 0.62 + 0.34 * wave * gust);
 
     vec3 pos = Position;
     pos.x += sway * 0.78;

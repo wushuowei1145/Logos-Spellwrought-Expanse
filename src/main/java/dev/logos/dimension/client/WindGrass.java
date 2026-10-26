@@ -79,7 +79,13 @@ public final class WindGrass {
         for (var pos : BlockPos.betweenClosed(center.offset(-RADIUS, -3, -RADIUS), center.offset(RADIUS, 3, RADIUS))) {
             BlockState state = level.getBlockState(pos);
             if (!state.is(longGrass) && !state.is(shortGrass)) continue;
-            grass.add(new Grass(pos.getX() + .5, pos.getY(), pos.getZ() + .5, LightCoordsUtil.FULL_BRIGHT));
+            int sky = level.getBrightness(net.minecraft.world.level.LightLayer.SKY, pos);
+            int blockLight = level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, pos);
+            float day = 1f - Math.min(11, level.getSkyDarken()) / 11f * 0.72f;
+            float bright = Math.max(blockLight / 15f, sky / 15f * day);
+            bright = 0.20f + 0.80f * Math.min(1f, bright);
+            grass.add(new Grass(pos.getX() + .5, pos.getY(), pos.getZ() + .5,
+                Math.round(bright * 255)));
             if (grass.size() >= MAX_BLADES) break;
         }
         event.getRenderState().setRenderData(GRASS, grass);
@@ -109,7 +115,7 @@ public final class WindGrass {
                 int light = g.light();
                 // 世界 xz 塞进 UV2，顶点着色器用它算波浪相位（整数格）。
                 int wx = (int) Math.round(g.x()), wz = (int) Math.round(g.z());
-                for (int k = 0; k < 4; k++)
+                for (int k = 0; k < 3; k++)
                     blade(p, v, g.x() - cam.pos.x, g.y() - cam.pos.y, g.z() - cam.pos.z, wx, wz, light,
                         u0, u1, v0, v1, k);
             }
@@ -117,37 +123,54 @@ public final class WindGrass {
         pose.popPose();
     }
 
-    /** 一片草：上窄下宽的竖直四边形，底边高度权重 0、顶边 1（存在颜色 alpha 里）。 */
+    /** 一片草：两段折线，根部立、叶尖向外弯；亮度来自方块所在位置的天空光/方块光。 */
     private static void blade(PoseStack.Pose p, VertexConsumer v,
-                              double bx, double by, double bz, int wx, int wz, int light,
+                              double bx, double by, double bz, int wx, int wz, int bright,
                               float u0, float u1, float v0, float v1,
                               int plane) {
-        // 每片草按世界坐标取一个稳定的随机量：高矮、宽度、朝向都略有差别，
-        // 整片草原才不会像排队的旗子。CPU 只做几次整数哈希，代价可以忽略。
         int hash = (wx * 73856093) ^ (wz * 19349663) ^ (plane * 0x2C1B3C6D);
         float r = ((hash >>> 3) & 1023) / 1023f;
         float half = .10f + .04f * r;
-        float tip = half * (.30f + .25f * r);
-        float baseOffset = .10f + .16f * r;
-        float height = .50f + .42f * r;
+        float baseOffset = .08f + .18f * r;
+        float height = .55f + .45f * r;
+        double ang = Math.toRadians(plane * 45 + r * 18);
+        float cos = (float) Math.cos(ang), sin = (float) Math.sin(ang);
+
+        // 根部亮一点、叶尖亮一点（叶尖受光），中段靠片元的渐变再拉开。
+        int root = (0) | (Math.max(20, (int) (bright * 0.72f)) << 16)
+                 | (Math.max(20, (int) (bright * 0.72f)) << 8) | Math.max(20, (int) (bright * 0.72f));
+        int tip = (255) | (bright << 16) | (bright << 8) | bright;
+
         float baseY = (float) by + baseOffset;
-        // 四片交叉平面：0°/45°/90°/135°，每片的高度与宽度各不相同。
-        double ang = Math.toRadians(plane * 45 + r * 20);
-        float dx = (float) (Math.cos(ang) * half), dz = (float) (Math.sin(ang) * half);
-        float tx = (float) (Math.cos(ang) * tip), tz = (float) (Math.sin(ang) * tip);
-        int topColor = (255 << 24) | 0xFFFFFF;
-        int rootColor = 0x00FFFFFF;
-        v.addVertex(p, (float) (bx - dx), baseY, (float) (bz - dz))
-            .setColor(rootColor).setUv(u0, v1)
+        float midY = baseY + height * 0.55f;
+        float tipY = baseY + height;
+        float midHalf = half * 0.62f;
+        float tipHalf = half * 0.22f;
+        // 中段先往外弯一点，叶尖再弯得更多，整体像被风压住。
+        float midBend = height * 0.10f, tipBend = height * 0.26f;
+        float bx1 = (float) bx, bz1 = (float) bz;
+        float dxb = cos * half, dzb = sin * half;
+        float dxm = cos * midHalf, dzm = sin * midHalf;
+        float dxt = cos * tipHalf, dzt = sin * tipHalf;
+        float bendX = cos * 0f, bendZ = sin * 0f;
+
+        // 下段：根 → 中
+        v.addVertex(p, bx1 - dxb, baseY, bz1 - dzb).setColor(root).setUv(u0, v1)
             .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
-        v.addVertex(p, (float) (bx + dx), baseY, (float) (bz + dz))
-            .setColor(rootColor).setUv(u1, v1)
+        v.addVertex(p, bx1 + dxb, baseY, bz1 + dzb).setColor(root).setUv(u1, v1)
             .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
-        v.addVertex(p, (float) (bx + tx), baseY + height, (float) (bz + tz))
-            .setColor(topColor).setUv(u1, v0)
+        v.addVertex(p, bx1 + dxm + bendX, midY, bz1 + dzm + bendZ).setColor(tip).setUv(u1, (v0 + v1) * .5f)
             .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
-        v.addVertex(p, (float) (bx - tx), baseY + height, (float) (bz - tz))
-            .setColor(topColor).setUv(u0, v0)
+        v.addVertex(p, bx1 - dxm + bendX, midY, bz1 - dzm + bendZ).setColor(tip).setUv(u0, (v0 + v1) * .5f)
+            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+        // 上段：中 → 尖
+        v.addVertex(p, bx1 - dxm, midY, bz1 - dzm).setColor(tip).setUv(u0, (v0 + v1) * .5f)
+            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+        v.addVertex(p, bx1 + dxm, midY, bz1 + dzm).setColor(tip).setUv(u1, (v0 + v1) * .5f)
+            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+        v.addVertex(p, bx1 + dxt + cos * tipBend, tipY, bz1 + dzt + sin * tipBend).setColor(tip).setUv(u1, v0)
+            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+        v.addVertex(p, bx1 - dxt + cos * tipBend, tipY, bz1 - dzt + sin * tipBend).setColor(tip).setUv(u0, v0)
             .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
     }
 }
