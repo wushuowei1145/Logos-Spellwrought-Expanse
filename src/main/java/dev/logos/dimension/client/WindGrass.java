@@ -36,11 +36,11 @@ import org.joml.Vector3f;
 @EventBusSubscriber(modid = LogosDimension.ID, value = Dist.CLIENT)
 public final class WindGrass {
     /** 附近多少格内提交草尖。 */
-    private static final int RADIUS = 10;
+    private static final int RADIUS = 14;
     /** 每帧最多提交多少片草尖（每片 2 个交叉四边形）。 */
-    private static final int MAX_BLADES = 600;
+    private static final int MAX_BLADES = 1500;
     private static final ContextKey<List<Grass>> GRASS = new ContextKey<>(LogosDimension.id("wind_grass_state"));
-    private static final Identifier GRASS_TEXTURE = LogosDimension.id("block/journey_meadow_grass");
+    private static final Identifier BLADE_TEXTURE = LogosDimension.id("textures/block/wind_blade.png");
 
     private record Grass(double x, double y, double z, int light) {}
 
@@ -60,7 +60,7 @@ public final class WindGrass {
                 .build();
             type = RenderType.create("logos_dimension_wind_grass",
                 RenderSetup.builder(pipeline)
-                    .withTexture("Sampler0", TextureAtlas.LOCATION_BLOCKS)
+                    .withTexture("Sampler0", BLADE_TEXTURE)
                     .sortOnUpload()
                     .createRenderSetup());
         }
@@ -98,24 +98,15 @@ public final class WindGrass {
         var cam = event.getLevelRenderState().cameraRenderState;
         var pose = event.getPoseStack();
         var out = LogosSkyOverlay.collector(event.getSubmitNodeCollector());
-        // 26.1 的图集管理器按"图集 id"索引（minecraft:blocks），不是贴图路径。
-        TextureAtlasSprite sprite;
-        try {
-            sprite = Minecraft.getInstance().getAtlasManager()
-                .getAtlasOrThrow(Identifier.withDefaultNamespace("blocks")).getSprite(GRASS_TEXTURE);
-        } catch (RuntimeException e) {
-            return; // 图集还没准备好时安静跳过，不要因为装饰渲染崩掉整个画面
-        }
-        float su0 = sprite.getU0(), su1 = sprite.getU1(), v0 = sprite.getV0(), v1 = sprite.getV1();
-        // 只取贴图中间的一条窄带：一片叶子，不是整丛草。
-        float u0 = su0 + (su1 - su0) * 0.44f, u1 = su0 + (su1 - su0) * 0.56f;
+        // 专用草叶贴图，整张映射到叶片四边形上。
+        float u0 = 0f, u1 = 1f, v0 = 0f, v1 = 1f;
         pose.pushPose();
         out.submitCustomGeometry(pose, type(), (p, v) -> {
             for (var g : frame) {
                 int light = g.light();
                 // 世界 xz 塞进 UV2，顶点着色器用它算波浪相位（整数格）。
                 int wx = (int) Math.round(g.x()), wz = (int) Math.round(g.z());
-                for (int k = 0; k < 3; k++)
+                for (int k = 0; k < 6; k++)
                     blade(p, v, g.x() - cam.pos.x, g.y() - cam.pos.y, g.z() - cam.pos.z, wx, wz, light,
                         u0, u1, v0, v1, k);
             }
@@ -130,15 +121,15 @@ public final class WindGrass {
                               int plane) {
         int hash = (wx * 73856093) ^ (wz * 19349663) ^ (plane * 0x2C1B3C6D);
         float r = ((hash >>> 3) & 1023) / 1023f;
-        float half = .10f + .04f * r;
+        float half = .045f + .022f * r;
         float baseOffset = .08f + .18f * r;
         float height = .55f + .45f * r;
-        double ang = Math.toRadians(plane * 45 + r * 18);
+        double ang = Math.toRadians(plane * 30 + r * 14);
         float cos = (float) Math.cos(ang), sin = (float) Math.sin(ang);
 
         // 根部亮一点、叶尖亮一点（叶尖受光），中段靠片元的渐变再拉开。
-        int root = (0) | (Math.max(20, (int) (bright * 0.72f)) << 16)
-                 | (Math.max(20, (int) (bright * 0.72f)) << 8) | Math.max(20, (int) (bright * 0.72f));
+        int rootLevel = Math.max(18, (int) (bright * 0.52f));
+        int root = (rootLevel << 16) | (rootLevel << 8) | rootLevel;
         int tip = (255) | (bright << 16) | (bright << 8) | bright;
 
         float baseY = (float) by + baseOffset;
