@@ -87,9 +87,11 @@ def main():
     def face():
         return {"texture": "#mat", "uv": [0, 0, 16, 16]}
 
+    # 只保留上/下两个面：1/16 厚草垫的侧面会在方块边界形成一圈深色竖线，
+    # 去掉侧面之后相邻草垫在视觉上是连续的一层草皮。
     elements = [{
         "from": [0, 0, 0], "to": [16, 1, 16],
-        "faces": {side: face() for side in ("up", "down", "north", "south", "east", "west")},
+        "faces": {"up": face(), "down": face()},
     }]
     write(A / "models/block" / f"{NAME}.json",
           {"parent": "minecraft:block/block", "ambientocclusion": False,
