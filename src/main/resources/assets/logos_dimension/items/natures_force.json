@@ -1,0 +1,42 @@
+{
+  "model": {
+    "type": "minecraft:condition",
+    "property": "minecraft:using_item",
+    "on_false": {
+      "type": "minecraft:model",
+      "model": "logos_dimension:item/natures_force_0"
+    },
+    "on_true": {
+      "type": "minecraft:range_dispatch",
+      "property": "logos_dimension:nature_charge",
+      "scale": 1,
+      "fallback": {
+        "type": "minecraft:model",
+        "model": "logos_dimension:item/natures_force_1"
+      },
+      "entries": [
+        {
+          "threshold": 2,
+          "model": {
+            "type": "minecraft:model",
+            "model": "logos_dimension:item/natures_force_2"
+          }
+        },
+        {
+          "threshold": 3,
+          "model": {
+            "type": "minecraft:model",
+            "model": "logos_dimension:item/natures_force_3"
+          }
+        },
+        {
+          "threshold": 4,
+          "model": {
+            "type": "minecraft:model",
+            "model": "logos_dimension:item/natures_force_4"
+          }
+        }
+      ]
+    }
+  }
+}

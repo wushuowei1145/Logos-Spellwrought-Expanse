@@ -35,6 +35,7 @@ public final class LogosDimension {
                 .displayItems((p,out) -> {
                     dev.logos.dimension.cloudsea.CloudseaBlocks.PALETTE.forEach(b -> out.accept(b.get()));
                     out.accept(dev.logos.dimension.cloudsea.CloudseaBlocks.GRAPES.get());out.accept(dev.logos.dimension.cloudsea.CloudseaBlocks.GRAPE_LEAF.get());
+                    out.accept(dev.logos.dimension.item.NaturesForceItem.ITEM.get());
                 }).build());
         TABS.register("crucible", () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.logos_dimension"))
                 .icon(() -> DimensionBlocks.SALT_CRYSTAL.get().asItem().getDefaultInstance())
@@ -45,6 +46,8 @@ public final class LogosDimension {
     }
     public LogosDimension(IEventBus bus) {
         DimensionFluids.init();
+        dev.logos.dimension.item.NaturesForceItem.init();
+        dev.logos.dimension.item.NatureAttachments.TYPES.register(bus);
         dev.logos.dimension.instance.CauldronBinding.register(bus);
         dev.logos.dimension.cloudsea.CloudseaBlocks.init();
         dev.logos.dimension.elven.ElvenBlocks.init();
@@ -65,6 +68,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.MushroomGameTests.register(bus);
         dev.logos.dimension.gametest.TurfGameTests.register(bus);
         dev.logos.dimension.gametest.YoungGrassGameTests.register(bus);
+        dev.logos.dimension.gametest.NaturesForceGameTests.register(bus);
         bus.addListener(DimensionSpawns::register);
         bus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
                 event.registrar("1").playToClient(dev.logos.dimension.net.HauntPayload.TYPE, dev.logos.dimension.net.HauntPayload.CODEC));
