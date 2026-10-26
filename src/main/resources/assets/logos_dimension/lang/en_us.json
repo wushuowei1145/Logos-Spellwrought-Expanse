@@ -228,5 +228,6 @@
   "block.logos_dimension.journey_false_chanterelle": "False Chanterelle",
   "block.logos_dimension.journey_meadow_grass_young": "Young Meadow Grass",
   "item.logos_dimension.natures_force": "Nature's Force",
-  "message.logos_dimension.natures_force.no_mana": "Not enough mana (requires %s); firing a stage II arrow"
+  "message.logos_dimension.natures_force.no_mana": "Not enough mana (requires %s); firing a stage II arrow",
+  "block.logos_dimension.journey_meadow_grass_short": "Short Meadow Grass"
 }

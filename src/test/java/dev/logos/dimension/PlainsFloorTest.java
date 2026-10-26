@@ -54,7 +54,10 @@ class PlainsFloorTest {
     /** 长风草原的招牌是"风里的长草"：牧草压过其它，短草与幼草补齐高度层次。 */
     @Test void silkFoldsIsWindsweptGrass()throws Exception{
         var w=weights(SILK+"_floor");
-        int grass=w.getOrDefault("logos_dimension:journey_meadow_grass",0);
+        // 长风草原的地表现在用矮草（journey_meadow_grass_short）做主草，
+        // 叠加层的风摆草尖才不会被原版模型挡住；两种牧草都算"牧草权重"。
+        int grass=Math.max(w.getOrDefault("logos_dimension:journey_meadow_grass",0),
+                           w.getOrDefault("logos_dimension:journey_meadow_grass_short",0));
         int shortGrass=w.getOrDefault("minecraft:short_grass",0);
         int young=w.getOrDefault("logos_dimension:journey_meadow_grass_young",0);
         int flowers=0;
