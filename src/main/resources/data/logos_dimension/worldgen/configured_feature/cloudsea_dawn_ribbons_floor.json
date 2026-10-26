@@ -1,0 +1,61 @@
+{
+  "type": "minecraft:simple_block",
+  "config": {
+    "to_place": {
+      "type": "minecraft:weighted_state_provider",
+      "entries": [
+        {
+          "data": {
+            "Name": "logos_dimension:journey_meadow_grass_short"
+          },
+          "weight": 34
+        },
+        {
+          "data": {
+            "Name": "minecraft:short_grass"
+          },
+          "weight": 22
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_bracken"
+          },
+          "weight": 14
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_meadow_grass"
+          },
+          "weight": 10
+        },
+        {
+          "data": {
+            "Name": "minecraft:gravel"
+          },
+          "weight": 5
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_heather",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 6
+        },
+        {
+          "data": {
+            "Name": "minecraft:oxeye_daisy"
+          },
+          "weight": 4
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_meadow_grass_young"
+          },
+          "weight": 5
+        }
+      ]
+    }
+  }
+}

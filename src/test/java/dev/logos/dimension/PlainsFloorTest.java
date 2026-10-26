@@ -15,8 +15,9 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class PlainsFloorTest {
     private static final String SILK="cloudsea_silk_folds";
+    /** 还没做地表改造的草原群系：每做一个就从这里删掉一个。 */
     private static final String[] OTHER_PLAINS={
-        "cloudsea_dawn_ribbons","cloudsea_rose_dunes","cloudsea_amber_whirls",
+        "cloudsea_rose_dunes","cloudsea_amber_whirls",
         "cloudsea_blue_bell_steps","cloudsea_aurora_dunes"};
 
     private JsonObject data(String path)throws IOException{
@@ -68,6 +69,24 @@ class PlainsFloorTest {
         assertTrue(grass>flowers,"牧草应当压过野花");
         assertTrue(shortGrass>0,"缺少原版短草补层次");
         assertTrue(young>0,"缺少幼草");
+    }
+
+    /** 旷野丘陵是起伏草坡：草更碎、夹砾石与卷叶蕨，野花很少。 */
+    @Test void dawnRibbonsIsARockyHillside()throws Exception{
+        var ground=vegetation("cloudsea_dawn_ribbons");
+        assertTrue(ground.contains("logos_dimension:cloudsea_dawn_ribbons_floor"),
+            "旷野丘陵应该引用自己的地表特征");
+        assertFalse(ground.contains("logos_dimension:meadow_floor"),
+            "旷野丘陵不应再引用共享草地表");
+
+        var w=weights("cloudsea_dawn_ribbons_floor");
+        int grass=Math.max(w.getOrDefault("logos_dimension:journey_meadow_grass",0),
+                           w.getOrDefault("logos_dimension:journey_meadow_grass_short",0));
+        int shortGrass=w.getOrDefault("minecraft:short_grass",0);
+        assertTrue(w.getOrDefault("minecraft:gravel",0)>0,"丘陵应该有砾石");
+        assertTrue(w.getOrDefault("logos_dimension:journey_bracken",0)>0,"丘陵应该有卷叶蕨");
+        assertTrue(grass+shortGrass>w.getOrDefault("minecraft:gravel",0)*4,
+            "砾石不能压过草，否则不像丘陵而像碎石坡");
     }
 
     @Test void otherPlainsStillUseTheSharedFloor()throws Exception{
