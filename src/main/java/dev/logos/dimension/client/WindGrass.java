@@ -43,16 +43,16 @@ public final class WindGrass {
     private static final ContextKey<List<Grass>> GRASS = new ContextKey<>(LogosDimension.id("wind_grass_state"));
     private static final Identifier BLADE_TEXTURE = LogosDimension.id("textures/block/wind_blade.png");
 
-    private record Grass(double x, double y, double z, int light, double distance) {}
+    private record Grass(double x, double y, double z, int light, double distance, boolean tall) {}
 
-    private static RenderType type;
+    private static RenderType bladeType, atlasType;
     /** 上一帧实际提交的草片数（调试用）。 */
     public static volatile int lastSheets;
 
     private WindGrass() {}
 
-    private static RenderType type() {
-        if (type == null) {
+    private static RenderType type(boolean atlas) {
+        if (bladeType == null) {
             var pipeline = RenderPipeline.builder(RenderPipelines.BEACON_BEAM_SNIPPET, RenderPipelines.GLOBALS_SNIPPET)
                 .withLocation(LogosDimension.id("pipeline/wind_grass"))
                 .withVertexShader(LogosDimension.id("core/wind_grass"))
@@ -61,13 +61,12 @@ public final class WindGrass {
                 .withSampler("Sampler0")
                 .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, true))
                 .build();
-            type = RenderType.create("logos_dimension_wind_grass",
-                RenderSetup.builder(pipeline)
-                    .withTexture("Sampler0", BLADE_TEXTURE)
-                    .sortOnUpload()
-                    .createRenderSetup());
+            bladeType = RenderType.create("logos_dimension_wind_grass",
+                RenderSetup.builder(pipeline).withTexture("Sampler0", BLADE_TEXTURE).sortOnUpload().createRenderSetup());
+            atlasType = RenderType.create("logos_dimension_wind_grass_atlas",
+                RenderSetup.builder(pipeline).withTexture("Sampler0", TextureAtlas.LOCATION_BLOCKS).sortOnUpload().createRenderSetup());
         }
-        return type;
+        return atlas ? atlasType : bladeType;
     }
 
     @SubscribeEvent
@@ -81,14 +80,17 @@ public final class WindGrass {
         var shortGrass = CloudseaBlocks.MEADOW_GRASS_SHORT.get();
         for (var pos : BlockPos.betweenClosed(center.offset(-RADIUS, -3, -RADIUS), center.offset(RADIUS, 3, RADIUS))) {
             BlockState state = level.getBlockState(pos);
-            if (!state.is(longGrass) && !state.is(shortGrass)) continue;
+            boolean tall = state.is(net.minecraft.world.level.block.Blocks.TALL_GRASS)
+                && state.getValue(net.minecraft.world.level.block.DoublePlantBlock.HALF)
+                    == net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER;
+            if (!tall && !state.is(longGrass) && !state.is(shortGrass)) continue;
             int sky = level.getBrightness(net.minecraft.world.level.LightLayer.SKY, pos);
             int blockLight = level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, pos);
             float day = 1f - Math.min(11, level.getSkyDarken()) / 11f * 0.72f;
             float bright = Math.max(blockLight / 15f, sky / 15f * day);
             bright = 0.20f + 0.80f * Math.min(1f, bright);
             grass.add(new Grass(pos.getX() + .5, pos.getY(), pos.getZ() + .5,
-                Math.round(bright * 255), cam.distanceToSqr(pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5)));
+                Math.round(bright * 255), cam.distanceToSqr(pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5), tall));
             if (grass.size() >= MAX_SHEETS) break;
         }
         // 近处优先：远的草先被裁掉，视觉上"近密远疏"，开销也有上限。
@@ -107,9 +109,32 @@ public final class WindGrass {
         lastSheets = 0;
         // 专用草叶贴图，整张映射到叶片四边形上。
         float u0 = 0f, u1 = 1f, v0 = 0f, v1 = 1f;
+        TextureAtlasSprite tallSprite = null;
+        try {
+            tallSprite = Minecraft.getInstance().getAtlasManager()
+                .getAtlasOrThrow(Identifier.withDefaultNamespace("blocks"))
+                .getSprite(Identifier.withDefaultNamespace("block/tall_grass_top"));
+        } catch (RuntimeException ignored) {
+            // 图集还没准备好时就不画高草丛的摆动层
+        }
         pose.pushPose();
-        out.submitCustomGeometry(pose, type(), (p, v) -> {
+        // 高草丛：用原版 tall_grass_top 贴图的交叉四边形盖在草的上半段，随风左右摇。
+        if (tallSprite != null) {
+            float tu0 = tallSprite.getU0(), tu1 = tallSprite.getU1();
+            float tv0 = tallSprite.getV0(), tv1 = tallSprite.getV1();
+            out.submitCustomGeometry(pose, type(true), (p, v) -> {
+                for (var g : frame) {
+                    if (!g.tall()) continue;
+                    int wx = (int) Math.round(g.x()), wz = (int) Math.round(g.z());
+                    for (int k = 0; k < 2; k++)
+                        tallGrass(p, v, g.x() - cam.pos.x, g.y() - cam.pos.y, g.z() - cam.pos.z,
+                            wx, wz, g.light(), tu0, tu1, tv0, tv1, k);
+                }
+            });
+        }
+        out.submitCustomGeometry(pose, type(false), (p, v) -> {
             for (var g : frame) {
+                if (g.tall()) continue;
                 int light = g.light();
                 // 世界 xz 塞进 UV2，顶点着色器用它算波浪相位（整数格）。
                 int wx = (int) Math.round(g.x()), wz = (int) Math.round(g.z());
@@ -122,6 +147,31 @@ public final class WindGrass {
             }
         });
         pose.popPose();
+    }
+
+    /** 一段高草丛：从方块中段到顶，用原版草贴图，顶部由着色器带出摆动。 */
+    private static void tallGrass(PoseStack.Pose p, VertexConsumer v,
+                                  double bx, double by, double bz, int wx, int wz, int bright,
+                                  float u0, float u1, float v0, float v1, int plane) {
+        float half = .42f;
+        float y0 = (float) by + .55f, y1 = (float) by + 1.95f;
+        float cos = plane == 0 ? 1f : 0f, sin = plane == 0 ? 0f : 1f;
+        // 原版 tall_grass 贴图是灰的，靠群系草色染色；我们自己的几何不吃 biome tint，
+        // 所以在这里乘上长风草原的草色（#839769）并稍微提亮。
+        float tr = .72f, tg = .82f, tb = .56f;
+        int rootLevel = Math.max(24, (int) (bright * 0.72f));
+        int root = (0 << 24) | (int) (rootLevel * tr) << 16 | (int) (rootLevel * tg) << 8 | (int) (rootLevel * tb);
+        int tip = (255 << 24) | (int) (bright * tr) << 16 | (int) (bright * tg) << 8 | (int) (bright * tb);
+        float dx0 = cos * half, dz0 = sin * half;
+        float dx1 = cos * half * .55f, dz1 = sin * half * .55f;
+        v.addVertex(p, (float) bx - dx0, y0, (float) bz - dz0).setColor(root).setUv(u0, v1)
+            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+        v.addVertex(p, (float) bx + dx0, y0, (float) bz + dz0).setColor(root).setUv(u1, v1)
+            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+        v.addVertex(p, (float) bx + dx1, y1, (float) bz + dz1).setColor(tip).setUv(u1, v0)
+            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+        v.addVertex(p, (float) bx - dx1, y1, (float) bz - dz1).setColor(tip).setUv(u0, v0)
+            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
     }
 
     /** 一片草：两段折线，根部立、叶尖向外弯；亮度来自方块所在位置的天空光/方块光。 */
