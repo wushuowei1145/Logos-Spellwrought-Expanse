@@ -58,8 +58,7 @@ class PlainsFloorTest {
         // 高草丛的上端由渲染层的叠加几何带出摆动。
         int tall=w.getOrDefault("minecraft:tall_grass",0);
         int grass=tall
-                 +Math.max(w.getOrDefault("logos_dimension:journey_meadow_grass",0),
-                           w.getOrDefault("logos_dimension:journey_meadow_grass_short",0))
+                 +w.getOrDefault("logos_dimension:journey_meadow_grass",0)
                  +w.getOrDefault("minecraft:short_grass",0);
         int young=w.getOrDefault("logos_dimension:journey_meadow_grass_young",0);
         int flowers=0;
@@ -82,8 +81,7 @@ class PlainsFloorTest {
             "旷野丘陵不应再引用共享草地表");
 
         var w=weights("cloudsea_dawn_ribbons_floor");
-        int grass=Math.max(w.getOrDefault("logos_dimension:journey_meadow_grass",0),
-                           w.getOrDefault("logos_dimension:journey_meadow_grass_short",0));
+        int grass=w.getOrDefault("logos_dimension:journey_meadow_grass",0);
         int shortGrass=w.getOrDefault("minecraft:short_grass",0);
         assertTrue(w.getOrDefault("minecraft:gravel",0)>0,"丘陵应该有砾石");
         assertTrue(w.getOrDefault("logos_dimension:journey_bracken",0)>0,"丘陵应该有卷叶蕨");
@@ -100,8 +98,7 @@ class PlainsFloorTest {
             "野花草甸不应再引用共享草地表");
 
         var w=weights("cloudsea_rose_dunes_floor");
-        int grass=Math.max(w.getOrDefault("logos_dimension:journey_meadow_grass",0),
-                           w.getOrDefault("logos_dimension:journey_meadow_grass_short",0))
+        int grass=w.getOrDefault("logos_dimension:journey_meadow_grass",0)
                  +w.getOrDefault("minecraft:short_grass",0);
         int flowers=0;
         for(var e:w.entrySet())

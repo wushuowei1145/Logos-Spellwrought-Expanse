@@ -27,9 +27,9 @@
         },
         {
           "data": {
-            "Name": "logos_dimension:journey_meadow_grass_short"
+            "Name": "minecraft:short_grass"
           },
-          "weight": 20
+          "weight": 28
         },
         {
           "data": {
@@ -54,12 +54,6 @@
             }
           },
           "weight": 6
-        },
-        {
-          "data": {
-            "Name": "minecraft:short_grass"
-          },
-          "weight": 8
         }
       ]
     }
