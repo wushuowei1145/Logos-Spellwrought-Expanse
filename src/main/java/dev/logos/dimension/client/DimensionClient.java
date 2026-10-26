@@ -25,6 +25,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent;
 import net.neoforged.neoforge.client.event.RegisterFluidModelsEvent;
 import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
@@ -51,6 +52,10 @@ public final class DimensionClient {
     private static final RenderType ORBITS = engraving("orbits");
     private static final RenderType SEAL = engraving("seal");
     private static final RenderType ENERGY = engraving("energy");
+
+    @SubscribeEvent static void entityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(dev.logos.dimension.npc.NpcEntities.FOREST_ELF.get(), ctx -> new NpcRenderer<>(ctx, "forest_elf"));
+    }
 
     @SubscribeEvent static void fluids(RegisterFluidModelsEvent event) {
         event.register(new FluidModel.Unbaked(new Material(LogosDimension.id("block/mercury_still")),

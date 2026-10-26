@@ -1,4 +1,5 @@
 {
+  "entity.logos_dimension.forest_elf": "Forest Elf",
   "itemGroup.logos_dimension": "The Crucible · Logos Addon",
   "message.logos_dimension.missing_dimension": "The Crucible dimension is unavailable. Check the installation and world data.",
   "block.logos_dimension.strata_stone": "Stratified Stone",

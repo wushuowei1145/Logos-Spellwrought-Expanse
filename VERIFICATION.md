@@ -2,6 +2,31 @@
 
 目标环境：Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25；Logos 0.5.1，主模组源码基线 `f196960`。当前开发安装包为 0.11.0。原炼金维度不包含建筑或 Boss；远行大陆包含中世纪聚落、精灵森林与世界树，不包含 Boss。
 
+## 森林精灵预览原型（零件切换）
+
+2026-10-26：随机外观的最小原型，先让森林精灵在游戏里能按零件切换外观，并用客户端截图场景检查。
+
+- **实体**：`logos_dimension:forest_elf`（`ForestElf`），碰撞箱 0.6×1.5，眼高 1.26；简单闲逛和看玩家；用 `NpcAnimations` 驱动，模型里目前只有 `idle`，其余状态按驱动规则顺延。
+- **外观记录**：「槽位 → 零件 ID」，生成时随机抽一次，存档存 ID（NBT `Appearance`），同步用一个字符串字段；未知 ID 回退默认；可选槽位（发型、头饰、服装）可以选 `none`，素体就是这三项都为 `none`。
+- **零件表**：`NpcParts.FOREST_ELF`，六个槽位：发型（长直发、短发）、头饰（枝冠）、耳型（长耳）、眼睛（方眼、垂眼）、嘴（微笑、猫猫嘴）、服装（居民）。
+- **渲染**：`NpcRenderer` 对实现 `NpcPartsHolder` 的 NPC 整组跳过没选中零件的骨骼组（含子骨骼）；发光骨骼在隐藏组里时也不补画。
+- **资源**：模型、动画、贴图由仓库外的 Blockbench 总模型 `forest_elf_race_1.bbmodel` 导出（2 倍制作，206 根骨骼，贴图 112×128）。
+
+验证：**74/74 单元测试**通过，其中新增 `NpcPartsTest` 4 项：编码往返、未知 ID 与 `none` 的回退规则、隐藏组计算，以及零件表与模型骨骼组一一对应。普通实际客户端 `group:npc_preview`：**3/3 场景、6/6 检查**通过，检查五个精灵的外观都同步到了客户端，并人工查看了截图：
+
+- `forest-elf-lineup.png`：从左到右依次是默认外观、短发不戴头饰、短发配垂眼和猫猫嘴、长直发配垂眼和猫猫嘴不戴头饰、素体；
+- `forest-elf-angle.png`：3/4 视角；
+- `forest-elf-faces.png`：短发配垂眼和猫猫嘴的脸部近景。
+
+截图在 `docs/screenshots/npc-preview/`。精灵在场景里关掉 AI 站定，待机动画照常播放。
+
+没有验证的部分：自然生成（还没加进任何结构或群系）、存档重进后外观保留（只有代码与单元层面的编码检查）、多人同步、光影、硬件帧率；GameTest 没有新增也没有重跑。
+
+```text
+./gradlew test build -PlogosJar=/absolute/path/logos-0.5.1.jar
+./gradlew runClient -PlogosJar=/absolute/path/logos-0.5.1.jar -PldTest=group:npc_preview -PldTestHeadless -PldTestWindow=1600x900
+```
+
 ## 0.11.0 林地蘑菇、幼年牧草与草皮骨粉
 
 2026-10-25：森林侧收尾的一批小内容，全部数据包 + 少量方块类，无新美术服务、无内嵌前置。

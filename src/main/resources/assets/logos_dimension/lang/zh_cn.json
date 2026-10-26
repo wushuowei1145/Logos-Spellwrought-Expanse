@@ -1,4 +1,5 @@
 {
+  "entity.logos_dimension.forest_elf": "森林精灵",
   "itemGroup.logos_dimension": "炼金釜 · Logos 附属维度",
   "message.logos_dimension.missing_dimension": "炼金维度未加载，请检查安装与世界数据。",
   "block.logos_dimension.strata_stone": "层理石",
