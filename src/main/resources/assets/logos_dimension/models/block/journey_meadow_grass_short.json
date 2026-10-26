@@ -1,28 +1,45 @@
 {
   "parent": "minecraft:block/block",
   "ambientocclusion": false,
+  "render_type": "neoforge:cutout",
   "textures": {
-    "particle": "logos_dimension:block/journey_meadow_grass",
-    "plant": "logos_dimension:block/journey_meadow_grass",
-    "stem": "logos_dimension:block/journey_botanical_stem",
-    "bark": "logos_dimension:block/journey_botanical_bark",
-    "mat": "logos_dimension:block/journey_meadow_mat"
+    "particle": "logos_dimension:block/journey_meadow_grass_short",
+    "plant": "logos_dimension:block/journey_meadow_grass_short",
+    "mat": "logos_dimension:block/journey_meadow_grass_short_mat"
   },
   "elements": [
     {
       "from": [
-        0.0,
-        0.0,
-        2
+        0,
+        0,
+        0
       ],
       "to": [
-        16.0,
-        4.95,
-        2
+        16,
+        1,
+        16
       ],
       "faces": {
+        "up": {
+          "texture": "#mat",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#mat",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
         "north": {
-          "texture": "#plant",
+          "texture": "#mat",
           "uv": [
             0,
             0,
@@ -31,30 +48,7 @@
           ]
         },
         "south": {
-          "texture": "#plant",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        0.0,
-        0.0,
-        6
-      ],
-      "to": [
-        16.0,
-        7.15,
-        6
-      ],
-      "faces": {
-        "north": {
-          "texture": "#plant",
+          "texture": "#mat",
           "uv": [
             0,
             0,
@@ -62,95 +56,8 @@
             16
           ]
         },
-        "south": {
-          "texture": "#plant",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        0.0,
-        0.0,
-        10
-      ],
-      "to": [
-        16.0,
-        6.05,
-        10
-      ],
-      "faces": {
-        "north": {
-          "texture": "#plant",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        },
-        "south": {
-          "texture": "#plant",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        0.0,
-        0.0,
-        14
-      ],
-      "to": [
-        16.0,
-        5.5,
-        14
-      ],
-      "faces": {
-        "north": {
-          "texture": "#plant",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        },
-        "south": {
-          "texture": "#plant",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        4,
-        0.0,
-        0.0
-      ],
-      "to": [
-        4,
-        6.6,
-        16.0
-      ],
-      "faces": {
         "east": {
-          "texture": "#plant",
+          "texture": "#mat",
           "uv": [
             0,
             0,
@@ -159,39 +66,7 @@
           ]
         },
         "west": {
-          "texture": "#plant",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        12,
-        0.0,
-        0.0
-      ],
-      "to": [
-        12,
-        6.6,
-        16.0
-      ],
-      "faces": {
-        "east": {
-          "texture": "#plant",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        },
-        "west": {
-          "texture": "#plant",
+          "texture": "#mat",
           "uv": [
             0,
             0,
@@ -201,6 +76,5 @@
         }
       }
     }
-  ],
-  "render_type": "neoforge:cutout"
+  ]
 }

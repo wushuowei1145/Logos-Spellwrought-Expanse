@@ -19,24 +19,25 @@ out float vWind;
 
 void main() {
     vec2 world = vec2(UV2);          // 世界 xz（整数格）
-    float t = GameTime;
+    // 主模组的着色器都用 GameTime * 1200 换秒，直接用 GameTime 会慢 1200 倍（草看起来不动）。
+    float t = GameTime * 1200.0;
 
     // 阵风：两层正弦叠出"时大时小"，与 WindField 的节奏接近（约 150s 慢层 + 11s 快层）。
     float gust = 0.55 + 0.45 * sin(t * 0.021) + 0.18 * sin(t * 0.573 + 2.1);
-    gust = clamp(gust, 0.05, 1.2);
+    gust = clamp(gust, 0.35, 1.35);
 
     // 草浪：沿风向的相位差让波峰从一侧扫到另一侧。
-    float phase = dot(world, vec2(0.62, 0.78)) - t * 2.35;
+    float phase = dot(world, vec2(0.62, 0.78)) - t * 4.0;
     float wave = sin(phase);
 
     // Color.a 存的是"离地高度比例"，越靠叶尖摆得越多。
     float h = clamp(Color.a, 0.0, 1.0);
-    float sway = h * h * (gust * 0.62 + 0.34 * wave * gust);
+    float sway = h * h * (gust * 1.25 + 0.60 * wave * gust);
 
     vec3 pos = Position;
     pos.x += sway * 0.78;
     pos.z += sway * 0.62;
-    pos.y -= abs(sway) * 0.16;       // 摆出去的时候压低一点，像被风压住
+    pos.y -= abs(sway) * 0.22;       // 摆出去的时候压低一点，像被风压住
 
     gl_Position = ProjMat * ModelViewMat * vec4(pos, 1.0);
     vertexColor = Color;

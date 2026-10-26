@@ -20,7 +20,7 @@ def main():
     for y in range(H):
         t = y / (H - 1)                     # 0 = 叶尖, 1 = 叶根
         # 叶宽：根部宽、叶尖收成一点
-        half = max(0.8, (2.6 - 2.0 * t))
+        half = max(1.2, (3.6 - 2.6 * t))
         # 叶身随高度轻微弯曲
         bend = (t - 0.5) ** 2 * 3.2 - 0.8
         cx = W / 2 + bend
@@ -30,9 +30,10 @@ def main():
                 continue
             edge = 1.0 - (d / half) ** 3       # 边缘羽化
             # 颜色：根部深绿 -> 叶尖黄绿；中间是叶身
-            r = int(58 + 74 * t)
-            g = int(96 + 68 * t)
-            b = int(38 + 34 * t)
+            # y=0 是叶尖（亮），y=H-1 是叶根（暗）。
+            r = int(132 - 74 * t)
+            g = int(170 - 74 * t)
+            b = int(96 - 58 * t)
             # 左侧一道高光
             if x < cx:
                 r, g, b = int(r * 1.16), int(g * 1.12), int(b * 1.05)
