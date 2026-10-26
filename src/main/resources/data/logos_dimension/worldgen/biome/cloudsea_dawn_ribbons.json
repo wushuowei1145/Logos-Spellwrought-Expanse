@@ -8,9 +8,7 @@
     "foliage_color": "#6d8658"
   },
   "carvers": [
-    "minecraft:cave",
-    "minecraft:cave_extra_underground",
-    "minecraft:canyon"
+    "minecraft:cave"
   ],
   "features": [
     [],
@@ -23,7 +21,6 @@
     [],
     [],
     [
-      "logos_dimension:trees_cloudsea_dawn_ribbons",
       "logos_dimension:cloudsea_dawn_ribbons_floor"
     ],
     []

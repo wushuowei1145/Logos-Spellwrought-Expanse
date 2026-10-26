@@ -278,9 +278,15 @@ write(D/'worldgen/placed_feature/forest_rock_outcrop.json',{'feature':'logos_dim
     outside_island(),
     {'type':'minecraft:block_predicate_filter','predicate':{'type':'minecraft:matching_blocks','blocks':['minecraft:air']}},
     {'type':'minecraft:biome'}]})
+PLAINS=set(PLAINS_FLOORS)
 for bid in ids:
     data=json.loads((D/'worldgen/biome'/f'{bid}.json').read_text());features=[[] for _ in range(11)]
-    if bid not in barren:
+    if bid in PLAINS:
+        # 平原第一次试玩的反馈：地面不该长树、也不该被峡谷切出沟壑。
+        # 树林不生成，峡谷 carver 去掉（洞穴保留，地下仍然可探索）。
+        data['carvers']=['minecraft:cave']
+        features[9]=['logos_dimension:'+bid+'_floor']
+    elif bid not in barren:
         tree=copy.deepcopy(TREES['spruce' if bid in conifers else 'birch' if bid in birches else 'fancy_oak' if bid in forests else 'oak'])
         config=tree['config'];config['foliage_provider']=provider('logos_dimension:'+bid+'_leaf',distance=7,persistent=False,waterlogged=False,season=0)
         config['trunk_placer']['base_height']=9 if bid in conifers else 8 if bid in forests else 5
