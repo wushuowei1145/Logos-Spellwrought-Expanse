@@ -112,7 +112,9 @@ def models():
     for name,texture_name,light in [('elven_pale_planks','elven_wood',False),('elven_luminous_inlay','elven_inlay',True)]:
         e=box((0,0,0),(16,16,16),'wood',light)
         for face in e['faces'].values():face['cullface']=next(k for k,v in e['faces'].items() if v is face)
-        write(A/'models/block'/f'{name}.json',{'textures':{'wood':tex(texture_name),'particle':tex(texture_name)},'elements':[e]})
+        # 带上 block/block 父模型：否则物品形态拿不到原版的 display 变换，
+        # 拿在手上和掉在地上都会撑成 16×16 的整方块，看起来"太大"。
+        write(A/'models/block'/f'{name}.json',{'parent':'minecraft:block/block','textures':{'wood':tex(texture_name),'particle':tex(texture_name)},'elements':[e]})
         write(A/'blockstates'/f'{name}.json',{'variants':{'':{'model':tex(name)}}})
     names={'elven_heartwood':('精灵古心木','Elven Heartwood'),'elven_canopy':('精灵林冠叶','Elven Canopy'),'elven_pale_planks':('浅色精灵木板','Pale Elven Planks'),'elven_luminous_inlay':('叶辉嵌片','Leaflight Inlay'),'elven_leaf_seat':('精灵叶背椅','Elven Leaf Seat'),'elven_reading_table':('精灵阅览桌','Elven Reading Table'),'elven_flower_planter':('精灵白花花架','Elven Flower Planter'),'elven_bookshelf':('精灵藏书架','Elven Bookshelf'),'elven_leaf_lamp':('暖白叶灯','Warm Leaflight'),'elven_lamp_vine':('吊灯细藤','Lantern Vine')}
     for n in names:
