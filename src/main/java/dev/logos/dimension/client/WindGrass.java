@@ -109,36 +109,45 @@ public final class WindGrass {
                 int light = g.light();
                 // 世界 xz 塞进 UV2，顶点着色器用它算波浪相位（整数格）。
                 int wx = (int) Math.round(g.x()), wz = (int) Math.round(g.z());
-                blade(p, v, g.x() - cam.pos.x, g.y() - cam.pos.y, g.z() - cam.pos.z, wx, wz, light,
-                    u0, u1, v0, v1, 0.0f);
-                blade(p, v, g.x() - cam.pos.x, g.y() - cam.pos.y, g.z() - cam.pos.z, wx, wz, light,
-                    u0, u1, v0, v1, 1.0f);
+                for (int k = 0; k < 4; k++)
+                    blade(p, v, g.x() - cam.pos.x, g.y() - cam.pos.y, g.z() - cam.pos.z, wx, wz, light,
+                        u0, u1, v0, v1, k);
             }
         });
         pose.popPose();
     }
 
-    /** 一片草：一个竖直四边形，底边两个顶点高度权重 0、顶边 1（存在颜色 alpha 里）。 */
+    /** 一片草：上窄下宽的竖直四边形，底边高度权重 0、顶边 1（存在颜色 alpha 里）。 */
     private static void blade(PoseStack.Pose p, VertexConsumer v,
                               double bx, double by, double bz, int wx, int wz, int light,
                               float u0, float u1, float v0, float v1,
-                              float yaw) {
-        float half = .15f, baseOffset = .22f, height = .62f;
-        double dx = (yaw == 0 ? half : -half), dz = (yaw == 0 ? 0 : half);
-        int top = (255 << 24) | 0xE8F2D0;
-        int bottom = 0x00E8F2D0;
+                              int plane) {
+        // 每片草按世界坐标取一个稳定的随机量：高矮、宽度、朝向都略有差别，
+        // 整片草原才不会像排队的旗子。CPU 只做几次整数哈希，代价可以忽略。
+        int hash = (wx * 73856093) ^ (wz * 19349663) ^ (plane * 0x2C1B3C6D);
+        float r = ((hash >>> 3) & 1023) / 1023f;
+        float half = .10f + .04f * r;
+        float tip = half * (.30f + .25f * r);
+        float baseOffset = .10f + .16f * r;
+        float height = .50f + .42f * r;
         float baseY = (float) by + baseOffset;
+        // 四片交叉平面：0°/45°/90°/135°，每片的高度与宽度各不相同。
+        double ang = Math.toRadians(plane * 45 + r * 20);
+        float dx = (float) (Math.cos(ang) * half), dz = (float) (Math.sin(ang) * half);
+        float tx = (float) (Math.cos(ang) * tip), tz = (float) (Math.sin(ang) * tip);
+        int topColor = (255 << 24) | 0xFFFFFF;
+        int rootColor = 0x00FFFFFF;
         v.addVertex(p, (float) (bx - dx), baseY, (float) (bz - dz))
-            .setColor(bottom).setUv(u0, v1).setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-            .setUv2(wx, wz);
+            .setColor(rootColor).setUv(u0, v1)
+            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
         v.addVertex(p, (float) (bx + dx), baseY, (float) (bz + dz))
-            .setColor(bottom).setUv(u1, v1).setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-            .setUv2(wx, wz);
-        v.addVertex(p, (float) (bx + dx), baseY + height, (float) (bz + dz))
-            .setColor(top).setUv(u1, v0).setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-            .setUv2(wx, wz);
-        v.addVertex(p, (float) (bx - dx), baseY + height, (float) (bz - dz))
-            .setColor(top).setUv(u0, v0).setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-            .setUv2(wx, wz);
+            .setColor(rootColor).setUv(u1, v1)
+            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+        v.addVertex(p, (float) (bx + tx), baseY + height, (float) (bz + tz))
+            .setColor(topColor).setUv(u1, v0)
+            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+        v.addVertex(p, (float) (bx - tx), baseY + height, (float) (bz - tz))
+            .setColor(topColor).setUv(u0, v0)
+            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
     }
 }

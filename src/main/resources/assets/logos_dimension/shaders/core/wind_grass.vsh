@@ -14,6 +14,8 @@ in ivec2 UV2;
 
 out vec4 vertexColor;
 out vec2 texCoord0;
+out float vHeight;
+out float vWind;
 
 void main() {
     vec2 world = vec2(UV2);          // 世界 xz（整数格）
@@ -39,4 +41,6 @@ void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(pos, 1.0);
     vertexColor = Color;
     texCoord0 = UV0;
+    vHeight = h;
+    vWind = gust;
 }
