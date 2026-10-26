@@ -38,11 +38,11 @@ public final class WindGrass {
     /** 附近多少格内提交草尖。 */
     private static final int RADIUS = 14;
     /** 每帧最多提交多少片草尖（每片 2 个交叉四边形）。 */
-    private static final int MAX_BLADES = 1500;
+    private static final int MAX_BLADES = 2600;
     private static final ContextKey<List<Grass>> GRASS = new ContextKey<>(LogosDimension.id("wind_grass_state"));
     private static final Identifier BLADE_TEXTURE = LogosDimension.id("textures/block/wind_blade.png");
 
-    private record Grass(double x, double y, double z, int light) {}
+    private record Grass(double x, double y, double z, int light, double distance) {}
 
     private static RenderType type;
 
@@ -85,9 +85,12 @@ public final class WindGrass {
             float bright = Math.max(blockLight / 15f, sky / 15f * day);
             bright = 0.20f + 0.80f * Math.min(1f, bright);
             grass.add(new Grass(pos.getX() + .5, pos.getY(), pos.getZ() + .5,
-                Math.round(bright * 255)));
+                Math.round(bright * 255), cam.distanceToSqr(pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5)));
             if (grass.size() >= MAX_BLADES) break;
         }
+        // 近处优先：远的草先被裁掉，视觉上"近密远疏"，开销也有上限。
+        grass.sort(java.util.Comparator.comparingDouble(Grass::distance));
+        if (grass.size() > MAX_BLADES) grass.subList(MAX_BLADES, grass.size()).clear();
         event.getRenderState().setRenderData(GRASS, grass);
     }
 
@@ -106,7 +109,8 @@ public final class WindGrass {
                 int light = g.light();
                 // 世界 xz 塞进 UV2，顶点着色器用它算波浪相位（整数格）。
                 int wx = (int) Math.round(g.x()), wz = (int) Math.round(g.z());
-                for (int k = 0; k < 6; k++)
+                int planes = g.distance() < 36 ? 6 : g.distance() < 100 ? 3 : 2;
+                for (int k = 0; k < planes; k++)
                     blade(p, v, g.x() - cam.pos.x, g.y() - cam.pos.y, g.z() - cam.pos.z, wx, wz, light,
                         u0, u1, v0, v1, k);
             }
