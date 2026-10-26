@@ -49,8 +49,7 @@ public final class WindPollen {
             double y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, (int) x, (int) z) + .35;
             // 只在草地上生成：踩点下方必须是长风草原的矮草或普通牧草。
             var below = level.getBlockState(BlockPos.containing(x, y - 1.1, z));
-            if (!below.is(CloudseaBlocks.MEADOW_GRASS_SHORT.get())
-                && !below.is(CloudseaBlocks.MEADOW_GRASS.get())) continue;
+            if (!below.is(Blocks.TALL_GRASS) && !below.is(CloudseaBlocks.MEADOW_GRASS.get())) continue;
             double speed = .35 + .55 * wind.strength();
             level.addParticle(DimensionParticles.MOTE.get(),
                 x, y, z,
