@@ -99,7 +99,12 @@ for ti,t in enumerate([-.8,-.4,0,.4,.8]):
       elif ti==2:bid='cloudroot_shelves' if ei==0 else 'ancient_beech' if wi%2 else 'jade_whirls'
       elif ti==3:bid='lantern_shelves' if hi==3 else 'verdant_whirls' if wi%2 else 'copper_copse'
       else:bid='jade_whirls' if hi>1 else 'copper_copse'
-     else:bid=['blue_bell_steps','silk_folds','rose_dunes','dawn_ribbons','amber_whirls'][(ti+ei+wi)%5]
+     else:
+      # 原版平原之所以看起来平，是因为它们被分给了"侵蚀程度最高（地形最平）"的地方；
+      # 这里照做：草原群系只占侵蚀 0.65 的格子，缓坡给牧草坡地，陡坡给旷野丘陵。
+      if ei==2:bid=['blue_bell_steps','silk_folds','rose_dunes'][(ti+wi)%3]
+      elif ei==1:bid='amber_whirls'
+      else:bid='dawn_ribbons'
      if ci==2 and ei==2 and hi==4 and ti>1:bid='dream_basins'
      if ci==2 and ei==0 and wi==2:bid='echo_folds' if ti<2 else 'moon_folds'
      if ci==2 and ei==2 and wi in [0,4] and hi==3:bid='star_ribbons'
