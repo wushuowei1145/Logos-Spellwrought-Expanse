@@ -1,8 +1,10 @@
 """从用户提供的代码绘制素材包导入自然之力，生成四段蓄力物品定义。"""
 import argparse
+from io import BytesIO
 import json
 from pathlib import Path
 from zipfile import ZipFile
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 ASSETS = ROOT / "src/main/resources/assets/logos_dimension"
@@ -15,8 +17,27 @@ def write(path, content):
 
 
 def model(stage):
-    """每个阶段使用同一握柄位置和原版弓显示变换。"""
+    """每个阶段使用同一握柄位置，贴图方向与原版弓显示变换对齐。"""
     return {"type": "minecraft:model", "model": f"logos_dimension:item/natures_force_{stage}"}
+
+
+def refine_bow_frames(pack):
+    """弓臂纵向延长四分之一，再统一转到原版弓的左上射向；五帧共用裁切框。"""
+    frames = []
+    for stage in range(5):
+        source = Image.open(BytesIO(pack.read(f"natures_force_32/natures_force_{stage}.png"))).convert("RGBA")
+        stretched = source.resize((32, 40), Image.Resampling.NEAREST)
+        canvas = Image.new("RGBA", (64, 64))
+        canvas.alpha_composite(stretched, (16, 12))
+        frames.append(canvas.rotate(-45, resample=Image.Resampling.NEAREST, expand=True))
+    bounds = [frame.getbbox() for frame in frames]
+    left, top = min(b[0] for b in bounds), min(b[1] for b in bounds)
+    right, bottom = max(b[2] for b in bounds), max(b[3] for b in bounds)
+    size = max(right - left, bottom - top) + 4
+    center_x, center_y = (left + right) / 2, (top + bottom) / 2
+    crop = (round(center_x - size / 2), round(center_y - size / 2),
+            round(center_x - size / 2) + size, round(center_y - size / 2) + size)
+    return [frame.crop(crop).resize((64, 64), Image.Resampling.NEAREST) for frame in frames]
 
 
 def main():
@@ -25,10 +46,10 @@ def main():
     parser.add_argument("--arrow", type=Path, required=True)
     args = parser.parse_args()
     with ZipFile(args.bow_pack) as pack:
-        for stage in range(5):
+        for stage, frame in enumerate(refine_bow_frames(pack)):
             image = ASSETS / f"textures/item/natures_force_{stage}.png"
             image.parent.mkdir(parents=True, exist_ok=True)
-            image.write_bytes(pack.read(f"natures_force_32/natures_force_{stage}.png"))
+            frame.save(image)
             write(ASSETS / f"models/item/natures_force_{stage}.json", {
                 "parent": "minecraft:item/bow", "textures": {"layer0": f"logos_dimension:item/natures_force_{stage}"}
             })

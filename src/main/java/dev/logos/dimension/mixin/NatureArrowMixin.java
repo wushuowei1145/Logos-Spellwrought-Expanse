@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** 在原版箭上附加小量状态，完整保留药水、光灵、附魔和碰撞逻辑。 */
@@ -38,6 +39,13 @@ public abstract class NatureArrowMixin implements NatureArrow {
 
     @ModifyVariable(method = "applyInertia", at = @At("HEAD"), argsOnly = true)
     private float natureInertia(float inertia) { return natureStage() == 4 ? 1 : inertia; }
+
+    // 第四阶仍可计算满弓暴击伤害，但飞行外观只使用 Logos 生命拖尾。
+    @Redirect(method = "tick", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/world/entity/projectile/arrow/AbstractArrow;isCritArrow()Z"))
+    private boolean natureCriticalParticles(AbstractArrow arrow) {
+        return natureStage() != 4 && arrow.isCritArrow();
+    }
 
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     private void natureExpiry(CallbackInfo ci) {

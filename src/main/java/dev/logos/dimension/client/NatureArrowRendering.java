@@ -20,9 +20,9 @@ public final class NatureArrowRendering {
 
     @SubscribeEvent static void register(RegisterRenderStateModifiersEvent event) {
         event.registerEntityModifier(TippableArrowRenderer.class,
-                (arrow, state) -> state.setRenderData(NATURE_ARROW, ((NatureArrow) arrow).natureStage() > 0));
+                (arrow, state) -> state.setRenderData(NATURE_ARROW, ((NatureArrow) arrow).natureStage() == 4));
         event.registerEntityModifier(SpectralArrowRenderer.class,
-                (arrow, state) -> state.setRenderData(NATURE_ARROW, ((NatureArrow) arrow).natureStage() > 0));
+                (arrow, state) -> state.setRenderData(NATURE_ARROW, ((NatureArrow) arrow).natureStage() == 4));
     }
 
     public static Identifier texture(ArrowRenderState state, Identifier fallback) {
