@@ -188,22 +188,22 @@ public final class WindGrass {
         float rbt = cos * half * .55f, rbtz = sin * half * .55f;
         // 下半段：根 → 腰（用 tall_grass_bottom 贴图）
         v.addVertex(p, (float) bx - rgb0, ground, (float) bz - rb0).setColor(root)
-            .setUv(bottom[0], bottom[3]).setOverlay(OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+            .setUv(bottom[0], bottom[3]).setOverlay(OverlayTexture.NO_OVERLAY) .setUv2(wx, wz).setNormal(p, -sin, 0, cos);
         v.addVertex(p, (float) bx + rgb0, ground, (float) bz + rb0).setColor(root)
-            .setUv(bottom[1], bottom[3]).setOverlay(OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+            .setUv(bottom[1], bottom[3]).setOverlay(OverlayTexture.NO_OVERLAY) .setUv2(wx, wz).setNormal(p, -sin, 0, cos);
         v.addVertex(p, (float) bx + rbm + cos * midOff, waist, (float) bz + rbmz + sin * midOff).setColor(mid)
-            .setUv(bottom[1], bottom[2]).setOverlay(OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+            .setUv(bottom[1], bottom[2]).setOverlay(OverlayTexture.NO_OVERLAY) .setUv2(wx, wz).setNormal(p, -sin, 0, cos);
         v.addVertex(p, (float) bx - rbm + cos * midOff, waist, (float) bz - rbmz + sin * midOff).setColor(mid)
-            .setUv(bottom[0], bottom[2]).setOverlay(OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+            .setUv(bottom[0], bottom[2]).setOverlay(OverlayTexture.NO_OVERLAY) .setUv2(wx, wz).setNormal(p, -sin, 0, cos);
         // 上半段：腰 → 顶（用 tall_grass_top 贴图），顶端随阵风左右摆
         v.addVertex(p, (float) bx - rbm, waist, (float) bz - rbmz).setColor(mid)
-            .setUv(top[0], top[3]).setOverlay(OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+            .setUv(top[0], top[3]).setOverlay(OverlayTexture.NO_OVERLAY) .setUv2(wx, wz).setNormal(p, -sin, 0, cos);
         v.addVertex(p, (float) bx + rbm, waist, (float) bz + rbmz).setColor(mid)
-            .setUv(top[1], top[3]).setOverlay(OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+            .setUv(top[1], top[3]).setOverlay(OverlayTexture.NO_OVERLAY) .setUv2(wx, wz).setNormal(p, -sin, 0, cos);
         v.addVertex(p, (float) bx + rbt + cos * tipOff, topY, (float) bz + rbtz + sin * tipOff).setColor(tip)
-            .setUv(top[1], top[2]).setOverlay(OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+            .setUv(top[1], top[2]).setOverlay(OverlayTexture.NO_OVERLAY) .setUv2(wx, wz).setNormal(p, -sin, 0, cos);
         v.addVertex(p, (float) bx - rbt + cos * tipOff, topY, (float) bz - rbtz + sin * tipOff).setColor(tip)
-            .setUv(top[0], top[2]).setOverlay(OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+            .setUv(top[0], top[2]).setOverlay(OverlayTexture.NO_OVERLAY) .setUv2(wx, wz).setNormal(p, -sin, 0, cos);
     }
 
     /** 一片草：两段折线，根部立、叶尖向外弯；亮度来自方块所在位置的天空光/方块光。 */
@@ -245,21 +245,21 @@ public final class WindGrass {
 
         // 下段：根 → 中
         v.addVertex(p, bx1 - dxb, baseY, bz1 - dzb).setColor(root).setUv(u0, v1)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+            .setOverlay(OverlayTexture.NO_OVERLAY).setUv2(wx, wz).setNormal(p, -sin, 0, cos);
         v.addVertex(p, bx1 + dxb, baseY, bz1 + dzb).setColor(root).setUv(u1, v1)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+            .setOverlay(OverlayTexture.NO_OVERLAY).setUv2(wx, wz).setNormal(p, -sin, 0, cos);
         v.addVertex(p, bx1 + dxm + bendX, midY, bz1 + dzm + bendZ).setColor(tip).setUv(u1, (v0 + v1) * .5f)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+            .setOverlay(OverlayTexture.NO_OVERLAY).setUv2(wx, wz).setNormal(p, -sin, 0, cos);
         v.addVertex(p, bx1 - dxm + bendX, midY, bz1 - dzm + bendZ).setColor(tip).setUv(u0, (v0 + v1) * .5f)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+            .setOverlay(OverlayTexture.NO_OVERLAY).setUv2(wx, wz).setNormal(p, -sin, 0, cos);
         // 上段：中 → 尖
         v.addVertex(p, bx1 - dxm, midY, bz1 - dzm).setColor(tip).setUv(u0, (v0 + v1) * .5f)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+            .setOverlay(OverlayTexture.NO_OVERLAY).setUv2(wx, wz).setNormal(p, -sin, 0, cos);
         v.addVertex(p, bx1 + dxm, midY, bz1 + dzm).setColor(tip).setUv(u1, (v0 + v1) * .5f)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+            .setOverlay(OverlayTexture.NO_OVERLAY).setUv2(wx, wz).setNormal(p, -sin, 0, cos);
         v.addVertex(p, bx1 + dxt + cos * tipBend, tipY, bz1 + dzt + sin * tipBend).setColor(tip).setUv(u1, v0)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+            .setOverlay(OverlayTexture.NO_OVERLAY).setUv2(wx, wz).setNormal(p, -sin, 0, cos);
         v.addVertex(p, bx1 - dxt + cos * tipBend, tipY, bz1 - dzt + sin * tipBend).setColor(tip).setUv(u0, v0)
-            .setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).setUv2(wx, wz);
+            .setOverlay(OverlayTexture.NO_OVERLAY).setUv2(wx, wz).setNormal(p, -sin, 0, cos);
     }
 }
