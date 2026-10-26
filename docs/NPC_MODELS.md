@@ -7,7 +7,7 @@ NPC 采用车万女仆（Touhou Little Maid，下称 TLM）的 GeckoLib 女仆�
 1. 在附属模组里用与 TLM 相同的渲染方式显示 NPC（外观接近 YSM，但 YSM 不开源，渲染细节无法核对）；
 2. 同一份几何和贴图不改动就能放进 TLM 的自定义模型包，作为女仆模型使用。
 
-怎样把角色做得好看（比例、脸、头发、服装、UV 的具体做法）见 [NPC 模型制作指南](NPC_MODELING_GUIDE.md)。
+怎样把角色做得好看（比例、脸、头发、服装、UV 的具体做法）见 [NPC 模型制作指南](NPC_MODELING_GUIDE.md)。在世界里大量生成的普通 NPC 的随机外观（发型、配色、五官、服装、身材）见 [NPC 随机外观方案](NPC_APPEARANCE.md)。
 
 ## 1. 格式
 
