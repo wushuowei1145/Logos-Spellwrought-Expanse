@@ -1,0 +1,108 @@
+{
+  "entity.forest_elf.alert": {
+    "subtitle": "subtitles.logos_dimension.forest_elf.alert",
+    "sounds": [
+      "logos_dimension:entity/forest_elf/female_alert_044d51fa",
+      "logos_dimension:entity/forest_elf/female_alert_aa4f5610"
+    ]
+  },
+  "entity.forest_elf.ambient": {
+    "subtitle": "subtitles.logos_dimension.forest_elf.ambient",
+    "sounds": [
+      "logos_dimension:entity/forest_elf/female_ambient_3832c6a0",
+      "logos_dimension:entity/forest_elf/female_ambient_f6a275e5",
+      "logos_dimension:entity/forest_elf/female_ambient_51670363",
+      "logos_dimension:entity/forest_elf/female_ambient_fa492d2c",
+      "logos_dimension:entity/forest_elf/female_ambient_05084e4d"
+    ]
+  },
+  "entity.forest_elf.attack": {
+    "subtitle": "subtitles.logos_dimension.forest_elf.attack",
+    "sounds": [
+      "logos_dimension:entity/forest_elf/female_attack_3f25b7c5",
+      "logos_dimension:entity/forest_elf/female_attack_d7d8c0a3"
+    ]
+  },
+  "entity.forest_elf.death": {
+    "subtitle": "subtitles.logos_dimension.forest_elf.death",
+    "sounds": [
+      "logos_dimension:entity/forest_elf/female_death_e13e4eb0",
+      "logos_dimension:entity/forest_elf/female_death_b15093d2",
+      "logos_dimension:entity/forest_elf/female_death_ed5824bd"
+    ]
+  },
+  "entity.forest_elf.greet": {
+    "subtitle": "subtitles.logos_dimension.forest_elf.greet",
+    "sounds": [
+      "logos_dimension:entity/forest_elf/female_greet_9b14e7fb",
+      "logos_dimension:entity/forest_elf/female_greet_6ab5549d",
+      "logos_dimension:entity/forest_elf/female_greet_dbb1d2b8",
+      "logos_dimension:entity/forest_elf/female_greet_f75950ce"
+    ]
+  },
+  "entity.forest_elf.hurt": {
+    "subtitle": "subtitles.logos_dimension.forest_elf.hurt",
+    "sounds": [
+      "logos_dimension:entity/forest_elf/female_hurt_0c087f30",
+      "logos_dimension:entity/forest_elf/female_hurt_01eedcf2",
+      "logos_dimension:entity/forest_elf/female_hurt_a84f5585"
+    ]
+  },
+  "entity.forest_elf.no": {
+    "subtitle": "subtitles.logos_dimension.forest_elf.no",
+    "sounds": [
+      "logos_dimension:entity/forest_elf/female_no_91dbaba3",
+      "logos_dimension:entity/forest_elf/female_no_566a7005"
+    ]
+  },
+  "entity.forest_elf.yes": {
+    "subtitle": "subtitles.logos_dimension.forest_elf.yes",
+    "sounds": [
+      "logos_dimension:entity/forest_elf/female_yes_e6c69343"
+    ]
+  },
+  "entity.forest_elf.neutral.alert": {
+    "subtitle": "subtitles.logos_dimension.forest_elf.alert",
+    "sounds": [
+      "logos_dimension:entity/forest_elf/neutral_alert_9ef2a709"
+    ]
+  },
+  "entity.forest_elf.neutral.ambient": {
+    "subtitle": "subtitles.logos_dimension.forest_elf.ambient",
+    "sounds": [
+      "logos_dimension:entity/forest_elf/neutral_ambient_ad253ab1",
+      "logos_dimension:entity/forest_elf/neutral_ambient_dbe06a6a",
+      "logos_dimension:entity/forest_elf/neutral_ambient_a834a65c",
+      "logos_dimension:entity/forest_elf/neutral_ambient_766c20fc",
+      "logos_dimension:entity/forest_elf/neutral_ambient_ec0c608d"
+    ]
+  },
+  "entity.forest_elf.neutral.attack": {
+    "subtitle": "subtitles.logos_dimension.forest_elf.attack",
+    "sounds": [
+      "logos_dimension:entity/forest_elf/neutral_attack_070231a6",
+      "logos_dimension:entity/forest_elf/neutral_attack_c9c571ab"
+    ]
+  },
+  "entity.forest_elf.neutral.death": {
+    "subtitle": "subtitles.logos_dimension.forest_elf.death",
+    "sounds": [
+      "logos_dimension:entity/forest_elf/neutral_death_221a1c1d"
+    ]
+  },
+  "entity.forest_elf.neutral.hurt": {
+    "subtitle": "subtitles.logos_dimension.forest_elf.hurt",
+    "sounds": [
+      "logos_dimension:entity/forest_elf/neutral_hurt_894085dd"
+    ]
+  },
+  "entity.forest_elf.cast": {
+    "subtitle": "subtitles.logos_dimension.forest_elf.cast",
+    "sounds": [
+      "logos_dimension:entity/forest_elf/female_greet_9b14e7fb",
+      "logos_dimension:entity/forest_elf/female_greet_6ab5549d",
+      "logos_dimension:entity/forest_elf/female_greet_dbb1d2b8",
+      "logos_dimension:entity/forest_elf/female_greet_f75950ce"
+    ]
+  }
+}

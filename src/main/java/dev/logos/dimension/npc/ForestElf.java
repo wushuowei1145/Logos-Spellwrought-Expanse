@@ -1,6 +1,7 @@
 package dev.logos.dimension.npc;
 
 import java.util.Map;
+import java.util.UUID;
 
 import com.geckolib.animatable.instance.AnimatableInstanceCache;
 import com.geckolib.animatable.manager.AnimatableManager;
@@ -8,13 +9,23 @@ import com.geckolib.util.GeckoLibUtil;
 import com.mojang.serialization.Codec;
 
 import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.item.NaturesForceItem;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -23,18 +34,33 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 
 /**
- * 森林精灵（普通居民）的最小原型：随机外观、车万女仆同款动画驱动、简单闲逛。
+ * 森林精灵：精灵森林的居民（docs/NPC_RACE_FOREST_ELF.md）。
  *
- * <p>外观在生成时抽一次，存解析后的零件 ID（docs/NPC_APPEARANCE.md 第 6 节）；年龄、伴侣、配色替换以后再加。
+ * <ul>
+ * <li>外观：生成时按零件表随机抽一次，存解析后的零件 ID（docs/NPC_APPEARANCE.md 第 6 节）。</li>
+ * <li>战斗：拿「自然之力」远射（{@link ElfBowAttackGoal}），主动攻击附近的亡灵与灾厄村民；
+ *     僵尸和灾厄村民也把精灵当村民打（{@link ElfFactions}）。</li>
+ * <li>治疗：200 点魔力、每秒恢复 5 点，用 Logos 示例法术治疗受伤的同伴（{@link ElfHealGoal}）。
+ *     作为玩家的使魔时把玩家视为友方。</li>
+ * <li>移动：普通地面寻路之外，绳梯也算路径（{@link ElfNavigation}），能爬上树屋。</li>
+ * </ul>
+ * 年龄、伴侣、配色替换以后再加。
  */
 public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHolder {
+    public static final float MAX_MANA = 200, MANA_PER_SECOND = 5;
+    /** 主动攻击的搜索半径；一旦决定攻击，追踪距离由 FOLLOW_RANGE 决定（更远）。 */
+    public static final double AGGRO_RANGE = 24, FOLLOW_RANGE = 48;
     private static final EntityDataAccessor<String> APPEARANCE = SynchedEntityData.defineId(ForestElf.class, EntityDataSerializers.STRING);
     private static final Codec<Map<String, String>> APPEARANCE_CODEC = Codec.unboundedMap(Codec.STRING, Codec.STRING);
     private static final Identifier ASSET = LogosDimension.id("forest_elf");
@@ -42,13 +68,18 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     /** 客户端解码缓存，同步数据变了才重新解码。 */
     private String decodedFrom;
     private Map<String, String> decoded;
+    private float mana = MAX_MANA;
+    /** 使魔身份每秒查一次（Logos 的使魔记录在 Logos 那边）。 */
+    private long nextFamiliarCheck;
+    private UUID master;
 
     public ForestElf(EntityType<? extends ForestElf> type, Level level) {
         super(type, level);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, 20).add(Attributes.MOVEMENT_SPEED, 0.25);
+        return PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, 20).add(Attributes.MOVEMENT_SPEED, 0.3)
+                .add(Attributes.FOLLOW_RANGE, FOLLOW_RANGE);
     }
 
     @Override
@@ -58,17 +89,52 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     }
 
     @Override
+    protected PathNavigation createNavigation(Level level) {
+        return new ElfNavigation(this, level);
+    }
+
+    @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
+        goalSelector.addGoal(1, new ElfBowAttackGoal(this));
+        goalSelector.addGoal(2, new ElfHealGoal(this));
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.6));
-        goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6));
+        goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8));
         goalSelector.addGoal(7, new RandomLookAroundGoal(this));
+        targetSelector.addGoal(1, new HurtByTargetGoal(this, ForestElf.class).setAlertOthers());
+        targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Mob.class, 10, true, false, (e, level) -> isFoe(e)));
+    }
+
+    /** 主动攻击的对象：亡灵和灾厄村民（含劫掠队成员），玩家的 Logos 使魔除外。 */
+    public static boolean isFoe(LivingEntity e) {
+        var type = e.typeHolder();
+        boolean hostile = type.is(EntityTypeTags.UNDEAD) || type.is(EntityTypeTags.ILLAGER) || type.is(EntityTypeTags.RAIDERS);
+        return hostile && !(e instanceof ForestElf) && LogosMagicBridge.masterOf(e) == null;
+    }
+
+    @Override
+    public boolean canAttack(LivingEntity target) {
+        if (target instanceof ForestElf) return false;
+        if (target instanceof Player && isFamiliar()) return false;
+        return super.canAttack(target);
     }
 
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, EntitySpawnReason reason, SpawnGroupData data) {
         setAppearance(NpcParts.FOREST_ELF.random(level.getRandom()));
+        setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(NaturesForceItem.ITEM.get()));
+        setDropChance(EquipmentSlot.MAINHAND, 0);
+        if (reason == EntitySpawnReason.STRUCTURE) {
+            setPersistenceRequired();
+            // 住在树屋或世界树里：闲逛不走出住处附近
+            setHomeTo(blockPosition(), 24);
+        }
         return super.finalizeSpawn(level, difficulty, reason, data);
+    }
+
+    @Override
+    public boolean removeWhenFarAway(double distance) {
+        return false;
     }
 
     public void setAppearance(Map<String, String> appearance) {
@@ -90,17 +156,84 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
         return decoded;
     }
 
+    // ---------------------------------------------------------------- 魔力与使魔身份
+
+    public float mana() {
+        return mana;
+    }
+
+    /** 付 cost 点魔力；不够就不付。 */
+    public boolean spendMana(float cost) {
+        if (mana < cost) return false;
+        mana -= cost;
+        return true;
+    }
+
+    /** 是不是某个玩家的 Logos 使魔（服务端每秒查一次）。 */
+    public boolean isFamiliar() {
+        long now = level().getGameTime();
+        if (now >= nextFamiliarCheck) {
+            nextFamiliarCheck = now + 20;
+            master = LogosMagicBridge.masterOf(this);
+        }
+        return master != null;
+    }
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        if (!level().isClientSide() && mana < MAX_MANA) mana = Math.min(MAX_MANA, mana + MANA_PER_SECOND / 20f);
+    }
+
+    @Override
+    public void setTarget(LivingEntity target) {
+        if (target != null && target != getTarget() && level() instanceof ServerLevel) playSound(ElfSounds.ALERT.get(), 1, getVoicePitch());
+        super.setTarget(target);
+    }
+
+    // ---------------------------------------------------------------- 存档
+
     @Override
     protected void addAdditionalSaveData(ValueOutput output) {
         super.addAdditionalSaveData(output);
         output.store("Appearance", APPEARANCE_CODEC, npcAppearance());
+        output.putFloat("Mana", mana);
     }
 
     @Override
     protected void readAdditionalSaveData(ValueInput input) {
         super.readAdditionalSaveData(input);
         input.read("Appearance", APPEARANCE_CODEC).ifPresent(this::setAppearance);
+        mana = Math.clamp(input.getFloatOr("Mana", MAX_MANA), 0, MAX_MANA);
     }
+
+    // ---------------------------------------------------------------- 声音与交互（对标村民）
+
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return getTarget() != null ? null : ElfSounds.AMBIENT.get();
+    }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) {
+        return ElfSounds.HURT.get();
+    }
+
+    @Override
+    protected SoundEvent getDeathSound() {
+        return ElfSounds.DEATH.get();
+    }
+
+    /** 右键打招呼：看向玩家，正在战斗时回一声不满。 */
+    @Override
+    protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+        if (!isAlive()) return super.mobInteract(player, hand);
+        getLookControl().setLookAt(player);
+        if (!level().isClientSide()) playSound(getTarget() != null ? ElfSounds.NO.get() : ElfSounds.GREET.get(), 1, getVoicePitch());
+        return InteractionResult.SUCCESS;
+    }
+
+    // ---------------------------------------------------------------- 动画
 
     @Override
     public Identifier npcAnimationAsset() {

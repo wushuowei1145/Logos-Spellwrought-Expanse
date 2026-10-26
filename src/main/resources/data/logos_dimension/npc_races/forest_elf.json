@@ -1,0 +1,161 @@
+{
+ "race": "forest_elf",
+ "body_cubes": 42,
+ "slots": {
+  "hair": {
+   "optional": true,
+   "parts": [
+    {
+     "id": "hair_straight_long",
+     "groups": [
+      "hair_straight_long"
+     ],
+     "default": true,
+     "cubes": 180
+    },
+    {
+     "id": "hair_hooded",
+     "groups": [
+      "hair_hooded"
+     ],
+     "default": false,
+     "cubes": 88
+    },
+    {
+     "id": "hair_short_bob",
+     "groups": [
+      "hair_short_bob"
+     ],
+     "default": false,
+     "cubes": 243
+    }
+   ]
+  },
+  "headwear": {
+   "optional": true,
+   "parts": [
+    {
+     "id": "headwear_twig_crown",
+     "groups": [
+      "headwear_twig_crown"
+     ],
+     "default": true,
+     "cubes": 23
+    }
+   ]
+  },
+  "ears": {
+   "optional": false,
+   "parts": [
+    {
+     "id": "ear_long",
+     "groups": [
+      "ear_long_left",
+      "ear_long_right"
+     ],
+     "default": true,
+     "cubes": 6
+    }
+   ]
+  },
+  "eyes": {
+   "optional": false,
+   "parts": [
+    {
+     "id": "eyes_square",
+     "groups": [
+      "eyes_square_left_pupil",
+      "eyes_square_left",
+      "eyes_square_right_pupil",
+      "eyes_square_right"
+     ],
+     "default": true,
+     "cubes": 8
+    },
+    {
+     "id": "eyes_droopy",
+     "groups": [
+      "eyes_droopy_left_pupil",
+      "eyes_droopy_left",
+      "eyes_droopy_right_pupil",
+      "eyes_droopy_right"
+     ],
+     "default": false,
+     "cubes": 8
+    }
+   ]
+  },
+  "mouth": {
+   "optional": false,
+   "parts": [
+    {
+     "id": "mouth_smile",
+     "groups": [
+      "mouth_smile"
+     ],
+     "default": true,
+     "cubes": 3
+    },
+    {
+     "id": "mouth_cat",
+     "groups": [
+      "mouth_cat"
+     ],
+     "default": false,
+     "cubes": 4
+    }
+   ]
+  },
+  "outfit": {
+   "optional": true,
+   "parts": [
+    {
+     "id": "outfit_villager",
+     "groups": [
+      "outfit_villager_neck",
+      "outfit_villager_leftforearm",
+      "outfit_villager_leftarm",
+      "outfit_villager_rightforearm",
+      "outfit_villager_rightarm",
+      "outfit_villager_body",
+      "outfit_villager_skirt",
+      "outfit_villager_leftfoot",
+      "outfit_villager_leftshin",
+      "outfit_villager_rightfoot",
+      "outfit_villager_rightshin"
+     ],
+     "default": true,
+     "cubes": 64
+    },
+    {
+     "id": "outfit_ranger",
+     "groups": [
+      "outfit_ranger_leftforearm",
+      "outfit_ranger_leftarm",
+      "outfit_ranger_rightforearm",
+      "outfit_ranger_rightarm",
+      "outfit_ranger_body",
+      "outfit_ranger_cape",
+      "outfit_ranger_capelet",
+      "outfit_ranger_skirt",
+      "outfit_ranger_leftfoot",
+      "outfit_ranger_leftshin",
+      "outfit_ranger_leftleg",
+      "outfit_ranger_rightfoot",
+      "outfit_ranger_rightshin",
+      "outfit_ranger_rightleg",
+      "outfit_ranger_hips"
+     ],
+     "default": false,
+     "cubes": 61
+    }
+   ]
+  }
+ },
+ "conflicts": [
+  [
+   "hair_hooded",
+   "headwear_twig_crown"
+  ]
+ ]
+}
