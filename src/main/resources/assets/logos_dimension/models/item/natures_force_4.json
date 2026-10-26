@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/bow",
+  "textures": {
+    "layer0": "logos_dimension:item/natures_force_4"
+  }
+}

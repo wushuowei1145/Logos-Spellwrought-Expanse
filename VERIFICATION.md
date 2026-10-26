@@ -25,6 +25,36 @@
 ```text
 ./gradlew test build -PlogosJar=/absolute/path/logos-0.5.1.jar
 ./gradlew runClient -PlogosJar=/absolute/path/logos-0.5.1.jar -PldTest=group:npc_preview -PldTestHeadless -PldTestWindow=1600x900
+## 0.11.0 自然之力四段蓄力弓
+
+### 2026-10-26 手持朝向、弓臂与箭矢外观修订
+
+按实际试玩反馈，将五张弓贴图的弓臂纵向延长约 25%，统一转到原版弓的左上射向并输出 64×64，保持五帧握柄一致；沿用原版显示变换，修正第一人称箭身侧向的问题。前三阶恢复普通箭、药水箭、光灵箭各自的原版纹理；只有第四阶使用自然之力纹理。第四阶屏蔽原版暴击飞行粒子，保留暴击伤害和 Logos 生命弹体拖尾。
+
+同一 Logos 0.6.0 快照（`a86bb4d`）下复验：**69/69 单元、10/10 定向世界检查通过，构建通过；普通实际客户端左右手 2/2 场景、16/16 检查通过**。客户端实际观察一次箭刻产生的原版粒子数量：保持暴击标记时第三阶生成四颗，第四阶零颗；另外确认生命拖尾正常接收。普通/药水/光灵箭三种实体各检查四个阶段的最终纹理选择。人工查看左右手第一人称满弓及第三人称持弓截图，更新 `docs/screenshots/natures-force/`。此次仍未运行第三方光影。
+
+### 首次实现验证
+
+2026-10-26：在独立分支 `codex/natures-force-bow` 添加 `logos_dimension:natures_force`，玩法见 [自然之力](docs/NATURES_FORCE.md)。前两阶免魔力，第三阶消耗 5 点并等同原版满弓，第四阶合计消耗 10 点，8 格/tick 直线飞行、额外 10 点 Logos 生命属性基础伤害。魔力不足降至第二阶，不扣残余魔力。
+
+最终运行环境为 **Logos 0.6.0，上游 main `a86bb4d1ed7aadbe0c9beb16f8fc1935cae982c2` 的源码快照构建**。快照仅下载、编译到本附属被忽略的 `build/`，没有修改本地主模组仓库，也没有将其源码或 JAR 纳入提交。早期使用本地 0.5.1 检查基本射击与客户端；下表为最终 0.6.0 结果。
+
+| 层级 | 结果 | 覆盖 |
+| --- | --- | --- |
+| 单元 | 69/69 通过 | 含新增三项蓄力边界、速度和魔力费用检查；保留现有单元测试 |
+| 定向世界检查 | 10/10 通过 | 生存箭耗与各阶魔力、缺魔力降阶、无箭拒绝、各阶物理/生命伤害、药水及光灵效果、无重力无阻力、80 tick 到期、保存/重载到期时间、未加载区块清除、无限且不可拾取的生物箭、原版骷髅 AI 等待 40 tick、普通箭不受影响 |
+| 普通实际客户端 | 1/1 场景、6/6 检查通过 | 四阶物品模型、箭阶段同步、最终渲染状态选择指定纹理、Logos 生命拖尾、1280×720 视口、80 tick 后自然移除 |
+| 构建与资源 | 通过 | 原版箭模型、用户指定 PNG 原样导入、五张弓贴图、中英文名称、弓/耐久附魔与骷髅武器标签；无内嵌前置 JAR |
+
+实际客户端截图位于 `docs/screenshots/natures-force/`，已人工查看待机、满蓄力和飞行箭近景。用于拍摄的近景箭以较慢速度横移，便于辨认 UV；实际发射的 8 格/tick 速度由世界测试单独断言。没有将近景拍摄速度当作战斗射速。
+
+过程中修复了两项真实兼容问题：NeoForge 开发环境禁止给原版箭追加同步数据编号，改用同步附件；NeoForge 会在实体原版提取后清空扩展渲染数据，改用正式渲染状态回调写入标记，补充最终纹理选择断言并重新拍摄，确认箭身实际使用指定的翠绿/浅金纹理。世界测试的无玩家区块不保证持续模拟，80 tick 测试明确在指定时刻触发到期检查；实际客户端另外验证了自然移除。
+
+本次未跑全套世界生成 GameTest，也未运行第三方光影、多人远程联机或硬件帧率检查。没有新增配方或生存掉落来源；通过创造标签页或 `/give @s logos_dimension:natures_force` 获取。没有将工作分支内容称为 main 已更新。
+
+```text
+./gradlew test runGameTestServer build -PlogosJar=/absolute/path/logos-0.6.0.jar -PdimensionTests=logos_dimension:nature_*
+./gradlew runClient build -PlogosJar=/absolute/path/logos-0.6.0.jar -PldTest=group:natures_force -PldTestHeadless -PldTestWindow=1280x720
 ```
 
 ## 0.11.0 林地蘑菇、幼年牧草与草皮骨粉

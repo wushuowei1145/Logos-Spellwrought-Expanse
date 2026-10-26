@@ -28,6 +28,8 @@ public final class CloudseaBlocks {
     public static final DeferredBlock<Block> STARDEW=flora("journey_stardew",2),LUMEN_FERN=flora("journey_lumen_fern",3);
     /** 幼年原野牧草：会自己长大的小草，带 age 属性。 */
     public static final DeferredBlock<Block> MEADOW_GRASS_YOUNG=youngGrass("journey_meadow_grass_young");
+    /** 长风草原的矮草：基础草只到 0.45 格，风摆动的草尖留给渲染层。 */
+    public static final DeferredBlock<Block> MEADOW_GRASS_SHORT=flora("journey_meadow_grass_short",0);
     public static final DeferredBlock<Block> RICE=rice();
     public static final DeferredBlock<Block> GRAPEVINE=grapevine();
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> GRAPES=DimensionBlocks.ITEMS.registerSimpleItem("journey_grapes",p->p.food(new net.minecraft.world.food.FoodProperties.Builder().nutrition(2).saturationModifier(.2f).build()));

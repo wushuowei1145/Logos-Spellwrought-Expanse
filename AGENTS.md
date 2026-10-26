@@ -5,7 +5,7 @@
 - 新改动在分支完成，一个 PR 只解决一个主题。提交标题用英文，说明用中文。
 - PR 默认以 main 为目标；只有明确说明的依赖审查才指向功能分支，依赖功能分支上的更新必须另行整合到 main，不能把功能分支内合并称为主分支已更新。
 - 美术素材使用代码绘制，不使用图像生成服务；代码注释与文档字符串使用中文。
-- NPC 模型按 [docs/NPC_MODELS.md](docs/NPC_MODELS.md)：车万女仆 GeckoLib 骨架命名、2 倍制作、entityCutout（不剔除背面）加原版实体光照，发光部件用 `ysmGlow` 前缀骨骼；制作做法见 [docs/NPC_MODELING_GUIDE.md](docs/NPC_MODELING_GUIDE.md)。
+- NPC 模型按 [docs/NPC_MODELS.md](docs/NPC_MODELS.md)：车万女仆 GeckoLib 骨架命名、2 倍制作、entityCutout（不剔除背面）加原版实体光照，发光部件用 `ysmGlow` 前缀骨骼；制作做法见 [docs/NPC_MODELING_GUIDE.md](docs/NPC_MODELING_GUIDE.md)；普通 NPC 的随机外观按 [docs/NPC_APPEARANCE.md](docs/NPC_APPEARANCE.md)，幼年、伴侣与繁殖按 [docs/NPC_POPULATION.md](docs/NPC_POPULATION.md)。
 - 提交与 PR 不添加 AI 作者、共同作者或贡献者署名，使用维护者已有的 Git 身份。
 - 复用现有 Logos 材料注册 ID，不复制注册污染碎片。
 - 新增植被或树叶方块时加进 Logos 的 `logos:fragile_plants` 标签，否则衰退符文对它无效；见 [docs/LOGOS_TAGS.md](docs/LOGOS_TAGS.md)。
