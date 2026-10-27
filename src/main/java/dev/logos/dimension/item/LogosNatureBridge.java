@@ -67,10 +67,21 @@ public final class LogosNatureBridge {
     }
 
     public static void damage(LivingEntity caster, LivingEntity target) {
+        damage(caster, target, 10);
+    }
+
+    /** 一次独立的生命追加伤害；使用 Logos 的术式伤害入口，避免前一笔物理伤害的无敌帧吞掉追加。 */
+    public static void damage(LivingEntity caster, LivingEntity target, double amount) {
         try {
             Object instance = INSTANCE.newInstance(SPELL, caster, (ServerLevel) target.level(), 0d, 0d);
-            DAMAGE.invoke(null, instance, target, 10d, LIFE);
+            DAMAGE.invoke(null, instance, target, amount, LIFE);
         } catch (ReflectiveOperationException error) { throw failure(error); }
+    }
+
+    /** 复用 Logos 注册的生命易伤效果，不复制药水或属性。 */
+    public static java.util.Optional<net.minecraft.core.Holder.Reference<net.minecraft.world.effect.MobEffect>> lifeVulnerability() {
+        return net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.get(
+                net.minecraft.resources.Identifier.fromNamespaceAndPath("logos", "life_vulnerability"));
     }
 
     public static void trail(AbstractArrow arrow, boolean end) {

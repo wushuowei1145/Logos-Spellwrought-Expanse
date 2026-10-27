@@ -40,6 +40,10 @@
 
 新增四段蓄力弓 `logos_dimension:natures_force`：第三阶是原版满弓箭，第四阶射出高速直线箭并追加 10 点 Logos 生命伤害。前两阶免费，第三阶耗 5 魔力、第四阶合计耗 10；不足时降为第二阶。第四阶箭在四秒后或遇到未加载区块时清除。支持原版药水箭、光灵箭与骷髅射击，见 [自然之力](docs/NATURES_FORCE.md)。
 
+## 精灵长矛
+
+新增 `logos_dimension:elf_spear`：钻石矛的 4 点戳刺伤害、木矛的 0.65 秒攻速，右键保留铁矛冲撞。左键种下六秒萌芽印记，右键触发消耗印记与 5 魔力，追加 6 点 Logos 生命基础伤害，再施加四秒生命易伤 I。使用用户提供的图标与原版长矛显示模板，见 [精灵长矛](docs/ELF_SPEAR.md)。
+
 ## 原版数据包生成
 
 两个维度都使用原版 `minecraft:noise` 地形、`minecraft:multi_noise` 群系选择、原版树木与植物 Feature、标准 NBT/jigsaw 结构。删除手写 Java 地形、种树与建筑填块生成器。数据随 Mod 内置，正常安装不需要额外下载数据包，存档数据包可以覆盖同名资源。见 [生成数据与迁移](docs/NATIVE_WORLDGEN.md)。

@@ -14,5 +14,9 @@ public final class NatureAttachments {
             () -> AttachmentType.builder(() -> 0).sync(ByteBufCodecs.VAR_INT).build());
     public static final Supplier<AttachmentType<Integer>> CHARGE_LIMIT = TYPES.register("nature_charge_limit",
             () -> AttachmentType.builder(() -> 2).sync(ByteBufCodecs.VAR_INT).build());
+    public static final Supplier<AttachmentType<SproutMark>> SPROUT_MARK = TYPES.register("sprout_mark",
+            () -> AttachmentType.builder(() -> SproutMark.EMPTY)
+                    .serialize(SproutMark.CODEC, mark -> mark.expiresAt() > 0)
+                    .sync(SproutMark.STREAM_CODEC).build());
     private NatureAttachments() {}
 }

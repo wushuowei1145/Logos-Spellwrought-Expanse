@@ -19,6 +19,7 @@ public final class DimensionParticles {
     public static final DeferredHolder<ParticleType<?>,SimpleParticleType> WISP=TYPES.register("journey_water_wisp",()->new SimpleParticleType(false));
     /** 森林精灵倒下时飘出的绿色光点（ForestElf 在客户端生成，不走网络）。 */
     public static final DeferredHolder<ParticleType<?>,SimpleParticleType> ELF_SPIRIT=TYPES.register("forest_elf_spirit",()->new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>,SimpleParticleType> SPROUT_MARK=TYPES.register("sprout_mark",()->new SimpleParticleType(false));
     public static void register(IEventBus bus){TYPES.register(bus);}
     private DimensionParticles(){}
 }
