@@ -223,5 +223,19 @@
    "hair_hooded",
    "headwear_twig_crown"
   ]
+ ],
+ "expressions": [
+  {
+   "id": "expression_dazed_tears",
+   "groups": [
+    "expression_dazed_tears"
+   ],
+   "hides": [
+    "Eyes",
+    "Eyelid",
+    "EyeBrow",
+    "Mouth"
+   ]
+  }
  ]
 }

@@ -20,8 +20,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.npc.NpcAnimated;
+import dev.logos.dimension.npc.NpcAnimations;
 import dev.logos.dimension.npc.NpcPartsHolder;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -59,6 +61,8 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
     @SuppressWarnings("unchecked")
     private static final DataTicket<Set<String>> GLOWING =
             DataTicket.create("logos_dimension_npc_glowing", (Class<Set<String>>) (Class<?>) Set.class);
+    /** 本帧是否在播放自带的死亡动画（动画文件里有 {@code death} 且 NPC 正在死亡）。 */
+    private static final DataTicket<Boolean> ANIMATED_DEATH = DataTicket.create("logos_dimension_npc_animated_death", Boolean.class);
     /** 本帧是否在瞄准（{@link NpcAnimated#npcAiming()}）。 */
     private static final DataTicket<Boolean> AIMING = DataTicket.create("logos_dimension_npc_aiming", Boolean.class);
     /** 本帧要整组隐藏的零件组（外观里没选中的零件，见 {@link NpcPartsHolder}）。 */
@@ -77,13 +81,32 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
         this.shadowRadius = 0.35f;
     }
 
-    /** 有可换零件的 NPC：把没选中的零件组交给渲染状态。 */
+    /** 有可换零件的 NPC：把没选中的零件组（以及当前表情）交给渲染状态。 */
     @Override
     public void addRenderData(T animatable, Void relatedObject, R state, float partialTick) {
         super.addRenderData(animatable, relatedObject, state, partialTick);
+        NpcAnimated npc = animatable instanceof NpcAnimated a ? a : null;
         if (animatable instanceof NpcPartsHolder holder)
-            state.addGeckolibData(HIDDEN_PARTS, holder.npcRace().hiddenGroups(holder.npcAppearance()));
-        state.addGeckolibData(AIMING, animatable instanceof NpcAnimated npc && npc.npcAiming());
+            state.addGeckolibData(HIDDEN_PARTS, holder.npcRace().hiddenGroups(holder.npcAppearance(), npc == null ? null : npc.npcExpression()));
+        state.addGeckolibData(AIMING, npc != null && npc.npcAiming());
+        state.addGeckolibData(ANIMATED_DEATH, animatedDeath(animatable));
+    }
+
+    private static boolean animatedDeath(Mob mob) {
+        return mob.isDeadOrDying() && mob instanceof NpcAnimated npc
+                && NpcAnimations.available(npc.npcAnimationAsset()).contains(NpcAnimations.DEATH);
+    }
+
+    /** 有自己的死亡动画时不按原版向侧面倒下，姿势全交给动画。 */
+    @Override
+    protected float getDeathMaxRotation(GeoRenderState state) {
+        return state.getOrDefaultGeckolibData(ANIMATED_DEATH, false) ? 0 : super.getDeathMaxRotation(state);
+    }
+
+    /** 有自己的死亡动画时不染红（原版受伤与死亡共用的红色覆盖）；平时受伤照常变红。 */
+    @Override
+    public int getPackedOverlay(T animatable, Void relatedObject, float u, float partialTick) {
+        return animatedDeath(animatable) ? OverlayTexture.NO_OVERLAY : super.getPackedOverlay(animatable, relatedObject, u, partialTick);
     }
 
     /** 26.1 的 {@code entityCutout} 即旧版的 entityCutoutNoCull：薄发片与裙摆内侧两面可见。 */
@@ -108,7 +131,8 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
         super.adjustModelBonesForRender(info, snapshots);
         R state = info.renderState();
         // 原版俯仰向下为正，GeckoLib 骨骼绕 X 轴为正时朝前的部分向上抬，所以取反
-        snapshots.ifPresent(HEAD_BONE, head -> {
+        // 死亡动画自己摆头，不再叠加视线
+        if (!info.getOrDefaultGeckolibData(ANIMATED_DEATH, false)) snapshots.ifPresent(HEAD_BONE, head -> {
             head.setRotX(head.getRotX() - state.xRot * Mth.DEG_TO_RAD);
             head.setRotY(head.getRotY() + state.yRot * Mth.DEG_TO_RAD);
         });

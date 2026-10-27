@@ -36,7 +36,7 @@ NPC 的动画驱动 `dev.logos.dimension.npc.NpcAnimations` 沿用车万女仆�
 
 | 优先级 | 动画名 | 条件 | 循环 |
 |---|---|---|---|
-| 最高 | `death` | 死亡中 | 播完停在最后一帧 |
+| 最高 | `death` | 死亡中 | 播完停在最后一帧；动画文件里有 `attacked` 时先播一遍 `attacked`（最后一击的受击）再接 `death` |
 | 最高 | `sleep` | 睡觉姿势 | 循环 |
 | 最高 | `swim` | 游泳姿势（水中冲刺） | 循环 |
 | 最高 | `ladder_up` / `ladder_stillness` / `ladder_down` | 在梯子上，向上 / 不动 / 向下 | 循环 |
@@ -53,6 +53,8 @@ NPC 的动画驱动 `dev.logos.dimension.npc.NpcAnimations` 沿用车万女仆�
 同级按表中顺序：水中受伤显示 `swim_stand`，与 TLM 相同。
 
 **至少要有 `idle` 和 `walk`**；`attacked`、`run`、`jump`、`sit` 建议都做；`death`、`sleep`、`swim`、梯子、船按 NPC 实际会遇到的情况做。
+
+**自带死亡动画的 NPC**（动画文件里有 `death`）：渲染器不再叠加原版的红色受伤覆盖和向侧面倒下，也不再叠加视线；手部、剧情动作在死亡时停止。原版 20 刻就移除，NPC 要自己延长（例如 `ForestElf#tickDeath`），否则动画会被截断。
 
 ## 4. 手部条件动画
 
@@ -98,6 +100,7 @@ NPC 的动画驱动 `dev.logos.dimension.npc.NpcAnimations` 沿用车万女仆�
 - **先验证方向**：Bedrock 导出时 X、Y 旋转取反。先用一根骨骼做一个关键帧，确认方向，再批量做。
 - **分骨骼的部件**：头发每缕、褶片每片都是独立骨骼，可以只给一部分加摆动，不必全部都动。以后的物理效果也在这些骨骼上叠加。
 - **表情**：用 `Eyes` / `Eyelid` / `Mouth` 下的骨骼显示、隐藏切换（如眨眼），可以放在常驻叠加层里循环。
+- **动画专用表情**（例如死亡时的茫然挂泪）：做成独立部件挂在 `Head` 下，登记在零件表的 `expressions`（`tools/forest_elf_expressions.py` 并进模型与贴图）。平时由渲染器隐藏；NPC 的 `npcExpression()` 给出它时显示它、隐藏常态眼眉嘴，不需要在每个动画里写缩放关键帧。
 - **光照**：发光部件用 `ysmGlow` 前缀骨骼（规范第 5 节）；动画里缩放或隐藏它们，发光也跟着变。
 
 ## 7. 交付与验证

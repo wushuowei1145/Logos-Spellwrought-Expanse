@@ -39,8 +39,11 @@ public final class NpcParts {
         }
     }
 
+    /** 动画专用表情：平时隐藏；NPC 给出这个表情时显示 groups、隐藏 hides（常态眼嘴）。不参与随机抽取。 */
+    public record Expression(String id, List<String> groups, List<String> hides) {}
+
     /** conflicts：每组里的零件两两不能同时出现。 */
-    public record Race(String asset, List<Slot> slots, List<Set<String>> conflicts) {
+    public record Race(String asset, List<Slot> slots, List<Set<String>> conflicts, List<Expression> expressions) {
         public Slot slot(String name) {
             for (Slot s : slots) if (s.name().equals(name)) return s;
             return null;
@@ -98,12 +101,21 @@ public final class NpcParts {
             return out;
         }
 
-        /** 需要隐藏的骨骼组：每个槽位里没选中的零件的所有组。 */
+        /** 需要隐藏的骨骼组：每个槽位里没选中的零件的所有组，以及全部动画专用表情。 */
         public Set<String> hiddenGroups(Map<String, String> appearance) {
+            return hiddenGroups(appearance, null);
+        }
+
+        /** 同上；expression 不为空时显示这个表情、隐藏它替换掉的常态五官。 */
+        public Set<String> hiddenGroups(Map<String, String> appearance, String expression) {
             Set<String> out = new HashSet<>();
             for (Slot s : slots) {
                 String id = appearance.get(s.name());
                 for (Part p : s.parts()) if (!p.id().equals(id)) out.addAll(p.groups());
+            }
+            for (Expression e : expressions) {
+                if (e.id().equals(expression)) out.addAll(e.hides());
+                else out.addAll(e.groups());
             }
             return out;
         }
@@ -132,7 +144,17 @@ public final class NpcParts {
                     conflicts.add(Set.copyOf(group));
                 }
             }
-            return new Race(asset, List.copyOf(slots), List.copyOf(conflicts));
+            List<Expression> expressions = new ArrayList<>();
+            if (root.has("expressions")) {
+                for (JsonElement ee : root.getAsJsonArray("expressions")) {
+                    JsonObject eo = ee.getAsJsonObject();
+                    List<String> groups = new ArrayList<>(), hides = new ArrayList<>();
+                    for (JsonElement g : eo.getAsJsonArray("groups")) groups.add(g.getAsString());
+                    for (JsonElement g : eo.getAsJsonArray("hides")) hides.add(g.getAsString());
+                    expressions.add(new Expression(eo.get("id").getAsString(), List.copyOf(groups), List.copyOf(hides)));
+                }
+            }
+            return new Race(asset, List.copyOf(slots), List.copyOf(conflicts), List.copyOf(expressions));
         }
 
         /** 从模组资源读零件表；服务端（抽外观）与客户端（隐藏零件）读同一份。 */

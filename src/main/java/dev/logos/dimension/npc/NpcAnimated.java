@@ -34,4 +34,12 @@ public interface NpcAnimated extends GeoEntity {
     default boolean npcAiming() {
         return false;
     }
+
+    /**
+     * 当前替换常态眼嘴的动画专用表情（零件表 {@code expressions} 里的 id），没有为 null。
+     * 渲染器按它显示表情、隐藏常态五官（{@link NpcParts.Race#hiddenGroups(java.util.Map, String)}）。
+     */
+    default String npcExpression() {
+        return null;
+    }
 }
