@@ -4,7 +4,7 @@
 
 NPC 的动画驱动 `dev.logos.dimension.npc.NpcAnimations` 沿用车万女仆（TLM）GeckoLib 女仆的控制器结构、动画名和优先级。同一份动画文件在附属模组里由 NPC 驱动播放，放进 TLM 模型包后由 TLM 驱动，效果一致。
 
-对照的 TLM 源码（1.21 分支）是 `client/animation/gecko/AnimationManager`、`AnimationRegister`、`condition/*` 与 `client/entity/GeckoMaidEntity`。本仓库只参照它的命名和规则，不复制 TLM 的代码或动画文件（TLM 美术为 CC BY-NC-SA 4.0）。
+对照的 TLM 源码（1.21 分支）是 `client/animation/gecko/AnimationManager`、`AnimationRegister`、`condition/*` 与 `client/entity/GeckoMaidEntity`。本仓库参照它的命名和规则，不复制 TLM 的代码。TLM 的默认动画可以借用，署名与授权要求见 [NPC 模型美术规范](NPC_MODELS.md) 第 7 节和 [致谢与第三方素材](../CREDITS.md)。
 
 ## 1. 文件与命名
 
