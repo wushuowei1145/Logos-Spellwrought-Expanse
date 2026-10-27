@@ -9,6 +9,7 @@ import com.lowdragmc.lowdraglib2.uitest.*;
 
 import dev.logos.dimension.DimensionTravel;
 import dev.logos.dimension.cloudsea.CloudseaBlocks;
+import dev.logos.dimension.item.NaturesForceItem;
 import dev.logos.dimension.npc.ForestElf;
 import dev.logos.dimension.npc.NpcAnimations;
 import dev.logos.dimension.npc.NpcEntities;
@@ -17,6 +18,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -25,7 +28,7 @@ import net.minecraft.world.phys.Vec3;
  * 实际客户端预览森林精灵的动作，白瓷台上并排三个精灵，关掉 AI 站定：
  * <ul>
  * <li>弓（3/4 与正侧面两张）：从左到右是持弓、平射拉弓、抬头 30° 拉弓（3/4 那张再向左偏 25°），弓应跟着视线；</li>
- * <li>施法：抚生之触、生息之环、行礼。剧情动作错开触发，让截图那一刻都在动作的停顿处。</li>
+ * <li>施法：抚生之触、生息之环、行礼（不在战斗中，弓收着）。剧情动作错开触发，让截图那一刻都在动作的停顿处。</li>
  * </ul>
  */
 public abstract class NpcActionViews implements UIScenario {
@@ -97,6 +100,9 @@ public abstract class NpcActionViews implements UIScenario {
                         elf.setYBodyRot(body);
                         elf.setNoAi(true);
                         elf.setPersistenceRequired();
+                        // 平时弓收着；预览里在加入世界前直接放到手上（加入后再换装备会打断拉弓）。
+                        // 收着的那把还在，所以不会被收回去
+                        if (bow()) elf.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(NaturesForceItem.ITEM.get()));
                         level.addFreshEntity(elf);
                         if (bow() && i > 0) elf.startUsingItem(InteractionHand.MAIN_HAND);
                     }
