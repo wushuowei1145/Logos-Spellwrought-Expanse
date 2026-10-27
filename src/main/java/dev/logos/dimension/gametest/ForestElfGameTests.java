@@ -83,7 +83,8 @@ public final class ForestElfGameTests {
      */
     private static void keepTicking(GameTestHelper h, Mob mob) {
         h.onEachTick(() -> {
-            if (mob.isAlive() && !h.getLevel().isPositionEntityTicking(mob.blockPosition())) {
+            // 死亡中的生物也要推进（死亡计时、消失），直到被移除
+            if (!mob.isRemoved() && !h.getLevel().isPositionEntityTicking(mob.blockPosition())) {
                 mob.setOldPosAndRot();
                 mob.tickCount++;
                 mob.tick();
@@ -268,15 +269,24 @@ public final class ForestElfGameTests {
         });
     }
 
-    /** 死亡：受击与死亡动画播完前不消失；死亡动画开始时换上茫然挂泪的表情；DEATH_TICKS 刻后消失。 */
+    /** 死亡：受击与死亡动画播完前不消失；死亡动画开始时换上茫然挂泪的表情；倒下后不再转动；DEATH_TICKS 刻后消失。 */
     private static void deathLingers(GameTestHelper h) {
         floor(h, 6);
         ForestElf elf = elf(h, 2, 1, 2, EntitySpawnReason.COMMAND);
         elf.hurtServer(h.getLevel(), h.getLevel().damageSources().generic(), 1000);
         h.assertTrue(elf.isDeadOrDying(), "一击没有致命");
+        float[] facing = {Float.NaN};
         int[] seen = {0};
         h.onEachTick(() -> {
             if (elf.isRemoved()) return;
+            // 模拟击退滑动和头转向：倒下后朝向仍要保持不变
+            elf.setDeltaMovement(.15, 0, .2);
+            elf.setYHeadRot(elf.getYHeadRot() + 30);
+            // 死后第一刻结束时才记下朝向，从第二刻起比较
+            if (elf.deathTime < 2) return;
+            if (Float.isNaN(facing[0])) facing[0] = elf.yBodyRot;
+            else if (Math.abs(elf.yBodyRot - facing[0]) > .01f || Math.abs(elf.getYRot() - facing[0]) > .01f)
+                throw h.assertionException(net.minecraft.network.chat.Component.literal("倒下后转了方向：" + facing[0] + " → " + elf.yBodyRot));
             seen[0] = elf.deathTime;
             boolean face = ForestElf.DEATH_EXPRESSION.equals(elf.npcExpression());
             if (face != elf.deathTime >= ForestElf.DEATH_FACE_TICKS)
@@ -284,7 +294,8 @@ public final class ForestElfGameTests {
         });
         h.succeedWhen(() -> {
             h.assertTrue(elf.isRemoved(), "还没消失：" + elf.deathTime);
-            h.assertTrue(seen[0] >= ForestElf.DEATH_TICKS - 1, "消失得太早：" + seen[0]);
+            // 测试每刻的检查可能排在精灵这一刻之前或之后，最后看到的死亡刻数差一刻
+            h.assertTrue(seen[0] >= ForestElf.DEATH_TICKS - 2, "消失得太早：" + seen[0]);
         });
     }
 
