@@ -24,7 +24,7 @@ NPC 的动画驱动 `dev.logos.dimension.npc.NpcAnimations` 沿用车万女仆�
 | `hold_offhand` / `hold_mainhand` | 持物（第 4 节） | 0 |
 | `swing` | 挥手，每次挥手从头播一遍 | 2 tick |
 | `use` | 使用物品（吃、拉弓、举盾……） | 2 tick |
-| `misc` | 剧情动作，由 NPC 自己给出名字（`NpcAnimated.npcMiscAnimation()`） | 2 tick |
+| `misc` | 剧情动作，由 NPC 自己给出名字（`NpcAnimated.npcMiscAnimation()`），按动画文件里写的 `loop` 播放 | 2 tick |
 | `parallel_0..7_controller` | 动画 `parallel0`–`parallel7`，有就一直循环 | 0 |
 
 - **只播放动画文件里有的名字。** GeckoLib 遇到缺失的动画会每帧报错，所以驱动先查动画文件。主状态缺失时顺延到下一个成立的状态：比如没有 `run`，奔跑时播 `walk`；没有 `jump`，就落到 `walk` 或 `idle`。
@@ -82,6 +82,8 @@ NPC 的动画驱动 `dev.logos.dimension.npc.NpcAnimations` 沿用车万女仆�
 
 - **静止姿势要先正确**：模型的静止姿势本身必须好看、正确，比如百褶裙的褶角、头发的弯曲。动画只在上面做变化，不要用动画去「摆正」模型。
 - **视线由渲染器负责**：头部跟随视线由 `NpcRenderer` 在动画之上叠加，`idle` 里不要让 `Head` 大幅转动，否则会和视线打架。
+- **瞄准也由渲染器负责**：NPC 在瞄准（`NpcAnimated.npcAiming()`，例如拉弓、伸手施法）时，渲染器把视线的俯仰和相对身体的偏航同样叠加到 `Arm`（双臂的共同父骨骼）上，双臂连同手里的弓一起指向目标。所以拉弓、施法动画只做**水平向前**的姿势，不要自己抬手瞄准。
+- **手臂的 A 字外张**：模型手臂的静止姿势外张约 18°（右臂 z +18°、左臂 z −18°）。要让手臂笔直向前，动画里用 z 抵消（右臂 −18°、左臂 +18°）。
 - **循环首尾一致**：循环动画的首尾关键帧必须完全相同，插值用平滑曲线（catmullrom），避免接缝处抽一下。
 - **时长与节奏**：
   - `idle` 3–4 秒，呼吸的起伏 1–2°；

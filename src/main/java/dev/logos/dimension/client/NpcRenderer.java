@@ -19,6 +19,7 @@ import com.geckolib.renderer.layer.builtin.ItemInHandGeoLayer;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.npc.NpcAnimated;
 import dev.logos.dimension.npc.NpcPartsHolder;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -44,6 +45,8 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
     public static final float MODEL_SCALE = 0.5f;
     /** 随视线转动的头部骨骼。 */
     public static final String HEAD_BONE = "Head";
+    /** 双臂的共同父骨骼（肩线中点）；瞄准时随视线转动。 */
+    public static final String ARMS_BONE = "Arm";
     /** 手持物品的挂点骨骼。 */
     public static final String RIGHT_HAND_BONE = "RightHandLocator";
     public static final String LEFT_HAND_BONE = "LeftHandLocator";
@@ -56,6 +59,8 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
     @SuppressWarnings("unchecked")
     private static final DataTicket<Set<String>> GLOWING =
             DataTicket.create("logos_dimension_npc_glowing", (Class<Set<String>>) (Class<?>) Set.class);
+    /** 本帧是否在瞄准（{@link NpcAnimated#npcAiming()}）。 */
+    private static final DataTicket<Boolean> AIMING = DataTicket.create("logos_dimension_npc_aiming", Boolean.class);
     /** 本帧要整组隐藏的零件组（外观里没选中的零件，见 {@link NpcPartsHolder}）。 */
     @SuppressWarnings("unchecked")
     private static final DataTicket<Set<String>> HIDDEN_PARTS =
@@ -78,6 +83,7 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
         super.addRenderData(animatable, relatedObject, state, partialTick);
         if (animatable instanceof NpcPartsHolder holder)
             state.addGeckolibData(HIDDEN_PARTS, holder.npcRace().hiddenGroups(holder.npcAppearance()));
+        state.addGeckolibData(AIMING, animatable instanceof NpcAnimated npc && npc.npcAiming());
     }
 
     /** 26.1 的 {@code entityCutout} 即旧版的 entityCutoutNoCull：薄发片与裙摆内侧两面可见。 */
@@ -94,16 +100,21 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
     }
 
     /**
-     * 头部跟随视线：在动画姿势之上叠加俯仰与相对身体的偏航。
+     * 头部跟随视线：在动画姿势之上叠加俯仰与相对身体的偏航；瞄准时双臂（{@link #ARMS_BONE}）也一样，弓和施法的手指向目标。
      * 发光骨骼：常规绘制里跳过它自身的方块，改由 {@link #submitGlow} 以满亮度补画；被动画隐藏的保持隐藏。
      */
     @Override
     public void adjustModelBonesForRender(RenderPassInfo<R> info, BoneSnapshots snapshots) {
         super.adjustModelBonesForRender(info, snapshots);
         R state = info.renderState();
+        // 原版俯仰向下为正，GeckoLib 骨骼绕 X 轴为正时朝前的部分向上抬，所以取反
         snapshots.ifPresent(HEAD_BONE, head -> {
-            head.setRotX(head.getRotX() + state.xRot * Mth.DEG_TO_RAD);
+            head.setRotX(head.getRotX() - state.xRot * Mth.DEG_TO_RAD);
             head.setRotY(head.getRotY() + state.yRot * Mth.DEG_TO_RAD);
+        });
+        if (info.getOrDefaultGeckolibData(AIMING, false)) snapshots.ifPresent(ARMS_BONE, arms -> {
+            arms.setRotX(arms.getRotX() - state.xRot * Mth.DEG_TO_RAD);
+            arms.setRotY(arms.getRotY() + state.yRot * Mth.DEG_TO_RAD);
         });
         // 没选中的零件：整组连同子骨骼都不画
         Set<String> hidden = info.getOrDefaultGeckolibData(HIDDEN_PARTS, Set.of());

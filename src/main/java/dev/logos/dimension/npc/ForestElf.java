@@ -62,6 +62,11 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     /** 主动攻击的搜索半径；一旦决定攻击，追踪距离由 FOLLOW_RANGE 决定（更远）。 */
     public static final double AGGRO_RANGE = 24, FOLLOW_RANGE = 48;
     private static final EntityDataAccessor<String> APPEARANCE = SynchedEntityData.defineId(ForestElf.class, EntityDataSerializers.STRING);
+    /** 正在做的剧情动作（动画名，空为没有），见 {@link #playAction}。 */
+    private static final EntityDataAccessor<String> ACTION = SynchedEntityData.defineId(ForestElf.class, EntityDataSerializers.STRING);
+    /** 剧情动作的动画名与时长（刻），与动画文件一致（tools/forest_elf_animations.py）。 */
+    public static final String HEAL_TOUCH = "heal_touch", HEAL_RING = "heal_ring", GREET = "greet", REFUSE = "refuse";
+    private static final Map<String, Integer> ACTION_TICKS = Map.of(HEAL_TOUCH, 16, HEAL_RING, 26, GREET, 32, REFUSE, 18);
     private static final Codec<Map<String, String>> APPEARANCE_CODEC = Codec.unboundedMap(Codec.STRING, Codec.STRING);
     private static final Identifier ASSET = LogosDimension.id("forest_elf");
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -72,6 +77,8 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     /** 使魔身份每秒查一次（Logos 的使魔记录在 Logos 那边）。 */
     private long nextFamiliarCheck;
     private UUID master;
+    /** 服务端：剧情动作还剩几刻。 */
+    private int actionTicks;
 
     public ForestElf(EntityType<? extends ForestElf> type, Level level) {
         super(type, level);
@@ -86,6 +93,7 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(APPEARANCE, NpcParts.encode(NpcParts.FOREST_ELF.defaults()));
+        builder.define(ACTION, "");
     }
 
     @Override
@@ -182,7 +190,29 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     @Override
     public void aiStep() {
         super.aiStep();
-        if (!level().isClientSide() && mana < MAX_MANA) mana = Math.min(MAX_MANA, mana + MANA_PER_SECOND / 20f);
+        if (level().isClientSide()) return;
+        if (mana < MAX_MANA) mana = Math.min(MAX_MANA, mana + MANA_PER_SECOND / 20f);
+        if (actionTicks > 0 && --actionTicks == 0) entityData.set(ACTION, "");
+    }
+
+    // ---------------------------------------------------------------- 剧情动作与瞄准（动画）
+
+    /** 服务端：播放一个剧情动作（治疗、行礼、拒绝），播完自动清掉。 */
+    public void playAction(String name) {
+        actionTicks = ACTION_TICKS.getOrDefault(name, 20);
+        entityData.set(ACTION, name);
+    }
+
+    @Override
+    public String npcMiscAnimation() {
+        String name = entityData.get(ACTION);
+        return name.isEmpty() ? null : name;
+    }
+
+    /** 拉自然之力、伸手放抚生之触时，双臂随视线指向目标。 */
+    @Override
+    public boolean npcAiming() {
+        return isUsingItem() && getUseItem().getItem() instanceof NaturesForceItem || HEAL_TOUCH.equals(entityData.get(ACTION));
     }
 
     @Override
@@ -229,7 +259,11 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (!isAlive()) return super.mobInteract(player, hand);
         getLookControl().setLookAt(player);
-        if (!level().isClientSide()) playSound(getTarget() != null ? ElfSounds.NO.get() : ElfSounds.GREET.get(), 1, getVoicePitch());
+        if (!level().isClientSide()) {
+            boolean busy = getTarget() != null;
+            playSound(busy ? ElfSounds.NO.get() : ElfSounds.GREET.get(), 1, getVoicePitch());
+            playAction(busy ? REFUSE : GREET);
+        }
         return InteractionResult.SUCCESS;
     }
 
