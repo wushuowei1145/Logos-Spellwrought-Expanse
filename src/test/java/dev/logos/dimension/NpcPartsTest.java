@@ -20,6 +20,37 @@ import net.minecraft.util.RandomSource;
 class NpcPartsTest {
     private static final NpcParts.Race ELF = NpcParts.FOREST_ELF;
 
+    /** 骨盆封口使用肤色，正面 90° UV 不丢失，胸顶精确增加 0.1 深度。 */
+    @Test void revisedBodyKeepsThePelvisCapAndRotatedSkinUv() throws Exception {
+        com.google.gson.JsonArray bones;
+        try (var in = getClass().getResourceAsStream("/assets/logos_dimension/geckolib/models/entity/forest_elf.geo.json")) {
+            assertNotNull(in);
+            bones = JsonParser.parseString(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8))
+                    .getAsJsonObject().getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject().getAsJsonArray("bones");
+        }
+        com.google.gson.JsonObject pelvis = null, chestTop = null;
+        for (var element : bones) {
+            var bone = element.getAsJsonObject();
+            if (bone.get("name").getAsString().equals("DownBody")) for (var cube : bone.getAsJsonArray("cubes"))
+                if (cube.getAsJsonObject().getAsJsonArray("size").get(0).getAsDouble() == 7.5) pelvis = cube.getAsJsonObject();
+            if (bone.get("name").getAsString().equals("UpperBody")) for (var cube : bone.getAsJsonArray("cubes"))
+                if (cube.getAsJsonObject().getAsJsonArray("size").get(0).getAsDouble() == 6.0) chestTop = cube.getAsJsonObject();
+        }
+        assertNotNull(pelvis);
+        var uv = pelvis.getAsJsonObject("uv");
+        assertEquals(90, uv.getAsJsonObject("north").get("uv_rotation").getAsInt());
+        var cap = uv.getAsJsonObject("up");
+        assertNotNull(cap, "骨盆顶面未封口");
+        try (var in = getClass().getResourceAsStream("/assets/logos_dimension/textures/entity/forest_elf.png")) {
+            assertNotNull(in);
+            var image = javax.imageio.ImageIO.read(in);
+            var point = cap.getAsJsonArray("uv");
+            assertEquals(0xFFFFE1D5, image.getRGB((int) point.get(0).getAsDouble(), (int) point.get(1).getAsDouble()));
+        }
+        assertNotNull(chestTop);
+        assertEquals(4.1, chestTop.getAsJsonArray("size").get(2).getAsDouble(), 0.00001);
+    }
+
     @Test void encodeDecodeRoundTrip() {
         Map<String, String> a = ELF.defaults();
         assertEquals(a, NpcParts.decode(NpcParts.encode(a)));
