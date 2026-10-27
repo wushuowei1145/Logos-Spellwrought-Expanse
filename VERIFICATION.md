@@ -2,6 +2,135 @@
 
 目标环境：Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25；Logos 0.5.1，主模组源码基线 `f196960`。当前开发安装包为 0.11.0。原炼金维度不包含建筑或 Boss；远行大陆包含中世纪聚落、精灵森林与世界树，不包含 Boss。
 
+## 森林精灵兜帽与披风搭配规则
+
+2026-10-27：分支 `fix/forest-elf-hood-rule`，基于主分支 `5fe80a1`。
+
+新增数据规则 `requires: {"hair_hooded": {"outfit": "outfit_ranger"}}`：兜帽必带守林人披风，披风可以搭配其他发型；不改变其他组合及兜帽与枝冠互斥。按槽位顺序处理单向依赖，既用于出生随机，也用于旧存档和手动外观的校正；不合法的依赖目标或反向槽位配置在读取时报告错误。仓库外 `race.json`、合并脚本和 `build/parts.json` 同步保存该规则，避免下次导出丢失。
+
+验证：`NpcPartsTest` **12/12** 通过，包含 2000 次随机验证（兜帽总是搭配披风，同时确实能抽出无兜帽的披风）、手动组合与旧外观校正，以及其他发型与每套服装保持原组合。未运行完整单元套件、世界 GameTest 或实际客户端。
+
+## 森林精灵素体与 UV 修订
+
+2026-10-27：分支 `fix/forest-elf-body-uv`，已同步主分支 `a07dc76`。
+
+- 同步维护者增量保存的成年女性素体：保留肩部拆分、腰胯形体和贴图修改，删除的六块腰部曲面不再导出，共用素体由 42 块改为 38 块。
+- `pelvis` 顶面封口，使用独立素体贴图右侧肤色纹素中心 `(14.5, 3.5)`（`#FFE1D5`）；`chest_top` 向前（制作坐标 −Z）精确加深 0.1，深度为 4.1。导出保留骨盆正面 90° UV 旋转。
+- 新增局部导入工具 `tools/forest_elf_body.py`，只替换共用素体方块、总贴图 `(96, 200)` 的 16×16 素体区域及方块统计。逐项比较确认其余部件、挂泪表情、骨架层级和全部游戏动画保持主分支内容；重复运行输出不变。
+- 新增开发预览组 `npc_body_preview`：无遮发素体、高马尾素体、休闲、花匠、学者，从正面和斜侧面观察。
+
+后续追加：左右 `upper_arm`、`forearm`、`hand` 统一为上臂原有的 2.4×2.9 截面，长度、中心、关节与 UV 保留；重新导出时同步标准源文件已有的 4 个素体纹素调整。按维护者要求，这次追加未运行测试或构建，下表为此前素体修订的验证结果。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元与构建 | **90/90** 通过，`test build` 成功；新增骨盆封口肤色、90° UV 与胸顶 4.1 深度回归检查 |
+| 世界（GameTest） | 本次未重跑 |
+| 实际客户端（`group:npc_body_preview`） | **2/2 场景、4/4 检查**通过；人工查看正面及斜侧面截图 |
+
+截图：`docs/screenshots/npc-body-uv/forest-elf-body-lineup.png`、`forest-elf-body-angle.png`。没有验证战斗动作中的服装穿插、多人或光影包。
+
+## NPC 死亡后锁住朝向
+
+2026-10-27：分支 `fix/npc-death-facing`。原版死亡时朝向不冻结（身体转向击退滑动的方向、被头的朝向拉着走），森林精灵趴着躺 3 秒时会慢慢转过一定角度。新增 `NpcDeathPose.hold`：死后每刻把身体、头和实体的偏航（连同上一刻的值）固定为死亡时的朝向，服务端与客户端都调用；`ForestElf#tick` 使用它。`docs/NPC_ANIMATIONS.md` 写明之后加入的 NPC 都用同一个方法。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | **89/89** 通过 |
+| 世界（GameTest `logos_dimension:forest_elf*`） | **9/9** 通过，连续三次；`forest_elf_death_lingers` 新增：死后每刻给尸体击退速度、把头转 30°，从第二刻起身体与实体朝向不变 |
+| 实际客户端 | 没有运行 |
+
+顺带修正测试：手动推进生物的辅助方法原来跳过已死亡的生物，测试区块不运算实体时尸体不会消失；`forest_elf_death_lingers` 的「不能消失太早」放宽一刻（测试检查与精灵这一刻的先后不固定）。
+
+## 森林精灵拉弓姿势修正
+
+2026-10-27：分支 `fix/forest-elf-bow-pose`，按实际试玩反馈参照玩家拉弓修改。
+
+- **左手**：原来左臂向外甩、小臂向上折，看起来是意义不明地举起；现在左臂向内约 34°（含上身 12° 侧转）、小臂微弯，左手伸到弓的位置。动画里左臂 y 为正是向内。
+- **侧身**：原来视线偏向一侧时只有双臂跟着转（最多约 75°，加上动画侧转接近 90°）；现在瞄准时整个人转向视线方向，上身侧转只来自动画（12°，远小于 45°）。施法伸手（抚生之触）同样适用。
+
+验证：单元 89/89；实际客户端 `npc_forest_elf_bow`、`npc_forest_elf_bow_side` 2/2 场景、8/8 检查，人工查看 3/4、侧面截图，并临时把镜头放到正上方确认两手在弓的位置会合（这张俯视图没有保存进仓库）。更新 `forest-elf-bow.png`、`forest-elf-bow-side.png`。没有在实战中查看。
+
+
+2026-10-27：分支 `feat/forest-elf-death`。
+
+- **动画**：维护者在 Blockbench 里做的 `death`（仓库外 `forest-elf-model/forest_elf/Animation/forest_elf_death.bbmodel`，1.55 秒，跪下再向前倒地）由 `tools/forest_elf_animations.py` 换算进动画文件；与维护者导出的 `forest_elf_death.animation.json` 逐关键帧比对，差为 0。
+- **衔接**：主控制器在死亡时先播一遍 `attacked`（最后一击的受击），再播 `death` 并停在最后一帧。
+- **表情**：`expression_dazed_tears`（仓库外 `expressions/`）由 `tools/forest_elf_expressions.py` 并进模型（8 根骨骼、25 个方块，挂在 `Head` 下）与贴图（放在原贴图未使用的 (96, 104)），登记在零件表 `expressions`。死亡动画开始的同时（第 9 刻）显示它、隐藏常态眼眉嘴。重复运行结果不变。
+- **原版效果**：有死亡动画的 NPC 不再染红、不向侧面倒下、不叠加视线；死亡时停止手部与剧情动作。精灵 60 刻（动画播完后在地上停约 1 秒）才消失。倒下的精灵不再拿出弓。
+- **粒子**：新粒子 `forest_elf_spirit`（代码绘制的 8×8 白色圆点，染成叶绿色，全亮、半透明，向上飘、轻轻摆动、淡出）。死亡动画开始后每刻从身上飘出一两个，出生点随身体从站立移到倒地；消失时不放原版白烟，沿倒地的身体散出 100 个。都在客户端生成，不走网络。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | **89/89** 通过；新增：表情平时隐藏、给出时替换常态眼嘴且不参与抽取，表情挂在 `Head` 下；死亡动画停在最后一帧 |
+| 世界（GameTest `logos_dimension:forest_elf*`） | **9/9** 通过；新增 `forest_elf_death_lingers`：一击致命后第 9 刻起才换表情，满 60 刻才消失 |
+| 实际客户端（`group:npc_preview`） | **8/8 场景、32/32 检查**通过，连续两次；新增两个死亡场景：三个精灵错开受到致命一击，检查死亡动画播完前不消失、客户端按死亡刻数换表情、常态眼嘴被隐藏、倒下时飘出光点、消失时散出大量光点；人工查看截图 |
+
+截图 `docs/screenshots/npc-preview/forest-elf-death.png`（3/4）与 `forest-elf-death-side.png`（侧面）：从左到右是倒地停住（身上飘出光点）、跪下中（挂泪表情）、受击中；都没有染红或侧倒。`forest-elf-death-burst.png` 与 `forest-elf-death-burst-side.png`：左边的精灵刚消失，化作一团绿色光点，没有白烟。
+
+注意：以后从 `forest-elf-model` 重新合并并复制模型、贴图后，要再跑 `tools/forest_elf_expressions.py` 与 `tools/forest_elf_animations.py`，否则表情和死亡动画会丢。
+
+没有验证的部分：实战中被玩家或怪物打死的观感（只用了无来源的伤害）、多人、光影；TLM 中的播放。
+
+## 森林精灵平时收起武器
+
+2026-10-27：分支 `feat/forest-elf-holster`（建在 `feat/forest-elf-animations` 之上）。精灵的弓平时收着（存档 `Weapon`），有目标时拿出来；目标没了或受伤后警戒 100 刻（5 秒），期间不收，正在拉弓时也不收。旧存档里一直拿着弓的精灵，在第一次不警戒时收起来。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | **86/86** 通过（没有新增） |
+| 世界（GameTest `logos_dimension:forest_elf*`） | **8/8** 通过，连续两次；新增 `forest_elf_weapon_only_in_combat`：平时空手 → 看到僵尸拿出弓并真正开始拉弓 → 僵尸消失后警戒期内仍拿着 → 警戒结束收起；结构生成的精灵空手、弓收着 |
+| 实际客户端（`group:npc_preview`） | **6/6 场景、18/18 检查**通过；施法截图 `forest-elf-spells.png` 更新为空手（不在战斗中） |
+
+没有验证的部分：实际游戏中进出战斗的观感（没有在战斗中截图）、多人。
+
+
+2026-10-27：分支 `feat/forest-elf-animations`，清单见 [NPC 动画清单](docs/NPC_ANIMATION_LIST.md)。
+
+- **借用车万女仆**（CC BY-NC-SA 4.0，[CREDITS.md](CREDITS.md) 登记）：`walk`、`jump`、`attacked`、`ladder_up` / `ladder_stillness` / `ladder_down`、`swim_stand`、`swing_hand`；位移按 2 倍制作放大。
+- **自绘**（`tools/forest_elf_animations.py`）：`hold_mainhand:bow`、`use_mainhand:bow`（1.2 秒拉满停住）、`heal_touch`、`heal_ring`、`greet`、`refuse`。
+- **瞄准**：拉弓、放抚生之触时，渲染器把视线俯仰与偏航叠加到 `Arm`，弓和施法的手指向目标；自然之力的拉弓贴图按精灵 24 刻满弦的比例推进。
+- **剧情动作**：精灵用同步字段给出动作名（治疗、右键行礼 / 拒绝），播完自动清掉。
+- **修正**：NPC 头部俯仰方向原来是反的（抬头时低头），现在和视线一致；站着不动的 NPC 在客户端不再误播跳跃（客户端的「在地面上」只在移动时更新）。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | **86/86** 通过；新增 `ForestElfAnimationFileTest` 4 项：现有行为的动作齐全、动画骨骼都在模型里、没有 TLM 专用 Molang、自绘循环首尾一致 |
+| 世界（GameTest `logos_dimension:forest_elf*`） | **7/7** 通过 |
+| 实际客户端（`group:npc_preview`） | **6/6 场景、18/18 检查**通过，新增三个动作场景：拉弓的精灵在客户端处于瞄准、剧情动作同步、站着不动的精灵不播跳跃；人工查看截图 |
+
+截图在 `docs/screenshots/npc-preview/`：
+
+- `forest-elf-bow.png`：持弓、平射拉弓、抬头 30° 并向左偏 25° 拉弓，弓与头一起朝向视线；
+- `forest-elf-bow-side.png`：正侧面，平射时弓臂水平，抬头 30° 时弓随之抬起；
+- `forest-elf-spells.png`：抚生之触、生息之环、行礼。
+
+没有验证的部分：实际战斗与寻路中的连贯性（走路、爬绳、受伤只确认了动画存在且骨骼匹配，没有逐帧截图）、`refuse` 的画面、多人、光影。
+## 森林精灵第二批随机外观部件
+
+2026-10-27：分支 `feat/forest-elf-appearance-parts`，基于 `main` 的 `17c2dbd`。同步维护者最新手改并修正 UV 后的合并几何、128×240 贴图与零件表，新增高马尾、花匠工作服、休闲短装和白大衣学者服。动画与主分支字节一致，不引入新动画或借用素材。
+
+新生成的森林精灵从四种发型、五套服装中随机选择。外观记录继续存部件 ID，已有精灵不重新随机；默认组合、兜帽与枝冠互斥保持不变。没有修改出生逻辑或渲染器。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元与构建 | **83/83** 单元通过，`build` 通过；包含新部件存在、2000 次随机抽取覆盖、外观编码往返、未选中服装隐藏及全部零件顶层组登记检查 |
+| 资源核对 | 四个运行时资源与最新源导出字节一致；其中动画无差异。原有 263 根骨骼的几何与父子结构、3430 个面的纹理像素及 UV 尺寸保留 |
+| 普通实际客户端 | `group:npc_preview` **3/3 场景、6/6 检查**通过；1600×900 实际渲染与客户端外观同步，并人工查看三张截图 |
+| 世界（GameTest） | 本轮未重跑，行为与结构生成没有改动 |
+
+客户端环境：Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25.0.3、GeckoLib 5.5.2、本地 Logos 0.6.0 开发 JAR（未提交）。预览五位精灵依次为默认居民、高马尾花匠、高马尾休闲装（垂眼与猫猫嘴）、高马尾学者、兜帽巡林弓手；精灵关掉 AI 站定，待机动画正常播放。截图位于 `docs/screenshots/npc-parts/`：
+
+- [正面组合](docs/screenshots/npc-parts/forest-elf-parts-lineup.png)
+- [3/4 组合](docs/screenshots/npc-parts/forest-elf-parts-angle.png)
+- [高马尾与休闲装近景](docs/screenshots/npc-parts/forest-elf-parts-faces.png)
+
+本轮没有验证多人、第三方光影、极端动作穿插或大量居民的帧率。单元检查证明新部件进入随机池，客户端截图使用指定外观以完整展示三套新服装；没有将指定预览说成自然生成截图。
+
+```text
+./gradlew --offline test build -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar -PldTest=group:npc_preview -PldTestHeadless -PldTestWindow=1600x900
+```
+
 ## 森林精灵居民：生成、战斗、治疗、绳梯与语音
 
 2026-10-26：分支 `feat/forest-elf-residents`，行为见 [森林精灵](docs/NPC_RACE_FOREST_ELF.md) 第 8 节，施法接入见 [NPC 魔法](docs/NPC_MAGIC.md)。

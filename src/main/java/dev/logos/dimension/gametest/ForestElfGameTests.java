@@ -55,7 +55,9 @@ public final class ForestElfGameTests {
                 "forest_elf_heal_one", ForestElfGameTests::healOne,
                 "forest_elf_heal_group", ForestElfGameTests::healGroup,
                 "forest_elf_familiar_heals_player", ForestElfGameTests::familiarHealsPlayer,
-                "forest_elf_zombie_enmity", ForestElfGameTests::zombieEnmity);
+                "forest_elf_zombie_enmity", ForestElfGameTests::zombieEnmity,
+                "forest_elf_weapon_only_in_combat", ForestElfGameTests::weaponOnlyInCombat,
+                "forest_elf_death_lingers", ForestElfGameTests::deathLingers);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -81,7 +83,8 @@ public final class ForestElfGameTests {
      */
     private static void keepTicking(GameTestHelper h, Mob mob) {
         h.onEachTick(() -> {
-            if (mob.isAlive() && !h.getLevel().isPositionEntityTicking(mob.blockPosition())) {
+            // 死亡中的生物也要推进（死亡计时、消失），直到被移除
+            if (!mob.isRemoved() && !h.getLevel().isPositionEntityTicking(mob.blockPosition())) {
                 mob.setOldPosAndRot();
                 mob.tickCount++;
                 mob.tick();
@@ -117,7 +120,8 @@ public final class ForestElfGameTests {
             Map<String, String> a = elf.npcAppearance();
             h.assertTrue(a.equals(NpcParts.FOREST_ELF.sanitize(a)), "外观不合法：" + a);
             h.assertFalse("hair_hooded".equals(a.get("hair")) && "headwear_twig_crown".equals(a.get("headwear")), "兜帽和枝冠同时出现");
-            h.assertTrue(elf.getMainHandItem().getItem() instanceof NaturesForceItem, "没拿自然之力");
+            h.assertTrue(elf.weapon().getItem() instanceof NaturesForceItem, "没有自然之力");
+            h.assertTrue(elf.getMainHandItem().isEmpty(), "平时不该把弓拿在手上");
             h.assertTrue(elf.isPersistenceRequired(), "结构里的精灵不常驻");
             h.assertTrue(elf.hasHome(), "结构里的精灵没有住处范围");
         }
@@ -214,7 +218,7 @@ public final class ForestElfGameTests {
         zombie.snapTo(h.absoluteVec(new Vec3(9.5, 1, 9.5)));
         zombie.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.LEATHER_HELMET));
         // 测的是双方选目标：精灵不拿弓（强化箭会把僵尸击飞出测试场地），双方给足生命（无敌的生物不会被当成敌人）
-        elf.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, net.minecraft.world.item.ItemStack.EMPTY);
+        elf.setWeapon(net.minecraft.world.item.ItemStack.EMPTY);
         for (var mob : List.of(zombie, elf)) {
             mob.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1000);
             mob.setHealth(1000);
@@ -230,6 +234,68 @@ public final class ForestElfGameTests {
         h.succeedWhen(() -> {
             h.assertTrue(seen[0], "僵尸没把精灵当目标：" + zombie.getTarget());
             h.assertTrue(seen[1], "精灵没把僵尸当目标：" + elf.getTarget());
+        });
+    }
+
+    /** 平时弓收着；有敌人时拿出来并拉弓；敌人没了、警戒期过后再收起来。 */
+    private static void weaponOnlyInCombat(GameTestHelper h) {
+        floor(h, 12);
+        ForestElf elf = elf(h, 2, 1, 2, EntitySpawnReason.COMMAND);
+        h.assertTrue(elf.getMainHandItem().isEmpty(), "平时不该把弓拿在手上");
+        Zombie zombie = EntityType.ZOMBIE.create(h.getLevel(), EntitySpawnReason.COMMAND);
+        zombie.snapTo(h.absoluteVec(new Vec3(9.5, 1, 9.5)));
+        zombie.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.LEATHER_HELMET));
+        zombie.setNoAi(true);
+        h.getLevel().addFreshEntity(zombie);
+        int[] phase = {0};
+        int[] calm = {0};
+        h.onEachTick(() -> {
+            // 拿出来的弓真的能拉（换装备不会打断拉弓）
+            if (phase[0] == 0 && elf.getTarget() == zombie && elf.isUsingItem() && elf.getUseItem().getItem() instanceof NaturesForceItem) {
+                phase[0] = 1;
+                zombie.discard();
+            } else if (phase[0] == 1 && elf.getTarget() == null) {
+                phase[0] = 2;
+            } else if (phase[0] == 2) {
+                calm[0]++;
+                // 警戒期内弓还拿着
+                if (calm[0] == ForestElf.ALERT_TICKS / 2 && elf.getMainHandItem().isEmpty())
+                    throw h.assertionException(net.minecraft.network.chat.Component.literal("警戒期还没过就收起了弓"));
+            }
+        });
+        h.succeedWhen(() -> {
+            h.assertTrue(phase[0] == 2 && calm[0] > ForestElf.ALERT_TICKS, "还没走完：战斗 → 警戒 → 平静（" + phase[0] + "）");
+            h.assertTrue(elf.getMainHandItem().isEmpty() && elf.weapon().getItem() instanceof NaturesForceItem, "警戒过后没把弓收起来");
+        });
+    }
+
+    /** 死亡：受击与死亡动画播完前不消失；死亡动画开始时换上茫然挂泪的表情；倒下后不再转动；DEATH_TICKS 刻后消失。 */
+    private static void deathLingers(GameTestHelper h) {
+        floor(h, 6);
+        ForestElf elf = elf(h, 2, 1, 2, EntitySpawnReason.COMMAND);
+        elf.hurtServer(h.getLevel(), h.getLevel().damageSources().generic(), 1000);
+        h.assertTrue(elf.isDeadOrDying(), "一击没有致命");
+        float[] facing = {Float.NaN};
+        int[] seen = {0};
+        h.onEachTick(() -> {
+            if (elf.isRemoved()) return;
+            // 模拟击退滑动和头转向：倒下后朝向仍要保持不变
+            elf.setDeltaMovement(.15, 0, .2);
+            elf.setYHeadRot(elf.getYHeadRot() + 30);
+            // 死后第一刻结束时才记下朝向，从第二刻起比较
+            if (elf.deathTime < 2) return;
+            if (Float.isNaN(facing[0])) facing[0] = elf.yBodyRot;
+            else if (Math.abs(elf.yBodyRot - facing[0]) > .01f || Math.abs(elf.getYRot() - facing[0]) > .01f)
+                throw h.assertionException(net.minecraft.network.chat.Component.literal("倒下后转了方向：" + facing[0] + " → " + elf.yBodyRot));
+            seen[0] = elf.deathTime;
+            boolean face = ForestElf.DEATH_EXPRESSION.equals(elf.npcExpression());
+            if (face != elf.deathTime >= ForestElf.DEATH_FACE_TICKS)
+                throw h.assertionException(net.minecraft.network.chat.Component.literal("表情切换时间不对：" + elf.deathTime + " " + face));
+        });
+        h.succeedWhen(() -> {
+            h.assertTrue(elf.isRemoved(), "还没消失：" + elf.deathTime);
+            // 测试每刻的检查可能排在精灵这一刻之前或之后，最后看到的死亡刻数差一刻
+            h.assertTrue(seen[0] >= ForestElf.DEATH_TICKS - 2, "消失得太早：" + seen[0]);
         });
     }
 

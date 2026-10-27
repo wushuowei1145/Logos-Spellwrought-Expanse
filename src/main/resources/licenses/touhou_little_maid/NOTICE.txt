@@ -1,0 +1,27 @@
+Touhou Little Maid - third-party animations used by Logos: The Alchemical Crucible (logos_dimension)
+车万女仆：本模组借用的第三方动画
+
+Authors / 作者:
+  TartaricAcid, Snownee, Succinum, Pajinyi, Zhi_Ban, CrystalizedSun, Foky, ZeniCrow,
+  Paulzzh, Yuriscat, Lappland162 and other Touhou Little Maid contributors
+Source / 来源:
+  https://github.com/TartaricAcid/TouhouLittleMaid (branch 1.21)
+  src/main/resources/assets/touhou_little_maid/animation/maid.animation.json
+
+License / 协议:
+  Touhou Little Maid code is MIT; its art assets (models, textures, animations) are licensed under
+  Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0).
+  https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+  Animation files in this mod that contain borrowed or modified Touhou Little Maid animations are,
+  as whole files, licensed under CC BY-NC-SA 4.0. The rest of this mod is not covered by this notice.
+  Which animations are borrowed, where they are used and how they were modified is listed in
+  CREDITS.md in the source repository.
+
+  本模组中含有借用或修改过的车万女仆动画的动画文件，整个文件以 CC BY-NC-SA 4.0 发布；
+  本模组的其余部分不受本说明约束。借用了哪些动画、用在哪里、做了哪些修改，见源码仓库的 CREDITS.md。
+
+Disclaimer / 免责:
+  The material is provided as-is, without warranties of any kind. The original authors do not
+  endorse this mod.
+  素材按原样提供，原作者不提供任何担保，也不为本模组背书。

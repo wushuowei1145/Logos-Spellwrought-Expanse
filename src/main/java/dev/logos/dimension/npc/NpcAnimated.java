@@ -26,4 +26,20 @@ public interface NpcAnimated extends GeoEntity {
     default String npcMiscAnimation() {
         return null;
     }
+
+    /**
+     * 是否在瞄准（拉弓、伸手施法）：为真时渲染器把视线的俯仰与相对身体的偏航叠加到 {@code Arm} 骨骼上，
+     * 双臂连同手里的弓一起指向视线方向。动画里只做水平的姿势。
+     */
+    default boolean npcAiming() {
+        return false;
+    }
+
+    /**
+     * 当前替换常态眼嘴的动画专用表情（零件表 {@code expressions} 里的 id），没有为 null。
+     * 渲染器按它显示表情、隐藏常态五官（{@link NpcParts.Race#hiddenGroups(java.util.Map, String)}）。
+     */
+    default String npcExpression() {
+        return null;
+    }
 }

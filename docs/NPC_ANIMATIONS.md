@@ -4,7 +4,7 @@
 
 NPC 的动画驱动 `dev.logos.dimension.npc.NpcAnimations` 沿用车万女仆（TLM）GeckoLib 女仆的控制器结构、动画名和优先级。同一份动画文件在附属模组里由 NPC 驱动播放，放进 TLM 模型包后由 TLM 驱动，效果一致。
 
-对照的 TLM 源码（1.21 分支）是 `client/animation/gecko/AnimationManager`、`AnimationRegister`、`condition/*` 与 `client/entity/GeckoMaidEntity`。本仓库只参照它的命名和规则，不复制 TLM 的代码或动画文件（TLM 美术为 CC BY-NC-SA 4.0）。
+对照的 TLM 源码（1.21 分支）是 `client/animation/gecko/AnimationManager`、`AnimationRegister`、`condition/*` 与 `client/entity/GeckoMaidEntity`。本仓库参照它的命名和规则，不复制 TLM 的代码。TLM 的默认动画可以借用，署名与授权要求见 [NPC 模型美术规范](NPC_MODELS.md) 第 7 节和 [致谢与第三方素材](../CREDITS.md)。
 
 ## 1. 文件与命名
 
@@ -24,7 +24,7 @@ NPC 的动画驱动 `dev.logos.dimension.npc.NpcAnimations` 沿用车万女仆�
 | `hold_offhand` / `hold_mainhand` | 持物（第 4 节） | 0 |
 | `swing` | 挥手，每次挥手从头播一遍 | 2 tick |
 | `use` | 使用物品（吃、拉弓、举盾……） | 2 tick |
-| `misc` | 剧情动作，由 NPC 自己给出名字（`NpcAnimated.npcMiscAnimation()`） | 2 tick |
+| `misc` | 剧情动作，由 NPC 自己给出名字（`NpcAnimated.npcMiscAnimation()`），按动画文件里写的 `loop` 播放 | 2 tick |
 | `parallel_0..7_controller` | 动画 `parallel0`–`parallel7`，有就一直循环 | 0 |
 
 - **只播放动画文件里有的名字。** GeckoLib 遇到缺失的动画会每帧报错，所以驱动先查动画文件。主状态缺失时顺延到下一个成立的状态：比如没有 `run`，奔跑时播 `walk`；没有 `jump`，就落到 `walk` 或 `idle`。
@@ -36,7 +36,7 @@ NPC 的动画驱动 `dev.logos.dimension.npc.NpcAnimations` 沿用车万女仆�
 
 | 优先级 | 动画名 | 条件 | 循环 |
 |---|---|---|---|
-| 最高 | `death` | 死亡中 | 播完停在最后一帧 |
+| 最高 | `death` | 死亡中 | 播完停在最后一帧；动画文件里有 `attacked` 时先播一遍 `attacked`（最后一击的受击）再接 `death` |
 | 最高 | `sleep` | 睡觉姿势 | 循环 |
 | 最高 | `swim` | 游泳姿势（水中冲刺） | 循环 |
 | 最高 | `ladder_up` / `ladder_stillness` / `ladder_down` | 在梯子上，向上 / 不动 / 向下 | 循环 |
@@ -53,6 +53,10 @@ NPC 的动画驱动 `dev.logos.dimension.npc.NpcAnimations` 沿用车万女仆�
 同级按表中顺序：水中受伤显示 `swim_stand`，与 TLM 相同。
 
 **至少要有 `idle` 和 `walk`**；`attacked`、`run`、`jump`、`sit` 建议都做；`death`、`sleep`、`swim`、梯子、船按 NPC 实际会遇到的情况做。
+
+**自带死亡动画的 NPC**（动画文件里有 `death`）：渲染器不再叠加原版的红色受伤覆盖和向侧面倒下，也不再叠加视线；手部、剧情动作在死亡时停止。原版 20 刻就移除，NPC 要自己延长（例如 `ForestElf#tickDeath`），否则动画会被截断。
+
+**死亡后锁住朝向**：原版死亡时朝向不冻结，身体会转向击退滑动的方向、被头的朝向拉着走，自带死亡动画、在地上躺几秒的 NPC 会趴着慢慢转。**之后加入的所有 NPC 都用同一个方法**：记一个死亡时的朝向（初值 `Float.NaN`），在 `tick()` 里 `super.tick()` 之后调用 `NpcDeathPose.hold`（服务端与客户端都调用），活着时清回 NaN。写法见 `ForestElf#tick`。
 
 ## 4. 手部条件动画
 
@@ -82,6 +86,8 @@ NPC 的动画驱动 `dev.logos.dimension.npc.NpcAnimations` 沿用车万女仆�
 
 - **静止姿势要先正确**：模型的静止姿势本身必须好看、正确，比如百褶裙的褶角、头发的弯曲。动画只在上面做变化，不要用动画去「摆正」模型。
 - **视线由渲染器负责**：头部跟随视线由 `NpcRenderer` 在动画之上叠加，`idle` 里不要让 `Head` 大幅转动，否则会和视线打架。
+- **瞄准也由渲染器负责**：NPC 在瞄准（`NpcAnimated.npcAiming()`，例如拉弓、伸手施法）时，渲染器把整个人（`AllBody`）转向视线的水平方向（头不再单独偏转），把视线的俯仰叠加到 `Arm`（双臂的共同父骨骼）上，双臂连同手里的弓一起指向目标。所以拉弓、施法动画只做**正对前方、水平**的姿势，不要自己抬手瞄准；上身的侧转只在动画里做，不超过 45°。
+- **手臂的 A 字外张**：模型手臂的静止姿势外张约 18°（右臂 z +18°、左臂 z −18°）。要让手臂笔直向前，动画里用 z 抵消（右臂 −18°、左臂 +18°）。
 - **循环首尾一致**：循环动画的首尾关键帧必须完全相同，插值用平滑曲线（catmullrom），避免接缝处抽一下。
 - **时长与节奏**：
   - `idle` 3–4 秒，呼吸的起伏 1–2°；
@@ -96,6 +102,7 @@ NPC 的动画驱动 `dev.logos.dimension.npc.NpcAnimations` 沿用车万女仆�
 - **先验证方向**：Bedrock 导出时 X、Y 旋转取反。先用一根骨骼做一个关键帧，确认方向，再批量做。
 - **分骨骼的部件**：头发每缕、褶片每片都是独立骨骼，可以只给一部分加摆动，不必全部都动。以后的物理效果也在这些骨骼上叠加。
 - **表情**：用 `Eyes` / `Eyelid` / `Mouth` 下的骨骼显示、隐藏切换（如眨眼），可以放在常驻叠加层里循环。
+- **动画专用表情**（例如死亡时的茫然挂泪）：做成独立部件挂在 `Head` 下，登记在零件表的 `expressions`（`tools/forest_elf_expressions.py` 并进模型与贴图）。平时由渲染器隐藏；NPC 的 `npcExpression()` 给出它时显示它、隐藏常态眼眉嘴，不需要在每个动画里写缩放关键帧。
 - **光照**：发光部件用 `ysmGlow` 前缀骨骼（规范第 5 节）；动画里缩放或隐藏它们，发光也跟着变。
 
 ## 7. 交付与验证

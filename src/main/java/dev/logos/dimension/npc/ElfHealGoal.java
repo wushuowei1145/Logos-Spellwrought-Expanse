@@ -71,6 +71,7 @@ public final class ElfHealGoal extends Goal {
                 groupCooldown = GROUP_COOLDOWN;
                 singleCooldown = SINGLE_COOLDOWN;
                 elf.playSound(ElfSounds.CAST.get(), 1, elf.getVoicePitch());
+                elf.playAction(ForestElf.HEAL_RING);
             }
             return;
         }
@@ -85,6 +86,7 @@ public final class ElfHealGoal extends Goal {
         if (elf.spendMana(SINGLE_COST) && LogosMagicBridge.cast(elf, LogosMagicBridge.NPC_HEAL, forPlayer, SINGLE_COST, target)) {
             singleCooldown = SINGLE_COOLDOWN;
             elf.playSound(ElfSounds.CAST.get(), 1, elf.getVoicePitch());
+            elf.playAction(ForestElf.HEAL_TOUCH);
         }
     }
 

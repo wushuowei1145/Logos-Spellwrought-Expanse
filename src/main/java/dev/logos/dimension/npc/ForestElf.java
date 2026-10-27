@@ -8,6 +8,7 @@ import com.geckolib.animatable.manager.AnimatableManager;
 import com.geckolib.util.GeckoLibUtil;
 import com.mojang.serialization.Codec;
 
+import dev.logos.dimension.DimensionParticles;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.item.NaturesForceItem;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -21,6 +22,7 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntityEvent;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -49,7 +51,8 @@ import net.minecraft.world.level.storage.ValueOutput;
  *
  * <ul>
  * <li>外观：生成时按零件表随机抽一次，存解析后的零件 ID（docs/NPC_APPEARANCE.md 第 6 节）。</li>
- * <li>战斗：拿「自然之力」远射（{@link ElfBowAttackGoal}），主动攻击附近的亡灵与灾厄村民；
+ * <li>战斗：拿「自然之力」远射（{@link ElfBowAttackGoal}），主动攻击附近的亡灵与灾厄村民。
+ *     弓平时收着，只在战斗和战斗后的警戒期里拿在手上（{@link #weapon}）；
  *     僵尸和灾厄村民也把精灵当村民打（{@link ElfFactions}）。</li>
  * <li>治疗：200 点魔力、每秒恢复 5 点，用 Logos 示例法术治疗受伤的同伴（{@link ElfHealGoal}）。
  *     作为玩家的使魔时把玩家视为友方。</li>
@@ -62,6 +65,11 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     /** 主动攻击的搜索半径；一旦决定攻击，追踪距离由 FOLLOW_RANGE 决定（更远）。 */
     public static final double AGGRO_RANGE = 24, FOLLOW_RANGE = 48;
     private static final EntityDataAccessor<String> APPEARANCE = SynchedEntityData.defineId(ForestElf.class, EntityDataSerializers.STRING);
+    /** 正在做的剧情动作（动画名，空为没有），见 {@link #playAction}。 */
+    private static final EntityDataAccessor<String> ACTION = SynchedEntityData.defineId(ForestElf.class, EntityDataSerializers.STRING);
+    /** 剧情动作的动画名与时长（刻），与动画文件一致（tools/forest_elf_animations.py）。 */
+    public static final String HEAL_TOUCH = "heal_touch", HEAL_RING = "heal_ring", GREET = "greet", REFUSE = "refuse";
+    private static final Map<String, Integer> ACTION_TICKS = Map.of(HEAL_TOUCH, 16, HEAL_RING, 26, GREET, 32, REFUSE, 18);
     private static final Codec<Map<String, String>> APPEARANCE_CODEC = Codec.unboundedMap(Codec.STRING, Codec.STRING);
     private static final Identifier ASSET = LogosDimension.id("forest_elf");
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -72,6 +80,22 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     /** 使魔身份每秒查一次（Logos 的使魔记录在 Logos 那边）。 */
     private long nextFamiliarCheck;
     private UUID master;
+    /** 死亡时的朝向（活着时为 NaN），见 {@link NpcDeathPose}。 */
+    private float deathYaw = Float.NaN;
+    /** 服务端：剧情动作还剩几刻。 */
+    private int actionTicks;
+    /**
+     * 死亡：先播最后一击的受击动画（约 0.46 秒），再播死亡动画（1.55 秒）并在倒地姿势停约 1 秒，共 {@link #DEATH_TICKS} 刻后消失。
+     * 死亡动画开始的同时换上茫然挂泪的表情，身上开始飘出绿色光点；消失时化作大量绿色光点，不放原版白烟。
+     */
+    public static final int DEATH_FACE_TICKS = 9, DEATH_TICKS = 60;
+    public static final String DEATH_EXPRESSION = "expression_dazed_tears";
+    /** 战斗或受伤之后保持警戒（弓不收起）的刻数。 */
+    public static final int ALERT_TICKS = 100;
+    /** 收起来的武器；拿在手上时这里为空。存档 {@code Weapon}。 */
+    private ItemStack weapon = ItemStack.EMPTY;
+    /** 服务端：警戒还剩几刻。 */
+    private int alertTicks;
 
     public ForestElf(EntityType<? extends ForestElf> type, Level level) {
         super(type, level);
@@ -86,6 +110,7 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(APPEARANCE, NpcParts.encode(NpcParts.FOREST_ELF.defaults()));
+        builder.define(ACTION, "");
     }
 
     @Override
@@ -122,7 +147,8 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, EntitySpawnReason reason, SpawnGroupData data) {
         setAppearance(NpcParts.FOREST_ELF.random(level.getRandom()));
-        setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(NaturesForceItem.ITEM.get()));
+        // 弓收着，战斗时才拿出来（见 updateWeapon）
+        weapon = new ItemStack(NaturesForceItem.ITEM.get());
         setDropChance(EquipmentSlot.MAINHAND, 0);
         if (reason == EntitySpawnReason.STRUCTURE) {
             setPersistenceRequired();
@@ -182,7 +208,138 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     @Override
     public void aiStep() {
         super.aiStep();
-        if (!level().isClientSide() && mana < MAX_MANA) mana = Math.min(MAX_MANA, mana + MANA_PER_SECOND / 20f);
+        if (level().isClientSide()) return;
+        if (mana < MAX_MANA) mana = Math.min(MAX_MANA, mana + MANA_PER_SECOND / 20f);
+        if (actionTicks > 0 && --actionTicks == 0) entityData.set(ACTION, "");
+        updateWeapon();
+    }
+
+    // ---------------------------------------------------------------- 武器：平时收起，战斗与警戒时拿出
+
+    /** 收着的或拿在手上的武器（没有为空）。 */
+    public ItemStack weapon() {
+        return weapon.isEmpty() && getMainHandItem().getItem() instanceof NaturesForceItem ? getMainHandItem() : weapon;
+    }
+
+    /** 换一把武器（收着）；传空即没有武器。 */
+    public void setWeapon(ItemStack stack) {
+        if (getMainHandItem().getItem() instanceof NaturesForceItem) setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+        weapon = stack.copy();
+    }
+
+    /** 在战斗中，或者战斗、受伤之后的警戒期内。 */
+    public boolean isAlert() {
+        return getTarget() != null || alertTicks > 0;
+    }
+
+    /** 服务端每刻：警戒时把弓拿出来，警戒结束（且没在拉弓）时收起来。 */
+    private void updateWeapon() {
+        // 致命一击也算受伤，但倒下的精灵不再拿出武器
+        if (isDeadOrDying()) return;
+        if (getTarget() != null || hurtTime > 0) alertTicks = ALERT_TICKS;
+        else if (alertTicks > 0) alertTicks--;
+        ItemStack hand = getMainHandItem();
+        if (isAlert()) {
+            if (hand.isEmpty() && !weapon.isEmpty()) {
+                setItemSlot(EquipmentSlot.MAINHAND, weapon);
+                weapon = ItemStack.EMPTY;
+            }
+        } else if (hand.getItem() instanceof NaturesForceItem && !isUsingItem() && weapon.isEmpty()) {
+            // 旧存档里一直拿在手上的弓也在这里收起来
+            weapon = hand;
+            setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+        }
+    }
+
+    /** 原版死亡 20 刻就消失；这里等受击与死亡动画播完、在地上停一会儿再化烟。 */
+    @Override
+    protected void tickDeath() {
+        deathTime++;
+        if (deathTime >= DEATH_TICKS && !level().isClientSide() && !isRemoved()) {
+            level().broadcastEntityEvent(this, EntityEvent.POOF);
+            remove(RemovalReason.KILLED);
+        }
+    }
+
+    /** 倒下的身体长度（格）：发顶约 1.4 格高，倒地后沿面朝方向躺开。 */
+    private static final double BODY_LENGTH = 1.4;
+    /** 死亡动画里从开始跪下到前倒触地的刻数（约 0.95 秒）。 */
+    private static final int FALL_TICKS = 19;
+    /** 最后化作光点时生成的数量。 */
+    public static final int BURST = 100;
+    /** 客户端：化作光点的次数（客户端测试用）。 */
+    private static int bursts;
+
+    public static int bursts() {
+        return bursts;
+    }
+
+    /**
+     * 死亡后锁住朝向；客户端：死亡动画开始后，每刻从身上飘出一两个小的绿色光点。
+     * 光点出生在身体上随机一点：身体从站立渐渐倒向面朝方向，出生点跟着从竖直的一条线移到地上的一条线。
+     */
+    @Override
+    public void tick() {
+        super.tick();
+        // 倒下后朝向不再转动（NpcDeathPose）
+        deathYaw = isDeadOrDying() ? NpcDeathPose.hold(this, deathYaw) : Float.NaN;
+        if (level().isClientSide() && isDeadOrDying() && deathTime >= DEATH_FACE_TICKS && deathTime < DEATH_TICKS) {
+            int n = random.nextFloat() < .6f ? 1 : 2;
+            for (int i = 0; i < n; i++) spirit(.015, .02 + random.nextDouble() * .02);
+        }
+    }
+
+    /** 身上随机一点，按倒下的进度在站立与躺倒之间插值。 */
+    private double[] bodyPoint() {
+        double fall = Math.clamp((deathTime - DEATH_FACE_TICKS) / (double) FALL_TICKS, 0, 1);
+        fall = fall * fall * fall;
+        double t = random.nextDouble() * BODY_LENGTH, yaw = Math.toRadians(yBodyRot);
+        double fx = -Math.sin(yaw), fz = Math.cos(yaw);
+        double side = (random.nextDouble() - .5) * .45;
+        double along = t * fall, up = t * (1 - fall) + .15 * fall;
+        return new double[] {getX() + fx * along - fz * side, getY() + up, getZ() + fz * along + fx * side};
+    }
+
+    private void spirit(double spread, double rise) {
+        double[] p = bodyPoint();
+        level().addParticle(DimensionParticles.ELF_SPIRIT.get(), p[0], p[1], p[2],
+                (random.nextDouble() - .5) * 2 * spread, rise, (random.nextDouble() - .5) * 2 * spread);
+    }
+
+    /** 消失时不放原版的白烟，改为从身上散出大量绿色光点。 */
+    @Override
+    public void handleEntityEvent(byte id) {
+        if (id == EntityEvent.POOF) {
+            bursts++;
+            for (int i = 0; i < BURST; i++) spirit(.09, .03 + random.nextDouble() * .07);
+            return;
+        }
+        super.handleEntityEvent(id);
+    }
+
+    @Override
+    public String npcExpression() {
+        return isDeadOrDying() && deathTime >= DEATH_FACE_TICKS ? DEATH_EXPRESSION : null;
+    }
+
+    // ---------------------------------------------------------------- 剧情动作与瞄准（动画）
+
+    /** 服务端：播放一个剧情动作（治疗、行礼、拒绝），播完自动清掉。 */
+    public void playAction(String name) {
+        actionTicks = ACTION_TICKS.getOrDefault(name, 20);
+        entityData.set(ACTION, name);
+    }
+
+    @Override
+    public String npcMiscAnimation() {
+        String name = entityData.get(ACTION);
+        return name.isEmpty() ? null : name;
+    }
+
+    /** 拉自然之力、伸手放抚生之触时，双臂随视线指向目标。 */
+    @Override
+    public boolean npcAiming() {
+        return isUsingItem() && getUseItem().getItem() instanceof NaturesForceItem || HEAL_TOUCH.equals(entityData.get(ACTION));
     }
 
     @Override
@@ -198,6 +355,7 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
         super.addAdditionalSaveData(output);
         output.store("Appearance", APPEARANCE_CODEC, npcAppearance());
         output.putFloat("Mana", mana);
+        if (!weapon.isEmpty()) output.store("Weapon", ItemStack.CODEC, weapon);
     }
 
     @Override
@@ -205,6 +363,7 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
         super.readAdditionalSaveData(input);
         input.read("Appearance", APPEARANCE_CODEC).ifPresent(this::setAppearance);
         mana = Math.clamp(input.getFloatOr("Mana", MAX_MANA), 0, MAX_MANA);
+        weapon = input.read("Weapon", ItemStack.CODEC).orElse(ItemStack.EMPTY);
     }
 
     // ---------------------------------------------------------------- 声音与交互（对标村民）
@@ -229,7 +388,11 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (!isAlive()) return super.mobInteract(player, hand);
         getLookControl().setLookAt(player);
-        if (!level().isClientSide()) playSound(getTarget() != null ? ElfSounds.NO.get() : ElfSounds.GREET.get(), 1, getVoicePitch());
+        if (!level().isClientSide()) {
+            boolean busy = getTarget() != null;
+            playSound(busy ? ElfSounds.NO.get() : ElfSounds.GREET.get(), 1, getVoicePitch());
+            playAction(busy ? REFUSE : GREET);
+        }
         return InteractionResult.SUCCESS;
     }
 

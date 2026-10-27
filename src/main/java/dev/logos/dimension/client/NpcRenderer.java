@@ -19,8 +19,11 @@ import com.geckolib.renderer.layer.builtin.ItemInHandGeoLayer;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.npc.NpcAnimated;
+import dev.logos.dimension.npc.NpcAnimations;
 import dev.logos.dimension.npc.NpcPartsHolder;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -44,6 +47,10 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
     public static final float MODEL_SCALE = 0.5f;
     /** 随视线转动的头部骨骼。 */
     public static final String HEAD_BONE = "Head";
+    /** 双臂的共同父骨骼（肩线中点）；瞄准时随视线俯仰。 */
+    public static final String ARMS_BONE = "Arm";
+    /** 整个身体（不含根骨骼）；瞄准时整个人转向视线的水平方向。 */
+    public static final String BODY_BONE = "AllBody";
     /** 手持物品的挂点骨骼。 */
     public static final String RIGHT_HAND_BONE = "RightHandLocator";
     public static final String LEFT_HAND_BONE = "LeftHandLocator";
@@ -56,6 +63,10 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
     @SuppressWarnings("unchecked")
     private static final DataTicket<Set<String>> GLOWING =
             DataTicket.create("logos_dimension_npc_glowing", (Class<Set<String>>) (Class<?>) Set.class);
+    /** 本帧是否在播放自带的死亡动画（动画文件里有 {@code death} 且 NPC 正在死亡）。 */
+    private static final DataTicket<Boolean> ANIMATED_DEATH = DataTicket.create("logos_dimension_npc_animated_death", Boolean.class);
+    /** 本帧是否在瞄准（{@link NpcAnimated#npcAiming()}）。 */
+    private static final DataTicket<Boolean> AIMING = DataTicket.create("logos_dimension_npc_aiming", Boolean.class);
     /** 本帧要整组隐藏的零件组（外观里没选中的零件，见 {@link NpcPartsHolder}）。 */
     @SuppressWarnings("unchecked")
     private static final DataTicket<Set<String>> HIDDEN_PARTS =
@@ -72,12 +83,32 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
         this.shadowRadius = 0.35f;
     }
 
-    /** 有可换零件的 NPC：把没选中的零件组交给渲染状态。 */
+    /** 有可换零件的 NPC：把没选中的零件组（以及当前表情）交给渲染状态。 */
     @Override
     public void addRenderData(T animatable, Void relatedObject, R state, float partialTick) {
         super.addRenderData(animatable, relatedObject, state, partialTick);
+        NpcAnimated npc = animatable instanceof NpcAnimated a ? a : null;
         if (animatable instanceof NpcPartsHolder holder)
-            state.addGeckolibData(HIDDEN_PARTS, holder.npcRace().hiddenGroups(holder.npcAppearance()));
+            state.addGeckolibData(HIDDEN_PARTS, holder.npcRace().hiddenGroups(holder.npcAppearance(), npc == null ? null : npc.npcExpression()));
+        state.addGeckolibData(AIMING, npc != null && npc.npcAiming());
+        state.addGeckolibData(ANIMATED_DEATH, animatedDeath(animatable));
+    }
+
+    private static boolean animatedDeath(Mob mob) {
+        return mob.isDeadOrDying() && mob instanceof NpcAnimated npc
+                && NpcAnimations.available(npc.npcAnimationAsset()).contains(NpcAnimations.DEATH);
+    }
+
+    /** 有自己的死亡动画时不按原版向侧面倒下，姿势全交给动画。 */
+    @Override
+    protected float getDeathMaxRotation(GeoRenderState state) {
+        return state.getOrDefaultGeckolibData(ANIMATED_DEATH, false) ? 0 : super.getDeathMaxRotation(state);
+    }
+
+    /** 有自己的死亡动画时不染红（原版受伤与死亡共用的红色覆盖）；平时受伤照常变红。 */
+    @Override
+    public int getPackedOverlay(T animatable, Void relatedObject, float u, float partialTick) {
+        return animatedDeath(animatable) ? OverlayTexture.NO_OVERLAY : super.getPackedOverlay(animatable, relatedObject, u, partialTick);
     }
 
     /** 26.1 的 {@code entityCutout} 即旧版的 entityCutoutNoCull：薄发片与裙摆内侧两面可见。 */
@@ -95,16 +126,25 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
 
     /**
      * 头部跟随视线：在动画姿势之上叠加俯仰与相对身体的偏航。
+     * 瞄准时整个人（{@link #BODY_BONE}）转向视线的水平方向、头不再单独偏转，双臂（{@link #ARMS_BONE}）跟着俯仰，
+     * 弓和施法的手指向目标；身体的侧转只来自动画本身（拉弓时上身侧转不超过 45°）。
      * 发光骨骼：常规绘制里跳过它自身的方块，改由 {@link #submitGlow} 以满亮度补画；被动画隐藏的保持隐藏。
      */
     @Override
     public void adjustModelBonesForRender(RenderPassInfo<R> info, BoneSnapshots snapshots) {
         super.adjustModelBonesForRender(info, snapshots);
         R state = info.renderState();
-        snapshots.ifPresent(HEAD_BONE, head -> {
-            head.setRotX(head.getRotX() + state.xRot * Mth.DEG_TO_RAD);
-            head.setRotY(head.getRotY() + state.yRot * Mth.DEG_TO_RAD);
+        // 原版俯仰向下为正，GeckoLib 骨骼绕 X 轴为正时朝前的部分向上抬，所以取反
+        // 死亡动画自己摆头，不再叠加视线
+        boolean aiming = info.getOrDefaultGeckolibData(AIMING, false);
+        if (!info.getOrDefaultGeckolibData(ANIMATED_DEATH, false)) snapshots.ifPresent(HEAD_BONE, head -> {
+            head.setRotX(head.getRotX() - state.xRot * Mth.DEG_TO_RAD);
+            if (!aiming) head.setRotY(head.getRotY() + state.yRot * Mth.DEG_TO_RAD);
         });
+        if (aiming) {
+            snapshots.ifPresent(BODY_BONE, body -> body.setRotY(body.getRotY() + state.yRot * Mth.DEG_TO_RAD));
+            snapshots.ifPresent(ARMS_BONE, arms -> arms.setRotX(arms.getRotX() - state.xRot * Mth.DEG_TO_RAD));
+        }
         // 没选中的零件：整组连同子骨骼都不画
         Set<String> hidden = info.getOrDefaultGeckolibData(HIDDEN_PARTS, Set.of());
         for (String group : hidden) snapshots.ifPresent(group, s -> s.skipRender(true).skipChildrenRender(true));

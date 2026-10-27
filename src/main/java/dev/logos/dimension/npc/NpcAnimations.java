@@ -81,10 +81,15 @@ public final class NpcAnimations {
     public record Snapshot(boolean dead, boolean sleeping, boolean swimming, boolean climbing, double verticalSpeed,
                            boolean inBoat, boolean passenger, boolean sitting, boolean inWater, boolean hurt,
                            boolean onGround, boolean sprinting, float walkSpeed) {
+        /**
+         * 客户端的「在地面上」只在收到移动包时更新，一直站着不动的 NPC 刚进入视野时会一直是假，
+         * 看起来像悬空跳跃；所以这一刻没有竖直移动也算在地面上。
+         */
         public static Snapshot of(LivingEntity e, boolean sitting) {
+            double vy = 20 * (e.getY() - e.yo);
             return new Snapshot(e.isDeadOrDying(), e.getPose() == Pose.SLEEPING, e.isVisuallySwimming(), e.onClimbable(),
-                    20 * (e.getY() - e.yo), e.getVehicle() instanceof AbstractBoat, e.isPassenger(), sitting,
-                    e.isInWater(), e.hurtTime > 0, e.onGround(), e.isSprinting(), e.walkAnimation.speed());
+                    vy, e.getVehicle() instanceof AbstractBoat, e.isPassenger(), sitting,
+                    e.isInWater(), e.hurtTime > 0, e.onGround() || vy == 0, e.isSprinting(), e.walkAnimation.speed());
         }
     }
 
@@ -223,6 +228,15 @@ public final class NpcAnimations {
         };
     }
 
+    private static final Map<String, RawAnimation> AS_FILE = new ConcurrentHashMap<>();
+    /** 死亡：先播一遍受击，再播死亡并停在最后一帧。 */
+    private static final RawAnimation DEATH_AFTER_HIT = RawAnimation.begin().thenPlay(ATTACKED).thenPlayAndHold(DEATH);
+
+    /** 按动画文件里写的 loop 播放（剧情动作：一次性的播完就停，循环的一直循环）。 */
+    private static RawAnimation asFile(String name) {
+        return AS_FILE.computeIfAbsent(name, n -> RawAnimation.begin().then(n, LoopType.DEFAULT));
+    }
+
     private static RawAnimation once(String name) {
         return ONCE.computeIfAbsent(name, n -> RawAnimation.begin().then(n, LoopType.PLAY_ONCE));
     }
@@ -233,13 +247,16 @@ public final class NpcAnimations {
             controllers.add(parallel(npc, String.format("pre_parallel_%d_controller", i), "pre_parallel" + i));
         }
         controllers.add(new AnimationController<T>("main", 2, test -> {
-            String name = mainState(Snapshot.of(npc, npc.isNpcSitting()), available(npc.npcAnimationAsset())::contains);
-            return name == null ? PlayState.STOP : test.setAndContinue(raw(name));
+            Set<String> names = available(npc.npcAnimationAsset());
+            String name = mainState(Snapshot.of(npc, npc.isNpcSitting()), names::contains);
+            if (name == null) return PlayState.STOP;
+            // 最后一击：先把受击动画播完，再接死亡动画
+            return test.setAndContinue(DEATH.equals(name) && names.contains(ATTACKED) ? DEATH_AFTER_HIT : raw(name));
         }));
         controllers.add(hold(npc, "hold_offhand", false));
         controllers.add(hold(npc, "hold_mainhand", true));
         controllers.add(new AnimationController<T>("swing", 2, test -> {
-            if (!npc.swinging || npc.isSleeping()) return PlayState.STOP;
+            if (!npc.swinging || npc.isSleeping() || npc.isDeadOrDying()) return PlayState.STOP;
             boolean main = npc.swingingArm != InteractionHand.OFF_HAND;
             String name = swingAnimation(main, HandItem.of(main ? npc.getMainHandItem() : npc.getOffhandItem()),
                     available(npc.npcAnimationAsset()));
@@ -248,7 +265,7 @@ public final class NpcAnimations {
             return test.setAndContinue(once(name));
         }));
         controllers.add(new AnimationController<T>("use", 2, test -> {
-            if (!npc.isUsingItem() || npc.isSleeping()) return PlayState.STOP;
+            if (!npc.isUsingItem() || npc.isSleeping() || npc.isDeadOrDying()) return PlayState.STOP;
             boolean main = npc.getUsedItemHand() == InteractionHand.MAIN_HAND;
             String name = useAnimation(main, HandItem.of(main ? npc.getMainHandItem() : npc.getOffhandItem()),
                     available(npc.npcAnimationAsset()));
@@ -257,9 +274,9 @@ public final class NpcAnimations {
             return test.setAndContinue(raw(name));
         }));
         controllers.add(new AnimationController<T>("misc", 2, test -> {
-            String name = npc.npcMiscAnimation();
+            String name = npc.isDeadOrDying() ? null : npc.npcMiscAnimation();
             if (name == null || !available(npc.npcAnimationAsset()).contains(name)) return PlayState.STOP;
-            return test.setAndContinue(raw(name));
+            return test.setAndContinue(asFile(name));
         }));
         for (int i = 0; i < PARALLEL_COUNT; i++) {
             controllers.add(parallel(npc, String.format("parallel_%d_controller", i), "parallel" + i));

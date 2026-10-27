@@ -23,19 +23,30 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * 实际客户端预览森林精灵的零件组合：在主世界高处的白瓷台上并排放五个精灵，分别是默认外观、
- * 短发、短发配垂眼与猫猫嘴、长直发配垂眼与猫猫嘴（不戴头饰）、素体（不显示发型、头饰、服装）。
+ * 高马尾花匠、高马尾休闲装（垂眼与猫猫嘴）、高马尾白大衣学者、兜帽巡林弓手。
  * 精灵关掉 AI 站定朝向镜头，待机动画照常播放。三张截图：正面、3/4、脸部近景。
  */
 public abstract class NpcPreviewViews implements UIScenario {
     /** 每个精灵的外观（只写和默认不同的槽位）。 */
     static final List<Map<String, String>> LINEUP = List.of(
             Map.of(),
-            Map.of("hair", "hair_short_bob", "headwear", NpcParts.NONE),
-            Map.of("hair", "hair_short_bob", "eyes", "eyes_droopy", "mouth", "mouth_cat"),
-            Map.of("eyes", "eyes_droopy", "mouth", "mouth_cat", "headwear", NpcParts.NONE),
-            Map.of("hair", NpcParts.NONE, "headwear", NpcParts.NONE, "outfit", NpcParts.NONE));
+            Map.of("hair", "hair_high_ponytail", "headwear", NpcParts.NONE, "outfit", "outfit_gardener"),
+            Map.of("hair", "hair_high_ponytail", "outfit", "outfit_casual", "eyes", "eyes_droopy", "mouth", "mouth_cat"),
+            Map.of("hair", "hair_high_ponytail", "outfit", "outfit_scholar", "headwear", NpcParts.NONE),
+            Map.of("hair", "hair_hooded", "outfit", "outfit_ranger"));
     private static final double SPACING = 1.7;
     private static final int FLOOR = 99;
+
+    /** 素体对照保留常态五官，分辨肩腰、骨盆与服装衔接。 */
+    private static final List<Map<String, String>> BODY_LINEUP = List.of(
+            Map.of("hair", NpcParts.NONE, "headwear", NpcParts.NONE, "outfit", NpcParts.NONE),
+            Map.of("hair", "hair_high_ponytail", "headwear", NpcParts.NONE, "outfit", NpcParts.NONE),
+            Map.of("hair", "hair_high_ponytail", "headwear", NpcParts.NONE, "outfit", "outfit_casual"),
+            Map.of("hair", "hair_high_ponytail", "headwear", NpcParts.NONE, "outfit", "outfit_gardener"),
+            Map.of("hair", "hair_high_ponytail", "headwear", NpcParts.NONE, "outfit", "outfit_scholar"));
+
+    protected List<Map<String, String>> lineup() { return LINEUP; }
+    protected String previewTag() { return "npc_preview"; }
 
     /** 0 正面，1 3/4，2 脸部近景。 */
     protected int view() {
@@ -43,13 +54,21 @@ public abstract class NpcPreviewViews implements UIScenario {
     }
 
     static Map<String, String> appearance(int i) {
+        return resolveAppearance(LINEUP.get(i));
+    }
+
+    protected Map<String, String> selectedAppearance(int i) {
+        return resolveAppearance(lineup().get(i));
+    }
+
+    private static Map<String, String> resolveAppearance(Map<String, String> parts) {
         Map<String, String> a = new LinkedHashMap<>(NpcParts.FOREST_ELF.defaults());
-        a.putAll(LINEUP.get(i));
+        a.putAll(parts);
         return NpcParts.FOREST_ELF.sanitize(a);
     }
 
-    private static double x(int i) {
-        return (i - (LINEUP.size() - 1) / 2.0) * SPACING + 0.5;
+    private double x(int i) {
+        return (i - (lineup().size() - 1) / 2.0) * SPACING + 0.5;
     }
 
     private Vec3 eye() {
@@ -66,7 +85,7 @@ public abstract class NpcPreviewViews implements UIScenario {
 
     @Override
     public void configure(ScenarioOptions o) {
-        o.tags("npc_preview").defaultTimeoutMs(60_000).scenarioTimeoutMs(120_000);
+        o.tags(previewTag()).defaultTimeoutMs(60_000).scenarioTimeoutMs(120_000);
     }
 
     @Override
@@ -95,14 +114,14 @@ public abstract class NpcPreviewViews implements UIScenario {
                         }
                     AABB area = new AABB(-9, FLOOR, -6, 10, FLOOR + 6, 9);
                     level.getEntitiesOfClass(ForestElf.class, area).forEach(e -> e.discard());
-                    for (int i = 0; i < LINEUP.size(); i++) {
+                    for (int i = 0; i < lineup().size(); i++) {
                         ForestElf elf = NpcEntities.FOREST_ELF.get().create(level, EntitySpawnReason.COMMAND);
                         elf.snapTo(x(i), FLOOR + 1, 0.5, 0, 0);
                         elf.setYHeadRot(0);
                         elf.setYBodyRot(0);
                         elf.setNoAi(true);
                         elf.setPersistenceRequired();
-                        elf.setAppearance(appearance(i));
+                        elf.setAppearance(selectedAppearance(i));
                         level.addFreshEntity(elf);
                     }
                     var p = ctx.player();
@@ -112,7 +131,7 @@ public abstract class NpcPreviewViews implements UIScenario {
                     p.getAbilities().flying = true;
                     p.onUpdateAbilities();
                 })
-                .waitUntil("五个精灵同步到客户端", ctx -> elves().size() == LINEUP.size()).ticks(200)
+                .waitUntil("五个精灵同步到客户端", ctx -> elves().size() == lineup().size()).ticks(200)
                 .step("对准精灵", ctx -> {
                     var p = Minecraft.getInstance().player;
                     var d = look().subtract(p.getEyePosition());
@@ -121,7 +140,7 @@ public abstract class NpcPreviewViews implements UIScenario {
                 }).ticks(40)
                 .check("外观同步到客户端", ctx -> {
                     List<ForestElf> elves = elves();
-                    for (int i = 0; i < elves.size(); i++) if (!elves.get(i).npcAppearance().equals(appearance(i))) return false;
+                    for (int i = 0; i < elves.size(); i++) if (!elves.get(i).npcAppearance().equals(selectedAppearance(i))) return false;
                     return true;
                 })
                 .check("离屏截图有实际分辨率", ctx -> {
@@ -152,5 +171,16 @@ public abstract class NpcPreviewViews implements UIScenario {
     @LDLRegisterClient(name = "npc_forest_elf_faces", group = "npc_preview", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
     public static class Faces extends NpcPreviewViews {
         @Override protected int view() { return 2; }
+    }
+
+    @LDLRegisterClient(name = "npc_forest_elf_body", group = "npc_body_preview", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class Body extends NpcPreviewViews {
+        @Override protected List<Map<String, String>> lineup() { return BODY_LINEUP; }
+        @Override protected String previewTag() { return "npc_body_preview"; }
+    }
+
+    @LDLRegisterClient(name = "npc_forest_elf_body_angle", group = "npc_body_preview", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class BodyAngle extends Body {
+        @Override protected int view() { return 1; }
     }
 }

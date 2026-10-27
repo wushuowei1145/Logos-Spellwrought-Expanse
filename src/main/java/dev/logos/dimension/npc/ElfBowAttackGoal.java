@@ -32,8 +32,9 @@ public final class ElfBowAttackGoal extends Goal {
         setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
+    /** 手上或收着的自然之力（收着的由精灵在有目标时拿出来，见 {@link ForestElf#weapon()}）。 */
     private boolean holdsBow() {
-        return elf.getMainHandItem().getItem() instanceof NaturesForceItem || elf.getOffhandItem().getItem() instanceof NaturesForceItem;
+        return elf.weapon().getItem() instanceof NaturesForceItem || elf.getOffhandItem().getItem() instanceof NaturesForceItem;
     }
 
     @Override
@@ -96,7 +97,8 @@ public final class ElfBowAttackGoal extends Goal {
                 }
                 reload = RELOAD;
             }
-        } else if (see && reload <= 0 && dist <= MAX_RANGE) {
+        } else if (see && reload <= 0 && dist <= MAX_RANGE && elf.getItemInHand(hand).getItem() instanceof NaturesForceItem) {
+            // 刚进入战斗的那一刻弓可能还收着，精灵下一刻拿出来再拉
             elf.startUsingItem(hand);
         }
     }

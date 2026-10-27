@@ -1,4 +1,4 @@
-"""森林精灵的资源：刷怪蛋（代码绘制）与语音（按素材标签归类、转成 ogg、写 sounds.json）。
+"""森林精灵的资源：刷怪蛋与倒下时的光点（代码绘制）、语音（按素材标签归类、转成 ogg、写 sounds.json）。
 
     python tools/forest_elf_resources.py [--voices <素材目录>] [--ffmpeg <ffmpeg 路径>]
 
@@ -71,6 +71,29 @@ def spawn_egg():
           {"parent": "minecraft:item/generated", "textures": {"layer0": "logos_dimension:item/forest_elf_spawn_egg"}})
     write(ASSETS / "items/forest_elf_spawn_egg.json",
           {"model": {"type": "minecraft:model", "model": "logos_dimension:item/forest_elf_spawn_egg"}})
+
+
+def spirit_particle():
+    """8×8 倒下时飘出的光点：实心圆点、外圈一级半透明；白色，游戏里按叶绿色染色（ElfSpiritParticle）。"""
+    rows = [
+        "........",
+        "..+##+..",
+        ".+####+.",
+        ".######.",
+        ".######.",
+        ".+####+.",
+        "..+##+..",
+        "........",
+    ]
+    img = Image.new("RGBA", (8, 8))
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            if ch != ".":
+                img.putpixel((x, y), (255, 255, 255, 255 if ch == "#" else 150))
+    path = ASSETS / "textures/particle/forest_elf_spirit.png"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    img.save(path)
+    write(ASSETS / "particles/forest_elf_spirit.json", {"textures": ["logos_dimension:forest_elf_spirit"]})
 
 
 def classify(name):

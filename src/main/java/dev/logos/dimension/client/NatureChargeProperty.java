@@ -2,6 +2,8 @@ package dev.logos.dimension.client;
 
 import com.mojang.serialization.MapCodec;
 import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.npc.ElfBowAttackGoal;
+import dev.logos.dimension.npc.ForestElf;
 import dev.logos.dimension.item.NatureAttachments;
 import dev.logos.dimension.item.NatureCharge;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -26,7 +28,10 @@ public record NatureChargeProperty() implements RangeSelectItemModelProperty {
     @Override public float get(ItemStack stack, ClientLevel level, ItemOwner owner, int seed) {
         var entity = owner == null ? null : owner.asLivingEntity();
         if (entity == null || entity.getUseItem() != stack) return 0;
-        return Math.min(NatureCharge.stage(UseDuration.useDuration(stack, entity)), entity.getData(NatureAttachments.CHARGE_LIMIT));
+        int ticks = UseDuration.useDuration(stack, entity);
+        // 森林精灵拉弓更快（ElfBowAttackGoal.DRAW_TICKS 刻满弦），贴图按同样的比例推进
+        if (entity instanceof ForestElf) ticks = ticks * NatureCharge.FULL_CHARGE / ElfBowAttackGoal.DRAW_TICKS;
+        return Math.min(NatureCharge.stage(ticks), entity.getData(NatureAttachments.CHARGE_LIMIT));
     }
 
     @Override public MapCodec<NatureChargeProperty> type() { return CODEC; }
