@@ -80,6 +80,8 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     /** 使魔身份每秒查一次（Logos 的使魔记录在 Logos 那边）。 */
     private long nextFamiliarCheck;
     private UUID master;
+    /** 死亡时的朝向（活着时为 NaN），见 {@link NpcDeathPose}。 */
+    private float deathYaw = Float.NaN;
     /** 服务端：剧情动作还剩几刻。 */
     private int actionTicks;
     /**
@@ -273,12 +275,14 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     }
 
     /**
-     * 客户端：死亡动画开始后，每刻从身上飘出一两个小的绿色光点。
+     * 死亡后锁住朝向；客户端：死亡动画开始后，每刻从身上飘出一两个小的绿色光点。
      * 光点出生在身体上随机一点：身体从站立渐渐倒向面朝方向，出生点跟着从竖直的一条线移到地上的一条线。
      */
     @Override
     public void tick() {
         super.tick();
+        // 倒下后朝向不再转动（NpcDeathPose）
+        deathYaw = isDeadOrDying() ? NpcDeathPose.hold(this, deathYaw) : Float.NaN;
         if (level().isClientSide() && isDeadOrDying() && deathTime >= DEATH_FACE_TICKS && deathTime < DEATH_TICKS) {
             int n = random.nextFloat() < .6f ? 1 : 2;
             for (int i = 0; i < n; i++) spirit(.015, .02 + random.nextDouble() * .02);
