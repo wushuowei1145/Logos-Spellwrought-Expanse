@@ -14,6 +14,14 @@
      "cubes": 180
     },
     {
+     "id": "hair_high_ponytail",
+     "groups": [
+      "hair_high_ponytail"
+     ],
+     "default": false,
+     "cubes": 80
+    },
+    {
      "id": "hair_hooded",
      "groups": [
       "hair_hooded"
@@ -128,6 +136,43 @@
      "cubes": 64
     },
     {
+     "id": "outfit_casual",
+     "groups": [
+      "outfit_casual_leftarm",
+      "outfit_casual_rightarm",
+      "outfit_casual_body",
+      "outfit_casual_leaf_sash",
+      "outfit_casual_leftfoot",
+      "outfit_casual_leftshin",
+      "outfit_casual_leftleg",
+      "outfit_casual_rightfoot",
+      "outfit_casual_rightshin",
+      "outfit_casual_rightleg",
+      "outfit_casual_hips"
+     ],
+     "default": false,
+     "cubes": 48
+    },
+    {
+     "id": "outfit_gardener",
+     "groups": [
+      "outfit_gardener_leftarm",
+      "outfit_gardener_rightarm",
+      "outfit_gardener_body",
+      "outfit_gardener_apron",
+      "outfit_gardener_leftfoot",
+      "outfit_gardener_leftshin",
+      "outfit_gardener_leftleg",
+      "outfit_gardener_rightfoot",
+      "outfit_gardener_rightshin",
+      "outfit_gardener_rightleg",
+      "outfit_gardener_pouch",
+      "outfit_gardener_hips"
+     ],
+     "default": false,
+     "cubes": 47
+    },
+    {
      "id": "outfit_ranger",
      "groups": [
       "outfit_ranger_leftforearm",
@@ -148,6 +193,27 @@
      ],
      "default": false,
      "cubes": 61
+    },
+    {
+     "id": "outfit_scholar",
+     "groups": [
+      "outfit_scholar_leftforearm",
+      "outfit_scholar_leftarm",
+      "outfit_scholar_rightforearm",
+      "outfit_scholar_rightarm",
+      "outfit_scholar_body",
+      "outfit_scholar_coat_tails",
+      "outfit_scholar_leftfoot",
+      "outfit_scholar_leftshin",
+      "outfit_scholar_leftleg",
+      "outfit_scholar_rightfoot",
+      "outfit_scholar_rightshin",
+      "outfit_scholar_rightleg",
+      "outfit_scholar_hips",
+      "outfit_scholar_satchel"
+     ],
+     "default": false,
+     "cubes": 64
     }
    ]
   }

@@ -25,6 +25,31 @@
 - `forest-elf-spells.png`：抚生之触、生息之环、行礼。
 
 没有验证的部分：实际战斗与寻路中的连贯性（走路、爬绳、受伤只确认了动画存在且骨骼匹配，没有逐帧截图）、`refuse` 的画面、多人、光影。
+## 森林精灵第二批随机外观部件
+
+2026-10-27：分支 `feat/forest-elf-appearance-parts`，基于 `main` 的 `17c2dbd`。同步维护者最新手改并修正 UV 后的合并几何、128×240 贴图与零件表，新增高马尾、花匠工作服、休闲短装和白大衣学者服。动画与主分支字节一致，不引入新动画或借用素材。
+
+新生成的森林精灵从四种发型、五套服装中随机选择。外观记录继续存部件 ID，已有精灵不重新随机；默认组合、兜帽与枝冠互斥保持不变。没有修改出生逻辑或渲染器。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元与构建 | **83/83** 单元通过，`build` 通过；包含新部件存在、2000 次随机抽取覆盖、外观编码往返、未选中服装隐藏及全部零件顶层组登记检查 |
+| 资源核对 | 四个运行时资源与最新源导出字节一致；其中动画无差异。原有 263 根骨骼的几何与父子结构、3430 个面的纹理像素及 UV 尺寸保留 |
+| 普通实际客户端 | `group:npc_preview` **3/3 场景、6/6 检查**通过；1600×900 实际渲染与客户端外观同步，并人工查看三张截图 |
+| 世界（GameTest） | 本轮未重跑，行为与结构生成没有改动 |
+
+客户端环境：Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25.0.3、GeckoLib 5.5.2、本地 Logos 0.6.0 开发 JAR（未提交）。预览五位精灵依次为默认居民、高马尾花匠、高马尾休闲装（垂眼与猫猫嘴）、高马尾学者、兜帽巡林弓手；精灵关掉 AI 站定，待机动画正常播放。截图位于 `docs/screenshots/npc-parts/`：
+
+- [正面组合](docs/screenshots/npc-parts/forest-elf-parts-lineup.png)
+- [3/4 组合](docs/screenshots/npc-parts/forest-elf-parts-angle.png)
+- [高马尾与休闲装近景](docs/screenshots/npc-parts/forest-elf-parts-faces.png)
+
+本轮没有验证多人、第三方光影、极端动作穿插或大量居民的帧率。单元检查证明新部件进入随机池，客户端截图使用指定外观以完整展示三套新服装；没有将指定预览说成自然生成截图。
+
+```text
+./gradlew --offline test build -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar -PldTest=group:npc_preview -PldTestHeadless -PldTestWindow=1600x900
+```
 
 ## 森林精灵居民：生成、战斗、治疗、绳梯与语音
 

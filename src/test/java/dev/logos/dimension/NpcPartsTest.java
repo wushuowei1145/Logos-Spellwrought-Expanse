@@ -82,10 +82,37 @@ class NpcPartsTest {
     @Test void tableComesFromDataAndHasTheNewParts() {
         assertNotNull(ELF.slot("hair").find("hair_hooded"));
         assertNotNull(ELF.slot("hair").find("hair_short_bob"));
+        assertNotNull(ELF.slot("hair").find("hair_high_ponytail"));
         assertNotNull(ELF.slot("outfit").find("outfit_ranger"));
+        for (String id : Set.of("outfit_gardener", "outfit_casual", "outfit_scholar"))
+            assertNotNull(ELF.slot("outfit").find(id), id);
         assertEquals("hair_straight_long", ELF.slot("hair").parts().getFirst().id(), "默认零件排第一个");
         assertTrue(ELF.conflicts("hair_hooded", "headwear_twig_crown"));
         assertFalse(ELF.conflicts("hair_short_bob", "headwear_twig_crown"));
+    }
+
+    /** 新零件确实进入出生随机池，外观同步后不回退，隐藏组只包含未选中的零件。 */
+    @Test void newAppearancePartsCanBeRolledAndRoundTripWithoutShowingOtherOutfits() {
+        RandomSource random = RandomSource.create(20261027);
+        Set<String> rolledHair = new HashSet<>(), rolledOutfits = new HashSet<>();
+        for (int i = 0; i < 2000; i++) {
+            Map<String, String> appearance = ELF.random(random);
+            rolledHair.add(appearance.get("hair"));
+            rolledOutfits.add(appearance.get("outfit"));
+            assertEquals(appearance, ELF.sanitize(NpcParts.decode(NpcParts.encode(appearance))));
+        }
+        assertTrue(rolledHair.contains("hair_high_ponytail"), "高马尾没有进入随机池");
+        for (String outfit : Set.of("outfit_gardener", "outfit_casual", "outfit_scholar")) {
+            assertTrue(rolledOutfits.contains(outfit), outfit + " 没有进入随机池");
+            Map<String, String> selected = ELF.defaults();
+            selected.put("hair", "hair_high_ponytail");
+            selected.put("outfit", outfit);
+            assertEquals(selected, ELF.sanitize(selected));
+            Set<String> hidden = ELF.hiddenGroups(selected);
+            assertFalse(hidden.contains("hair_high_ponytail"));
+            for (var part : ELF.slot("outfit").parts()) for (String group : part.groups())
+                assertEquals(!part.id().equals(outfit), hidden.contains(group), group);
+        }
     }
 
     /** 兜帽和枝冠互斥：随机抽不会同时出现；手动给出的组合会把后面的头饰换成 none。 */
