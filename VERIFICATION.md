@@ -2,6 +2,27 @@
 
 目标环境：Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25；Logos 0.5.1，主模组源码基线 `f196960`。当前开发安装包为 0.11.0。原炼金维度不包含建筑或 Boss；远行大陆包含中世纪聚落、精灵森林与世界树，不包含 Boss。
 
+## 森林精灵死亡动画与挂泪表情
+
+2026-10-27：分支 `feat/forest-elf-death`。
+
+- **动画**：维护者在 Blockbench 里做的 `death`（仓库外 `forest-elf-model/forest_elf/Animation/forest_elf_death.bbmodel`，1.55 秒，跪下再向前倒地）由 `tools/forest_elf_animations.py` 换算进动画文件；与维护者导出的 `forest_elf_death.animation.json` 逐关键帧比对，差为 0。
+- **衔接**：主控制器在死亡时先播一遍 `attacked`（最后一击的受击），再播 `death` 并停在最后一帧。
+- **表情**：`expression_dazed_tears`（仓库外 `expressions/`）由 `tools/forest_elf_expressions.py` 并进模型（8 根骨骼、25 个方块，挂在 `Head` 下）与贴图（放在原贴图未使用的 (96, 104)），登记在零件表 `expressions`。死亡动画开始的同时（第 9 刻）显示它、隐藏常态眼眉嘴。重复运行结果不变。
+- **原版效果**：有死亡动画的 NPC 不再染红、不向侧面倒下、不叠加视线；死亡时停止手部与剧情动作。精灵 60 刻（动画播完后在地上停约 1 秒）才化烟消失。倒下的精灵不再拿出弓。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | **89/89** 通过；新增：表情平时隐藏、给出时替换常态眼嘴且不参与抽取，表情挂在 `Head` 下；死亡动画停在最后一帧 |
+| 世界（GameTest `logos_dimension:forest_elf*`） | **9/9** 通过；新增 `forest_elf_death_lingers`：一击致命后第 9 刻起才换表情，满 60 刻才消失 |
+| 实际客户端（`group:npc_preview`） | **8/8 场景、28/28 检查**通过；新增两个死亡场景：三个精灵错开受到致命一击，检查死亡动画播完前不消失、客户端按死亡刻数换表情、常态眼嘴被隐藏；人工查看截图 |
+
+截图 `docs/screenshots/npc-preview/forest-elf-death.png`（3/4）与 `forest-elf-death-side.png`（侧面）：从左到右是倒地停住、跪下中（挂泪表情）、受击中；都没有染红或侧倒。
+
+注意：以后从 `forest-elf-model` 重新合并并复制模型、贴图后，要再跑 `tools/forest_elf_expressions.py` 与 `tools/forest_elf_animations.py`，否则表情和死亡动画会丢。
+
+没有验证的部分：实战中被玩家或怪物打死的观感（只用了无来源的伤害）、多人、光影；TLM 中的播放。
+
 ## 森林精灵平时收起武器
 
 2026-10-27：分支 `feat/forest-elf-holster`（建在 `feat/forest-elf-animations` 之上）。精灵的弓平时收着（存档 `Weapon`），有目标时拿出来；目标没了或受伤后警戒 100 刻（5 秒），期间不收，正在拉弓时也不收。旧存档里一直拿着弓的精灵，在第一次不警戒时收起来。

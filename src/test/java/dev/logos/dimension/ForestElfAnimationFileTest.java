@@ -33,7 +33,7 @@ class ForestElfAnimationFileTest {
     void hasEveryActionTheElfUses() throws Exception {
         Set<String> names = animations().keySet();
         for (String n : new String[] {"idle", "walk", "jump", "attacked", "ladder_up", "ladder_stillness", "ladder_down", "swim_stand",
-                "swing_hand", "hold_mainhand:bow", "use_mainhand:bow", "heal_touch", "heal_ring", "greet", "refuse"})
+                "swing_hand", "hold_mainhand:bow", "use_mainhand:bow", "heal_touch", "heal_ring", "greet", "refuse", "death"})
             assertTrue(names.contains(n), n);
     }
 
@@ -52,6 +52,15 @@ class ForestElfAnimationFileTest {
     void noPlayerModelOnlyMolang() throws Exception {
         String text = animations().toString();
         assertFalse(text.contains("ysm."), "动画里有 ysm.* 变量");
+    }
+
+    /** 死亡动画（维护者在 Blockbench 里做的）播完停在最后一帧，接在受击动画之后。 */
+    @Test
+    void deathHoldsItsLastFrame() throws Exception {
+        JsonObject death = animations().getAsJsonObject("death");
+        assertEquals("hold_on_last_frame", death.get("loop").getAsString());
+        assertEquals(1.55, death.get("animation_length").getAsDouble(), 1e-6);
+        assertTrue(animations().has("attacked"));
     }
 
     /** 自绘的循环动画首尾一致，避免循环接缝处抽一下。 */

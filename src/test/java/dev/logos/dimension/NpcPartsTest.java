@@ -52,6 +52,21 @@ class NpcPartsTest {
         assertFalse(hidden.contains("eyes_square_left_pupil"));
     }
 
+    /** 动画专用表情平时隐藏；给出表情时显示它、隐藏常态眼嘴；不参与随机抽取。 */
+    @Test void expressionsAreHiddenUntilShownAndReplaceTheFace() {
+        Map<String, String> a = ELF.defaults();
+        assertEquals(1, ELF.expressions().size());
+        var tears = ELF.expressions().getFirst();
+        assertEquals("expression_dazed_tears", tears.id());
+        assertEquals(java.util.List.of("Eyes", "Eyelid", "EyeBrow", "Mouth"), tears.hides());
+        Set<String> calm = ELF.hiddenGroups(a), dazed = ELF.hiddenGroups(a, tears.id());
+        assertTrue(calm.containsAll(tears.groups()));
+        for (String g : tears.hides()) assertFalse(calm.contains(g), g);
+        for (String g : tears.groups()) assertFalse(dazed.contains(g), g);
+        assertTrue(dazed.containsAll(tears.hides()));
+        for (var slot : ELF.slots()) for (var part : slot.parts()) assertFalse(part.id().startsWith("expression_"), part.id());
+    }
+
     /** 零件表里的每个组都在模型里，模型里每个零件前缀的顶层组也都登记了。 */
     @Test void partGroupsMatchTheModel() throws Exception {
         String text;
@@ -69,6 +84,14 @@ class NpcPartsTest {
         Set<String> listed = new HashSet<>();
         for (var slot : ELF.slots()) for (var part : slot.parts()) listed.addAll(part.groups());
         for (String g : listed) assertTrue(parent.containsKey(g), "模型里缺少零件组 " + g);
+        for (var e : ELF.expressions()) {
+            for (String g : e.groups()) assertEquals("Head", parent.get(g), "表情要挂在 Head 下：" + g);
+            for (String g : e.hides()) {
+                String p = g;
+                while (p != null && !p.equals("Head")) p = parent.get(p);
+                assertEquals("Head", p, "表情替换的常态五官要在 Head 之下：" + g);
+            }
+        }
         for (var e : parent.entrySet()) {
             String n = e.getKey(), p = e.getValue();
             boolean partName = n.startsWith("hair_") || n.startsWith("headwear_") || n.startsWith("ear_") || n.startsWith("eyes_")

@@ -56,7 +56,8 @@ public final class ForestElfGameTests {
                 "forest_elf_heal_group", ForestElfGameTests::healGroup,
                 "forest_elf_familiar_heals_player", ForestElfGameTests::familiarHealsPlayer,
                 "forest_elf_zombie_enmity", ForestElfGameTests::zombieEnmity,
-                "forest_elf_weapon_only_in_combat", ForestElfGameTests::weaponOnlyInCombat);
+                "forest_elf_weapon_only_in_combat", ForestElfGameTests::weaponOnlyInCombat,
+                "forest_elf_death_lingers", ForestElfGameTests::deathLingers);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -264,6 +265,26 @@ public final class ForestElfGameTests {
         h.succeedWhen(() -> {
             h.assertTrue(phase[0] == 2 && calm[0] > ForestElf.ALERT_TICKS, "还没走完：战斗 → 警戒 → 平静（" + phase[0] + "）");
             h.assertTrue(elf.getMainHandItem().isEmpty() && elf.weapon().getItem() instanceof NaturesForceItem, "警戒过后没把弓收起来");
+        });
+    }
+
+    /** 死亡：受击与死亡动画播完前不消失；死亡动画开始时换上茫然挂泪的表情；DEATH_TICKS 刻后消失。 */
+    private static void deathLingers(GameTestHelper h) {
+        floor(h, 6);
+        ForestElf elf = elf(h, 2, 1, 2, EntitySpawnReason.COMMAND);
+        elf.hurtServer(h.getLevel(), h.getLevel().damageSources().generic(), 1000);
+        h.assertTrue(elf.isDeadOrDying(), "一击没有致命");
+        int[] seen = {0};
+        h.onEachTick(() -> {
+            if (elf.isRemoved()) return;
+            seen[0] = elf.deathTime;
+            boolean face = ForestElf.DEATH_EXPRESSION.equals(elf.npcExpression());
+            if (face != elf.deathTime >= ForestElf.DEATH_FACE_TICKS)
+                throw h.assertionException(net.minecraft.network.chat.Component.literal("表情切换时间不对：" + elf.deathTime + " " + face));
+        });
+        h.succeedWhen(() -> {
+            h.assertTrue(elf.isRemoved(), "还没消失：" + elf.deathTime);
+            h.assertTrue(seen[0] >= ForestElf.DEATH_TICKS - 1, "消失得太早：" + seen[0]);
         });
     }
 

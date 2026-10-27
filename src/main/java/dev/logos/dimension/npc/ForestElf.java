@@ -21,6 +21,7 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntityEvent;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -80,6 +81,12 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     private UUID master;
     /** 服务端：剧情动作还剩几刻。 */
     private int actionTicks;
+    /**
+     * 死亡：先播最后一击的受击动画（约 0.46 秒），再播死亡动画（1.55 秒）并在倒地姿势停约 1 秒，共 {@link #DEATH_TICKS} 刻后消失。
+     * 死亡动画开始的同时换上茫然挂泪的表情。
+     */
+    public static final int DEATH_FACE_TICKS = 9, DEATH_TICKS = 60;
+    public static final String DEATH_EXPRESSION = "expression_dazed_tears";
     /** 战斗或受伤之后保持警戒（弓不收起）的刻数。 */
     public static final int ALERT_TICKS = 100;
     /** 收起来的武器；拿在手上时这里为空。存档 {@code Weapon}。 */
@@ -224,6 +231,8 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
 
     /** 服务端每刻：警戒时把弓拿出来，警戒结束（且没在拉弓）时收起来。 */
     private void updateWeapon() {
+        // 致命一击也算受伤，但倒下的精灵不再拿出武器
+        if (isDeadOrDying()) return;
         if (getTarget() != null || hurtTime > 0) alertTicks = ALERT_TICKS;
         else if (alertTicks > 0) alertTicks--;
         ItemStack hand = getMainHandItem();
@@ -237,6 +246,21 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
             weapon = hand;
             setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
         }
+    }
+
+    /** 原版死亡 20 刻就消失；这里等受击与死亡动画播完、在地上停一会儿再化烟。 */
+    @Override
+    protected void tickDeath() {
+        deathTime++;
+        if (deathTime >= DEATH_TICKS && !level().isClientSide() && !isRemoved()) {
+            level().broadcastEntityEvent(this, EntityEvent.POOF);
+            remove(RemovalReason.KILLED);
+        }
+    }
+
+    @Override
+    public String npcExpression() {
+        return isDeadOrDying() && deathTime >= DEATH_FACE_TICKS ? DEATH_EXPRESSION : null;
     }
 
     // ---------------------------------------------------------------- 剧情动作与瞄准（动画）

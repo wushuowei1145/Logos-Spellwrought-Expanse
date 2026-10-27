@@ -8,6 +8,9 @@
 - 自绘：持弓、拉弓、抚生之触、生息之环、行礼、拒绝。手臂静止姿势外张约 18°（A 字），
   向前举时用 z 抵消。弓和施法的手指向目标由渲染器按视线俯仰叠加在 `Arm` 骨骼上，这里只做水平的姿势。
 - 角度沿用 Bedrock 动画的写法：手臂 x 为负是向前举，身体 x 为正是前倾。
+- 死亡 `death`：维护者在 Blockbench 里做的原创动画（仓库外 forest-elf-model/forest_elf/Animation/forest_elf_death.bbmodel），
+  按 Blockbench 导出 Bedrock 的规则换算：旋转 X、Y 与位移 X 取反，`hold` 循环写成 `hold_on_last_frame`。
+  源文件不在时保留动画文件里现有的 `death`。
 """
 import argparse
 import json
@@ -18,6 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 ASSETS = ROOT / "src/main/resources/assets/logos_dimension/geckolib"
 ANIMATION = ASSETS / "animations/entity/forest_elf.animation.json"
 MODEL = ASSETS / "models/entity/forest_elf.geo.json"
+DEATH_SOURCE = ROOT.parent / "forest-elf-model/forest_elf/Animation/forest_elf_death.bbmodel"
 TLM_COMMIT = "207647c85740b1d0971de6040d6dd57cea62528c"
 TLM_URL = ("https://raw.githubusercontent.com/TartaricAcid/TouhouLittleMaid/" + TLM_COMMIT
            + "/src/main/resources/assets/touhou_little_maid/animation/maid.animation.json")
@@ -59,6 +63,31 @@ def adapt(anim, bones):
         if "position" in b:
             b["position"] = scale_positions(b["position"])
         out["bones"][name] = b
+    return out
+
+
+# Blockbench 关键帧换算到 Bedrock：旋转 X、Y 与位移 X 取反
+BB_SIGN = {"rotation": (-1, -1, 1), "position": (-1, 1, 1), "scale": (1, 1, 1)}
+BB_LOOP = {"hold": "hold_on_last_frame", "loop": True, "once": False}
+
+
+def from_bbmodel(path, name, bones):
+    """从 .bbmodel 里取出一个动画，换算成 Bedrock / GeckoLib 的写法；只保留游戏模型里有的骨骼。"""
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    src = next(a for a in data["animations"] if a["name"] == name)
+    out = {"loop": BB_LOOP.get(src["loop"], False), "animation_length": src["length"], "bones": {}}
+    for animator in src["animators"].values():
+        if animator.get("type", "bone") != "bone" or animator["name"] not in bones:
+            continue
+        channels = {}
+        for k in sorted(animator["keyframes"], key=lambda k: k["time"]):
+            sign = BB_SIGN[k["channel"]]
+            point = k["data_points"][0]
+            value = [float(point[a]) * s + 0.0 for a, s in zip("xyz", sign)]
+            frame = {"post": value, "lerp_mode": "catmullrom" if k["interpolation"] == "catmullrom" else "linear"}
+            channels.setdefault(k["channel"], {})[f"{round(k['time'], 4):g}"] = frame
+        if channels:
+            out["bones"][animator["name"]] = channels
     return out
 
 
@@ -129,6 +158,7 @@ def drawn():
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--tlm", default=TLM_URL)
+    parser.add_argument("--death", default=str(DEATH_SOURCE))
     args = parser.parse_args()
     bones = {b["name"] for b in json.loads(MODEL.read_text(encoding="utf-8"))["minecraft:geometry"][0]["bones"]}
     current = json.loads(ANIMATION.read_text(encoding="utf-8"))
@@ -140,6 +170,10 @@ def main():
         missing = set(anim["bones"]) - bones
         assert not missing, (name, missing)
         animations[name] = anim
+    if Path(args.death).is_file():
+        animations["death"] = from_bbmodel(args.death, "death", bones)
+    elif "death" in current["animations"]:
+        animations["death"] = current["animations"]["death"]
     out = {"format_version": current.get("format_version", "1.8.0"), "animations": animations}
     ANIMATION.write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"{len(animations)} 个动画：{', '.join(animations)}")
