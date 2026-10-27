@@ -94,3 +94,7 @@
 ```
 
 验证结果见 [VERIFICATION.md](VERIFICATION.md)，生态方向见 [远行大陆](docs/TEMPERATE_JOURNEY.md)。`tools/native_worldgen.py` 输出的 JSON/NBT/PNG 已提交，普通构建不需要运行资源脚本。
+
+## 致谢与第三方素材
+
+NPC 的骨骼命名、动画名和动画规则参照 [车万女仆（Touhou Little Maid）](https://github.com/TartaricAcid/TouhouLittleMaid)；NPC 动画可以借用车万女仆的默认动画（CC BY-NC-SA 4.0）。作者、协议和借用清单见 [CREDITS.md](CREDITS.md)，发布包内附 `licenses/touhou_little_maid/NOTICE.txt`。
