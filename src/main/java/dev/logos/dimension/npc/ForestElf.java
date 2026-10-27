@@ -8,6 +8,7 @@ import com.geckolib.animatable.manager.AnimatableManager;
 import com.geckolib.util.GeckoLibUtil;
 import com.mojang.serialization.Codec;
 
+import dev.logos.dimension.DimensionParticles;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.item.NaturesForceItem;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -83,7 +84,7 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     private int actionTicks;
     /**
      * 死亡：先播最后一击的受击动画（约 0.46 秒），再播死亡动画（1.55 秒）并在倒地姿势停约 1 秒，共 {@link #DEATH_TICKS} 刻后消失。
-     * 死亡动画开始的同时换上茫然挂泪的表情。
+     * 死亡动画开始的同时换上茫然挂泪的表情，身上开始飘出绿色光点；消失时化作大量绿色光点，不放原版白烟。
      */
     public static final int DEATH_FACE_TICKS = 9, DEATH_TICKS = 60;
     public static final String DEATH_EXPRESSION = "expression_dazed_tears";
@@ -256,6 +257,60 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
             level().broadcastEntityEvent(this, EntityEvent.POOF);
             remove(RemovalReason.KILLED);
         }
+    }
+
+    /** 倒下的身体长度（格）：发顶约 1.4 格高，倒地后沿面朝方向躺开。 */
+    private static final double BODY_LENGTH = 1.4;
+    /** 死亡动画里从开始跪下到前倒触地的刻数（约 0.95 秒）。 */
+    private static final int FALL_TICKS = 19;
+    /** 最后化作光点时生成的数量。 */
+    public static final int BURST = 100;
+    /** 客户端：化作光点的次数（客户端测试用）。 */
+    private static int bursts;
+
+    public static int bursts() {
+        return bursts;
+    }
+
+    /**
+     * 客户端：死亡动画开始后，每刻从身上飘出一两个小的绿色光点。
+     * 光点出生在身体上随机一点：身体从站立渐渐倒向面朝方向，出生点跟着从竖直的一条线移到地上的一条线。
+     */
+    @Override
+    public void tick() {
+        super.tick();
+        if (level().isClientSide() && isDeadOrDying() && deathTime >= DEATH_FACE_TICKS && deathTime < DEATH_TICKS) {
+            int n = random.nextFloat() < .6f ? 1 : 2;
+            for (int i = 0; i < n; i++) spirit(.015, .02 + random.nextDouble() * .02);
+        }
+    }
+
+    /** 身上随机一点，按倒下的进度在站立与躺倒之间插值。 */
+    private double[] bodyPoint() {
+        double fall = Math.clamp((deathTime - DEATH_FACE_TICKS) / (double) FALL_TICKS, 0, 1);
+        fall = fall * fall * fall;
+        double t = random.nextDouble() * BODY_LENGTH, yaw = Math.toRadians(yBodyRot);
+        double fx = -Math.sin(yaw), fz = Math.cos(yaw);
+        double side = (random.nextDouble() - .5) * .45;
+        double along = t * fall, up = t * (1 - fall) + .15 * fall;
+        return new double[] {getX() + fx * along - fz * side, getY() + up, getZ() + fz * along + fx * side};
+    }
+
+    private void spirit(double spread, double rise) {
+        double[] p = bodyPoint();
+        level().addParticle(DimensionParticles.ELF_SPIRIT.get(), p[0], p[1], p[2],
+                (random.nextDouble() - .5) * 2 * spread, rise, (random.nextDouble() - .5) * 2 * spread);
+    }
+
+    /** 消失时不放原版的白烟，改为从身上散出大量绿色光点。 */
+    @Override
+    public void handleEntityEvent(byte id) {
+        if (id == EntityEvent.POOF) {
+            bursts++;
+            for (int i = 0; i < BURST; i++) spirit(.09, .03 + random.nextDouble() * .07);
+            return;
+        }
+        super.handleEntityEvent(id);
     }
 
     @Override

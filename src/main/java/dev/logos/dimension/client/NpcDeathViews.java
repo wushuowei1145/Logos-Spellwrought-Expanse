@@ -23,7 +23,7 @@ import net.minecraft.world.phys.Vec3;
 /**
  * 实际客户端预览森林精灵的死亡：白瓷台上三个精灵错开时间受到致命一击，截图那一刻从左到右分别是
  * 倒地停住（死亡动画末帧）、跪下中（死亡动画开始约 0.3 秒，已换上茫然挂泪的表情）、最后一击的受击动画中（常态表情）。
- * 两张截图：3/4 与正侧面（精灵朝东）。
+ * 倒下时身上飘出绿色光点；左边的精灵到时间消失时化作大量绿色光点（另截一张）。两组截图：3/4 与正侧面（精灵朝东）。
  */
 public abstract class NpcDeathViews implements UIScenario {
     private static final int COUNT = 3;
@@ -34,6 +34,9 @@ public abstract class NpcDeathViews implements UIScenario {
     private static final int LYING = 44, KNEELING = 15, HIT = 4;
     /** 服务端三个精灵的实体编号，从左到右。 */
     private final int[] ids = new int[COUNT];
+    /** 开始击杀前已生成的绿色光点数。 */
+    private long spiritsBefore;
+    private int burstsBefore;
 
     /** 0 为 3/4，1 为正侧面。 */
     protected int view() {
@@ -102,13 +105,14 @@ public abstract class NpcDeathViews implements UIScenario {
                     p.getAbilities().flying = true;
                     p.onUpdateAbilities();
                 })
-                .waitUntil("三个精灵同步到客户端", ctx -> elves().size() == COUNT).ticks(200)
+                .waitUntil("三个精灵同步到客户端", ctx -> elves().size() == COUNT)
                 .step("对准精灵", ctx -> {
                     var p = Minecraft.getInstance().player;
                     var d = look().subtract(p.getEyePosition());
                     p.setYRot((float) Math.toDegrees(Math.atan2(-d.x, d.z)));
                     p.setXRot((float) -Math.toDegrees(Math.atan2(d.y, Math.hypot(d.x, d.z))));
                 }).ticks(40)
+                .step("记下光点数", ctx -> spiritsBefore = ElfSpiritParticle.created())
                 // 按服务端上实际的死亡刻数等待（步骤之间的耗时不固定）
                 .server("左边的精灵受到致命一击", ctx -> kill(ctx.server().overworld(), 0))
                 .waitUntilServer("左边的精灵倒下了一阵", ctx -> deathTime(ctx.server().overworld(), 0) >= LYING - KNEELING)
@@ -127,11 +131,21 @@ public abstract class NpcDeathViews implements UIScenario {
                     return hidden.containsAll(List.of("Eyes", "Eyelid", "EyeBrow", "Mouth")) && !hidden.contains(ForestElf.DEATH_EXPRESSION)
                             && calm.contains(ForestElf.DEATH_EXPRESSION) && !calm.contains("Eyes");
                 })
+                .check("倒下时身上飘出绿色光点", ctx -> ElfSpiritParticle.created() - spiritsBefore >= 20)
                 .check("动画文件有死亡动画", ctx -> NpcAnimations.available(elves().get(0).npcAnimationAsset()).contains(NpcAnimations.DEATH))
                 .check("离屏截图有实际分辨率", ctx -> {
                     var target = Minecraft.getInstance().getMainRenderTarget();
                     return target.width == 1600 && target.height == 900;
                 })
+                // 左边的精灵到时间消失：化作大量绿色光点（不放原版白烟）
+                .step("记下消失前的光点数", ctx -> {
+                    spiritsBefore = ElfSpiritParticle.created();
+                    burstsBefore = ForestElf.bursts();
+                })
+                // 左边的精灵一化作光点就截图（光点约 2 秒内飘散）
+                .waitUntil("左边的精灵化作光点", ctx -> ForestElf.bursts() > burstsBefore)
+                .screenshot(view() == 1 ? "forest_elf_death_burst_side" : "forest_elf_death_burst")
+                .check("消失时没有被原版白烟代替，散出了大量光点", ctx -> ElfSpiritParticle.created() - spiritsBefore >= ForestElf.BURST / 2)
                 .teardown("恢复界面", ctx -> Minecraft.getInstance().options.hideGui = false);
     }
 
