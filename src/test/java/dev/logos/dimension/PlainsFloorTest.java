@@ -38,7 +38,7 @@ class PlainsFloorTest {
         for(var entry:data("worldgen/configured_feature/"+floor).getAsJsonObject("config")
                 .getAsJsonObject("to_place").getAsJsonArray("entries")){
             var object=entry.getAsJsonObject();
-            map.put(object.getAsJsonObject("data").get("Name").getAsString(),object.get("weight").getAsInt());
+            map.merge(object.getAsJsonObject("data").get("Name").getAsString(),object.get("weight").getAsInt(),Integer::sum);
         }
         return map;
     }
@@ -54,12 +54,11 @@ class PlainsFloorTest {
     /** 长风草原的招牌是"风里的长草"：牧草压过其它，短草与幼草补齐高度层次。 */
     @Test void silkFoldsIsWindsweptGrass()throws Exception{
         var w=weights(SILK+"_floor");
-        // 长风草原的主草是原版高草丛（两格高、自带群系草色），我们的矮草与短草只是补层次；
+        // 长风草原的主草是原版高草丛（两格高、自带群系草色），短草只是补层次；
         // 高草丛的上端由渲染层的叠加几何带出摆动。
         int tall=w.getOrDefault("minecraft:tall_grass",0);
         int grass=tall
-                 +Math.max(w.getOrDefault("logos_dimension:journey_meadow_grass",0),
-                           w.getOrDefault("logos_dimension:journey_meadow_grass_short",0))
+                 +w.getOrDefault("logos_dimension:journey_meadow_grass",0)
                  +w.getOrDefault("minecraft:short_grass",0);
         int young=w.getOrDefault("logos_dimension:journey_meadow_grass_young",0);
         int flowers=0;
@@ -82,8 +81,7 @@ class PlainsFloorTest {
             "旷野丘陵不应再引用共享草地表");
 
         var w=weights("cloudsea_dawn_ribbons_floor");
-        int grass=Math.max(w.getOrDefault("logos_dimension:journey_meadow_grass",0),
-                           w.getOrDefault("logos_dimension:journey_meadow_grass_short",0));
+        int grass=w.getOrDefault("logos_dimension:journey_meadow_grass",0);
         int shortGrass=w.getOrDefault("minecraft:short_grass",0);
         assertTrue(w.getOrDefault("minecraft:gravel",0)>0,"丘陵应该有砾石");
         assertTrue(w.getOrDefault("logos_dimension:journey_bracken",0)>0,"丘陵应该有卷叶蕨");
@@ -100,8 +98,7 @@ class PlainsFloorTest {
             "野花草甸不应再引用共享草地表");
 
         var w=weights("cloudsea_rose_dunes_floor");
-        int grass=Math.max(w.getOrDefault("logos_dimension:journey_meadow_grass",0),
-                           w.getOrDefault("logos_dimension:journey_meadow_grass_short",0))
+        int grass=w.getOrDefault("logos_dimension:journey_meadow_grass",0)
                  +w.getOrDefault("minecraft:short_grass",0);
         int flowers=0;
         for(var e:w.entrySet())
@@ -110,6 +107,16 @@ class PlainsFloorTest {
         flowers+=w.getOrDefault("minecraft:oxeye_daisy",0);
         assertTrue(flowers>grass,"野花权重应当压过草（花甸才像花甸）：花="+flowers+" 草="+grass);
         assertTrue(w.getOrDefault("logos_dimension:journey_fireweed",0)>0,"缺少柳兰点缀");
+    }
+
+    /** 删除矮草后必须使用原版 ID，并保留合并后的短草总权重。 */
+    @Test void plainsShortGrassUsesVanillaRegistryId()throws Exception{
+        for(var entry:Map.of(SILK,26,"cloudsea_dawn_ribbons",56,"cloudsea_rose_dunes",28).entrySet()){
+            var w=weights(entry.getKey()+"_floor");
+            assertEquals(entry.getValue(),w.get("minecraft:short_grass"),entry.getKey()+" 短草 ID 或总权重错误");
+            assertFalse(w.containsKey("logos_dimension:short_grass"),"短草属于 minecraft 命名空间");
+            assertFalse(w.containsKey("logos_dimension:journey_meadow_grass_short"),"不应再引用已删除的矮草");
+        }
     }
 
     @Test void otherPlainsStillUseTheSharedFloor()throws Exception{

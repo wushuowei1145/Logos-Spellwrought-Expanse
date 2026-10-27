@@ -1,5 +1,20 @@
 # 首版验证记录
 
+## 修复 #73 / #84 后服务端世界生成注册表加载失败
+
+2026-10-27：分支 `fix/rose-dunes-server-startup`，基于 `main` 的 `82b63dd`。
+
+#73 删除草原矮草注册后漏掉了野花草甸的引用；#84 将它改成不存在的 `logos_dimension:short_grass`，因此仍然启动失败。已实际复现 `Unknown registry key in ResourceKey[minecraft:root / minecraft:block]: logos_dimension:short_grass`。改为 `minecraft:short_grass`，保留原有权重；恢复生成脚本里误删的野花草甸配置。平原测试按相同 ID 累加权重，新增三个平原群系的原版短草 ID 与总权重检查，并清理允许旧矮草 ID 的逻辑。
+
+验证环境：Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25、Logos 0.6.0。
+
+- 回归：修复前新测试失败（7 项中 1 项失败），修复后全部通过。
+- 单元与构建：`test build` 成功，95/95 单元测试通过。
+- 世界：`runGameTestServer -PdimensionTests=logos_dimension:cloudsea_registry`，1/1 通过，世界生成数据成功加载。
+- 普通独立服务端：`runServer` 在全新测试存档进入 `Done (1.851s)!`，成功加载主世界、下界、末地和 `logos_dimension:cloudsea`。
+- 未运行实际客户端或使用维护者原存档测试；没有运行完整资源生成脚本（其依赖仓库外的主模组构建产物）。
+
+
 目标环境：Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25；Logos 0.5.1，主模组源码基线 `f196960`。当前开发安装包为 0.11.0。原炼金维度不包含建筑或 Boss；远行大陆包含中世纪聚落、精灵森林与世界树，不包含 Boss。
 
 ## 森林精灵兜帽与披风搭配规则
