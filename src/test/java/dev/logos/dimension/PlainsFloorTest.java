@@ -17,8 +17,7 @@ class PlainsFloorTest {
     private static final String SILK="cloudsea_silk_folds";
     /** 还没做地表改造的草原群系：每做一个就从这里删掉一个。 */
     private static final String[] OTHER_PLAINS={
-        "cloudsea_rose_dunes","cloudsea_amber_whirls",
-        "cloudsea_blue_bell_steps","cloudsea_aurora_dunes"};
+        "cloudsea_amber_whirls","cloudsea_blue_bell_steps","cloudsea_aurora_dunes"};
 
     private JsonObject data(String path)throws IOException{
         try(var input=getClass().getResourceAsStream("/data/logos_dimension/"+path+".json")){
@@ -90,6 +89,27 @@ class PlainsFloorTest {
         assertTrue(w.getOrDefault("logos_dimension:journey_bracken",0)>0,"丘陵应该有卷叶蕨");
         assertTrue(grass+shortGrass>w.getOrDefault("minecraft:gravel",0)*4,
             "砾石不能压过草，否则不像丘陵而像碎石坡");
+    }
+
+    /** 野花草甸：野花权重压过草，是六个平原里最"花"的一个。 */
+    @Test void roseDunesIsAFlowerMeadow()throws Exception{
+        var ground=vegetation("cloudsea_rose_dunes");
+        assertTrue(ground.contains("logos_dimension:cloudsea_rose_dunes_floor"),
+            "野花草甸应该引用自己的地表特征");
+        assertFalse(ground.contains("logos_dimension:meadow_floor"),
+            "野花草甸不应再引用共享草地表");
+
+        var w=weights("cloudsea_rose_dunes_floor");
+        int grass=Math.max(w.getOrDefault("logos_dimension:journey_meadow_grass",0),
+                           w.getOrDefault("logos_dimension:journey_meadow_grass_short",0))
+                 +w.getOrDefault("minecraft:short_grass",0);
+        int flowers=0;
+        for(var e:w.entrySet())
+            if(e.getKey().startsWith("logos_dimension:journey_")&&
+               !e.getKey().contains("meadow_grass")) flowers+=e.getValue();
+        flowers+=w.getOrDefault("minecraft:oxeye_daisy",0);
+        assertTrue(flowers>grass,"野花权重应当压过草（花甸才像花甸）：花="+flowers+" 草="+grass);
+        assertTrue(w.getOrDefault("logos_dimension:journey_fireweed",0)>0,"缺少柳兰点缀");
     }
 
     @Test void otherPlainsStillUseTheSharedFloor()throws Exception{
