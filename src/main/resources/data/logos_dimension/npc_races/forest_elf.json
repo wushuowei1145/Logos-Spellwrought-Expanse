@@ -224,6 +224,11 @@
    "headwear_twig_crown"
   ]
  ],
+ "requires": {
+  "hair_hooded": {
+   "outfit": "outfit_ranger"
+  }
+ },
  "expressions": [
   {
    "id": "expression_dazed_tears",

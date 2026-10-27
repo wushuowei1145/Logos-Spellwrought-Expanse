@@ -188,6 +188,45 @@ class NpcPartsTest {
         assertEquals(NpcParts.NONE, ELF.sanitize(clash).get("headwear"));
     }
 
+    /** 兜帽一定带披风；披风仍能搭配其他发型，不强制反向绑定。 */
+    @Test void hoodRequiresRangerButRangerCanAppearWithoutHood() {
+        RandomSource random = RandomSource.create(20261028);
+        int hood = 0, capeWithoutHood = 0;
+        for (int i = 0; i < 2000; i++) {
+            Map<String, String> a = ELF.random(random);
+            if ("hair_hooded".equals(a.get("hair"))) {
+                hood++;
+                assertEquals("outfit_ranger", a.get("outfit"), a.toString());
+                assertEquals(NpcParts.NONE, a.get("headwear"));
+            } else if ("outfit_ranger".equals(a.get("outfit"))) capeWithoutHood++;
+            assertEquals(a, ELF.sanitize(a));
+        }
+        assertTrue(hood > 0);
+        assertTrue(capeWithoutHood > 0);
+    }
+
+    /** 手动组合或旧存档里的孤立兜帽补齐披风；其他发型与服装保持原组合。 */
+    @Test void sanitizeCompletesHoodOutfitWithoutChangingOtherCombinations() {
+        for (String outfit : new String[]{NpcParts.NONE, "missing", "outfit_casual", "outfit_scholar", "outfit_ranger"}) {
+            Map<String, String> a = ELF.defaults();
+            a.put("hair", "hair_hooded");
+            a.put("outfit", outfit);
+            Map<String, String> fixed = ELF.sanitize(a);
+            assertEquals("hair_hooded", fixed.get("hair"));
+            assertEquals("outfit_ranger", fixed.get("outfit"));
+            assertEquals(NpcParts.NONE, fixed.get("headwear"));
+            assertEquals(fixed, ELF.sanitize(fixed));
+        }
+        for (String hair : new String[]{NpcParts.NONE, "hair_straight_long", "hair_short_bob", "hair_high_ponytail"}) {
+            for (var outfit : ELF.slot("outfit").parts()) {
+                Map<String, String> a = ELF.defaults();
+                a.put("hair", hair);
+                a.put("outfit", outfit.id());
+                assertEquals(a, ELF.sanitize(a));
+            }
+        }
+    }
+
     private static int residents(String template) throws Exception {
         try (var in = NpcPartsTest.class.getResourceAsStream("/data/logos_dimension/structure/elven/" + template + ".nbt")) {
             assertNotNull(in, template);
