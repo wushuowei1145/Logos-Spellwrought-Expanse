@@ -42,8 +42,9 @@ public final class NpcParts {
     /** 动画专用表情：平时隐藏；NPC 给出这个表情时显示 groups、隐藏 hides（常态眼嘴）。不参与随机抽取。 */
     public record Expression(String id, List<String> groups, List<String> hides) {}
 
-    /** conflicts：每组里的零件两两不能同时出现。 */
-    public record Race(String asset, List<Slot> slots, List<Set<String>> conflicts, List<Expression> expressions) {
+    /** conflicts：两两互斥；requires：前面槽位的零件指定后面槽位必须使用的零件。 */
+    public record Race(String asset, List<Slot> slots, List<Set<String>> conflicts,
+            Map<String, Map<String, String>> requires, List<Expression> expressions) {
         public Slot slot(String name) {
             for (Slot s : slots) if (s.name().equals(name)) return s;
             return null;
@@ -60,6 +61,19 @@ public final class NpcParts {
             return false;
         }
 
+        /** 单向依赖只约束后面的槽位，不会从披风反向要求兜帽。 */
+        private String requiredPart(Slot slot, Map<String, String> chosen) {
+            String required = null;
+            for (String part : chosen.values()) {
+                String id = requires.getOrDefault(part, Map.of()).get(slot.name());
+                if (id == null) continue;
+                if (required != null && !required.equals(id)) throw new IllegalStateException("零件依赖冲突：" + slot.name());
+                required = id;
+            }
+            if (required != null && clashesWith(required, chosen)) throw new IllegalStateException("依赖零件与已选零件互斥：" + required);
+            return required;
+        }
+
         /** 每个槽位都取默认零件。 */
         public Map<String, String> defaults() {
             return sanitize(Map.of());
@@ -67,11 +81,17 @@ public final class NpcParts {
 
         /**
          * 每个槽位均匀随机抽一个零件（权重以后再加），按槽位顺序抽，跳过和已抽中零件互斥的；
+         * 前面零件指定了本槽位的依赖时，直接使用指定零件。
          * 可选槽位只有在没有可用零件时才是 {@link #NONE}：普通居民都穿戴整齐。
          */
         public Map<String, String> random(RandomSource random) {
             Map<String, String> out = new LinkedHashMap<>();
             for (Slot s : slots) {
+                String required = requiredPart(s, out);
+                if (required != null) {
+                    out.put(s.name(), required);
+                    continue;
+                }
                 List<Part> ok = new ArrayList<>();
                 for (Part p : s.parts()) if (!clashesWith(p.id(), out)) ok.add(p);
                 out.put(s.name(), ok.isEmpty() ? fallback(s, out) : ok.get(random.nextInt(ok.size())).id());
@@ -87,7 +107,8 @@ public final class NpcParts {
 
         /**
          * 补齐缺的槽位、换掉未知的 ID（零件被删除或改名时回退到默认）、丢掉不认识的槽位；
-         * 和前面槽位互斥的零件换成本槽位第一个不冲突的零件（可选槽位换成 {@link #NONE}）。
+         * 和前面槽位互斥的零件换成本槽位第一个不冲突的零件（可选槽位换成 {@link #NONE}）；
+         * 前面零件指定的依赖优先，例如戴兜帽时把服装补为披风，已有记录同样适用。
          */
         public Map<String, String> sanitize(Map<String, String> in) {
             Map<String, String> out = new LinkedHashMap<>();
@@ -95,6 +116,8 @@ public final class NpcParts {
                 String id = in.get(s.name());
                 boolean known = id != null && (s.find(id) != null || s.optional() && NONE.equals(id));
                 if (!known) id = s.parts().getFirst().id();
+                String required = requiredPart(s, out);
+                if (required != null) id = required;
                 if (!NONE.equals(id) && clashesWith(id, out)) id = fallback(s, out);
                 out.put(s.name(), id);
             }
@@ -154,7 +177,23 @@ public final class NpcParts {
                     expressions.add(new Expression(eo.get("id").getAsString(), List.copyOf(groups), List.copyOf(hides)));
                 }
             }
-            return new Race(asset, List.copyOf(slots), List.copyOf(conflicts), List.copyOf(expressions));
+            Map<String, Map<String, String>> requires = new LinkedHashMap<>();
+            if (root.has("requires")) for (var rule : root.getAsJsonObject("requires").entrySet()) {
+                int source = -1;
+                for (int i = 0; i < slots.size(); i++) if (slots.get(i).find(rule.getKey()) != null) source = i;
+                if (source < 0) throw new IllegalArgumentException("依赖来源零件不存在：" + rule.getKey());
+                Map<String, String> targets = new LinkedHashMap<>();
+                for (var target : rule.getValue().getAsJsonObject().entrySet()) {
+                    int index = -1;
+                    for (int i = 0; i < slots.size(); i++) if (slots.get(i).name().equals(target.getKey())) index = i;
+                    String id = target.getValue().getAsString();
+                    if (index <= source || slots.get(index).find(id) == null)
+                        throw new IllegalArgumentException("依赖必须指向后面槽位的有效零件：" + target.getKey() + "=" + id);
+                    targets.put(target.getKey(), id);
+                }
+                requires.put(rule.getKey(), Map.copyOf(targets));
+            }
+            return new Race(asset, List.copyOf(slots), List.copyOf(conflicts), Map.copyOf(requires), List.copyOf(expressions));
         }
 
         /** 从模组资源读零件表；服务端（抽外观）与客户端（隐藏零件）读同一份。 */
