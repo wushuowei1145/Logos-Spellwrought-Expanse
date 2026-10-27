@@ -49,7 +49,8 @@ import net.minecraft.world.level.storage.ValueOutput;
  *
  * <ul>
  * <li>外观：生成时按零件表随机抽一次，存解析后的零件 ID（docs/NPC_APPEARANCE.md 第 6 节）。</li>
- * <li>战斗：拿「自然之力」远射（{@link ElfBowAttackGoal}），主动攻击附近的亡灵与灾厄村民；
+ * <li>战斗：拿「自然之力」远射（{@link ElfBowAttackGoal}），主动攻击附近的亡灵与灾厄村民。
+ *     弓平时收着，只在战斗和战斗后的警戒期里拿在手上（{@link #weapon}）；
  *     僵尸和灾厄村民也把精灵当村民打（{@link ElfFactions}）。</li>
  * <li>治疗：200 点魔力、每秒恢复 5 点，用 Logos 示例法术治疗受伤的同伴（{@link ElfHealGoal}）。
  *     作为玩家的使魔时把玩家视为友方。</li>
@@ -79,6 +80,12 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     private UUID master;
     /** 服务端：剧情动作还剩几刻。 */
     private int actionTicks;
+    /** 战斗或受伤之后保持警戒（弓不收起）的刻数。 */
+    public static final int ALERT_TICKS = 100;
+    /** 收起来的武器；拿在手上时这里为空。存档 {@code Weapon}。 */
+    private ItemStack weapon = ItemStack.EMPTY;
+    /** 服务端：警戒还剩几刻。 */
+    private int alertTicks;
 
     public ForestElf(EntityType<? extends ForestElf> type, Level level) {
         super(type, level);
@@ -130,7 +137,8 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, EntitySpawnReason reason, SpawnGroupData data) {
         setAppearance(NpcParts.FOREST_ELF.random(level.getRandom()));
-        setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(NaturesForceItem.ITEM.get()));
+        // 弓收着，战斗时才拿出来（见 updateWeapon）
+        weapon = new ItemStack(NaturesForceItem.ITEM.get());
         setDropChance(EquipmentSlot.MAINHAND, 0);
         if (reason == EntitySpawnReason.STRUCTURE) {
             setPersistenceRequired();
@@ -193,6 +201,42 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
         if (level().isClientSide()) return;
         if (mana < MAX_MANA) mana = Math.min(MAX_MANA, mana + MANA_PER_SECOND / 20f);
         if (actionTicks > 0 && --actionTicks == 0) entityData.set(ACTION, "");
+        updateWeapon();
+    }
+
+    // ---------------------------------------------------------------- 武器：平时收起，战斗与警戒时拿出
+
+    /** 收着的或拿在手上的武器（没有为空）。 */
+    public ItemStack weapon() {
+        return weapon.isEmpty() && getMainHandItem().getItem() instanceof NaturesForceItem ? getMainHandItem() : weapon;
+    }
+
+    /** 换一把武器（收着）；传空即没有武器。 */
+    public void setWeapon(ItemStack stack) {
+        if (getMainHandItem().getItem() instanceof NaturesForceItem) setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+        weapon = stack.copy();
+    }
+
+    /** 在战斗中，或者战斗、受伤之后的警戒期内。 */
+    public boolean isAlert() {
+        return getTarget() != null || alertTicks > 0;
+    }
+
+    /** 服务端每刻：警戒时把弓拿出来，警戒结束（且没在拉弓）时收起来。 */
+    private void updateWeapon() {
+        if (getTarget() != null || hurtTime > 0) alertTicks = ALERT_TICKS;
+        else if (alertTicks > 0) alertTicks--;
+        ItemStack hand = getMainHandItem();
+        if (isAlert()) {
+            if (hand.isEmpty() && !weapon.isEmpty()) {
+                setItemSlot(EquipmentSlot.MAINHAND, weapon);
+                weapon = ItemStack.EMPTY;
+            }
+        } else if (hand.getItem() instanceof NaturesForceItem && !isUsingItem() && weapon.isEmpty()) {
+            // 旧存档里一直拿在手上的弓也在这里收起来
+            weapon = hand;
+            setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+        }
     }
 
     // ---------------------------------------------------------------- 剧情动作与瞄准（动画）
@@ -228,6 +272,7 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
         super.addAdditionalSaveData(output);
         output.store("Appearance", APPEARANCE_CODEC, npcAppearance());
         output.putFloat("Mana", mana);
+        if (!weapon.isEmpty()) output.store("Weapon", ItemStack.CODEC, weapon);
     }
 
     @Override
@@ -235,6 +280,7 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
         super.readAdditionalSaveData(input);
         input.read("Appearance", APPEARANCE_CODEC).ifPresent(this::setAppearance);
         mana = Math.clamp(input.getFloatOr("Mana", MAX_MANA), 0, MAX_MANA);
+        weapon = input.read("Weapon", ItemStack.CODEC).orElse(ItemStack.EMPTY);
     }
 
     // ---------------------------------------------------------------- 声音与交互（对标村民）
