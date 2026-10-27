@@ -23,17 +23,17 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * 实际客户端预览森林精灵的零件组合：在主世界高处的白瓷台上并排放五个精灵，分别是默认外观、
- * 短发、短发配垂眼与猫猫嘴、长直发配垂眼与猫猫嘴（不戴头饰）、素体（不显示发型、头饰、服装）。
+ * 高马尾花匠、高马尾休闲装（垂眼与猫猫嘴）、高马尾白大衣学者、兜帽巡林弓手。
  * 精灵关掉 AI 站定朝向镜头，待机动画照常播放。三张截图：正面、3/4、脸部近景。
  */
 public abstract class NpcPreviewViews implements UIScenario {
     /** 每个精灵的外观（只写和默认不同的槽位）。 */
     static final List<Map<String, String>> LINEUP = List.of(
             Map.of(),
-            Map.of("hair", "hair_short_bob", "headwear", NpcParts.NONE),
-            Map.of("hair", "hair_short_bob", "eyes", "eyes_droopy", "mouth", "mouth_cat"),
-            Map.of("eyes", "eyes_droopy", "mouth", "mouth_cat", "headwear", NpcParts.NONE),
-            Map.of("hair", NpcParts.NONE, "headwear", NpcParts.NONE, "outfit", NpcParts.NONE));
+            Map.of("hair", "hair_high_ponytail", "headwear", NpcParts.NONE, "outfit", "outfit_gardener"),
+            Map.of("hair", "hair_high_ponytail", "outfit", "outfit_casual", "eyes", "eyes_droopy", "mouth", "mouth_cat"),
+            Map.of("hair", "hair_high_ponytail", "outfit", "outfit_scholar", "headwear", NpcParts.NONE),
+            Map.of("hair", "hair_hooded", "outfit", "outfit_ranger"));
     private static final double SPACING = 1.7;
     private static final int FLOOR = 99;
 
