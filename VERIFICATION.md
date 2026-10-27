@@ -2,6 +2,29 @@
 
 目标环境：Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25；Logos 0.5.1，主模组源码基线 `f196960`。当前开发安装包为 0.11.0。原炼金维度不包含建筑或 Boss；远行大陆包含中世纪聚落、精灵森林与世界树，不包含 Boss。
 
+## 森林精灵动画：移动、拉弓瞄准与施法动作
+
+2026-10-27：分支 `feat/forest-elf-animations`，清单见 [NPC 动画清单](docs/NPC_ANIMATION_LIST.md)。
+
+- **借用车万女仆**（CC BY-NC-SA 4.0，[CREDITS.md](CREDITS.md) 登记）：`walk`、`jump`、`attacked`、`ladder_up` / `ladder_stillness` / `ladder_down`、`swim_stand`、`swing_hand`；位移按 2 倍制作放大。
+- **自绘**（`tools/forest_elf_animations.py`）：`hold_mainhand:bow`、`use_mainhand:bow`（1.2 秒拉满停住）、`heal_touch`、`heal_ring`、`greet`、`refuse`。
+- **瞄准**：拉弓、放抚生之触时，渲染器把视线俯仰与偏航叠加到 `Arm`，弓和施法的手指向目标；自然之力的拉弓贴图按精灵 24 刻满弦的比例推进。
+- **剧情动作**：精灵用同步字段给出动作名（治疗、右键行礼 / 拒绝），播完自动清掉。
+- **修正**：NPC 头部俯仰方向原来是反的（抬头时低头），现在和视线一致；站着不动的 NPC 在客户端不再误播跳跃（客户端的「在地面上」只在移动时更新）。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | **86/86** 通过；新增 `ForestElfAnimationFileTest` 4 项：现有行为的动作齐全、动画骨骼都在模型里、没有 TLM 专用 Molang、自绘循环首尾一致 |
+| 世界（GameTest `logos_dimension:forest_elf*`） | **7/7** 通过 |
+| 实际客户端（`group:npc_preview`） | **6/6 场景、18/18 检查**通过，新增三个动作场景：拉弓的精灵在客户端处于瞄准、剧情动作同步、站着不动的精灵不播跳跃；人工查看截图 |
+
+截图在 `docs/screenshots/npc-preview/`：
+
+- `forest-elf-bow.png`：持弓、平射拉弓、抬头 30° 并向左偏 25° 拉弓，弓与头一起朝向视线；
+- `forest-elf-bow-side.png`：正侧面，平射时弓臂水平，抬头 30° 时弓随之抬起；
+- `forest-elf-spells.png`：抚生之触、生息之环、行礼。
+
+没有验证的部分：实际战斗与寻路中的连贯性（走路、爬绳、受伤只确认了动画存在且骨骼匹配，没有逐帧截图）、`refuse` 的画面、多人、光影。
 ## 森林精灵第二批随机外观部件
 
 2026-10-27：分支 `feat/forest-elf-appearance-parts`，基于 `main` 的 `17c2dbd`。同步维护者最新手改并修正 UV 后的合并几何、128×240 贴图与零件表，新增高马尾、花匠工作服、休闲短装和白大衣学者服。动画与主分支字节一致，不引入新动画或借用素材。

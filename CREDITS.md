@@ -21,7 +21,16 @@ NPC 的骨骼命名、动画名、动画控制器结构与优先级、手部条�
 
 | 本模组的动画文件 | 动画名 | 来源动画 | 修改 |
 |---|---|---|---|
-| （暂无） | | | |
+| `forest_elf.animation.json` | `walk` | `walk` | 位移 ×2（本模组 2 倍制作） |
+| `forest_elf.animation.json` | `jump` | `jump` | 无 |
+| `forest_elf.animation.json` | `attacked` | `attacked` | 位移 ×2 |
+| `forest_elf.animation.json` | `ladder_up` | `ladder_up` | 位移 ×2；去掉精灵模型没有的 `LongHair` |
+| `forest_elf.animation.json` | `ladder_stillness` | `ladder_stillness` | 位移 ×2；去掉 `LongHair` |
+| `forest_elf.animation.json` | `ladder_down` | `ladder_down` | 位移 ×2；去掉 `LongHair` |
+| `forest_elf.animation.json` | `swim_stand` | `swim_stand` | 位移 ×2 |
+| `forest_elf.animation.json` | `swing_hand` | `swing_hand` | 无 |
+
+来源固定在车万女仆 1.21 分支的提交 `207647c85740b1d0971de6040d6dd57cea62528c`，由 `tools/forest_elf_animations.py` 读取、修改后写入。因此 `forest_elf.animation.json` 整个文件（包括同一文件里自绘的持弓、拉弓、治疗、行礼、拒绝动画）以 CC BY-NC-SA 4.0 发布。
 
 借用新动画时在这里加一行；只参照节奏和姿势、自己从头制作的动画不用登记。
 
