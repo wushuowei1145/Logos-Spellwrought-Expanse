@@ -47,8 +47,10 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
     public static final float MODEL_SCALE = 0.5f;
     /** 随视线转动的头部骨骼。 */
     public static final String HEAD_BONE = "Head";
-    /** 双臂的共同父骨骼（肩线中点）；瞄准时随视线转动。 */
+    /** 双臂的共同父骨骼（肩线中点）；瞄准时随视线俯仰。 */
     public static final String ARMS_BONE = "Arm";
+    /** 整个身体（不含根骨骼）；瞄准时整个人转向视线的水平方向。 */
+    public static final String BODY_BONE = "AllBody";
     /** 手持物品的挂点骨骼。 */
     public static final String RIGHT_HAND_BONE = "RightHandLocator";
     public static final String LEFT_HAND_BONE = "LeftHandLocator";
@@ -123,7 +125,9 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
     }
 
     /**
-     * 头部跟随视线：在动画姿势之上叠加俯仰与相对身体的偏航；瞄准时双臂（{@link #ARMS_BONE}）也一样，弓和施法的手指向目标。
+     * 头部跟随视线：在动画姿势之上叠加俯仰与相对身体的偏航。
+     * 瞄准时整个人（{@link #BODY_BONE}）转向视线的水平方向、头不再单独偏转，双臂（{@link #ARMS_BONE}）跟着俯仰，
+     * 弓和施法的手指向目标；身体的侧转只来自动画本身（拉弓时上身侧转不超过 45°）。
      * 发光骨骼：常规绘制里跳过它自身的方块，改由 {@link #submitGlow} 以满亮度补画；被动画隐藏的保持隐藏。
      */
     @Override
@@ -132,14 +136,15 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
         R state = info.renderState();
         // 原版俯仰向下为正，GeckoLib 骨骼绕 X 轴为正时朝前的部分向上抬，所以取反
         // 死亡动画自己摆头，不再叠加视线
+        boolean aiming = info.getOrDefaultGeckolibData(AIMING, false);
         if (!info.getOrDefaultGeckolibData(ANIMATED_DEATH, false)) snapshots.ifPresent(HEAD_BONE, head -> {
             head.setRotX(head.getRotX() - state.xRot * Mth.DEG_TO_RAD);
-            head.setRotY(head.getRotY() + state.yRot * Mth.DEG_TO_RAD);
+            if (!aiming) head.setRotY(head.getRotY() + state.yRot * Mth.DEG_TO_RAD);
         });
-        if (info.getOrDefaultGeckolibData(AIMING, false)) snapshots.ifPresent(ARMS_BONE, arms -> {
-            arms.setRotX(arms.getRotX() - state.xRot * Mth.DEG_TO_RAD);
-            arms.setRotY(arms.getRotY() + state.yRot * Mth.DEG_TO_RAD);
-        });
+        if (aiming) {
+            snapshots.ifPresent(BODY_BONE, body -> body.setRotY(body.getRotY() + state.yRot * Mth.DEG_TO_RAD));
+            snapshots.ifPresent(ARMS_BONE, arms -> arms.setRotX(arms.getRotX() - state.xRot * Mth.DEG_TO_RAD));
+        }
         // 没选中的零件：整组连同子骨骼都不画
         Set<String> hidden = info.getOrDefaultGeckolibData(HIDDEN_PARTS, Set.of());
         for (String group : hidden) snapshots.ifPresent(group, s -> s.skipRender(true).skipChildrenRender(true));
