@@ -45,7 +45,8 @@
 | `swing_hand` | 默认挥手 / 近战 / 交互 | ✅ | 有（借用 TLM） | |
 | `hold_mainhand:empty` | 空手 | ▫ | 缺 | 空手时放松的手型 |
 | `hold_mainhand:sword` + `swing:sword` | 持剑、挥剑 | ▫ | 缺 | 以后的近战种族 |
-| `hold_offhand:shield` + `use_offhand:shield` | 举盾 | ▫ | 缺 | |
+| `hold_mainhand:spear` + `swing:spear` | 持矛、戳刺 | ✅ | 有（自绘） | 仅写右臂，可与副手举盾叠加 |
+| `hold_offhand:shield` + `use_offhand:shield` | 举盾 | ✅ | 有（自绘） | 仅写左臂，不覆盖右手戳刺；也提供主手盾版本 |
 | `use_mainhand:eat` / `use_mainhand:drink` | 吃、喝 | ▫ | 缺 | |
 | `hold_mainhand:crossbow` / `use_mainhand:crossbow` / `hold_mainhand:charged_crossbow` | 弩 | ▫ | 缺 | |
 

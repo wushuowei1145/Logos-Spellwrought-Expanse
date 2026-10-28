@@ -144,7 +144,8 @@ public final class NpcAnimations {
         if (stack.is(ItemTags.PICKAXES)) return "pickaxe";
         if (stack.is(ItemTags.SHOVELS)) return "shovel";
         if (stack.is(ItemTags.HOES)) return "hoe";
-        if (stack.is(Items.SHIELD)) return "shield";
+        if (stack.has(DataComponents.BLOCKS_ATTACKS)) return "shield";
+        if (stack.has(DataComponents.PIERCING_WEAPON)) return "spear";
         if (stack.is(Items.SPLASH_POTION) || stack.is(Items.LINGERING_POTION)) return "throwable_potion";
         return null;
     }

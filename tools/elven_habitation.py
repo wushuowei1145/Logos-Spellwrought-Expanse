@@ -86,9 +86,10 @@ def tree_house(cells, conifer=False, variant=0, offset=(0, 0, 0)):
 RESIDENT = NS + 'forest_elf'
 
 
-def resident(x, y, z):
-    """结构模板里的一位森林精灵：放置时原版按 STRUCTURE 原因调用 finalizeSpawn，在那里抽外观、拿弓。"""
-    return {'pos': [x + .5, float(y), z + .5], 'blockPos': [x, y, z], 'nbt': {'id': RESIDENT}}
+def resident(x, y, z, guard=False):
+    """结构放置时按 STRUCTURE 初始化；普通居民拿弓，顶楼守卫标记让实体初始化矛盾。"""
+    return {'pos': [x + .5, float(y), z + .5], 'blockPos': [x, y, z],
+            'nbt': {'id': RESIDENT, **({'WorldTreeGuard': 1} if guard else {})}}
 
 
 def house_residents(offset, floor):
@@ -105,7 +106,7 @@ def standable(cells, x, y, z):
 
 
 def world_residents(cells, levels):
-    """世界树：大厅三位，上面三层回廊各两位（参照村庄：住处附近成群出现）。位置逐个检查脚下有地、头上两格是空气。"""
+    """世界树：大厅三位、三层回廊各两位、顶楼两位守卫；逐个检查脚下有地、头上两格为空气。"""
     out = []
     hall = [(3, 1), (-3, -2), (1, -4), (-4, 3), (4, -3)]
     for x, z in hall:
@@ -124,6 +125,16 @@ def world_residents(cells, levels):
                 placed += 1
             if placed == 2:
                 break
+    # 顶楼单独增加两位矛盾守卫，保留原来的居民与装备。
+    placed = 0
+    for x, z in ring:
+        y = levels['floors'][-1] + 1
+        if standable(cells, x, y, z):
+            out.append(resident(x, y, z, guard=True))
+            placed += 1
+        if placed == 2:
+            break
+    assert placed == 2, '世界树顶楼没有足够的守卫站位'
     return out
 
 

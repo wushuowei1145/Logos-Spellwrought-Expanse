@@ -5,7 +5,7 @@
 - 待机 `idle` 保留动画文件里现有的（模型合并脚本导出的那一份）。
 - 借用 TLM 默认女仆动画（CC BY-NC-SA 4.0，CREDITS.md 登记）：位移按本模组的 2 倍制作放大，
   去掉精灵模型没有的骨骼。来源固定在 TLM 1.21 分支的一个提交，重跑结果不变。
-- 自绘：持弓、拉弓、抚生之触、生息之环、行礼、拒绝。手臂静止姿势外张约 18°（A 字），
+- 自绘：持弓、拉弓、持矛、戳刺、举盾、抚生之触、生息之环、行礼、拒绝。手臂静止姿势外张约 18°（A 字），
   向前举时用 z 抵消。弓和施法的手指向目标由渲染器按视线俯仰叠加在 `Arm` 骨骼上，这里只做水平的姿势。
 - 角度沿用 Bedrock 动画的写法：手臂 x 为负是向前举，身体 x 为正是前倾。
 - 死亡 `death`：维护者在 Blockbench 里做的原创动画（仓库外 forest-elf-model/forest_elf/Animation/forest_elf_death.bbmodel），
@@ -110,6 +110,34 @@ R_FWD, L_FWD = -18, 18
 def drawn():
     """代码绘制的动作。"""
     a = {}
+    # 矛的持握与戳刺只写右臂，盾的使用只写左臂，双持时两个控制器可以叠加。
+    a["hold_mainhand:spear"] = pose(2, {
+        "RightArm": {0: [-64, -8, R_FWD], 2: [-64, -8, R_FWD]},
+        "RightForeArm": {0: [-22, 0, 0], 2: [-22, 0, 0]},
+        "RightHandLocator": {0: [90, 0, 0], 2: [90, 0, 0]},
+    }, loop=True)
+    a["swing:spear"] = pose(.3, {
+        "RightArm": {0: [-64, -8, R_FWD], .08: [-48, -12, R_FWD], .16: [-90, 0, R_FWD], .3: [-64, -8, R_FWD]},
+        "RightForeArm": {0: [-22, 0, 0], .08: [-45, 0, 0], .16: [0, 0, 0], .3: [-22, 0, 0]},
+    }, loop=False)
+    for side, sign, hand in [("Left", 1, "offhand"), ("Right", -1, "mainhand")]:
+        # 整臂在同侧肩膀前方举盾，抵消 A 字初始角，不向身体中线内收；前臂和手腕保持自然。
+        # 挂点角度由肩部、GeckoLib 手持层和原版盾模型的合成矩阵求逆，只校正物品，让盾面直立朝前。
+        shoulder = [.18355, sign * 3.0808, sign * 18.17591]
+        # 未格挡时绕掌心的手臂轴翻转半圈，让横持的盾从身体内侧转到外侧。
+        locator = [0, 180, 0 if side == "Left" else 180]
+        a["hold_" + hand + ":shield"] = pose(2, {
+            side + "Arm": {0: shoulder, 2: shoulder},
+            side + "ForeArm": {0: [0, 0, 0], 2: [0, 0, 0]},
+            side + "HandLocator": {0: locator, 2: locator},
+        }, loop=True)
+        block = [shoulder[0] - 54, shoulder[1], shoulder[2]]
+        block_locator = [101.636249, -14.383372, -20.669024] if side == "Left" else [-101.636249, -14.383372, -159.330976]
+        a["use_" + hand + ":shield"] = pose(2, {
+            side + "Arm": {0: block, 2: block},
+            side + "ForeArm": {0: [0, 0, 0], 2: [0, 0, 0]},
+            side + "HandLocator": {0: block_locator, 2: block_locator},
+        }, loop=True)
     # 持弓：弓臂（右手）微微前提、肘部弯曲，弓斜握在身前侧
     a["hold_mainhand:bow"] = pose(2, {
         "RightArm": {0: [-14, 0, -6], 2: [-14, 0, -6]},

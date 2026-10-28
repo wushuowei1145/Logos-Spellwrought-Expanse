@@ -38166,6 +38166,414 @@
           }
         }
       }
+    },
+    "hold_mainhand:spear": {
+      "animation_length": 2,
+      "bones": {
+        "RightArm": {
+          "rotation": {
+            "0": {
+              "post": [
+                -64,
+                -8,
+                -18
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "2": {
+              "post": [
+                -64,
+                -8,
+                -18
+              ],
+              "lerp_mode": "catmullrom"
+            }
+          }
+        },
+        "RightForeArm": {
+          "rotation": {
+            "0": {
+              "post": [
+                -22,
+                0,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "2": {
+              "post": [
+                -22,
+                0,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            }
+          }
+        },
+        "RightHandLocator": {
+          "rotation": {
+            "0": {
+              "post": [
+                90,
+                0,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "2": {
+              "post": [
+                90,
+                0,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            }
+          }
+        }
+      },
+      "loop": true
+    },
+    "swing:spear": {
+      "animation_length": 0.3,
+      "bones": {
+        "RightArm": {
+          "rotation": {
+            "0": {
+              "post": [
+                -64,
+                -8,
+                -18
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "0.08": {
+              "post": [
+                -48,
+                -12,
+                -18
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "0.16": {
+              "post": [
+                -90,
+                0,
+                -18
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "0.3": {
+              "post": [
+                -64,
+                -8,
+                -18
+              ],
+              "lerp_mode": "catmullrom"
+            }
+          }
+        },
+        "RightForeArm": {
+          "rotation": {
+            "0": {
+              "post": [
+                -22,
+                0,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "0.08": {
+              "post": [
+                -45,
+                0,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "0.16": {
+              "post": [
+                0,
+                0,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "0.3": {
+              "post": [
+                -22,
+                0,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            }
+          }
+        }
+      },
+      "loop": false
+    },
+    "hold_offhand:shield": {
+      "animation_length": 2,
+      "bones": {
+        "LeftArm": {
+          "rotation": {
+            "0": {
+              "post": [
+                0.18355,
+                3.0808,
+                18.17591
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "2": {
+              "post": [
+                0.18355,
+                3.0808,
+                18.17591
+              ],
+              "lerp_mode": "catmullrom"
+            }
+          }
+        },
+        "LeftForeArm": {
+          "rotation": {
+            "0": {
+              "post": [
+                0,
+                0,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "2": {
+              "post": [
+                0,
+                0,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            }
+          }
+        },
+        "LeftHandLocator": {
+          "rotation": {
+            "0": {
+              "post": [
+                0,
+                180,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "2": {
+              "post": [
+                0,
+                180,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            }
+          }
+        }
+      },
+      "loop": true
+    },
+    "use_offhand:shield": {
+      "animation_length": 2,
+      "bones": {
+        "LeftArm": {
+          "rotation": {
+            "0": {
+              "post": [
+                -53.81645,
+                3.0808,
+                18.17591
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "2": {
+              "post": [
+                -53.81645,
+                3.0808,
+                18.17591
+              ],
+              "lerp_mode": "catmullrom"
+            }
+          }
+        },
+        "LeftForeArm": {
+          "rotation": {
+            "0": {
+              "post": [
+                0,
+                0,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "2": {
+              "post": [
+                0,
+                0,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            }
+          }
+        },
+        "LeftHandLocator": {
+          "rotation": {
+            "0": {
+              "post": [
+                101.636249,
+                -14.383372,
+                -20.669024
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "2": {
+              "post": [
+                101.636249,
+                -14.383372,
+                -20.669024
+              ],
+              "lerp_mode": "catmullrom"
+            }
+          }
+        }
+      },
+      "loop": true
+    },
+    "hold_mainhand:shield": {
+      "animation_length": 2,
+      "bones": {
+        "RightArm": {
+          "rotation": {
+            "0": {
+              "post": [
+                0.18355,
+                -3.0808,
+                -18.17591
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "2": {
+              "post": [
+                0.18355,
+                -3.0808,
+                -18.17591
+              ],
+              "lerp_mode": "catmullrom"
+            }
+          }
+        },
+        "RightForeArm": {
+          "rotation": {
+            "0": {
+              "post": [
+                0,
+                0,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "2": {
+              "post": [
+                0,
+                0,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            }
+          }
+        },
+        "RightHandLocator": {
+          "rotation": {
+            "0": {
+              "post": [
+                0,
+                180,
+                180
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "2": {
+              "post": [
+                0,
+                180,
+                180
+              ],
+              "lerp_mode": "catmullrom"
+            }
+          }
+        }
+      },
+      "loop": true
+    },
+    "use_mainhand:shield": {
+      "animation_length": 2,
+      "bones": {
+        "RightArm": {
+          "rotation": {
+            "0": {
+              "post": [
+                -53.81645,
+                -3.0808,
+                -18.17591
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "2": {
+              "post": [
+                -53.81645,
+                -3.0808,
+                -18.17591
+              ],
+              "lerp_mode": "catmullrom"
+            }
+          }
+        },
+        "RightForeArm": {
+          "rotation": {
+            "0": {
+              "post": [
+                0,
+                0,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "2": {
+              "post": [
+                0,
+                0,
+                0
+              ],
+              "lerp_mode": "catmullrom"
+            }
+          }
+        },
+        "RightHandLocator": {
+          "rotation": {
+            "0": {
+              "post": [
+                -101.636249,
+                -14.383372,
+                -159.330976
+              ],
+              "lerp_mode": "catmullrom"
+            },
+            "2": {
+              "post": [
+                -101.636249,
+                -14.383372,
+                -159.330976
+              ],
+              "lerp_mode": "catmullrom"
+            }
+          }
+        }
+      },
+      "loop": true
     }
   }
 }
