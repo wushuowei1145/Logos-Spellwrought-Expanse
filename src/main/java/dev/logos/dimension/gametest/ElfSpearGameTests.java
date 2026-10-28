@@ -56,7 +56,10 @@ public final class ElfSpearGameTests {
                 Map.entry("elf_spear_blocked", ElfSpearGameTests::blocked),
                 Map.entry("elf_spear_mark_save", ElfSpearGameTests::saveMark),
                 Map.entry("elf_spear_many", ElfSpearGameTests::many),
-                Map.entry("elf_spear_offhand_delay", ElfSpearGameTests::offhandDelay));
+                Map.entry("elf_spear_offhand_delay", ElfSpearGameTests::offhandDelay),
+                Map.entry("elf_spear_guard_reverse", ElfSpearGameTests::guardReverse),
+                Map.entry("elf_spear_guard_no_charge", ElfSpearGameTests::guardNoCharge),
+                Map.entry("elf_spear_guard_break", ElfSpearGameTests::guardBreak));
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test)); FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
             var env = event.registerEnvironment(LogosDimension.id("elf_spear"), new TestEnvironmentDefinition.AllOf());
@@ -249,6 +252,69 @@ public final class ElfSpearGameTests {
             f.charge(10, InteractionHand.OFF_HAND, 11); health(h, f.target, 100);
             h.assertTrue(f.marked() && LogosNatureBridge.mana(f.p) == 20, "起手未完成就触发");
             f.charge(10, InteractionHand.OFF_HAND, 12); health(h, f.target, 84);
+        } h.succeed();
+    }
+    private static void reverse(Fixture f) {
+        f.p.stopUsingItem();
+        f.p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(AncientEmbraceItem.ITEM.get()));
+        f.p.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(ElfSpearItem.ITEM.get()));
+        for (int i = 0; i < 20; i++) f.p.doTick();
+        f.p.setYRot(-90); f.p.setYHeadRot(-90); f.p.setXRot(0); LogosNatureBridge.mana(f.p, 20);
+        f.target.setPos(f.p.position().add(3, 0, 0));
+    }
+    private static void stabPacket(Fixture f) {
+        f.p.connection.handlePlayerAction(new net.minecraft.network.protocol.game.ServerboundPlayerActionPacket(
+                net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.STAB,
+                BlockPos.ZERO, net.minecraft.core.Direction.DOWN));
+    }
+    private static void guardReverse(GameTestHelper h) {
+        try (var f = Fixture.create(h)) {
+            reverse(f); stabPacket(f); health(h, f.target, 96);
+            h.assertTrue(f.marked() && !f.p.isUsingItem() && f.p.swingingArm == InteractionHand.OFF_HAND, "反手左键没有普通戳刺或挥错手");
+            h.assertTrue(f.p.getAttributeValue(Attributes.ATTACK_DAMAGE) == 1 && f.p.getAttributeValue(Attributes.ATTACK_SPEED) == 4,
+                    "副手矛属性残留为常驻加成");
+            f.target.invulnerableTime = 0; stabPacket(f); health(h, f.target, 96);
+            f.p.getMainHandItem().use(h.getLevel(), f.p, InteractionHand.MAIN_HAND);
+            h.assertTrue(f.p.isBlocking() && f.p.getUseItem().is(AncientEmbraceItem.ITEM.get()), "反手右键未正常举盾");
+            var origin = f.p.position();
+            for (int i = 0; i < 14; i++) { f.p.setDeltaMovement(Vec3.ZERO); f.p.doTick(); f.p.setPos(origin); }
+            f.p.setYRot(-90); f.p.setYHeadRot(-90); f.resetTarget(); f.target.setPos(origin.add(3, 0, 0));
+            int elapsed = f.p.getTicksUsingItem(); double mana = LogosNatureBridge.mana(f.p);
+            stabPacket(f); health(h, f.target, 96);
+            h.assertTrue(f.p.isBlocking() && f.p.getTicksUsingItem() == elapsed && f.marked()
+                    && LogosNatureBridge.mana(f.p) == mana && !f.target.hasEffect(LogosNatureBridge.lifeVulnerability().orElseThrow()),
+                    "反手举盾戳刺中断盾、误耗印记或造成生命追加");
+            h.assertTrue(f.p.getAttributeValue(Attributes.ATTACK_DAMAGE) == 1 && f.p.getAttributeValue(Attributes.ATTACK_SPEED) == 4,
+                    "反手举盾戳刺留下攻击属性");
+            f.target.invulnerableTime = 0; stabPacket(f); health(h, f.target, 96);
+        } h.succeed();
+    }
+    private static void guardNoCharge(GameTestHelper h) {
+        for (boolean swapped : new boolean[]{false, true}) try (var f = Fixture.create(h)) {
+            if (swapped) reverse(f);
+            else f.p.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(AncientEmbraceItem.ITEM.get()));
+            var shieldHand = swapped ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+            var shield = f.p.getItemInHand(shieldHand);
+            shield.use(h.getLevel(), f.p, shieldHand);
+            var mark = new SproutMark(f.p.getUUID(), h.getLevel().getGameTime() + 120);
+            f.target.setData(NatureAttachments.SPROUT_MARK, mark); double mana = LogosNatureBridge.mana(f.p);
+            f.p.known = new Vec3(1, 0, 0);
+            shield.onUseTick(h.getLevel(), f.p, 72000 - 40); health(h, f.target, 100);
+            h.assertTrue(f.p.isBlocking() && f.target.getData(NatureAttachments.SPROUT_MARK).equals(mark)
+                    && LogosNatureBridge.mana(f.p) == mana, "双持举盾错误触发动能冲撞或生命追加");
+            var effects = shield.getOrDefault(DataComponents.USE_EFFECTS, net.minecraft.world.item.component.UseEffects.DEFAULT);
+            var vanilla = new ItemStack(Items.SHIELD).getOrDefault(DataComponents.USE_EFFECTS, net.minecraft.world.item.component.UseEffects.DEFAULT);
+            h.assertTrue(effects.equals(vanilla) && effects.speedMultiplier() < 1, "未保留原版举盾减速");
+        } h.succeed();
+    }
+    private static void guardBreak(GameTestHelper h) {
+        try (var f = Fixture.create(h)) {
+            reverse(f); var shield = f.p.getMainHandItem();
+            f.p.getOffhandItem().setDamageValue(f.p.getOffhandItem().getMaxDamage() - 1);
+            stabPacket(f);
+            h.assertTrue(f.p.getOffhandItem().isEmpty() && f.p.getMainHandItem() == shield
+                    && shield.is(AncientEmbraceItem.ITEM.get()) && shield.getDamageValue() == 0,
+                    "副手矛损毁误删或损坏主手盾");
         } h.succeed();
     }
     private ElfSpearGameTests() {}

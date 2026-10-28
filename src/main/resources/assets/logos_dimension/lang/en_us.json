@@ -412,5 +412,7 @@
   "item.logos_dimension.sulfur_deposit": "Alchemical Sulfur Deposit",
   "item.logos_dimension.vortex": "Alchemical Vortex",
   "item.logos_dimension.elf_spear": "Elven Spear",
-  "message.logos_dimension.elf_spear.old_logos": "This Logos version lacks Life Vulnerability; the spear deals physical damage only"
+  "message.logos_dimension.elf_spear.old_logos": "This Logos version lacks Life Vulnerability; the spear deals physical damage only",
+  "item.logos_dimension.ancient_embrace": "Ancient Embrace",
+  "item.logos_dimension.ancient_embrace.desc": "Block to light leaves. Lower at five leaves: 5 mana restores 4 health. Well-timed blocks light two leaves."
 }

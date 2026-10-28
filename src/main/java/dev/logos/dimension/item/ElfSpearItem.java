@@ -26,6 +26,13 @@ public final class ElfSpearItem extends Item {
     public ElfSpearItem(Properties properties) { super(properties(properties)); }
     public static void init() {}
 
+    /** 与古木之拥双持时让出右键，由原版双手交互继续选择盾，禁盾期间也不退回冲刺。 */
+    @Override public net.minecraft.world.InteractionResult use(net.minecraft.world.level.Level level,
+            net.minecraft.world.entity.player.Player player, net.minecraft.world.InteractionHand hand) {
+        if (SpearShieldGuard.paired(player)) return net.minecraft.world.InteractionResult.PASS;
+        return super.use(level, player, hand);
+    }
+
     private static Properties properties(Properties p) {
         return p.spear(ToolMaterial.IRON, .65f, .95f, .6f, 2.5f, 11f, 6.75f, 5.1f, 11.25f, 4.6f)
                 .component(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.builder()

@@ -37,6 +37,7 @@ public final class LogosDimension {
                     out.accept(dev.logos.dimension.cloudsea.CloudseaBlocks.GRAPES.get());out.accept(dev.logos.dimension.cloudsea.CloudseaBlocks.GRAPE_LEAF.get());
                     out.accept(dev.logos.dimension.item.NaturesForceItem.ITEM.get());
                     out.accept(dev.logos.dimension.item.ElfSpearItem.ITEM.get());
+                    out.accept(dev.logos.dimension.item.AncientEmbraceItem.ITEM.get());
                 }).build());
         TABS.register("crucible", () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.logos_dimension"))
                 .icon(() -> DimensionBlocks.SALT_CRYSTAL.get().asItem().getDefaultInstance())
@@ -49,6 +50,7 @@ public final class LogosDimension {
         DimensionFluids.init();
         dev.logos.dimension.item.NaturesForceItem.init();
         dev.logos.dimension.item.ElfSpearItem.init();
+        dev.logos.dimension.item.AncientEmbraceItem.register(bus);
         dev.logos.dimension.item.NatureAttachments.TYPES.register(bus);
         dev.logos.dimension.instance.CauldronBinding.register(bus);
         dev.logos.dimension.cloudsea.CloudseaBlocks.init();
@@ -73,6 +75,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.YoungGrassGameTests.register(bus);
         dev.logos.dimension.gametest.NaturesForceGameTests.register(bus);
         dev.logos.dimension.gametest.ElfSpearGameTests.register(bus);
+        dev.logos.dimension.gametest.AncientEmbraceGameTests.register(bus);
         dev.logos.dimension.gametest.ForestElfGameTests.register(bus);
         bus.addListener(DimensionSpawns::register);
         bus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->

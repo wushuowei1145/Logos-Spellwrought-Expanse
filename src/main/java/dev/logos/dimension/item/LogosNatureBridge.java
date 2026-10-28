@@ -84,6 +84,17 @@ public final class LogosNatureBridge {
                 net.minecraft.resources.Identifier.fromNamespaceAndPath("logos", "life_vulnerability"));
     }
 
+    /** 调用主模组现成的生命治疗绽放，盾牌不向收集器提交额外几何。 */
+    public static void healBurst(ServerPlayer player) {
+        try {
+            var burst = Class.forName("dev.logos.runtime.Vfx$Burst");
+            var heal = burst.getField("HEAL").get(null);
+            Class.forName("dev.logos.runtime.Vfx").getMethod("burst", ServerLevel.class,
+                    net.minecraft.world.entity.Entity.class, Vec3.class, LIFE.getClass(), burst)
+                    .invoke(null, (ServerLevel) player.level(), player, null, LIFE, heal);
+        } catch (ReflectiveOperationException error) { throw failure(error); }
+    }
+
     public static void trail(AbstractArrow arrow, boolean end) {
         if (!(arrow.level() instanceof ServerLevel level)) return;
         try {
