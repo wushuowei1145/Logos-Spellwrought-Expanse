@@ -44,7 +44,9 @@ public final class AncientEmbraceGameTests {
                 Map.entry("ancient_embrace_expiry_save", AncientEmbraceGameTests::expirySave),
                 Map.entry("ancient_embrace_direction_bypass", AncientEmbraceGameTests::directionBypass),
                 Map.entry("ancient_embrace_disable", AncientEmbraceGameTests::disable),
-                Map.entry("ancient_embrace_creative", AncientEmbraceGameTests::creative));
+                Map.entry("ancient_embrace_creative", AncientEmbraceGameTests::creative),
+                Map.entry("ancient_embrace_guard_priority", AncientEmbraceGameTests::guardPriority),
+                Map.entry("ancient_embrace_guard_jab", AncientEmbraceGameTests::guardJab));
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test)); FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
             var env = event.registerEnvironment(LogosDimension.id("ancient_embrace"), new TestEnvironmentDefinition.AllOf());
@@ -172,6 +174,38 @@ public final class AncientEmbraceGameTests {
         try (var f = Fixture.create(h)) {
             f.p.setHealth(10); f.full(); f.p.setGameMode(GameType.CREATIVE); LogosNatureBridge.mana(f.p, 0); f.p.releaseUsingItem();
             h.assertTrue(f.p.getHealth() == 14 && f.leaves() == 0 && LogosNatureBridge.mana(f.p) == 0, "创造模式治疗没有免魔力");
+        } h.succeed();
+    }
+    private static void guardPriority(GameTestHelper h) {
+        try (var f = Fixture.create(h)) {
+            f.p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ElfSpearItem.ITEM.get()));
+            var spear = f.p.getMainHandItem();
+            h.assertTrue(spear.use(h.getLevel(), f.p, InteractionHand.MAIN_HAND) == net.minecraft.world.InteractionResult.PASS
+                    && !f.p.isUsingItem(), "持盾时主手矛仍抢占右键");
+            f.shield().use(h.getLevel(), f.p, InteractionHand.OFF_HAND);
+            h.assertTrue(f.p.isBlocking() && f.p.getUsedItemHand() == InteractionHand.OFF_HAND, "右键没有继续选择副手古木盾");
+            f.p.stopUsingItem(); f.p.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.SHIELD));
+            spear.use(h.getLevel(), f.p, InteractionHand.MAIN_HAND);
+            h.assertTrue(f.p.getUsedItemHand() == InteractionHand.MAIN_HAND && f.p.getUseItem().is(ElfSpearItem.ITEM.get()), "原版盾搭配意外改成盾优先");
+        } h.succeed();
+    }
+    private static void guardJab(GameTestHelper h) {
+        try (var f = Fixture.create(h)) {
+            f.p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ElfSpearItem.ITEM.get()));
+            f.p.setHealth(10); f.raise(20);
+            f.shield().set(AncientEmbraceItem.CHARGE.get(), new AncientEmbraceCharge(5, h.getLevel().getGameTime() + 160));
+            int elapsed = f.p.getTicksUsingItem();
+            var packet = new net.minecraft.network.protocol.game.ServerboundPlayerActionPacket(
+                    net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.STAB,
+                    net.minecraft.core.BlockPos.ZERO, net.minecraft.core.Direction.DOWN);
+            f.p.connection.handlePlayerAction(packet);
+            h.assertTrue(f.attacker.getHealth() == 96, "举盾戳刺不是四点物理伤害：" + f.attacker.getHealth());
+            h.assertTrue(f.p.isBlocking() && f.p.getTicksUsingItem() == elapsed && f.p.getHealth() == 10 && f.leaves() == 5,
+                    "戳刺中断举盾、重置极限窗口或触发治疗");
+            h.assertTrue(f.attacker.getData(NatureAttachments.SPROUT_MARK).belongsTo(f.p.getUUID(), h.getLevel().getGameTime())
+                    && LogosNatureBridge.mana(f.p) == 20, "举盾戳刺未种印或误扣魔力");
+            f.attacker.invulnerableTime = 0; f.p.connection.handlePlayerAction(packet);
+            h.assertTrue(f.attacker.getHealth() == 96, "举盾连续点击绕过戳刺冷却");
         } h.succeed();
     }
     private AncientEmbraceGameTests() {}

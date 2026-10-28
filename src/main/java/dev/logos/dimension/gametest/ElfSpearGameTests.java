@@ -56,7 +56,11 @@ public final class ElfSpearGameTests {
                 Map.entry("elf_spear_blocked", ElfSpearGameTests::blocked),
                 Map.entry("elf_spear_mark_save", ElfSpearGameTests::saveMark),
                 Map.entry("elf_spear_many", ElfSpearGameTests::many),
-                Map.entry("elf_spear_offhand_delay", ElfSpearGameTests::offhandDelay));
+                Map.entry("elf_spear_offhand_delay", ElfSpearGameTests::offhandDelay),
+                Map.entry("elf_spear_guard_reverse", ElfSpearGameTests::guardReverse),
+                Map.entry("elf_spear_guard_charge", ElfSpearGameTests::guardCharge),
+                Map.entry("elf_spear_guard_no_charge", ElfSpearGameTests::guardNoCharge),
+                Map.entry("elf_spear_guard_break", ElfSpearGameTests::guardBreak));
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test)); FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
             var env = event.registerEnvironment(LogosDimension.id("elf_spear"), new TestEnvironmentDefinition.AllOf());
@@ -249,6 +253,67 @@ public final class ElfSpearGameTests {
             f.charge(10, InteractionHand.OFF_HAND, 11); health(h, f.target, 100);
             h.assertTrue(f.marked() && LogosNatureBridge.mana(f.p) == 20, "起手未完成就触发");
             f.charge(10, InteractionHand.OFF_HAND, 12); health(h, f.target, 84);
+        } h.succeed();
+    }
+    private static void reverse(Fixture f) {
+        f.p.stopUsingItem();
+        f.p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(AncientEmbraceItem.ITEM.get()));
+        f.p.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(ElfSpearItem.ITEM.get()));
+        for (int i = 0; i < 20; i++) f.p.doTick();
+        f.p.setYRot(-90); f.p.setYHeadRot(-90); f.p.setXRot(0); LogosNatureBridge.mana(f.p, 20);
+        f.target.setPos(f.p.position().add(3, 0, 0));
+    }
+    private static void stabPacket(Fixture f) {
+        f.p.connection.handlePlayerAction(new net.minecraft.network.protocol.game.ServerboundPlayerActionPacket(
+                net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.STAB,
+                BlockPos.ZERO, net.minecraft.core.Direction.DOWN));
+    }
+    private static void guardReverse(GameTestHelper h) {
+        try (var f = Fixture.create(h)) {
+            reverse(f); stabPacket(f); health(h, f.target, 96);
+            h.assertTrue(f.marked() && !f.p.isUsingItem() && f.p.swingingArm == InteractionHand.OFF_HAND, "反手左键没有普通戳刺或挥错手");
+            h.assertTrue(f.p.getAttributeValue(Attributes.ATTACK_DAMAGE) == 1 && f.p.getAttributeValue(Attributes.ATTACK_SPEED) == 4,
+                    "副手矛属性残留为常驻加成");
+            f.target.invulnerableTime = 0; stabPacket(f); health(h, f.target, 96);
+            f.p.getMainHandItem().use(h.getLevel(), f.p, InteractionHand.MAIN_HAND);
+            h.assertTrue(f.p.isBlocking() && SpearShieldGuard.kineticActive(f.p), "反手右键没有同时举盾与冲刺");
+            f.target.invulnerableTime = 0; stabPacket(f); health(h, f.target, 96);
+            h.assertTrue(LogosNatureBridge.mana(f.p) == 20 && f.marked(), "反手举盾时的左键误触戳刺或印记");
+        } h.succeed();
+    }
+    private static void guardCharge(GameTestHelper h) {
+        try (var f = Fixture.create(h)) {
+            reverse(f); stabPacket(f); f.resetTarget();
+            f.p.getMainHandItem().use(h.getLevel(), f.p, InteractionHand.MAIN_HAND);
+            f.p.resetOnlyAttackStrengthTicker(); f.p.known = new Vec3(.5, 0, 0);
+            f.p.getMainHandItem().onUseTick(h.getLevel(), f.p, 72000 - 11); health(h, f.target, 100);
+            f.p.getMainHandItem().onUseTick(h.getLevel(), f.p, 72000 - 12); health(h, f.target, 84);
+            h.assertTrue(f.p.isBlocking() && !f.marked() && LogosNatureBridge.mana(f.p) == 15
+                    && f.target.hasEffect(LogosNatureBridge.lifeVulnerability().orElseThrow()), "同时冲刺未保留盾或生命印记结算");
+            f.resetTarget(); f.p.getMainHandItem().onUseTick(h.getLevel(), f.p, 72000 - 13); health(h, f.target, 100);
+            h.assertTrue(f.p.wasRecentlyStabbed(f.target, 10), "未使用原版接触冷却表");
+            f.p.stopUsingItem(); f.p.getMainHandItem().onUseTick(h.getLevel(), f.p, 72000 - 14); health(h, f.target, 100);
+            h.assertTrue(!SpearShieldGuard.kineticActive(f.p), "收盾后仍在冲刺");
+        } h.succeed();
+    }
+    private static void guardNoCharge(GameTestHelper h) {
+        try (var f = Fixture.create(h)) {
+            f.p.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(AncientEmbraceItem.ITEM.get()));
+            f.p.getMainHandItem().use(h.getLevel(), f.p, InteractionHand.MAIN_HAND);
+            f.p.getOffhandItem().use(h.getLevel(), f.p, InteractionHand.OFF_HAND);
+            f.p.known = new Vec3(.5, 0, 0);
+            f.p.getOffhandItem().onUseTick(h.getLevel(), f.p, 72000 - 40); health(h, f.target, 100);
+            h.assertTrue(f.p.isBlocking() && !SpearShieldGuard.kineticActive(f.p), "主矛副盾错误启用冲刺");
+        } h.succeed();
+    }
+    private static void guardBreak(GameTestHelper h) {
+        try (var f = Fixture.create(h)) {
+            reverse(f); var shield = f.p.getMainHandItem();
+            f.p.getOffhandItem().setDamageValue(f.p.getOffhandItem().getMaxDamage() - 1);
+            stabPacket(f);
+            h.assertTrue(f.p.getOffhandItem().isEmpty() && f.p.getMainHandItem() == shield
+                    && shield.is(AncientEmbraceItem.ITEM.get()) && shield.getDamageValue() == 0,
+                    "副手矛损毁误删或损坏主手盾");
         } h.succeed();
     }
     private ElfSpearGameTests() {}
