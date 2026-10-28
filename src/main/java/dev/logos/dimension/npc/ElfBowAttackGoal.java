@@ -86,7 +86,7 @@ public final class ElfBowAttackGoal extends Goal {
 
         // 拉弓：看得见、在射程内就拉；拉满就放
         InteractionHand hand = ProjectileUtil.getWeaponHoldingHand(elf, item -> item instanceof NaturesForceItem);
-        if (elf.isUsingItem()) {
+        if (elf.isUsingItem() && elf.getUseItem().getItem() instanceof NaturesForceItem) {
             if (!see && seeTime < -LOST_SIGHT) {
                 elf.stopUsingItem();
             } else if (see && elf.getTicksUsingItem() >= DRAW_TICKS) {
@@ -97,7 +97,7 @@ public final class ElfBowAttackGoal extends Goal {
                 }
                 reload = RELOAD;
             }
-        } else if (see && reload <= 0 && dist <= MAX_RANGE && elf.getItemInHand(hand).getItem() instanceof NaturesForceItem) {
+        } else if (!elf.isUsingItem() && see && reload <= 0 && dist <= MAX_RANGE && elf.getItemInHand(hand).getItem() instanceof NaturesForceItem) {
             // 刚进入战斗的那一刻弓可能还收着，精灵下一刻拿出来再拉
             elf.startUsingItem(hand);
         }

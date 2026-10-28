@@ -238,7 +238,7 @@ class NpcPartsTest {
         }
     }
 
-    /** 生成脚本写进模板的居民：每间树屋两位，没有屋子的巨木没有；世界树（大厅三位、三层回廊各两位、两间树屋各两位）共十三位。 */
+    /** 原有十三位世界树居民保留，顶层额外两位守卫；独立树屋仍各两位。 */
     @Test void templatesCarryResidents() throws Exception {
         for (int i = 0; i < 5; i++) {
             assertEquals(2, residents("giant_" + i + "_home"), "giant_" + i + "_home");
@@ -246,6 +246,11 @@ class NpcPartsTest {
         }
         int world = 0;
         for (int x = 0; x < 7; x++) for (int y = 0; y < 7; y++) for (int z = 0; z < 7; z++) world += residents("tile_" + x + "_" + y + "_" + z);
-        assertEquals(13, world);
+        try (var in = getClass().getResourceAsStream("/data/logos_dimension/elven_forest_manifest.json")) {
+            assertNotNull(in);
+            var manifest = JsonParser.parseString(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+            assertEquals(manifest.getAsJsonObject("world_tree").getAsJsonArray("residents").size(), world);
+            assertTrue(world >= 15, "原有居民与两位顶楼守卫必须保留");
+        }
     }
 }

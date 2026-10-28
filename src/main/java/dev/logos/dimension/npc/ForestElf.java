@@ -11,6 +11,9 @@ import com.mojang.serialization.Codec;
 import dev.logos.dimension.DimensionParticles;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.item.NaturesForceItem;
+import dev.logos.dimension.item.AncientEmbraceItem;
+import dev.logos.dimension.item.ElfSpearItem;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -54,6 +57,7 @@ import net.minecraft.world.level.storage.ValueOutput;
  * <li>战斗：拿「自然之力」远射（{@link ElfBowAttackGoal}），主动攻击附近的亡灵与灾厄村民。
  *     弓平时收着，只在战斗和战斗后的警戒期里拿在手上（{@link #weapon}）；
  *     僵尸和灾厄村民也把精灵当村民打（{@link ElfFactions}）。</li>
+ * <li>矛盾：长矛在有效射程外沿戳刺（{@link ElfSpearAttackGoal}），有盾时受击举盾，持矛战斗可持续格挡。</li>
  * <li>治疗：200 点魔力、每秒恢复 5 点，用 Logos 示例法术治疗受伤的同伴（{@link ElfHealGoal}）。
  *     作为玩家的使魔时把玩家视为友方。</li>
  * <li>移动：普通地面寻路之外，绳梯也算路径（{@link ElfNavigation}），能爬上树屋。</li>
@@ -90,12 +94,17 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
      */
     public static final int DEATH_FACE_TICKS = 9, DEATH_TICKS = 60;
     public static final String DEATH_EXPRESSION = "expression_dazed_tears";
-    /** 战斗或受伤之后保持警戒（弓不收起）的刻数。 */
+    /** 战斗或受伤之后保持警戒（整套武器和盾不收起）的刻数。 */
     public static final int ALERT_TICKS = 100;
     /** 收起来的武器；拿在手上时这里为空。存档 {@code Weapon}。 */
     private ItemStack weapon = ItemStack.EMPTY;
+    /** 收起的副手盾；拿出时移回装备槽，保留耐久、附魔和自定义组件。 */
+    private ItemStack shield = ItemStack.EMPTY;
     /** 服务端：警戒还剩几刻。 */
     private int alertTicks;
+    /** 模板只给世界树顶楼守卫设置；装备仍按普通实体装备存档。 */
+    private boolean worldTreeGuard;
+    private int shieldTicks, shieldCooldown;
 
     public ForestElf(EntityType<? extends ForestElf> type, Level level) {
         super(type, level);
@@ -103,7 +112,7 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
 
     public static AttributeSupplier.Builder createAttributes() {
         return PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, 20).add(Attributes.MOVEMENT_SPEED, 0.3)
-                .add(Attributes.FOLLOW_RANGE, FOLLOW_RANGE);
+                .add(Attributes.FOLLOW_RANGE, FOLLOW_RANGE).add(Attributes.ATTACK_DAMAGE, 1).add(Attributes.ATTACK_SPEED, 4);
     }
 
     @Override
@@ -122,6 +131,7 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new ElfBowAttackGoal(this));
+        goalSelector.addGoal(1, new ElfSpearAttackGoal(this));
         goalSelector.addGoal(2, new ElfHealGoal(this));
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.6));
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8));
@@ -148,8 +158,16 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, EntitySpawnReason reason, SpawnGroupData data) {
         setAppearance(NpcParts.FOREST_ELF.random(level.getRandom()));
         // 弓收着，战斗时才拿出来（见 updateWeapon）
-        weapon = new ItemStack(NaturesForceItem.ITEM.get());
+        if (worldTreeGuard) {
+            weapon = new ItemStack(ElfSpearItem.ITEM.get());
+            shield = new ItemStack(AncientEmbraceItem.ITEM.get());
+            setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+            setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
+        } else if (getMainHandItem().isEmpty() && weapon.isEmpty()) {
+            weapon = new ItemStack(NaturesForceItem.ITEM.get());
+        }
         setDropChance(EquipmentSlot.MAINHAND, 0);
+        setDropChance(EquipmentSlot.OFFHAND, 0);
         if (reason == EntitySpawnReason.STRUCTURE) {
             setPersistenceRequired();
             // 住在树屋或世界树里：闲逛不走出住处附近
@@ -212,19 +230,37 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
         if (mana < MAX_MANA) mana = Math.min(MAX_MANA, mana + MANA_PER_SECOND / 20f);
         if (actionTicks > 0 && --actionTicks == 0) entityData.set(ACTION, "");
         updateWeapon();
+        updateShield();
     }
 
     // ---------------------------------------------------------------- 武器：平时收起，战斗与警戒时拿出
 
     /** 收着的或拿在手上的武器（没有为空）。 */
     public ItemStack weapon() {
-        return weapon.isEmpty() && getMainHandItem().getItem() instanceof NaturesForceItem ? getMainHandItem() : weapon;
+        return !getMainHandItem().isEmpty() ? getMainHandItem() : weapon;
     }
 
-    /** 换一把武器（收着）；传空即没有武器。 */
+    /** 收着的或拿在副手的盾。 */
+    public ItemStack shield() {
+        return getOffhandItem().has(DataComponents.BLOCKS_ATTACKS) ? getOffhandItem() : shield;
+    }
+
+    /** 外部换装替换该槽收起的旧装备；内部拿出时移动的是同一个堆，不清掉它自己。 */
+    @Override
+    public void setItemSlot(EquipmentSlot slot, ItemStack stack) {
+        if (!stack.isEmpty()) {
+            if (slot == EquipmentSlot.MAINHAND && stack != weapon) weapon = ItemStack.EMPTY;
+            if (slot == EquipmentSlot.OFFHAND && stack != shield) shield = ItemStack.EMPTY;
+        }
+        super.setItemSlot(slot, stack);
+    }
+
+    /** 换一把收起的武器；已有目标时立即拿出，传空即没有武器。 */
     public void setWeapon(ItemStack stack) {
-        if (getMainHandItem().getItem() instanceof NaturesForceItem) setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+        if (isUsingItem() && getUsedItemHand() == InteractionHand.MAIN_HAND) stopUsingItem();
+        setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
         weapon = stack.copy();
+        if (isAlert()) equipStored();
     }
 
     /** 在战斗中，或者战斗、受伤之后的警戒期内。 */
@@ -232,7 +268,22 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
         return getTarget() != null || alertTicks > 0;
     }
 
-    /** 服务端每刻：警戒时把弓拿出来，警戒结束（且没在拉弓）时收起来。 */
+    private static boolean stowable(ItemStack stack) {
+        return stack.getItem() instanceof NaturesForceItem || ElfSpearAttackGoal.isSpear(stack) || stack.has(DataComponents.BLOCKS_ATTACKS);
+    }
+
+    private void equipStored() {
+        if (getMainHandItem().isEmpty() && !weapon.isEmpty()) {
+            setItemSlot(EquipmentSlot.MAINHAND, weapon);
+            weapon = ItemStack.EMPTY;
+        }
+        if (getOffhandItem().isEmpty() && !shield.isEmpty()) {
+            setItemSlot(EquipmentSlot.OFFHAND, shield);
+            shield = ItemStack.EMPTY;
+        }
+    }
+
+    /** 战斗和五秒警戒期间拿出整套装备，平静后收起；旧存档中直接拿着的矛盾也适用。 */
     private void updateWeapon() {
         // 致命一击也算受伤，但倒下的精灵不再拿出武器
         if (isDeadOrDying()) return;
@@ -240,14 +291,68 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
         else if (alertTicks > 0) alertTicks--;
         ItemStack hand = getMainHandItem();
         if (isAlert()) {
-            if (hand.isEmpty() && !weapon.isEmpty()) {
-                setItemSlot(EquipmentSlot.MAINHAND, weapon);
-                weapon = ItemStack.EMPTY;
+            equipStored();
+        } else {
+            if (isUsingItem() && !(getUseItem().getItem() instanceof NaturesForceItem)) stopUsingItem();
+            if (stowable(hand) && !isUsingItem() && weapon.isEmpty()) {
+                weapon = hand;
+                setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
             }
-        } else if (hand.getItem() instanceof NaturesForceItem && !isUsingItem() && weapon.isEmpty()) {
-            // 旧存档里一直拿在手上的弓也在这里收起来
-            weapon = hand;
-            setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+            ItemStack offhand = getOffhandItem();
+            if (offhand.has(DataComponents.BLOCKS_ATTACKS) && shield.isEmpty()) {
+                shield = offhand;
+                setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
+            }
+        }
+    }
+
+    /** 组件识别，兼容原版盾及其它使用原版格挡机制的物品。 */
+    private InteractionHand shieldHand() {
+        if (getOffhandItem().has(DataComponents.BLOCKS_ATTACKS)) return InteractionHand.OFF_HAND;
+        if (getMainHandItem().has(DataComponents.BLOCKS_ATTACKS)) return InteractionHand.MAIN_HAND;
+        return null;
+    }
+
+    private void raiseShield() {
+        if (isDeadOrDying()) return;
+        equipStored();
+        InteractionHand hand = shieldHand();
+        if (hand == null || shieldCooldown > 0 || isDeadOrDying()) return;
+        if (isUsingItem() && getUsedItemHand() != hand) stopUsingItem();
+        if (!isUsingItem()) startUsingItem(hand);
+    }
+
+    /** 矛盾战斗持续防御；弓手仅在遭受攻击后短暂防御，然后恢复原有射击。 */
+    private void updateShield() {
+        if (shieldCooldown > 0) shieldCooldown--;
+        if (shieldTicks > 0) shieldTicks--;
+        boolean guard = shieldTicks > 0 || getTarget() != null
+                && (ElfSpearAttackGoal.isSpear(getMainHandItem()) || getMainHandItem().has(DataComponents.BLOCKS_ATTACKS));
+        if (guard && !isDeadOrDying()) raiseShield();
+        else if (isUsingItem() && getUseItem().has(DataComponents.BLOCKS_ATTACKS)) stopUsingItem();
+    }
+
+    /** 收到攻击就尝试起盾；不跳过盾自身的前摇，也不修改受击方向和绕盾规则。 */
+    @Override
+    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+        if (amount > 0 && !isInvulnerableTo(level, source) && source.getSourcePosition() != null) {
+            alertTicks = ALERT_TICKS;
+            shieldTicks = 30;
+            raiseShield();
+        }
+        return super.hurtServer(level, source, amount);
+    }
+
+    /** 原版仅为玩家记录禁盾冷却；NPC 也等待相同的物品禁用时长，避免下一刻重新举起。 */
+    @Override
+    protected void blockUsingItem(ServerLevel level, LivingEntity attacker) {
+        super.blockUsingItem(level, attacker);
+        ItemStack shield = getItemBlockingWith();
+        var block = shield == null ? null : shield.get(DataComponents.BLOCKS_ATTACKS);
+        float seconds = attacker.getSecondsToDisableBlocking();
+        if (block != null && seconds > 0) {
+            shieldCooldown = Math.max(shieldCooldown, Math.round(seconds * block.disableCooldownScale() * 20));
+            block.disable(level, this, seconds, shield);
         }
     }
 
@@ -280,6 +385,14 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
      */
     @Override
     public void tick() {
+        // 同一刻拿出装备并举盾时，使用标记可能先于装备包到达；装备到齐后补上客户端使用堆。
+        if (level().isClientSide() && isUsingItem() && useItem.isEmpty()) {
+            ItemStack held = getItemInHand(getUsedItemHand());
+            if (!held.isEmpty()) {
+                useItem = held;
+                useItemRemaining = held.getUseDuration(this);
+            }
+        }
         super.tick();
         // 倒下后朝向不再转动（NpcDeathPose）
         deathYaw = isDeadOrDying() ? NpcDeathPose.hold(this, deathYaw) : Float.NaN;
@@ -339,7 +452,8 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     /** 拉自然之力、伸手放抚生之触时，双臂随视线指向目标。 */
     @Override
     public boolean npcAiming() {
-        return isUsingItem() && getUseItem().getItem() instanceof NaturesForceItem || HEAL_TOUCH.equals(entityData.get(ACTION));
+        return isUsingItem() && getUseItem().getItem() instanceof NaturesForceItem
+                || isAggressive() && ElfSpearAttackGoal.isSpear(getMainHandItem()) || HEAL_TOUCH.equals(entityData.get(ACTION));
     }
 
     @Override
@@ -355,7 +469,9 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
         super.addAdditionalSaveData(output);
         output.store("Appearance", APPEARANCE_CODEC, npcAppearance());
         output.putFloat("Mana", mana);
+        output.putBoolean("WorldTreeGuard", worldTreeGuard);
         if (!weapon.isEmpty()) output.store("Weapon", ItemStack.CODEC, weapon);
+        if (!shield.isEmpty()) output.store("Shield", ItemStack.CODEC, shield);
     }
 
     @Override
@@ -364,6 +480,11 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
         input.read("Appearance", APPEARANCE_CODEC).ifPresent(this::setAppearance);
         mana = Math.clamp(input.getFloatOr("Mana", MAX_MANA), 0, MAX_MANA);
         weapon = input.read("Weapon", ItemStack.CODEC).orElse(ItemStack.EMPTY);
+        shield = input.read("Shield", ItemStack.CODEC).orElse(ItemStack.EMPTY);
+        // 旧存档可能同时保存了手里的新长矛和藏起的默认弓，以手持换装为准。
+        if (!getMainHandItem().isEmpty()) weapon = ItemStack.EMPTY;
+        if (getOffhandItem().has(DataComponents.BLOCKS_ATTACKS)) shield = ItemStack.EMPTY;
+        worldTreeGuard = input.getBooleanOr("WorldTreeGuard", false);
     }
 
     // ---------------------------------------------------------------- 声音与交互（对标村民）

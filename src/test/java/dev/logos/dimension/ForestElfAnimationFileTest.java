@@ -33,7 +33,9 @@ class ForestElfAnimationFileTest {
     void hasEveryActionTheElfUses() throws Exception {
         Set<String> names = animations().keySet();
         for (String n : new String[] {"idle", "walk", "jump", "attacked", "ladder_up", "ladder_stillness", "ladder_down", "swim_stand",
-                "swing_hand", "hold_mainhand:bow", "use_mainhand:bow", "heal_touch", "heal_ring", "greet", "refuse", "death"})
+                "swing_hand", "hold_mainhand:bow", "use_mainhand:bow", "hold_mainhand:spear", "swing:spear",
+                "hold_offhand:shield", "use_offhand:shield", "hold_mainhand:shield", "use_mainhand:shield",
+                "heal_touch", "heal_ring", "greet", "refuse", "death"})
             assertTrue(names.contains(n), n);
     }
 
@@ -45,6 +47,17 @@ class ForestElfAnimationFileTest {
         for (Map.Entry<String, JsonElement> a : animations().entrySet())
             for (String bone : a.getValue().getAsJsonObject().getAsJsonObject("bones").keySet())
                 assertTrue(bones.contains(bone), a.getKey() + " → " + bone);
+    }
+
+    /** 后播放的举盾控制器不得覆盖主手刺击的骨骼。 */
+    @Test
+    void shieldAndSpearAnimateSeparateArms() throws Exception {
+        var animations = animations();
+        var spear = animations.getAsJsonObject("swing:spear").getAsJsonObject("bones").keySet();
+        var shield = animations.getAsJsonObject("use_offhand:shield").getAsJsonObject("bones").keySet();
+        assertTrue(java.util.Collections.disjoint(spear, shield));
+        assertTrue(spear.stream().allMatch(n -> n.startsWith("Right")));
+        assertTrue(shield.stream().allMatch(n -> n.startsWith("Left")));
     }
 
     /** TLM / YSM 专用的 Molang 变量我们的驱动不提供，出现了就是借用时没处理干净。 */

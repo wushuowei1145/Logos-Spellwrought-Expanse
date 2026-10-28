@@ -10,6 +10,17 @@ import com.mojang.authlib.GameProfile;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.elven.ElvenBlocks;
 import dev.logos.dimension.item.NaturesForceItem;
+import dev.logos.dimension.item.ElfSpearItem;
+import dev.logos.dimension.item.AncientEmbraceItem;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
 import dev.logos.dimension.npc.ElfHealGoal;
 import dev.logos.dimension.npc.ForestElf;
 import dev.logos.dimension.npc.NpcEntities;
@@ -32,6 +43,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.zombie.Zombie;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
@@ -48,7 +60,7 @@ public final class ForestElfGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS = DeferredRegister.create(Registries.TEST_FUNCTION, LogosDimension.ID);
 
     public static void register(IEventBus bus) {
-        var tests = Map.<String, Consumer<GameTestHelper>>of(
+        var tests = new java.util.HashMap<String, Consumer<GameTestHelper>>(Map.of(
                 "forest_elf_structure_spawn", ForestElfGameTests::structureSpawn,
                 "forest_elf_rope_climb", ForestElfGameTests::ropeClimb,
                 "forest_elf_rope_descend", ForestElfGameTests::ropeDescend,
@@ -57,14 +69,24 @@ public final class ForestElfGameTests {
                 "forest_elf_familiar_heals_player", ForestElfGameTests::familiarHealsPlayer,
                 "forest_elf_zombie_enmity", ForestElfGameTests::zombieEnmity,
                 "forest_elf_weapon_only_in_combat", ForestElfGameTests::weaponOnlyInCombat,
-                "forest_elf_death_lingers", ForestElfGameTests::deathLingers);
+                "forest_elf_death_lingers", ForestElfGameTests::deathLingers));
+        tests.put("forest_elf_spear_shield_vanilla", h -> spearCombat(h, false, true));
+        tests.put("forest_elf_spear_shield_custom", h -> spearCombat(h, true, true));
+        tests.put("forest_elf_spear_alone", h -> spearCombat(h, false, false));
+        tests.put("forest_elf_shield_reaction", ForestElfGameTests::shieldReaction);
+        tests.put("forest_elf_shield_delay", ForestElfGameTests::shieldDelay);
+        tests.put("forest_elf_shield_disable", ForestElfGameTests::shieldDisable);
+        tests.put("forest_elf_top_guards", ForestElfGameTests::topGuards);
+        tests.put("forest_elf_bow_shield_recovery", ForestElfGameTests::bowShieldRecovery);
+        tests.put("forest_elf_gear_stow_vanilla", h -> gearStow(h, false));
+        tests.put("forest_elf_gear_stow_custom", h -> gearStow(h, true));
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
             var env = event.registerEnvironment(LogosDimension.id("forest_elf"), new TestEnvironmentDefinition.AllOf());
             for (String name : tests.keySet()) event.registerTest(LogosDimension.id(name), new FunctionGameTestInstance(
                     ResourceKey.create(Registries.TEST_FUNCTION, LogosDimension.id(name)), new TestData<>(env,
-                    Identifier.withDefaultNamespace("empty"), 400, 0, true, Rotation.NONE, false, 1, 1, false, 16)));
+                    Identifier.withDefaultNamespace("empty"), 400, 0, true, Rotation.NONE, false, 1, 1, false, 32)));
         });
     }
 
@@ -78,17 +100,19 @@ public final class ForestElfGameTests {
     }
 
     /**
-     * 测试服务器把测试放在很远的随机位置，区块有时还没进入实体运算就跑完了（实体一动不动）。
-     * 那样的刻里手动替它跑一刻，区块正常运算时不重复。
+     * 测试服务器把测试放在很远的随机位置，区块可能已标为运算中，但新实体尚未进入运算列表。
+     * 比较实体实际刻数，只在上一轮至今没被世界推进时补一刻；不能仅依赖区块状态。
      */
     private static void keepTicking(GameTestHelper h, Mob mob) {
+        int[] lastTick = {mob.tickCount};
         h.onEachTick(() -> {
             // 死亡中的生物也要推进（死亡计时、消失），直到被移除
-            if (!mob.isRemoved() && !h.getLevel().isPositionEntityTicking(mob.blockPosition())) {
+            if (!mob.isRemoved() && mob.tickCount == lastTick[0]) {
                 mob.setOldPosAndRot();
                 mob.tickCount++;
                 mob.tick();
             }
+            lastTick[0] = mob.tickCount;
         });
     }
 
@@ -109,7 +133,221 @@ public final class ForestElfGameTests {
     }
 
     private static void floor(GameTestHelper h, int size) {
-        for (int x = 0; x < size; x++) for (int z = 0; z < size; z++) h.setBlock(x, 0, z, Blocks.STONE);
+        for (int x = 0; x < size; x++) for (int z = 0; z < size; z++) {
+            h.setBlock(x, 0, z, Blocks.STONE);
+            for (int y = 1; y <= 10; y++) h.setBlock(x, y, z, Blocks.AIR);
+        }
+    }
+
+    private static Zombie dummy(GameTestHelper h, double x, double z) {
+        Zombie mob = EntityType.ZOMBIE.create(h.getLevel(), EntitySpawnReason.COMMAND);
+        mob.snapTo(h.absoluteVec(new Vec3(x, 1, z)));
+        mob.setNoAi(true);
+        mob.setPersistenceRequired();
+        mob.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.LEATHER_HELMET));
+        mob.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1000);
+        mob.setHealth(1000);
+        h.getLevel().addFreshEntity(mob);
+        keepTicking(h, mob);
+        return mob;
+    }
+
+    /** 从贴身盲区开始，真正后撤、刺中并持续举盾，覆盖原版装备和自定义装备。 */
+    private static void spearCombat(GameTestHelper h, boolean custom, boolean shield) {
+        floor(h, 16);
+        ForestElf elf = elf(h, 7, 1, 7, EntitySpawnReason.COMMAND);
+        elf.setWeapon(new ItemStack(custom ? ElfSpearItem.ITEM.get() : Items.IRON_SPEAR));
+        if (shield) elf.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(custom ? AncientEmbraceItem.ITEM.get() : Items.SHIELD));
+        Zombie target = dummy(h, 7.5, 8.5);
+        elf.setTarget(target);
+        Vec3 start = elf.position();
+        boolean[] hit = {false}, guarded = {false}, outer = {false};
+        h.onEachTick(() -> {
+            // 木桩不被击退，避免把击退误判为精灵后撤。
+            target.setDeltaMovement(Vec3.ZERO);
+            target.setPos(h.absoluteVec(new Vec3(7.5, 1, 8.5)));
+            double distance = Math.sqrt(target.getBoundingBox().distanceToSqr(elf.getEyePosition()));
+            var range = elf.getAttackRangeWith(elf.getMainHandItem());
+            outer[0] |= distance >= range.effectiveMaxRange(elf) - .55 && distance <= range.effectiveMaxRange(elf) + .125;
+            if (target.getHealth() < 1000) {
+                hit[0] = true;
+                if (shield && elf.isBlocking()) {
+                    // 从正面实际打一次，验证刺击期间盾没有被收起。
+                    float hp = elf.getHealth();
+                    elf.invulnerableTime = 0;
+                    elf.hurtServer(h.getLevel(), h.getLevel().damageSources().mobAttack(target), 3);
+                    guarded[0] |= elf.getHealth() == hp;
+                }
+            }
+        });
+        h.succeedWhen(() -> {
+            h.assertTrue(hit[0], "还没有实际刺中目标，距离=" + elf.distanceTo(target) + " 位置=" + elf.position()
+                    + " 目标正确=" + (elf.getTarget() == target) + " 战斗=" + elf.isAggressive() + " 路径=" + elf.getNavigation().getPath()
+                    + " 可见=" + elf.hasLineOfSight(target) + " 范围=" + elf.getAttackRangeWith(elf.getMainHandItem())
+                    + " 终点=" + (elf.getNavigation().getPath() == null ? "null" : elf.getNavigation().getPath().getTarget())
+                    + " 末节点=" + (elf.getNavigation().getPath() == null ? "null" : elf.getNavigation().getPath().getEndNode())
+                    + " 落地=" + elf.onGround() + " 导航完成=" + elf.getNavigation().isDone()
+                    + " 后方脚下=" + h.getLevel().getBlockState(elf.blockPosition().offset(0,-1,-1)));
+            h.assertTrue(start.distanceTo(elf.position()) > .7, "没有从贴身盲区后撤");
+            h.assertTrue(outer[0], "没有回到长矛有效射程外沿");
+            h.assertTrue(!shield || guarded[0], "戳刺时盾没有真正挡住伤害");
+        });
+    }
+
+    private static ForestElf shieldElf(GameTestHelper h, boolean custom) {
+        floor(h, 10);
+        ForestElf elf = elf(h, 4, 1, 4, EntitySpawnReason.COMMAND);
+        elf.setNoAi(true);
+        elf.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(custom ? AncientEmbraceItem.ITEM.get() : Items.SHIELD));
+        elf.setYRot(0);
+        elf.setYHeadRot(0);
+        return elf;
+    }
+
+    /** 未预先举盾，古木盾第一击就起盾；背后攻击仍然造成伤害。 */
+    private static void shieldReaction(GameTestHelper h) {
+        ForestElf elf = shieldElf(h, true);
+        Zombie front = dummy(h, 4.5, 7.5);
+        elf.hurtServer(h.getLevel(), h.getLevel().damageSources().mobAttack(front), 3);
+        h.assertTrue(elf.isBlocking() && elf.getHealth() == 20, "古木盾没在首击起盾格挡");
+        Zombie rear = dummy(h, 4.5, 1.5);
+        elf.invulnerableTime = 0;
+        elf.hurtServer(h.getLevel(), h.getLevel().damageSources().mobAttack(rear), 3);
+        h.assertTrue(elf.getHealth() < 20, "背后攻击不应被挡住");
+        h.succeed();
+    }
+
+    /** 原版盾的五刻前摇保留，前摇后才生效。 */
+    private static void shieldDelay(GameTestHelper h) {
+        ForestElf elf = shieldElf(h, false);
+        Zombie front = dummy(h, 4.5, 7.5);
+        elf.hurtServer(h.getLevel(), h.getLevel().damageSources().mobAttack(front), 3);
+        h.assertTrue(elf.isUsingItem() && !elf.isBlocking() && elf.getHealth() < 20, "原版盾的起手前摇被跳过");
+        h.runAfterDelay(7, () -> {
+            float hp = elf.getHealth();
+            elf.invulnerableTime = 0;
+            elf.hurtServer(h.getLevel(), h.getLevel().damageSources().mobAttack(front), 3);
+            h.assertTrue(elf.isBlocking() && elf.getHealth() == hp, "前摇结束后没有挡住伤害");
+            h.succeed();
+        });
+    }
+
+    /** 斧头禁盾后，紧接着的一击不能被自动重新举盾挡住。 */
+    private static void shieldDisable(GameTestHelper h) {
+        ForestElf elf = shieldElf(h, true);
+        Zombie front = dummy(h, 4.5, 7.5);
+        front.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_AXE));
+        elf.hurtServer(h.getLevel(), h.getLevel().damageSources().mobAttack(front), 3);
+        h.assertTrue(!elf.isUsingItem() && elf.getHealth() == 20, "斧头没有禁用盾牌");
+        elf.invulnerableTime = 0;
+        elf.hurtServer(h.getLevel(), h.getLevel().damageSources().mobAttack(front), 3);
+        h.assertTrue(elf.getHealth() < 20 && !elf.isBlocking(), "禁盾后又立即举起盾牌");
+        h.succeed();
+    }
+
+    /** 直接读取打包模板中的两位顶楼守卫，并走真实结构初始化与存档重载。 */
+    private static void topGuards(GameTestHelper h) {
+        var template = h.getLevel().getStructureManager().getOrCreate(LogosDimension.id("elven/tile_3_2_3"));
+        var entities = template.save(new CompoundTag()).getListOrEmpty("entities");
+        int count = 0;
+        for (var entry : entities) {
+            CompoundTag nbt = ((CompoundTag) entry).getCompoundOrEmpty("nbt");
+            if (!nbt.getBooleanOr("WorldTreeGuard", false)) continue;
+            ForestElf elf = NpcEntities.FOREST_ELF.get().create(h.getLevel(), EntitySpawnReason.STRUCTURE);
+            elf.load(TagValueInput.create(ProblemReporter.DISCARDING, h.getLevel().registryAccess(), nbt));
+            elf.snapTo(h.absoluteVec(new Vec3(2 + count, 1, 2)));
+            elf.finalizeSpawn(h.getLevel(), h.getLevel().getCurrentDifficultyAt(elf.blockPosition()), EntitySpawnReason.STRUCTURE, null);
+            h.assertTrue(elf.weapon().is(ElfSpearItem.ITEM.get()) && elf.shield().is(AncientEmbraceItem.ITEM.get())
+                    && elf.getMainHandItem().isEmpty() && elf.getOffhandItem().isEmpty(), "顶楼守卫没有收起默认矛盾装备");
+            h.assertTrue(elf.isPersistenceRequired() && elf.hasHome(), "守卫没有常驻或住处");
+            var saved = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, h.getLevel().registryAccess());
+            elf.saveWithoutId(saved);
+            ForestElf loaded = NpcEntities.FOREST_ELF.get().create(h.getLevel(), EntitySpawnReason.LOAD);
+            loaded.load(TagValueInput.create(ProblemReporter.DISCARDING, h.getLevel().registryAccess(), saved.buildResult()));
+            h.assertTrue(loaded.getMainHandItem().isEmpty() && loaded.getOffhandItem().isEmpty()
+                    && loaded.weapon().is(ElfSpearItem.ITEM.get()) && loaded.shield().is(AncientEmbraceItem.ITEM.get()),
+                    "守卫存档重载后丢失装备或没有保持收起状态");
+            count++;
+        }
+        h.assertTrue(count == 2, "顶楼守卫数量不为二：" + count);
+        h.succeed();
+    }
+
+    /** 盾牌计时不能被当成拉弓计时；短暂防御后仍按原有弓箭逻辑射击。 */
+    private static void bowShieldRecovery(GameTestHelper h) {
+        floor(h, 16);
+        ForestElf elf = elf(h, 3, 1, 3, EntitySpawnReason.COMMAND);
+        elf.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(AncientEmbraceItem.ITEM.get()));
+        Zombie target = dummy(h, 3.5, 12.5);
+        elf.setTarget(target);
+        elf.setYHeadRot(0);
+        elf.hurtServer(h.getLevel(), h.getLevel().damageSources().mobAttack(target), 3);
+        h.assertTrue(elf.isBlocking(), "弓手受击没举盾");
+        h.runAfterDelay(25, () -> h.assertTrue(target.getHealth() == 1000 && !hasArrow(elf), "举盾被错误地算成满弓并放箭"));
+        // 远处测试区的投射物可能尚未进入世界运算；确认真实箭实体已射出即可，不用其是否推进来判断弓 AI。
+        h.succeedWhen(() -> h.assertTrue((target.getHealth() < 1000 || hasArrow(elf)) && !elf.isBlocking(),
+                "短暂防御结束后没有恢复射箭 " + bowState(elf, target)));
+    }
+
+    private static boolean hasArrow(ForestElf elf) {
+        return !elf.level().getEntitiesOfClass(AbstractArrow.class, elf.getBoundingBox().inflate(48), arrow -> arrow.getOwner() == elf).isEmpty();
+    }
+
+    /** 直接换掉默认弓，验证平静收起、战斗拿出、五秒警戒、再收起及物品数据存档。 */
+    private static void gearStow(GameTestHelper h, boolean custom) {
+        floor(h, 12);
+        ForestElf elf = elf(h, 3, 1, 3, EntitySpawnReason.COMMAND);
+        elf.setNoAi(true);
+        ItemStack spear = new ItemStack(custom ? ElfSpearItem.ITEM.get() : Items.IRON_SPEAR);
+        ItemStack shield = new ItemStack(custom ? AncientEmbraceItem.ITEM.get() : Items.SHIELD);
+        spear.setDamageValue(3);
+        shield.setDamageValue(7);
+        shield.set(DataComponents.CUSTOM_NAME, net.minecraft.network.chat.Component.literal("保留的盾牌"));
+        elf.setItemSlot(EquipmentSlot.MAINHAND, spear);
+        elf.setItemSlot(EquipmentSlot.OFFHAND, shield);
+        Zombie target = dummy(h, 8.5, 8.5);
+        h.runAfterDelay(3, () -> {
+            h.assertTrue(elf.getMainHandItem().isEmpty() && elf.getOffhandItem().isEmpty(), "平静时没有收起长矛和盾");
+            h.assertTrue(elf.weapon() == spear && elf.shield() == shield, "外部换装后仍藏着原来的弓，或复制了装备");
+            elf.hurtServer(h.getLevel(), h.getLevel().damageSources().mobAttack(target), 3);
+            h.assertTrue(elf.getOffhandItem() == shield && elf.isUsingItem(), "装备收起时遭受攻击，没有立即拿出盾尝试格挡");
+            elf.setTarget(target);
+        });
+        h.runAfterDelay(10, () -> {
+            h.assertTrue(elf.getMainHandItem() == spear && elf.getOffhandItem() == shield && elf.isBlocking(), "战斗时没有拿出整套矛盾");
+            target.discard();
+            elf.setTarget(null);
+        });
+        h.runAfterDelay(50, () -> h.assertTrue(elf.getMainHandItem() == spear && elf.getOffhandItem() == shield, "警戒期内提前收起装备"));
+        h.runAfterDelay(120, () -> {
+            h.assertTrue(elf.getMainHandItem().isEmpty() && elf.getOffhandItem().isEmpty() && !elf.isUsingItem(), "警戒结束后没有收起整套装备");
+            var saved = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, h.getLevel().registryAccess());
+            elf.saveWithoutId(saved);
+            ForestElf loaded = NpcEntities.FOREST_ELF.get().create(h.getLevel(), EntitySpawnReason.LOAD);
+            loaded.load(TagValueInput.create(ProblemReporter.DISCARDING, h.getLevel().registryAccess(), saved.buildResult()));
+            h.assertTrue(loaded.weapon().is(spear.getItem()) && loaded.weapon().getDamageValue() == 3
+                    && loaded.shield().is(shield.getItem()) && loaded.shield().getDamageValue() == 7
+                    && loaded.shield().get(DataComponents.CUSTOM_NAME).getString().equals("保留的盾牌"), "收起装备存档后数据丢失");
+            // 模拟上一版存档中手持长矛、内部还藏着默认弓的状态。
+            loaded.setItemSlot(EquipmentSlot.MAINHAND, spear.copy());
+            loaded.setItemSlot(EquipmentSlot.OFFHAND, shield.copy());
+            var legacy = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, h.getLevel().registryAccess());
+            loaded.saveWithoutId(legacy);
+            legacy.store("Weapon", ItemStack.CODEC, new ItemStack(NaturesForceItem.ITEM.get()));
+            ForestElf migrated = NpcEntities.FOREST_ELF.get().create(h.getLevel(), EntitySpawnReason.LOAD);
+            migrated.load(TagValueInput.create(ProblemReporter.DISCARDING, h.getLevel().registryAccess(), legacy.buildResult()));
+            migrated.aiStep();
+            h.assertTrue(migrated.getMainHandItem().isEmpty() && migrated.getOffhandItem().isEmpty()
+                    && migrated.weapon().is(spear.getItem()) && migrated.shield().is(shield.getItem()), "旧存档换装未迁移，仍被默认弓阻止收起");
+            h.succeed();
+        });
+    }
+
+    private static String bowState(ForestElf elf, Zombie target) {
+        return "tick=" + elf.tickCount + " hp=" + elf.getHealth() + " target=" + (elf.getTarget() == target)
+                + " hand=" + elf.getMainHandItem() + " stored=" + elf.weapon() + " using=" + elf.getUseItem()
+                + " useTicks=" + elf.getTicksUsingItem() + " visible=" + elf.hasLineOfSight(target)
+                + " distance=" + elf.distanceTo(target) + " targetHp=" + target.getHealth();
     }
 
     /** 结构放置（STRUCTURE）：外观合法且没有互斥零件、拿自然之力、常驻、有住处范围。 */
@@ -216,6 +454,7 @@ public final class ForestElfGameTests {
         ForestElf elf = elf(h, 2, 1, 2, EntitySpawnReason.COMMAND);
         Zombie zombie = EntityType.ZOMBIE.create(h.getLevel(), EntitySpawnReason.COMMAND);
         zombie.snapTo(h.absoluteVec(new Vec3(9.5, 1, 9.5)));
+        zombie.setPersistenceRequired();
         zombie.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.LEATHER_HELMET));
         // 测的是双方选目标：精灵不拿弓（强化箭会把僵尸击飞出测试场地），双方给足生命（无敌的生物不会被当成敌人）
         elf.setWeapon(net.minecraft.world.item.ItemStack.EMPTY);
@@ -244,6 +483,7 @@ public final class ForestElfGameTests {
         h.assertTrue(elf.getMainHandItem().isEmpty(), "平时不该把弓拿在手上");
         Zombie zombie = EntityType.ZOMBIE.create(h.getLevel(), EntitySpawnReason.COMMAND);
         zombie.snapTo(h.absoluteVec(new Vec3(9.5, 1, 9.5)));
+        zombie.setPersistenceRequired();
         zombie.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.LEATHER_HELMET));
         zombie.setNoAi(true);
         h.getLevel().addFreshEntity(zombie);
@@ -264,7 +504,7 @@ public final class ForestElfGameTests {
             }
         });
         h.succeedWhen(() -> {
-            h.assertTrue(phase[0] == 2 && calm[0] > ForestElf.ALERT_TICKS, "还没走完：战斗 → 警戒 → 平静（" + phase[0] + "）");
+            h.assertTrue(phase[0] == 2 && calm[0] > ForestElf.ALERT_TICKS, "还没走完：战斗 → 警戒 → 平静（" + phase[0] + "） " + bowState(elf, zombie));
             h.assertTrue(elf.getMainHandItem().isEmpty() && elf.weapon().getItem() instanceof NaturesForceItem, "警戒过后没把弓收起来");
         });
     }
