@@ -55,25 +55,6 @@ public final class AncientEmbraceItem extends ShieldItem {
 
     public static void register(IEventBus bus) { COMPONENTS.register(bus); }
 
-    @Override public net.minecraft.world.InteractionResult use(Level level, net.minecraft.world.entity.player.Player player,
-                                                              net.minecraft.world.InteractionHand hand) {
-        boolean starting = !player.isUsingItem();
-        var result = super.use(level, player, hand);
-        if (starting && SpearShieldGuard.kineticActive(player)) {
-            var kinetic = player.getOffhandItem().get(DataComponents.KINETIC_WEAPON);
-            if (kinetic != null) kinetic.makeSound(player);
-        }
-        return result;
-    }
-
-    /** 主盾副矛共享一次持续使用时间，额外调用原版副手矛动能组件；主矛副盾不启用此路径。 */
-    @Override public void onUseTick(Level level, LivingEntity entity, ItemStack shield, int remaining) {
-        if (entity instanceof ServerPlayer player && SpearShieldGuard.kineticActive(player)) {
-            var spear = player.getOffhandItem(); var kinetic = spear.get(DataComponents.KINETIC_WEAPON);
-            if (kinetic != null) kinetic.damageEntities(spear, remaining, player, EquipmentSlot.OFFHAND);
-        }
-    }
-
     /** 在原版及其它模组完成格挡结算后记录实际挡下的攻击，盾被禁用不会自动触发收盾治疗。 */
     public static void blocked(ServerPlayer player, ItemStack shield, int elapsedTicks) {
         long now = player.level().getGameTime();

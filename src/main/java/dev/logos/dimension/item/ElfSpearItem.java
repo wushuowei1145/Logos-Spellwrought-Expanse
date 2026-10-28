@@ -45,8 +45,7 @@ public final class ElfSpearItem extends Item {
     public static void afterPhysicalHit(ServerPlayer player, LivingEntity target, EquipmentSlot slot) {
         if (!player.getItemBySlot(slot).is(ITEM.get()) || !target.isAlive()) return;
         long now = target.level().getGameTime();
-        boolean charging = player.isUsingItem() && (player.getUsedItemHand().asEquipmentSlot() == slot
-                || slot == EquipmentSlot.OFFHAND && SpearShieldGuard.kineticActive(player));
+        boolean charging = player.isUsingItem() && player.getUsedItemHand().asEquipmentSlot() == slot;
         if (!charging) {
             target.setData(NatureAttachments.SPROUT_MARK, new SproutMark(player.getUUID(), now + MARK_TICKS));
             return;

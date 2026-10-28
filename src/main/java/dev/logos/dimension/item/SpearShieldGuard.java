@@ -24,9 +24,6 @@ public final class SpearShieldGuard {
     public static boolean reversed(Player player) {
         return paired(player) && spearHand(player) == InteractionHand.OFF_HAND;
     }
-    public static boolean kineticActive(Player player) {
-        return reversed(player) && guarding(player) && player.getUsedItemHand() == InteractionHand.MAIN_HAND;
-    }
     public static InteractionHand spearHand(Player player) {
         return player.getMainHandItem().is(ElfSpearItem.ITEM.get()) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
     }
@@ -54,7 +51,8 @@ public final class SpearShieldGuard {
 
     /** 接收原版 STAB 包时处理反手搭配；仍使用原版长矛射线、命中、附魔与耐久路径。 */
     public static void offhandAttack(Player player) {
-        if (!reversed(player) || player.isUsingItem() || !player.isAlive() || player.isSpectator()) return;
+        if (!reversed(player) || !player.isAlive() || player.isSpectator()
+                || player.isUsingItem() && !guarding(player)) return;
         withSpearAttributes(player, () -> {
             var stack = player.getOffhandItem();
             if (player.cannotAttackWithItem(stack, 5)) return;

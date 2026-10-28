@@ -3,6 +3,6 @@
   "package": "dev.logos.dimension.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": ["JourneyTemperatureMixin", "MinecraftServerAccess", "NatureArrowMixin", "NatureSkeletonMixin", "NatureBowGoalMixin", "MobGoalsAccess", "ElfSpearAttackMixin", "AncientEmbraceBlockMixin", "SpearShieldPacketMixin", "SpearShieldSwingMixin", "SpearShieldDurabilityMixin"],
-  "client": ["NatureArrowRendererMixin", "SpearShieldPoseMixin", "SpearShieldAnimationMixin"],
+  "client": ["NatureArrowRendererMixin"],
   "injectors": {"defaultRequire": 1}
 }

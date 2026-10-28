@@ -19,7 +19,7 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
-/** 四种握持/惯用手组合，用实际右键与左键输入验证盾优先、举盾戳刺和反手双使用姿态。 */
+/** 四种握持/惯用手组合，验证统一的右键举盾、举盾戳刺与两键同刻操作。 */
 @LDLRegisterClient(name = "spear_shield_main_right", group = "spear_shield", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
 public class SpearShieldView implements UIScenario {
     private HumanoidArm previousArm;
@@ -59,14 +59,16 @@ public class SpearShieldView implements UIScenario {
                 .server("复位靶子", ctx -> { var t = ctx.player().level().getEntity(targetId); t.setPos(.5, 100, 1); t.setDeltaMovement(Vec3.ZERO); })
                 .ticks(16).step("实际右键自动选择盾", ctx -> {
                     var mc = Minecraft.getInstance(); mc.options.keyUse.setDown(true); KeyMapping.click(mc.options.keyUse.getKey());
-                    if (reverse()) KeyMapping.click(mc.options.keyAttack.getKey());
+                    KeyMapping.click(mc.options.keyAttack.getKey());
                 }).waitUntil("举盾同步", ctx -> SpearShieldGuard.guarding(Minecraft.getInstance().player))
                 .ticks(15)
-                .check("实际使用手与冲刺模式", ctx -> Minecraft.getInstance().player.getUsedItemHand() == (reverse() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND)
-                        && SpearShieldGuard.kineticActive(Minecraft.getInstance().player) == reverse())
+                .check("实际使用手始终为盾", ctx -> Minecraft.getInstance().player.getUsedItemHand() == (reverse() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND)
+                        && Minecraft.getInstance().player.getUseItem().is(AncientEmbraceItem.ITEM.get()))
+                .checkServer("两键同刻可以戳刺并举盾", ctx -> ((LivingEntity) ctx.player().level().getEntity(targetId)).getHealth() == 92)
+                .server("复位同时攻击后的靶子", ctx -> { var t = ctx.player().level().getEntity(targetId); t.setPos(.5, 100, 1); t.setDeltaMovement(Vec3.ZERO); })
                 .screenshot("spear_shield_first_person")
                 .step("举盾中实际左键", ctx -> clickAttack()).ticks(5)
-                .checkServer("举盾左键遵循两种握持规则", ctx -> ((LivingEntity) ctx.player().level().getEntity(targetId)).getHealth() == (reverse() ? 96 : 92))
+                .checkServer("两种握持均可举盾戳刺", ctx -> ((LivingEntity) ctx.player().level().getEntity(targetId)).getHealth() == 88)
                 .check("左键没有放下盾", ctx -> SpearShieldGuard.guarding(Minecraft.getInstance().player))
                 .server("确认仍可实际格挡", ctx -> {
                     var target = (LivingEntity) ctx.player().level().getEntity(targetId); target.setPos(.5, 100, 1); target.setDeltaMovement(Vec3.ZERO);
@@ -79,7 +81,7 @@ public class SpearShieldView implements UIScenario {
                 .ticks(16).step("松开右键同时实际左键", ctx -> {
                     var mc = Minecraft.getInstance(); mc.options.keyUse.setDown(false); mc.options.setCameraType(CameraType.FIRST_PERSON); clickAttack();
                 }).waitUntil("收盾后立即恢复普通戳刺", ctx -> !Minecraft.getInstance().player.isUsingItem()
-                        && ((LivingEntity) Minecraft.getInstance().level.getEntity(targetId)).getHealth() == (reverse() ? 92 : 88))
+                        && ((LivingEntity) Minecraft.getInstance().level.getEntity(targetId)).getHealth() == 84)
                 .checkServer("收盾未消费治疗魔力", ctx -> LogosNatureBridge.mana(ctx.player()) >= 50)
                 .teardown("恢复矛盾检查设置", ctx -> {
                     var mc = Minecraft.getInstance(); mc.options.keyUse.setDown(false); mc.options.setCameraType(CameraType.FIRST_PERSON);

@@ -17,15 +17,11 @@ public final class SpearShieldInput {
         if (mc.screen != null || player == null || mc.gameMode == null || !SpearShieldGuard.paired(player)
                 || !player.isAlive() || player.isSpectator()) return;
         boolean reverse = SpearShieldGuard.reversed(player);
-        if (reverse && mc.options.keyUse.isDown()) {
-            // 两键同刻按下时也让右键优先，不先打出一次副手戳刺或主手盾普攻。
-            while (mc.options.keyAttack.consumeClick()) {}
-            return;
-        }
+        if (player.isUsingItem() && !SpearShieldGuard.guarding(player)) return;
         if (!reverse && !SpearShieldGuard.guarding(player)) return;
         while (mc.options.keyAttack.consumeClick()) {
-            // 松开右键与左键发生在同一刻时，先按原版方式收盾，再发送副手戳刺，避免输入被吞。
-            if (reverse && player.isUsingItem()) mc.gameMode.releaseUsingItem(player);
+            // 松开右键与左键发生在同一刻时先正常收盾；按住右键时戳刺不打断格挡。
+            if (!mc.options.keyUse.isDown() && player.isUsingItem()) mc.gameMode.releaseUsingItem(player);
             SpearShieldGuard.withSpearAttributes(player, () -> {
                 var hand = SpearShieldGuard.spearHand(player); var stack = player.getItemInHand(hand);
                 if (player.isHandsBusy() || player.cannotAttackWithItem(stack, 0)) return;
