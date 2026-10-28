@@ -8,7 +8,7 @@ import com.google.gson.*;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import net.minecraft.core.*;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.registries.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.resources.*;
 import net.minecraft.server.level.ServerLevel;
@@ -76,6 +76,15 @@ public final class ElvenForestGameTests {
         for(int x=-4;x<=4;x++)for(int z=-4;z<=4;z++)if(x*x+z*z<=16)for(int y=2;y<=9;y++)h.assertTrue(l.getBlockState(tree.pos(x,y,z)).getCollisionShape(l,tree.pos(x,y,z)).isEmpty(),"中央通行区域被占用");
         for(int x:new int[]{-7,-6,-5})h.assertTrue(l.getBlockState(tree.pos(x,2,9)).is(ElvenBlocks.BOOKCASE.get())&&l.getBlockState(tree.pos(x,3,9)).is(ElvenBlocks.BOOKCASE.get()),"原版放置丢失书架上下半部");
         var manifest=manifest();var room=manifest.getAsJsonObject("world_tree").getAsJsonObject("interior");
+        var jars=manifest.getAsJsonObject("world_tree").getAsJsonArray("cultivation_jars");
+        h.assertTrue(jars!=null&&jars.size()>=16,"玻璃花房缺少培养罐清单");
+        for(var jar:jars){
+            var p=jar.getAsJsonObject().getAsJsonArray("pos");
+            var at=tree.pos(p.get(0).getAsInt(),p.get(1).getAsInt(),p.get(2).getAsInt());
+            h.assertTrue(BuiltInRegistries.BLOCK.getKey(l.getBlockState(at).getBlock()).equals(Identifier.fromNamespaceAndPath("logos","cultivation_jar")),"玻璃花房培养罐方块缺失："+at);
+            var be=l.getBlockEntity(at);
+            h.assertTrue(be!=null&&!be.saveCustomOnly(l.registryAccess()).getStringOr("plant","").isEmpty(),"玻璃花房培养罐内未种植植物："+at);
+        }
         for(var floor:room.getAsJsonArray("floors")){
             var pos=tree.pos(7,floor.getAsInt(),0);
             h.assertTrue(l.getBlockState(pos).is(ElvenBlocks.PLANKS.get())||l.getBlockState(pos).is(ElvenBlocks.INLAY.get()),"分层楼板缺失");

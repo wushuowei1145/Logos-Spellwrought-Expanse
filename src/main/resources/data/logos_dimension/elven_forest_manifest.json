@@ -3,8 +3,8 @@
   "climate_entries": 80,
   "world_tree": {
     "tiles": 343,
-    "root_footings": 1670,
-    "material_cells": 574618,
+    "root_footings": 1632,
+    "material_cells": 688641,
     "root_tile": "tile_3_0_3",
     "anchor": [
       16,
@@ -15,24 +15,979 @@
     "surrounding_giants": 8,
     "tree_houses": [
       {
+        "kind": "fir",
+        "floor": 26,
+        "upper_floor": 38,
+        "rope": [
+          74,
+          2,
+          -9
+        ],
+        "rope_top": 28,
+        "bridge_port": [
+          64,
+          26,
+          0
+        ],
+        "center": [
+          74,
+          26,
+          0
+        ]
+      },
+      {
         "kind": "broadleaf",
         "floor": 26,
+        "upper_floor": null,
         "rope": [
-          52,
+          58,
           2,
-          65
+          46
         ],
-        "rope_top": 28
+        "rope_top": 28,
+        "bridge_port": [
+          45,
+          26,
+          45
+        ],
+        "center": [
+          52,
+          26,
+          52
+        ]
+      },
+      {
+        "kind": "broadleaf",
+        "floor": 26,
+        "upper_floor": 38,
+        "rope": [
+          9,
+          2,
+          74
+        ],
+        "rope_top": 28,
+        "bridge_port": [
+          0,
+          26,
+          64
+        ],
+        "center": [
+          0,
+          26,
+          74
+        ]
       },
       {
         "kind": "fir",
-        "floor": 23,
+        "floor": 26,
+        "upper_floor": null,
         "rope": [
-          0,
+          -46,
           2,
-          -61
+          58
         ],
-        "rope_top": 25
+        "rope_top": 28,
+        "bridge_port": [
+          -45,
+          26,
+          45
+        ],
+        "center": [
+          -52,
+          26,
+          52
+        ]
+      },
+      {
+        "kind": "broadleaf",
+        "floor": 26,
+        "upper_floor": 38,
+        "rope": [
+          -74,
+          2,
+          9
+        ],
+        "rope_top": 28,
+        "bridge_port": [
+          -64,
+          26,
+          0
+        ],
+        "center": [
+          -74,
+          26,
+          0
+        ]
+      },
+      {
+        "kind": "broadleaf",
+        "floor": 26,
+        "upper_floor": null,
+        "rope": [
+          -58,
+          2,
+          -46
+        ],
+        "rope_top": 28,
+        "bridge_port": [
+          -45,
+          26,
+          -45
+        ],
+        "center": [
+          -52,
+          26,
+          -52
+        ]
+      },
+      {
+        "kind": "fir",
+        "floor": 26,
+        "upper_floor": 38,
+        "rope": [
+          -9,
+          2,
+          -74
+        ],
+        "rope_top": 28,
+        "bridge_port": [
+          0,
+          26,
+          -64
+        ],
+        "center": [
+          0,
+          26,
+          -74
+        ]
+      },
+      {
+        "kind": "broadleaf",
+        "floor": 26,
+        "upper_floor": null,
+        "rope": [
+          46,
+          2,
+          -58
+        ],
+        "rope_top": 28,
+        "bridge_port": [
+          45,
+          26,
+          -45
+        ],
+        "center": [
+          52,
+          26,
+          -52
+        ]
+      }
+    ],
+    "trunk_houses": [
+      {
+        "center": [
+          35,
+          9,
+          -10
+        ],
+        "floor": 8,
+        "angle": -0.3612831551628264,
+        "two_story": true
+      },
+      {
+        "center": [
+          -31,
+          11,
+          -18
+        ],
+        "floor": 10,
+        "angle": -2.5157873969947064,
+        "two_story": true
+      },
+      {
+        "center": [
+          40,
+          12,
+          6
+        ],
+        "floor": 11,
+        "angle": 0.1527956426973216,
+        "two_story": false
+      },
+      {
+        "center": [
+          5,
+          20,
+          40
+        ],
+        "floor": 19,
+        "angle": 1.4379926373476914,
+        "two_story": false
+      },
+      {
+        "center": [
+          -14,
+          23,
+          34
+        ],
+        "floor": 22,
+        "angle": 2.080591134672876,
+        "two_story": true
+      },
+      {
+        "center": [
+          -36,
+          28,
+          8
+        ],
+        "floor": 27,
+        "angle": 2.9159691811956168,
+        "two_story": false
+      },
+      {
+        "center": [
+          -34,
+          31,
+          -12
+        ],
+        "floor": 30,
+        "angle": 3.5585676785208014,
+        "two_story": false
+      },
+      {
+        "center": [
+          -10,
+          36,
+          -34
+        ],
+        "floor": 35,
+        "angle": 4.329685875311024,
+        "two_story": false
+      },
+      {
+        "center": [
+          10,
+          39,
+          -36
+        ],
+        "floor": 38,
+        "angle": 4.972284372636208,
+        "two_story": true
+      },
+      {
+        "center": [
+          33,
+          43,
+          -16
+        ],
+        "floor": 42,
+        "angle": 5.679142719693913,
+        "two_story": false
+      },
+      {
+        "center": [
+          40,
+          47,
+          5
+        ],
+        "floor": 46,
+        "angle": 6.386001066751615,
+        "two_story": false
+      },
+      {
+        "center": [
+          20,
+          52,
+          32
+        ],
+        "floor": 51,
+        "angle": 7.221379113274355,
+        "two_story": false
+      },
+      {
+        "center": [
+          -2,
+          56,
+          36
+        ],
+        "floor": 55,
+        "angle": 7.992497310064578,
+        "two_story": true
+      },
+      {
+        "center": [
+          -26,
+          60,
+          21
+        ],
+        "floor": 59,
+        "angle": 8.699355657122283,
+        "two_story": false
+      },
+      {
+        "center": [
+          -33,
+          63,
+          8
+        ],
+        "floor": 62,
+        "angle": 9.21343445498243,
+        "two_story": false
+      },
+      {
+        "center": [
+          -14,
+          69,
+          -27
+        ],
+        "floor": 68,
+        "angle": 10.370111750167762,
+        "two_story": false
+      },
+      {
+        "center": [
+          9,
+          74,
+          -34
+        ],
+        "floor": 73,
+        "angle": 11.205489796690504,
+        "two_story": false
+      },
+      {
+        "center": [
+          35,
+          79,
+          -14
+        ],
+        "floor": 78,
+        "angle": 12.040867843213242,
+        "two_story": false
+      }
+    ],
+    "suspended_houses": [
+      {
+        "center": [
+          36,
+          84,
+          0
+        ],
+        "floor": 84,
+        "anchor_y": 120,
+        "ropes": [
+          [
+            32,
+            -4,
+            89,
+            114
+          ],
+          [
+            32,
+            4,
+            89,
+            114
+          ],
+          [
+            40,
+            -4,
+            89,
+            122
+          ],
+          [
+            40,
+            4,
+            89,
+            122
+          ]
+        ]
+      },
+      {
+        "center": [
+          54,
+          84,
+          0
+        ],
+        "floor": 84,
+        "anchor_y": 138,
+        "ropes": [
+          [
+            50,
+            -4,
+            89,
+            132
+          ],
+          [
+            50,
+            4,
+            89,
+            132
+          ],
+          [
+            58,
+            -4,
+            89,
+            140
+          ],
+          [
+            58,
+            4,
+            89,
+            140
+          ]
+        ]
+      },
+      {
+        "center": [
+          24,
+          84,
+          24
+        ],
+        "floor": 84,
+        "anchor_y": 126,
+        "ropes": [
+          [
+            20,
+            20,
+            89,
+            117
+          ],
+          [
+            20,
+            28,
+            89,
+            124
+          ],
+          [
+            28,
+            20,
+            89,
+            124
+          ],
+          [
+            28,
+            28,
+            89,
+            131
+          ]
+        ]
+      },
+      {
+        "center": [
+          0,
+          84,
+          35
+        ],
+        "floor": 84,
+        "anchor_y": 123,
+        "ropes": [
+          [
+            -4,
+            31,
+            89,
+            118
+          ],
+          [
+            -4,
+            39,
+            89,
+            124
+          ],
+          [
+            4,
+            31,
+            89,
+            118
+          ],
+          [
+            4,
+            39,
+            89,
+            124
+          ]
+        ]
+      },
+      {
+        "center": [
+          0,
+          84,
+          51
+        ],
+        "floor": 84,
+        "anchor_y": 138,
+        "ropes": [
+          [
+            -4,
+            47,
+            89,
+            132
+          ],
+          [
+            -4,
+            55,
+            89,
+            140
+          ],
+          [
+            4,
+            47,
+            89,
+            132
+          ],
+          [
+            4,
+            55,
+            89,
+            140
+          ]
+        ]
+      },
+      {
+        "center": [
+          -21,
+          84,
+          21
+        ],
+        "floor": 84,
+        "anchor_y": 121,
+        "ropes": [
+          [
+            -25,
+            17,
+            89,
+            119
+          ],
+          [
+            -25,
+            25,
+            89,
+            127
+          ],
+          [
+            -17,
+            17,
+            89,
+            111
+          ],
+          [
+            -17,
+            25,
+            89,
+            119
+          ]
+        ]
+      },
+      {
+        "center": [
+          -37,
+          84,
+          0
+        ],
+        "floor": 84,
+        "anchor_y": 124,
+        "ropes": [
+          [
+            -41,
+            -4,
+            89,
+            126
+          ],
+          [
+            -41,
+            4,
+            89,
+            126
+          ],
+          [
+            -33,
+            -4,
+            89,
+            118
+          ],
+          [
+            -33,
+            4,
+            89,
+            118
+          ]
+        ]
+      },
+      {
+        "center": [
+          -55,
+          84,
+          0
+        ],
+        "floor": 84,
+        "anchor_y": 143,
+        "ropes": [
+          [
+            -59,
+            -4,
+            89,
+            145
+          ],
+          [
+            -59,
+            4,
+            89,
+            145
+          ],
+          [
+            -51,
+            -4,
+            89,
+            137
+          ],
+          [
+            -51,
+            4,
+            89,
+            137
+          ]
+        ]
+      },
+      {
+        "center": [
+          -24,
+          84,
+          -24
+        ],
+        "floor": 84,
+        "anchor_y": 133,
+        "ropes": [
+          [
+            -28,
+            -28,
+            89,
+            139
+          ],
+          [
+            -28,
+            -20,
+            89,
+            131
+          ],
+          [
+            -20,
+            -28,
+            89,
+            131
+          ],
+          [
+            -20,
+            -20,
+            89,
+            123
+          ]
+        ]
+      },
+      {
+        "center": [
+          0,
+          84,
+          -35
+        ],
+        "floor": 84,
+        "anchor_y": 122,
+        "ropes": [
+          [
+            -4,
+            -39,
+            89,
+            125
+          ],
+          [
+            -4,
+            -31,
+            89,
+            115
+          ],
+          [
+            4,
+            -39,
+            89,
+            125
+          ],
+          [
+            4,
+            -31,
+            89,
+            115
+          ]
+        ]
+      },
+      {
+        "center": [
+          0,
+          84,
+          -52
+        ],
+        "floor": 84,
+        "anchor_y": 141,
+        "ropes": [
+          [
+            -4,
+            -56,
+            89,
+            143
+          ],
+          [
+            -4,
+            -48,
+            89,
+            135
+          ],
+          [
+            4,
+            -56,
+            89,
+            143
+          ],
+          [
+            4,
+            -48,
+            89,
+            135
+          ]
+        ]
+      },
+      {
+        "center": [
+          23,
+          84,
+          -23
+        ],
+        "floor": 84,
+        "anchor_y": 122,
+        "ropes": [
+          [
+            19,
+            -27,
+            89,
+            120
+          ],
+          [
+            19,
+            -19,
+            89,
+            114
+          ],
+          [
+            27,
+            -27,
+            89,
+            126
+          ],
+          [
+            27,
+            -19,
+            89,
+            120
+          ]
+        ]
+      }
+    ],
+    "market_stalls": 6,
+    "cultivation_jars": [
+      {
+        "pos": [
+          31,
+          16,
+          15
+        ],
+        "seed": "logos:mandrake_seed",
+        "plant": "logos:mandrake_crop",
+        "age": 3
+      },
+      {
+        "pos": [
+          33,
+          16,
+          15
+        ],
+        "seed": "logos:starlight_moss_spore",
+        "plant": "logos:starlight_moss_crop",
+        "age": 3
+      },
+      {
+        "pos": [
+          35,
+          16,
+          15
+        ],
+        "seed": "logos:mercury_spore",
+        "plant": "logos:mercury_mushroom_crop",
+        "age": 2
+      },
+      {
+        "pos": [
+          31,
+          16,
+          23
+        ],
+        "seed": "logos:niter_sprout",
+        "plant": "logos:niter_sprout_crop",
+        "age": 3
+      },
+      {
+        "pos": [
+          33,
+          16,
+          23
+        ],
+        "seed": "logos_dimension:journey_berry_bramble",
+        "plant": "logos_dimension:journey_berry_bramble",
+        "age": 3
+      },
+      {
+        "pos": [
+          35,
+          16,
+          23
+        ],
+        "seed": "minecraft:sweet_berries",
+        "plant": "minecraft:sweet_berry_bush",
+        "age": 3
+      },
+      {
+        "pos": [
+          32,
+          15,
+          17
+        ],
+        "seed": "minecraft:carrot",
+        "plant": "minecraft:carrots",
+        "age": 7
+      },
+      {
+        "pos": [
+          35,
+          15,
+          17
+        ],
+        "seed": "minecraft:wheat_seeds",
+        "plant": "minecraft:wheat",
+        "age": 7
+      },
+      {
+        "pos": [
+          32,
+          15,
+          21
+        ],
+        "seed": "minecraft:beetroot_seeds",
+        "plant": "minecraft:beetroots",
+        "age": 3
+      },
+      {
+        "pos": [
+          35,
+          15,
+          21
+        ],
+        "seed": "minecraft:potato",
+        "plant": "minecraft:potatoes",
+        "age": 7
+      },
+      {
+        "pos": [
+          -33,
+          21,
+          6
+        ],
+        "seed": "minecraft:wheat_seeds",
+        "plant": "minecraft:wheat",
+        "age": 7
+      },
+      {
+        "pos": [
+          -35,
+          21,
+          6
+        ],
+        "seed": "minecraft:beetroot_seeds",
+        "plant": "minecraft:beetroots",
+        "age": 3
+      },
+      {
+        "pos": [
+          -37,
+          21,
+          6
+        ],
+        "seed": "minecraft:potato",
+        "plant": "minecraft:potatoes",
+        "age": 7
+      },
+      {
+        "pos": [
+          -33,
+          21,
+          -2
+        ],
+        "seed": "minecraft:nether_wart",
+        "plant": "minecraft:nether_wart",
+        "age": 3
+      },
+      {
+        "pos": [
+          -35,
+          21,
+          -2
+        ],
+        "seed": "minecraft:torchflower_seeds",
+        "plant": "minecraft:torchflower_crop",
+        "age": 1
+      },
+      {
+        "pos": [
+          -37,
+          21,
+          -2
+        ],
+        "seed": "logos:mandrake_seed",
+        "plant": "logos:mandrake_crop",
+        "age": 3
+      },
+      {
+        "pos": [
+          -34,
+          20,
+          4
+        ],
+        "seed": "logos:starlight_moss_spore",
+        "plant": "logos:starlight_moss_crop",
+        "age": 3
+      },
+      {
+        "pos": [
+          -37,
+          20,
+          4
+        ],
+        "seed": "logos:mercury_spore",
+        "plant": "logos:mercury_mushroom_crop",
+        "age": 2
+      },
+      {
+        "pos": [
+          -34,
+          20,
+          0
+        ],
+        "seed": "logos:niter_sprout",
+        "plant": "logos:niter_sprout_crop",
+        "age": 3
+      },
+      {
+        "pos": [
+          -37,
+          20,
+          0
+        ],
+        "seed": "logos_dimension:journey_berry_bramble",
+        "plant": "logos_dimension:journey_berry_bramble",
+        "age": 3
       }
     ],
     "interior": {
@@ -1014,7 +1969,7 @@
       "width": 3,
       "central_lightwell_radius": 5.3
     },
-    "bough_lights": 177,
+    "bough_lights": 196,
     "residents": [
       [
         3,
@@ -1072,24 +2027,194 @@
         0
       ],
       [
-        50,
-        27,
-        60
+        31,
+        9,
+        -11
       ],
       [
-        53,
-        27,
-        60
+        -35,
+        11,
+        -18
       ],
       [
-        -2,
-        24,
-        -66
+        36,
+        12,
+        5
       ],
       [
         1,
-        24,
-        -66
+        20,
+        44
+      ],
+      [
+        -18,
+        23,
+        33
+      ],
+      [
+        -40,
+        28,
+        4
+      ],
+      [
+        -38,
+        31,
+        -16
+      ],
+      [
+        -14,
+        36,
+        -38
+      ],
+      [
+        6,
+        39,
+        -39
+      ],
+      [
+        29,
+        43,
+        -18
+      ],
+      [
+        36,
+        47,
+        4
+      ],
+      [
+        16,
+        52,
+        36
+      ],
+      [
+        -6,
+        56,
+        35
+      ],
+      [
+        -30,
+        60,
+        17
+      ],
+      [
+        -37,
+        63,
+        4
+      ],
+      [
+        -18,
+        69,
+        -31
+      ],
+      [
+        5,
+        74,
+        -38
+      ],
+      [
+        31,
+        79,
+        -16
+      ],
+      [
+        32,
+        85,
+        -3
+      ],
+      [
+        50,
+        85,
+        -3
+      ],
+      [
+        20,
+        85,
+        21
+      ],
+      [
+        -4,
+        85,
+        31
+      ],
+      [
+        -4,
+        85,
+        48
+      ],
+      [
+        -25,
+        85,
+        17
+      ],
+      [
+        -41,
+        85,
+        -3
+      ],
+      [
+        -59,
+        85,
+        -3
+      ],
+      [
+        -28,
+        85,
+        -27
+      ],
+      [
+        -4,
+        85,
+        -38
+      ],
+      [
+        -4,
+        85,
+        -55
+      ],
+      [
+        19,
+        85,
+        -26
+      ],
+      [
+        70,
+        27,
+        -3
+      ],
+      [
+        48,
+        27,
+        48
+      ],
+      [
+        -4,
+        27,
+        70
+      ],
+      [
+        -56,
+        27,
+        49
+      ],
+      [
+        -78,
+        27,
+        -1
+      ],
+      [
+        -56,
+        27,
+        -53
+      ],
+      [
+        -4,
+        27,
+        -77
+      ],
+      [
+        48,
+        27,
+        -55
       ]
     ]
   },
@@ -1186,7 +2311,7 @@
     },
     {
       "template": "giant_3_home",
-      "blocks": 17551,
+      "blocks": 17552,
       "footings": 34,
       "height": 85,
       "house": {
@@ -1213,7 +2338,7 @@
     },
     {
       "template": "giant_4_home",
-      "blocks": 19415,
+      "blocks": 19420,
       "footings": 31,
       "height": 90,
       "house": {
