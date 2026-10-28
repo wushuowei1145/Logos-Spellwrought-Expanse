@@ -44,6 +44,10 @@
 
 新增 `logos_dimension:elf_spear`：钻石矛的 4 点戳刺伤害、木矛的 0.65 秒攻速，右键保留铁矛冲撞。左键种下六秒萌芽印记，右键触发消耗印记与 5 魔力，追加 6 点 Logos 生命基础伤害，再施加四秒生命易伤 I。使用用户提供的图标与原版长矛显示模板，见 [精灵长矛](docs/ELF_SPEAR.md)。
 
+## 古木之拥
+
+新增生命系列盾牌 `logos_dimension:ancient_embrace`，使用提供的完整模型和原图，耐久沿用原版盾的 336 点。取消自己的五刻举盾前摇，成功格挡点亮一片叶；举盾前五刻格挡奖励两片。五片全亮后收盾消耗 5 魔力恢复 4 点生命，技能冷却八秒，见 [古木之拥](docs/ANCIENT_EMBRACE.md)。
+
 ## 原版数据包生成
 
 两个维度都使用原版 `minecraft:noise` 地形、`minecraft:multi_noise` 群系选择、原版树木与植物 Feature、标准 NBT/jigsaw 结构。删除手写 Java 地形、种树与建筑填块生成器。数据随 Mod 内置，正常安装不需要额外下载数据包，存档数据包可以覆盖同名资源。见 [生成数据与迁移](docs/NATIVE_WORLDGEN.md)。
