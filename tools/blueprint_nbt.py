@@ -51,5 +51,10 @@ def write_structure(path,size,cells,block_entities=None,data_version=0,entities=
         blocks.append(entry)
     doc={'DataVersion':data_version,'size':list(size),'palette':palette,'blocks':blocks,'entities':entities or []}
     path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
-    with path.open('wb') as stream:
-        with gzip.GzipFile(fileobj=stream,mode='wb',mtime=0) as output:output.write(b'\x0a\0\0'+_payload(doc))
+    raw=gzip.compress(b'\x0a\0\0'+_payload(doc),mtime=0)
+    for attempt in range(5):
+        try:
+            path.write_bytes(raw);break
+        except OSError:
+            if attempt==4:raise
+            import time;time.sleep(0.05)

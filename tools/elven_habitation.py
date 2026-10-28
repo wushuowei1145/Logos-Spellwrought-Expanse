@@ -57,6 +57,8 @@ def tree_house(cells, conifer=False, variant=0, offset=(0, 0, 0)):
         y = floor+5+rise
         for z in range(4, 12):
             put(x, y, z, f'minecraft:{roof}_stairs', facing='east' if x<0 else 'west', half='bottom', shape='straight', waterlogged=False)
+            if abs(x) < 5 and y > floor+5:
+                put(x, y-1, z, plank)
             # 封住山墙，避免从屋内看见穿透的屋顶边缘。
             for wall_y in range(floor+5, y):
                 for edge in [5, 10]: put(x, wall_y, edge, plank)
@@ -176,7 +178,7 @@ def world_floors(cells):
                     put(x, floor, z, 'elven_luminous_inlay' if (x*7+z*11)%29==0 else 'elven_pale_planks')
                     # 完整分层，树壳作外围墙，中央光井贯通所有楼层。
                     for y in range(floor+1, floor+5): put(x, y, z, 'minecraft:air')
-                if 5.3 <= r < 6.2:
+                if 5.3 <= r <= 6.42:
                     put(x, floor+1, z, 'minecraft:birch_fence', north=True, south=True, east=True, west=True, waterlogged=False)
         for x, z in [(-7, 0), (7, 0), (0, -7), (0, 7)]:
             put(x, floor+3, z, 'elven_leaf_lamp', facing='north')
@@ -204,11 +206,53 @@ def world_floors(cells):
         if i % 8 == 0:
             sx, sz = x+dx*2*(1 if x>=0 else -1), z+dz*2*(1 if z>=0 else -1)
             put(sx, y+1, sz, 'elven_bough_light')
+    rail_posts = []
     for x, y, z, half in steps:
         dx, dz = (1 if x>=0 else -1, 0) if abs(x)>=abs(z) else (0, 1 if z>=0 else -1)
+        fx, fy, fz = x+dx*2, y+1, z+dz*2
         # 外侧连续扶手位于行走宽度之外，不堵中央采光井或楼梯。
-        put(x+dx*2, y+1, z+dz*2, 'minecraft:birch_fence', north=True, south=True, east=True, west=True, waterlogged=False)
+        put(fx, fy, fz, 'minecraft:birch_fence', north=False, south=False, east=False, west=False, waterlogged=False)
+        rail_posts.append((fx, fy, fz))
+    for (fx0, fy0, fz0), (fx1, fy1, fz1) in zip(rail_posts, rail_posts[1:]):
+        if fy1 == fy0 + 1 and abs(fx1 - fx0) + abs(fz1 - fz0) == 1:
+            put(fx0, fy1, fz0, 'minecraft:birch_fence', north=False, south=False, east=False, west=False, waterlogged=False)
     return {'floors': floors, 'stairs': steps, 'width': 3, 'central_lightwell_radius': 5.3}
+
+
+def _can_connect_horizontal(neighbor_name, is_pane=False):
+    if not neighbor_name or neighbor_name == 'minecraft:air':
+        return False
+    if is_pane:
+        if 'glass_pane' in neighbor_name or 'distillation_glass' in neighbor_name or neighbor_name.endswith(':glass'):
+            return True
+    else:
+        if '_fence' in neighbor_name:
+            return True
+    return any(k in neighbor_name for k in (
+        'planks', 'heartwood', '_log', 'plaster', 'wool', 'moss_block', 'luminous_inlay'
+    ))
+
+
+def fix_connectable_blockstates(cells):
+    """根据四邻格实际方块自动修正全部栅栏与玻璃板的连接属性（north/south/east/west），消除十字错乱状态。"""
+    dirs = (
+        ('north', 0, -1),
+        ('south', 0, 1),
+        ('east', 1, 0),
+        ('west', -1, 0),
+    )
+    for (x, y, z), st in list(cells.items()):
+        name = st.get('Name', '')
+        is_fence = '_fence' in name
+        is_pane = 'glass_pane' in name
+        if not (is_fence or is_pane):
+            continue
+        props = dict(st.get('Properties', {}))
+        for side, dx, dz in dirs:
+            nb = cells.get((x + dx, y, z + dz), {}).get('Name', 'minecraft:air')
+            props[side] = 'true' if _can_connect_horizontal(nb, is_pane=is_pane) else 'false'
+        props['waterlogged'] = 'false'
+        cells[x, y, z] = {'Name': name, 'Properties': props}
 
 
 def assets(root):
@@ -218,9 +262,9 @@ def assets(root):
     def write(p, o):
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(json.dumps(o, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
-    im = Image.new('RGBA', (32, 32), (164, 140, 97, 255)); q = ImageDraw.Draw(im)
-    for y in range(32):
-        for x in range(32):
+    im = Image.new('RGBA', (16, 16), (164, 140, 97, 255)); q = ImageDraw.Draw(im)
+    for y in range(16):
+        for x in range(16):
             v = int(16*math.sin((x+y*.7)*1.4)+5*math.cos(y*1.6))
             q.point((x, y), fill=(164+v, 140+v, 97+v, 255))
     im.save(a/'textures/block/elven_rope.png')

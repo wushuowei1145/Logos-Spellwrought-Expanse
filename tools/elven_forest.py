@@ -9,7 +9,8 @@ ROOT=Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(ROOT/'tools'))
 from blueprint_nbt import write_structure
 from elven_tree_study import world_tree, broadleaf, fir
-from elven_habitation import tree_house, tree_lights, world_floors, house_residents, world_residents, assets as habitation_assets
+from elven_habitation import tree_house, tree_lights, world_floors, house_residents, world_residents, resident, standable, fix_connectable_blockstates, assets as habitation_assets
+from elven_settlement import build_world_tree_settlement, carve_interior_portals
 R=ROOT/'src/main/resources';D=R/'data/logos_dimension';A=R/'assets/logos_dimension'
 NS='logos_dimension:'
 
@@ -34,9 +35,9 @@ def box(lo,hi,texture='wood',lit=False):
 
 def texture(name,color,grain=False):
     rng=np.random.default_rng(sum(ord(c)*(i+1) for i,c in enumerate(name)))
-    yy,xx=np.mgrid[:64,:64]
-    noise=rng.normal(0,2.8,(64,64))
-    if grain:noise+=np.sin(xx*.75+np.sin(yy*.12)*.8)*5+np.sin(xx*2.1)*2
+    yy,xx=np.mgrid[:16,:16]
+    noise=rng.normal(0,3.2,(16,16))
+    if grain:noise+=np.sin(xx*1.2+np.sin(yy*.35)*.8)*5+np.sin(xx*2.4)*2
     rgb=np.clip(np.array(color)[None,None,:]+noise[:,:,None],0,255).astype(np.uint8)
     im=Image.fromarray(rgb).convert('RGBA');im.save(A/'textures/block'/f'{name}.png')
 
@@ -48,26 +49,26 @@ def models():
     im=Image.open(A/'textures/block/elven_wood.png');q=ImageDraw.Draw(im)
     for angle in [0,math.pi/2,math.pi,math.pi*1.5]:
         points=[]
-        for a,b in [(0,0),(6,9),(0,24),(-6,9)]:
-            points.append((32+a*math.cos(angle)-b*math.sin(angle),32+a*math.sin(angle)+b*math.cos(angle)))
+        for a,b in [(0,0),(2,3),(0,6),(-2,3)]:
+            points.append((8+a*math.cos(angle)-b*math.sin(angle),8+a*math.sin(angle)+b*math.cos(angle)))
         q.polygon(points,fill=(255,239,183,255))
-    q.ellipse((29,29,35,35),fill=(255,248,207,255));im.save(A/'textures/block/elven_inlay.png')
+    q.rectangle((7,7,8,8),fill=(255,248,207,255));im.save(A/'textures/block/elven_inlay.png')
     texture('elven_heartwood',(113,101,80),True)
     im=Image.open(A/'textures/block/elven_heartwood.png');q=ImageDraw.Draw(im)
-    for x in range(2,64,9):q.line([(x,0),(x+2,18),(x,37),(x-1,63)],fill=(78,76,62,255),width=1)
+    for x in range(1,16,4):q.line([(x,0),(x+1,5),(x,10),(x,15)],fill=(78,76,62,255),width=1)
     im.save(A/'textures/block/elven_heartwood.png')
-    im=Image.new('RGBA',(64,64),(147,129,93,255));q=ImageDraw.Draw(im)
-    for r in range(4,48,5):q.ellipse((32-r,31-r,32+r,31+r),outline=(115+r//5,100+r//5,76,255),width=1)
+    im=Image.new('RGBA',(16,16),(147,129,93,255));q=ImageDraw.Draw(im)
+    for r in [2,4,6]:q.ellipse((8-r,8-r,7+r,7+r),outline=(115+r*2,100+r*2,76,255),width=1)
     im.save(A/'textures/block/elven_heartwood_end.png')
     write(A/'models/block/elven_heartwood.json',{'parent':'minecraft:block/cube_column','textures':{'side':tex('elven_heartwood'),'end':tex('elven_heartwood_end')}})
     write(A/'blockstates/elven_heartwood.json',{'variants':{'axis=y':{'model':tex('elven_heartwood')},'axis=x':{'model':tex('elven_heartwood'),'x':90,'y':90},'axis=z':{'model':tex('elven_heartwood'),'x':90}}})
     for season,color in enumerate([(108,143,109),(87,124,93),(152,141,83),(145,161,146)]):
-        rng=np.random.default_rng(143+season);im=Image.new('RGBA',(64,64));q=ImageDraw.Draw(im)
-        for _ in range(370):
-            x,y=rng.integers(-4,64,2);r=int(rng.integers(2,5));n=int(rng.integers(-17,18))
-            c=tuple(int(np.clip(v+n,0,255)) for v in color)+(255,)
-            q.ellipse((int(x-r),int(y-r//2),int(x+r),int(y+r//2+1)),fill=c)
-            q.line((int(x-r+1),int(y),int(x+r-1),int(y)),fill=tuple(min(255,v+9) for v in c[:3])+(255,))
+        rng=np.random.default_rng(143+season);im=Image.new('RGBA',(16,16));q=ImageDraw.Draw(im)
+        for y in range(16):
+            for x in range(16):
+                n=int(rng.integers(-16,17))+((x+y)%2)*4
+                c=tuple(int(np.clip(v+n,0,255)) for v in color)+(255,)
+                q.point((x,y),fill=c)
         name='elven_canopy_'+str(season);im.save(A/'textures/block'/f'{name}.png')
         m=json.loads((A/'models/block'/f'cloudsea_ancient_beech_leaf_{season}.json').read_text(encoding='utf-8'))
         m['textures']={k:tex(name) for k in m['textures']}
@@ -197,7 +198,8 @@ def furniture(cells):
     for x in range(-12,13):
         for z in range(-12,13):
             if x*x+z*z<169:put(x,1,z,'elven_pale_planks')
-    for x,z in [(0,0),(4,0),(-4,0),(0,4),(0,-4)]:put(x,1,z,'elven_luminous_inlay')
+    for x in [-4,0,4]:
+        for z in [-4,0,4]:put(x,1,z,'elven_luminous_inlay')
     for x,facing in [(-9,'east'),(9,'west')]:
         for z in [2,3,4]:put(x,2,z,'elven_leaf_seat',facing=facing)
     for x in [-7,-6,-5]:
@@ -235,10 +237,12 @@ def world_assets():
         if i%3==0:values[values==1]=25
         dst=xyz-v.origin;inside=np.all((dst>=0)&(dst<np.array(data.shape)),axis=1)
         dst=dst[inside];values=values[inside];empty=data[tuple(dst.T)]==0;data[tuple(dst[empty].T)]=values[empty]
-        if i in [1,6]:homes.append((i,round(math.cos(a)*74),round(math.sin(a)*74)))
+        homes.append((i,round(math.cos(a)*74),round(math.sin(a)*74)))
     cells={}
     for p in np.argwhere(data):
         x,y,z=(p+v.origin).tolist();cells[x,y,z]=base_state(int(data[tuple(p)]),y)
+    extra_block_entities={}
+    settlement=build_world_tree_settlement(cells,homes,block_entities=extra_block_entities)
     for y in range(2,96):
         radius=13 if y<82 else 13-(y-82)*.22
         for x in range(-13,14):
@@ -246,14 +250,25 @@ def world_assets():
                 if x*x+z*z<radius*radius or (y<35 and z<0 and (x/9)**2+(max(0,y-19)/16)**2<1):cells[x,y,z]=state('minecraft:air')
     furniture(cells)
     levels=world_floors(cells)
-    house_specs=[tree_house(cells,i%3==0,i,(x,0,z)) for i,x,z in homes]
-    # 森林精灵：世界树大厅与上面几层、两间树屋，写进模板的实体列表（参照村庄的村民）。
-    residents=world_residents(cells,levels)
-    for (i,x,z),spec in zip(homes,house_specs):residents+=house_residents((x,0,z),spec['floor'])
     lights=tree_lights(cells,seed=37)
+    portals=carve_interior_portals(cells,settlement['spiral_a'],levels=levels)
+    cells.pop((-95,7,-95),None)
+    house_specs=settlement['giant_houses']
+    # 森林精灵：世界树大厅、五层内廊（含顶层两位持盾矛守卫）、外圈依附木屋、高空悬吊屋及近卫巨木树屋。
+    residents=world_residents(cells,levels)
+    for group in [settlement['trunk_houses'],settlement['suspended_houses'],settlement['giant_houses']]:
+        for spec in group:
+            cx,cy,cz=spec['center'];ry=spec['floor']+1;placed=0
+            for dx in range(-4,5):
+                for dz in range(-4,5):
+                    if standable(cells,cx+dx,ry,cz+dz):
+                        residents.append(resident(cx+dx,ry,cz+dz));placed+=1
+                        if placed==1:break
+                if placed==1:break
     # 只在根拱入口设置短木阶，不生成矩形土台。
     for z,y in [(-29,0),(-28,1)]:
         for x in range(-4,5):cells[x,y,z]=state('minecraft:oak_stairs',facing='south',half='bottom',shape='straight',waterlogged=False)
+    fix_connectable_blockstates(cells)
     root=(3,0,3);parent={root:None};queue=deque([root]);order=[]
     directions=[((1,0,0),'east'),((-1,0,0),'west'),((0,1,0),'up'),((0,-1,0),'down'),((0,0,1),'south'),((0,0,-1),'north')]
     while queue:
@@ -269,6 +284,10 @@ def world_assets():
         p=((x+112)//32,(y+4)//32,(z+112)//32)
         assert p in tiles,(x,y,z)
         tiles[p][0][((x+112)%32,(y+4)%32,(z+112)%32)]=s
+    for (x,y,z),be_nbt in extra_block_entities.items():
+        p=((x+112)//32,(y+4)//32,(z+112)//32)
+        assert p in tiles,(x,y,z)
+        tiles[p][1][((x+112)%32,(y+4)%32,(z+112)%32)]=be_nbt
     opposite={'east':'west','west':'east','up':'down','down':'up','north':'south','south':'north'}
     ports={'east':(31,1,1),'west':(0,1,1),'up':(1,31,1),'down':(1,0,1),'south':(1,1,31),'north':(1,1,0)}
     for child,relation in parent.items():
@@ -282,7 +301,7 @@ def world_assets():
         if p[1]==0:footings+=footing(c,e)
         name='tile_'+'_'.join(map(str,p));write_structure(D/'structure/elven'/f'{name}.nbt',[32,32,32],c,e,data_version=4790,entities=tile_entities[p]);pool(name,[name])
     pool('world_tree',['tile_3_0_3']);structure('elven_world_tree','world_tree',32,14,['elven_forest'],True)
-    return {'tiles':len(tiles),'root_footings':footings,'material_cells':len(cells),'root_tile':'tile_3_0_3','anchor':[16,4,16],'height_above_ground':216,'surrounding_giants':8,'tree_houses':house_specs,'interior':levels,'bough_lights':lights,'residents':[r['blockPos'] for r in residents]}
+    return {'tiles':len(tiles),'root_footings':footings,'material_cells':len(cells),'root_tile':'tile_3_0_3','anchor':[16,4,16],'height_above_ground':216,'surrounding_giants':8,'tree_houses':house_specs,'trunk_houses':settlement['trunk_houses'],'suspended_houses':settlement['suspended_houses'],'market_stalls':settlement['market_stalls'],'cultivation_jars':settlement['cultivation_jars'],'interior':levels,'bough_lights':lights,'residents':[r['blockPos'] for r in residents]}
 
 
 def ordinary_assets():
@@ -300,6 +319,7 @@ def ordinary_assets():
         for furnished in [False,True]:
             variant=copy.deepcopy(cells)
             home=tree_house(variant,i>=3,i,offset) if furnished else None
+            fix_connectable_blockstates(variant)
             residents=house_residents(offset,home['floor']-offset[1]) if furnished else []
             tags={};count=footing(variant,tags);name='giant_'+str(i)+('_home' if furnished else '')
             size=[max(p[axis] for p in variant)+1 for axis in range(3)]
