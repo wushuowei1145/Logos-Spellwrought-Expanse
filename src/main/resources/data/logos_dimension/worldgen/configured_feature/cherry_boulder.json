@@ -1,8 +1,12 @@
 {
-  "type": "minecraft:forest_rock",
+  "type": "minecraft:block_blob",
   "config": {
     "state": {
       "Name": "logos_dimension:journey_limestone"
+    },
+    "can_place_on": {
+      "type": "minecraft:matching_block_tag",
+      "tag": "logos_dimension:turf"
     }
   }
 }

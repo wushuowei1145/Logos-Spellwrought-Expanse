@@ -42,7 +42,12 @@ def placed(name, feature, placement):
 
 def main():
     # 1. 巨石：原版森林巨石，用我们的石灰岩，稀疏地冒出地面。
-    configured("cherry_boulder", {"type": "minecraft:forest_rock", "config": {"state": {"Name": STONE}}})
+    # 注意：26.1 没有 `minecraft:forest_rock` 这个特征类型，原版森林巨石用的是 block_blob；
+    # 类型名写错会让整个数据包加载失败，表现为"一直在生成世界"。
+    configured("cherry_boulder", {"type": "minecraft:block_blob", "config": {
+        "state": {"Name": STONE},
+        "can_place_on": {"type": "minecraft:matching_block_tag", "tag": "logos_dimension:turf"},
+    }})
     placed("cherry_boulder", "cherry_boulder",
            [{"type": "minecraft:rarity_filter", "chance": 10},
             {"type": "minecraft:in_square"},
