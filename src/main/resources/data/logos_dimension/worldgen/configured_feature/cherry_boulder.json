@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:forest_rock",
+  "config": {
+    "state": {
+      "Name": "logos_dimension:journey_limestone"
+    }
+  }
+}

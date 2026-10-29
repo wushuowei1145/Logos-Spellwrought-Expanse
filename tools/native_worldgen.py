@@ -14,13 +14,14 @@ with zipfile.ZipFile(archive) as z:
     def vanilla(path):return json.loads(z.read('data/minecraft/'+path+'.json'))
     DATA_VERSION=json.loads(z.read('version.json'))['world_version']
     OW=vanilla('worldgen/noise_settings/overworld');LARGE=vanilla('worldgen/noise_settings/large_biomes')
-    TREES={n:vanilla('worldgen/configured_feature/'+n) for n in ['oak','birch','spruce','fancy_oak']}
+    TREES={n:vanilla('worldgen/configured_feature/'+n) for n in ['oak','birch','spruce','fancy_oak','cherry']}
 
 biomes=re.findall(r'([A-Z_]+)\("([^"]+)",0x([A-F0-9]+),0x([A-F0-9]+)',(ROOT/'src/main/java/dev/logos/dimension/cloudsea/CloudseaBiome.java').read_text(encoding='utf-8'))
 ids=['cloudsea_'+b[0].lower() for b in biomes]
 conifers={'cloudsea_lilac_steps','cloudsea_cloudroot_shelves','cloudsea_fir_heart'}
 birches={'cloudsea_reverse_gardens','cloudsea_ivory_steps','cloudsea_moon_birch'}
-forests=conifers|birches|{'cloudsea_jade_whirls','cloudsea_verdant_whirls','cloudsea_lantern_shelves','cloudsea_ancient_beech','cloudsea_fernwood','cloudsea_moss_vale','cloudsea_copper_copse'}
+cherries={'cloudsea_white_cherry'}
+forests=conifers|birches|cherries|{'cloudsea_jade_whirls','cloudsea_verdant_whirls','cloudsea_lantern_shelves','cloudsea_ancient_beech','cloudsea_fernwood','cloudsea_moss_vale','cloudsea_copper_copse'}
 barren={ids[i] for i in [2,6,7,15,20,23]}
 glades={'cloudsea_sunlit_glade','cloudsea_starflower_glade'}
 
@@ -93,6 +94,8 @@ for ti,t in enumerate([-.8,-.4,0,.4,.8]):
      elif ei==0 and ci==3 and abs(w)>.3:bid='frost_spires' if ti<2 else 'pale_spires' if ti==2 else 'halo_spires'
      elif ti==0:bid='fir_heart' if hi>1 else 'lilac_steps' if hi==1 else 'aurora_dunes'
      elif wi==2 and ei>0 and hi>0:bid='starflower_glade' if hi>2 else 'sunlit_glade'
+     elif hi>=1 and ei==1 and ti in [2,3]:bid='white_cherry'  # 山脚：中等侵蚀的坡地
+     elif hi>=1 and ei==0 and ti==4 and wi==2:bid='white_cherry'  # 温山山顶
      elif hi>=1:
       if ti==1:bid=['ivory_steps','reverse_gardens','moon_birch'][ei]
       elif hi==4:bid='moss_vale' if ei==2 else 'fernwood'
@@ -155,6 +158,8 @@ plant_feature('meadow_floor',[('logos_dimension:journey_meadow_grass',{},65),('l
 # 尝试次数，只把组合与权重换成本群系自己的，让林地、林隙和精灵森林各有辨识度。
 SEASONAL_BLOCKS={'journey_silver_anemone','journey_moonbell','journey_glowcap','journey_heather','journey_amber_fern','journey_winter_hellebore','journey_fireweed','journey_berry_bramble'}
 FOREST_FLOORS={
+ # 樱花组：白樱林——落瓣与白花铺地，草只作底。
+ 'cloudsea_white_cherry':(640,[('minecraft:leaf_litter',30),('logos_dimension:journey_meadow_grass',24),('minecraft:oxeye_daisy',16),('logos_dimension:journey_silver_anemone',14),('minecraft:short_grass',12),('logos_dimension:journey_meadow_grass_young',8),('logos_dimension:journey_heather',4)]),
  # 针叶组：紫丁香阶地、云根层台、杉影深林
  'cloudsea_lilac_steps':(640,[('logos_dimension:journey_silver_anemone',20),('logos_dimension:journey_bluebell',16),('logos_dimension:journey_woodland_fern',18),('minecraft:moss_carpet',14),('minecraft:leaf_litter',10),('logos_dimension:journey_glowcap',6),('logos_dimension:journey_stardew',2)]),
  'cloudsea_cloudroot_shelves':(640,[('minecraft:moss_carpet',26),('logos_dimension:journey_woodland_fern',18),('logos_dimension:journey_lumen_fern',8),('logos_dimension:journey_glowcap',8),('logos_dimension:journey_bracken',8),('logos_dimension:journey_berry_bramble',8),('minecraft:leaf_litter',8)]),
@@ -294,9 +299,10 @@ for bid in ids:
         data['carvers']=['minecraft:cave']
         features[9]=['logos_dimension:'+bid+'_floor']
     elif bid not in barren:
-        tree=copy.deepcopy(TREES['spruce' if bid in conifers else 'birch' if bid in birches else 'fancy_oak' if bid in forests else 'oak'])
+        tree=copy.deepcopy(TREES['spruce' if bid in conifers else 'birch' if bid in birches else 'cherry' if bid in cherries else 'fancy_oak' if bid in forests else 'oak'])
         config=tree['config'];config['foliage_provider']=provider('logos_dimension:'+bid+'_leaf',distance=7,persistent=False,waterlogged=False,season=0)
-        config['trunk_placer']['base_height']=9 if bid in conifers else 8 if bid in forests else 5
+        if 'base_height' in config['trunk_placer']:
+            config['trunk_placer']['base_height']=9 if bid in conifers else 8 if bid in forests else 5
         config['trunk_provider']=provider('logos_dimension:'+bid+'_log',axis='y')
         if config['foliage_placer']['type']=='minecraft:blob_foliage_placer':config['foliage_placer']['radius']=3
         configured('trees_'+bid,tree);placed('trees_'+bid,'trees_'+bid,12 if bid in forests else 0 if bid in glades else 1,'OCEAN_FLOOR_WG')
@@ -314,6 +320,9 @@ for bid in ids:
         # 会报 "Feature order cycle found" 并直接让区块生成失败。精灵森林的 step9 是
         # [树, 地表, 倒木, 光林, 甘蔗, 睡莲, 露头, 白伞菇]，这里必须保持同样的先后。
         features[9].extend(MUSHROOM_FOR.get(bid,[]))
+    # 灵狐樱野：零星飘瓣的天空粒子，密度压低到 0.006。
+    if bid=='cloudsea_white_cherry':
+        data.setdefault('effects',{})['particle']={'probability':0.006,'options':{'type':'minecraft:cherry_leaves'}}
     data['features']=features;write(D/'worldgen/biome'/f'{bid}.json',data)
 for bid in ['aether','sulfur','mercury','salt','sanctum']:
     data=json.loads((D/'worldgen/biome'/f'{bid}.json').read_text());data['carvers']=['minecraft:cave','minecraft:canyon'];data['features']=[[] for _ in range(11)]
@@ -385,6 +394,7 @@ write(D/'tags/worldgen/structure/journey_settlements.json',{'values':['logos_dim
 runpy.run_path(str(ROOT/'tools/journey_art.py'))
 runpy.run_path(str(ROOT/'tools/grape_resources.py'))
 runpy.run_path(str(ROOT/'tools/ambient_particles.py'))
+runpy.run_path(str(ROOT/'tools/cherry_terrain.py'),run_name='__main__')  # 灵狐樱野的随机地形装饰
 runpy.run_path(str(ROOT/'tools/journey_tree_art.py'))
 
 runpy.run_path(str(ROOT/'tools/berry_resources.py'))

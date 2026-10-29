@@ -84,7 +84,8 @@ public final class CloudseaBlocks {
         PALETTE.add(block);return block;
     }
     private static DeferredBlock<Block> canopy(String id){
-        var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,SeasonalLeavesBlock::new,p->p.mapColor(MapColor.PLANT).strength(.2f).sound(SoundType.GRASS).noOcclusion().randomTicks());
+        // 白樱叶飘落瓣，其余树叶保持原样（不飘）。
+        var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,p->new SeasonalLeavesBlock(p,id.contains("white_cherry")),p->p.mapColor(MapColor.PLANT).strength(.2f).sound(SoundType.GRASS).noOcclusion().randomTicks());
         DimensionBlocks.ITEMS.registerSimpleBlockItem(id,block);PALETTE.add(block);return block;
     }
     private static DeferredBlock<Block> solid(String id,MapColor color,SoundType sound,int light) {

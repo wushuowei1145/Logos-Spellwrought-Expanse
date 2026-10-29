@@ -414,5 +414,12 @@
   "item.logos_dimension.elf_spear": "精灵长矛",
   "message.logos_dimension.elf_spear.old_logos": "当前 Logos 没有生命易伤效果，精灵长矛仅造成物理伤害",
   "item.logos_dimension.ancient_embrace": "古木之拥",
-  "item.logos_dimension.ancient_embrace.desc": "格挡点亮叶片，五片全亮后收盾消耗5魔力恢复4点生命；举盾瞬间格挡点亮两片"
+  "item.logos_dimension.ancient_embrace.desc": "格挡点亮叶片，五片全亮后收盾消耗5魔力恢复4点生命；举盾瞬间格挡点亮两片",
+  "block.logos_dimension.cloudsea_white_cherry_ground": "灵狐樱野草皮",
+  "block.logos_dimension.cloudsea_white_cherry_leaf": "灵狐樱野树叶",
+  "biome.logos_dimension.cloudsea_white_cherry": "灵狐樱野",
+  "block.logos_dimension.cloudsea_white_cherry_log": "灵狐樱野原木",
+  "item.logos_dimension.cloudsea_white_cherry_ground": "灵狐樱野草皮",
+  "item.logos_dimension.cloudsea_white_cherry_leaf": "灵狐樱野树叶",
+  "item.logos_dimension.cloudsea_white_cherry_log": "灵狐樱野原木"
 }
