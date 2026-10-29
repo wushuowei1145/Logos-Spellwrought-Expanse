@@ -394,6 +394,7 @@ write(D/'tags/worldgen/structure/journey_settlements.json',{'values':['logos_dim
 runpy.run_path(str(ROOT/'tools/journey_art.py'))
 runpy.run_path(str(ROOT/'tools/grape_resources.py'))
 runpy.run_path(str(ROOT/'tools/ambient_particles.py'))
+runpy.run_path(str(ROOT/'tools/cherry_terrain.py'),run_name='__main__')  # 灵狐樱野的随机地形装饰
 runpy.run_path(str(ROOT/'tools/journey_tree_art.py'))
 
 runpy.run_path(str(ROOT/'tools/berry_resources.py'))

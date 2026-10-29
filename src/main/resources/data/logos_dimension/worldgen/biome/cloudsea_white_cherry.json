@@ -37,7 +37,11 @@
       "logos_dimension:fallen_tree_cloudsea_white_cherry",
       "minecraft:patch_sugar_cane",
       "minecraft:patch_waterlily",
-      "logos_dimension:forest_rock_outcrop"
+      "logos_dimension:forest_rock_outcrop",
+      "logos_dimension:cherry_boulder",
+      "logos_dimension:cherry_pebbles",
+      "logos_dimension:cherry_pool",
+      "logos_dimension:cherry_white_flowers"
     ],
     []
   ],
