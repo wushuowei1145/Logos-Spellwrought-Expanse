@@ -32,10 +32,10 @@ def tile(name,c,kind='stone'):
 
 text=(ROOT/'src/main/java/dev/logos/dimension/cloudsea/CloudseaBiome.java').read_text(encoding='utf-8')
 biomes=re.findall(r'([A-Z_]+)\("([^"]+)",0x([A-F0-9]+),0x([A-F0-9]+)',text)
-assert len(biomes)==32
+assert len(biomes)==33
 zh=json.loads((A/'lang/zh_cn.json').read_text(encoding='utf-8'));en=json.loads((A/'lang/en_us.json').read_text(encoding='utf-8'))
 zh['itemGroup.logos_dimension.cloudsea']='远行大陆';en['itemGroup.logos_dimension.cloudsea']='The Wayfarer Lands'
-english=['Windbound Plains','Beech Woods','Shallow Sandbars','Northern Birchwood','River Valley','Highland Meadow','Chalk Coast','Bare Ridges','Old River Gorge','Oak Woodland','Stillwater Lake','Deep Broadleaf Woods','Open Downs','Northern Firwood','Wildflower Meadow','Glacier Ridge','Alpine River','Pasture Slopes','Reed Wetland','Mountain Pinewood','Southern Bay','Silver Birch Heath','Cold Heath','Snowbound Summit','Ancient Beechwood','Fernwood','Moonlit Birch Grove','Fir Heartwood','Mossy Vale','Copper Copse','Sunlit Glade','Starbell Glade']
+english=['Windbound Plains','Beech Woods','Shallow Sandbars','Northern Birchwood','River Valley','Highland Meadow','Chalk Coast','Bare Ridges','Old River Gorge','Oak Woodland','Stillwater Lake','Deep Broadleaf Woods','Open Downs','Northern Firwood','Wildflower Meadow','Glacier Ridge','Alpine River','Pasture Slopes','Reed Wetland','Mountain Pinewood','Southern Bay','Silver Birch Heath','Cold Heath','Snowbound Summit','Ancient Beechwood','Fernwood','Moonlit Birch Grove','Fir Heartwood','Mossy Vale','Copper Copse','Sunlit Glade','Starbell Glade','Foxspirit Cherry Wilds']
 # 只给三个最有辨识度的林地改雾色，天空与其余群系都不动。
 # 精灵森林的群系文件由 tools/elven_forest.py 覆盖生成，雾色写在那里。
 ATMOSPHERE={
@@ -60,11 +60,11 @@ for i,(key,title,g,l) in enumerate(biomes):
         if season==0:lc=tint(leaf,9)
         if season==2:lc=[(166,126,57),(163,102,51),(176,143,65)][i%3]
         if season==3:lc=(144,151,136)
-        if i in [13,19,22]:lc=leaf
+        if i in [13,19,22,32]:lc=leaf
         r=random.Random(bid);im=Image.new('RGBA',(32,32));q=ImageDraw.Draw(im)
         for yy in range(-2,36,4):
             for xx in range(-2,36,4):
-                if r.random()<(.22 if season==3 and i not in [13,19,22] else .015):continue
+                if r.random()<(.22 if season==3 and i not in [13,19,22,32] else .015):continue
                 x=xx+r.randrange(-1,2);y=yy+r.randrange(-1,2);c=tint(lc,r.randrange(-13,14))
                 q.rectangle((x,y,x+4,y+3),fill=c+(255,));q.point((x,y),fill=tint(c,13)+(255,))
                 q.point((x+4,y+2),fill=tint(c,-8)+(255,))
@@ -75,6 +75,9 @@ for i,(key,title,g,l) in enumerate(biomes):
         write(A/'items'/f'{bid}_{kind}.json',{'model':{'type':'minecraft:model','model':f'logos_dimension:block/{bid}_{kind}_0'}})
         zh[f'block.logos_dimension.{bid}_{kind}']=title+('草皮' if kind=='ground' else '树叶')
         en[f'block.logos_dimension.{bid}_{kind}']=english[i]+(' Turf' if kind=='ground' else ' Leaves')
+        # 同名的方块物品也要有 item. 名字（方块物品显示的是 item. 键）。
+        zh[f'item.logos_dimension.{bid}_{kind}']=zh[f'block.logos_dimension.{bid}_{kind}']
+        en[f'item.logos_dimension.{bid}_{kind}']=en[f'block.logos_dimension.{bid}_{kind}']
     zh[f'biome.logos_dimension.{bid}']=title;en[f'biome.logos_dimension.{bid}']=english[i]
     cold=i in [3,13,19,21,22];alpine=i in [7,15,23];ocean=i in [2,20]
     mobs={} # No generated animals, either with the terrain or through ambient spawning.

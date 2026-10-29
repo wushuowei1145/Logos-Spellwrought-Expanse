@@ -1,0 +1,40 @@
+{
+  "has_precipitation": true,
+  "temperature": 0.65,
+  "downfall": 0.45,
+  "effects": {
+    "water_color": "#567d91",
+    "grass_color": "#8b9870",
+    "foliage_color": "#f2e6ee"
+  },
+  "carvers": [
+    "minecraft:cave",
+    "minecraft:cave_extra_underground",
+    "minecraft:canyon"
+  ],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "logos_dimension:forest_cave_lichen",
+      "logos_dimension:forest_cave_moss"
+    ],
+    [],
+    [
+      "logos_dimension:trees_cloudsea_white_cherry",
+      "logos_dimension:cloudsea_white_cherry_floor",
+      "logos_dimension:fallen_tree_cloudsea_white_cherry",
+      "minecraft:patch_sugar_cane",
+      "minecraft:patch_waterlily",
+      "logos_dimension:forest_rock_outcrop"
+    ],
+    []
+  ],
+  "spawners": {},
+  "spawn_costs": {}
+}
