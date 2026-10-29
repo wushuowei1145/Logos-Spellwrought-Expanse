@@ -3,7 +3,9 @@ package dev.logos.dimension.mixin;
 import dev.logos.dimension.item.LogosNatureBridge;
 import dev.logos.dimension.item.NatureArrow;
 import dev.logos.dimension.item.NatureAttachments;
+import dev.logos.dimension.npc.ForestElf;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.level.storage.ValueInput;
@@ -17,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** 在原版箭上附加小量状态，完整保留药水、光灵、附魔和碰撞逻辑。 */
 @Mixin(AbstractArrow.class)
@@ -36,6 +39,14 @@ public abstract class NatureArrowMixin implements NatureArrow {
         if (stage == 4 && !natureSelf().level().isClientSide()) natureExpiresAt = natureSelf().level().getGameTime() + 80;
     }
     @Override public void natureDamageScale(double scale) { baseDamage *= scale; }
+
+    // 在筛选碰撞目标时跳过同族，箭才能继续检查同一段飞行路径后面的敌人或方块。
+    @Inject(method = "canHitEntity", at = @At("HEAD"), cancellable = true)
+    private void natureSkipElves(Entity target, CallbackInfoReturnable<Boolean> ci) {
+        if (natureStage() > 0 && natureSelf().getOwner() instanceof ForestElf && target instanceof ForestElf) {
+            ci.setReturnValue(false);
+        }
+    }
 
     @ModifyVariable(method = "applyInertia", at = @At("HEAD"), argsOnly = true)
     private float natureInertia(float inertia) { return natureStage() == 4 ? 1 : inertia; }

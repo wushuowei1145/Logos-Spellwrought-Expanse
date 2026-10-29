@@ -10,6 +10,7 @@ import com.mojang.authlib.GameProfile;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.elven.ElvenBlocks;
 import dev.logos.dimension.item.NaturesForceItem;
+import dev.logos.dimension.item.NatureArrow;
 import dev.logos.dimension.item.ElfSpearItem;
 import dev.logos.dimension.item.AncientEmbraceItem;
 import net.minecraft.core.component.DataComponents;
@@ -19,6 +20,10 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ArrowItem;
+import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.world.item.alchemy.Potions;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
 import dev.logos.dimension.npc.ElfHealGoal;
@@ -80,6 +85,10 @@ public final class ForestElfGameTests {
         tests.put("forest_elf_bow_shield_recovery", ForestElfGameTests::bowShieldRecovery);
         tests.put("forest_elf_gear_stow_vanilla", h -> gearStow(h, false));
         tests.put("forest_elf_gear_stow_custom", h -> gearStow(h, true));
+        tests.put("forest_elf_arrow_passthrough", h -> arrowPassthrough(h, Items.ARROW));
+        tests.put("forest_elf_potion_arrow_passthrough", h -> arrowPassthrough(h, Items.TIPPED_ARROW));
+        tests.put("forest_elf_spectral_arrow_passthrough", h -> arrowPassthrough(h, Items.SPECTRAL_ARROW));
+        tests.put("forest_elf_arrow_collision_scope", ForestElfGameTests::arrowCollisionScope);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -537,6 +546,86 @@ public final class ForestElfGameTests {
             // 测试每刻的检查可能排在精灵这一刻之前或之后，最后看到的死亡刻数差一刻
             h.assertTrue(seen[0] >= ForestElf.DEATH_TICKS - 2, "消失得太早：" + seen[0]);
         });
+    }
+
+    /** 自然之力箭同一刻穿过两个同族，再命中后方敌人；药效也不能落在同伴身上。 */
+    private static void arrowPassthrough(GameTestHelper h, net.minecraft.world.item.Item ammoItem) {
+        floor(h, 12);
+        ForestElf shooter = elf(h, 1, 1, 2, EntitySpawnReason.COMMAND);
+        ForestElf first = elf(h, 3, 1, 2, EntitySpawnReason.COMMAND);
+        ForestElf second = elf(h, 5, 1, 2, EntitySpawnReason.COMMAND);
+        for (ForestElf elf : List.of(shooter, first, second)) elf.setNoAi(true);
+        Zombie target = dummy(h, 8.5, 2.5);
+        ItemStack ammo = new ItemStack(ammoItem);
+        if (ammoItem == Items.TIPPED_ARROW) ammo.set(DataComponents.POTION_CONTENTS, new PotionContents(Potions.SLOWNESS));
+        AbstractArrow arrow = elfArrow(h, shooter, target, ammo);
+        h.assertTrue(arrow.getOwner() == shooter && ((NatureArrow) arrow).natureStage() == 4, "没有发射精灵的自然之力强化箭");
+        arrow.tick();
+        for (ForestElf ally : List.of(first, second)) {
+            h.assertTrue(ally.getHealth() == ally.getMaxHealth(), "箭伤到了挡在前面的精灵");
+            h.assertFalse(ally.hasEffect(MobEffects.SLOWNESS) || ally.hasEffect(MobEffects.GLOWING), "同伴受到箭矢药效");
+            h.assertTrue(ally.getDeltaMovement().lengthSqr() == 0, "同伴受到箭矢击退");
+        }
+        h.assertTrue(target.getHealth() < 1000, "穿过同伴后没有在同一刻命中敌人");
+        if (ammoItem != Items.ARROW) h.assertTrue(target.hasEffect(ammoItem == Items.TIPPED_ARROW ? MobEffects.SLOWNESS : MobEffects.GLOWING), "穿过同伴后丢失了箭矢药效");
+        arrow.discard();
+        // 同伴后面有墙时，仍由墙挡住，不能连方块也穿过。
+        for (int y = 1; y <= 3; y++) h.setBlock(7, y, 2, Blocks.STONE);
+        float health = target.getHealth();
+        target.invulnerableTime = 0;
+        arrow = elfArrow(h, shooter, target, ammo);
+        arrow.tick();
+        h.assertTrue(target.getHealth() == health && arrow.getX() < h.absolutePos(new BlockPos(8, 1, 2)).getX(), "箭穿过了同伴后面的墙");
+        arrow.discard();
+        h.succeed();
+    }
+
+    private static AbstractArrow elfArrow(GameTestHelper h, ForestElf shooter, Zombie target, ItemStack ammo) {
+        var bow = NaturesForceItem.ITEM.get();
+        if (ammo.is(Items.ARROW)) {
+            bow.shootMob(h.getLevel(), shooter, target, new ItemStack(bow), InteractionHand.MAIN_HAND);
+            return h.getLevel().getEntitiesOfClass(AbstractArrow.class, shooter.getBoundingBox().inflate(1)).getFirst();
+        }
+        // 生物默认只提供普通箭；另行创建两种原版特效箭，验证同一碰撞规则与命中药效。
+        var arrow = ((ArrowItem) ammo.getItem()).createArrow(h.getLevel(), ammo, shooter, new ItemStack(bow));
+        bow.customArrow(arrow, ammo, new ItemStack(bow));
+        ((NatureArrow) arrow).natureStage(4);
+        ((NatureArrow) arrow).natureDamageScale(3d / 8d);
+        arrow.shoot(target.getX() - arrow.getX(), target.getY(1d / 3d) - arrow.getY(), target.getZ() - arrow.getZ(), 8, 0);
+        h.getLevel().addFreshEntity(arrow);
+        return arrow;
+    }
+
+    /** 只豁免精灵的自然之力箭：精灵普通弓、骷髅和玩家的箭仍可命中精灵。 */
+    private static void arrowCollisionScope(GameTestHelper h) {
+        floor(h, 8);
+        ForestElf target = elf(h, 4, 1, 2, EntitySpawnReason.COMMAND);
+        target.setNoAi(true);
+        target.getAttribute(Attributes.MAX_HEALTH).setBaseValue(100);
+        ForestElf elf = NpcEntities.FOREST_ELF.get().create(h.getLevel(), EntitySpawnReason.COMMAND);
+        elf.setPos(h.absoluteVec(new Vec3(1.5, 1, 2.5)));
+        var skeleton = EntityType.SKELETON.create(h.getLevel(), EntitySpawnReason.COMMAND);
+        skeleton.setPos(elf.position());
+        var player = player(h, new Vec3(1.5, 1, 5.5), GameType.SURVIVAL);
+        try {
+            for (var owner : List.of(elf, skeleton, player)) {
+                target.setHealth(target.getMaxHealth());
+                target.invulnerableTime = 0;
+                target.setDeltaMovement(Vec3.ZERO);
+                ItemStack bow = new ItemStack(owner == elf ? Items.BOW : NaturesForceItem.ITEM.get());
+                var arrow = ((ArrowItem) Items.ARROW).createArrow(h.getLevel(), new ItemStack(Items.ARROW), owner, bow);
+                if (owner != elf) ((NatureArrow) arrow).natureStage(4);
+                arrow.setPos(elf.getX(), target.getY() + .8, target.getZ());
+                arrow.setDeltaMovement(6, 0, 0);
+                h.getLevel().addFreshEntity(arrow);
+                arrow.tick();
+                h.assertTrue(target.getHealth() < target.getMaxHealth(), "误让其他来源的箭穿过精灵：" + owner.getType());
+                arrow.discard();
+            }
+        } finally {
+            h.getLevel().getServer().getPlayerList().remove(player);
+        }
+        h.succeed();
     }
 
     private ForestElfGameTests() {}
