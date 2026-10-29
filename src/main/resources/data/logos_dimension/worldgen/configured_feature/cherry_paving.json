@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:simple_block",
+  "config": {
+    "to_place": {
+      "type": "minecraft:weighted_state_provider",
+      "entries": [
+        {
+          "data": {
+            "Name": "minecraft:stone_bricks"
+          },
+          "weight": 6
+        },
+        {
+          "data": {
+            "Name": "minecraft:mossy_stone_bricks"
+          },
+          "weight": 3
+        },
+        {
+          "data": {
+            "Name": "minecraft:cracked_stone_bricks"
+          },
+          "weight": 2
+        }
+      ]
+    }
+  }
+}

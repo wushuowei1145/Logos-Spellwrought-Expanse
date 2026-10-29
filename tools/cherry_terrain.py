@@ -86,10 +86,27 @@ def main():
             {"type": "minecraft:heightmap", "heightmap": "MOTION_BLOCKING"},
             {"type": "minecraft:biome"}])
 
+    # 5. 神社遗迹：散落的旧石板，不铺成方形；只嵌进草皮表层，像被苔草吃掉一半的参道。
+    paving = {"type": "minecraft:weighted_state_provider", "entries": [
+        {"data": {"Name": "minecraft:stone_bricks"}, "weight": 6},
+        {"data": {"Name": "minecraft:mossy_stone_bricks"}, "weight": 3},
+        {"data": {"Name": "minecraft:cracked_stone_bricks"}, "weight": 2},
+    ]}
+    configured("cherry_paving", {"type": "minecraft:simple_block", "config": {"to_place": paving}})
+    placed("cherry_paving", "cherry_paving", [
+        {"type": "minecraft:count", "count": 5},
+        {"type": "minecraft:in_square"},
+        {"type": "minecraft:heightmap", "heightmap": "MOTION_BLOCKING_NO_LEAVES"},
+        {"type": "minecraft:random_offset", "xz_spread": 0, "y_spread": -1},
+        {"type": "minecraft:block_predicate_filter",
+         "predicate": {"type": "minecraft:matching_block_tag", "tag": "logos_dimension:turf"}},
+        {"type": "minecraft:biome"},
+    ])
+
     # 追加到灵狐樱野的 step 9（重复执行安全），顺序固定为：巨石 → 碎石 → 泉 → 白花。
     data = json.loads(BIOME.read_text(encoding="utf-8"))
     step9 = data["features"][9]
-    for name in ("cherry_boulder", "cherry_pebbles", "cherry_pool", "cherry_white_flowers"):
+    for name in ("cherry_boulder", "cherry_pebbles", "cherry_pool", "cherry_white_flowers", "cherry_paving"):
         placed_id = f"logos_dimension:{name}"
         if placed_id not in step9:
             step9.append(placed_id)
