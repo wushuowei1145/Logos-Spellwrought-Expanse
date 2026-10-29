@@ -35,7 +35,9 @@
       "minecraft:patch_sugar_cane",
       "minecraft:patch_waterlily",
       "logos_dimension:forest_rock_outcrop",
-      "logos_dimension:journey_field_mushroom"
+      "logos_dimension:journey_field_mushroom",
+      "logos_dimension:wild_mandrake",
+      "logos_dimension:wild_starlight_moss"
     ],
     []
   ],
