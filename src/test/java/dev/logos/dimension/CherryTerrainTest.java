@@ -48,7 +48,7 @@ class CherryTerrainTest {
     @Test void cherryFeatureTypesAreRegisteredOnes() throws Exception {
         var allowed = Set.of(
             "minecraft:block_blob", "minecraft:block_pile", "minecraft:lake",
-            "minecraft:random_patch", "minecraft:simple_block");
+            "minecraft:simple_block");
         for (String name : FEATURES) {
             var configured = data("data/logos_dimension/worldgen/configured_feature/" + name + ".json");
             String type = configured.get("type").getAsString();

@@ -71,25 +71,23 @@ def main():
             {"type": "minecraft:in_square"},
             *ground_filters()])
 
-    # 4. 白花片：雏菊成片，给樱花林的草地一点白。
-    petal_state = {"Name": "minecraft:oxeye_daisy"}
-    configured("cherry_white_flowers", {"type": "minecraft:random_patch", "config": {
-        "tries": 24, "xz_spread": 5, "y_spread": 2,
-        "feature": {
-            "feature": {"type": "minecraft:simple_block", "config": {"to_place": petal_state}},
-            "placement": [
-                {"type": "minecraft:block_predicate_filter",
-                 "predicate": {"type": "minecraft:matching_blocks", "blocks": "minecraft:air"}},
-                {"type": "minecraft:block_predicate_filter",
-                 "predicate": {"type": "minecraft:would_survive", "state": petal_state}},
-            ],
-        },
-    }})
-    placed("cherry_white_flowers", "cherry_white_flowers",
-           [{"type": "minecraft:count", "count": 2},
-            {"type": "minecraft:in_square"},
-            {"type": "minecraft:heightmap", "heightmap": "MOTION_BLOCKING"},
-            {"type": "minecraft:biome"}])
+    # 4. 白花片：26.1 没有 random_patch 这个特征类型，原版花片是 simple_block +
+    #    placed_feature 里做多次 count / random_offset，这里照原版改。
+    flower_entries = [
+        {"data": {"Name": "minecraft:oxeye_daisy"}, "weight": 6},
+        {"data": {"Name": "logos_dimension:journey_silver_anemone", "Properties": {"season": "0"}}, "weight": 3},
+        {"data": {"Name": "minecraft:short_grass"}, "weight": 4},
+    ]
+    configured("cherry_white_flowers", {"type": "minecraft:simple_block", "config": {
+        "to_place": {"type": "minecraft:weighted_state_provider", "entries": flower_entries}}})
+    placed("cherry_white_flowers", "cherry_white_flowers", [
+        {"type": "minecraft:count", "count": 24},
+        {"type": "minecraft:random_offset", "xz_spread": 5, "y_spread": 2},
+        {"type": "minecraft:heightmap", "heightmap": "MOTION_BLOCKING"},
+        {"type": "minecraft:block_predicate_filter",
+         "predicate": {"type": "minecraft:matching_blocks", "blocks": "minecraft:air"}},
+        {"type": "minecraft:biome"},
+    ])
 
     # 5. 神社遗迹：散落的旧石板，不铺成方形；只嵌进草皮表层，像被苔草吃掉一半的参道。
     paving = {"type": "minecraft:weighted_state_provider", "entries": [
