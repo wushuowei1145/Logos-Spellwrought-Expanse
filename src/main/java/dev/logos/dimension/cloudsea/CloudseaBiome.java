@@ -36,7 +36,7 @@ public enum CloudseaBiome {
     COPPER_COPSE("铜叶林丘",0x829167,0x718149,Form.FOLD,160,25,.88),
     SUNLIT_GLADE("曦光林隙",0x91A274,0x6F8853,Form.FOLD,160,25,.94),
     STARFLOWER_GLADE("星铃花甸",0x889E75,0x70895A,Form.FOLD,160,25,.96),
-WHITE_CHERRY("灵狐樱野",0x8B9870,0xF2E6EE,Form.PETAL,157,23,.90);
+WHITE_CHERRY("灵狐樱野",0x8B9870,0xFFF2F6,Form.PETAL,157,23,.90);
 
     public enum Form { FOLD, PETAL, BASIN, HANGING, RIBBON, STEPS, DUNE, SPIRE }
     public final String title; public final int groundColor, leafColor, base, relief; public final Form form; public final double flora;

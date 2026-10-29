@@ -320,6 +320,9 @@ for bid in ids:
         # 会报 "Feature order cycle found" 并直接让区块生成失败。精灵森林的 step9 是
         # [树, 地表, 倒木, 光林, 甘蔗, 睡莲, 露头, 白伞菇]，这里必须保持同样的先后。
         features[9].extend(MUSHROOM_FOR.get(bid,[]))
+    # 灵狐樱野：零星飘瓣的天空粒子，密度压低到 0.006。
+    if bid=='cloudsea_white_cherry':
+        data.setdefault('effects',{})['particle']={'probability':0.006,'options':{'type':'minecraft:cherry_leaves'}}
     data['features']=features;write(D/'worldgen/biome'/f'{bid}.json',data)
 for bid in ['aether','sulfur','mercury','salt','sanctum']:
     data=json.loads((D/'worldgen/biome'/f'{bid}.json').read_text());data['carvers']=['minecraft:cave','minecraft:canyon'];data['features']=[[] for _ in range(11)]

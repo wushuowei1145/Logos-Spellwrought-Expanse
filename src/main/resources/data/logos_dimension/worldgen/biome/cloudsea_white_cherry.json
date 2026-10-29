@@ -5,7 +5,13 @@
   "effects": {
     "water_color": "#567d91",
     "grass_color": "#8b9870",
-    "foliage_color": "#f2e6ee"
+    "foliage_color": "#fff2f6",
+    "particle": {
+      "probability": 0.006,
+      "options": {
+        "type": "minecraft:cherry_leaves"
+      }
+    }
   },
   "carvers": [
     "minecraft:cave",
