@@ -1,0 +1,133 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "neoforge:cutout",
+  "textures": {
+    "plant": "logos_dimension:block/journey_fallen_leaves",
+    "particle": "logos_dimension:block/journey_fallen_leaves"
+  },
+  "elements": [
+    {
+      "from": [
+        5.66,
+        0.14094741324650528,
+        2.58
+      ],
+      "to": [
+        9.61,
+        0.34,
+        6.28
+      ],
+      "faces": {
+        "up": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          0,
+          8
+        ],
+        "axis": "y",
+        "angle": 0
+      }
+    },
+    {
+      "from": [
+        8.46,
+        0.10547845437910006,
+        10.15
+      ],
+      "to": [
+        13.04,
+        0.31,
+        12.62
+      ],
+      "faces": {
+        "up": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          0,
+          8
+        ],
+        "axis": "y",
+        "angle": 0
+      }
+    },
+    {
+      "from": [
+        6.03,
+        0.1227090787672106,
+        3.2
+      ],
+      "to": [
+        10.07,
+        0.32,
+        8.17
+      ],
+      "faces": {
+        "up": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#plant",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          0,
+          8
+        ],
+        "axis": "y",
+        "angle": 67.5
+      }
+    }
+  ]
+}

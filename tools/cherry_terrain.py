@@ -106,10 +106,28 @@ def main():
         {"type": "minecraft:biome"},
     ])
 
+
+    # 6. 落瓣堆：成片的落樱，amount 1-4 随机，只在樱野地表。
+    drift = {"type": "minecraft:weighted_state_provider", "entries": [
+        {"data": {"Name": "logos_dimension:journey_white_petals", "Properties": {"amount": "1"}}, "weight": 5},
+        {"data": {"Name": "logos_dimension:journey_white_petals", "Properties": {"amount": "2"}}, "weight": 4},
+        {"data": {"Name": "logos_dimension:journey_white_petals", "Properties": {"amount": "3"}}, "weight": 2},
+        {"data": {"Name": "logos_dimension:journey_fallen_leaves", "Properties": {"amount": "2"}}, "weight": 2},
+    ]}
+    configured("cherry_petal_drift", {"type": "minecraft:simple_block", "config": {"to_place": drift}})
+    placed("cherry_petal_drift", "cherry_petal_drift", [
+        {"type": "minecraft:count", "count": 6},
+        {"type": "minecraft:random_offset", "xz_spread": 7, "y_spread": 1},
+        {"type": "minecraft:heightmap", "heightmap": "MOTION_BLOCKING"},
+        {"type": "minecraft:block_predicate_filter",
+         "predicate": {"type": "minecraft:matching_blocks", "blocks": "minecraft:air"}},
+        {"type": "minecraft:biome"},
+    ])
+
     # 追加到灵狐樱野的 step 9（重复执行安全），顺序固定为：巨石 → 碎石 → 泉 → 白花。
     data = json.loads(BIOME.read_text(encoding="utf-8"))
     step9 = data["features"][9]
-    for name in ("cherry_boulder", "cherry_pebbles", "cherry_pool", "cherry_white_flowers", "cherry_paving"):
+    for name in ("cherry_boulder", "cherry_pebbles", "cherry_pool", "cherry_white_flowers", "cherry_paving", "cherry_petal_drift"):
         placed_id = f"logos_dimension:{name}"
         if placed_id not in step9:
             step9.append(placed_id)
