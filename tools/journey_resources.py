@@ -73,11 +73,17 @@ for i,(key,title,g,l) in enumerate(biomes):
     for kind in ['ground','leaf']:
         write(A/'blockstates'/f'{bid}_{kind}.json',{'variants':{f'season={s}':{'model':f'logos_dimension:block/{bid}_{kind}_{s}'} for s in range(4)}})
         write(A/'items'/f'{bid}_{kind}.json',{'model':{'type':'minecraft:model','model':f'logos_dimension:block/{bid}_{kind}_0'}})
-        zh[f'block.logos_dimension.{bid}_{kind}']=title+('草皮' if kind=='ground' else '树叶')
-        en[f'block.logos_dimension.{bid}_{kind}']=english[i]+(' Turf' if kind=='ground' else ' Leaves')
-        # 同名的方块物品也要有 item. 名字（方块物品显示的是 item. 键）。
-        zh[f'item.logos_dimension.{bid}_{kind}']=zh[f'block.logos_dimension.{bid}_{kind}']
-        en[f'item.logos_dimension.{bid}_{kind}']=en[f'block.logos_dimension.{bid}_{kind}']
+    if bid=='cloudsea_white_cherry':
+        block_zh='白樱花'+('草皮' if kind=='ground' else '树叶')
+        block_en='White Cherry'+(' Turf' if kind=='ground' else ' Leaves')
+    else:
+        block_zh=title+('草皮' if kind=='ground' else '树叶')
+        block_en=english[i]+(' Turf' if kind=='ground' else ' Leaves')
+    zh[f'block.logos_dimension.{bid}_{kind}']=block_zh
+    en[f'block.logos_dimension.{bid}_{kind}']=block_en
+    # 同名的方块物品也要有 item. 名字（方块物品显示的是 item. 键）。
+    zh[f'item.logos_dimension.{bid}_{kind}']=block_zh
+    en[f'item.logos_dimension.{bid}_{kind}']=block_en
     zh[f'biome.logos_dimension.{bid}']=title;en[f'biome.logos_dimension.{bid}']=english[i]
     cold=i in [3,13,19,21,22];alpine=i in [7,15,23];ocean=i in [2,20]
     mobs={} # No generated animals, either with the terrain or through ambient spawning.

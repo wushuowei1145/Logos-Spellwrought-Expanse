@@ -1,0 +1,15 @@
+{
+  "structures": [
+    {
+      "structure": "logos_dimension:cherry_road",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1572398,
+    "spacing": 26,
+    "separation": 10,
+    "spread_type": "linear"
+  }
+}
