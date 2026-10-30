@@ -119,7 +119,13 @@ for key,title,g,l in biomes:
         variants['axis=z'].append({'model':tex(model_name),'x':90})
     write(A/'blockstates'/f'{name}.json',{'variants':variants});write(A/'items'/f'{name}.json',{'model':{'type':'minecraft:model','model':tex(name)}})
     write(D/'loot_table/blocks'/f'{name}.json',{'type':'minecraft:block','pools':[{'rolls':1,'entries':[{'type':'minecraft:item','name':'logos_dimension:'+name}],'conditions':[{'condition':'minecraft:survives_explosion'}]}]})
-    zh['block.logos_dimension.'+name]=title+'原木';en['block.logos_dimension.'+name]=en['block.logos_dimension.'+bid+'_leaf'].removesuffix(' Leaves')+' Log'
+    if key=='WHITE_CHERRY':zh['block.logos_dimension.'+name]='白樱花原木';en['block.logos_dimension.'+name]='White Cherry Log'
+    if key=='WHITE_CHERRY':
+        zh['block.logos_dimension.'+name]='白樱花原木';en['block.logos_dimension.'+name]='White Cherry Log'
+        zh['item.logos_dimension.'+name]='白樱花原木';en['item.logos_dimension.'+name]='White Cherry Log'
+    else:
+        zh['block.logos_dimension.'+name]=title+'原木';en['block.logos_dimension.'+name]=en['block.logos_dimension.'+bid+'_leaf'].removesuffix(' Leaves')+' Log'
+
     for season in range(4):
         leaf=bid+'_leaf_'+str(season);save(leaf_inner(leaf,season,group=='conifer'),leaf+'_inner')
         p=A/'models/block'/f'{leaf}.json';m=json.loads(p.read_text());m['textures']['inner']=tex(leaf+'_inner')

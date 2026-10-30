@@ -109,10 +109,10 @@ def main():
 
     # 6. 落瓣堆：成片的落樱，amount 1-4 随机，只在樱野地表。
     drift = {"type": "minecraft:weighted_state_provider", "entries": [
-        {"data": {"Name": "logos_dimension:journey_white_petals", "Properties": {"amount": "1"}}, "weight": 5},
-        {"data": {"Name": "logos_dimension:journey_white_petals", "Properties": {"amount": "2"}}, "weight": 4},
-        {"data": {"Name": "logos_dimension:journey_white_petals", "Properties": {"amount": "3"}}, "weight": 2},
-        {"data": {"Name": "logos_dimension:journey_fallen_leaves", "Properties": {"amount": "2"}}, "weight": 2},
+        {"data": {"Name": "logos_dimension:journey_white_petals", "Properties": {"flower_amount": "1"}}, "weight": 5},
+        {"data": {"Name": "logos_dimension:journey_white_petals", "Properties": {"flower_amount": "2"}}, "weight": 4},
+        {"data": {"Name": "logos_dimension:journey_white_petals", "Properties": {"flower_amount": "3"}}, "weight": 2},
+        {"data": {"Name": "logos_dimension:journey_fallen_leaves", "Properties": {"flower_amount": "2"}}, "weight": 2},
     ]}
     configured("cherry_petal_drift", {"type": "minecraft:simple_block", "config": {"to_place": drift}})
     placed("cherry_petal_drift", "cherry_petal_drift", [

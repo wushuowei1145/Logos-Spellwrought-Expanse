@@ -95,6 +95,8 @@ for ti,t in enumerate([-.8,-.4,0,.4,.8]):
      elif ti==0:bid='fir_heart' if hi>1 else 'lilac_steps' if hi==1 else 'aurora_dunes'
      elif wi==2 and ei>0 and hi>0:bid='starflower_glade' if hi>2 else 'sunlit_glade'
      elif hi>=1 and ei==1 and ti in [2,3]:bid='white_cherry'  # 山脚：中等侵蚀的坡地
+     # 山体最大的那一档：侵蚀最低（起伏最大）+ 内陆高地，让樱野包住成片的大山
+     elif ci==3 and ei==0 and ti in [1,2] and wi in [1,2,3]:bid='white_cherry'
      elif hi>=1 and ei==0 and ti==4 and wi==2:bid='white_cherry'  # 温山山顶
      elif hi>=1:
       if ti==1:bid=['ivory_steps','reverse_gardens','moon_birch'][ei]
@@ -120,6 +122,12 @@ for bid in ids:
     top='minecraft:sand' if bid in {ids[2],ids[20]} else 'logos_dimension:journey_limestone' if bid==ids[6] else 'minecraft:stone' if bid==ids[7] else 'minecraft:snow_block' if bid in {ids[15],ids[23]} else 'logos_dimension:'+bid+'_ground'
     materials.append((bid,top,'minecraft:dirt'))
 settings('journey',OW,materials)
+# 放大山体：只调地形的垂直尺度这一个合法字段，其余保持原版。
+_journey = D/'worldgen/noise_settings/journey.json'
+_spec = json.loads(_journey.read_text(encoding='utf-8'))
+_spec['noise']['size_vertical'] = 2.5
+write(_journey, _spec)
+
 
 alchemy=[]
 for t in [-.8,-.4,0,.4,.8]:
@@ -159,7 +167,7 @@ plant_feature('meadow_floor',[('logos_dimension:journey_meadow_grass',{},65),('l
 SEASONAL_BLOCKS={'journey_silver_anemone','journey_moonbell','journey_glowcap','journey_heather','journey_amber_fern','journey_winter_hellebore','journey_fireweed','journey_berry_bramble'}
 FOREST_FLOORS={
  # 樱花组：白樱林——落瓣与白花铺地，草只作底。
- 'cloudsea_white_cherry':(640,[('logos_dimension:journey_white_petals',24),('logos_dimension:journey_fallen_leaves',10),('logos_dimension:journey_meadow_grass',24),('minecraft:oxeye_daisy',16),('logos_dimension:journey_silver_anemone',14),('minecraft:short_grass',12),('logos_dimension:journey_meadow_grass_young',8),('logos_dimension:journey_heather',4)]),
+ 'cloudsea_white_cherry':(640,[('logos_dimension:journey_fallen_leaves',16),('logos_dimension:journey_meadow_grass',24),('minecraft:oxeye_daisy',16),('logos_dimension:journey_silver_anemone',14),('minecraft:short_grass',12),('logos_dimension:journey_meadow_grass_young',8),('logos_dimension:journey_heather',4)]),
  # 针叶组：紫丁香阶地、云根层台、杉影深林
  'cloudsea_lilac_steps':(640,[('logos_dimension:journey_silver_anemone',20),('logos_dimension:journey_bluebell',16),('logos_dimension:journey_woodland_fern',18),('minecraft:moss_carpet',14),('minecraft:leaf_litter',10),('logos_dimension:journey_glowcap',6),('logos_dimension:journey_stardew',2)]),
  'cloudsea_cloudroot_shelves':(640,[('minecraft:moss_carpet',26),('logos_dimension:journey_woodland_fern',18),('logos_dimension:journey_lumen_fern',8),('logos_dimension:journey_glowcap',8),('logos_dimension:journey_bracken',8),('logos_dimension:journey_berry_bramble',8),('minecraft:leaf_litter',8)]),
