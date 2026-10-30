@@ -71,7 +71,7 @@ public class CherryBiomeViews implements UIScenario {
                 var pos = ctx.player().blockPosition();
                 int h = level2.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, pos.getX(), pos.getZ());
                 DimensionTravel.teleport(ctx.player(), level2,
-                    new Vec3(pos.getX() + .5, h + 2.2, pos.getZ() + .5), 135f, 42f);
+                    new Vec3(pos.getX() + .5, Math.min(h + 2.2, 300), pos.getZ() + .5), 135f, 22f);
             })
             .ticks(120)
             .ticks(240)
