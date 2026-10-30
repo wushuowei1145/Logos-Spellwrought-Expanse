@@ -125,7 +125,7 @@ settings('journey',OW,materials)
 # 放大山体：只调地形的垂直尺度这一个合法字段，其余保持原版。
 _journey = D/'worldgen/noise_settings/journey.json'
 _spec = json.loads(_journey.read_text(encoding='utf-8'))
-_spec['noise']['size_vertical'] = 2.8
+_spec['noise']['size_vertical'] = 2.5
 write(_journey, _spec)
 
 
