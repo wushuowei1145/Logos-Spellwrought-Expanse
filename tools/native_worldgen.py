@@ -167,7 +167,7 @@ plant_feature('meadow_floor',[('logos_dimension:journey_meadow_grass',{},65),('l
 SEASONAL_BLOCKS={'journey_silver_anemone','journey_moonbell','journey_glowcap','journey_heather','journey_amber_fern','journey_winter_hellebore','journey_fireweed','journey_berry_bramble'}
 FOREST_FLOORS={
  # 樱花组：白樱林——落瓣与白花铺地，草只作底。
- 'cloudsea_white_cherry':(640,[('logos_dimension:journey_white_petals',24),('logos_dimension:journey_fallen_leaves',10),('logos_dimension:journey_meadow_grass',24),('minecraft:oxeye_daisy',16),('logos_dimension:journey_silver_anemone',14),('minecraft:short_grass',12),('logos_dimension:journey_meadow_grass_young',8),('logos_dimension:journey_heather',4)]),
+ 'cloudsea_white_cherry':(640,[('logos_dimension:journey_fallen_leaves',16),('logos_dimension:journey_meadow_grass',24),('minecraft:oxeye_daisy',16),('logos_dimension:journey_silver_anemone',14),('minecraft:short_grass',12),('logos_dimension:journey_meadow_grass_young',8),('logos_dimension:journey_heather',4)]),
  # 针叶组：紫丁香阶地、云根层台、杉影深林
  'cloudsea_lilac_steps':(640,[('logos_dimension:journey_silver_anemone',20),('logos_dimension:journey_bluebell',16),('logos_dimension:journey_woodland_fern',18),('minecraft:moss_carpet',14),('minecraft:leaf_litter',10),('logos_dimension:journey_glowcap',6),('logos_dimension:journey_stardew',2)]),
  'cloudsea_cloudroot_shelves':(640,[('minecraft:moss_carpet',26),('logos_dimension:journey_woodland_fern',18),('logos_dimension:journey_lumen_fern',8),('logos_dimension:journey_glowcap',8),('logos_dimension:journey_bracken',8),('logos_dimension:journey_berry_bramble',8),('minecraft:leaf_litter',8)]),
