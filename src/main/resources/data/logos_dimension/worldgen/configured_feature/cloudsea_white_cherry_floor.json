@@ -6,9 +6,15 @@
       "entries": [
         {
           "data": {
-            "Name": "minecraft:leaf_litter"
+            "Name": "logos_dimension:journey_white_petals"
           },
-          "weight": 30
+          "weight": 24
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_fallen_leaves"
+          },
+          "weight": 10
         },
         {
           "data": {

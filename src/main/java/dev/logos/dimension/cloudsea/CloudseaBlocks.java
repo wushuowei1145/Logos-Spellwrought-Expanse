@@ -130,6 +130,12 @@ public final class CloudseaBlocks {
                 .food(new net.minecraft.world.food.FoodProperties.Builder().nutrition(nutrition).saturationModifier(saturation).build())));
         PALETTE.add(block);return block;
     }
+    /** 灵狐樱野的地面落瓣 / 落叶：贴地、无碰撞、amount 1-4。 */
+    public static final DeferredBlock<Block> WHITE_PETALS=cover("journey_white_petals"),FALLEN_LEAVES=cover("journey_fallen_leaves");
     public static void init() {}
+    private static DeferredBlock<Block> cover(String id){
+        var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,JourneyCoverBlock::new,p->p.mapColor(MapColor.PLANT).strength(.05f).sound(SoundType.GRASS).noCollision().noOcclusion().replaceable());
+        DimensionBlocks.ITEMS.registerSimpleBlockItem(id,block);PALETTE.add(block);return block;
+    }
     private CloudseaBlocks() {}
 }

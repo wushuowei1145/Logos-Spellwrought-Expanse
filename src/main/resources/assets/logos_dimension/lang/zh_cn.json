@@ -421,5 +421,9 @@
   "block.logos_dimension.cloudsea_white_cherry_log": "灵狐樱野原木",
   "item.logos_dimension.cloudsea_white_cherry_ground": "灵狐樱野草皮",
   "item.logos_dimension.cloudsea_white_cherry_leaf": "灵狐樱野树叶",
-  "item.logos_dimension.cloudsea_white_cherry_log": "灵狐樱野原木"
+  "item.logos_dimension.cloudsea_white_cherry_log": "灵狐樱野原木",
+  "block.logos_dimension.journey_white_petals": "落樱瓣",
+  "block.logos_dimension.journey_fallen_leaves": "落樱叶",
+  "item.logos_dimension.journey_white_petals": "落樱瓣",
+  "item.logos_dimension.journey_fallen_leaves": "落樱叶"
 }

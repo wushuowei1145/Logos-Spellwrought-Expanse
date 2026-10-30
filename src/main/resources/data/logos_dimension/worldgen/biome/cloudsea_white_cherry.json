@@ -5,7 +5,7 @@
   "effects": {
     "water_color": "#567d91",
     "grass_color": "#8b9870",
-    "foliage_color": "#ffe9f2",
+    "foliage_color": "#ffe6ef",
     "particle": {
       "probability": 0.006,
       "options": {
@@ -42,7 +42,8 @@
       "logos_dimension:cherry_pebbles",
       "logos_dimension:cherry_pool",
       "logos_dimension:cherry_white_flowers",
-      "logos_dimension:cherry_paving"
+      "logos_dimension:cherry_paving",
+      "logos_dimension:cherry_petal_drift"
     ],
     []
   ],

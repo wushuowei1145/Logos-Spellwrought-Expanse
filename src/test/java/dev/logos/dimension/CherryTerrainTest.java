@@ -17,6 +17,7 @@ class CherryTerrainTest {
     private static final String BIOME = "cloudsea_white_cherry";
     private static final String[] FEATURES = {
         "cherry_boulder", "cherry_pebbles", "cherry_pool", "cherry_white_flowers", "cherry_paving",
+        "cherry_petal_drift",
     };
 
     private static JsonObject data(String path) throws IOException {
@@ -54,5 +55,12 @@ class CherryTerrainTest {
             String type = configured.get("type").getAsString();
             assertTrue(allowed.contains(type), name + " 用了未知特征类型：" + type);
         }
+    }
+
+    @Test void coverBlocksAreRegisteredForDecay() throws Exception {
+        // 落瓣/落叶是植被方块，得进 Logos 的 fragile_plants 标签，否则衰退符文对它们无效。
+        var tag = data("data/logos/tags/block/fragile_plants.json").toString();
+        assertTrue(tag.contains("journey_white_petals"), "落樱瓣没进 fragile_plants");
+        assertTrue(tag.contains("journey_fallen_leaves"), "落樱叶没进 fragile_plants");
     }
 }

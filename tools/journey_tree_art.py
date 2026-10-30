@@ -134,3 +134,15 @@ for key,title,g,l in biomes:
 write(A/'lang/zh_cn.json',zh);write(A/'lang/en_us.json',en)
 write(A/'models/block/cloudsea_stem.json',{'parent':tex('cloudsea_ancient_beech_log')})
 print('Tree art: 32 named log families, 96 bark models, 128 dense inner leaf textures and 14-face culled leaf volumes.')
+
+# 白樱原木：树皮压暗，做出"深色樱花木"；只动白樱群系，别影响其它树的树种。
+def _darken(name, factor):
+    path = A / 'textures/block' / f'{name}.png'
+    if not path.exists():
+        return
+    im = Image.open(path).convert('RGBA')
+    im.putdata([(int(r * factor), int(g * factor), int(b * factor), a) for r, g, b, a in im.getdata()])
+    im.save(path)
+
+for suffix in ('', '_v1', '_v2', '_end'):
+    _darken('cloudsea_white_cherry_log' + suffix, 0.52)

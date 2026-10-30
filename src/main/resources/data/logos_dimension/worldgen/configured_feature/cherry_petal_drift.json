@@ -1,0 +1,46 @@
+{
+  "type": "minecraft:simple_block",
+  "config": {
+    "to_place": {
+      "type": "minecraft:weighted_state_provider",
+      "entries": [
+        {
+          "data": {
+            "Name": "logos_dimension:journey_white_petals",
+            "Properties": {
+              "amount": "1"
+            }
+          },
+          "weight": 5
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_white_petals",
+            "Properties": {
+              "amount": "2"
+            }
+          },
+          "weight": 4
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_white_petals",
+            "Properties": {
+              "amount": "3"
+            }
+          },
+          "weight": 2
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_fallen_leaves",
+            "Properties": {
+              "amount": "2"
+            }
+          },
+          "weight": 2
+        }
+      ]
+    }
+  }
+}

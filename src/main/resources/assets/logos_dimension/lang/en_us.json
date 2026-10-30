@@ -421,5 +421,9 @@
   "block.logos_dimension.cloudsea_white_cherry_log": "Foxspirit Cherry Wilds Log",
   "item.logos_dimension.cloudsea_white_cherry_ground": "Foxspirit Cherry Wilds Turf",
   "item.logos_dimension.cloudsea_white_cherry_leaf": "Foxspirit Cherry Wilds Leaves",
-  "item.logos_dimension.cloudsea_white_cherry_log": "Foxspirit Cherry Wilds Log"
+  "item.logos_dimension.cloudsea_white_cherry_log": "Foxspirit Cherry Wilds Log",
+  "block.logos_dimension.journey_white_petals": "Fallen Cherry Petals",
+  "block.logos_dimension.journey_fallen_leaves": "Fallen Cherry Leaves",
+  "item.logos_dimension.journey_white_petals": "Fallen Cherry Petals",
+  "item.logos_dimension.journey_fallen_leaves": "Fallen Cherry Leaves"
 }
