@@ -96,7 +96,7 @@ for ti,t in enumerate([-.8,-.4,0,.4,.8]):
      elif wi==2 and ei>0 and hi>0:bid='starflower_glade' if hi>2 else 'sunlit_glade'
      elif hi>=1 and ei==1 and ti in [2,3]:bid='white_cherry'  # 山脚：中等侵蚀的坡地
      # 山体最大的那一档：侵蚀最低（起伏最大）+ 内陆高地，让樱野包住成片的大山
-     elif ci>=2 and ei==0 and ti in [1,2,3] and wi in [1,3]:bid='white_cherry'
+     elif ci==3 and ei==0 and ti in [1,2] and wi in [1,2,3]:bid='white_cherry'
      elif hi>=1 and ei==0 and ti==4 and wi==2:bid='white_cherry'  # 温山山顶
      elif hi>=1:
       if ti==1:bid=['ivory_steps','reverse_gardens','moon_birch'][ei]
@@ -125,7 +125,7 @@ settings('journey',OW,materials)
 # 放大山体：只调地形的垂直尺度这一个合法字段，其余保持原版。
 _journey = D/'worldgen/noise_settings/journey.json'
 _spec = json.loads(_journey.read_text(encoding='utf-8'))
-_spec['noise']['size_vertical'] = 2.5
+_spec['noise']['size_vertical'] = 2.8
 write(_journey, _spec)
 
 

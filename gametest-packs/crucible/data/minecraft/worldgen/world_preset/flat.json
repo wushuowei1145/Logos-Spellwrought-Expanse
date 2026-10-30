@@ -4007,7 +4007,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_dawn_ribbons",
               "parameters": {
                 "temperature": -0.4,
                 "humidity": -0.8,
@@ -4031,7 +4031,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_dawn_ribbons",
               "parameters": {
                 "temperature": -0.4,
                 "humidity": -0.8,
@@ -4199,7 +4199,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_dawn_ribbons",
+              "biome": "logos_dimension:cloudsea_white_cherry",
               "parameters": {
                 "temperature": -0.4,
                 "humidity": -0.8,
@@ -4727,7 +4727,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_ivory_steps",
               "parameters": {
                 "temperature": -0.4,
                 "humidity": -0.4,
@@ -4751,7 +4751,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_ivory_steps",
               "parameters": {
                 "temperature": -0.4,
                 "humidity": -0.4,
@@ -4914,540 +4914,540 @@
                 "continentalness": 0.75,
                 "erosion": -0.65,
                 "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_ivory_steps",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": -0.4,
-                "continentalness": 0.75,
-                "erosion": -0.65,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_frost_spires",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": -0.4,
-                "continentalness": 0.75,
-                "erosion": -0.65,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_frost_spires",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": -0.4,
-                "continentalness": 0.75,
-                "erosion": -0.65,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_reverse_gardens",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": -0.4,
-                "continentalness": 0.75,
-                "erosion": 0.15,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_reverse_gardens",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": -0.4,
-                "continentalness": 0.75,
-                "erosion": 0.15,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_sunlit_glade",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": -0.4,
-                "continentalness": 0.75,
-                "erosion": 0.15,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_reverse_gardens",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": -0.4,
-                "continentalness": 0.75,
-                "erosion": 0.15,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_reverse_gardens",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": -0.4,
-                "continentalness": 0.75,
-                "erosion": 0.15,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_moon_birch",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": -0.4,
-                "continentalness": 0.75,
-                "erosion": 0.65,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_moon_birch",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": -0.4,
-                "continentalness": 0.75,
-                "erosion": 0.65,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_sunlit_glade",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": -0.4,
-                "continentalness": 0.75,
-                "erosion": 0.65,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_moon_birch",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": -0.4,
-                "continentalness": 0.75,
-                "erosion": 0.65,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_moon_birch",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": -0.4,
-                "continentalness": 0.75,
-                "erosion": 0.65,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.6,
-                "erosion": -0.65,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.6,
-                "erosion": -0.65,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.6,
-                "erosion": -0.65,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.6,
-                "erosion": -0.65,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.6,
-                "erosion": -0.65,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.6,
-                "erosion": 0.15,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.6,
-                "erosion": 0.15,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.6,
-                "erosion": 0.15,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.6,
-                "erosion": 0.15,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.6,
-                "erosion": 0.15,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.6,
-                "erosion": 0.65,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.6,
-                "erosion": 0.65,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.6,
-                "erosion": 0.65,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.6,
-                "erosion": 0.65,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.6,
-                "erosion": 0.65,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_opal_dunes",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.08,
-                "erosion": -0.65,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_opal_dunes",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.08,
-                "erosion": -0.65,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_opal_dunes",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.08,
-                "erosion": -0.65,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_opal_dunes",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.08,
-                "erosion": -0.65,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_opal_dunes",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.08,
-                "erosion": -0.65,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_opal_dunes",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.08,
-                "erosion": 0.15,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_opal_dunes",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.08,
-                "erosion": 0.15,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_opal_dunes",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.08,
-                "erosion": 0.15,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_opal_dunes",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.08,
-                "erosion": 0.15,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_opal_dunes",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.08,
-                "erosion": 0.15,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_opal_dunes",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.08,
-                "erosion": 0.65,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_opal_dunes",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.08,
-                "erosion": 0.65,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_opal_dunes",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.08,
-                "erosion": 0.65,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_opal_dunes",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.08,
-                "erosion": 0.65,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_opal_dunes",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": -0.08,
-                "erosion": 0.65,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_ivory_steps",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": 0.3,
-                "erosion": -0.65,
-                "weirdness": -0.8,
                 "depth": 0,
                 "offset": 0
               }
             },
             {
               "biome": "logos_dimension:cloudsea_white_cherry",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": -0.4,
+                "continentalness": 0.75,
+                "erosion": -0.65,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_frost_spires",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": -0.4,
+                "continentalness": 0.75,
+                "erosion": -0.65,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_frost_spires",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": -0.4,
+                "continentalness": 0.75,
+                "erosion": -0.65,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_reverse_gardens",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": -0.4,
+                "continentalness": 0.75,
+                "erosion": 0.15,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_reverse_gardens",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": -0.4,
+                "continentalness": 0.75,
+                "erosion": 0.15,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_sunlit_glade",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": -0.4,
+                "continentalness": 0.75,
+                "erosion": 0.15,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_reverse_gardens",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": -0.4,
+                "continentalness": 0.75,
+                "erosion": 0.15,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_reverse_gardens",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": -0.4,
+                "continentalness": 0.75,
+                "erosion": 0.15,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_moon_birch",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": -0.4,
+                "continentalness": 0.75,
+                "erosion": 0.65,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_moon_birch",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": -0.4,
+                "continentalness": 0.75,
+                "erosion": 0.65,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_sunlit_glade",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": -0.4,
+                "continentalness": 0.75,
+                "erosion": 0.65,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_moon_birch",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": -0.4,
+                "continentalness": 0.75,
+                "erosion": 0.65,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_moon_birch",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": -0.4,
+                "continentalness": 0.75,
+                "erosion": 0.65,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.6,
+                "erosion": -0.65,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.6,
+                "erosion": -0.65,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.6,
+                "erosion": -0.65,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.6,
+                "erosion": -0.65,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.6,
+                "erosion": -0.65,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.6,
+                "erosion": 0.15,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.6,
+                "erosion": 0.15,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.6,
+                "erosion": 0.15,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.6,
+                "erosion": 0.15,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.6,
+                "erosion": 0.15,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.6,
+                "erosion": 0.65,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.6,
+                "erosion": 0.65,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.6,
+                "erosion": 0.65,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.6,
+                "erosion": 0.65,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.6,
+                "erosion": 0.65,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_opal_dunes",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.08,
+                "erosion": -0.65,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_opal_dunes",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.08,
+                "erosion": -0.65,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_opal_dunes",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.08,
+                "erosion": -0.65,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_opal_dunes",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.08,
+                "erosion": -0.65,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_opal_dunes",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.08,
+                "erosion": -0.65,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_opal_dunes",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.08,
+                "erosion": 0.15,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_opal_dunes",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.08,
+                "erosion": 0.15,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_opal_dunes",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.08,
+                "erosion": 0.15,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_opal_dunes",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.08,
+                "erosion": 0.15,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_opal_dunes",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.08,
+                "erosion": 0.15,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_opal_dunes",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.08,
+                "erosion": 0.65,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_opal_dunes",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.08,
+                "erosion": 0.65,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_opal_dunes",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.08,
+                "erosion": 0.65,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_opal_dunes",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.08,
+                "erosion": 0.65,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_opal_dunes",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": -0.08,
+                "erosion": 0.65,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_ivory_steps",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": 0.3,
+                "erosion": -0.65,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_ivory_steps",
               "parameters": {
                 "temperature": -0.4,
                 "humidity": 0,
@@ -5471,7 +5471,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_ivory_steps",
               "parameters": {
                 "temperature": -0.4,
                 "humidity": 0,
@@ -5634,540 +5634,540 @@
                 "continentalness": 0.75,
                 "erosion": -0.65,
                 "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_ivory_steps",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": 0.75,
-                "erosion": -0.65,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_frost_spires",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": 0.75,
-                "erosion": -0.65,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_frost_spires",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": 0.75,
-                "erosion": -0.65,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_reverse_gardens",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": 0.75,
-                "erosion": 0.15,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_reverse_gardens",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": 0.75,
-                "erosion": 0.15,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_sunlit_glade",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": 0.75,
-                "erosion": 0.15,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_reverse_gardens",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": 0.75,
-                "erosion": 0.15,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_reverse_gardens",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": 0.75,
-                "erosion": 0.15,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_moon_birch",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": 0.75,
-                "erosion": 0.65,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_moon_birch",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": 0.75,
-                "erosion": 0.65,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_sunlit_glade",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": 0.75,
-                "erosion": 0.65,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_moon_birch",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": 0.75,
-                "erosion": 0.65,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_moon_birch",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0,
-                "continentalness": 0.75,
-                "erosion": 0.65,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.6,
-                "erosion": -0.65,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.6,
-                "erosion": -0.65,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.6,
-                "erosion": -0.65,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.6,
-                "erosion": -0.65,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.6,
-                "erosion": -0.65,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.6,
-                "erosion": 0.15,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.6,
-                "erosion": 0.15,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.6,
-                "erosion": 0.15,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.6,
-                "erosion": 0.15,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.6,
-                "erosion": 0.15,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.6,
-                "erosion": 0.65,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.6,
-                "erosion": 0.65,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.6,
-                "erosion": 0.65,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.6,
-                "erosion": 0.65,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pearl_basins",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.6,
-                "erosion": 0.65,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_glass_lagoons",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.08,
-                "erosion": -0.65,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_glass_lagoons",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.08,
-                "erosion": -0.65,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_glass_lagoons",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.08,
-                "erosion": -0.65,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_glass_lagoons",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.08,
-                "erosion": -0.65,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_glass_lagoons",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.08,
-                "erosion": -0.65,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_glass_lagoons",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.08,
-                "erosion": 0.15,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_glass_lagoons",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.08,
-                "erosion": 0.15,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_glass_lagoons",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.08,
-                "erosion": 0.15,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_glass_lagoons",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.08,
-                "erosion": 0.15,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_glass_lagoons",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.08,
-                "erosion": 0.15,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_glass_lagoons",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.08,
-                "erosion": 0.65,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_glass_lagoons",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.08,
-                "erosion": 0.65,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_glass_lagoons",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.08,
-                "erosion": 0.65,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_glass_lagoons",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.08,
-                "erosion": 0.65,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_glass_lagoons",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": -0.08,
-                "erosion": 0.65,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_ivory_steps",
-              "parameters": {
-                "temperature": -0.4,
-                "humidity": 0.4,
-                "continentalness": 0.3,
-                "erosion": -0.65,
-                "weirdness": -0.8,
                 "depth": 0,
                 "offset": 0
               }
             },
             {
               "biome": "logos_dimension:cloudsea_white_cherry",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": 0.75,
+                "erosion": -0.65,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_frost_spires",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": 0.75,
+                "erosion": -0.65,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_frost_spires",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": 0.75,
+                "erosion": -0.65,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_reverse_gardens",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": 0.75,
+                "erosion": 0.15,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_reverse_gardens",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": 0.75,
+                "erosion": 0.15,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_sunlit_glade",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": 0.75,
+                "erosion": 0.15,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_reverse_gardens",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": 0.75,
+                "erosion": 0.15,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_reverse_gardens",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": 0.75,
+                "erosion": 0.15,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_moon_birch",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": 0.75,
+                "erosion": 0.65,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_moon_birch",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": 0.75,
+                "erosion": 0.65,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_sunlit_glade",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": 0.75,
+                "erosion": 0.65,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_moon_birch",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": 0.75,
+                "erosion": 0.65,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_moon_birch",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0,
+                "continentalness": 0.75,
+                "erosion": 0.65,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.6,
+                "erosion": -0.65,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.6,
+                "erosion": -0.65,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.6,
+                "erosion": -0.65,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.6,
+                "erosion": -0.65,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.6,
+                "erosion": -0.65,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.6,
+                "erosion": 0.15,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.6,
+                "erosion": 0.15,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.6,
+                "erosion": 0.15,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.6,
+                "erosion": 0.15,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.6,
+                "erosion": 0.15,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.6,
+                "erosion": 0.65,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.6,
+                "erosion": 0.65,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.6,
+                "erosion": 0.65,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.6,
+                "erosion": 0.65,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pearl_basins",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.6,
+                "erosion": 0.65,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_glass_lagoons",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.08,
+                "erosion": -0.65,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_glass_lagoons",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.08,
+                "erosion": -0.65,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_glass_lagoons",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.08,
+                "erosion": -0.65,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_glass_lagoons",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.08,
+                "erosion": -0.65,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_glass_lagoons",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.08,
+                "erosion": -0.65,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_glass_lagoons",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.08,
+                "erosion": 0.15,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_glass_lagoons",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.08,
+                "erosion": 0.15,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_glass_lagoons",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.08,
+                "erosion": 0.15,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_glass_lagoons",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.08,
+                "erosion": 0.15,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_glass_lagoons",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.08,
+                "erosion": 0.15,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_glass_lagoons",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.08,
+                "erosion": 0.65,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_glass_lagoons",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.08,
+                "erosion": 0.65,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_glass_lagoons",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.08,
+                "erosion": 0.65,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_glass_lagoons",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.08,
+                "erosion": 0.65,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_glass_lagoons",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": -0.08,
+                "erosion": 0.65,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_ivory_steps",
+              "parameters": {
+                "temperature": -0.4,
+                "humidity": 0.4,
+                "continentalness": 0.3,
+                "erosion": -0.65,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_ivory_steps",
               "parameters": {
                 "temperature": -0.4,
                 "humidity": 0.4,
@@ -6191,7 +6191,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_ivory_steps",
               "parameters": {
                 "temperature": -0.4,
                 "humidity": 0.4,
@@ -6359,7 +6359,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_ivory_steps",
+              "biome": "logos_dimension:cloudsea_white_cherry",
               "parameters": {
                 "temperature": -0.4,
                 "humidity": 0.4,
@@ -6887,7 +6887,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_ivory_steps",
               "parameters": {
                 "temperature": -0.4,
                 "humidity": 0.8,
@@ -6911,7 +6911,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_ivory_steps",
               "parameters": {
                 "temperature": -0.4,
                 "humidity": 0.8,
@@ -7079,7 +7079,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_ivory_steps",
+              "biome": "logos_dimension:cloudsea_white_cherry",
               "parameters": {
                 "temperature": -0.4,
                 "humidity": 0.8,
@@ -7607,7 +7607,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_dawn_ribbons",
               "parameters": {
                 "temperature": 0,
                 "humidity": -0.8,
@@ -7631,7 +7631,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_dawn_ribbons",
               "parameters": {
                 "temperature": 0,
                 "humidity": -0.8,
@@ -7799,7 +7799,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_dawn_ribbons",
+              "biome": "logos_dimension:cloudsea_white_cherry",
               "parameters": {
                 "temperature": 0,
                 "humidity": -0.8,
@@ -8327,7 +8327,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_cloudroot_shelves",
               "parameters": {
                 "temperature": 0,
                 "humidity": -0.4,
@@ -8351,7 +8351,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_cloudroot_shelves",
               "parameters": {
                 "temperature": 0,
                 "humidity": -0.4,
@@ -8519,7 +8519,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_cloudroot_shelves",
+              "biome": "logos_dimension:cloudsea_white_cherry",
               "parameters": {
                 "temperature": 0,
                 "humidity": -0.4,
@@ -9047,7 +9047,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_cloudroot_shelves",
               "parameters": {
                 "temperature": 0,
                 "humidity": 0,
@@ -9071,7 +9071,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_cloudroot_shelves",
               "parameters": {
                 "temperature": 0,
                 "humidity": 0,
@@ -9239,7 +9239,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_cloudroot_shelves",
+              "biome": "logos_dimension:cloudsea_white_cherry",
               "parameters": {
                 "temperature": 0,
                 "humidity": 0,
@@ -9767,7 +9767,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_cloudroot_shelves",
               "parameters": {
                 "temperature": 0,
                 "humidity": 0.4,
@@ -9791,175 +9791,175 @@
               }
             },
             {
+              "biome": "logos_dimension:cloudsea_cloudroot_shelves",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.4,
+                "continentalness": 0.3,
+                "erosion": -0.65,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_cloudroot_shelves",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.4,
+                "continentalness": 0.3,
+                "erosion": -0.65,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.4,
+                "continentalness": 0.3,
+                "erosion": 0.15,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.4,
+                "continentalness": 0.3,
+                "erosion": 0.15,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.4,
+                "continentalness": 0.3,
+                "erosion": 0.15,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.4,
+                "continentalness": 0.3,
+                "erosion": 0.15,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.4,
+                "continentalness": 0.3,
+                "erosion": 0.15,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.4,
+                "continentalness": 0.3,
+                "erosion": 0.65,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.4,
+                "continentalness": 0.3,
+                "erosion": 0.65,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.4,
+                "continentalness": 0.3,
+                "erosion": 0.65,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.4,
+                "continentalness": 0.3,
+                "erosion": 0.65,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.4,
+                "continentalness": 0.3,
+                "erosion": 0.65,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pale_spires",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.4,
+                "continentalness": 0.75,
+                "erosion": -0.65,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pale_spires",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.4,
+                "continentalness": 0.75,
+                "erosion": -0.65,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
               "biome": "logos_dimension:cloudsea_white_cherry",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.4,
-                "continentalness": 0.3,
-                "erosion": -0.65,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_cloudroot_shelves",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.4,
-                "continentalness": 0.3,
-                "erosion": -0.65,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.4,
-                "continentalness": 0.3,
-                "erosion": 0.15,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.4,
-                "continentalness": 0.3,
-                "erosion": 0.15,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.4,
-                "continentalness": 0.3,
-                "erosion": 0.15,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.4,
-                "continentalness": 0.3,
-                "erosion": 0.15,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.4,
-                "continentalness": 0.3,
-                "erosion": 0.15,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.4,
-                "continentalness": 0.3,
-                "erosion": 0.65,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.4,
-                "continentalness": 0.3,
-                "erosion": 0.65,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.4,
-                "continentalness": 0.3,
-                "erosion": 0.65,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.4,
-                "continentalness": 0.3,
-                "erosion": 0.65,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.4,
-                "continentalness": 0.3,
-                "erosion": 0.65,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pale_spires",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.4,
-                "continentalness": 0.75,
-                "erosion": -0.65,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pale_spires",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.4,
-                "continentalness": 0.75,
-                "erosion": -0.65,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_cloudroot_shelves",
               "parameters": {
                 "temperature": 0,
                 "humidity": 0.4,
@@ -10487,7 +10487,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_fernwood",
               "parameters": {
                 "temperature": 0,
                 "humidity": 0.8,
@@ -10511,175 +10511,175 @@
               }
             },
             {
+              "biome": "logos_dimension:cloudsea_fernwood",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.8,
+                "continentalness": 0.3,
+                "erosion": -0.65,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_fernwood",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.8,
+                "continentalness": 0.3,
+                "erosion": -0.65,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.8,
+                "continentalness": 0.3,
+                "erosion": 0.15,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.8,
+                "continentalness": 0.3,
+                "erosion": 0.15,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.8,
+                "continentalness": 0.3,
+                "erosion": 0.15,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.8,
+                "continentalness": 0.3,
+                "erosion": 0.15,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.8,
+                "continentalness": 0.3,
+                "erosion": 0.15,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.8,
+                "continentalness": 0.3,
+                "erosion": 0.65,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.8,
+                "continentalness": 0.3,
+                "erosion": 0.65,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.8,
+                "continentalness": 0.3,
+                "erosion": 0.65,
+                "weirdness": 0,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.8,
+                "continentalness": 0.3,
+                "erosion": 0.65,
+                "weirdness": 0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:elven_forest",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.8,
+                "continentalness": 0.3,
+                "erosion": 0.65,
+                "weirdness": 0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pale_spires",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.8,
+                "continentalness": 0.75,
+                "erosion": -0.65,
+                "weirdness": -0.8,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_pale_spires",
+              "parameters": {
+                "temperature": 0,
+                "humidity": 0.8,
+                "continentalness": 0.75,
+                "erosion": -0.65,
+                "weirdness": -0.35,
+                "depth": 0,
+                "offset": 0
+              }
+            },
+            {
               "biome": "logos_dimension:cloudsea_white_cherry",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.8,
-                "continentalness": 0.3,
-                "erosion": -0.65,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_fernwood",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.8,
-                "continentalness": 0.3,
-                "erosion": -0.65,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.8,
-                "continentalness": 0.3,
-                "erosion": 0.15,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.8,
-                "continentalness": 0.3,
-                "erosion": 0.15,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.8,
-                "continentalness": 0.3,
-                "erosion": 0.15,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.8,
-                "continentalness": 0.3,
-                "erosion": 0.15,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.8,
-                "continentalness": 0.3,
-                "erosion": 0.15,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.8,
-                "continentalness": 0.3,
-                "erosion": 0.65,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.8,
-                "continentalness": 0.3,
-                "erosion": 0.65,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.8,
-                "continentalness": 0.3,
-                "erosion": 0.65,
-                "weirdness": 0,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.8,
-                "continentalness": 0.3,
-                "erosion": 0.65,
-                "weirdness": 0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:elven_forest",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.8,
-                "continentalness": 0.3,
-                "erosion": 0.65,
-                "weirdness": 0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pale_spires",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.8,
-                "continentalness": 0.75,
-                "erosion": -0.65,
-                "weirdness": -0.8,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_pale_spires",
-              "parameters": {
-                "temperature": 0,
-                "humidity": 0.8,
-                "continentalness": 0.75,
-                "erosion": -0.65,
-                "weirdness": -0.35,
-                "depth": 0,
-                "offset": 0
-              }
-            },
-            {
-              "biome": "logos_dimension:cloudsea_fernwood",
               "parameters": {
                 "temperature": 0,
                 "humidity": 0.8,
@@ -11207,7 +11207,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_dawn_ribbons",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": -0.8,
@@ -11231,7 +11231,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_dawn_ribbons",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": -0.8,
@@ -11927,7 +11927,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_verdant_whirls",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": -0.4,
@@ -11951,7 +11951,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_verdant_whirls",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": -0.4,
@@ -12647,7 +12647,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_verdant_whirls",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": 0,
@@ -12671,7 +12671,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_verdant_whirls",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": 0,
@@ -13367,7 +13367,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_lantern_shelves",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": 0.4,
@@ -13391,7 +13391,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_lantern_shelves",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": 0.4,
@@ -14087,7 +14087,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_fernwood",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": 0.8,
@@ -14111,7 +14111,7 @@
               }
             },
             {
-              "biome": "logos_dimension:cloudsea_white_cherry",
+              "biome": "logos_dimension:cloudsea_fernwood",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": 0.8,
