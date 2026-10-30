@@ -5,7 +5,7 @@
   "effects": {
     "water_color": "#567d91",
     "grass_color": "#8b9870",
-    "foliage_color": "#ffe9f2",
+    "foliage_color": "#ffdeeb",
     "particle": {
       "probability": 0.006,
       "options": {
