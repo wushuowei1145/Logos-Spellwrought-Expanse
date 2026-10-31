@@ -85,3 +85,64 @@ Logos 升级 Photon / LDLib2 时，同步改这里的 `photon_version`、`ldlib2
 - 客户端场景：`./gradlew runClient -PlogosJar=<jar> -PldTest=group:pillar_burst -PldTestHeadless -PldTestWindow=1280x720`。`pillar_burst` 是远景的五个阶段；`pillar_burst_close` 是近景、经服务端发包、夜晚和站在光柱里。
 - 动态预览：`-PldTest=group:pillar_preview`，去掉 `-PldTestHeadless` 就会开窗口播放。白天三个机位（远看、近看、侧面两倍大小），夜里三个机位（远看、站在旁边、第三人称背后），每个机位放一次完整的光柱，不截图。本地的 `预览金色光柱.cmd`（不进仓库）就是跑这一组。
 - 没有做的：音效、照亮周围方块的动态光源、Unreal 原版的 HDR/Bloom、随时间被侵蚀的镂空（原版 OpacityMask 的溶解）。
+
+### 魔力龙卷（`ManaTornado`）
+
+魔力围着施法者盘旋上升，卷成一道螺旋龙卷。服务端调用：
+
+- `dev.logos.dimension.vfx.ManaTornado.play(level, 施法者, 刻数, 缩放, 转色刻数)`：刻数为负表示一直卷，直到 `stop(level, 施法者)`。
+- `play(level, 位置, ...)`：不跟随实体，停在原地。
+
+128 格内的玩家会收到 `ManaTornadoPayload`。客户端由 `ManaTornados` 管理，同一个实体身上只留一个，最多同时 8 个；画面在 `ManaTornadoVisual`。龙卷跟着施法者走。`转色刻数` 是整体色相转一圈的刻数：默认 `ManaTornado.CYCLE` = 240 刻，即 12 秒一圈；0 保持原色。只有画面，没有伤害，也不破坏方块。
+
+参考 Unreal `NiagaeaBigVFXPack/Effects/Niagara/Tornado/NS_Tornado_Mesh_red`（往上卷的部分）和 `NS_Tornado_under`（地面盘旋的部分），逐层照搬。拆解（每层的网格、材质、解出的参数、网格三视图）在仓库外 `art/tornado/`。
+
+原版每层都是一个静态网格加一个 Masked 材质（不透明、边缘硬切、可以有暗部），动起来全靠材质里的 UV 滚动。这里的做法：
+
+- 网格用程序化几何重做，有三种：
+  - `STRAIGHT` 直筒（SM_Tornado_Tatumaki，腰略细）；
+  - `HOURGLASS` 沙漏（SM_Tornado，下半截原本埋在地下，只画露出地面的部分）；
+  - `SKIRT` 外翻裙边（SM_Tornado_en2）。
+- 地涡是极坐标 UV 的圆盘（SM_Tornado_en）。
+- 贴图绕一圈取整数格。越往上贴图转得越多，表面起伏也顺着同一个方向盘上去，整根扭成绳状；整根还会轻轻弯曲、摆动。
+- **大部分层用硬边镂空材质 `VfxParts.cutOwn`**，对应 UE 的 Masked。它借原版粒子着色器：贴图 alpha × 顶点 alpha 低于 0.1 的像素直接不画，其余半透明混合并写深度。
+  - 贴图的 RGB 是亮度，乘顶点颜色，所以一层里就能有亮红和深红、白蓝和深蓝。
+  - 顶点 alpha 调低时，贴图 alpha 低的地方先被切掉，相当于 UE 随时间侵蚀的溶解。卷起、散开和下面说的透明窗都靠它。
+  - 镂空层排在 `order` 1，加法发光层排在 2，芯后面的辉光会被芯挡住。其余（地涡、地面光、光点、烟尘、碎石）在 0。
+- 第一版全部用半透明软边和加法发光，芯是空的、蓝线是满屏细丝、没有暗部，和 UE 差别很大，已经推翻。第一版留在本地分支 `backup/mana-tornado-v1`。
+
+| 层（由里到外） | 原版 | 这里 |
+|---|---|---|
+| 红芯 | Center：Tatumaki × MI_Tornado_main_Tatumaki | 腰半径 1.15、高 12 的直筒，扭 2.5 圈。镂空的 `tornado/core`：竖向条纹，亮红到深红，零星的洞。外面叠一层加法的粉白高光（`tornado/streaks`，带 Fresnel） |
+| 深蓝细线 | Center_Side：SM_Tornado × under2 | 贴着芯的沙漏，镂空的 `tornado/streaks` |
+| 刀刃 | Center_Side2：Tatumaki × MI_Tornado_Sander | 半径 1.45 的直筒，镂空的 `tornado/blades`：四片长长的刀刃绕着芯盘上去，中间白亮、边缘深蓝。贴着它再叠一层同样的加法辉光 |
+| 红色细线 | Tornado3：SM_Tornado × Sander2 | 半径 1.75 的沙漏，镂空的 `tornado/streaks`，透明度 0.45，切剩稀疏的几道 |
+| 外圈刀刃 | Tornado8：Tatumaki × Sander | 半径 2、高 11 的直筒，两片浅蓝刀刃 |
+| 蓝点 | Tornado2：SM_Tornado × under | 半径 2.2 的沙漏，镂空的 `tornado/specks` |
+| 红色裂纹 | OutSide：SM_Tornado × Sander2 | 半径 2.6 的沙漏，镂空的 `pillar_burst/veins`，透明度 0.25，只剩零星几道 |
+| 裙边 | Under、MeshMain004 | 芯脚往上张开的白色裙边（镂空 `tornado/core`）、外面一圈白蓝刀刃，再叠一层加法光晕 |
+| 地涡与地面光 | MeshMain006、MeshMain005、点光源 | 半径 3 左右的白色地涡（`pillar_burst/cells` 加烟絮），反着转的深蓝底光，加一大片照在地上的蓝白光（`heal/glow`） |
+| 光点 | PointLight001（每秒 330 个） | 每刻 4 个，贴着脚边飞快打转，上溅一两格又落下（`heal/glow`） |
+| 烟尘 | Smoke | 每两刻一团，绕着转着往上飘（`physical_ray/smoke`，按脚下方块的地图色往浅灰偏） |
+| 碎石 | Gareki | 每三刻从脚边 1.4–4.8 格的地面掀起一块，用那块方块自己的贴图。约 32° 锥形抛起，同时被卷着绕中心转，落地后停一会儿淡掉 |
+
+- 尺寸：原版芯高约 25 米，这里芯高 12 格。原版外面几层大得多（OutSide 腰半径 15 米、Tornado8 半径 20 米高 64 米），但大部分被材质切掉，看上去是一根紧凑的柱子；这里所有层都收在 2.6 格以内。所有尺寸都乘以缩放。
+- 不挡住施法者：
+  - **透明窗**：离中心 3.2 格以内的层，在施法者身高以内（离地 1.9–2.7 格以下）、朝向镜头的那一面被切开一个窗。窗边从贴图 alpha 低的地方先切，是参差的。
+  - **镜头在里面**：镜头进到某一层里面时，那一层降到四成（镂空层就是被切掉大半）；贴近镜头 0.7–2.6 格的部分也被切掉。第三人称看得清自己，第一人称平视几乎看不到墙，往上看是龙卷的内壁。
+- 镂空层的颜色是不透明混合出来的，白天不会被亮天空冲淡，不再需要第一版那种半透明罩层。
+- 时间轴：
+  - **卷起**：14 刻内由里到外依次从地面往上长出来，前沿是软的。
+  - **收掉**：24 刻内整体往上飘 2.5 格，从底部往上散掉；已经飞起的光点、碎石落完为止。
+- 贴图：`tornado/` 下的 `wisp`、`streaks`、`specks`、`core`、`blades` 是代码画的，生成脚本在仓库外 `art/tornado/tools/TornadoTextures.java`，规则同光柱：只往后追加。`core` 和 `blades` 的 RGB 是亮度，alpha 是遮罩；前三张是白色 RGB 加亮度 alpha。其余贴图复用 Logos 和光柱已有的。
+- 预览：`/alchemy tornado [秒数] [缩放] [转色秒数]` 在自己身边卷起，默认 8 秒、缩放 1、12 秒转一圈；秒数为 0 表示一直卷，`/alchemy tornado stop` 收掉。需要管理员权限。
+- 客户端场景：`-PldTest=group:mana_tornado`。
+  - `mana_tornado`：卷在村民身上，截卷起、成形、转色半圈、散开四个阶段。
+  - `mana_tornado_caster`：卷在玩家自己身上，截第三人称背后、第一人称平视和仰视，再加夜里远看。
+- 动态预览：`-PldTest=group:tornado_preview`，去掉 `-PldTestHeadless` 会开窗口。本地的 `预览魔力龙卷.cmd`（不进仓库）就是跑这一组。
+- 没有做的：
+  - 音效。
+  - 原版的两个点光源（只画了照在地上的那片光）。
+  - 原版材质里按顶点法线推开的形变（WPO）：这里用程序化的表面起伏代替。
+  - 光影下没有测过。粒子着色器的镂空材质经 ShaderPackOverlay 是否正常，需要开光影确认。
+- 已知：远处的云在龙卷后面时，可能会画在龙卷上面（第一版很明显，像一道横向亮带）。看起来是云在自定义几何之后才画；还没有深究。光柱应该也有这个问题。

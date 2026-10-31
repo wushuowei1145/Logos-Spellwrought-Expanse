@@ -80,7 +80,8 @@ public final class LogosDimension {
         bus.addListener(DimensionSpawns::register);
         bus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
                 event.registrar("1").playToClient(dev.logos.dimension.net.HauntPayload.TYPE, dev.logos.dimension.net.HauntPayload.CODEC)
-                        .playToClient(dev.logos.dimension.net.PillarBurstPayload.TYPE, dev.logos.dimension.net.PillarBurstPayload.CODEC));
+                        .playToClient(dev.logos.dimension.net.PillarBurstPayload.TYPE, dev.logos.dimension.net.PillarBurstPayload.CODEC)
+                        .playToClient(dev.logos.dimension.net.ManaTornadoPayload.TYPE, dev.logos.dimension.net.ManaTornadoPayload.CODEC));
         NeoForge.EVENT_BUS.addListener(DimensionCommands::register);
         NeoForge.EVENT_BUS.addListener(dev.logos.dimension.wind.WindCommands::register);
         NeoForge.EVENT_BUS.addListener(IslandSanctum::placement);

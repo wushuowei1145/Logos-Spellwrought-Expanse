@@ -16,15 +16,21 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import dev.logos.dimension.LogosDimension;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -56,6 +62,25 @@ public final class VfxParts {
     /** 半透明混合材质，贴图是附属自己的 {@code logos_dimension:textures/vfx/<texture>.png}。 */
     public static RenderType blendOwn(String texture) {
         return BLEND.computeIfAbsent(LogosDimension.ID + ":" + texture, k -> material(LogosDimension.id("textures/vfx/" + texture + ".png"), false));
+    }
+
+    private static final Map<String, RenderType> CUT = new HashMap<>();
+
+    /**
+     * 硬边镂空材质（照 UE 的 Masked），贴图是附属自己的：借原版粒子着色器，贴图 alpha × 顶点 alpha 低于 0.1 的像素直接不画，
+     * 其余半透明混合并写深度，后画的东西会被它挡住。贴图的 RGB 是亮度，乘顶点颜色，一张图里就能有亮有暗。
+     * 顶点 alpha 调低时，贴图 alpha 低的地方先被切掉，相当于 UE 里随时间侵蚀的溶解。
+     */
+    public static RenderType cutOwn(String texture) {
+        return CUT.computeIfAbsent(texture, k -> {
+            String key = "cut_own_" + texture.replace('/', '_');
+            var pipeline = RenderPipeline.builder(RenderPipelines.PARTICLE_SNIPPET)
+                    .withLocation(LogosDimension.id("pipeline/vfx_" + key)).withCull(false)
+                    .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, true))
+                    .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT)).build();
+            return RenderType.create("logos_dimension_vfx_" + key, RenderSetup.builder(pipeline)
+                    .withTexture("Sampler0", LogosDimension.id("textures/vfx/" + texture + ".png")).useLightmap().sortOnUpload().createRenderSetup());
+        });
     }
 
     /** 方块图集上的半透明材质：碎块用地面方块自己的贴图，写深度，互相遮挡。 */
@@ -212,5 +237,33 @@ public final class VfxParts {
         int g = (int) Mth.lerp(k, a >> 8 & 255, b >> 8 & 255);
         int bl = (int) Mth.lerp(k, a & 255, b & 255);
         return r << 16 | g << 8 | bl;
+    }
+
+    /** 把颜色的色相转过 {@code turns} 圈（1 为一整圈），饱和度和明度不变。 */
+    public static int hue(int rgb, float turns) {
+        float r = (rgb >> 16 & 255) / 255f, g = (rgb >> 8 & 255) / 255f, b = (rgb & 255) / 255f;
+        float max = Math.max(r, Math.max(g, b)), min = Math.min(r, Math.min(g, b)), d = max - min;
+        if (d <= 0 || max <= 0) return rgb & 0xFFFFFF;
+        float h = max == r ? (g - b) / d : max == g ? 2 + (b - r) / d : 4 + (r - g) / d;
+        h = h / 6 + turns;
+        return Mth.hsvToRgb(h - Mth.floor(h), d / max, max) & 0xFFFFFF;
+    }
+
+    // ---- 地面 ----------------------------------------------------------------------------------
+
+    /** 尘土的颜色：{@code at} 脚下方块的地图色，往浅灰偏一些，免得草地扬起绿色的灰。 */
+    public static int groundTint(Level level, Vec3 at) {
+        BlockPos below = BlockPos.containing(at.x, at.y - .5, at.z);
+        BlockState state = level.getBlockState(below);
+        int map = state.isAir() ? 0x9A8F80 : state.getMapColor(level, below).col;
+        return lerpColor(map, 0xB8AFA2, .45f);
+    }
+
+    /** {@code (x, z)} 处、高度 {@code groundY} 之下那块方块自己的贴图，用来画碎石；空气或特殊渲染的方块返回 null。 */
+    public static TextureAtlasSprite blockSprite(Level level, double x, double groundY, double z) {
+        BlockState state = level.getBlockState(BlockPos.containing(x, groundY - .5, z));
+        if (state.isAir() || state.getRenderShape() != RenderShape.MODEL) return null;
+        TextureAtlasSprite sprite = Minecraft.getInstance().getModelManager().getBlockStateModelSet().getParticleMaterial(state).sprite();
+        return sprite.atlasLocation().getPath().contains("blocks") ? sprite : null;
     }
 }

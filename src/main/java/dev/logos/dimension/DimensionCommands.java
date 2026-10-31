@@ -56,11 +56,30 @@ public final class DimensionCommands {
         root.then(Commands.literal("pillar").executes(c -> pillar(c.getSource().getPlayerOrException(), 1))
                 .then(Commands.argument("scale", FloatArgumentType.floatArg(.25f, 4))
                         .executes(c -> pillar(c.getSource().getPlayerOrException(), FloatArgumentType.getFloat(c, "scale")))));
+        // 特效预览：自己身边卷起魔力龙卷。秒数 0 表示一直卷，stop 收掉；cycle 是颜色转一圈的秒数，0 保持原色
+        root.then(Commands.literal("tornado").executes(c -> tornado(c.getSource().getPlayerOrException(), 8, 1, 12))
+                .then(Commands.literal("stop").executes(c -> {
+                    var player = c.getSource().getPlayerOrException();
+                    dev.logos.dimension.vfx.ManaTornado.stop(player.level(), player);
+                    return 1;
+                }))
+                .then(Commands.argument("seconds", IntegerArgumentType.integer(0, 600))
+                        .executes(c -> tornado(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "seconds"), 1, 12))
+                        .then(Commands.argument("scale", FloatArgumentType.floatArg(.25f, 4))
+                                .executes(c -> tornado(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "seconds"),
+                                        FloatArgumentType.getFloat(c, "scale"), 12))
+                                .then(Commands.argument("cycle", IntegerArgumentType.integer(0, 600))
+                                        .executes(c -> tornado(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "seconds"),
+                                                FloatArgumentType.getFloat(c, "scale"), IntegerArgumentType.getInteger(c, "cycle")))))));
         event.getDispatcher().register(root);
     }
     private static int pillar(net.minecraft.server.level.ServerPlayer player, float scale) {
         var hit = player.pick(64, 0, false);
         dev.logos.dimension.vfx.PillarBurst.play(player.level(), hit.getLocation(), scale);
+        return 1;
+    }
+    private static int tornado(net.minecraft.server.level.ServerPlayer player, int seconds, float scale, int cycleSeconds) {
+        dev.logos.dimension.vfx.ManaTornado.play(player.level(), player, seconds * 20, scale, cycleSeconds * 20);
         return 1;
     }
     private static int island(net.minecraft.server.level.ServerPlayer player, int gx, int gz) {
