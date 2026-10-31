@@ -1,5 +1,6 @@
 package dev.logos.dimension;
 
+import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 
 import dev.logos.dimension.world.AlchemicalLayout;
@@ -51,7 +52,16 @@ public final class DimensionCommands {
             return 1;
         }));
         root.then(bossState);
+        // 特效预览：在准星指着的地面爆发金色光柱
+        root.then(Commands.literal("pillar").executes(c -> pillar(c.getSource().getPlayerOrException(), 1))
+                .then(Commands.argument("scale", FloatArgumentType.floatArg(.25f, 4))
+                        .executes(c -> pillar(c.getSource().getPlayerOrException(), FloatArgumentType.getFloat(c, "scale")))));
         event.getDispatcher().register(root);
+    }
+    private static int pillar(net.minecraft.server.level.ServerPlayer player, float scale) {
+        var hit = player.pick(64, 0, false);
+        dev.logos.dimension.vfx.PillarBurst.play(player.level(), hit.getLocation(), scale);
+        return 1;
     }
     private static int island(net.minecraft.server.level.ServerPlayer player, int gx, int gz) {
         if(gx!=0||gz!=0){player.sendSystemMessage(Component.literal("每个咒械原世界只有一座中心空岛。"));return 0;}
