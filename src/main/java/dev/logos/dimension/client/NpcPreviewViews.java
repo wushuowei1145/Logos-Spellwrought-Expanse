@@ -37,6 +37,14 @@ public abstract class NpcPreviewViews implements UIScenario {
     private static final double SPACING = 1.7;
     private static final int FLOOR = 99;
 
+    /** 第三批保留独立搭配：卫士、祭服、礼裙及双辫与其他衣服的组合。 */
+    private static final List<Map<String, String>> THIRD_BATCH_LINEUP = List.of(
+            Map.of("hair", "hair_high_ponytail", "outfit", "outfit_vine_guard"),
+            Map.of("hair", "hair_priestess_braids", "outfit", "outfit_priestess"),
+            Map.of("hair", "hair_high_ponytail", "outfit", "outfit_floral_gown"),
+            Map.of("hair", "hair_priestess_braids", "outfit", "outfit_floral_gown", "headwear", NpcParts.NONE),
+            Map.of("hair", "hair_priestess_braids", "outfit", "outfit_villager", "headwear", NpcParts.NONE));
+
     /** 素体对照保留常态五官，分辨肩腰、骨盆与服装衔接。 */
     private static final List<Map<String, String>> BODY_LINEUP = List.of(
             Map.of("hair", NpcParts.NONE, "headwear", NpcParts.NONE, "outfit", NpcParts.NONE),
@@ -48,7 +56,7 @@ public abstract class NpcPreviewViews implements UIScenario {
     protected List<Map<String, String>> lineup() { return LINEUP; }
     protected String previewTag() { return "npc_preview"; }
 
-    /** 0 正面，1 3/4，2 脸部近景。 */
+    /** 0 正面，1 3/4，2 脸部近景，3 背面。 */
     protected int view() {
         return 0;
     }
@@ -75,6 +83,7 @@ public abstract class NpcPreviewViews implements UIScenario {
         return switch (view()) {
             case 1 -> new Vec3(4.4, FLOOR + 2.3, 4.2);
             case 2 -> new Vec3(0.5, FLOOR + 2.15, 2.0);
+            case 3 -> new Vec3(0.5, FLOOR + 2.0, -5.0);
             default -> new Vec3(0.5, FLOOR + 1.8, 4.7);
         };
     }
@@ -147,7 +156,7 @@ public abstract class NpcPreviewViews implements UIScenario {
                     var target = Minecraft.getInstance().getMainRenderTarget();
                     return target.width == 1600 && target.height == 900;
                 })
-                .screenshot(view() == 0 ? "forest_elf_lineup" : view() == 1 ? "forest_elf_lineup_angle" : "forest_elf_faces")
+                .screenshot(view() == 0 ? "forest_elf_lineup" : view() == 1 ? "forest_elf_lineup_angle" : view() == 3 ? "forest_elf_lineup_back" : "forest_elf_faces")
                 .teardown("恢复界面", ctx -> Minecraft.getInstance().options.hideGui = false);
     }
 
@@ -182,5 +191,21 @@ public abstract class NpcPreviewViews implements UIScenario {
     @LDLRegisterClient(name = "npc_forest_elf_body_angle", group = "npc_body_preview", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
     public static class BodyAngle extends Body {
         @Override protected int view() { return 1; }
+    }
+
+    @LDLRegisterClient(name = "npc_forest_elf_third_batch", group = "npc_batch_03_preview", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class ThirdBatch extends NpcPreviewViews {
+        @Override protected List<Map<String, String>> lineup() { return THIRD_BATCH_LINEUP; }
+        @Override protected String previewTag() { return "npc_batch_03_preview"; }
+    }
+
+    @LDLRegisterClient(name = "npc_forest_elf_third_batch_angle", group = "npc_batch_03_preview", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class ThirdBatchAngle extends ThirdBatch {
+        @Override protected int view() { return 1; }
+    }
+
+    @LDLRegisterClient(name = "npc_forest_elf_third_batch_back", group = "npc_batch_03_preview", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class ThirdBatchBack extends ThirdBatch {
+        @Override protected int view() { return 3; }
     }
 }

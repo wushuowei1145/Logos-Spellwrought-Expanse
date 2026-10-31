@@ -1,8 +1,8 @@
-"""将维护者最新的素体与十五个外观部件局部同步进游戏资源。
+"""将维护者最新素体和外观部件同步进游戏资源，保留运行时动画与表情。
 
 python tools/forest_elf_appearance.py
 
-使用现有图集分区，保留全部运行时动画、动画表情、共用骨架与搭配规则。
+已有部件使用原图集分区，第三批贴图追加在下方；保留动画、表情、共用骨架与规则。
 只读取仓库外的当前 .bbmodel，不重跑旧制作脚本，不修改源文件。
 """
 import base64
@@ -35,6 +35,8 @@ UV_ORIGINS = {
     'outfit_casual': (72, 200), 'outfit_gardener': (88, 160),
     'outfit_ranger': (64, 56), 'outfit_scholar': (0, 176),
     'outfit_villager': (48, 112),
+    'outfit_vine_guard': (0, 240), 'outfit_priestess': (48, 240),
+    'outfit_floral_gown': (0, 304), 'hair_priestess_braids': (56, 304),
 }
 
 
@@ -92,11 +94,13 @@ def read_source(path, pid, game):
         own_root = name == pid or name.startswith(pid + '_')
         chosen = pid == 'body' or included or own_root
         if chosen:
-            assert name in game, ('需要先登记新骨骼', name)
-            assert game[name].get('parent') == parent, ('骨骼重新挂接需单独核对', name)
+            if name in game:
+                assert game[name].get('parent') == parent, ('骨骼重新挂接需单独核对', name)
+                assert set(game[name]) <= {'name', 'parent', 'pivot', 'rotation', 'cubes'}, ('未识别的运行时骨骼字段', name)
+            else:
+                assert pid != 'body' and own_root, ('新增骨骼必须属于当前部件', pid, name)
             origin = [round(float(v), 5) + 0.0 for v in g['origin']]
             rotation = [round(float(v), 5) + 0.0 for v in (g.get('rotation') or [0, 0, 0])]
-            assert set(game[name]) <= {'name', 'parent', 'pivot', 'rotation', 'cubes'}, ('未识别的运行时骨骼字段', name)
             bone = {'name': name, 'pivot': [-origin[0], origin[1], origin[2]]}
             if parent:
                 bone['parent'] = parent
@@ -134,18 +138,31 @@ def main():
         table = parts['slots'][slot['name']]
         assert table['optional'] == slot['optional']
         assert next(p['id'] for p in table['parts'] if p['default']) == slot['default']
-        assert {p.stem for p in (SOURCE / slot['name']).glob('*.bbmodel')} == {p['id'] for p in table['parts']}
+        paths={p.stem:p for p in (SOURCE / slot['name']).glob('*.bbmodel')}
+        existing={p['id'] for p in table['parts']}
+        assert existing <= paths.keys(), ('已有零件源文件丢失', existing-paths.keys())
+        for pid in sorted(paths.keys()-existing):
+            assert pid in UV_ORIGINS, ('新部件需要分配独立贴图区', pid)
+            table['parts'].append({'id':pid,'groups':[],'default':False,'cubes':0})
         for entry in table['parts']:
             pid = entry['id']
             src = read_source(SOURCE / slot['name'] / (pid + '.bbmodel'), pid, game)
-            assert src['tops'] == entry['groups'], ('零件顶层登记不一致', pid)
+            if pid in existing:
+                assert src['tops'] == entry['groups'], ('零件顶层登记不一致', pid)
+            else:
+                entry['groups']=src['tops']
             sources[pid] = src
             entry['cubes'] = src['count']
     parts['body_cubes'] = sources['body']['count']
     selected = {name for s in sources.values() for name in s['bones']}
     assert len(selected) == sum(len(s['bones']) for s in sources.values()), '重复导出骨骼'
-    atlas = np.asarray(Image.open(TEXTURE).convert('RGBA')).copy()
+    previous_atlas = np.asarray(Image.open(TEXTURE).convert('RGBA'))
+    height=max(previous_atlas.shape[0],max(UV_ORIGINS[pid][1]+src['image'].shape[0] for pid,src in sources.items()))
+    height=math.ceil(height/16)*16
+    atlas=np.zeros((height,previous_atlas.shape[1],4),np.uint8)
+    atlas[:previous_atlas.shape[0]]=previous_atlas
     old_atlas = atlas.copy()
+    model['description']['texture_height']=height
     protected = np.zeros(atlas.shape[:2], bool)
     for name, bone in game.items():
         if name in selected:
@@ -155,7 +172,8 @@ def main():
                 x0, y0, x1, y1 = face_region(face)
                 protected[y0:y1, x0:x1] = True
     occupied = np.zeros_like(protected)
-    report = {'parts': {}, 'changed_bones': [], 'animation_count': len(json.loads(before_animation)['animations'])}
+    report = {'parts': {}, 'changed_bones': [], 'added_bones': [], 'added_parts': [],
+              'animation_count': len(json.loads(before_animation)['animations'])}
     for pid, src in sources.items():
         x, y = UV_ORIGINS[pid]; h, w = src['image'].shape[:2]
         assert x + w <= atlas.shape[1] and y + h <= atlas.shape[0], (pid, '源贴图超出现有图集')
@@ -166,10 +184,15 @@ def main():
         # 只写当前模型实际采样的像素，保留空白分区中的表情图块。
         atlas[y:y+h, x:x+w][used] = src['image'][used]
         for name, bone in src['bones'].items():
-            old = game[name]
-            if old != bone:
+            old = game.get(name)
+            if old is None:
+                assert bone.get('parent') in game, ('新增骨骼的父级未登记', name)
+                model['bones'].append(bone)
+                game[name]=bone
+                report['added_bones'].append(name)
+            elif old != bone:
                 report['changed_bones'].append(name)
-            old.clear(); old.update(bone)
+                old.clear(); old.update(bone)
         report['parts'][pid] = {'source': src['file'], 'cubes': src['count'], 'uv_origin': [x, y]}
     for old, new in zip(before_model['bones'], model['bones']):
         if old['name'] not in selected:
@@ -181,8 +204,10 @@ def main():
     assert invariant(parts) == invariant(before_parts)
     for slot, table in parts['slots'].items():
         assert table['optional'] == before_parts['slots'][slot]['optional']
-        for old, new in zip(before_parts['slots'][slot]['parts'], table['parts']):
+        old_entries=before_parts['slots'][slot]['parts']
+        for old, new in zip(old_entries, table['parts']):
             assert {k:v for k,v in old.items() if k != 'cubes'} == {k:v for k,v in new.items() if k != 'cubes'}
+        report['added_parts'].extend(p['id'] for p in table['parts'][len(old_entries):])
     MODEL.write_text(json.dumps(geo, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
     Image.fromarray(atlas).save(TEXTURE, optimize=True)
     PARTS.write_text(json.dumps(parts, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
