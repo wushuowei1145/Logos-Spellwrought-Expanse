@@ -36,6 +36,14 @@
      ],
      "default": false,
      "cubes": 243
+    },
+    {
+     "id": "hair_priestess_braids",
+     "groups": [
+      "hair_priestess_braids"
+     ],
+     "default": false,
+     "cubes": 107
     }
    ]
   },
@@ -214,6 +222,60 @@
      ],
      "default": false,
      "cubes": 66
+    },
+    {
+     "id": "outfit_floral_gown",
+     "groups": [
+      "outfit_floral_gown_leftforearm",
+      "outfit_floral_gown_leftarm",
+      "outfit_floral_gown_rightforearm",
+      "outfit_floral_gown_rightarm",
+      "outfit_floral_gown_body",
+      "outfit_floral_gown_continuous_skirt",
+      "outfit_floral_gown_leftfoot",
+      "outfit_floral_gown_leftshin",
+      "outfit_floral_gown_rightfoot",
+      "outfit_floral_gown_rightshin"
+     ],
+     "default": false,
+     "cubes": 100
+    },
+    {
+     "id": "outfit_priestess",
+     "groups": [
+      "outfit_priestess_leftforearm",
+      "outfit_priestess_leftarm",
+      "outfit_priestess_rightforearm",
+      "outfit_priestess_rightarm",
+      "outfit_priestess_body",
+      "outfit_priestess_continuous_robe",
+      "outfit_priestess_leftfoot",
+      "outfit_priestess_leftshin",
+      "outfit_priestess_rightfoot",
+      "outfit_priestess_rightshin"
+     ],
+     "default": false,
+     "cubes": 65
+    },
+    {
+     "id": "outfit_vine_guard",
+     "groups": [
+      "outfit_vine_guard_leftforearm",
+      "outfit_vine_guard_leftarm",
+      "outfit_vine_guard_rightforearm",
+      "outfit_vine_guard_rightarm",
+      "outfit_vine_guard_body",
+      "outfit_vine_guard_tassets",
+      "outfit_vine_guard_leftfoot",
+      "outfit_vine_guard_leftshin",
+      "outfit_vine_guard_leftleg",
+      "outfit_vine_guard_rightfoot",
+      "outfit_vine_guard_rightshin",
+      "outfit_vine_guard_rightleg",
+      "outfit_vine_guard_hips"
+     ],
+     "default": false,
+     "cubes": 69
     }
    ]
   }

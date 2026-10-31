@@ -169,6 +169,36 @@ class NpcPartsTest {
         }
     }
 
+    /** 第三批进入随机池，存档回读保留选择，其他衣服和发型全部隐藏。 */
+    @Test void thirdBatchRollsAndKeepsOnlyTheSelectedOutfitAndHairVisible() {
+        Set<String> outfits = Set.of("outfit_vine_guard", "outfit_priestess", "outfit_floral_gown");
+        Set<String> rolled = new HashSet<>();
+        boolean braidsRolled = false;
+        RandomSource random = RandomSource.create(20261031);
+        for (int i = 0; i < 2000; i++) {
+            var appearance = ELF.random(random);
+            rolled.add(appearance.get("outfit"));
+            braidsRolled |= "hair_priestess_braids".equals(appearance.get("hair"));
+        }
+        assertTrue(rolled.containsAll(outfits), "第三批服装未进入随机池");
+        assertTrue(braidsRolled, "双麻花辫未进入随机池");
+        for (String outfit : outfits) {
+            var selected = ELF.defaults();
+            selected.put("hair", "hair_priestess_braids");
+            selected.put("outfit", outfit);
+            assertEquals(selected, ELF.sanitize(NpcParts.decode(NpcParts.encode(selected))));
+            var hidden = ELF.hiddenGroups(selected);
+            for (String slot : Set.of("outfit", "hair")) for (var part : ELF.slot(slot).parts()) {
+                for (String group : part.groups())
+                    assertEquals(!part.id().equals(selected.get(slot)), hidden.contains(group), group);
+            }
+        }
+        var gownWithPonytail = ELF.defaults();
+        gownWithPonytail.put("hair", "hair_high_ponytail");
+        gownWithPonytail.put("outfit", "outfit_floral_gown");
+        assertEquals(gownWithPonytail, ELF.sanitize(gownWithPonytail), "祭祀发型不能与新衣服强制绑定");
+    }
+
     /** 兜帽和枝冠互斥：随机抽不会同时出现；手动给出的组合会把后面的头饰换成 none。 */
     @Test void conflictingPartsNeverAppearTogether() {
         RandomSource random = RandomSource.create(42);
