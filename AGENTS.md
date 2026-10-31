@@ -8,6 +8,7 @@
 - NPC 模型按 [docs/NPC_MODELS.md](docs/NPC_MODELS.md)：车万女仆 GeckoLib 骨架命名、2 倍制作、entityCutout（不剔除背面）加原版实体光照，发光部件用 `ysmGlow` 前缀骨骼；制作做法见 [docs/NPC_MODELING_GUIDE.md](docs/NPC_MODELING_GUIDE.md)；普通 NPC 的随机外观按 [docs/NPC_APPEARANCE.md](docs/NPC_APPEARANCE.md)，幼年、伴侣与繁殖按 [docs/NPC_POPULATION.md](docs/NPC_POPULATION.md)，施法按 [docs/NPC_MAGIC.md](docs/NPC_MAGIC.md)；借用车万女仆的动画按 [CREDITS.md](CREDITS.md) 署名并登记。
 - 提交与 PR 不添加 AI 作者、共同作者或贡献者署名，使用维护者已有的 Git 身份。
 - 复用现有 Logos 材料注册 ID，不复制注册污染碎片。
+- 特效按 [docs/VFX.md](docs/VFX.md) 做：复用 Logos 的法术特效时在服务端调用 `dev.logos.runtime.Vfx`；附属自己的特效直接用 Photon 写，已有贴图用 `logos:` 路径引用。构建需要 `-PlogosJar`。
 - 新增植被或树叶方块时加进 Logos 的 `logos:fragile_plants` 标签，否则衰退符文对它无效；见 [docs/LOGOS_TAGS.md](docs/LOGOS_TAGS.md)。
 - 不使用原版新版本硫磺方块，不添加原版主世界矿物生成。
 - 两个维度使用原版数据包生成，不恢复 Java 地形/种树/建筑填块生成器。咒械原为每釜独立的 20,000×20,000 格 UUID 世界，原版大群系替代同心环，以太占多数。挖掘保留绑定，实体损毁才销毁对应实例。
