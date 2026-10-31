@@ -28,7 +28,7 @@ NPC 照着这套做，不需要新机制。
 
 ## 3. 接入方式
 
-附属模组**没有编译期依赖** Logos（`build.gradle` 里只是 `runtimeOnly`），所以和 `LogosNatureBridge` 一样，用反射在边界接入，并缓存方法句柄。
+写这部分时附属还**没有编译期依赖** Logos，所以和 `LogosNatureBridge` 一样，用反射在边界接入，并缓存方法句柄。现在附属已编译期依赖 Logos（见 [VFX.md](VFX.md)），新代码直接调用公开类即可；这里的反射保留到改写时再换成直接调用。
 
 | 用到的 Logos 接口 | 用途 |
 |---|---|

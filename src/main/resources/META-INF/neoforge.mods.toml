@@ -33,6 +33,14 @@ ordering="AFTER"
 side="BOTH"
 
 [[dependencies.logos_dimension]]
+modId="photon"
+type="required"
+reason="附属自己的法术特效"
+versionRange="[26.1.2.3,)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.logos_dimension]]
 modId="geckolib"
 type="required"
 reason="NPC 模型渲染（车万女仆骨架规范）"

@@ -46,12 +46,16 @@ neoForge {
 }
 
 dependencies {
-    // Logos remains a separately installed mod; no copy of its code or items is bundled.
-    if (providers.gradleProperty('logosJar').isPresent()) {
-        runtimeOnly files(providers.gradleProperty('logosJar').get())
+    // 编译期依赖 Logos，以复用它的公开特效入口 dev.logos.runtime.Vfx（见 docs/VFX.md）。
+    // 安装包里不含 Logos 的代码或物品，玩家自己装。jar 路径用 -PlogosJar 传，或写进 ~/.gradle/gradle.properties
+    def logosJar = providers.gradleProperty('logosJar')
+    if (!logosJar.isPresent()) {
+        throw new GradleException('缺少 -PlogosJar=/absolute/path/logos-x.y.z.jar：附属编译期依赖 Logos，见 docs/VFX.md')
     }
+    implementation files(logosJar.get())
     implementation "com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:${ldlib2_version}"
-    runtimeOnly("com.lowdragmc.photon:photon-neoforge-26.1:${photon_version}") { transitive = false }
+    // 附属自己的 Photon 特效直接编译 Photon；版本跟 Logos 的 gradle.properties 保持一致
+    implementation("com.lowdragmc.photon:photon-neoforge-26.1:${photon_version}") { transitive = false }
     runtimeOnly("com.lowdragmc.kilagraph:kilagraph-neoforge-26.1:${kilagraph_version}") { transitive = false }
     // NPC 渲染器直接使用 GeckoLib 的类；Logos 本身也依赖它，所以玩家不需要另装
     implementation "maven.modrinth:geckolib:${geckolib_version}"
