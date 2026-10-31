@@ -1,6 +1,6 @@
 {
  "race": "forest_elf",
- "body_cubes": 38,
+ "body_cubes": 40,
  "slots": {
   "hair": {
    "optional": true,
@@ -133,7 +133,7 @@
       "outfit_villager_rightshin"
      ],
      "default": true,
-     "cubes": 64
+     "cubes": 66
     },
     {
      "id": "outfit_casual",
@@ -170,7 +170,7 @@
       "outfit_gardener_hips"
      ],
      "default": false,
-     "cubes": 47
+     "cubes": 51
     },
     {
      "id": "outfit_ranger",
@@ -192,7 +192,7 @@
       "outfit_ranger_hips"
      ],
      "default": false,
-     "cubes": 61
+     "cubes": 63
     },
     {
      "id": "outfit_scholar",
@@ -213,7 +213,7 @@
       "outfit_scholar_satchel"
      ],
      "default": false,
-     "cubes": 64
+     "cubes": 66
     }
    ]
   }

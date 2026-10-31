@@ -1,5 +1,37 @@
 # 首版验证记录
 
+## 森林精灵最新体型与全套服装同步
+
+2026-10-31：分支 `feat/forest-elf-body-fit`，基于 `main` 的 `8d6ddf5`。读取维护者最新标准 `.bbmodel`，同步 40 块素体、五套配套服装的胸腰形体、凉鞋和腰包局部修订，以及守林人披肩角度。源文件未改，游戏模型实际更新 11 根骨骼的几何或局部静止姿势，合计 1002 块、349 根骨骼。
+
+新增 `tools/forest_elf_appearance.py`，复用现有坐标和 UV 旋转导出规则，在原图集分区中局部同步整个外观库。22 段完整运行时动画、挂泪表情骨骼及像素、39 根共用骨架、全部外观 ID 与搭配规则保持不变；本轮贴图像素无需修改。连续两次导出字节一致。新旧精灵继续按原部件 ID 使用更新后的形体，不重新随机外观。
+
+| 层级 | 结果 |
+| --- | --- |
+| 源数据与导出 | 十六个源文件保持维护者内容；十五个部件的共用骨架和 40 块灰色参照对齐，UV 无越界、名称唯一、方块有正确父级；非本轮修改骨骼与完整动画逐项保留 |
+| 单元与构建 | **103/103** 单元通过，`test build` 成功；保留骨盆封口、90° UV、随机外观及完整动画回归检查 |
+| 原始实际客户端 | **未进入预览**：主分支已有 `wild_mandrake`、`wild_starlight_moss` 使用不存在的 `minecraft:random_patch` Feature 类型，世界注册表加载失败；这两个资源未由本 PR 修改 |
+| 隔离植物配置后的实际客户端 | 素体 `group:npc_body_preview` **2/2 场景、4/4 检查**；外观与动作 `group:npc_preview` **8/8 场景、32/32 检查**，合计 **10/10 场景、36/36 检查** |
+
+客户端隔离方式：仅在本地 `build/preview-registry-compat.init.gradle` 的 `runClient.doFirst` 中，将 `build/resources/main/` 下上述两个植物 Feature 临时换为 `{"type":"minecraft:no_op","config":{}}`，以让模型预览世界进入游戏。它不修改 `src/`，不纳入提交；测试后已恢复构建输出，并核对安装包内两个配置与原源文件字节一致。**上述客户端通过只代表在该隔离条件下的外观与动作检查，不能称作主分支原始配置已能正常进入世界。** 原始启动错误保留于本地 `build/body-fit-original-client-registry-error.log`。
+
+运行环境：Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25.0.3、GeckoLib 5.5.2、本地 Logos 0.6.0 开发 JAR。人工查看素体、全套服装的正面与斜侧面，以及拉弓侧面、施法和死亡侧面截图。新增截图在 `docs/screenshots/npc-body-fit/`：
+
+- [素体与配套服装正面](docs/screenshots/npc-body-fit/forest-elf-body-fit-front.png)
+- [素体与配套服装斜侧面](docs/screenshots/npc-body-fit/forest-elf-body-fit-angle.png)
+- [五套服装正面](docs/screenshots/npc-body-fit/forest-elf-outfits-fit-front.png)
+- [五套服装斜侧面](docs/screenshots/npc-body-fit/forest-elf-outfits-fit-angle.png)
+
+本轮未重跑世界 GameTest，没有验证多人、光影或全部极端动作穿插。没有修改生态注册、NPC 行为、战斗逻辑或动画。
+
+```text
+python tools/forest_elf_appearance.py
+./gradlew --offline test build -PlogosJar=/absolute/path/logos-0.6.0.jar
+# 以下两次客户端检查使用上文说明的本地临时 init 脚本。
+./gradlew --offline -I build/preview-registry-compat.init.gradle runClient -PlogosJar=/absolute/path/logos-0.6.0.jar -PldTest=group:npc_body_preview -PldTestHeadless -PldTestWindow=1600x900
+./gradlew --offline -I build/preview-registry-compat.init.gradle runClient -PlogosJar=/absolute/path/logos-0.6.0.jar -PldTest=group:npc_preview -PldTestHeadless -PldTestWindow=1600x900
+```
+
 ## 精灵自然之力箭穿过同族
 
 2026-10-29：分支 `fix/elf-nature-arrow-passthrough`，基于 `origin/main` 的 `738b725`。在原版箭的 `canHitEntity` 目标筛选处，跳过「自然之力标记 + 发射者为森林精灵 + 目标为森林精灵」的碰撞；箭继续检查同一段路径后面的敌人和方块。
