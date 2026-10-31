@@ -1,42 +1,14 @@
 {
-  "type": "minecraft:random_patch",
+  "type": "minecraft:simple_block",
   "config": {
-    "tries": 2,
-    "xz_spread": 3,
-    "y_spread": 1,
-    "feature": {
-      "feature": {
-        "type": "minecraft:simple_block",
-        "config": {
-          "to_place": {
-            "Name": "logos:mandrake_crop",
-            "Properties": {
-              "age": "0"
-            }
-          }
+    "to_place": {
+      "type": "minecraft:simple_state_provider",
+      "state": {
+        "Name": "logos:mandrake_crop",
+        "Properties": {
+          "age": "0"
         }
-      },
-      "placement": [
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:matching_blocks",
-            "blocks": "minecraft:air"
-          }
-        },
-        {
-          "type": "minecraft:block_predicate_filter",
-          "predicate": {
-            "type": "minecraft:would_survive",
-            "state": {
-              "Name": "logos:mandrake_crop",
-              "Properties": {
-                "age": "0"
-              }
-            }
-          }
-        }
-      ]
+      }
     }
   }
 }
