@@ -1,7 +1,6 @@
 package dev.logos.dimension.client.vfx;
 
 import static dev.logos.dimension.client.vfx.VfxParts.argb;
-import static dev.logos.dimension.client.vfx.VfxParts.lerpColor;
 import static dev.logos.dimension.client.vfx.VfxParts.smooth;
 
 import java.util.ArrayList;
@@ -13,16 +12,12 @@ import org.joml.Quaternionf;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import dev.logos.dimension.client.vfx.VfxParts.View;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -122,7 +117,7 @@ public final class PillarBurstVisual {
             motes.add(new Spark(random.nextFloat() * 34, .12f + .18f * random.nextFloat(), RADIUS * (1.4f + 2.6f * random.nextFloat()),
                     random.nextFloat() * Mth.TWO_PI, .05f + .07f * random.nextFloat()));
         }
-        int ground = groundTint(level);
+        int ground = VfxParts.groundTint(level, base);
         for (int i = 0; i < 20; i++) {
             float a = random.nextFloat() * Mth.TWO_PI, r = RADIUS * (1.1f + 1.2f * random.nextFloat()) * scale;
             Vec3 out = new Vec3(Mth.cos(a), 0, Mth.sin(a));
@@ -141,22 +136,13 @@ public final class PillarBurstVisual {
         }
     }
 
-    /** 尘土的颜色：脚下方块的地图色，往浅灰偏一些，免得草地扬起绿色的灰。 */
-    private int groundTint(Level level) {
-        BlockState state = level.getBlockState(BlockPos.containing(base.x, base.y - .5, base.z));
-        int map = state.isAir() ? 0x9A8F80 : state.getMapColor(level, BlockPos.containing(base.x, base.y - .5, base.z)).col;
-        return lerpColor(map, 0xB8AFA2, .45f);
-    }
-
     /** 掀起一块碎石：在光柱周围取地面方块，用它自己的贴图；空气或特殊渲染的方块就不掀。 */
     private void rock(Level level, int born) {
         float a = random.nextFloat() * Mth.TWO_PI, r = RADIUS * (.6f + 1.9f * random.nextFloat()) * scale;
         Vec3 out = new Vec3(Mth.cos(a), 0, Mth.sin(a));
         Vec3 at = base.add(out.scale(r)).add(0, .15, 0);
-        BlockState state = level.getBlockState(BlockPos.containing(at.x, base.y - .5, at.z));
-        if (state.isAir() || state.getRenderShape() != RenderShape.MODEL) return;
-        TextureAtlasSprite sprite = Minecraft.getInstance().getModelManager().getBlockStateModelSet().getParticleMaterial(state).sprite();
-        if (!sprite.atlasLocation().getPath().contains("blocks")) return;
+        TextureAtlasSprite sprite = VfxParts.blockSprite(level, at.x, base.y, at.z);
+        if (sprite == null) return;
         // 约 35° 的锥形向上抛出（NS_FlamePillar_Stone 的 Cone Angle 35.2）
         double up = (.45 + .5 * random.nextDouble()) * scale, side = (.1 + .3 * random.nextDouble()) * scale;
         Quaternionf spin = new Quaternionf().rotateXYZ((random.nextFloat() - .5f) * .5f, (random.nextFloat() - .5f) * .5f, (random.nextFloat() - .5f) * .5f);
