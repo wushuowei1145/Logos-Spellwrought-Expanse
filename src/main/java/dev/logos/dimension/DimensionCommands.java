@@ -60,7 +60,7 @@ public final class DimensionCommands {
         root.then(Commands.literal("tornado").executes(c -> tornado(c.getSource().getPlayerOrException(), 8, 1, 12))
                 .then(Commands.literal("stop").executes(c -> {
                     var player = c.getSource().getPlayerOrException();
-                    dev.logos.dimension.vfx.ManaTornado.stop(player.level(), player);
+                    dev.logos.runtime.ManaTornado.stop(player.level(), player);
                     return 1;
                 }))
                 .then(Commands.argument("seconds", IntegerArgumentType.integer(0, 600))
@@ -71,15 +71,28 @@ public final class DimensionCommands {
                                 .then(Commands.argument("cycle", IntegerArgumentType.integer(0, 600))
                                         .executes(c -> tornado(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "seconds"),
                                                 FloatArgumentType.getFloat(c, "scale"), IntegerArgumentType.getInteger(c, "cycle")))))));
+        // 特效预览：给手里的物品加上表面特效（冒火、缠着魔力），hue 是色相转多少圈；clear 去掉
+        var aura = Commands.literal("aura").then(Commands.literal("clear").executes(c -> aura(c.getSource().getPlayerOrException(), null, 0)));
+        for (var style : dev.logos.runtime.SurfaceAura.Style.values()) aura.then(Commands.literal(style.getSerializedName())
+                .executes(c -> aura(c.getSource().getPlayerOrException(), style, 0))
+                .then(Commands.argument("hue", FloatArgumentType.floatArg(-1, 1))
+                        .executes(c -> aura(c.getSource().getPlayerOrException(), style, FloatArgumentType.getFloat(c, "hue")))));
+        root.then(aura);
         event.getDispatcher().register(root);
     }
     private static int pillar(net.minecraft.server.level.ServerPlayer player, float scale) {
         var hit = player.pick(64, 0, false);
-        dev.logos.dimension.vfx.PillarBurst.play(player.level(), hit.getLocation(), scale);
+        dev.logos.runtime.PillarBurst.play(player.level(), hit.getLocation(), scale);
         return 1;
     }
     private static int tornado(net.minecraft.server.level.ServerPlayer player, int seconds, float scale, int cycleSeconds) {
-        dev.logos.dimension.vfx.ManaTornado.play(player.level(), player, seconds * 20, scale, cycleSeconds * 20);
+        dev.logos.runtime.ManaTornado.play(player.level(), player, seconds * 20, scale, cycleSeconds * 20);
+        return 1;
+    }
+    private static int aura(net.minecraft.server.level.ServerPlayer player, dev.logos.runtime.SurfaceAura.@org.jspecify.annotations.Nullable Style style, float hue) {
+        var stack = player.getMainHandItem();
+        if (stack.isEmpty()) { player.sendSystemMessage(Component.literal("手里没有物品。")); return 0; }
+        dev.logos.runtime.SurfaceAura.set(stack, style, hue);
         return 1;
     }
     private static int island(net.minecraft.server.level.ServerPlayer player, int gx, int gz) {
