@@ -425,5 +425,9 @@
   "block.logos_dimension.journey_white_petals": "Fallen Cherry Petals",
   "block.logos_dimension.journey_fallen_leaves": "Fallen Cherry Leaves",
   "item.logos_dimension.journey_white_petals": "Fallen Cherry Petals",
-  "item.logos_dimension.journey_fallen_leaves": "Fallen Cherry Leaves"
+  "item.logos_dimension.journey_fallen_leaves": "Fallen Cherry Leaves",
+  "item.logos_dimension.dawnvow": "Dawnvow",
+  "item.logos_dimension.blacksteel_longsword": "Blacksteel Longsword",
+  "tooltip.logos_dimension.longsword.combo": "Attack: three-cut combo (hold to chain)",
+  "tooltip.logos_dimension.longsword.charge": "Hold Use to charge upright; release for an overhead cut"
 }
