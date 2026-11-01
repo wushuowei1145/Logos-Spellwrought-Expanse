@@ -17,11 +17,11 @@ public final class LongswordArmorModel extends Model<LongswordClient.Frame> {
     }
     private static Map<String,ModelPart> parts() {
         Map<String,ModelPart> parts=new LinkedHashMap<>();
-        for(var side:new String[]{"right","left"}) for(boolean upper:new boolean[]{true,false}) {
-            float x=side.equals("right")?-7:3;
+        for(var side:new String[]{"Right","Left"}) for(boolean upper:new boolean[]{true,false}) {
+            float x=side.equals("Right")?-7:3;
             var cube=new ModelPart.Cube(40,upper?16:22,x,upper?.55f:6.9f,-2,4,upper?6.35f:5.4f,4,
-                    .65f,.18f,.65f,side.equals("left"),64,32,EnumSet.allOf(Direction.class));
-            parts.put(side+(upper?"_upper_arm":"_forearm"),new ModelPart(List.of(cube),Map.of()));
+                    .65f,.18f,.65f,side.equals("Left"),64,32,EnumSet.allOf(Direction.class));
+            parts.put(side+(upper?"Arm":"ForeArm"),new ModelPart(List.of(cube),Map.of()));
         }
         return parts;
     }

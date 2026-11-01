@@ -2,7 +2,9 @@ package dev.logos.dimension.client.longsword;
 
 import com.google.gson.*;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.logging.LogUtils;
 import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.combat.*;
 import java.io.IOException;
 import java.util.*;
 import net.minecraft.client.Minecraft;
@@ -12,72 +14,92 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.slf4j.Logger;
 
-/** 直接取样审定的双手骨骼，剑与手臂共用矩阵；展示人偶的头、躯干和腿不参与渲染。 */
+/**
+ * 按战斗骨架（docs/COMBAT_SKELETON.md）取样玩家参考骨架，剑、剑鞘与分段手臂共用同一组骨骼矩阵。
+ * 骨架、武器或动作资源缺失或损坏时返回空，调用方退回原版渲染，不让资源包问题导致崩溃。
+ */
 public final class LongswordRig {
-    private static final Map<String, LongswordRig> MODELS = new HashMap<>();
-    private static final Map<String, JsonObject> MOTIONS = new HashMap<>();
-    private record Bone(String name, String parent, Vector3f pivot) {}
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Map<String, Optional<LongswordRig>> MODELS = new HashMap<>();
+    private static final Map<String, Map<String, CombatClip>> CLIPS = new HashMap<>();
     private record Quad(String bone, boolean skin, Vector3f[] points, Vector3f normal, float[] uv) {}
-    public record Sample(Map<String, Matrix4f> bones, Vector3f bodyRotation) {}
-    private final List<Bone> bones = new ArrayList<>();
+    /** weapon 为剑网格原点的矩阵（剑骨骼 × 枢轴 × 视角缩放），魔力缠绕表面按它定位。 */
+    public record Sample(Map<String, Matrix4f> bones, Vector3f bodyRotation, Matrix4f weapon) {}
+    private final CombatSkeleton skeleton;
+    private final Map<String, CombatClip> clips;
     private final List<Quad> quads = new ArrayList<>();
-    private final JsonObject clips;
     private final Identifier texture;
+    private final Vector3f weaponPivot;
+    private final float weaponScale;
 
-    public static void clear() { MODELS.clear(); MOTIONS.clear(); }
+    public static void clear() { MODELS.clear(); CLIPS.clear(); }
+    /** 取不到资源时为 null。 */
     public static LongswordRig get(int variant, boolean firstPerson) {
         String name = variant == 1 ? "blacksteel_longsword" : "dawnvow", view = firstPerson ? "fp" : "tp";
-        return MODELS.computeIfAbsent(name + "_" + view, key -> new LongswordRig(name, view));
+        return MODELS.computeIfAbsent(name + "_" + view, key -> {
+            try { return Optional.of(new LongswordRig(name, view)); }
+            catch (RuntimeException e) { LOGGER.error("长剑骨架 {} 加载失败，改用原版持物渲染", key, e); return Optional.empty(); }
+        }).orElse(null);
     }
     private static JsonObject read(String path) {
-        try (var reader = Minecraft.getInstance().getResourceManager().getResourceOrThrow(LogosDimension.id("longsword/" + path + ".json")).openAsReader()) {
+        try (var reader = Minecraft.getInstance().getResourceManager().getResourceOrThrow(LogosDimension.id(path)).openAsReader()) {
             return JsonParser.parseReader(reader).getAsJsonObject();
-        } catch (IOException e) { throw new IllegalStateException("无法读取长剑动作素材 " + path, e); }
+        } catch (IOException e) { throw new IllegalStateException("无法读取战斗素材 " + path, e); }
+    }
+    private static Map<String, CombatClip> clips(String view) {
+        return CLIPS.computeIfAbsent(view, key -> {
+            List<String> warnings = new ArrayList<>();
+            var clips = CombatClip.parseFile(read("combat/animations/longsword_" + view + ".animation.json"), warnings);
+            warnings.forEach(w -> LOGGER.warn("长剑动作 longsword_{}：{}", view, w));
+            return clips;
+        });
     }
     private LongswordRig(String name, String view) {
-        var model = read(name + "_" + view);
-        clips = MOTIONS.computeIfAbsent(view, key -> read("motion_" + view));
-        texture = LogosDimension.id("textures/item/" + name + "_rig.png");
-        for (var value : model.getAsJsonArray("bones")) {
-            var b = value.getAsJsonObject();
-            bones.add(new Bone(b.get("name").getAsString(), b.get("parent").isJsonNull() ? null : b.get("parent").getAsString(), vector(b.getAsJsonArray("pivot"), 0)));
+        var skeletonJson = read("combat/skeletons/player_" + view + ".json");
+        skeleton = CombatSkeleton.fromJson(skeletonJson);
+        if (!skeleton.missingRequired().isEmpty()) throw new IllegalStateException("玩家骨架缺少 " + skeleton.missingRequired());
+        clips = clips(view);
+        weaponPivot = skeleton.bone(CombatBones.WEAPON).pivot();
+        weaponScale = skeletonJson.get("weapon_scale").getAsFloat();
+        for (var value : skeletonJson.getAsJsonArray("skin")) cube(value.getAsJsonObject(), true, new Matrix4f());
+        var weapon = read("combat/weapons/" + name + ".json");
+        texture = Identifier.parse(weapon.get("texture").getAsString());
+        var size = weapon.getAsJsonArray("texture_size");
+        float width = size.get(0).getAsFloat(), height = size.get(1).getAsFloat();
+        for (var value : weapon.getAsJsonArray("cubes")) {
+            var cube = value.getAsJsonObject();
+            boolean sheath = cube.get("part").getAsString().equals("sheath");
+            // 第一人称只画剑，剑鞘只在第三人称挂在腰侧。
+            if (sheath && view.equals("fp")) continue;
+            var bone = skeleton.bone(sheath ? CombatBones.SHEATH : CombatBones.WEAPON);
+            var origin = new Matrix4f().translation(bone.pivot()).scale(weaponScale);
+            cube.addProperty("bone", bone.name());
+            cube(cube, false, origin);
+            for (int i = quads.size() - 6; i < quads.size(); i++) {
+                var uv = quads.get(i).uv;
+                uv[0] /= width; uv[1] /= height; uv[2] /= width; uv[3] /= height;
+            }
         }
-        for (var value : model.getAsJsonArray("cubes")) cube(value.getAsJsonObject());
     }
-    private static Vector3f vector(JsonArray a, int offset) { return new Vector3f(a.get(offset).getAsFloat(), a.get(offset + 1).getAsFloat(), a.get(offset + 2).getAsFloat()); }
-    private static Matrix4f local(Vector3f pivot, Vector3f position, Vector3f rotation) {
-        float r = (float) Math.PI / 180;
-        return new Matrix4f().translation(new Vector3f(pivot).add(position))
-                .rotateZ(rotation.z * r).rotateY(rotation.y * r).rotateX(rotation.x * r).translate(-pivot.x, -pivot.y, -pivot.z);
+    private static Vector3f vector(JsonArray a) { return new Vector3f(a.get(0).getAsFloat(), a.get(1).getAsFloat(), a.get(2).getAsFloat()); }
+    private static Matrix4f local(Vector3f pivot, Vector3f rotation) {
+        return CombatPose.local(pivot, new CombatPose.Joint(new Vector3f(), rotation, new Vector3f(1)));
     }
-    private static Vector3f channel(JsonObject track, String name, float time) {
-        if (track == null || !track.has(name)) return new Vector3f();
-        var keys = track.getAsJsonArray(name);
-        int lo = 0, hi = keys.size() - 1;
-        while (hi - lo > 1) { int mid = (lo + hi) >>> 1; if (keys.get(mid).getAsJsonArray().get(0).getAsFloat() <= time) lo = mid; else hi = mid; }
-        var a = keys.get(lo).getAsJsonArray(); var b = keys.get(hi).getAsJsonArray();
-        float t0 = a.get(0).getAsFloat(), t1 = b.get(0).getAsFloat();
-        return vector(a, 1).lerp(vector(b, 1), Math.clamp((time - t0) / Math.max(.000001f, t1 - t0), 0, 1));
-    }
+    /** 取样一帧；动作文件里没有这段动作时为 null。 */
     public Sample sample(String clip, float seconds) {
-        var tracks = clips.getAsJsonObject(clip).getAsJsonObject("tracks");
-        Map<String, Matrix4f> matrices = new HashMap<>();
-        Vector3f body = new Vector3f();
-        for (var bone : bones) {
-            var track = tracks.getAsJsonObject(bone.name);
-            var rotation = channel(track, "rotation", seconds);
-            var matrix = local(bone.pivot, channel(track, "position", seconds), rotation);
-            if (bone.parent != null) matrix = new Matrix4f(matrices.get(bone.parent)).mul(matrix);
-            matrices.put(bone.name, matrix);
-            if (bone.name.equals("body")) body = rotation;
-        }
-        return new Sample(matrices, body);
+        var animation = clips.get(clip);
+        if (animation == null) return null;
+        var pose = CombatPose.sample(animation, seconds);
+        var bones = pose.matrices(skeleton);
+        var weapon = new Matrix4f(bones.get(CombatBones.WEAPON)).translate(weaponPivot).scale(weaponScale);
+        return new Sample(bones, pose.rotation(CombatBones.UP_BODY), weapon);
     }
-    private void cube(JsonObject cube) {
-        var from = vector(cube.getAsJsonArray("start"), 0); var to = vector(cube.getAsJsonArray("end"), 0);
-        var transform = local(vector(cube.getAsJsonArray("pivot"), 0), new Vector3f(), vector(cube.getAsJsonArray("rotation"), 0));
-        String bone = cube.get("bone").getAsString(); boolean skin = cube.get("skin").getAsBoolean();
+    private void cube(JsonObject cube, boolean skin, Matrix4f origin) {
+        var from = vector(cube.getAsJsonArray("start")); var to = vector(cube.getAsJsonArray("end"));
+        var transform = new Matrix4f(origin).mul(local(vector(cube.getAsJsonArray("pivot")), vector(cube.getAsJsonArray("rotation"))));
+        String bone = cube.get("bone").getAsString();
         float x = from.x, y = from.y, z = from.z, X = to.x, Y = to.y, Z = to.z;
         float[][][] faces = {
             {{X,y,z},{x,y,z},{x,Y,z},{X,Y,z}}, {{x,y,Z},{X,y,Z},{X,Y,Z},{x,Y,Z}},
@@ -89,17 +111,22 @@ public final class LongswordRig {
             var points = new Vector3f[4];
             for (int i = 0; i < 4; i++) points[i] = transform.transformPosition(new Vector3f(faces[face][i]));
             var normal = new Vector3f(points[1]).sub(points[0]).cross(new Vector3f(points[2]).sub(points[0])).normalize();
-            var uv = cube.getAsJsonObject("uv").getAsJsonArray(names[face]);
-            float[] textureUv = {uv.get(0).getAsFloat()/256, uv.get(1).getAsFloat()/512, uv.get(2).getAsFloat()/256, uv.get(3).getAsFloat()/512};
+            float[] textureUv;
             if (skin) textureUv = skinUv(bone, face);
+            else {
+                var uv = cube.getAsJsonObject("uv").getAsJsonArray(names[face]);
+                textureUv = new float[]{uv.get(0).getAsFloat(), uv.get(1).getAsFloat(), uv.get(2).getAsFloat(), uv.get(3).getAsFloat()};
+            }
             quads.add(new Quad(bone, skin, points, normal, textureUv));
         }
     }
+    /** 原版 64×64 皮肤的手臂区域按上臂 6、前臂 4、手 2 像素分段。 */
     private static float[] skinUv(String bone, int face) {
-        boolean left = bone.startsWith("left");
+        boolean left = bone.startsWith("Left");
         float u = left ? 32 : 40, v = left ? 48 : 16;
-        float top = bone.endsWith("upper_arm") ? 4 : bone.endsWith("forearm") ? 10 : 14;
-        float bottom = bone.endsWith("upper_arm") ? 10 : bone.endsWith("forearm") ? 14 : 16;
+        String part = bone.substring(left ? 4 : 5);
+        float top = part.equals("Arm") ? 4 : part.equals("ForeArm") ? 10 : 14;
+        float bottom = part.equals("Arm") ? 10 : part.equals("ForeArm") ? 14 : 16;
         float[] offset = switch (face) {
             case 0 -> new float[]{4,top,8,bottom};
             case 1 -> new float[]{12,top,16,bottom};
