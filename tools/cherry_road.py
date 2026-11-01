@@ -95,8 +95,12 @@ def build():
             put(xs + leg - 1, py0 + 1, z + lane + 2, 5)
             put(xs + leg - 1, py0, z + lane, 6)
 
-    for pos, state in filled.items():
-        blocks.append((pos, state))
+    # 把整条路挪到模板中心，这样在脚下放结构时人正好站在路中间
+    xs = [p[0] for p in filled]; zs = [p[2] for p in filled]
+    dx = (SIZE // 2) - (min(xs) + max(xs)) // 2
+    dz = (SIZE // 2) - (min(zs) + max(zs)) // 2
+    for (x, y, z), state in filled.items():
+        blocks.append(((x + dx, y, z + dz), state))
     return blocks
 
 def write_nbt(blocks):

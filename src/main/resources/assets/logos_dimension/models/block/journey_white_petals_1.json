@@ -1,7 +1,138 @@
 {
-  "parent": "minecraft:block/flowerbed_1",
+  "parent": "minecraft:block/block",
+  "render_type": "neoforge:cutout",
   "textures": {
     "flowerbed": "logos_dimension:block/journey_white_petals",
-    "stem": "logos_dimension:block/journey_white_petals_stem"
-  }
+    "particle": "logos_dimension:block/journey_white_petals"
+  },
+  "elements": [
+    {
+      "from": [
+        4.52,
+        0.0,
+        9.82
+      ],
+      "to": [
+        7.78,
+        0.05,
+        13.07
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        2.52,
+        0.0,
+        3.52
+      ],
+      "to": [
+        5.48,
+        0.05,
+        6.48
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        9.78,
+        0.0,
+        1.72
+      ],
+      "to": [
+        13.09,
+        0.05,
+        5.04
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        6.37,
+        0.0,
+        8.31
+      ],
+      "to": [
+        9.44,
+        0.05,
+        11.38
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ]
 }

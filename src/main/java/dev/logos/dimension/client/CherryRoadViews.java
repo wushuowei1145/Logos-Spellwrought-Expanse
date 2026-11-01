@@ -12,9 +12,10 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.gamerules.GameRules;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
-/** 盘山路实机预览（本地开发用，不提交）：在樱野里手动放一次结构，俯瞰截图。 */
+/** 盘山路实机预览（本地开发用）：在樱野地表手动放一次结构，原地抬升俯瞰。 */
 @LDLRegisterClient(name = "cherry_road_views", group = "cherry_dev", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
 public class CherryRoadViews implements UIScenario {
     private static final ResourceKey<Biome> CHERRY =
@@ -50,21 +51,19 @@ public class CherryRoadViews implements UIScenario {
                 ctx.player().setNoGravity(true);
                 System.out.println("[road] cherry at " + found);
             })
-            .ticks(100)
-.server("place", ctx -> {
+            .ticks(120)
+            .server("place", ctx -> {
                 var level = ctx.server().getLevel(LogosDimension.CLOUDSEA);
                 var pos = ctx.player().blockPosition();
-                int h = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, pos.getX(), pos.getZ());
+                int h = level.getHeight(Heightmap.Types.WORLD_SURFACE, pos.getX(), pos.getZ());
                 ctx.server().getCommands().performPrefixedCommand(
                     ctx.player().createCommandSourceStack(),
                     "place structure logos_dimension:cherry_road " + pos.getX() + " " + h + " " + pos.getZ());
-                int sx = pos.getX() + 18, sz = pos.getZ();
-                int sh = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, sx, sz);
-                DimensionTravel.teleport(ctx.player(), level, new Vec3(sx + .5, sh + 3, sz + .5), -90f, 6f);
+                DimensionTravel.teleport(ctx.player(), level,
+                    new Vec3(pos.getX() + .5, h + 14, pos.getZ() + .5), 0f, 55f);
                 ctx.player().setNoGravity(true);
                 System.out.println("[road] placed at y=" + h);
             })
-            .ticks(60)
             .ticks(80)
             .repeat(2, b -> b.ticks(40).screenshot("cherry_road"))
             .teardown("restore HUD", ctx -> Minecraft.getInstance().options.hideGui = false);
