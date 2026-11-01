@@ -34,6 +34,16 @@ Logos 升级 Photon / LDLib2 时，同步改这里的 `photon_version`、`ldlib2
 | `cast` / `mark` / `execute` | 施法点、标记、处决提示 |
 | `sound(element)` | 元素对应的音效 |
 
+不分元素的形类魔法特效也在 Logos（做法见主模组的 `FORM_VFX.md`），同样在服务端调用：
+
+| 入口 | 画什么 |
+|---|---|
+| `PillarBurst.play(level, 位置, 缩放)` | 金色光柱爆发（圣剑蓄力劈下后用） |
+| `ManaTornado.play(level, 施法者或位置, 刻数, 缩放, 转色刻数)` / `stop(level, 施法者)` | 魔力龙卷，跟着施法者走；刻数为 0 或负数时一直卷到 `stop` |
+| `SurfaceAura.set(物品, 样式, 色相)` / `of(物品)` | 物品表面的冒火或缠着魔力，写在物品的数据组件 `logos:surface_aura` 上；样式为 null 时去掉 |
+
+这三种原本是附属自己做的，后来移进 Logos，附属改为调用。
+
 规则：
 
 - 只调用 Logos 的 **public** 类。`dev.logos.client.*Visual` 是主模组的内部实现，大多是包级私有，不要用反射调用，也不要把代码复制过来。缺少入口时，到主模组提 PR 加一个公开方法，再把附属的 `logos` 依赖下限抬到包含它的版本。
@@ -45,7 +55,7 @@ Logos 升级 Photon / LDLib2 时，同步改这里的 `photon_version`、`ldlib2
 - 客户端代码放 `dev.logos.dimension.client.vfx`。需要由服务端触发时，附属自己定义 payload，不要借用 Logos 的 `FxPayload`。
 - 两种画法都可以，跟 Logos 一样按层选：
   - 粒子类的层用 Photon，材质用 Photon 自带的（`TextureMaterial`、`CustomShaderMaterial`），不要返回自己构造的 `RenderType`，否则开光影时看不见。
-  - 光柱、地面光环、冲击波这类成形的几何，用 `VfxParts` 画（照 Logos 蓄力核心的 `ChargeParts` 做法）。它的材质直接读 `logos:textures/vfx/...`，几何每个顶点写全；绘制时经 `dev.logos.client.ShaderPackOverlay.collector(...)` 提交，并在 `SubmitCustomGeometryEvent` 里用 `EventPriority.LOWEST` 排在 Logos 之后（Logos 在这个事件里先 `begin()`）。
+  - 光柱、地面光环、冲击波这类成形的几何，用 Logos 公开的 `dev.logos.client.VfxParts` 画（形类魔法特效就是用它画的）。材质传字符串时读 `logos:textures/vfx/...`，用附属自己的贴图时传完整的 `Identifier`；几何每个顶点写全。绘制时经 `dev.logos.client.ShaderPackOverlay.collector(...)` 提交，并在 `SubmitCustomGeometryEvent` 里用 `EventPriority.LOWEST` 排在 Logos 之后（Logos 在这个事件里先 `begin()`）。
 - Logos 已有的贴图和 shader 直接用 `logos:` 路径引用，例如 `logos:textures/vfx/fire/...`，不要复制一份。新素材放 `assets/logos_dimension/textures/vfx/`，仍然用代码绘制。
 - 风格对齐主模组仓库里的特效设计文档（`CHARGE_VFX.md`、`FIELD_VFX.md`、`RAY_VFX.md` 等）。
 - 自定义几何的要求不变：写全 UV、颜色、光照、法线和 overlay，并与 ShaderPackOverlay 共用收集器（见 AGENTS.md）。
@@ -55,94 +65,10 @@ Logos 升级 Photon / LDLib2 时，同步改这里的 `photon_version`、`ldlib2
 
 有了编译期依赖之后，Logos 改了 `Vfx` 的签名，附属会**直接编译失败**。这时按 [UPSTREAM_SYNC.md](UPSTREAM_SYNC.md) 跟进。编译通过仍然不能证明运行期兼容，世界内测试照常要跑。
 
-## 五、已有的附属特效
+## 五、已移到 Logos 的特效
 
-### 金色光柱爆发（`PillarBurst`）
+金色光柱爆发、魔力龙卷、物品表面特效原本是附属做的，现在在 Logos（入口见上面第二节，做法、时间轴、贴图和客户端场景见主模组的 `FORM_VFX.md`）。附属只保留预览指令，都需要管理员权限：
 
-为圣剑蓄力劈下后的爆发准备。服务端调用 `dev.logos.dimension.vfx.PillarBurst.play(level, 位置, 缩放)`，160 格内的玩家会收到 `PillarBurstPayload`。客户端由 `PillarBursts` 管理，最多同时 8 个；画面在 `PillarBurstVisual`。只有画面，没有伤害，也不破坏方块。
-
-参考 Unreal `NiagaeaBigVFXPack/Effects/Niagara/FlamePillar/NS_FlamePillar` 和 `NS_FlamePillar_Stone`。原版是循环的火柱，这里改成一次性爆发、金色。拆解（发射器、材质、解出的参数）在仓库外 `art/pillar/`。
-
-| 时间（刻） | 内容 |
-|---|---|
-| 0–6 | 同心光柱从地面冲上 64 格；开头一闪，柱子先略粗再收回 |
-| 0–30 | 两道贴地冲击波：地面亮环（`heal/ring`）加一圈低矮风墙（`physical_ray/wind`），分别扩散到约 18、24 格 |
-| 2–48 | 光柱立着期间，脚下每 4 刻荡开一圈白色气浪，扩散到约 10 格，光柱离地后不再新生。边缘起伏、有断有续，往里拖着气流纹（`pillar_burst/ripple_0`–`2` 三种形状），每圈随机挑一种、随机转向、横纵各自略压扁 |
-| 0–58 | 柱脚甩出的两圈火舌（参考《碧蓝幻想 Relink》夏洛特奥义光柱根部的火焰气浪）：上圈 16 条，向外倾斜 35–55°，像王冠；下圈 12 条，倾斜 70–82°，几乎贴地往外喷。4 刻内甩到全长，保持到第 10 刻，之后慢慢变淡、变细，同时往外飘。贴图 `pillar_burst/flame` 有 4 帧，每 2 刻换一帧，火苗会跳动；先画半透明深金底色，再叠金色发光和白芯 |
-| 0–40 | 柱内上冲的光痕（`force/streak`），四周慢慢升起的光点（`heal/glow`） |
-| 0–60 | 被掀起的尘土（`physical_ray/smoke`，按脚下方块的地图色往浅灰偏）；约 35° 锥形抛起的碎石，用碎石所在位置那块方块自己的贴图，落地后停一会儿再淡掉 |
-| 全程 | 脚下的地面光晕（`heal/glow`）、两圈反向旋转的光环（`heal/ring`）和旋涡（`heal/swirl`） |
-| 42–74 | 光柱底部始终贴着地面，柱身越收越细，第 66 刻只剩一条线，随后熄灭 |
-
-- 光柱的层次照 UE 的 `M_FlamePillar_main`。那个材质是 Masked（不透明加镂空），最暗的一层（`MI_FlamePillar_main1`）基色是暗红褐，暗斑块是材质自己的颜色，不是背景；它挡住后面的亮层，配合快速上滚，显得速度快、能量大。这里的层（半径由内到外）：白芯（`pillar_burst/veins` 与 `charge/pillar`）、金色亮面（`veins`）、半透明的暗褐斑块（`pillar_burst/cells`）、半透明金色罩层（白天的亮天空会把加法发光冲成白色，靠它染回金色）、外层金色亮面和淡淡的外晕。绘制顺序是暗斑块最先，其余按半径由内到外：里层亮面叠在暗斑块上，把它冲淡成零星的琥珀色暗块。维护者认可的是这个样子；暗斑块若最后才画，会又黑又密，很难看。
-- 贴图按世界尺寸铺：亮面一格横向 3.2 格、纵向再乘 1.35，暗斑块一格横向 4.5 格、纵向乘 1.8；绕柱一圈取整数格。各层每刻上冲 0.8–2.6 格。
-- 暗斑块那层越往上纵向拉得越长：离地占满高 `f` 处一格贴图拉长 `1 + 40·f³` 倍，连续变化（竖向切 24 段算 UV）。底部三成和原来几乎一样，到顶约拉长 41 倍，近乎一条线；同样的滚动速度在上面也就冲得更快。
-- `pillar_burst/` 下的贴图（暗斑块、亮面、三种气浪环、火舌四帧）是代码画的，生成脚本在仓库外 `art/pillar/tools/PillarTextures.java`。加新贴图时只往后追加，别改动前面几张用到的随机数顺序，否则已经调好的贴图会变。
-- 绘制顺序（`order`）：光柱 7 层是 1–7，火舌的底色和发光是 8、9；其余部分（地面、冲击波、气浪、尘土、碎石）在 0。
-- 缩放 1 时柱半径 1.6 格。所有尺寸和速度都乘以缩放。
-- 镜头进到光柱里时，各层按到柱轴的水平距离淡出；贴近镜头的碎石、尘土和光点也会淡出，不会糊满视野。
-- 预览：`/alchemy pillar [缩放]` 在准星指着的地面爆发一次（需要管理员权限）。
-- 客户端场景：`./gradlew runClient -PlogosJar=<jar> -PldTest=group:pillar_burst -PldTestHeadless -PldTestWindow=1280x720`。`pillar_burst` 是远景的五个阶段；`pillar_burst_close` 是近景、经服务端发包、夜晚和站在光柱里。
-- 动态预览：`-PldTest=group:pillar_preview`，去掉 `-PldTestHeadless` 就会开窗口播放。白天三个机位（远看、近看、侧面两倍大小），夜里三个机位（远看、站在旁边、第三人称背后），每个机位放一次完整的光柱，不截图。本地的 `预览金色光柱.cmd`（不进仓库）就是跑这一组。
-- 没有做的：音效、照亮周围方块的动态光源、Unreal 原版的 HDR/Bloom、随时间被侵蚀的镂空（原版 OpacityMask 的溶解）。
-
-### 魔力龙卷（`ManaTornado`）
-
-魔力围着施法者盘旋上升，卷成一道螺旋龙卷。服务端调用：
-
-- `dev.logos.dimension.vfx.ManaTornado.play(level, 施法者, 刻数, 缩放, 转色刻数)`：刻数为负表示一直卷，直到 `stop(level, 施法者)`。
-- `play(level, 位置, ...)`：不跟随实体，停在原地。
-
-128 格内的玩家会收到 `ManaTornadoPayload`。客户端由 `ManaTornados` 管理，同一个实体身上只留一个，最多同时 8 个；画面在 `ManaTornadoVisual`。龙卷跟着施法者走。`转色刻数` 是整体色相转一圈的刻数：默认 `ManaTornado.CYCLE` = 240 刻，即 12 秒一圈；0 保持原色。只有画面，没有伤害，也不破坏方块。
-
-参考 Unreal `NiagaeaBigVFXPack/Effects/Niagara/Tornado/NS_Tornado_Mesh_red`（往上卷的部分）和 `NS_Tornado_under`（地面盘旋的部分），逐层照搬。拆解（每层的网格、材质、解出的参数、网格三视图）在仓库外 `art/tornado/`。
-
-原版每层都是一个静态网格加一个 Masked 材质（不透明、边缘硬切、可以有暗部），动起来全靠材质里的 UV 滚动。这里的做法：
-
-- 网格用程序化几何重做，有三种：
-  - `STRAIGHT` 直筒（SM_Tornado_Tatumaki，腰略细）；
-  - `HOURGLASS` 沙漏（SM_Tornado，下半截原本埋在地下，只画露出地面的部分）；
-  - `SKIRT` 外翻裙边（SM_Tornado_en2）。
-- 地涡是极坐标 UV 的圆盘（SM_Tornado_en）。
-- 贴图绕一圈取整数格。越往上贴图转得越多，表面起伏也顺着同一个方向盘上去，整根扭成绳状；整根还会轻轻弯曲、摆动。
-- **大部分层用硬边镂空材质 `VfxParts.cutOwn`**，对应 UE 的 Masked。它借原版粒子着色器：贴图 alpha × 顶点 alpha 低于 0.1 的像素直接不画，其余半透明混合并写深度。
-  - 贴图的 RGB 是亮度，乘顶点颜色，所以一层里就能有亮红和深红、白蓝和深蓝。
-  - 顶点 alpha 调低时，贴图 alpha 低的地方先被切掉，相当于 UE 随时间侵蚀的溶解。卷起、散开和下面说的透明窗都靠它。
-  - 镂空层排在 `order` 1，加法发光层排在 2，芯后面的辉光会被芯挡住。其余（地涡、地面光、光点、烟尘、碎石）在 0。
-- 第一版全部用半透明软边和加法发光，芯是空的、蓝线是满屏细丝、没有暗部，和 UE 差别很大，已经推翻。第一版留在本地分支 `backup/mana-tornado-v1`。
-
-| 层（由里到外） | 原版 | 这里 |
-|---|---|---|
-| 红芯 | Center：Tatumaki × MI_Tornado_main_Tatumaki | 腰半径 1.15、高 12 的直筒，扭 2.5 圈。镂空的 `tornado/core`：竖向条纹，亮红到深红，零星的洞。外面叠一层加法的粉白高光（`tornado/streaks`，带 Fresnel） |
-| 深蓝细线 | Center_Side：SM_Tornado × under2 | 贴着芯的沙漏，镂空的 `tornado/streaks` |
-| 刀刃 | Center_Side2：Tatumaki × MI_Tornado_Sander | 半径 1.45 的直筒，镂空的 `tornado/blades`：四片长长的刀刃绕着芯盘上去，中间白亮、边缘深蓝。贴着它再叠一层同样的加法辉光 |
-| 红色细线 | Tornado3：SM_Tornado × Sander2 | 半径 1.75 的沙漏，镂空的 `tornado/streaks`，透明度 0.45，切剩稀疏的几道 |
-| 外圈刀刃 | Tornado8：Tatumaki × Sander | 半径 2、高 11 的直筒，两片浅蓝刀刃 |
-| 蓝点 | Tornado2：SM_Tornado × under | 半径 2.2 的沙漏，镂空的 `tornado/specks` |
-| 红色裂纹 | OutSide：SM_Tornado × Sander2 | 半径 2.6 的沙漏，镂空的 `pillar_burst/veins`，透明度 0.25，只剩零星几道 |
-| 裙边 | Under、MeshMain004 | 芯脚往上张开的白色裙边（镂空 `tornado/core`）、外面一圈白蓝刀刃，再叠一层加法光晕 |
-| 地涡与地面光 | MeshMain006、MeshMain005、点光源 | 半径 3 左右的白色地涡（`pillar_burst/cells` 加烟絮），反着转的深蓝底光，加一大片照在地上的蓝白光（`heal/glow`） |
-| 光点 | PointLight001（每秒 330 个） | 每刻 4 个，贴着脚边飞快打转，上溅一两格又落下（`heal/glow`） |
-| 烟尘 | Smoke | 每两刻一团，绕着转着往上飘（`physical_ray/smoke`，按脚下方块的地图色往浅灰偏） |
-| 碎石 | Gareki | 每三刻从脚边 1.4–4.8 格的地面掀起一块，用那块方块自己的贴图。约 32° 锥形抛起，同时被卷着绕中心转，落地后停一会儿淡掉 |
-
-- 尺寸：原版芯高约 25 米，这里芯高 12 格。原版外面几层大得多（OutSide 腰半径 15 米、Tornado8 半径 20 米高 64 米），但大部分被材质切掉，看上去是一根紧凑的柱子；这里所有层都收在 2.6 格以内。所有尺寸都乘以缩放。
-- 不挡住施法者：
-  - **透明窗**：离中心 3.2 格以内的层，在施法者身高以内（离地 1.9–2.7 格以下）、朝向镜头的那一面被切开一个窗。窗边从贴图 alpha 低的地方先切，是参差的。
-  - **镜头在里面**：镜头进到某一层里面时，那一层降到四成（镂空层就是被切掉大半）；贴近镜头 0.7–2.6 格的部分也被切掉。第三人称看得清自己，第一人称平视几乎看不到墙，往上看是龙卷的内壁。
-- 镂空层的颜色是不透明混合出来的，白天不会被亮天空冲淡，不再需要第一版那种半透明罩层。
-- 时间轴：
-  - **卷起**：14 刻内由里到外依次从地面往上长出来，前沿是软的。
-  - **收掉**：24 刻内整体往上飘 2.5 格，从底部往上散掉；已经飞起的光点、碎石落完为止。
-- 贴图：`tornado/` 下的 `wisp`、`streaks`、`specks`、`core`、`blades` 是代码画的，生成脚本在仓库外 `art/tornado/tools/TornadoTextures.java`，规则同光柱：只往后追加。`core` 和 `blades` 的 RGB 是亮度，alpha 是遮罩；前三张是白色 RGB 加亮度 alpha。其余贴图复用 Logos 和光柱已有的。
-- 预览：`/alchemy tornado [秒数] [缩放] [转色秒数]` 在自己身边卷起，默认 8 秒、缩放 1、12 秒转一圈；秒数为 0 表示一直卷，`/alchemy tornado stop` 收掉。需要管理员权限。
-- 客户端场景：`-PldTest=group:mana_tornado`。
-  - `mana_tornado`：卷在村民身上，截卷起、成形、转色半圈、散开四个阶段。
-  - `mana_tornado_caster`：卷在玩家自己身上，截第三人称背后、第一人称平视和仰视，再加夜里远看。
-- 动态预览：`-PldTest=group:tornado_preview`，去掉 `-PldTestHeadless` 会开窗口。本地的 `预览魔力龙卷.cmd`（不进仓库）就是跑这一组。
-- 没有做的：
-  - 音效。
-  - 原版的两个点光源（只画了照在地上的那片光）。
-  - 原版材质里按顶点法线推开的形变（WPO）：这里用程序化的表面起伏代替。
-  - 光影下没有测过。粒子着色器的镂空材质经 ShaderPackOverlay 是否正常，需要开光影确认。
-- 已知：远处的云在龙卷后面时，可能会画在龙卷上面（第一版很明显，像一道横向亮带）。看起来是云在自定义几何之后才画；还没有深究。光柱应该也有这个问题。
+- `/alchemy pillar [缩放]`：在准星指着的地面爆发一次光柱。
+- `/alchemy tornado [秒数] [缩放] [转色秒数]`：在自己身边卷起龙卷，默认 8 秒、缩放 1、12 秒转一圈；秒数为 0 表示一直卷，`/alchemy tornado stop` 收掉。
+- `/alchemy aura fire|mana [色相]`：给手里的物品加上表面特效，`/alchemy aura clear` 去掉。
