@@ -123,7 +123,7 @@ public final class LongswordRig {
             for (int i = 0; i < 4; i++) points[i] = matrix.transformPosition(new Vector3f(quad.points[i]));
             transformed.add(new Quad(quad.bone, skin, points, matrix.transformDirection(new Vector3f(quad.normal)).normalize(), quad.uv));
         }
-        collector.submitCustomGeometry(pose, RenderTypes.entityCutout(texture), (p, buffer) -> {
+        collector.order(-1).submitCustomGeometry(pose, RenderTypes.entityCutout(texture), (p, buffer) -> {
             for (var quad : transformed) for (int i = 0; i < 4; i++) {
                 var point = quad.points[i]; var uv = quad.uv; var n = quad.normal;
                 float u = i == 0 || i == 3 ? uv[2] : uv[0], v = i < 2 ? uv[3] : uv[1];

@@ -38,6 +38,7 @@ public final class LongswordGameTests {
                 "longsword_charge",LongswordGameTests::charge,
                 "longsword_cancel",LongswordGameTests::cancel,
                 "longsword_switch",LongswordGameTests::switchSlot,
+                "longsword_drop",LongswordGameTests::drop,
                 "longsword_wall",h->obstruction(h,false),
                 "longsword_reach",h->obstruction(h,true));
         tests.forEach((name,test)->FUNCTIONS.register(name,()->test)); FUNCTIONS.register(bus);
@@ -100,6 +101,15 @@ public final class LongswordGameTests {
         var f=Fixture.create(h);f.at(30,f::attack);f.at(32,()->f.p.getInventory().setSelectedSlot(2));
         f.at(40,()->h.assertTrue(f.target.getHealth()==100 && LongswordCombat.pose(f.p).phase()==LongswordPhase.SHEATHE,"换槽仍结算攻击或没有收剑"));
         f.at(60,()->{h.assertTrue(LongswordCombat.pose(f.p).phase()==LongswordPhase.CLEAR,"收剑没有释放双手");f.succeed();});
+    }
+    private static void drop(GameTestHelper h) {
+        var f=Fixture.create(h);int slot=f.p.getInventory().getSelectedSlot();
+        f.at(30,f::attack);f.at(32,()->f.p.drop(false));
+        f.at(40,()->{
+            h.assertTrue(f.p.getInventory().getSelectedSlot()==slot && f.p.getMainHandItem().isEmpty(),"丢弃后切槽或主手未空");
+            h.assertTrue(LongswordCombat.pose(f.p).phase()==LongswordPhase.CLEAR && f.target.getHealth()==100,"Q 丢弃未清除动作或仍结算攻击");
+            f.succeed();
+        });
     }
     private static void obstruction(GameTestHelper h,boolean far) {
         var f=Fixture.create(h);
