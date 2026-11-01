@@ -1,5 +1,24 @@
 # 首版验证记录
 
+## 战斗骨架标准与长剑迁移
+
+2026-11-02：分支 `feat/combat-skeleton`，基于 main `d46b591`。新增 [战斗骨架与兼容性规范](docs/COMBAT_SKELETON.md) 与共用运行时 `dev.logos.dimension.combat`；两把长剑的动作改为 TLM 骨骼名的 Bedrock 动作文件，玩家骨架、剑网格、动作拆成三类文件。外观与玩法不变；新增一项兼容行为：骨架、网格或动作资源缺失、损坏时记日志并退回原版持物渲染，不再抛异常。
+
+| 层级 | 结果 |
+| --- | --- |
+| 数据转换 | 仓库外校验脚本用迁移前的算法和旧数据、迁移后的算法和新数据，对两把剑、两个视角、九段动作按 60 帧每秒错开关键帧取样，比较全部方块顶点：最大误差 **7×10⁻¹⁵ 像素**；剑与剑鞘的 UV、贴图尺寸逐项一致 |
+| 单元与构建 | **118/118** 通过，`test build` 成功；新增运行时 7 项（Bedrock 符号、三种插值与 pre/post、Molang 与坏动作不抛异常、缺父骨骼、缺骨忽略、混合端点与球面插值、左右镜像）和长剑 2 项，其中一项用迁移前算法生成的 12 组参考骨骼矩阵逐项对照 |
+| 实际客户端 | `group:longsword` **3/3 场景、33/33 检查**，与同机在 main 上的结果相同 |
+| 截图对照 | main 与本分支各 54 张，没有逐像素相同的：魔力缠绕光层、粒子、受击飘心和云边每次运行都不同。人工放大核对第一人称待机、第三人称蓄力等截图，剑、护手、双手与手臂位置重合，缠绕光层仍贴在剑身上 |
+
+普通渲染 1280×720；Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25、Logos 0.6.0。日志里的 `Sheets loaded too early` 在 main 上同样出现两次，不是本轮引入。没有做 NPC 接入、光影包或联机测试；第 1 节第 10 条（与其他玩家模型模组共存）尚未实现。
+
+```text
+python tools/import_longswords.py ../art
+./gradlew --offline test build -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar -PldTest=group:longsword -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 双手剑潜行、丢弃与魔力缠绕修复
 
 2026-11-02：分支 `fix/longsword-crouch-and-drop`，基于 main `5b9da25`（已合并 PR #107）。修复持剑姿势覆盖潜行弯腰而导致腰腿错位；剑、双臂、剑鞘和胸甲共同跟随潜行。修复 Q 丢弃后空掉的原物品对象仍被视为装备中的剑，确保不切槽也清理动作并取消未命中的攻击。

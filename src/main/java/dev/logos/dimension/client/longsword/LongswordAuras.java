@@ -21,9 +21,9 @@ public final class LongswordAuras {
         var context=holder.getMainArm()==net.minecraft.world.entity.HumanoidArm.LEFT
                 ? ItemDisplayContext.FIRST_PERSON_LEFT_HAND : ItemDisplayContext.FIRST_PERSON_RIGHT_HAND;
         Minecraft.getInstance().getItemModelResolver().updateForLiving(FIRST_PERSON,holder.getMainHandItem(),context,holder);
-        submit(FIRST_PERSON,sample,pose,collector,.58f);
+        submit(FIRST_PERSON,sample,pose,collector);
     }
-    public static void submit(ItemStackRenderState item, LongswordRig.Sample sample, PoseStack pose, SubmitNodeCollector collector, float scale) {
+    public static void submit(ItemStackRenderState item, LongswordRig.Sample sample, PoseStack pose, SubmitNodeCollector collector) {
         if(item==null || item.isEmpty())return;
         var access=(ItemStackRenderStateAccessor)item;
         if(access.logos$activeLayerCount()==0)return;
@@ -35,8 +35,9 @@ public final class LongswordAuras {
         layer.setItemTransform(ItemTransform.NO_TRANSFORM);layer.setLocalTransform(new Matrix4f().translation(.5f,.5f,.5f));
         pose.pushPose();
         try {
-            pose.mulPose(sample.bones().get("sword_root"));
-            pose.translate(0,1,0);pose.scale(scale,scale,scale);pose.translate(-8,-1,-8);pose.scale(16,16,16);
+            // 剑网格原点在握柄，物品模型的像素原点在 (8,1,8)。
+            pose.mulPose(sample.weapon());
+            pose.translate(-8,-1,-8);pose.scale(16,16,16);
             SurfaceAuras.submitItem((SurfaceAuras.Carrier)item,pose,collector);
         } finally {
             pose.popPose();layer.setItemTransform(display);layer.setLocalTransform(local);
