@@ -2,7 +2,7 @@
   "multipart": [
     {
       "apply": {
-        "model": "logos_dimension:block/journey_white_petals_1"
+        "model": "logos_dimension:block/journey_white_petals_1_north"
       },
       "when": {
         "facing": "north"
@@ -10,8 +10,34 @@
     },
     {
       "apply": {
-        "model": "logos_dimension:block/journey_white_petals_1",
-        "y": 90
+        "model": "logos_dimension:block/journey_white_petals_2_north"
+      },
+      "when": {
+        "facing": "north",
+        "flower_amount": "2|3|4"
+      }
+    },
+    {
+      "apply": {
+        "model": "logos_dimension:block/journey_white_petals_3_north"
+      },
+      "when": {
+        "facing": "north",
+        "flower_amount": "3|4"
+      }
+    },
+    {
+      "apply": {
+        "model": "logos_dimension:block/journey_white_petals_4_north"
+      },
+      "when": {
+        "facing": "north",
+        "flower_amount": "4"
+      }
+    },
+    {
+      "apply": {
+        "model": "logos_dimension:block/journey_white_petals_1_east"
       },
       "when": {
         "facing": "east"
@@ -19,8 +45,34 @@
     },
     {
       "apply": {
-        "model": "logos_dimension:block/journey_white_petals_1",
-        "y": 180
+        "model": "logos_dimension:block/journey_white_petals_2_east"
+      },
+      "when": {
+        "facing": "east",
+        "flower_amount": "2|3|4"
+      }
+    },
+    {
+      "apply": {
+        "model": "logos_dimension:block/journey_white_petals_3_east"
+      },
+      "when": {
+        "facing": "east",
+        "flower_amount": "3|4"
+      }
+    },
+    {
+      "apply": {
+        "model": "logos_dimension:block/journey_white_petals_4_east"
+      },
+      "when": {
+        "facing": "east",
+        "flower_amount": "4"
+      }
+    },
+    {
+      "apply": {
+        "model": "logos_dimension:block/journey_white_petals_1_south"
       },
       "when": {
         "facing": "south"
@@ -28,8 +80,34 @@
     },
     {
       "apply": {
-        "model": "logos_dimension:block/journey_white_petals_1",
-        "y": 270
+        "model": "logos_dimension:block/journey_white_petals_2_south"
+      },
+      "when": {
+        "facing": "south",
+        "flower_amount": "2|3|4"
+      }
+    },
+    {
+      "apply": {
+        "model": "logos_dimension:block/journey_white_petals_3_south"
+      },
+      "when": {
+        "facing": "south",
+        "flower_amount": "3|4"
+      }
+    },
+    {
+      "apply": {
+        "model": "logos_dimension:block/journey_white_petals_4_south"
+      },
+      "when": {
+        "facing": "south",
+        "flower_amount": "4"
+      }
+    },
+    {
+      "apply": {
+        "model": "logos_dimension:block/journey_white_petals_1_west"
       },
       "when": {
         "facing": "west"
@@ -37,37 +115,7 @@
     },
     {
       "apply": {
-        "model": "logos_dimension:block/journey_white_petals_2"
-      },
-      "when": {
-        "facing": "north",
-        "flower_amount": "2|3|4"
-      }
-    },
-    {
-      "apply": {
-        "model": "logos_dimension:block/journey_white_petals_2",
-        "y": 90
-      },
-      "when": {
-        "facing": "east",
-        "flower_amount": "2|3|4"
-      }
-    },
-    {
-      "apply": {
-        "model": "logos_dimension:block/journey_white_petals_2",
-        "y": 180
-      },
-      "when": {
-        "facing": "south",
-        "flower_amount": "2|3|4"
-      }
-    },
-    {
-      "apply": {
-        "model": "logos_dimension:block/journey_white_petals_2",
-        "y": 270
+        "model": "logos_dimension:block/journey_white_petals_2_west"
       },
       "when": {
         "facing": "west",
@@ -76,37 +124,7 @@
     },
     {
       "apply": {
-        "model": "logos_dimension:block/journey_white_petals_3"
-      },
-      "when": {
-        "facing": "north",
-        "flower_amount": "3|4"
-      }
-    },
-    {
-      "apply": {
-        "model": "logos_dimension:block/journey_white_petals_3",
-        "y": 90
-      },
-      "when": {
-        "facing": "east",
-        "flower_amount": "3|4"
-      }
-    },
-    {
-      "apply": {
-        "model": "logos_dimension:block/journey_white_petals_3",
-        "y": 180
-      },
-      "when": {
-        "facing": "south",
-        "flower_amount": "3|4"
-      }
-    },
-    {
-      "apply": {
-        "model": "logos_dimension:block/journey_white_petals_3",
-        "y": 270
+        "model": "logos_dimension:block/journey_white_petals_3_west"
       },
       "when": {
         "facing": "west",
@@ -115,37 +133,7 @@
     },
     {
       "apply": {
-        "model": "logos_dimension:block/journey_white_petals_4"
-      },
-      "when": {
-        "facing": "north",
-        "flower_amount": "4"
-      }
-    },
-    {
-      "apply": {
-        "model": "logos_dimension:block/journey_white_petals_4",
-        "y": 90
-      },
-      "when": {
-        "facing": "east",
-        "flower_amount": "4"
-      }
-    },
-    {
-      "apply": {
-        "model": "logos_dimension:block/journey_white_petals_4",
-        "y": 180
-      },
-      "when": {
-        "facing": "south",
-        "flower_amount": "4"
-      }
-    },
-    {
-      "apply": {
-        "model": "logos_dimension:block/journey_white_petals_4",
-        "y": 270
+        "model": "logos_dimension:block/journey_white_petals_4_west"
       },
       "when": {
         "facing": "west",

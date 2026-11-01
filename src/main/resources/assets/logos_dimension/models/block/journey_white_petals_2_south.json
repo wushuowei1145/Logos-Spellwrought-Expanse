@@ -1,0 +1,394 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "neoforge:cutout",
+  "textures": {
+    "flowerbed": "logos_dimension:block/journey_white_petals",
+    "particle": "logos_dimension:block/journey_white_petals"
+  },
+  "elements": [
+    {
+      "from": [
+        0.66,
+        0.0,
+        1.63
+      ],
+      "to": [
+        7.4,
+        0.05,
+        8.36
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5.15,
+        0.0,
+        6.42
+      ],
+      "to": [
+        11.2,
+        0.05,
+        12.47
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        -3.07,
+        0.0,
+        -4.14
+      ],
+      "to": [
+        4.84,
+        0.05,
+        3.78
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        6.36,
+        0.0,
+        -1.66
+      ],
+      "to": [
+        14.22,
+        0.05,
+        6.2
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3.19,
+        0.0,
+        -3.5
+      ],
+      "to": [
+        11.52,
+        0.05,
+        4.83
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        -0.34,
+        0.0,
+        3.48
+      ],
+      "to": [
+        7.93,
+        0.05,
+        11.75
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        0.03,
+        0.0,
+        2.51
+      ],
+      "to": [
+        6.83,
+        0.05,
+        9.32
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        -1.98,
+        0.0,
+        7.36
+      ],
+      "to": [
+        4.24,
+        0.05,
+        13.57
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        13.42,
+        0.0,
+        6.51
+      ],
+      "to": [
+        18.5,
+        0.05,
+        11.59
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        -1.27,
+        0.0,
+        12.03
+      ],
+      "to": [
+        5.2,
+        0.05,
+        18.5
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        10.21,
+        0.0,
+        12.24
+      ],
+      "to": [
+        16.47,
+        0.05,
+        18.5
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.06,
+        0.0,
+        -2.5
+      ],
+      "to": [
+        12.06,
+        0.05,
+        2.5
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#flowerbed",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ]
+}

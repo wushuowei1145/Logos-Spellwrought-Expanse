@@ -8,7 +8,8 @@
           "data": {
             "Name": "logos_dimension:journey_white_petals",
             "Properties": {
-              "flower_amount": "1"
+              "flower_amount": "1",
+              "facing": "north"
             }
           },
           "weight": 5
@@ -17,7 +18,38 @@
           "data": {
             "Name": "logos_dimension:journey_white_petals",
             "Properties": {
-              "flower_amount": "2"
+              "flower_amount": "1",
+              "facing": "east"
+            }
+          },
+          "weight": 5
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_white_petals",
+            "Properties": {
+              "flower_amount": "1",
+              "facing": "south"
+            }
+          },
+          "weight": 5
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_white_petals",
+            "Properties": {
+              "flower_amount": "1",
+              "facing": "west"
+            }
+          },
+          "weight": 5
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_white_petals",
+            "Properties": {
+              "flower_amount": "2",
+              "facing": "north"
             }
           },
           "weight": 4
@@ -26,7 +58,68 @@
           "data": {
             "Name": "logos_dimension:journey_white_petals",
             "Properties": {
-              "flower_amount": "3"
+              "flower_amount": "2",
+              "facing": "east"
+            }
+          },
+          "weight": 4
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_white_petals",
+            "Properties": {
+              "flower_amount": "2",
+              "facing": "south"
+            }
+          },
+          "weight": 4
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_white_petals",
+            "Properties": {
+              "flower_amount": "2",
+              "facing": "west"
+            }
+          },
+          "weight": 4
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_white_petals",
+            "Properties": {
+              "flower_amount": "3",
+              "facing": "north"
+            }
+          },
+          "weight": 2
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_white_petals",
+            "Properties": {
+              "flower_amount": "3",
+              "facing": "east"
+            }
+          },
+          "weight": 2
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_white_petals",
+            "Properties": {
+              "flower_amount": "3",
+              "facing": "south"
+            }
+          },
+          "weight": 2
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_white_petals",
+            "Properties": {
+              "flower_amount": "3",
+              "facing": "west"
             }
           },
           "weight": 2
