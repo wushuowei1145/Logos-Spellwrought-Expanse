@@ -59,7 +59,7 @@ public final class LongswordCombat {
         sync(player, state);
     }
     private static boolean selected(ServerPlayer player, State state) {
-        return player.isAlive() && !player.isSpectator() && state.level == player.level()
+        return player.isAlive() && !player.isSpectator() && !state.stack.isEmpty() && state.level == player.level()
                 && player.getInventory().getSelectedSlot() == state.slot && player.getMainHandItem() == state.stack;
     }
     public static void attack(ServerPlayer player) {

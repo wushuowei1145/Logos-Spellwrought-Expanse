@@ -1,6 +1,6 @@
 # 维度-咒械原
 
-**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前开发版本 **0.11.0**，已公开正式安装包为 **0.10.0**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发验证搭配 Logos **0.5.1**。
+**Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前开发版本 **0.11.0**，已公开正式安装包为 **0.10.0**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发版需要 Logos **0.6.0** 或更新版本。
 
 **安装包：[下载 logos_dimension-0.10.0.jar](https://github.com/wushuowei1145/Logos-Spellwrought-Expanse/releases/download/v0.10.0/logos_dimension-0.10.0.jar)** · [正式发布页与校验文件](https://github.com/wushuowei1145/Logos-Spellwrought-Expanse/releases/tag/v0.10.0)。联机时服务端和客户端都需安装同版附属；停服替换旧版后重新启动。Code → Download ZIP 和发布页的 Source code 是源码，需要构建后才能安装。
 

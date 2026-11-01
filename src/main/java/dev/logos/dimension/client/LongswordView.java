@@ -30,6 +30,14 @@ public class LongswordView implements UIScenario {
         var mc = Minecraft.getInstance(); var p = LongswordClient.pose(mc.player.getUUID());
         return p != null && p.variant() == variant() && p.phase() == phase;
     }
+    private boolean crouchedWaistConnected() {
+        var mc=Minecraft.getInstance();
+        var model=((net.minecraft.client.renderer.entity.player.AvatarRenderer<?>)mc.getEntityRenderDispatcher().getRenderer(mc.player)).getModel();
+        var waist=new org.joml.Matrix4f().translation(model.body.x,model.body.y,model.body.z)
+                .rotateZYX(model.body.zRot,model.body.yRot,model.body.xRot).transformPosition(new org.joml.Vector3f(0,12,0));
+        var hips=new org.joml.Vector3f((model.leftLeg.x+model.rightLeg.x)/2,(model.leftLeg.y+model.rightLeg.y)/2,(model.leftLeg.z+model.rightLeg.z)/2);
+        return mc.player.isCrouching() && model.body.xRot>.3f && waist.distance(hips)<3.8f;
+    }
     @Override public void configure(ScenarioOptions o) { o.tags("longsword").defaultTimeoutMs(60000).scenarioTimeoutMs(180000); }
     @Override public void define(ScenarioBuilder s) {
         s.setGameMode(GameType.CREATIVE).runCommand("time set day").runCommand("weather clear").runCommand("difficulty peaceful")
@@ -53,6 +61,7 @@ public class LongswordView implements UIScenario {
                     golem.setPos(.5,100,2.8); level.addFreshEntity(golem); target = golem.getId();
                     ctx.player().getInventory().clearContent(); ctx.player().getInventory().setSelectedSlot(0);
                     ctx.player().setItemInHand(InteractionHand.MAIN_HAND,new ItemStack(variant()==0 ? LongswordItem.DAWNVOW.get() : LongswordItem.BLACKSTEEL.get()));
+                    dev.logos.runtime.ManaWrap.wrap(ctx.player(),variant()==0?dev.logos.lang.Element.ARCANE:dev.logos.lang.Element.FIRE,4,300);
                 }).setGameMode(GameType.SURVIVAL)
                 .waitUntil("拔剑同步", ctx -> phase(LongswordPhase.DRAW)).ticks(5).screenshot("draw")
                 .step("拔剑中提前按住右键",ctx->Minecraft.getInstance().options.keyUse.setDown(true)).ticks(3)
@@ -63,8 +72,16 @@ public class LongswordView implements UIScenario {
                 }).waitUntil("恢复侧持",ctx->phase(LongswordPhase.IDLE))
                 .server("恢复练剑目标生命",ctx->((LivingEntity)ctx.server().overworld().getEntity(target)).setHealth(100))
                 .waitUntil("待机同步", ctx -> phase(LongswordPhase.IDLE)).ticks(4).screenshot("first_person_idle")
+                .check("第一人称魔力缠绕产生表面与拖尾",ctx->dev.logos.client.SurfaceAuras.emitters()>0 && dev.logos.client.SurfaceAuras.motes()>0)
                 .step("第三人称正面", ctx -> Minecraft.getInstance().options.setCameraType(CameraType.THIRD_PERSON_FRONT))
                 .ticks(3).screenshot("third_person_idle")
+                .check("第三人称魔力缠绕仍在剑上",ctx->dev.logos.client.SurfaceAuras.emitters()>0 && dev.logos.runtime.ManaWrap.of(Minecraft.getInstance().player)!=null)
+                .step("实际按住潜行键",ctx->Minecraft.getInstance().options.keyShift.setDown(true))
+                .waitUntil("玩家进入潜行",ctx->Minecraft.getInstance().player.isCrouching()).ticks(5)
+                .check("潜行持剑保留弯腰且腰腿相接",ctx->crouchedWaistConnected()).screenshot("crouch_idle")
+                .step("观察潜行腰部侧面",ctx->{var p=Minecraft.getInstance().player;p.yBodyRot=65;p.yBodyRotO=65;})
+                .ticks(1).screenshot("crouch_side")
+                .step("恢复身体朝向",ctx->{var p=Minecraft.getInstance().player;p.yBodyRot=0;p.yBodyRotO=0;})
                 .step("持续左键连招", ctx -> Minecraft.getInstance().options.keyAttack.setDown(true))
                 .waitUntil("第一段实际出招", ctx -> phase(LongswordPhase.ATTACK_1)).ticks(4).screenshot("attack_1")
                 .waitUntil("第二段实际出招", ctx -> phase(LongswordPhase.ATTACK_2)).ticks(4).screenshot("attack_2")
@@ -72,6 +89,11 @@ public class LongswordView implements UIScenario {
                 .step("松开连招", ctx -> Minecraft.getInstance().options.keyAttack.setDown(false))
                 .waitUntil("连招收势", ctx -> phase(LongswordPhase.IDLE))
                 .checkServer("三段连招造成服务端伤害", ctx -> ((LivingEntity)ctx.server().overworld().getEntity(target)).getHealth()<100)
+                .server("清除魔力缠绕",ctx->dev.logos.runtime.ManaWrap.wrap(ctx.player(),dev.logos.lang.Element.ARCANE,0,0))
+                .waitUntil("缠绕解除同步",ctx->dev.logos.runtime.ManaWrap.of(Minecraft.getInstance().player)==null).ticks(6)
+                .check("解除后不再从剑发射特效",ctx->dev.logos.client.SurfaceAuras.emitters()==0)
+                .server("恢复魔力缠绕",ctx->dev.logos.runtime.ManaWrap.wrap(ctx.player(),variant()==0?dev.logos.lang.Element.ARCANE:dev.logos.lang.Element.FIRE,4,300))
+                .waitUntil("恢复缠绕同步",ctx->dev.logos.runtime.ManaWrap.of(Minecraft.getInstance().player)!=null)
                 .server("记录蓄力前生命", ctx -> health=((LivingEntity)ctx.server().overworld().getEntity(target)).getHealth())
                 .step("右键蓄力", ctx -> {
                     var mc=Minecraft.getInstance(); mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.keyUse.setDown(true);
@@ -88,6 +110,9 @@ public class LongswordView implements UIScenario {
                 .checkServer("松开后下劈伤害", ctx -> ((LivingEntity)ctx.server().overworld().getEntity(target)).getHealth()<health)
                 .server("检查分段胸甲",ctx->ctx.player().setItemSlot(EquipmentSlot.CHEST,new ItemStack(net.minecraft.world.item.Items.DIAMOND_CHESTPLATE)))
                 .ticks(5).screenshot("third_person_armor")
+                .check("穿胸甲后潜行腰部仍连接",ctx->crouchedWaistConnected())
+                .step("结束潜行",ctx->Minecraft.getInstance().options.keyShift.setDown(false))
+                .waitUntil("恢复站立",ctx->!Minecraft.getInstance().player.isCrouching()).ticks(5).screenshot("standing_after_crouch")
                 .step("恢复第一人称", ctx -> Minecraft.getInstance().options.setCameraType(CameraType.FIRST_PERSON))
                 .step("切换空槽收剑", ctx -> Minecraft.getInstance().player.getInventory().setSelectedSlot(2))
                 .waitUntil("收剑同步", ctx -> phase(LongswordPhase.SHEATHE)).ticks(8).screenshot("sheathe")
@@ -99,9 +124,17 @@ public class LongswordView implements UIScenario {
                     var model=renderer.getModel();
                     return model.head.visible && model.leftArm.visible && model.rightArm.visible && mc.player.getMainHandItem().isEmpty();
                 }).screenshot("third_person_sheathed_armor")
+                .step("原槽重新持剑",ctx->{var mc=Minecraft.getInstance();mc.options.setCameraType(CameraType.FIRST_PERSON);mc.player.getInventory().setSelectedSlot(0);})
+                .waitUntil("重新拔剑",ctx->phase(LongswordPhase.DRAW)).waitUntil("重新侧持",ctx->phase(LongswordPhase.IDLE))
+                .step("走原版 Q 丢弃路径",ctx->Minecraft.getInstance().player.drop(false))
+                .waitUntil("不切槽清除持剑动作",ctx->{var mc=Minecraft.getInstance();return mc.player.getMainHandItem().isEmpty()&&LongswordClient.pose(mc.player.getUUID())==null;})
+                .check("Q 丢弃后仍在同一物品栏槽",ctx->Minecraft.getInstance().player.getInventory().getSelectedSlot()==0)
+                .ticks(4).screenshot("dropped_first_person")
+                .step("检查丢弃后的第三人称",ctx->Minecraft.getInstance().options.setCameraType(CameraType.THIRD_PERSON_FRONT))
+                .ticks(5).screenshot("dropped_third_person")
                 .server("移除练剑目标", ctx -> { var e=ctx.server().overworld().getEntity(target); if(e!=null)e.discard(); })
                 .teardown("恢复输入", ctx -> {
-                    var mc=Minecraft.getInstance(); mc.options.keyAttack.setDown(false); mc.options.keyUse.setDown(false);
+                    var mc=Minecraft.getInstance(); mc.options.keyAttack.setDown(false); mc.options.keyUse.setDown(false);mc.options.keyShift.setDown(false);
                     mc.options.hideGui=previousHideGui; mc.options.setCameraType(CameraType.FIRST_PERSON);
                     if(previousArm!=null)mc.options.mainHand().set(previousArm); mc.options.broadcastOptions();
                 });
