@@ -1,0 +1,639 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "neoforge:cutout",
+  "textures": {
+    "flowerbed": "logos_dimension:block/journey_white_petals",
+    "particle": "logos_dimension:block/journey_white_petals"
+  },
+  "elements": [
+    {
+      "from": [
+        4.15,
+        0.02,
+        6.34
+      ],
+      "to": [
+        8.83,
+        0.07,
+        11.31
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ],
+          "texture": "#flowerbed"
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.49,
+          0.02,
+          8.83
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "from": [
+        5.24,
+        0.035,
+        7.39
+      ],
+      "to": [
+        9.47,
+        0.085,
+        12.47
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ],
+          "texture": "#flowerbed"
+        }
+      },
+      "rotation": {
+        "origin": [
+          7.36,
+          0.035,
+          9.93
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "from": [
+        7.85,
+        0.05,
+        3.34
+      ],
+      "to": [
+        12.52,
+        0.1,
+        8.0
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            8,
+            8,
+            16,
+            16
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            8,
+            8,
+            16,
+            16
+          ],
+          "texture": "#flowerbed"
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.18,
+          0.05,
+          5.67
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "from": [
+        8.61,
+        0.065,
+        6.63
+      ],
+      "to": [
+        13.44,
+        0.115,
+        10.83
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ],
+          "texture": "#flowerbed"
+        }
+      },
+      "rotation": {
+        "origin": [
+          11.02,
+          0.065,
+          8.73
+        ],
+        "axis": "y",
+        "angle": 22.5
+      }
+    },
+    {
+      "from": [
+        5.26,
+        0.08,
+        6.23
+      ],
+      "to": [
+        10.08,
+        0.13,
+        11.34
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            8,
+            8,
+            16,
+            16
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            8,
+            8,
+            16,
+            16
+          ],
+          "texture": "#flowerbed"
+        }
+      },
+      "rotation": {
+        "origin": [
+          7.67,
+          0.08,
+          8.79
+        ],
+        "axis": "y",
+        "angle": 22.5
+      }
+    },
+    {
+      "from": [
+        5.76,
+        0.095,
+        5.17
+      ],
+      "to": [
+        9.83,
+        0.145,
+        10.3
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "#flowerbed"
+        }
+      },
+      "rotation": {
+        "origin": [
+          7.79,
+          0.095,
+          7.74
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "from": [
+        4.18,
+        0.11,
+        6.66
+      ],
+      "to": [
+        9.16,
+        0.16,
+        11.6
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ],
+          "texture": "#flowerbed"
+        }
+      }
+    },
+    {
+      "from": [
+        6.11,
+        0.125,
+        4.66
+      ],
+      "to": [
+        10.19,
+        0.175,
+        8.96
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "#flowerbed"
+        }
+      }
+    },
+    {
+      "from": [
+        4.6,
+        0.14,
+        4.89
+      ],
+      "to": [
+        9.57,
+        0.19,
+        9.04
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ],
+          "texture": "#flowerbed"
+        }
+      },
+      "rotation": {
+        "origin": [
+          7.09,
+          0.14,
+          6.96
+        ],
+        "axis": "y",
+        "angle": 22.5
+      }
+    },
+    {
+      "from": [
+        2.81,
+        0.155,
+        5.59
+      ],
+      "to": [
+        7.48,
+        0.205,
+        10.36
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ],
+          "texture": "#flowerbed"
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.15,
+          0.155,
+          7.98
+        ],
+        "axis": "y",
+        "angle": -22.5
+      }
+    },
+    {
+      "from": [
+        6.3,
+        0.17,
+        7.99
+      ],
+      "to": [
+        11.32,
+        0.22,
+        12.02
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ],
+          "texture": "#flowerbed"
+        }
+      }
+    },
+    {
+      "from": [
+        5.04,
+        0.185,
+        7.91
+      ],
+      "to": [
+        9.8,
+        0.235,
+        12.73
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "#flowerbed"
+        }
+      },
+      "rotation": {
+        "origin": [
+          7.42,
+          0.185,
+          10.32
+        ],
+        "axis": "y",
+        "angle": -22.5
+      }
+    },
+    {
+      "from": [
+        9.01,
+        0.2,
+        4.98
+      ],
+      "to": [
+        13.14,
+        0.25,
+        9.8
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            8,
+            8,
+            16,
+            16
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            8,
+            8,
+            16,
+            16
+          ],
+          "texture": "#flowerbed"
+        }
+      },
+      "rotation": {
+        "origin": [
+          11.07,
+          0.2,
+          7.39
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "from": [
+        3.07,
+        0.215,
+        6.24
+      ],
+      "to": [
+        7.21,
+        0.265,
+        10.48
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            8,
+            8,
+            16,
+            16
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            8,
+            8,
+            16,
+            16
+          ],
+          "texture": "#flowerbed"
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.14,
+          0.215,
+          8.36
+        ],
+        "axis": "y",
+        "angle": 22.5
+      }
+    },
+    {
+      "from": [
+        2.55,
+        0.23,
+        9.03
+      ],
+      "to": [
+        7.36,
+        0.28,
+        13.4
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            0,
+            8,
+            8,
+            16
+          ],
+          "texture": "#flowerbed"
+        }
+      },
+      "rotation": {
+        "origin": [
+          4.95,
+          0.23,
+          11.22
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "from": [
+        9.28,
+        0.245,
+        5.27
+      ],
+      "to": [
+        13.35,
+        0.295,
+        10.43
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "#flowerbed"
+        }
+      },
+      "rotation": {
+        "origin": [
+          11.31,
+          0.245,
+          7.85
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    }
+  ]
+}

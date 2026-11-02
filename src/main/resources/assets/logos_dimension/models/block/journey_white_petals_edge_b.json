@@ -1,0 +1,165 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "neoforge:cutout",
+  "textures": {
+    "flowerbed": "logos_dimension:block/journey_white_petals",
+    "particle": "logos_dimension:block/journey_white_petals"
+  },
+  "elements": [
+    {
+      "from": [
+        0.93,
+        0.025,
+        1.24
+      ],
+      "to": [
+        5.5,
+        0.075,
+        5.89
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "#flowerbed"
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.22,
+          0.025,
+          3.57
+        ],
+        "axis": "y",
+        "angle": -45
+      }
+    },
+    {
+      "from": [
+        4.36,
+        0.04,
+        0.04
+      ],
+      "to": [
+        8.63,
+        0.09,
+        4.7
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ],
+          "texture": "#flowerbed"
+        }
+      }
+    },
+    {
+      "from": [
+        7.35,
+        0.055,
+        -0.4
+      ],
+      "to": [
+        12.27,
+        0.105,
+        4.02
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ],
+          "texture": "#flowerbed"
+        }
+      },
+      "rotation": {
+        "origin": [
+          9.81,
+          0.055,
+          1.81
+        ],
+        "axis": "y",
+        "angle": 22.5
+      }
+    },
+    {
+      "from": [
+        10.59,
+        0.025,
+        1.02
+      ],
+      "to": [
+        15.45,
+        0.075,
+        5.51
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ],
+          "texture": "#flowerbed"
+        },
+        "down": {
+          "uv": [
+            8,
+            0,
+            16,
+            8
+          ],
+          "texture": "#flowerbed"
+        }
+      },
+      "rotation": {
+        "origin": [
+          13.02,
+          0.025,
+          3.26
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    }
+  ]
+}
