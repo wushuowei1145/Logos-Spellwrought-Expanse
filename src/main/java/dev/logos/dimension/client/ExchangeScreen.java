@@ -1,0 +1,248 @@
+package dev.logos.dimension.client;
+
+import dev.logos.dimension.economy.Currency;
+import dev.logos.dimension.economy.EconomyActionPayload;
+import dev.logos.dimension.economy.FxMarket;
+import dev.logos.dimension.economy.Money;
+import dev.logos.dimension.economy.Purse;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+
+/**
+ * 兑换台面板：左边是所选货币对帝国币的 K 线（红涨绿跌，按游戏小时一根，可切换看近五天或近二十天），
+ * 右边下单，底部是最近的告示与传闻。价格一律写成「一枚最大面额值多少银元」。
+ */
+public final class ExchangeScreen extends Screen {
+    private static final int W = 360, H = 236, CHART_W = 222, CHART_H = 100, BARS = 60;
+    private static final int UP = 0xFFE05A4E, DOWN = 0xFF3FB27F, PANEL = 0xE0161218, EDGE = 0xFFB89A5A, DIM = 0xFF8C8478;
+    private final BlockPos pos;
+    private Currency shown = Currency.FOX, from = Currency.IMPERIAL, to = Currency.FOX;
+    private boolean wide;
+    private EditBox amount;
+    private Button fromButton, toButton, tradeButton, rangeButton;
+    private final List<Button> tabs = new ArrayList<>();
+    private int x0, y0;
+
+    public ExchangeScreen(BlockPos pos) {
+        super(Component.translatable("block.logos_dimension.exchange_counter"));
+        this.pos = pos;
+    }
+
+    @Override public boolean isPauseScreen() { return false; }
+
+    @Override
+    protected void init() {
+        x0 = (width - W) / 2; y0 = (height - H) / 2;
+        tabs.clear();
+        for (int i = 0; i < Currency.TRADED.size(); i++) {
+            var c = Currency.TRADED.get(i);
+            tabs.add(addRenderableWidget(Button.builder(Component.translatable(c.key()), b -> shown = c)
+                    .bounds(x0 + 8 + i * 54, y0 + 20, 52, 16).build()));
+        }
+        rangeButton = addRenderableWidget(Button.builder(Component.empty(), b -> wide = !wide).bounds(x0 + 8 + CHART_W - 54, y0 + 20, 54, 16).build());
+        int rx = x0 + 238, rw = W - 246;
+        fromButton = addRenderableWidget(Button.builder(Component.empty(), b -> from = next(from, to)).bounds(rx, y0 + 40, rw, 16).build());
+        toButton = addRenderableWidget(Button.builder(Component.empty(), b -> to = next(to, from)).bounds(rx, y0 + 60, rw, 16).build());
+        amount = addRenderableWidget(new EditBox(font, rx, y0 + 80, rw, 16, Component.translatable("screen.logos_dimension.fx.amount")));
+        amount.setFilter(s -> s.matches("\\d{0,9}(\\.\\d{0,3})?"));
+        amount.setHint(Component.translatable("screen.logos_dimension.fx.amount"));
+        int qw = (rw - 4) / 3;
+        Component[] labels = {Component.literal("25%"), Component.literal("50%"), Component.translatable("screen.logos_dimension.fx.all")};
+        double[] shares = {.25, .5, 1};
+        for (int i = 0; i < 3; i++) {
+            double share = shares[i];
+            addRenderableWidget(Button.builder(labels[i], b -> fill(share)).bounds(rx + i * (qw + 2), y0 + 100, qw, 14).build());
+        }
+        tradeButton = addRenderableWidget(Button.builder(Component.translatable("screen.logos_dimension.fx.trade"), b -> trade())
+                .bounds(rx, y0 + 144, rw, 18).build());
+    }
+
+    /** 轮换到下一种货币，跳过另一边已选的。 */
+    private static Currency next(Currency current, Currency other) {
+        var all = Currency.values();
+        var c = current;
+        do c = all[(c.ordinal() + 1) % all.length]; while (c == other);
+        return c;
+    }
+
+    private long held(Currency c) { return minecraft.player == null ? 0 : Purse.available(minecraft.player, c); }
+
+    /** 输入框按最大面额写，例如 1.5 小判；换算成最小单位。 */
+    private long typed() {
+        try {
+            String s = amount.getValue();
+            if (s.isEmpty() || s.equals(".")) return 0;
+            return Math.round(Double.parseDouble(s) * from.top().value());
+        } catch (NumberFormatException e) { return 0; }
+    }
+
+    private void fill(double share) {
+        long v = (long) Math.floor(held(from) * share);
+        amount.setValue(trim(v / (double) from.top().value()));
+    }
+
+    private static String trim(double v) {
+        String s = String.format(java.util.Locale.ROOT, "%.3f", Math.floor(v * 1000) / 1000);
+        return s.replaceAll("\\.?0+$", "");
+    }
+
+    private void trade() {
+        long a = typed();
+        if (a <= 0) return;
+        EconomyClient.send(EconomyActionPayload.TRADE, 0, from.ordinal(), to.ordinal(), Math.min(a, held(from)));
+        amount.setValue("");
+    }
+
+    @Override
+    public void removed() { EconomyClient.send(EconomyActionPayload.CLOSE, 0, 0, 0, 0); }
+
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float a) {
+        var data = EconomyClient.latest;
+        g.fill(x0, y0, x0 + W, y0 + H, PANEL);
+        g.outline(x0, y0, W, H, EDGE);
+        long clock = data == null ? 0 : data.clock();
+        boolean open = FxMarket.open(clock);
+        g.text(font, title, x0 + 8, y0 + 7, 0xFFE8C77A);
+        var status = EconomyClient.when(clock, false).copy().append(" · ")
+                .append(Component.translatable(open ? "screen.logos_dimension.fx.open" : "screen.logos_dimension.fx.closed"));
+        g.text(font, status, x0 + W - 8 - font.width(status), y0 + 7, open ? 0xFFB8E0A0 : 0xFFE09070);
+
+        for (int i = 0; i < tabs.size(); i++) tabs.get(i).active = Currency.TRADED.get(i) != shown;
+        rangeButton.setMessage(Component.translatable(wide ? "screen.logos_dimension.fx.range_wide" : "screen.logos_dimension.fx.range_near"));
+        fromButton.setMessage(Component.translatable("screen.logos_dimension.fx.from", Component.translatable(from.key())));
+        toButton.setMessage(Component.translatable("screen.logos_dimension.fx.to", Component.translatable(to.key())));
+        long typed = typed();
+        tradeButton.active = open && typed > 0 && typed <= held(from);
+        super.extractRenderState(g, mouseX, mouseY, a);
+
+        chart(g, data, mouseX, mouseY);
+        order(g, typed);
+        news(g, data, mouseX, mouseY);
+    }
+
+    // ---------------------------------------------------------------- K 线
+
+    private void chart(GuiGraphicsExtractor g, dev.logos.dimension.economy.MarketPayload data, int mouseX, int mouseY) {
+        int cx = x0 + 8, cy = y0 + 40;
+        g.fill(cx, cy, cx + CHART_W, cy + CHART_H, 0xC0080608);
+        g.outline(cx - 1, cy - 1, CHART_W + 2, CHART_H + 2, 0xFF4A4038);
+        var bars = bars(data == null ? List.of() : data.candles(shown));
+        if (bars.isEmpty()) {
+            g.centeredText(font, Component.translatable("screen.logos_dimension.fx.no_data"), cx + CHART_W / 2, cy + CHART_H / 2 - 4, DIM);
+            return;
+        }
+        double unit = shown.top().value() / 100.0; // 铜分 → 一枚最大面额值多少银元
+        float lo = Float.MAX_VALUE, hi = -Float.MAX_VALUE;
+        for (var k : bars) { lo = Math.min(lo, k.low()); hi = Math.max(hi, k.high()); }
+        float pad = Math.max((hi - lo) * .08f, hi * .002f);
+        lo -= pad; hi += pad;
+        final float min = lo, span = hi - lo;
+        int bw = CHART_W / BARS;
+        int left = cx + CHART_W - bars.size() * bw;
+        long lastDay = Long.MIN_VALUE;
+        for (int i = 0; i < bars.size(); i++) {
+            var k = bars.get(i);
+            int x = left + i * bw;
+            long day = Math.floorDiv(k.slot() * FxMarket.HOUR, FxMarket.DAY);
+            if (day != lastDay && i > 0) g.verticalLine(x - 1, cy, cy + CHART_H, 0x40FFFFFF);
+            lastDay = day;
+            int yHigh = y(k.high(), min, span, cy), yLow = y(k.low(), min, span, cy);
+            int yOpen = y(k.open(), min, span, cy), yClose = y(k.close(), min, span, cy);
+            int color = k.close() >= k.open() ? UP : DOWN;
+            int mid = x + Math.max(0, bw - 1) / 2;
+            g.verticalLine(mid, yHigh, yLow, color);
+            g.fill(x, Math.min(yOpen, yClose), x + Math.max(1, bw - 1), Math.max(yOpen, yClose) + 1, color);
+        }
+        var lastBar = bars.getLast();
+        int yNow = y(lastBar.close(), min, span, cy);
+        g.horizontalLine(cx, cx + CHART_W - 1, yNow, 0x60E8C77A);
+        g.text(font, fmt(hi * unit), cx + 2, cy + 2, DIM);
+        g.text(font, fmt(min * unit), cx + 2, cy + CHART_H - 10, DIM);
+        // 悬停显示那根 K 线
+        if (mouseX >= left && mouseX < cx + CHART_W && mouseY >= cy && mouseY < cy + CHART_H) {
+            int i = Math.min(bars.size() - 1, (mouseX - left) / bw);
+            var k = bars.get(i);
+            g.setTooltipForNextFrame(font, List.of(
+                    EconomyClient.when(k.slot() * FxMarket.HOUR, false),
+                    Component.translatable("screen.logos_dimension.fx.ohlc", fmt(k.open() * unit), fmt(k.high() * unit), fmt(k.low() * unit), fmt(k.close() * unit))
+            ), java.util.Optional.empty(), mouseX, mouseY);
+        }
+        // 当前报价与一天来的涨跌
+        double now = EconomyClient.rate(shown) * shown.top().value();
+        var all = data.candles(shown);
+        int back = Math.max(0, all.size() - 13);
+        double dayAgo = all.isEmpty() ? now : all.get(back).close() * shown.top().value();
+        double change = dayAgo == 0 ? 0 : (now / dayAgo - 1) * 100;
+        var quote = Component.literal("1 ").append(Component.translatable(shown.coinKey(shown.top()))).append(" = ")
+                .append(Money.top(Currency.IMPERIAL, now)).append("  ");
+        g.text(font, quote, cx, cy + CHART_H + 5, 0xFFE8E0D0);
+        String pct = String.format("%+.2f%%", change);
+        g.text(font, pct, cx + font.width(quote), cy + CHART_H + 5, change >= 0 ? UP : DOWN);
+    }
+
+    /** 近二十天时四小时并成一根，保证屏幕上总是六十根左右。 */
+    private List<FxMarket.Candle> bars(List<FxMarket.Candle> candles) {
+        if (!wide) return candles.subList(Math.max(0, candles.size() - BARS), candles.size());
+        var merged = new ArrayList<FxMarket.Candle>();
+        FxMarket.Candle cur = null;
+        for (var k : candles) {
+            long group = Math.floorDiv(k.slot(), 4);
+            if (cur != null && Math.floorDiv(cur.slot(), 4) == group) {
+                cur = new FxMarket.Candle(cur.slot(), cur.open(), Math.max(cur.high(), k.high()), Math.min(cur.low(), k.low()), k.close());
+                merged.set(merged.size() - 1, cur);
+            } else { cur = k; merged.add(cur); }
+        }
+        return merged.subList(Math.max(0, merged.size() - BARS), merged.size());
+    }
+
+    private static int y(float price, float min, float span, int cy) {
+        return cy + CHART_H - 1 - Math.round((price - min) / span * (CHART_H - 2));
+    }
+
+    private static String fmt(double silver) { return String.format("%,.2f", silver); }
+
+    // ---------------------------------------------------------------- 下单预览
+
+    private void order(GuiGraphicsExtractor g, long typed) {
+        int rx = x0 + 238, rw = W - 246;
+        int y = y0 + 118;
+        var held = Component.translatable("screen.logos_dimension.fx.held").append(Money.format(from, held(from)));
+        for (var line : font.split(held, rw)) { g.text(font, line, rx, y, DIM); y += 9; if (y > y0 + 135) break; }
+        if (typed <= 0) return;
+        var q = FxMarket.quote(from, to, typed, EconomyClient.rate(from), EconomyClient.rate(to));
+        var get = Component.translatable("screen.logos_dimension.fx.get").append(Money.format(to, q.received()));
+        int gy = y0 + 166;
+        for (var line : font.split(get, rw)) { g.text(font, line, rx, gy, 0xFFE8E0D0); gy += 9; }
+        g.text(font, Component.translatable("screen.logos_dimension.fx.cost").append(Money.top(Currency.IMPERIAL, Math.max(0, q.cost()))), rx, gy, DIM);
+        if (typed > held(from)) g.text(font, Component.translatable("screen.logos_dimension.fx.short"), rx, gy + 9, 0xFFE09070);
+    }
+
+    // ---------------------------------------------------------------- 告示与传闻
+
+    private void news(GuiGraphicsExtractor g, dev.logos.dimension.economy.MarketPayload data, int mouseX, int mouseY) {
+        int nx = x0 + 8, ny = y0 + 166, nw = 222;
+        g.text(font, Component.translatable("screen.logos_dimension.fx.news"), nx, ny - 10 + 4, 0xFFE8C77A);
+        ny += 4;
+        if (data == null) return;
+        var items = data.news();
+        int shown = 0;
+        for (int i = items.size() - 1; i >= 0 && shown < 6; i--, shown++) {
+            var n = items.get(i);
+            var line = EconomyClient.when(n.time(), true).copy().append(" ").append(EconomyClient.news(n));
+            int ly = ny + shown * 10;
+            // 中文没有空格，按词换行会把整句挤到下一行；这里按字截断，写不下的悬停看全文
+            boolean clipped = font.width(line) > nw;
+            var shownText = clipped ? net.minecraft.network.chat.FormattedText.composite(font.substrByWidth(line, nw - font.width("…")), net.minecraft.network.chat.FormattedText.of("…")) : line;
+            g.text(font, net.minecraft.locale.Language.getInstance().getVisualOrder(shownText), nx, ly, 0xFFD8D0C0);
+            if (clipped && mouseX >= nx && mouseX < nx + nw && mouseY >= ly - 1 && mouseY < ly + 9)
+                g.setTooltipForNextFrame(font, font.split(line, 220), mouseX, mouseY);
+        }
+    }
+}

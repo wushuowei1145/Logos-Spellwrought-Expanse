@@ -1,5 +1,23 @@
 # 首版验证记录
 
+## 异世界货币与炒外汇（第一版：原型与现货）
+
+2026-11-03：分支 `feat/fx-economy`，基于 main `b983fb0`。设计见 [异世界货币与外汇](docs/ECONOMY.md)。新增帝国、神狐、灵猫、群狼四种货币共十三枚钱币，全服共享的动态汇率市场（随机事件、传闻、玩家冲击），兑换台方块（K 线、下单、告示与传闻），万国钱囊（无限存放、取一枚或一组、锁定、捡钱入囊），以及给以后商人用的自动换汇结账。顺带修好 main 上 `zh_cn.json`、`en_us.json` 打刀格挡提示后缺的逗号（两份语言文件原本都不是合法 JSON）。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | `FxMarketTest` **6/6**：面额拆分、任意两步三步兑换都不赚钱（无三角套利）、砸盘压低汇率且几天内恢复、存读档后汇率消息 K 线一致且随机数接着走、四百天不越界、策略模拟（100 金冠起步、200 次 × 30 天：乱炒平均 −39%，买入不动 +3%，看可靠传闻 +15%） |
+| 世界测试 | 新增 **4/4**：钱囊存入取出、散币付款找零、结账自动卖帝国币且锁定后不卖、兑换台夜里不营业白天成交离远不能交易 |
+| 实际客户端 | 新增 `economy_views` **1/1 场景、4/4 检查**（中文界面）：五天行情与传闻送达客户端、兑换台截图、经网络下单一百金冠换狼币、钱囊截图、一键存入散币 |
+
+没测：多人同时交易、光影、和商人 NPC 的结账（商人还没有）。钱币和钱囊图标、兑换台方块贴图是代码画的初版。
+
+```text
+./gradlew test --tests dev.logos.dimension.economy.FxMarketTest -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:economy_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar -PldTest=economy_views -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 神狐打刀：四套刀装、连招、零延迟格挡与弹刀
 
 2026-11-02：分支 `feat/fox-uchigatana`，基于 main `1b51501`。规划与做法见 [神狐打刀](docs/UCHIGATANA.md)。新增四件打刀物品（墨漆米白柄、墨漆朱绳柄、靛漆靛青柄、拭漆木褐绳柄），左键四段连招，右键按住立即格挡（原版格挡组件，延迟 0），格挡开始 0.3 秒内被击中弹刀（不耗耐久），弹刀后左键突刺，切走物品时转刀两圈收刀。长剑与打刀改为共用运行时（`CombatWeapon`），招式文件新增 `block` 输入。玩家的手改为原版那样的一整块（长剑同样生效）。动作按刀路编排，用两段式逆运动学烘焙到第三、第一人称骨架，没有腕关节。

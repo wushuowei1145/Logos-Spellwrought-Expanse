@@ -67,6 +67,7 @@ public final class LogosDimension {
         DimensionFluids.TYPES.register(bus); DimensionFluids.FLUIDS.register(bus);
         DimensionParticles.register(bus);
         dev.logos.dimension.fox.FoxSanctuary.register(bus);
+        dev.logos.dimension.economy.Economy.register(bus);
         dev.logos.dimension.npc.NpcEntities.register(bus);
         GENERATORS.register(bus); BIOME_SOURCES.register(bus); TABS.register(bus);
         DimensionGameTests.register(bus);
@@ -87,6 +88,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.AncientEmbraceGameTests.register(bus);
         dev.logos.dimension.gametest.LongswordGameTests.register(bus);
         dev.logos.dimension.gametest.ForestElfGameTests.register(bus);
+        dev.logos.dimension.gametest.EconomyGameTests.register(bus);
         bus.addListener(DimensionSpawns::register);
         bus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
                 event.registrar("1").playToClient(dev.logos.dimension.net.HauntPayload.TYPE, dev.logos.dimension.net.HauntPayload.CODEC));

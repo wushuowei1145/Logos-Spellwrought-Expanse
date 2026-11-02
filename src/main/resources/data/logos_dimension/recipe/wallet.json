@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " S ",
+    "LGL",
+    " L "
+  ],
+  "key": {
+    "S": "minecraft:string",
+    "L": "minecraft:leather",
+    "G": "minecraft:gold_ingot"
+  },
+  "result": {
+    "id": "logos_dimension:wallet",
+    "count": 1
+  }
+}
