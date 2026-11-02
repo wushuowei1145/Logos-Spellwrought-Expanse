@@ -186,51 +186,6 @@ def make_kawara_roof_texture():
     im.save(TEXTURE_DIR / "journey_kawara_roof.png")
 
 
-def make_lacquer_wood_textures():
-    im_side = Image.new("RGBA", (16, 16))
-    d = ImageDraw.Draw(im_side)
-    for x in range(16):
-        for y in range(16):
-            noise = ((x * 11 + y * 5) % 7) - 3
-            band = 6 if x in (2, 7, 12) else 0
-            r = int(np.clip(185 + noise + band, 160, 210))
-            g = int(np.clip(45 + noise // 2, 30, 65))
-            b = int(np.clip(32 + noise // 2, 20, 50))
-            d.point((x, y), fill=(r, g, b, 255))
-    im_side.save(TEXTURE_DIR / "journey_lacquer_log.png")
-
-    im_top = Image.new("RGBA", (16, 16))
-    d_top = ImageDraw.Draw(im_top)
-    for x in range(16):
-        for y in range(16):
-            dx, dy = x - 7.5, y - 7.5
-            dist = math.sqrt(dx * dx + dy * dy)
-            if dist > 7.0:
-                d_top.point((x, y), fill=(175, 40, 28, 255))
-            else:
-                ring = int(math.sin(dist * 2.0) * 8)
-                d_top.point((x, y), fill=(195 + ring, 75 + ring // 2, 48 + ring // 3, 255))
-    im_top.save(TEXTURE_DIR / "journey_lacquer_log_top.png")
-
-    im_planks = Image.new("RGBA", (16, 16))
-    d_p = ImageDraw.Draw(im_planks)
-    for p_idx in range(4):
-        y0 = p_idx * 4
-        split_x = (p_idx * 6 + 4) % 16
-        for y in range(y0, y0 + 4):
-            for x in range(16):
-                if y == y0:
-                    d_p.point((x, y), fill=(205, 62, 45, 255))
-                elif y == y0 + 3:
-                    d_p.point((x, y), fill=(140, 30, 20, 255))
-                elif x == split_x:
-                    d_p.point((x, y), fill=(145, 32, 22, 255))
-                else:
-                    n = ((x * 5 + y * 9) % 7) - 3
-                    d_p.point((x, y), fill=(188 + n, 46 + n, 33 + n, 255))
-    im_planks.save(TEXTURE_DIR / "journey_lacquer_planks.png")
-
-
 def make_tatami_textures():
     im_top = Image.new("RGBA", (16, 16))
     d = ImageDraw.Draw(im_top)
@@ -259,64 +214,7 @@ def make_tatami_textures():
     im_side.save(TEXTURE_DIR / "journey_tatami_side.png")
 
 
-def make_shoji_textures():
-    im_dt = Image.new("RGBA", (16, 16))
-    d_dt = ImageDraw.Draw(im_dt)
-    for x in range(16):
-        for y in range(16):
-            is_frame = (x in (0, 1, 14, 15) or y in (0, 1, 15) or x in (5, 10) or y in (5, 10))
-            if is_frame:
-                d_dt.point((x, y), fill=(88, 64, 46, 255))
-            else:
-                n = ((x * 5 + y * 3) % 4)
-                d_dt.point((x, y), fill=(245 + n, 242 + n, 235 + n, 255))
-    im_dt.save(TEXTURE_DIR / "journey_shoji_door_top.png")
-
-    im_db = Image.new("RGBA", (16, 16))
-    d_db = ImageDraw.Draw(im_db)
-    for x in range(16):
-        for y in range(16):
-            is_wood_panel = (y >= 10)
-            is_frame = (x in (0, 1, 14, 15) or y in (0, 14, 15) or x in (5, 10) or y in (5,))
-            if is_wood_panel or is_frame:
-                col = 74 if is_wood_panel and (x % 3 == 0) else 86
-                d_db.point((x, y), fill=(col, col - 22, col - 40, 255))
-            else:
-                n = ((x * 5 + y * 3) % 4)
-                d_db.point((x, y), fill=(245 + n, 242 + n, 235 + n, 255))
-    im_db.save(TEXTURE_DIR / "journey_shoji_door_bottom.png")
-
-    im_w = Image.new("RGBA", (16, 16))
-    d_w = ImageDraw.Draw(im_w)
-    for x in range(16):
-        for y in range(16):
-            is_grid = (x in (0, 15) or y in (0, 15) or x in (5, 10) or y in (5, 10))
-            if is_grid:
-                d_w.point((x, y), fill=(84, 60, 42, 255))
-            else:
-                n = ((x * 7 + y * 5) % 4)
-                d_w.point((x, y), fill=(246 + n, 243 + n, 236 + n, 255))
-    im_w.save(TEXTURE_DIR / "journey_shoji_window.png")
-
-
 def make_lantern_textures():
-    im_pl = Image.new("RGBA", (16, 16))
-    d_pl = ImageDraw.Draw(im_pl)
-    for y in range(16):
-        for x in range(16):
-            if y in (0, 1, 14, 15):
-                d_pl.point((x, y), fill=(60, 44, 32, 255))
-            elif x in (0, 15):
-                d_pl.point((x, y), fill=(82, 60, 44, 255))
-            elif y in (5, 10):
-                d_pl.point((x, y), fill=(195, 155, 110, 255))
-            else:
-                dx = abs(x - 7.5)
-                dy = abs(y - 7.5)
-                glow = max(0, int(35 - dx * 3 - dy * 3))
-                d_pl.point((x, y), fill=(240 + glow // 3, 215 + glow // 2, 160 + glow, 255))
-    im_pl.save(TEXTURE_DIR / "journey_paper_lantern.png")
-
     im_sl = Image.new("RGBA", (16, 16))
     d_sl = ImageDraw.Draw(im_sl)
     for y in range(16):
@@ -552,47 +450,6 @@ def tatami_blocks():
     write_json(LOOT_DIR / "journey_tatami_slab.json", slab_loot_table("journey_tatami_slab"))
 
 
-def shoji_door_blocks():
-    name = "journey_shoji_door"
-    for part in ["bottom_left", "bottom_left_open", "bottom_right", "bottom_right_open",
-                 "top_left", "top_left_open", "top_right", "top_right_open"]:
-        is_top = "top" in part
-        is_right = "right" in part
-        parent_tmpl = "minecraft:block/door_" + ("top" if is_top else "bottom") + ("_right" if is_right else "_left")
-        if "open" in part: parent_tmpl += "_open"
-        write_json(MODEL_BLOCK_DIR / f"{name}_{part}.json", {
-            "parent": parent_tmpl,
-            "render_type": "minecraft:cutout",
-            "textures": {
-                "top": f"{NS}:block/{name}_top",
-                "bottom": f"{NS}:block/{name}_bottom"
-            }
-        })
-
-    variants = {}
-    for facing, y in [("east", None), ("south", 90), ("west", 180), ("north", 270)]:
-        for half in ["lower", "upper"]:
-            for hinge in ["left", "right"]:
-                for open_state in [False, True]:
-                    key = f"facing={facing},half={half},hinge={hinge},open={str(open_state).lower()}"
-                    part = f"{'top' if half == 'upper' else 'bottom'}_{hinge}"
-                    if open_state: part += "_open"
-                    entry = {"model": f"{NS}:block/{name}_{part}"}
-                    if y: entry["y"] = y
-                    variants[key] = entry
-    write_json(BLOCKSTATE_DIR / f"{name}.json", {"variants": variants})
-
-    write_json(MODEL_ITEM_DIR / f"{name}.json", {
-        "parent": "minecraft:item/generated",
-        "textures": {"layer0": f"{NS}:item/{name}"}
-    })
-    im_door_item = Image.open(TEXTURE_DIR / f"{name}_top.png").copy()
-    im_door_item.save(ASSETS / "textures/item" / f"{name}.png")
-
-    write_json(ITEM_DIR / f"{name}.json", {"model": {"type": "minecraft:model", "model": f"{NS}:item/{name}"}})
-    write_json(LOOT_DIR / f"{name}.json", door_loot_table(name))
-
-
 def shoji_window_blocks():
     name = "journey_shoji_window"
     write_json(MODEL_BLOCK_DIR / f"{name}.json", {
@@ -631,29 +488,7 @@ def shoji_window_blocks():
 
 
 def lantern_blocks():
-    # 1. 和纸灯笼
-    write_json(MODEL_BLOCK_DIR / "journey_paper_lantern.json", {
-        "parent": "minecraft:block/template_lantern",
-        "render_type": "minecraft:cutout",
-        "textures": {"lantern": f"{NS}:block/journey_paper_lantern"}
-    })
-    write_json(MODEL_BLOCK_DIR / "journey_paper_lantern_hanging.json", {
-        "parent": "minecraft:block/template_hanging_lantern",
-        "render_type": "minecraft:cutout",
-        "textures": {"lantern": f"{NS}:block/journey_paper_lantern"}
-    })
-    write_json(BLOCKSTATE_DIR / "journey_paper_lantern.json", {
-        "variants": {
-            "hanging=false": {"model": f"{NS}:block/journey_paper_lantern"},
-            "hanging=true": {"model": f"{NS}:block/journey_paper_lantern_hanging"}
-        }
-    })
-    write_json(MODEL_ITEM_DIR / "journey_paper_lantern.json", {
-        "parent": "minecraft:item/generated",
-        "textures": {"layer0": f"{NS}:item/journey_paper_lantern"}
-    })
-    Image.open(TEXTURE_DIR / "journey_paper_lantern.png").save(ASSETS / "textures/item/journey_paper_lantern.png")
-    write_json(ITEM_DIR / "journey_paper_lantern.json", {"model": {"type": "minecraft:model", "model": f"{NS}:item/journey_paper_lantern"}})
+    # 和纸灯笼的模型、贴图与物品改由 tools/fox_props_art.py 绘制，这里只写掉落表
     write_json(LOOT_DIR / "journey_paper_lantern.json", simple_loot_table("journey_paper_lantern"))
 
     # 2. 矮石灯笼
@@ -781,11 +616,9 @@ def main():
     make_plaster_texture()
     make_wainscot_texture()
     make_kawara_roof_texture()
-    make_lacquer_wood_textures()
     make_tatami_textures()
-    make_shoji_textures()
     make_lantern_textures()
-    # 狐像、手水钵、暖帘等庭院小品与温泉蒸汽改由 tools/fox_props_art.py 绘制
+    # 朱漆木贴图、障子门窗贴图与门模型、和纸灯笼，以及狐像、手水钵、暖帘等庭院小品与温泉蒸汽，改由 tools/fox_props_art.py 绘制
 
     print("正在生成模型与方块状态...")
     # 墙面
@@ -805,7 +638,6 @@ def main():
     # 榻榻米
     tatami_blocks()
     # 门窗
-    shoji_door_blocks()
     shoji_window_blocks()
     # 照明
     lantern_blocks()

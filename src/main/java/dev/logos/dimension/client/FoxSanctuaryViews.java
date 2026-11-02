@@ -123,6 +123,8 @@ public class FoxSanctuaryViews implements UIScenario {
         shot(s, "ryokan_gate", g -> look(g.designPoint(122.5, 2.6, 94), g.designPoint(122.5, 4, 112)));
         shot(s, "ryokan_court", g -> look(g.designPoint(124, 15, 128), g.designPoint(118, 0, 135)));
         shot(s, "onsen", g -> look(g.designPoint(140, 6, 157), g.designPoint(124, 0, 150)));
+        shot(s, "ryokan_stairs", g -> look(g.designPoint(111.5, 2.8, 121.5), g.designPoint(107.5, 4, 116)));
+        shot(s, "chozuya", g -> look(g.designPoint(131, 21, 43), g.designPoint(131, 17, 38)));
         shot(s, "fields", g -> look(g.designPoint(40, 6, 106), g.designPoint(55, -4, 138)));
         shot(s, "houses", g -> look(g.designPoint(60, 6, 72), g.designPoint(62, 2, 40)));
         s.teardown("restore HUD", ctx -> Minecraft.getInstance().options.hideGui = false);

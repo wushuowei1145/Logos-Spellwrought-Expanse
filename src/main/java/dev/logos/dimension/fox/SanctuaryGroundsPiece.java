@@ -25,6 +25,7 @@ import net.minecraft.world.level.block.state.properties.BambooLeaves;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.level.block.state.properties.SlabType;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -120,6 +121,7 @@ public class SanctuaryGroundsPiece extends StructurePiece {
                 Col c = plan(level, x, z, near, nearS);
                 if (c == null) continue;
                 apply(level, pos, x, z, c);
+                syncWorldgenHeightmaps(level, x, z);
                 bamboo(level, pos, x, z, c);
             }
         }
@@ -149,6 +151,33 @@ public class SanctuaryGroundsPiece extends StructurePiece {
             pos.move(0, -1, 0);
         }
         return min;
+    }
+
+    private static final Heightmap.Types[] WORLDGEN_MAPS = {Heightmap.Types.OCEAN_FLOOR_WG, Heightmap.Types.WORLD_SURFACE_WG};
+
+    /**
+     * 结构整形发生在特征阶段，此时区块只更新最终高度图，*_WG 还停在整形前；
+     * 别的群系的树多按 *_WG 落点，不同步的话会悬在削掉的路面上或埋进填出的坡里。
+     */
+    private static void syncWorldgenHeightmaps(WorldGenLevel level, int x, int z) {
+        ChunkAccess chunk = level.getChunk(x >> 4, z >> 4);
+        int lx = x & 15, lz = z & 15;
+        int surface = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, lx, lz);
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (Heightmap.Types type : WORLDGEN_MAPS) {
+            Heightmap map = chunk.getOrCreateHeightmapUnprimed(type);
+            // 原最高块被削掉：在该处“移除”一次，让高度图向下重找
+            int top = map.getFirstAvailable(lx, lz) - 1;
+            map.update(lx, top, lz, chunk.getBlockState(pos.set(x, top, z)));
+            // 填高：从现在的最高块往下找第一个算数的方块
+            for (int y = surface; y >= map.getFirstAvailable(lx, lz); y--) {
+                BlockState s = chunk.getBlockState(pos.set(x, y, z));
+                if (type.isOpaque().test(s)) {
+                    map.update(lx, y, lz, s);
+                    break;
+                }
+            }
+        }
     }
 
     /** 整形之后该列的地表。 */

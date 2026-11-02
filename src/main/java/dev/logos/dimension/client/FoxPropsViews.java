@@ -65,6 +65,30 @@ public class FoxPropsViews implements UIScenario {
                 for (int i = 0; i < hang.size(); i++) {
                     level.setBlockAndUpdate(new BlockPos(i * 2 + 1, y + 3, -2), hang.get(i).setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
                 }
+                // 第二排：绘马挂 1–4 层（第一个挂上一块写了字的绘马）、赛钱箱、铃与鈴緒、障子门开与关、两种纸灯笼
+                for (int i = 0; i < 4; i++) {
+                    level.setBlockAndUpdate(new BlockPos(i * 2, y + 1, 4), FoxWildsBlocks.EMA_RACK.get().defaultBlockState()
+                        .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH).setValue(dev.logos.dimension.cloudsea.EmaRackBlock.LAYERS, i + 1));
+                }
+                if (level.getBlockEntity(new BlockPos(0, y + 1, 4)) instanceof dev.logos.dimension.cloudsea.EmaRackBlockEntity rack) {
+                    var ema = new net.minecraft.world.item.ItemStack(FoxWildsBlocks.EMA.get());
+                    ema.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, net.minecraft.network.chat.Component.literal("五谷丰登"));
+                    rack.hang(ema);
+                    rack.hang(new net.minecraft.world.item.ItemStack(FoxWildsBlocks.EMA.get()));
+                }
+                level.setBlockAndUpdate(new BlockPos(8, y + 1, 4), FoxWildsBlocks.OFFERING_BOX.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+                level.setBlockAndUpdate(new BlockPos(10, y + 4, 4), Blocks.DARK_OAK_PLANKS.defaultBlockState());
+                level.setBlockAndUpdate(new BlockPos(10, y + 3, 4), Blocks.BELL.defaultBlockState().setValue(net.minecraft.world.level.block.BellBlock.ATTACHMENT, net.minecraft.world.level.block.state.properties.BellAttachType.CEILING));
+                level.setBlockAndUpdate(new BlockPos(10, y + 2, 4), FoxWildsBlocks.SUZU_ROPE.get().defaultBlockState().setValue(dev.logos.dimension.cloudsea.SuzuRopeBlock.BOTTOM, true));
+                var door = FoxWildsBlocks.SHOJI_DOOR.get().defaultBlockState().setValue(net.minecraft.world.level.block.DoorBlock.FACING, Direction.SOUTH);
+                for (int i = 0; i < 2; i++) {
+                    var d = door.setValue(net.minecraft.world.level.block.DoorBlock.OPEN, i == 1);
+                    level.setBlock(new BlockPos(13 + i * 3, y + 1, 4), d.setValue(net.minecraft.world.level.block.DoorBlock.HALF, DoubleBlockHalf.LOWER), 2);
+                    level.setBlock(new BlockPos(13 + i * 3, y + 2, 4), d.setValue(net.minecraft.world.level.block.DoorBlock.HALF, DoubleBlockHalf.UPPER), 2);
+                }
+                level.setBlockAndUpdate(new BlockPos(20, y + 1, 4), FoxWildsBlocks.PAPER_LANTERN.get().defaultBlockState());
+                level.setBlockAndUpdate(new BlockPos(21, y + 3, 4), Blocks.DARK_OAK_PLANKS.defaultBlockState());
+                level.setBlockAndUpdate(new BlockPos(21, y + 2, 4), FoxWildsBlocks.PAPER_LANTERN.get().defaultBlockState().setValue(net.minecraft.world.level.block.LanternBlock.HANGING, true));
                 DimensionTravel.teleport(ctx.player(), level, new Vec3(8, y + 4.2, 8.5), 180f, 22f);
                 ctx.player().setNoGravity(true);
             })
@@ -76,6 +100,18 @@ public class FoxPropsViews implements UIScenario {
             })
             .ticks(40)
             .screenshot("fox_props_close")
+            .server("shrine row", ctx -> {
+                var level = ctx.server().getLevel(LogosDimension.CLOUDSEA);
+                DimensionTravel.teleport(ctx.player(), level, new Vec3(5, 302.8, 8.5), 180f, 18f);
+            })
+            .ticks(40)
+            .screenshot("fox_props_shrine")
+            .server("door row", ctx -> {
+                var level = ctx.server().getLevel(LogosDimension.CLOUDSEA);
+                DimensionTravel.teleport(ctx.player(), level, new Vec3(17.5, 302.8, 9), 180f, 15f);
+            })
+            .ticks(40)
+            .screenshot("fox_props_doors")
             .teardown("restore HUD", ctx -> Minecraft.getInstance().options.hideGui = false);
     }
 }

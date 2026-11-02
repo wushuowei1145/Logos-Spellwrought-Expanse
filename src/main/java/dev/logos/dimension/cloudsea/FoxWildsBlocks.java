@@ -14,7 +14,9 @@ import net.minecraft.world.level.block.state.properties.BlockSetType;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.WoodType;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredBlock;
+import net.neoforged.neoforge.registries.DeferredItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -177,6 +179,25 @@ public final class FoxWildsBlocks {
             ShimenawaBlock::new,
             p -> p.mapColor(MapColor.SAND).strength(0.5f).sound(SoundType.GRASS).noOcclusion().noCollision()
     );
+
+    // 9. 神社用具：绘马挂（可叠 1–4 层、挂三块玩家绘马）、赛钱箱、鈴緒
+    public static final DeferredBlock<EmaRackBlock> EMA_RACK = register(
+            "journey_ema_rack",
+            EmaRackBlock::new,
+            p -> p.mapColor(MapColor.COLOR_BROWN).strength(1.5f).sound(SoundType.WOOD).noOcclusion()
+    );
+    public static final DeferredBlock<OfferingBoxBlock> OFFERING_BOX = register(
+            "journey_offering_box",
+            OfferingBoxBlock::new,
+            p -> p.mapColor(MapColor.COLOR_BROWN).strength(2.0f).sound(SoundType.WOOD).noOcclusion()
+    );
+    public static final DeferredBlock<SuzuRopeBlock> SUZU_ROPE = register(
+            "journey_suzu_rope",
+            SuzuRopeBlock::new,
+            p -> p.mapColor(MapColor.COLOR_RED).strength(0.3f).sound(SoundType.WOOL).noOcclusion().noCollision()
+    );
+    /** 绘马：在铁砧上改名即写下愿望，挂到绘马挂上会显示出来。 */
+    public static final DeferredItem<Item> EMA = DimensionBlocks.ITEMS.registerSimpleItem("journey_ema", p -> p.stacksTo(16));
 
     private static DeferredBlock<NorenBlock> noren(String id, MapColor color) {
         return register(id, NorenBlock::new, p -> p.mapColor(color).strength(0.5f).sound(SoundType.WOOL).noOcclusion().noCollision());

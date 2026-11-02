@@ -23,12 +23,8 @@ def machiya(c, noren_color='indigo', two_storey=True, goods=None, bench=False, l
     c.box(0, 0, front, W, 0, back, STONE_BASE)
     _floor(c, 1, W - 1, front + 1, 5, 0, B('packed_mud'))
     _floor(c, 1, W - 1, 6, back - 1, 0, FLOOR)
-    for x in range(1, W):
-        for z in range(6, back):
-            c.set(x, 1, z, L('journey_tatami_slab', type='bottom', waterlogged=False))
-    for x in range(1, W):
-        c.set(x, 1, 6, spruce_slab('bottom') if x % 2 else spruce_slab('bottom'))
-    interior_air(c, 1, W - 1, front + 1, back - 1, 1 if True else 1, 4)
+    interior_air(c, 1, W - 1, front + 1, back - 1, 1, 4)
+    # 后半是半格高的小上がり（不设门，进出只跨半格）
     for x in range(1, W):
         for z in range(6, back):
             c.set(x, 1, z, L('journey_tatami_slab', type='bottom', waterlogged=False))
@@ -55,14 +51,13 @@ def machiya(c, noren_color='indigo', two_storey=True, goods=None, bench=False, l
             c.set(x, 1, front, WAINSCOT)
     for x in door:
         c.set(x, 3, front, noren('north', noren_color))
-    # 檐下纸灯笼与店招
-    c.set(1, 4, 0, paper_lantern(True))
-    c.set(W - 1, 4, 0, paper_lantern(True))
-    # 一层披檐
-    for x in range(-0, W + 1):
-        c.set(x, 5, 0, tile_stairs('south'))
-        c.set(x, 5, front, tile_slab('bottom'))
     if two_storey:
+        # 檐下纸灯笼，挂在一层披檐下
+        c.set(1, 4, 0, paper_lantern(True))
+        c.set(W - 1, 4, 0, paper_lantern(True))
+        for x in range(0, W + 1):
+            c.set(x, 5, 0, tile_stairs('south'))
+            c.set(x, 5, front, tile_slab('bottom'))
         # 二层：退后一格，较矮，虫笼窗
         z2 = front + 1
         _floor(c, 0, W, front, back, 5, DARK_PLANKS)
@@ -75,11 +70,13 @@ def machiya(c, noren_color='indigo', two_storey=True, goods=None, bench=False, l
         for x in (2, 3, 5, 6):
             c.set(x, 7, z2, shoji_window('north'))
         interior_air(c, 1, W - 1, z2 + 1, back - 1, 6, 8)
-        gable_roof(c, 0, W, z2, back, 9, ridge_axis='x', eave=1)
+        gable_roof(c, 0, W, z2, back, 8, ridge_axis='x', eave=1)
     else:
-        interior_air(c, 1, W - 1, front + 1, back - 1, 5, 5)
-        _floor(c, 0, W, front, back, 5, DARK_PLANKS)
-        hip_roof(c, 0, W, front, back, 6, eave=1)
+        # 平屋：屋面直接从墙顶出檐，灯笼挂在檐下
+        _floor(c, 1, W - 1, front + 1, back - 1, 5, DARK_PLANKS)
+        hip_roof(c, 0, W, front, back, 4, eave=1)
+        c.set(1, 3, 0, paper_lantern(True))
+        c.set(W - 1, 3, 0, paper_lantern(True))
     if bench:
         # 檐下长凳：云杉台阶铺红毡
         for x in (1, 7):
@@ -221,7 +218,7 @@ def minka(variant):
         c.set(9, 4, 8, B('iron_bars', north=True, south=True, east=False, west=False, waterlogged=False))
         c.set(10, 1, 6, B('spruce_door', facing='north', half='lower', hinge='left', open=False, powered=False))
         c.set(10, 2, 6, B('spruce_door', facing='north', half='upper', hinge='left', open=False, powered=False))
-        gable_roof(c, 9, 12, 6, 11, 6, ridge_axis='z', eave=1)
+        gable_roof(c, 9, 12, 6, 11, 5, ridge_axis='z', eave=1)
         _veg_plot(c, 1, 11, 7, 12, crop='potatoes')
         fl_shrub(c, 11, 1, 2)
     else:

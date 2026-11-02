@@ -1,0 +1,19 @@
+{
+  "model": {
+    "type": "minecraft:composite",
+    "models": [
+      {
+        "type": "minecraft:model",
+        "model": "logos_dimension:block/journey_ema_rack_frame"
+      },
+      {
+        "type": "minecraft:model",
+        "model": "logos_dimension:block/journey_ema_rack_layer1"
+      },
+      {
+        "type": "minecraft:model",
+        "model": "logos_dimension:block/journey_ema_rack_layer2"
+      }
+    ]
+  }
+}

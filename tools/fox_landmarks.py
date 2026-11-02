@@ -159,7 +159,7 @@ def ryokan():
         c.box(x, 1, 9, x, 4, 9, POST)
     c.box(24, 0, 9, 32, 0, 11, PAVING)
     c.box(25, 5, 9, 31, 5, 11, DARK_PLANKS)
-    gable_roof(c, 25, 31, 9, 11, 6, ridge_axis='z', eave=1)
+    gable_roof(c, 25, 31, 9, 11, 5, ridge_axis='z', eave=1)
     c.set(26, 4, 10, paper_lantern(True))
     c.set(30, 4, 10, paper_lantern(True))
     for x in (24, 32):
@@ -172,10 +172,19 @@ def ryokan():
         low_table(c, x, 1, mz0 + 6)
         cushion(c, x - 1, 1, mz0 + 6)
         cushion(c, x + 1, 1, mz0 + 6)
-    # 楼梯：靠西墙的直梯
-    for k in range(8):
-        c.set(mx0 + 1, 1 + k, mz0 + 2 + k, B('spruce_stairs', facing='south', half='bottom', shape='straight', waterlogged=False))
-        c.clear(mx0 + 1, 2 + k, mz0 + 2 + k, mx0 + 1, 4 + k, mz0 + 2 + k)
+    # 楼梯：每层一跑，靠西墙两列并排，一层到二层在外侧一列，二层到三层在里侧一列
+    for f in range(len(levels) - 1):
+        base, rise = levels[f], levels[f + 1] - levels[f]
+        x = mx0 + 1 + f
+        for k in range(rise):
+            z = mz0 + 2 + k
+            c.set(x, base + k, z, B('spruce_stairs', facing='south', half='bottom', shape='straight', waterlogged=False))
+            c.clear(x, base + k + 1, z, x, base + k + 3, z)
+        # 上层地板在梯段上方开洞
+        for k in range(rise - 1):
+            c.set(x, levels[f + 1] - 1, mz0 + 2 + k, AIR)
+        # 梯脚前留一格平地
+        c.set(x, base - 1, mz0 + 1, FLOOR)
     for y in levels[1:]:
         balcony(c, mx0, mz0, mx1, mz1, y - 1, sides=('north', 'south'))
         for x in range(mx0 + 2, mx1 - 1, 4):
@@ -352,9 +361,10 @@ def haiden(c, x0, z0):
     c.set(cx, 6, z0 - 2, B('bell', attachment='ceiling', facing='north', powered=False))
     for s in range(-2, 3):
         c.set(cx + s, 6, z0 - 1, L('journey_shimenawa', facing='north'))
-    c.set(cx, 2, z0 - 1, B('dark_oak_planks'))
-    c.set(cx - 1, 2, z0 - 1, B('dark_oak_stairs', facing='east', half='bottom', shape='straight', waterlogged=False))
-    c.set(cx + 1, 2, z0 - 1, B('dark_oak_stairs', facing='west', half='bottom', shape='straight', waterlogged=False))
+    # 铃下垂两格鈴緒，最下一格带穗；台阶上正中是赛钱箱
+    c.set(cx, 5, z0 - 2, L('journey_suzu_rope', bottom=False))
+    c.set(cx, 4, z0 - 2, L('journey_suzu_rope', bottom=True))
+    c.set(cx, 2, z0 - 1, L('journey_offering_box', facing='north'))
     c.set(cx, 3, z0 + 6, L('journey_shrine_hokora', facing='north'))
     c.set(cx, 3, z0 + 3, B('red_carpet'))
     return x1, z1
@@ -384,29 +394,31 @@ def honden(c, x0, z0):
 
 
 def chozuya(c, x0, z0):
-    """手水舍：四根朱柱的小亭，中央石水钵与竹出水口。"""
+    """手水舍：四根朱柱的小亭；中央一块石砖托着石水钵，四周一圈朝内的含水石砖楼梯围成水槽，竹筧注水。"""
     for x in (x0, x0 + 4):
-        for z in (z0, z0 + 3):
+        for z in (z0, z0 + 4):
             c.box(x, 1, z, x, 4, z, LACQUER_LOG)
-    c.box(x0, 0, z0, x0 + 4, 0, z0 + 3, B('stone_bricks'))
-    c.box(x0, 5, z0, x0 + 4, 5, z0 + 3, LACQUER_PLANKS)
-    hip_roof(c, x0, x0 + 4, z0, z0 + 3, 6, eave=1)
-    for x in range(x0 + 1, x0 + 4):
-        c.set(x, 1, z0 + 1, L('journey_stone_basin', waterlogged=False))
-        c.set(x, 1, z0 + 2, L('journey_stone_basin', waterlogged=False))
-    c.set(x0 + 2, 2, z0 + 3, L('journey_bamboo_spout', facing='north'))
+    c.box(x0, 0, z0, x0 + 4, 0, z0 + 4, B('stone_bricks'))
+    cx, cz = x0 + 2, z0 + 2
+    c.set(cx, 1, cz, B('stone_bricks'))
+    c.set(cx, 2, cz, L('journey_stone_basin', waterlogged=False))
+    for dx in (-1, 0, 1):
+        for dz in (-1, 0, 1):
+            if dx == 0 and dz == 0:
+                continue
+            if dx and dz:
+                c.set(cx + dx, 1, cz + dz, B('stone_brick_slab', type='bottom', waterlogged=True))
+                continue
+            facing = 'east' if dx < 0 else 'west' if dx > 0 else 'south' if dz < 0 else 'north'
+            c.set(cx + dx, 1, cz + dz, B('stone_brick_stairs', facing=facing, half='bottom', shape='straight', waterlogged=True))
+    c.set(cx, 2, cz + 1, L('journey_bamboo_spout', facing='north', waterlogged=False))
+    c.box(x0, 5, z0, x0 + 4, 5, z0 + 4, LACQUER_PLANKS)
+    hip_roof(c, x0, x0 + 4, z0, z0 + 4, 5, eave=1)
 
-
-def ema_rack(c, x0, z0, length=5):
-    """绘马挂：深木框与小瓦顶，两层浅色木牌（桦木活板门）。"""
-    for x in (x0, x0 + length - 1):
-        c.box(x, 1, z0, x, 3, z0, B('dark_oak_log', axis='y'))
-    for x in range(x0, x0 + length):
-        c.set(x, 4, z0, tile_slab('bottom'))
-        if x0 < x < x0 + length - 1:
-            c.set(x, 3, z0, B('dark_oak_slab', type='top', waterlogged=False))
-            c.set(x, 2, z0, B('birch_trapdoor', facing='south', half='top', open=True, powered=False, waterlogged=False))
-            c.set(x, 1, z0, B('birch_trapdoor', facing='south', half='top', open=True, powered=False, waterlogged=False))
+def ema_racks(c, x0, y, z0, count=3, facing='north'):
+    """一排绘马挂方块，叠层多少交错，看起来挂得满满的。"""
+    for i in range(count):
+        c.set(x0 + i, y, z0, L('journey_ema_rack', facing=facing, layers=(4, 3, 4, 2)[i % 4]))
 
 
 def fox_pair(c, x, y, z, axis='x', gap=4, facing_in=True):

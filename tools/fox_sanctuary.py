@@ -306,9 +306,7 @@ def shrine(s):
     ch = Canvas()
     fl.chozuya(ch, 0, 0)
     s.put(ch, su - 3, 36, turns=1, y=16)
-    em = Canvas()
-    fl.ema_rack(em, 0, 0, length=6)
-    s.put(em, 152, 44, turns=2, y=16)
+    fl.ema_racks(c, 151, 17, 44, count=3, facing='north')
     fl.great_cherry(c, 156, 17, 32, seed=9)
     c.set(152, 17, 36, L('journey_shrine_hokora', facing='west'))
 

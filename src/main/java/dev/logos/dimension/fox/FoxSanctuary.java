@@ -1,7 +1,10 @@
 package dev.logos.dimension.fox;
 
 import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.cloudsea.EmaRackBlockEntity;
+import dev.logos.dimension.cloudsea.FoxWildsBlocks;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 import net.neoforged.bus.api.IEventBus;
@@ -18,6 +21,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class FoxSanctuary {
     private static final DeferredRegister<StructureType<?>> TYPES = DeferredRegister.create(Registries.STRUCTURE_TYPE, LogosDimension.ID);
     private static final DeferredRegister<StructurePieceType> PIECES = DeferredRegister.create(Registries.STRUCTURE_PIECE, LogosDimension.ID);
+    private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, LogosDimension.ID);
 
     public static final DeferredHolder<StructureType<?>, StructureType<FoxSanctuaryStructure>> TYPE =
         TYPES.register("fox_sanctuary", () -> () -> FoxSanctuaryStructure.CODEC);
@@ -26,9 +30,14 @@ public final class FoxSanctuary {
     public static final DeferredHolder<StructurePieceType, StructurePieceType> TEMPLATE =
         PIECES.register("fox_sanctuary_template", () -> (StructurePieceType.StructureTemplateType) SanctuaryTemplatePiece::new);
 
+    /** 绘马挂上的三块玩家绘马。 */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<EmaRackBlockEntity>> EMA_RACK =
+        BLOCK_ENTITIES.register("journey_ema_rack", () -> new BlockEntityType<>(EmaRackBlockEntity::new, FoxWildsBlocks.EMA_RACK.get()));
+
     public static void register(IEventBus bus) {
         TYPES.register(bus);
         PIECES.register(bus);
+        BLOCK_ENTITIES.register(bus);
     }
 
     private FoxSanctuary() {

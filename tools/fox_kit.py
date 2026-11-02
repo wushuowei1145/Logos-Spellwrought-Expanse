@@ -393,12 +393,14 @@ def wa_building(c, x0, z0, x1, z1, y0=0, floors=1, floor_h=4, roof='hip', ridge_
     y = y0 + 1
     for f in range(floors):
         top = y + floor_h - 1
-        c.box(x0 + 1, y - 1 if f else y0, z0 + 1, x1 - 1, y - 1 if f else y0, z1 - 1, FLOOR)
+        fy = y - 1 if f else y0
+        c.box(x0 + 1, fy, z0 + 1, x1 - 1, fy, z1 - 1, FLOOR)
         c.clear(x0 + 1, y, z0 + 1, x1 - 1, top, z1 - 1)
         if tatami:
+            # 整块榻榻米铺在地板层，地面与门槛齐平；纵横交错铺成市松
             for x in range(x0 + 1, x1):
                 for z in range(z0 + 1, z1):
-                    c.set(x, y, z, L('journey_tatami_slab', type='bottom', waterlogged=False))
+                    c.set(x, fy, z, TATAMI_X if ((x - x0 - 1) // 2 + (z - z0 - 1)) % 2 else TATAMI_Z)
         ws = 1 if f == 0 else 0  # 一层带木腰墙，上层整面白壁
         timber_wall(c, x0, x1, z0, z0, y, top, posts_every=bays, wainscot=ws)
         timber_wall(c, x0, x1, z1, z1, y, top, posts_every=bays, wainscot=ws)
@@ -422,10 +424,11 @@ def wa_building(c, x0, z0, x1, z1, y0=0, floors=1, floor_h=4, roof='hip', ridge_
         if skirts and f < floors - 1:
             skirt_roof(c, x0, z0, x1, z1, y, overhang=1)
         y += 1
+    # 屋面从墙顶横梁那一层起出檐，压住墙头，不在墙与屋面之间留一道缝
     if roof == 'hip':
-        ridge = hip_roof(c, x0, x1, z0, z1, y - 1, eave=eave)
+        ridge = hip_roof(c, x0, x1, z0, z1, y - 2, eave=eave)
     else:
-        ridge = gable_roof(c, x0, x1, z0, z1, y - 1, ridge_axis=ridge_axis, eave=eave)
+        ridge = gable_roof(c, x0, x1, z0, z1, y - 2, ridge_axis=ridge_axis, eave=eave)
     return levels, ridge
 
 

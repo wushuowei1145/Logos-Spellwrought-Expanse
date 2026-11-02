@@ -487,5 +487,12 @@
   "block.logos_dimension.journey_noren_white": "生成暖帘",
   "item.logos_dimension.journey_noren_white": "生成暖帘",
   "block.logos_dimension.journey_noren_brown": "焦茶暖帘",
-  "item.logos_dimension.journey_noren_brown": "焦茶暖帘"
+  "item.logos_dimension.journey_noren_brown": "焦茶暖帘",
+  "block.logos_dimension.journey_ema_rack": "绘马挂",
+  "item.logos_dimension.journey_ema_rack": "绘马挂",
+  "block.logos_dimension.journey_offering_box": "赛钱箱",
+  "item.logos_dimension.journey_offering_box": "赛钱箱",
+  "block.logos_dimension.journey_suzu_rope": "鈴緒",
+  "item.logos_dimension.journey_suzu_rope": "鈴緒",
+  "item.logos_dimension.journey_ema": "绘马（在铁砧上改名写下愿望）"
 }

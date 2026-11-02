@@ -1,6 +1,3 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "logos_dimension:item/journey_paper_lantern"
-  }
+  "parent": "logos_dimension:block/journey_paper_lantern"
 }
