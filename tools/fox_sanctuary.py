@@ -21,6 +21,7 @@ from blueprint_nbt import write_structure  # noqa: E402
 from fox_kit import *  # noqa: E402,F401,F403
 import fox_buildings as fb  # noqa: E402
 import fox_landmarks as fl  # noqa: E402
+import fox_yatai as fy  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 D = ROOT / 'src/main/resources/data/logos_dimension'
@@ -533,6 +534,7 @@ def compose():
     s = Site()
     base_terrain(s)
     street(s)
+    fy.street_row(s, street_v)
     food_plaza(s)
     shrine(s)
     ryokan(s)
@@ -547,6 +549,7 @@ def compose():
 def main():
     s = compose()
     tiles = write_templates(s)
+    fy.write_templates(OUT, DATA_VERSION)
     layout(s, tiles)
     worldgen()
     wild_features()

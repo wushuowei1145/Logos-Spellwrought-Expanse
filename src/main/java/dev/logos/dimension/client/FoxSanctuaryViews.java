@@ -127,6 +127,16 @@ public class FoxSanctuaryViews implements UIScenario {
         shot(s, "chozuya", g -> look(g.designPoint(131, 21, 43), g.designPoint(131, 17, 38)));
         shot(s, "fields", g -> look(g.designPoint(40, 6, 106), g.designPoint(55, -4, 138)));
         shot(s, "houses", g -> look(g.designPoint(60, 6, 72), g.designPoint(62, 2, 40)));
+        // 主街中央的屋台：高处顺街看一排；站在北侧通道（脚踩街面）看第一组与最后一组的长凳和暖帘
+        shot(s, "yatai_row", g -> look(g.designPoint(25, 4, 85.5), g.designPoint(60, 0.5, 90)));
+        shot(s, "yatai_close", g -> look(g.designPoint(45.5, 1, 85.5), g.designPoint(33, 1.8, 88)));
+        shot(s, "yatai_east", g -> look(g.designPoint(124.5, 1.5, 89.5), g.designPoint(104, 1.8, 93)));
+        s.server("night", ctx -> {
+            var level = ctx.server().getLevel(LogosDimension.CLOUDSEA);
+            level.clockManager().setTotalTicks(level.registryAccess().lookupOrThrow(Registries.WORLD_CLOCK).getOrThrow(JourneySeasons.CLOCK), 18000);
+        });
+        shot(s, "yatai_night", g -> look(g.designPoint(45.5, 1, 85.5), g.designPoint(33, 1.8, 88)));
+        shot(s, "yatai_night_row", g -> look(g.designPoint(25, 4, 85.5), g.designPoint(60, 0.5, 90)));
         s.teardown("restore HUD", ctx -> Minecraft.getInstance().options.hideGui = false);
     }
 }

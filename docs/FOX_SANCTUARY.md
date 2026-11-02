@@ -40,6 +40,7 @@
 | --- | --- | --- |
 | 入口 | 西侧中段 | 自 -14 升到主街的石阶槽，两侧石垣与石灯，顶端大鸟居与一对狐像 |
 | 主街 | 自入口向东，略作 S 形 | 石板路、北侧小水渠与门前石板，两侧町家商铺 |
+| 屋台街 | 主街中线 | 十三处路边屋台分五组一字排开，组间对准巷口留出横穿的口子，食摊广场门前留空 |
 | 食摊广场 | 主街北侧中段 | 四处屋台、水井、长凳、樱 |
 | 温泉旅馆 | 主街东段南侧 | 门与前庭、三层本馆（二三层朱栏外廊）、木廊围合的中庭樱树与池、两翼客房与食堂、内汤与露天风吕 |
 | 神社 | 街尾向北的山包，+16 | 街尾大鸟居、两侧千本鸟居的石阶、参道石灯与狐像、手水舍、拝殿与本殿、绘马挂、老樱与注连绳 |
@@ -64,6 +65,25 @@
 ![西南台地的旱田与水田](screenshots/fox-sanctuary/fields.png)
 
 以上均为实际客户端截图（`fox_sanctuary_views`，春季正午），未测光影包。
+
+## 主街屋台
+
+仿福冈中洲的路边屋台，由 `tools/fox_yatai.py` 生成，地块种类 `yatai`，每处从六种里随机挑一个：拉面、烤串、关东煮、甘味、酒、章鱼烧。
+
+- 车身 3×2：前排上半砖柜台（下面留出伸腿的空当），后排灶台（烟熏炉、炉子、营火、汤锅、酒桶）；柜台前是长凳或栅栏加压力板的高脚凳。
+- 屋顶在第三层：板葺平顶与布篷顶面 2.5 格，灰瓦与朱漆的人字小坡顶屋脊 3 格；檐下 2 格净空，行人从檐下走过不碰头。檐下一排暖帘或纸灯笼。
+- 西端挂双面写店名的吊牌（字会发光、无碰撞），东端挂灯笼、堆酒桶竹箱；同一组朝向一致、间隔 2 格，所以组内也有一格能横穿主街。
+- 柜台、灶台、座位三排以主街中线为中心，两侧各留至少 2 格通行，两侧商铺地块不动。
+
+![沿北侧通道看屋台街](screenshots/fox-sanctuary/yatai_row.png)
+
+![北侧通道看第一组：关东煮的灯笼与长凳、酒屋台的杉玉与高脚凳](screenshots/fox-sanctuary/yatai_close.png)
+
+![街尾一组屋台](screenshots/fox-sanctuary/yatai_east.png)
+
+![入夜后的屋台街](screenshots/fox-sanctuary/yatai_night.png)
+
+以上为实际客户端截图（`fox_sanctuary_views` 的 `yatai_*` 机位），未测光影包。
 
 ## 方块
 
@@ -93,7 +113,7 @@
 
 ```text
 python tools/fox_props_art.py      # 小品贴图与模型
-python tools/fox_sanctuary.py      # 设计数据、模板、结构 JSON、樱野放置规则
+python tools/fox_sanctuary.py      # 设计数据、模板（含 fox_yatai.py 的屋台）、结构 JSON、樱野放置规则
 ./gradlew runClient -PlogosJar=... -PldTest=fox_sanctuary_views -PldTestHeadless -PldTestWindow=1280x720
 ./gradlew runClient -PlogosJar=... -PldTest=fox_props_views -PldTestHeadless -PldTestWindow=1280x720
 ```
