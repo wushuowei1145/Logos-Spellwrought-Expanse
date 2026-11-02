@@ -273,12 +273,13 @@ def two_bone(S, W, a, b, pole, sign):
     bend = math.degrees(math.acos(max(-1, min(1, np.dot(u, f)))))
     return F, sign * bend, reach - (a + b)
 
-def rigid_arm(S, G, a, b, pref, target, previous, twist=120.0, previous_tau=None, up=(0, 1, 0)):
+def rigid_arm(S, G, a, b, pref, target, previous, twist=120.0, previous_tau=None, up=(0, 1, 0), body=None):
     """没有腕关节的手臂：手与前臂一体，只用肩（三向）和肘（弯曲加前臂自转）把拳心送到握点 G。
 
     b 是肘到拳心的长度（前臂加手）。到了握点后还剩手肘绕“肩—握点”连线的转角，逐个试，
     前臂自转按闭式让拳心正对 target（期望的手部朝向）给出的刀身方向；剩下对不上的就是刀柄穿过拳心的偏角。
-    pref 是偏好的手肘朝向，previous 是上一帧的手肘位置（保持连续，不翻面）。
+    pref 是偏好的手肘朝向，previous 是上一帧的手肘位置（保持连续，不翻面）；
+    body 给出世界坐标点陷进躯干的深度，手臂穿进身体重罚。
     返回 (上臂世界旋转, 弯曲角, 前臂自转角, 手肘位置, 刀在拳中的残差角, 够不着的长度)。"""
     dhat = unit(G - S)
     u1 = np.asarray(pref, float) - dhat * np.dot(pref, dhat)
@@ -292,6 +293,11 @@ def rigid_arm(S, G, a, b, pref, target, previous, twist=120.0, previous_tau=None
         F, bend, over = two_bone(S, G, a, b, pole, +1)
         local = (F @ rot_x(bend)).T @ blade
         elbow = S + F @ np.array([0, -a, 0])
+        inside = 0.0
+        if body is not None:
+            fore = unit(G - elbow)
+            for p in (S + (elbow - S) * 0.6, elbow, elbow + fore * b * 0.35, elbow + fore * b * 0.7, G):
+                inside += body(p)
         # 方块拳头只看得出刀柄穿过拳心的方向：前臂自转让拳心正对刀身，刀绕自身轴的转动看不出来。
         # 袖子截面是正方形，twist 为 None 时只转 90° 的整数倍，肘部棱角保持对齐；换档有代价，避免来回跳。
         if twist is None:
@@ -304,7 +310,7 @@ def rigid_arm(S, G, a, b, pref, target, previous, twist=120.0, previous_tau=None
             residual = math.acos(max(-1.0, min(1.0, float(np.dot(through, local)))))
             # 手肘偏离默认朝向（向下、略向后外）和抬过肩下方 1/4 上臂处都扣分，第三人称姿势才自然。
             lift = max(0.0, float(np.dot(elbow - S, up)) / a + 0.25)
-            cost = residual + ELBOW_PREF * (1 - math.cos(phi)) + 2.5 * lift + (0.05 if tau else 0)
+            cost = residual + ELBOW_PREF * (1 - math.cos(phi)) + 2.5 * lift + 6.0 * inside / a + (0.05 if tau else 0)
             if previous is not None:
                 cost += 2.0 * np.linalg.norm(elbow - previous) / a
             if previous_tau is not None and tau != previous_tau:
@@ -433,6 +439,15 @@ class Baker:
                 old_pos, old_R = target(side, previous)
                 pos, R = old_pos + (pos - old_pos) * w, slerp(old_R, R, w)
             hands[side] = pos, R
+        body = None
+        if getattr(sk, 'body', None) is not None:
+            # 躯干方块（静止坐标）；点换回躯干坐标后，陷进去的深度就是到最近一面的距离。
+            lo, hi = (np.asarray(v, float) for v in sk.body)
+            inverse = np.linalg.inv(torso)
+
+            def body(p):
+                q = (inverse @ np.append(p, 1))[:3]
+                return max(0.0, float(min(np.min(q - lo), np.min(hi - q))))
         for side in ('Right', 'Left'):
             grip, Rh = hands[side]
             arm, fore, hand = side + 'Arm', side + 'ForeArm', side + 'Hand'
@@ -443,7 +458,7 @@ class Baker:
             # 玩家模型没有手腕：手与前臂一体，拳心在前臂延长线上（握点偏移只取沿前臂的分量）。
             F, bend, tau, elbow, residual, over = rigid_arm(S, grip, a, b + abs(sk.hand_grip[1]), pole, Rh,
                                                             self.elbows.get(side), getattr(sk, 'twist', TWIST),
-                                                            self.taus.get(side), Rt[:, 1])
+                                                            self.taus.get(side), Rt[:, 1], body)
             self.elbows[side] = elbow
             self.taus[side] = tau
             self.residuals.append((clip['name'], t, side, residual))
@@ -510,7 +525,7 @@ class Baker:
 # 给数字则连续转动、以此为上限（度）。连续转动会让方块袖子在肘部错开、棱角穿插。
 TWIST = None
 # 手肘朝向默认方向（ARM_POLE）的权重，与刀柄偏角（弧度）相比。
-ELBOW_PREF = 0.9
+ELBOW_PREF = 1.4
 PRIMARY = 0.65
 SECONDARY = -1.1
 
