@@ -2,7 +2,6 @@ package dev.logos.dimension;
 
 import com.google.gson.*;
 import dev.logos.dimension.combat.*;
-import dev.logos.dimension.longsword.LongswordPhase;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -11,7 +10,7 @@ import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-/** 动作的接触时序、循环边界、战斗骨架资源约束，以及迁移到 TLM 骨骼名后与旧渲染逐矩阵一致。 */
+/** 动作循环边界、战斗骨架资源约束，以及迁移到 TLM 骨骼名后与旧渲染逐矩阵一致；招式时序见 MovesetTest。 */
 class LongswordMotionTest {
     static JsonObject read(String path) throws Exception {
         try (var stream = LongswordMotionTest.class.getResourceAsStream(path)) {
@@ -25,17 +24,6 @@ class LongswordMotionTest {
         var clips = CombatClip.parseFile(combat("animations/longsword_" + view + ".animation"), warnings);
         assertEquals(List.of(), warnings);
         return clips;
-    }
-    @Test void cadenceAndChargeMatchContacts() {
-        for (var phase : new LongswordPhase[]{LongswordPhase.ATTACK_1,LongswordPhase.ATTACK_2,LongswordPhase.ATTACK_3}) {
-            assertEquals(12.5,phase.duration(1,0));
-            assertTrue(phase.contact(1)>0 && phase.contact(1)<phase.duration(1,0));
-            assertEquals(phase.contact(1)/2,phase.contact(2));
-        }
-        assertEquals("charge_hold",LongswordPhase.CHARGING.clip(11));
-        assertEquals(0,LongswordPhase.CHARGING.seconds(43,1,0),.0001);
-        assertEquals(.54,LongswordPhase.RELEASE.seconds(LongswordPhase.RELEASE.contact(1),1,0),.0001);
-        assertEquals(0,LongswordPhase.CANCEL.seconds(5,1,5),.0001);
     }
     @Test void bothViewsHaveAllNineClipsAndRightEdgeRoot() throws Exception {
         for (var view : new String[]{"fp","tp"}) {

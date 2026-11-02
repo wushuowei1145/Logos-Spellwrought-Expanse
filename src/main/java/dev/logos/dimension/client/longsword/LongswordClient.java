@@ -3,6 +3,7 @@ package dev.logos.dimension.client.longsword;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.combat.Moveset;
 import dev.logos.dimension.item.LongswordItem;
 import dev.logos.dimension.longsword.*;
 import java.util.HashMap;
@@ -38,7 +39,7 @@ public final class LongswordClient {
     public static LongswordPayload pose(UUID player) { return STATES.get(player); }
     @SubscribeEvent static void packets(RegisterClientPayloadHandlersEvent event) {
         event.register(LongswordPayload.TYPE, (p, ctx) -> {
-            if (p.phase() == LongswordPhase.CLEAR) STATES.remove(p.player()); else STATES.put(p.player(), p);
+            if (p.cleared()) STATES.remove(p.player()); else STATES.put(p.player(), p);
         });
     }
     @SubscribeEvent static void logout(ClientPlayerNetworkEvent.LoggingOut event) { STATES.clear(); repeat = 0; }
@@ -49,7 +50,8 @@ public final class LongswordClient {
     @SubscribeEvent static void tick(ClientTickEvent.Post event) {
         var mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) { STATES.clear(); return; }
-        if (mc.screen == null && mc.options.keyAttack.isDown() && !mc.player.isUsingItem() && LongswordItem.variant(mc.player.getMainHandItem()) >= 0) {
+        if (mc.screen == null && mc.options.keyAttack.isDown() && !mc.player.isUsingItem() && LongswordItem.variant(mc.player.getMainHandItem()) >= 0
+                && STATES.containsKey(mc.player.getUUID())) {
             if (repeat-- <= 0) { ClientPacketDistributor.sendToServer(new LongswordPayload.Attack()); repeat = 2; }
         } else repeat = 0;
     }
@@ -57,13 +59,15 @@ public final class LongswordClient {
         var mc = Minecraft.getInstance();
         if (mc.player == null) return;
         var pose=STATES.get(mc.player.getUUID());
-        if (pose!=null && pose.phase()==LongswordPhase.SHEATHE && (event.isAttack() || event.isUseItem())) {
+        if (pose!=null && pose.sheathing() && (event.isAttack() || event.isUseItem())) {
             event.setCanceled(true); event.setSwingHand(false); return;
         }
         if (LongswordItem.variant(mc.player.getMainHandItem()) < 0) return;
-        if (event.isUseItem() && (pose==null || pose.phase()!=LongswordPhase.IDLE)) {
+        if (event.isUseItem() && (pose==null || !pose.acceptsUse())) {
             event.setCanceled(true); event.setSwingHand(false); return;
         }
+        // 服务端还没回报持剑动作（例如招式数据缺失）时不拦截左键，长剑按原版物品攻击。
+        if (pose == null) return;
         if (event.isAttack()) {
             event.setCanceled(true); event.setSwingHand(false);
             ClientPacketDistributor.sendToServer(new LongswordPayload.Attack());
@@ -75,8 +79,9 @@ public final class LongswordClient {
     private static LongswordRig.Sample sample(LongswordPayload p, boolean firstPerson, double now) {
         var rig = LongswordRig.get(p.variant(), firstPerson);
         if (rig == null) return null;
-        double age = Math.max(0, now - p.started());
-        return rig.sample(p.phase().clip(age), p.phase().seconds(age, p.rate(), p.reverse()));
+        double length = rig.length(p.clip());
+        if (length < 0) return null;
+        return rig.sample(p.clip(), (float) Moveset.playbackSeconds(p.playback(), length, now - p.started(), p.speed(), p.offset()));
     }
     @SubscribeEvent static void modifiers(RegisterRenderStateModifiersEvent event) {
         event.registerAvatarEntityModifier(new AvatarRenderStateModifier() {

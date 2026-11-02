@@ -62,19 +62,66 @@ NPC 模型**不需要**添加这两根骨骼：运行时自己算出它们的位
 
 两把长剑的数据由 `tools/import_longswords.py` 从仓库外的审定美术工程生成：曦誓工程提供玩家骨架和动作，两把剑各自提供网格。手改美术工程后重跑脚本，不要手改生成的 JSON。
 
-## 5. 运行时
+招式（第 5 节）放在服务端数据包：`data/<命名空间>/combat/movesets/<名>.json`，长剑是 `data/logos_dimension/combat/movesets/longsword.json`。独立服务端不加载 `assets`，所以招式不和动作放在一起；客户端也不需要招式文件。
+
+## 5. 招式状态机
+
+招式文件描述一张状态图：每个**招式**对应一段动作，**转移**说明在什么输入、什么时间窗口切到哪一招。服务端逐刻推进并决定出招与接触时刻；客户端只收到“动作名、开始刻、播放速度、播放方式”，自己取样画面，不做任何决定。玩家用按键、NPC 用 AI 向同一台状态机（`MoveRunner`）发送输入。
+
+```json
+{
+  "start": "draw", "sheathe": "sheathe", "combo_memory": 1.5,
+  "moves": {
+    "idle": {"clip": "idle", "length": 2.4, "playback": "loop",
+             "on": [{"input": "attack", "to": "attack_1", "combo": true}, {"input": "use_press", "to": "charge_start"}]},
+    "attack_1": {"clip": "attack_1", "length": 0.625, "attack_speed_base": 1.6, "contact": 0.24,
+                 "combo_next": "attack_2", "next": "idle",
+                 "on": [{"input": "attack", "to": "attack_2", "window": [0.425, 0.625], "queue": true}]},
+    "charge_cancel": {"clip": "charge_start", "playback": "reverse", "next": "idle"},
+    "sheathe": {"clip": "sheathe", "length": 1.2, "next": "$clear"}
+  }
+}
+```
+
+| 字段 | 含义 |
+|---|---|
+| `start` | 拿起武器时进入的招式。 |
+| `sheathe` | 换下武器时强制进入的招式；播完（`next` 为 `$clear`）后交回原版。不写时换下武器立即结束。 |
+| `combo_memory` | 连招记忆（秒，按游戏时间）：从上一段连招开始算，在这段时间内从待机出招会接着上一段的 `combo_next`。 |
+| `clip` | 动作名，对应 `animations/<类别>_<视角>.animation.json` 里的短名；不写时与招式同名。 |
+| `length` | 动作时长（秒），必须与动作文件一致（`MovesetTest` 检查）。 |
+| `playback` | `once`（播完停在末帧，默认）、`loop`（循环，不会自动结束）、`reverse`（从进入时上一招式已播到的位置倒放回 0，用于中途取消）。 |
+| `attack_speed_base` | 写了就按攻速缩放：播放速度 = 实际攻速 ÷ 该值（限制在 0.2–4 倍），进入招式时确定。 |
+| `contact` | 接触时刻（动作时间，秒）；到点时由武器或生物结算一次命中。 |
+| `next` | 播完后的去向；`$clear` 表示结束整套招式。不循环的招式必须写。 |
+| `combo_next` | 连招的下一段，配合 `combo_memory` 与转移的 `combo`。 |
+| `reset_combo` | 进入时清空连招记忆（例如蓄力）。 |
+| `on` | 转移列表，按顺序取第一条满足条件的。 |
+
+转移字段：`input` 为 `attack`、`use_press`、`use_release`；`to` 为目标招式或 `$clear`；`window` 为 `[起, 止]` 动作时间窗口（含端点，`止` 可省略表示到结束）；`queue` 为真时输入先记下，到本招式结束的那一刻切换（不对齐游戏刻，连段节奏不漂移）；`combo` 为真时若连招记忆有效，改去记忆中那一段的 `combo_next`。
+
+时间约定：招式里的时间都是**动作时间**，带 `attack_speed_base` 的招式按攻速缩放；`combo_memory` 用游戏时间。播完后没有排队输入时，在到点的那一刻进入 `next`。
+
+兼容（第 1 节第 5 条）：招式文件缺失或格式错误时 `Movesets` 记一次日志，长剑不进入持剑动作，按原版物品处理（左键是原版攻击）；客户端在服务端回报持剑动作之前也不拦截左键。
+
+## 6. 运行时
 
 `dev.logos.dimension.combat` 不依赖客户端类，服务端也能用（以后用于烘焙命中轨迹）：
 
 - `CombatSkeleton`：读取骨架，按父级排序；父级缺失的骨骼当根骨骼处理，循环父级报错；`missingRequired()` 列出缺少的标准骨骼。
 - `CombatClip`：读取 Bedrock 动作文件，按骨骼和通道采样。一段动作解析失败只跳过这一段。
 - `CombatPose`：一帧姿势。`sample` 从动作取样，`blend` 在两帧之间过渡（位移线性、旋转四元数球面插值），`matrices` 套到任意骨架上求模型空间矩阵。
+- `Moveset`：读取并校验招式文件（去向不存在、不循环却没有 `next` 等都报出原因）；`playbackSeconds` 是客户端与服务端共用的取样时间换算。
+- `MoveRunner`：一名角色身上的招式状态机，只依赖游戏刻和攻速，通过 `Actor` 回调换招与接触。
+- `Movesets`：按服务端资源管理器缓存招式，`/reload` 后重新读取。
 
-长剑客户端 `LongswordRig` 用它们取样并绘制剑、剑鞘和分段手臂。迁移到本标准时，用迁移前的渲染算法对旧数据求了参考矩阵（`src/test/resources/combat/longsword_reference.json`），`LongswordMotionTest` 逐矩阵对照，保证动作外观没有变化。
+长剑客户端 `LongswordRig` 用它们取样并绘制剑、剑鞘和分段手臂。迁移到本标准时，用迁移前的渲染算法对旧数据求了参考矩阵（`src/test/resources/combat/longsword_reference.json`），`LongswordMotionTest` 逐矩阵对照，保证动作外观没有变化。长剑招式迁移到状态机时，`MovesetTest` 按迁移前的时间轴逐刻对照出招、接触、排队接段、连招记忆、蓄力与取消。
 
-## 6. 后续顺序
+迁移后唯一的时序差别：旧版下一段的输入窗口固定为收势最后 4 游戏刻，现在是动作时间 0.425 秒起；原版剑攻速（1.6）下两者相同，攻速被其他效果改变时窗口随动作一起缩放。
 
-1. 招式状态图（JSON）：起手、判定、可取消、结束时间点，点击和超时的去向，冲刺/空中/蓄力等条件；接上 `blend` 做出招间的过渡。
+## 7. 后续顺序
+
+1. 改手感：取消窗口、整段输入缓冲、出招间用 `blend` 过渡；先决定提前接刀时伤害节奏怎么平衡。冲刺、空中等输入条件按需要加入。
 2. 玩家全身参考骨架：腰与腿分段、分段护腿与靴子，仍然只在动作期间替换。
 3. 第 1 节第 10 条：检测其他玩家模型模组并退回。
 4. NPC 适配：在 `NpcRenderer.adjustModelBonesForRender` 里把姿势写进 GeckoLib 骨骼，扣除静止旋转、按胯高缩放、双手握柄 IK；战斗层只覆盖它接管的骨骼，腿可以继续用 GeckoLib 的行走动画。核对 GeckoLib 读取 Bedrock 旋转的符号与本页一致。

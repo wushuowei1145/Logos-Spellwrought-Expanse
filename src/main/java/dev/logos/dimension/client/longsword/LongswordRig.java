@@ -87,6 +87,11 @@ public final class LongswordRig {
     private static Matrix4f local(Vector3f pivot, Vector3f rotation) {
         return CombatPose.local(pivot, new CombatPose.Joint(new Vector3f(), rotation, new Vector3f(1)));
     }
+    /** 动作时长（秒）；动作文件里没有这段动作时为 -1。 */
+    public double length(String clip) {
+        var animation = clips.get(clip);
+        return animation == null ? -1 : animation.length();
+    }
     /** 取样一帧；动作文件里没有这段动作时为 null。 */
     public Sample sample(String clip, float seconds) {
         var animation = clips.get(clip);

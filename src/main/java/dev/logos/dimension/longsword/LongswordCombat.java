@@ -1,6 +1,9 @@
 package dev.logos.dimension.longsword;
 
 import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.combat.MoveRunner;
+import dev.logos.dimension.combat.Moveset;
+import dev.logos.dimension.combat.Movesets;
 import dev.logos.dimension.item.LongswordItem;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,23 +25,40 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.NetworkRegistry;
 
-/** 服务端决定出招、接触时刻和射线命中；切物品、死亡、离线都会取消待结算攻击。 */
+/**
+ * 长剑接入招式状态机（数据包 combat/movesets/longsword.json）：服务端决定出招、接触时刻和射线命中；
+ * 切物品、死亡、离线都会取消待结算攻击。招式读不到时长剑按原版物品处理。
+ */
 @EventBusSubscriber(modid = LogosDimension.ID)
 public final class LongswordCombat {
+    public static final net.minecraft.resources.Identifier MOVESET = LogosDimension.id("longsword");
     private static final Map<UUID, State> STATES = new HashMap<>();
     private static final ThreadLocal<Boolean> CONTACT = ThreadLocal.withInitial(() -> false);
-    private static final class State {
-        ItemStack stack;
-        int slot, variant, combo;
-        LongswordPhase phase = LongswordPhase.DRAW;
-        double start, lastAttack = -100;
-        float rate = 1, reverse;
-        boolean hit, queued;
-        Object level;
-        LongswordPayload payload(ServerPlayer player) { return new LongswordPayload(player.getUUID(), variant, phase, start, rate, reverse); }
+    private static final class State implements MoveRunner.Actor {
+        final ServerPlayer player;
+        final ItemStack stack;
+        final int slot, variant;
+        final Object level;
+        MoveRunner runner;
+        State(ServerPlayer player, int variant) {
+            this.player = player; this.stack = player.getMainHandItem(); this.variant = variant;
+            this.slot = player.getInventory().getSelectedSlot(); this.level = player.level();
+        }
+        @Override public double attackSpeed() { return player.getAttributeValue(Attributes.ATTACK_SPEED); }
+        @Override public void moveStarted(MoveRunner runner) { sync(player, payload(runner)); }
+        @Override public void contact(MoveRunner runner) { if (selected(player, this)) LongswordCombat.contact(player); }
+        LongswordPayload payload(MoveRunner runner) {
+            if (runner.cleared()) return LongswordPayload.clear(player.getUUID());
+            var move = runner.move(); var set = runner.moveset();
+            byte flags = (byte) ((move.accepts(Moveset.Input.USE_PRESS) ? LongswordPayload.ACCEPTS_USE : 0)
+                    | (move.name().equals(set.sheathe()) ? LongswordPayload.SHEATHING : 0));
+            return new LongswordPayload(player.getUUID(), variant, move.name(), move.clip(), runner.start(),
+                    (float) runner.rate(), (float) runner.offset(), move.playback(), flags);
+        }
     }
     @SubscribeEvent static void packets(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("1");
+        // 同步包改为招式快照，版本号随之提高，新旧版本不会互相解码。
+        var registrar = event.registrar("2");
         registrar.playToClient(LongswordPayload.TYPE, LongswordPayload.CODEC);
         registrar.playToServer(LongswordPayload.Attack.TYPE, LongswordPayload.Attack.CODEC, (p, ctx) -> {
             if (ctx.player() instanceof ServerPlayer player) attack(player);
@@ -46,63 +66,51 @@ public final class LongswordCombat {
     }
     public static LongswordPayload pose(ServerPlayer player) {
         var state = STATES.get(player.getUUID());
-        return state == null ? new LongswordPayload(player.getUUID(), 0, LongswordPhase.CLEAR, 0, 1, 0) : state.payload(player);
+        return state == null ? LongswordPayload.clear(player.getUUID()) : state.payload(state.runner);
     }
-    private static void sync(ServerPlayer player, State state) { broadcast(player, state.payload(player)); }
-    private static void broadcast(ServerPlayer player, LongswordPayload payload) {
+    /** 当前招式名；没有持剑动作时为 null。 */
+    public static String move(ServerPlayer player) {
+        var state = STATES.get(player.getUUID());
+        return state == null ? null : state.runner.move().name();
+    }
+    private static void sync(ServerPlayer player, LongswordPayload payload) {
         // 模拟玩家没有协商客户端通道；只给观看此区块且支持动作包的连接同步。
         for (var viewer : player.level().players()) if ((viewer == player || viewer.getChunkTrackingView().contains(player.chunkPosition()))
                 && NetworkRegistry.hasChannel(viewer.connection, LongswordPayload.TYPE.id())) PacketDistributor.sendToPlayer(viewer, payload);
-    }
-    private static void begin(ServerPlayer player, State state, LongswordPhase phase, double now) {
-        state.phase = phase; state.start = now; state.hit = false; state.queued = false;
-        sync(player, state);
     }
     private static boolean selected(ServerPlayer player, State state) {
         return player.isAlive() && !player.isSpectator() && !state.stack.isEmpty() && state.level == player.level()
                 && player.getInventory().getSelectedSlot() == state.slot && player.getMainHandItem() == state.stack;
     }
-    public static void attack(ServerPlayer player) {
+    private static Moveset moveset(ServerPlayer player) { return Movesets.get(player.level().getServer(), MOVESET); }
+    private static State active(ServerPlayer player) {
         var state = STATES.get(player.getUUID());
-        if (state == null || !selected(player, state) || player.isUsingItem()) return;
-        double now = player.level().getGameTime();
-        if (state.phase.attack()) {
-            // 仅在收势的最后四刻接收一条输入，持续按住左键也不能跳过攻速。
-            if (now - state.start >= state.phase.duration(state.rate, 0) - 4) state.queued = true;
-        } else if (state.phase == LongswordPhase.IDLE) {
-            if (now - state.lastAttack > 30) state.combo = 0;
-            strike(player, state, now);
-        }
+        return state == null || !selected(player, state) ? null : state;
     }
-    private static void strike(ServerPlayer player, State state, double now) {
-        state.rate = (float) Math.clamp(player.getAttributeValue(Attributes.ATTACK_SPEED) / 1.6, .2, 4);
-        state.combo = state.combo % 3 + 1; state.lastAttack = now;
-        begin(player, state, LongswordPhase.values()[LongswordPhase.ATTACK_1.ordinal() + state.combo - 1], now);
+    public static void attack(ServerPlayer player) {
+        var state = active(player);
+        if (state != null && !player.isUsingItem()) state.runner.input(Moveset.Input.ATTACK, player.level().getGameTime());
     }
     public static boolean charge(ServerPlayer player) {
-        var state = STATES.get(player.getUUID());
-        if (state == null || !selected(player, state) || state.phase != LongswordPhase.IDLE) return false;
-        state.combo = 0;
-        begin(player, state, LongswordPhase.CHARGING, player.level().getGameTime());
-        return true;
+        var state = active(player);
+        return state != null && state.runner.input(Moveset.Input.USE_PRESS, player.level().getGameTime());
     }
     public static void release(ServerPlayer player) {
-        var state = STATES.get(player.getUUID());
-        if (state == null || state.phase != LongswordPhase.CHARGING || !selected(player, state)) return;
-        double now = player.level().getGameTime();
-        state.reverse = (float) Math.clamp(now - state.start, 0, 11);
-        begin(player, state, state.reverse >= 11 ? LongswordPhase.RELEASE : LongswordPhase.CANCEL, now);
+        var state = active(player);
+        if (state != null) state.runner.input(Moveset.Input.USE_RELEASE, player.level().getGameTime());
     }
     @SubscribeEvent static void vanillaAttack(AttackEntityEvent event) {
         if (LongswordItem.variant(event.getEntity().getMainHandItem()) < 0 || CONTACT.get()) return;
+        // 招式缺失时不拦截，长剑按原版物品攻击。
+        if (!(event.getEntity() instanceof ServerPlayer player) || moveset(player) == null) return;
         event.setCanceled(true);
-        if (event.getEntity() instanceof ServerPlayer player) attack(player);
+        attack(player);
     }
     @SubscribeEvent static void tick(ServerTickEvent.Post event) {
         for (var player : event.getServer().getPlayerList().getPlayers()) tick(player);
     }
     private static void clear(ServerPlayer player) {
-        if (STATES.remove(player.getUUID()) != null) broadcast(player, pose(player));
+        if (STATES.remove(player.getUUID()) != null) sync(player, LongswordPayload.clear(player.getUUID()));
     }
     private static boolean carried(ServerPlayer player, ItemStack stack) {
         for (int i = 0; i < player.getInventory().getContainerSize(); i++) if (player.getInventory().getItem(i) == stack) return true;
@@ -113,26 +121,23 @@ public final class LongswordCombat {
         if (!player.isAlive() || player.isSpectator() || state != null && state.level != player.level()) { clear(player); return; }
         double now = player.level().getGameTime();
         if (state != null && !selected(player, state)) {
-            if (state.stack.isEmpty() || !carried(player, state.stack)) { clear(player); state = null; }
-            else if (state.phase != LongswordPhase.SHEATHE) begin(player, state, LongswordPhase.SHEATHE, now);
+            var sheathe = state.runner.moveset().sheathe();
+            if (state.stack.isEmpty() || !carried(player, state.stack) || sheathe == null) { clear(player); state = null; }
+            else if (!state.runner.move().name().equals(sheathe)) state.runner.force(sheathe, now);
         }
         if (state == null) {
             int variant = LongswordItem.variant(player.getMainHandItem());
             if (variant < 0) return;
-            state = new State(); state.stack = player.getMainHandItem(); state.variant = variant;
-            state.slot = player.getInventory().getSelectedSlot(); state.level = player.level(); STATES.put(player.getUUID(), state);
-            begin(player, state, LongswordPhase.DRAW, now); return;
+            var set = moveset(player);
+            if (set == null) return;
+            state = new State(player, variant); STATES.put(player.getUUID(), state);
+            state.runner = new MoveRunner(set, state, now);
+            return;
         }
-        if ((state.phase.attack() || state.phase == LongswordPhase.RELEASE) && !state.hit
-                && now - state.start >= state.phase.contact(state.rate)) {
-            state.hit = true;
-            if (selected(player, state)) contact(player);
-        }
-        if (now - state.start >= state.phase.duration(state.rate, state.reverse)) {
-            if (state.phase == LongswordPhase.SHEATHE) { clear(player); return; }
-            if (state.phase.attack() && state.queued) strike(player, state, state.start + state.phase.duration(state.rate, 0));
-            else begin(player, state, LongswordPhase.IDLE, now);
-        } else if (state.phase == LongswordPhase.CHARGING && !player.isUsingItem()) release(player);
+        state.runner.tick(now);
+        if (state.runner.cleared()) { STATES.remove(player.getUUID()); return; }
+        // 松开右键的包可能早于或晚于这一刻到达；这里补一次，保证蓄力不会卡住。
+        if (!player.isUsingItem() && selected(player, state)) state.runner.input(Moveset.Input.USE_RELEASE, now);
     }
     private static void contact(ServerPlayer player) {
         var from = player.getEyePosition();

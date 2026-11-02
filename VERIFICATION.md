@@ -1,5 +1,23 @@
 # 首版验证记录
 
+## 招式状态机与长剑迁移
+
+2026-11-02：分支 `feat/combat-movesets`，基于 main `71e3816`（已合并 PR #109）。新增数据驱动的招式状态机（`Moveset`、`MoveRunner`、`Movesets`，格式见 [战斗骨架与兼容性规范](docs/COMBAT_SKELETON.md) 第 5 节），长剑的出招、接触、排队接段、连招记忆、蓄力、取消和收剑改由 `data/logos_dimension/combat/movesets/longsword.json` 描述，删除写死的 `LongswordPhase`。同步包改为招式快照（动作名、开始刻、速度、播放方式），通道版本由 1 升为 2。时序与手感不变；新增兼容行为：招式数据缺失或损坏时记日志，长剑按原版物品处理，客户端在服务端回报持剑动作前不拦截左键。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元与构建 | **129/129** 通过，`test build` 成功；新增 `MovesetTest` 12 项，按迁移前的时间轴逐刻对照拔剑、三连段（接触刻、0.425 秒起排队、在 42.5/55 刻对齐接段）、连招记忆 30 刻边界、攻速 2 倍、短按倒放取消、满蓄力保持与释放、边界刻松手、蓄力清空连招、收剑取消待结算攻击，以及动作时长与动作文件一致、校验报错 |
+| 世界测试 | 长剑 8 项各跑 6 次：本分支 3 次全过、3 次只有 `longsword_combo` 失败；同机 main 上 6 次中 5 次同样只有它失败，报错相同（第二、三段射线命中目标但没有掉血）。临时日志确认本分支三段都在预期刻命中，属于已有的测试环境问题，本轮未修；其余 7 项每次都通过 |
+| 实际客户端 | `group:longsword` **3/3 场景、33/33 检查**；与上一轮 main 截图放大对照，第二段攻击、下劈等同帧姿势一致 |
+
+唯一的时序差别：下一段的输入窗口旧版固定为收势最后 4 游戏刻，现在是动作时间 0.425 秒起；原版剑攻速 1.6 下相同，攻速被改变时窗口随动作缩放。普通渲染 1280×720；Minecraft 26.1.2、NeoForge 26.1.2.112、Java 25、Logos 0.6.0。没有改手感（取消窗口、过渡混合），没有做 NPC、光影或联机测试。
+
+```text
+./gradlew --offline test build -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew --offline runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:longsword_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar -PldTest=group:longsword -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 战斗骨架标准与长剑迁移
 
 2026-11-02：分支 `feat/combat-skeleton`，基于 main `d46b591`。新增 [战斗骨架与兼容性规范](docs/COMBAT_SKELETON.md) 与共用运行时 `dev.logos.dimension.combat`；两把长剑的动作改为 TLM 骨骼名的 Bedrock 动作文件，玩家骨架、剑网格、动作拆成三类文件。外观与玩法不变；新增一项兼容行为：骨架、网格或动作资源缺失、损坏时记日志并退回原版持物渲染，不再抛异常。
