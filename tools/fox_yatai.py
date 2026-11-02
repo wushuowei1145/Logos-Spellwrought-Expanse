@@ -48,11 +48,8 @@ def _stairs(wood, facing, half='bottom'):
 
 
 def _hanging_sign(c, nbt, x, y, z, wood, text, rotation=4):
-    """檐下吊牌：两面都写店名，夜里字会发光。"""
+    """檐下吊牌：留白不写字（维护者要求），玩家可以自己写上店名；text 只作变体说明。"""
     c.set(x, y, z, B(f'{wood}_hanging_sign', rotation=rotation, attached=False, waterlogged=False))
-    side = {'messages': ['', text, '', ''], 'color': 'white' if wood in ('dark_oak', 'spruce', 'mangrove') else 'black',
-            'has_glowing_text': 1}
-    nbt[(x, y, z)] = {'id': 'minecraft:hanging_sign', 'front_text': side, 'back_text': dict(side), 'is_waxed': 1}
 
 
 # ---------- 屋顶 ----------

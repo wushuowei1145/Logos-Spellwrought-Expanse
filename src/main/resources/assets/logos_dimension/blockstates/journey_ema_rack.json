@@ -2,10 +2,96 @@
   "multipart": [
     {
       "when": {
+        "facing": "north",
+        "left": "false",
+        "up": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_post_left",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "left": "false",
+        "up": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_post_left_tall",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "right": "false",
+        "up": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_post_right",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "right": "false",
+        "up": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_post_right_tall",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_top",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "left": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_cap_left",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_cap_right",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_hang_bar",
+        "y": 0
+      }
+    },
+    {
+      "when": {
         "facing": "north"
       },
       "apply": {
-        "model": "logos_dimension:block/journey_ema_rack_frame",
+        "model": "logos_dimension:block/journey_ema_rack_bar",
         "y": 0
       }
     },
@@ -47,6 +133,92 @@
       "apply": {
         "model": "logos_dimension:block/journey_ema_rack_layer4",
         "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "left": "false",
+        "up": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_post_left",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "left": "false",
+        "up": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_post_left_tall",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "right": "false",
+        "up": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_post_right",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "right": "false",
+        "up": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_post_right_tall",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_top",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "left": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_cap_left",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_cap_right",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_hang_bar",
+        "y": 90
       }
     },
     {
@@ -54,7 +226,7 @@
         "facing": "east"
       },
       "apply": {
-        "model": "logos_dimension:block/journey_ema_rack_frame",
+        "model": "logos_dimension:block/journey_ema_rack_bar",
         "y": 90
       }
     },
@@ -96,6 +268,92 @@
       "apply": {
         "model": "logos_dimension:block/journey_ema_rack_layer4",
         "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "left": "false",
+        "up": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_post_left",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "left": "false",
+        "up": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_post_left_tall",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "right": "false",
+        "up": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_post_right",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "right": "false",
+        "up": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_post_right_tall",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_top",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "left": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_cap_left",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_cap_right",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_hang_bar",
+        "y": 180
       }
     },
     {
@@ -103,7 +361,7 @@
         "facing": "south"
       },
       "apply": {
-        "model": "logos_dimension:block/journey_ema_rack_frame",
+        "model": "logos_dimension:block/journey_ema_rack_bar",
         "y": 180
       }
     },
@@ -149,10 +407,96 @@
     },
     {
       "when": {
+        "facing": "west",
+        "left": "false",
+        "up": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_post_left",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "left": "false",
+        "up": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_post_left_tall",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "right": "false",
+        "up": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_post_right",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "right": "false",
+        "up": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_post_right_tall",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_top",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "left": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_cap_left",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "right": "false"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_cap_right",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true"
+      },
+      "apply": {
+        "model": "logos_dimension:block/journey_ema_rack_hang_bar",
+        "y": 270
+      }
+    },
+    {
+      "when": {
         "facing": "west"
       },
       "apply": {
-        "model": "logos_dimension:block/journey_ema_rack_frame",
+        "model": "logos_dimension:block/journey_ema_rack_bar",
         "y": 270
       }
     },

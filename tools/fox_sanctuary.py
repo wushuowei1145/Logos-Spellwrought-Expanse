@@ -22,6 +22,7 @@ from fox_kit import *  # noqa: E402,F401,F403
 import fox_buildings as fb  # noqa: E402
 import fox_landmarks as fl  # noqa: E402
 import fox_yatai as fy  # noqa: E402
+import fox_life as life  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 D = ROOT / 'src/main/resources/data/logos_dimension'
@@ -238,7 +239,7 @@ def food_plaza(s):
     for du, dv in ((-1, -1), (1, 1)):
         c.box(wu + du, 2, wv + dv, wu + du, 3, wv + dv, fence('spruce'))
     c.box(wu - 1, 4, wv - 1, wu + 1, 4, wv + 1, tile_slab('bottom'))
-    c.set(wu, 3, wv, B('chain', axis='y', waterlogged=False))
+    c.set(wu, 3, wv, B('iron_chain', axis='y', waterlogged=False))
     for u in (u0 + 3, u0 + 9, u0 + 15):
         c.set(u, 1, v1 - 2, spruce_slab('bottom'))
         c.set(u + 1, 1, v1 - 2, spruce_slab('bottom'))
@@ -543,6 +544,13 @@ def compose():
     edge_band(s)
     entrance(s)
     rim_planting(s)
+    # 生活气息：灯笼串、巷口杂物、街尾茶庭、住宅区的树与花坛、草坪上的草与野花
+    rnd = random.Random(2026)
+    life.lantern_strings(s, street_v)
+    life.alley_props(s, street_v, rnd)
+    life.tea_garden(s, 137, 69, 157, 99, rnd)
+    life.greenery(s, (14, 14, 162, 112), rnd)
+    life.lawn_cover(s, rnd)
     return s
 
 

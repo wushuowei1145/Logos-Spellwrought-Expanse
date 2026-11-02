@@ -125,6 +125,7 @@ public class FoxSanctuaryViews implements UIScenario {
         shot(s, "onsen", g -> look(g.designPoint(140, 6, 157), g.designPoint(124, 0, 150)));
         shot(s, "ryokan_stairs", g -> look(g.designPoint(111.5, 2.8, 121.5), g.designPoint(107.5, 4, 116)));
         shot(s, "chozuya", g -> look(g.designPoint(131, 21, 43), g.designPoint(131, 17, 38)));
+        shot(s, "tea_garden", g -> look(g.designPoint(136, 6, 92), g.designPoint(148, 0, 82)));
         shot(s, "fields", g -> look(g.designPoint(40, 6, 106), g.designPoint(55, -4, 138)));
         shot(s, "houses", g -> look(g.designPoint(60, 6, 72), g.designPoint(62, 2, 40)));
         // 主街中央的屋台：高处顺街看一排；站在北侧通道（脚踩街面）看第一组与最后一组的长凳和暖帘

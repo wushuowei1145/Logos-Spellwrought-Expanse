@@ -292,21 +292,26 @@ def stairs_block(name, base_tex):
         "parent": "minecraft:block/outer_stairs",
         "textures": {"bottom": tex, "top": tex, "side": tex}
     })
+    # 与原版楼梯方块状态相同：下半的“左”转角、上半的“右”转角各再转 90°，否则西北、东南转角会错位
     variants = {}
-    for facing, y in [("east", None), ("west", 180), ("south", 90), ("north", 270)]:
-        for half, x in [("bottom", None), ("top", 180)]:
+    for facing, base in [("east", 0), ("south", 90), ("west", 180), ("north", 270)]:
+        for half in ("bottom", "top"):
             for shape in ["straight", "inner_left", "inner_right", "outer_left", "outer_right"]:
-                m_suffix = ""
-                if "inner" in shape:
-                    m_suffix = "_inner"
-                elif "outer" in shape:
-                    m_suffix = "_outer"
-                key = f"facing={facing},half={half},shape={shape}"
+                m_suffix = "_inner" if "inner" in shape else "_outer" if "outer" in shape else ""
+                y = base
+                if half == "bottom" and shape.endswith("left"):
+                    y -= 90
+                if half == "top" and shape.endswith("right"):
+                    y += 90
+                y %= 360
                 entry = {"model": f"{NS}:block/{name}{m_suffix}"}
-                if y: entry["y"] = y
-                if x: entry["x"] = x
-                entry["uvlock"] = True
-                variants[key] = entry
+                if half == "top":
+                    entry["x"] = 180
+                if y:
+                    entry["y"] = y
+                if half == "top" or y:
+                    entry["uvlock"] = True
+                variants[f"facing={facing},half={half},shape={shape}"] = entry
     write_json(BLOCKSTATE_DIR / f"{name}.json", {"variants": variants})
     write_json(MODEL_ITEM_DIR / f"{name}.json", {"parent": f"{NS}:block/{name}"})
     write_json(ITEM_DIR / f"{name}.json", {"model": {"type": "minecraft:model", "model": f"{NS}:item/{name}"}})

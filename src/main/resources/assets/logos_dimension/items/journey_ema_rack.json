@@ -4,7 +4,27 @@
     "models": [
       {
         "type": "minecraft:model",
-        "model": "logos_dimension:block/journey_ema_rack_frame"
+        "model": "logos_dimension:block/journey_ema_rack_post_left"
+      },
+      {
+        "type": "minecraft:model",
+        "model": "logos_dimension:block/journey_ema_rack_post_right"
+      },
+      {
+        "type": "minecraft:model",
+        "model": "logos_dimension:block/journey_ema_rack_top"
+      },
+      {
+        "type": "minecraft:model",
+        "model": "logos_dimension:block/journey_ema_rack_cap_left"
+      },
+      {
+        "type": "minecraft:model",
+        "model": "logos_dimension:block/journey_ema_rack_cap_right"
+      },
+      {
+        "type": "minecraft:model",
+        "model": "logos_dimension:block/journey_ema_rack_bar"
       },
       {
         "type": "minecraft:model",

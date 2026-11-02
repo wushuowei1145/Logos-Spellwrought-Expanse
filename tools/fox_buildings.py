@@ -83,6 +83,16 @@ def machiya(c, noren_color='indigo', two_storey=True, goods=None, bench=False, l
             c.set(x, 1, 0, spruce_slab('bottom'))
     if goods:
         goods(c)
+    # 檐下两角：一边立一面幟（nobori），一边摆盆栽或酒桶，各家不同
+    import random as _random
+    rnd = _random.Random(sum(map(ord, noren_color + (goods.__name__ if goods else ''))) + two_storey * 7)
+    banner = rnd.choice(('red_banner', 'white_banner', 'blue_banner', 'orange_banner'))
+    c.set(0, 1, 0, B(banner, rotation=8))
+    if rnd.random() < 0.5:
+        c.set(W, 1, 0, B(rnd.choice(('potted_azalea_bush', 'potted_bamboo', 'potted_fern', 'potted_cherry_sapling'))))
+    else:
+        c.set(W, 1, 0, B('barrel', facing='up', open=False))
+        c.set(W, 2, 0, B(rnd.choice(('potted_azalea_bush', 'potted_flowering_azalea_bush', 'flower_pot'))))
     # 后院：碎石地与小柴堆
     _floor(c, 0, W, 11, 12, 0, B('coarse_dirt'))
     c.set(1, 1, 12, B('barrel', facing='up', open=False))
@@ -231,6 +241,26 @@ def minka(variant):
         _veg_plot(c, 1, 10, 8, 12, crop='beetroots')
         _woodshed(c, 10, 10)
         c.set(12, 1, 1, B('composter', level=4))
+    _yard(c, variant)
+    return c
+
+
+def _yard(c, variant):
+    """住宅小院：一圈矮篱（正面留门口），院角一棵小樱或松，几丛花与盆栽。"""
+    import fox_landmarks as fl
+    pts = [(x, z) for x in (0, 12) for z in range(1, 13)] + [(x, 12) for x in range(1, 12)] + [(x, 0) for x in list(range(0, 4)) + list(range(7, 13))]
+    pts = [(x, z) for (x, z) in pts if c.get(x, 1, z) is None]
+    fence_line(c, pts, 1, wood='bamboo' if variant == 'b' else 'spruce')
+    corner = {'a': (1, 1), 'b': (2, 10), 'c': (11, 4)}[variant]
+    if variant == 'b':
+        fl.pine(c, corner[0], 1, corner[1], seed=3)
+    else:
+        fl.cherry_tree(c, corner[0], 1, corner[1], height=5, radius=3, seed=ord(variant))
+    for (x, z, f) in ((3, 1, 'poppy'), (8, 1, 'oxeye_daisy'), (9, 2, 'azure_bluet'), (2, 2, 'cornflower')):
+        if c.get(x, 1, z) is None:
+            c.set(x, 1, z, B(f))
+    if c.get(7, 1, 1) is None:
+        c.set(7, 1, 1, B('potted_azalea_bush'))
     return c
 
 

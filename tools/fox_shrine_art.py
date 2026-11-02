@@ -63,17 +63,29 @@ def ema_textures():
 
 
 def ema_rack():
-    """深木框与小瓦顶，梁下与中横木各挂一排旧绘马；叠层越多挂得越密，第 4 层在前面再错开挂一排。"""
+    """深木框与小瓦顶，梁下与中横木各挂一排旧绘马；叠层越多挂得越密，第 4 层在前面再错开挂一排。
+    左右、上下相连时只在两端立柱、只在最上一排盖顶，拼成一个大架子。"""
     ema_textures()
     tex = {'wood': f'{NS}:block/journey_ema_rack', 'roof': f'{NS}:block/journey_kawara_roof', 'particle': f'{NS}:block/journey_ema_rack'}
-    frame = [
-        el((0.5, 0, 7), (2, 14, 9), 'wood', uv={f: [0, 0, 2, 7] for f in ('north', 'south', 'west', 'east')}),
-        el((14, 0, 7), (15.5, 14, 9), 'wood', uv={f: [2, 0, 4, 7] for f in ('north', 'south', 'west', 'east')}),
-        el((0, 13, 7), (16, 15, 9), 'wood', uv={'north': [0, 1, 16, 3], 'south': [0, 1, 16, 3], 'up': [0, 0, 16, 2], 'down': [0, 4, 16, 6]}),
-        el((2, 7.5, 7.5), (14, 8.5, 8.5), 'wood', uv={'north': [0, 4, 12, 5], 'south': [0, 4, 12, 5]}),
-        el((-0.5, 15, 5.5), (16.5, 16, 10.5), 'roof'),
-    ]
-    model('journey_ema_rack_frame', tex, frame, cutout=True)
+    side_uv = lambda u: {f: [u, 0, u + 2, 7] for f in ('north', 'south', 'west', 'east')}
+    beam_uv = {'north': [0, 1, 16, 3], 'south': [0, 1, 16, 3], 'up': [0, 0, 16, 2], 'down': [0, 4, 16, 6]}
+    # 拆成几块，由方块状态按左右、上方是否相连组合：只在两端立柱，只在最上一排盖顶
+    parts = {
+        'post_left': [el((0.5, 0, 7), (2, 14, 9), 'wood', uv=side_uv(0))],
+        'post_left_tall': [el((0.5, 0, 7), (2, 16, 9), 'wood', uv=side_uv(0))],
+        'post_right': [el((14, 0, 7), (15.5, 14, 9), 'wood', uv=side_uv(2))],
+        'post_right_tall': [el((14, 0, 7), (15.5, 16, 9), 'wood', uv=side_uv(2))],
+        'top': [el((0, 13, 7), (16, 15, 9), 'wood', uv=beam_uv), el((0, 15, 5.5), (16, 16, 10.5), 'roof', skip=('west', 'east'))],
+        'cap_left': [el((-0.5, 15, 5.5), (0, 16, 10.5), 'roof')],
+        'cap_right': [el((16, 15, 5.5), (16.5, 16, 10.5), 'roof')],
+        'hang_bar': [el((0, 13.5, 7.5), (16, 14.5, 8.5), 'wood', uv={'north': [0, 4, 16, 5], 'south': [0, 4, 16, 5]}, skip=('west', 'east'))],
+        'bar': [el((0, 7.5, 7.5), (16, 8.5, 8.5), 'wood', uv={'north': [0, 4, 16, 5], 'south': [0, 4, 16, 5]}, skip=('west', 'east'))],
+    }
+    for name, els in parts.items():
+        model(f'journey_ema_rack_{name}', tex, els, cutout=True)
+    old_frame = A / 'models/block/journey_ema_rack_frame.json'
+    if old_frame.exists():
+        old_frame.unlink()
 
     def plaques(row_y, xs, z, seed):
         rnd = random.Random(seed)
@@ -95,17 +107,24 @@ def ema_rack():
     ]
     for i, els in enumerate(layers, start=1):
         model(f'journey_ema_rack_layer{i}', tex, els, cutout=True)
+    rules = [
+        ('post_left', {'left': 'false', 'up': 'false'}), ('post_left_tall', {'left': 'false', 'up': 'true'}),
+        ('post_right', {'right': 'false', 'up': 'false'}), ('post_right_tall', {'right': 'false', 'up': 'true'}),
+        ('top', {'up': 'false'}), ('cap_left', {'up': 'false', 'left': 'false'}), ('cap_right', {'up': 'false', 'right': 'false'}),
+        ('hang_bar', {'up': 'true'}), ('bar', {}),
+    ]
     parts = []
     for f, y in (('north', 0), ('east', 90), ('south', 180), ('west', 270)):
-        parts.append({'when': {'facing': f}, 'apply': {'model': f'{NS}:block/journey_ema_rack_frame', 'y': y}})
+        for name, cond in rules:
+            parts.append({'when': {'facing': f, **cond}, 'apply': {'model': f'{NS}:block/journey_ema_rack_{name}', 'y': y}})
         for i in range(1, 5):
             parts.append({'when': {'facing': f, 'layers': '|'.join(str(n) for n in range(i, 5))},
                           'apply': {'model': f'{NS}:block/journey_ema_rack_layer{i}', 'y': y}})
     write(A / 'blockstates/journey_ema_rack.json', {'multipart': parts})
     # 物品模型：框加两层旧绘马
-    write(A / 'models/item/journey_ema_rack.json', {'parent': f'{NS}:block/journey_ema_rack_frame'})
+    write(A / 'models/item/journey_ema_rack.json', {'parent': f'{NS}:block/journey_ema_rack_top'})
     write(A / 'items/journey_ema_rack.json', {'model': {'type': 'minecraft:composite', 'models': [
-        {'type': 'minecraft:model', 'model': f'{NS}:block/journey_ema_rack_frame'},
+        *[{'type': 'minecraft:model', 'model': f'{NS}:block/journey_ema_rack_{n}'} for n in ('post_left', 'post_right', 'top', 'cap_left', 'cap_right', 'bar')],
         {'type': 'minecraft:model', 'model': f'{NS}:block/journey_ema_rack_layer1'},
         {'type': 'minecraft:model', 'model': f'{NS}:block/journey_ema_rack_layer2'}]}})
     write(A / 'models/item/journey_ema.json', {'parent': 'minecraft:item/generated', 'textures': {'layer0': f'{NS}:item/journey_ema'}})
@@ -257,16 +276,30 @@ def shoji():
     kumiko(win, 0, 0, 16, 16, step_x=3, step_y=3)
     save(win, 'journey_shoji_window')
     item_dir = A / 'textures/item'
+    # 物品图标：原版门图标式的竖长一扇，深木框、细格和纸、下方木腰板
     door_item = canvas()
     for y in range(16):
-        for x in range(4, 12):
-            px(door_item, x, y, top.getpixel((x, y * 2 % 16)) if y < 8 else bottom.getpixel((x, (y - 8) * 2)))
+        for x in range(3, 13):
+            frame = x in (3, 12) or y in (0, 15)
+            if frame:
+                c = DARK_WOOD[2]
+            elif y >= 11:
+                c = DARK_WOOD[1] if y in (11, 14) else WOOD[(x + y) % 2 + 1]
+            elif (x - 3) % 3 == 0 or y % 3 == 0:
+                c = LIGHT_WOOD[1]
+            else:
+                c = (240, 236, 222)
+            px(door_item, x, y, c)
+    px(door_item, 10, 8, DARK_WOOD[0])  # 拉手
     door_item.save(item_dir / 'journey_shoji_door.png')
 
     def panel(half, slide):
         tex = 'top' if half == 'top' else 'bottom'
         z0, z1 = slide, 16 + slide
-        return el((0, 0, z0), (3, 16, z1), tex, uv={'west': [0, 0, 16, 16], 'east': [16, 0, 0, 16], 'north': [3, 0, 0, 16],
+        # 打开时整扇略往门洞内收、上下各缩一点，滑进墙里的部分不与墙面共面，避免闪烁
+        x0, x1 = (0.4, 2.6) if slide else (0, 3)
+        y0, y1 = (0.05, 15.95) if slide else (0, 16)
+        return el((x0, y0, z0), (x1, y1, z1), tex, uv={'west': [0, 0, 16, 16], 'east': [16, 0, 0, 16], 'north': [3, 0, 0, 16],
                                                     'south': [0, 0, 3, 16], 'up': [0, 0, 3, 16], 'down': [0, 0, 3, 16]})
     tex = {'top': f'{NS}:block/journey_shoji_door_top', 'bottom': f'{NS}:block/journey_shoji_door_bottom',
            'particle': f'{NS}:block/journey_shoji_door_bottom'}
