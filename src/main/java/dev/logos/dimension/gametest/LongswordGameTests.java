@@ -65,7 +65,7 @@ public final class LongswordGameTests {
             return new Fixture(h,p,target,origin);
         }
         void at(int delay,Runnable action) {h.runAfterDelay(delay,()->{try{action.run();}catch(RuntimeException|Error e){close();throw e;}});}
-        void idle(){h.assertTrue(LongswordCombat.pose(p).phase()==LongswordPhase.IDLE,"未完成拔剑");}
+        void idle(){h.assertTrue("idle".equals(LongswordCombat.move(p)),"未完成拔剑");}
         void attack(){LongswordCombat.attack(p);}
         void close(){p.stopUsingItem();target.discard();h.getLevel().getServer().getPlayerList().remove(p);}
         void succeed(){close();h.succeed();}
@@ -81,14 +81,14 @@ public final class LongswordGameTests {
     private static void combo(GameTestHelper h) {
         var f=Fixture.create(h);
         f.at(30,f::attack);f.at(40,f::attack);
-        f.at(44,()->h.assertTrue(LongswordCombat.pose(f.p).phase()==LongswordPhase.ATTACK_2,"第二段没有接续"));
+        f.at(44,()->h.assertTrue("attack_2".equals(LongswordCombat.move(f.p)),"第二段没有接续"));
         f.at(53,f::attack);
-        f.at(57,()->h.assertTrue(LongswordCombat.pose(f.p).phase()==LongswordPhase.ATTACK_3,"第三段没有接续"));
+        f.at(57,()->h.assertTrue("attack_3".equals(LongswordCombat.move(f.p)),"第三段没有接续"));
         f.at(70,()->{h.assertTrue(f.p.getMainHandItem().getDamageValue()==3 && f.target.getHealth()<81,"三段没有分别命中：生命="+f.target.getHealth()+" 耐久消耗="+f.p.getMainHandItem().getDamageValue());f.idle();f.succeed();});
     }
     private static void charge(GameTestHelper h) {
         var f=Fixture.create(h);f.at(30,f::use);
-        f.at(55,()->{h.assertTrue(LongswordCombat.pose(f.p).phase()==LongswordPhase.CHARGING && f.target.getHealth()==100,"蓄力期间伤害或结束");f.p.releaseUsingItem();});
+        f.at(55,()->{h.assertTrue(List.of("charge_start","charge_hold").contains(LongswordCombat.move(f.p)) && f.target.getHealth()==100,"蓄力期间伤害或结束");f.p.releaseUsingItem();});
         f.at(62,()->h.assertTrue(f.target.getHealth()==100,"下劈前举提前造成伤害"));
         f.at(69,()->h.assertTrue(f.target.getHealth()==93,"释放后没有下劈命中"));
         f.at(80,f::succeed);
@@ -99,15 +99,15 @@ public final class LongswordGameTests {
     }
     private static void switchSlot(GameTestHelper h) {
         var f=Fixture.create(h);f.at(30,f::attack);f.at(32,()->f.p.getInventory().setSelectedSlot(2));
-        f.at(40,()->h.assertTrue(f.target.getHealth()==100 && LongswordCombat.pose(f.p).phase()==LongswordPhase.SHEATHE,"换槽仍结算攻击或没有收剑"));
-        f.at(60,()->{h.assertTrue(LongswordCombat.pose(f.p).phase()==LongswordPhase.CLEAR,"收剑没有释放双手");f.succeed();});
+        f.at(40,()->h.assertTrue(f.target.getHealth()==100 && "sheathe".equals(LongswordCombat.move(f.p)),"换槽仍结算攻击或没有收剑"));
+        f.at(60,()->{h.assertTrue(LongswordCombat.move(f.p)==null,"收剑没有释放双手");f.succeed();});
     }
     private static void drop(GameTestHelper h) {
         var f=Fixture.create(h);int slot=f.p.getInventory().getSelectedSlot();
         f.at(30,f::attack);f.at(32,()->f.p.drop(false));
         f.at(40,()->{
             h.assertTrue(f.p.getInventory().getSelectedSlot()==slot && f.p.getMainHandItem().isEmpty(),"丢弃后切槽或主手未空");
-            h.assertTrue(LongswordCombat.pose(f.p).phase()==LongswordPhase.CLEAR && f.target.getHealth()==100,"Q 丢弃未清除动作或仍结算攻击");
+            h.assertTrue(LongswordCombat.move(f.p)==null && f.target.getHealth()==100,"Q 丢弃未清除动作或仍结算攻击");
             f.succeed();
         });
     }

@@ -1,0 +1,44 @@
+{
+  "start": "draw",
+  "sheathe": "sheathe",
+  "combo_memory": 1.5,
+  "moves": {
+    "draw": {"clip": "draw", "length": 1.2, "next": "idle"},
+    "idle": {
+      "clip": "idle", "length": 2.4, "playback": "loop",
+      "on": [
+        {"input": "attack", "to": "attack_1", "combo": true},
+        {"input": "use_press", "to": "charge_start"}
+      ]
+    },
+    "attack_1": {
+      "clip": "attack_1", "length": 0.625, "attack_speed_base": 1.6, "contact": 0.24,
+      "combo_next": "attack_2", "next": "idle",
+      "on": [{"input": "attack", "to": "attack_2", "window": [0.425, 0.625], "queue": true}]
+    },
+    "attack_2": {
+      "clip": "attack_2", "length": 0.625, "attack_speed_base": 1.6, "contact": 0.25,
+      "combo_next": "attack_3", "next": "idle",
+      "on": [{"input": "attack", "to": "attack_3", "window": [0.425, 0.625], "queue": true}]
+    },
+    "attack_3": {
+      "clip": "attack_3", "length": 0.625, "attack_speed_base": 1.6, "contact": 0.25,
+      "combo_next": "attack_1", "next": "idle",
+      "on": [{"input": "attack", "to": "attack_1", "window": [0.425, 0.625], "queue": true}]
+    },
+    "charge_start": {
+      "clip": "charge_start", "length": 0.55, "reset_combo": true, "next": "charge_hold",
+      "on": [
+        {"input": "use_release", "to": "charge_release", "window": [0.55]},
+        {"input": "use_release", "to": "charge_cancel"}
+      ]
+    },
+    "charge_hold": {
+      "clip": "charge_hold", "length": 1.6, "playback": "loop",
+      "on": [{"input": "use_release", "to": "charge_release"}]
+    },
+    "charge_release": {"clip": "charge_release", "length": 1.05, "contact": 0.54, "next": "idle"},
+    "charge_cancel": {"clip": "charge_start", "playback": "reverse", "next": "idle"},
+    "sheathe": {"clip": "sheathe", "length": 1.2, "next": "$clear"}
+  }
+}
