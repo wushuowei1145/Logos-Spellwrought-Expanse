@@ -59,8 +59,19 @@ public final class CloudseaBlocks {
         TRUNKS.put(b,wood(b.id()+"_log"));
     } }
     public static boolean isEvergreen(Block block){for(var b:CloudseaBiome.values())if(b.conifer()&&LEAVES.get(b).get()==block)return true;return false;}
+    public static class FlammableLogBlock extends RotatedPillarBlock {
+        public FlammableLogBlock(Properties properties) { super(properties); }
+        @Override
+        public int getFlammability(net.minecraft.world.level.block.state.BlockState state, net.minecraft.world.level.BlockGetter level, net.minecraft.core.BlockPos pos, net.minecraft.core.Direction direction) {
+            return 5;
+        }
+        @Override
+        public int getFireSpreadSpeed(net.minecraft.world.level.block.state.BlockState state, net.minecraft.world.level.BlockGetter level, net.minecraft.core.BlockPos pos, net.minecraft.core.Direction direction) {
+            return 5;
+        }
+    }
     private static DeferredBlock<Block> wood(String id){
-        var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,RotatedPillarBlock::new,p->p.mapColor(MapColor.COLOR_BROWN).strength(2f).sound(SoundType.WOOD));
+        var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,FlammableLogBlock::new,p->p.mapColor(MapColor.COLOR_BROWN).strength(2f).sound(SoundType.WOOD));
         DimensionBlocks.ITEMS.registerSimpleBlockItem(id,block);PALETTE.add(block);return block;
     }
     private static DeferredBlock<Block> grapevine(){
