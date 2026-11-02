@@ -17,6 +17,29 @@
 ./gradlew --offline runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:longsword_*"
 ./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar -PldTest=group:uchigatana -PldTestHeadless -PldTestWindow=1280x720
 ./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar -PldTest=group:longsword -PldTestHeadless -PldTestWindow=1280x720
+## 神狐聚落：山顶聚落、上山小路与和风小品
+
+2026-11-02：分支 `feat/fox-sanctuary`，基于 main `1b51501`。重做灵狐樱野的聚落生成（取代未合并的 `f7f8435` 与 main 上的 `cherry_road`），详见 [神狐聚落](docs/FOX_SANCTUARY.md)。维护者同意此结构用 Java 结构类型，AGENTS.md 记有例外。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元与构建 | **134/134** 通过，`test build` 成功；新增 `FoxSanctuaryDataTest`：设计图尺寸与入口、全部分块与地块变体模板存在、结构集间距与 Java 常量一致、樱野的树与地被只认自然草皮；`CherryTerrainTest` 跟着改认 `fox_wild_*` |
+| 世界测试 | 未跑 GameTest：测试服务器关闭结构生成 |
+| 实际客户端 | `fox_sanctuary_views` 与 `fox_props_views` **2/2 场景通过**。开发场景用反射打开结构生成，聚落随区块自然生成（候选 63 个后命中，主街 Y=100，山路 174 格）；逐张查看山脚、山腰、石板桥、鸟居段、入口石阶、登顶主街、食摊、街尾、千本鸟居、神社、旅馆门前、中庭、露天风吕、田地、住宅与小品近景 |
+
+试玩反馈修正（同日）：路边削挖后同步 `*_WG` 高度图（山脚别的群系的树不再悬空）；屋面从墙顶横梁起出檐；室内改整块榻榻米，2 格门洞不用潜行；旅馆每层一跑楼梯；障子拉门打开时滑进墙；和纸灯笼换新模型；手水舍改为石砖托手水钵、四周含水楼梯；新增绘马挂（1–4 层、挂三块玩家绘马并显示铁砧名）、绘马、赛钱箱、鈴緒。单元 **134/134**；客户端 `fox_props_views`、`fox_sanctuary_views` **2/2** 通过，查看了小品陈列、旅馆楼梯、住宅屋顶、神社与手水舍截图。
+
+合入屋台分支后（同日）：主街中线 13 个屋台、六种变体；重新生成数据后单元 **134/134**，客户端 `fox_props_views`、`fox_sanctuary_views` **2/2** 通过，查看了登顶主街、屋台近景与小品陈列截图。
+
+第四版（同日）：灰瓦/朱漆楼梯方块状态改为与原版一致（转角不再错位）；障子门打开时略内收防闪烁、重画物品图标；绘马挂可连成 3×2 大架子；神社石阶与赛钱箱修正；屋台吊牌留白；重做旅馆中庭与露天风吕，街尾加茶庭，街道、巷口、住宅区与草坪加满布置。模板方块 ID 全部对照 26.1 原版与本附属方块状态核对（发现并改正 `chain` → `iron_chain`）。单元 **134/134**；客户端 `fox_props_views`、`fox_sanctuary_views` **2/2** 通过，查看了中庭、茶庭、住宅、登顶主街截图。
+
+只在一个随机种子的一处聚落上看过；其他地形下的山路走向、陡坡露岩与开挖量没有逐一检查。没测光影包、联机与帧率。
+
+```text
+python tools/fox_props_art.py
+python tools/fox_sanctuary.py
+./gradlew --offline test build -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=fox_sanctuary_views,fox_props_views" -PldTestHeadless -PldTestWindow=1280x720
 ```
 
 ## 长剑连招手感：取消点、输入缓冲与过渡混合

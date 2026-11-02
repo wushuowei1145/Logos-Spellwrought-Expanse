@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "logos_dimension:block/journey_fox_statue"
+    },
+    "facing=east": {
+      "model": "logos_dimension:block/journey_fox_statue",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "logos_dimension:block/journey_fox_statue",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "logos_dimension:block/journey_fox_statue",
+      "y": 270
+    }
+  }
+}

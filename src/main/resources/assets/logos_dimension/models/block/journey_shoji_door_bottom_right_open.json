@@ -1,0 +1,79 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "top": "logos_dimension:block/journey_shoji_door_top",
+    "bottom": "logos_dimension:block/journey_shoji_door_bottom",
+    "particle": "logos_dimension:block/journey_shoji_door_bottom"
+  },
+  "elements": [
+    {
+      "from": [
+        0.4,
+        0.05,
+        13
+      ],
+      "to": [
+        2.6,
+        15.95,
+        29
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            0,
+            0,
+            16
+          ],
+          "texture": "#bottom"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            3,
+            16
+          ],
+          "texture": "#bottom"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#bottom"
+        },
+        "east": {
+          "uv": [
+            16,
+            0,
+            0,
+            16
+          ],
+          "texture": "#bottom"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            3,
+            16
+          ],
+          "texture": "#bottom"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            3,
+            16
+          ],
+          "texture": "#bottom"
+        }
+      }
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

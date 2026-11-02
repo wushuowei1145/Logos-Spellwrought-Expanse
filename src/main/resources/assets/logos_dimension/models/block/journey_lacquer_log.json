@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "logos_dimension:block/journey_lacquer_log_top",
+    "side": "logos_dimension:block/journey_lacquer_log"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "logos_dimension:block/journey_lacquer_log_horizontal",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y": {
+      "model": "logos_dimension:block/journey_lacquer_log"
+    },
+    "axis=z": {
+      "model": "logos_dimension:block/journey_lacquer_log_horizontal",
+      "x": 90
+    }
+  }
+}

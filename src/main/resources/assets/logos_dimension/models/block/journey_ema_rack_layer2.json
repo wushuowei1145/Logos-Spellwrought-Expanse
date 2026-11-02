@@ -1,0 +1,351 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "wood": "logos_dimension:block/journey_ema_rack",
+    "roof": "logos_dimension:block/journey_kawara_roof",
+    "particle": "logos_dimension:block/journey_ema_rack"
+  },
+  "elements": [
+    {
+      "from": [
+        4.5,
+        10,
+        6.0
+      ],
+      "to": [
+        7.5,
+        13,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            8,
+            3,
+            11
+          ],
+          "texture": "#wood"
+        },
+        "south": {
+          "uv": [
+            0,
+            8,
+            3,
+            11
+          ],
+          "texture": "#wood"
+        },
+        "west": {
+          "uv": [
+            0,
+            12,
+            0.5,
+            15
+          ],
+          "texture": "#wood"
+        },
+        "east": {
+          "uv": [
+            0,
+            12,
+            0.5,
+            15
+          ],
+          "texture": "#wood"
+        },
+        "up": {
+          "uv": [
+            0,
+            12,
+            3,
+            12.5
+          ],
+          "texture": "#wood"
+        },
+        "down": {
+          "uv": [
+            0,
+            12,
+            3,
+            12.5
+          ],
+          "texture": "#wood"
+        }
+      }
+    },
+    {
+      "from": [
+        8.5,
+        9.5,
+        6.0
+      ],
+      "to": [
+        11.5,
+        12.5,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            8,
+            3,
+            11
+          ],
+          "texture": "#wood"
+        },
+        "south": {
+          "uv": [
+            0,
+            8,
+            3,
+            11
+          ],
+          "texture": "#wood"
+        },
+        "west": {
+          "uv": [
+            0,
+            12,
+            0.5,
+            15
+          ],
+          "texture": "#wood"
+        },
+        "east": {
+          "uv": [
+            0,
+            12,
+            0.5,
+            15
+          ],
+          "texture": "#wood"
+        },
+        "up": {
+          "uv": [
+            0,
+            12,
+            3,
+            12.5
+          ],
+          "texture": "#wood"
+        },
+        "down": {
+          "uv": [
+            0,
+            12,
+            3,
+            12.5
+          ],
+          "texture": "#wood"
+        }
+      }
+    },
+    {
+      "from": [
+        12,
+        9,
+        6.0
+      ],
+      "to": [
+        15,
+        12,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            8,
+            6,
+            11
+          ],
+          "texture": "#wood"
+        },
+        "south": {
+          "uv": [
+            3,
+            8,
+            6,
+            11
+          ],
+          "texture": "#wood"
+        },
+        "west": {
+          "uv": [
+            0,
+            12,
+            0.5,
+            15
+          ],
+          "texture": "#wood"
+        },
+        "east": {
+          "uv": [
+            0,
+            12,
+            0.5,
+            15
+          ],
+          "texture": "#wood"
+        },
+        "up": {
+          "uv": [
+            0,
+            12,
+            3,
+            12.5
+          ],
+          "texture": "#wood"
+        },
+        "down": {
+          "uv": [
+            0,
+            12,
+            3,
+            12.5
+          ],
+          "texture": "#wood"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        3.5,
+        7.0
+      ],
+      "to": [
+        6,
+        6.5,
+        7.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            8,
+            6,
+            11
+          ],
+          "texture": "#wood"
+        },
+        "south": {
+          "uv": [
+            3,
+            8,
+            6,
+            11
+          ],
+          "texture": "#wood"
+        },
+        "west": {
+          "uv": [
+            0,
+            12,
+            0.5,
+            15
+          ],
+          "texture": "#wood"
+        },
+        "east": {
+          "uv": [
+            0,
+            12,
+            0.5,
+            15
+          ],
+          "texture": "#wood"
+        },
+        "up": {
+          "uv": [
+            0,
+            12,
+            3,
+            12.5
+          ],
+          "texture": "#wood"
+        },
+        "down": {
+          "uv": [
+            0,
+            12,
+            3,
+            12.5
+          ],
+          "texture": "#wood"
+        }
+      }
+    },
+    {
+      "from": [
+        9,
+        4.5,
+        7.0
+      ],
+      "to": [
+        12,
+        7.5,
+        7.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12,
+            8,
+            15,
+            11
+          ],
+          "texture": "#wood"
+        },
+        "south": {
+          "uv": [
+            12,
+            8,
+            15,
+            11
+          ],
+          "texture": "#wood"
+        },
+        "west": {
+          "uv": [
+            0,
+            12,
+            0.5,
+            15
+          ],
+          "texture": "#wood"
+        },
+        "east": {
+          "uv": [
+            0,
+            12,
+            0.5,
+            15
+          ],
+          "texture": "#wood"
+        },
+        "up": {
+          "uv": [
+            0,
+            12,
+            3,
+            12.5
+          ],
+          "texture": "#wood"
+        },
+        "down": {
+          "uv": [
+            0,
+            12,
+            3,
+            12.5
+          ],
+          "texture": "#wood"
+        }
+      }
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

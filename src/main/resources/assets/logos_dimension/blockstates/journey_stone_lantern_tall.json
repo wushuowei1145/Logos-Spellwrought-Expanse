@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "half=lower": {
+      "model": "logos_dimension:block/journey_stone_lantern_tall_lower"
+    },
+    "half=upper": {
+      "model": "logos_dimension:block/journey_stone_lantern_tall_upper"
+    }
+  }
+}

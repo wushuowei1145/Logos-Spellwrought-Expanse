@@ -1,0 +1,104 @@
+{
+  "variants": {
+    "waterlogged=false": [
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_a",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_a",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_a",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_a",
+        "y": 270
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_b",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_b",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_b",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_b",
+        "y": 270
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_c",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_c",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_c",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_c",
+        "y": 270
+      }
+    ],
+    "waterlogged=true": [
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_a",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_a",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_a",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_a",
+        "y": 270
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_b",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_b",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_b",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_b",
+        "y": 270
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_c",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_c",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_c",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/journey_stepping_stone_c",
+        "y": 270
+      }
+    ]
+  }
+}

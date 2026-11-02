@@ -1,0 +1,61 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "wood": "logos_dimension:block/journey_ema_rack",
+    "roof": "logos_dimension:block/journey_kawara_roof",
+    "particle": "logos_dimension:block/journey_ema_rack"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        13.5,
+        7.5
+      ],
+      "to": [
+        16,
+        14.5,
+        8.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            4,
+            16,
+            5
+          ],
+          "texture": "#wood"
+        },
+        "south": {
+          "uv": [
+            0,
+            4,
+            16,
+            5
+          ],
+          "texture": "#wood"
+        },
+        "up": {
+          "uv": [
+            0,
+            7.5,
+            16,
+            8.5
+          ],
+          "texture": "#wood"
+        },
+        "down": {
+          "uv": [
+            0,
+            7.5,
+            16,
+            8.5
+          ],
+          "texture": "#wood"
+        }
+      }
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}
