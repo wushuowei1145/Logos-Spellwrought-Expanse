@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "bottom": "logos_dimension:block/journey_kawara_roof",
+    "top": "logos_dimension:block/journey_kawara_roof",
+    "side": "logos_dimension:block/journey_kawara_roof"
+  }
+}

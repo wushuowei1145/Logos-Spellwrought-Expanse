@@ -32,7 +32,9 @@ class CherryTerrainTest {
         var step9 = new ArrayList<String>();
         biome.getAsJsonArray("features").get(9).getAsJsonArray().forEach(v -> step9.add(v.getAsString()));
         for (String name : FEATURES) {
-            assertTrue(step9.contains("logos_dimension:" + name), "灵狐樱野缺少地形装饰：" + name);
+            // 碎石与白花改用神狐聚落那份只认自然草皮的放置规则（见 FoxSanctuaryDataTest）
+            String id = name.equals("cherry_pebbles") ? "fox_wild_pebbles" : name.equals("cherry_white_flowers") ? "fox_wild_flowers" : name;
+            assertTrue(step9.contains("logos_dimension:" + id), "灵狐樱野缺少地形装饰：" + id);
         }
     }
 

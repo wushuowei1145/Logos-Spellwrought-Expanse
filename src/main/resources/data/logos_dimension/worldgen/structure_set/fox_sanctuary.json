@@ -1,0 +1,15 @@
+{
+  "structures": [
+    {
+      "structure": "logos_dimension:fox_sanctuary",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 20261102,
+    "spacing": 8,
+    "separation": 4,
+    "spread_type": "linear"
+  }
+}

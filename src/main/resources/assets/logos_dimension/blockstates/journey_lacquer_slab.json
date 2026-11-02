@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "logos_dimension:block/journey_lacquer_slab"
+    },
+    "type=double": {
+      "model": "logos_dimension:block/journey_lacquer_planks"
+    },
+    "type=top": {
+      "model": "logos_dimension:block/journey_lacquer_slab_top"
+    }
+  }
+}

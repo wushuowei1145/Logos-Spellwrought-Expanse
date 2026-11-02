@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "hanging=false": {
+      "model": "logos_dimension:block/journey_paper_lantern"
+    },
+    "hanging=true": {
+      "model": "logos_dimension:block/journey_paper_lantern_hanging"
+    }
+  }
+}

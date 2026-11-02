@@ -1,5 +1,24 @@
 # 首版验证记录
 
+## 神狐聚落：山顶聚落、上山小路与和风小品
+
+2026-11-02：分支 `feat/fox-sanctuary`，基于 main `1b51501`。重做灵狐樱野的聚落生成（取代未合并的 `f7f8435` 与 main 上的 `cherry_road`），详见 [神狐聚落](docs/FOX_SANCTUARY.md)。维护者同意此结构用 Java 结构类型，AGENTS.md 记有例外。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元与构建 | **134/134** 通过，`test build` 成功；新增 `FoxSanctuaryDataTest`：设计图尺寸与入口、全部分块与地块变体模板存在、结构集间距与 Java 常量一致、樱野的树与地被只认自然草皮；`CherryTerrainTest` 跟着改认 `fox_wild_*` |
+| 世界测试 | 未跑 GameTest：测试服务器关闭结构生成 |
+| 实际客户端 | `fox_sanctuary_views` 与 `fox_props_views` **2/2 场景通过**。开发场景用反射打开结构生成，聚落随区块自然生成（候选 63 个后命中，主街 Y=100，山路 174 格）；逐张查看山脚、山腰、石板桥、鸟居段、入口石阶、登顶主街、食摊、街尾、千本鸟居、神社、旅馆门前、中庭、露天风吕、田地、住宅与小品近景 |
+
+只在一个随机种子的一处聚落上看过；其他地形下的山路走向、陡坡露岩与开挖量没有逐一检查。没测光影包、联机与帧率。
+
+```text
+python tools/fox_props_art.py
+python tools/fox_sanctuary.py
+./gradlew --offline test build -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=fox_sanctuary_views,fox_props_views" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 长剑连招手感：取消点、输入缓冲与过渡混合
 
 2026-11-02：分支 `feat/combat-feel`，基于 main `de46d32`（已合并 PR #110）。招式转移新增 `at`（取消点），招式新增 `blend_in`（进入时的过渡时长），格式见 [战斗骨架与兼容性规范](docs/COMBAT_SKELETON.md) 第 5 节。长剑出刀 0.1 秒后的左键都会缓冲，在美术标注的收势起点（0.36 / 0.36 / 0.37 秒）接下一段；客户端从上一招在切换那一刻的姿势平滑过渡（攻击 0.08 秒、回待机 0.12 秒、蓄力 0.1 秒、下劈 0.05 秒、收剑 0.1 秒）。同步包加入过渡时长，通道版本升为 3。
