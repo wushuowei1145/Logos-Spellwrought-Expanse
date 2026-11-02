@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NBN",
+    "PPP",
+    "P P"
+  ],
+  "key": {
+    "N": "minecraft:gold_nugget",
+    "B": "minecraft:book",
+    "P": "#minecraft:planks"
+  },
+  "result": {
+    "id": "logos_dimension:exchange_counter",
+    "count": 1
+  }
+}
