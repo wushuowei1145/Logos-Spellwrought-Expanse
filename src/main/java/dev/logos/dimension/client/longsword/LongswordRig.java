@@ -92,11 +92,13 @@ public final class LongswordRig {
         var animation = clips.get(clip);
         return animation == null ? -1 : animation.length();
     }
-    /** 取样一帧；动作文件里没有这段动作时为 null。 */
-    public Sample sample(String clip, float seconds) {
+    /** 取样一帧姿势；动作文件里没有这段动作时为 null。 */
+    public CombatPose pose(String clip, float seconds) {
         var animation = clips.get(clip);
-        if (animation == null) return null;
-        var pose = CombatPose.sample(animation, seconds);
+        return animation == null ? null : CombatPose.sample(animation, seconds);
+    }
+    /** 把姿势套到玩家参考骨架上。 */
+    public Sample sample(CombatPose pose) {
         var bones = pose.matrices(skeleton);
         var weapon = new Matrix4f(bones.get(CombatBones.WEAPON)).translate(weaponPivot).scale(weaponScale);
         return new Sample(bones, pose.rotation(CombatBones.UP_BODY), weapon);

@@ -80,11 +80,14 @@ public final class LongswordGameTests {
     }
     private static void combo(GameTestHelper h) {
         var f=Fixture.create(h);
-        f.at(30,f::attack);f.at(40,f::attack);
-        f.at(44,()->h.assertTrue("attack_2".equals(LongswordCombat.move(f.p)),"第二段没有接续"));
-        f.at(53,f::attack);
-        f.at(57,()->h.assertTrue("attack_3".equals(LongswordCombat.move(f.p)),"第三段没有接续"));
-        f.at(70,()->{h.assertTrue(f.p.getMainHandItem().getDamageValue()==3 && f.target.getHealth()<81,"三段没有分别命中：生命="+f.target.getHealth()+" 耐久消耗="+f.p.getMainHandItem().getDamageValue());f.idle();f.succeed();});
+        // 出刀后缓冲下一段，在取消点（0.36 秒）接上；三下命中只隔 7–8 刻，也检查连招不会被自己上一下的受击冷却挡掉。
+        f.at(30,f::attack);f.at(33,f::attack);
+        f.at(37,()->h.assertTrue("attack_1".equals(LongswordCombat.move(f.p)),"缓冲的第二段提前接上"));
+        f.at(39,()->h.assertTrue("attack_2".equals(LongswordCombat.move(f.p)),"第二段没有在取消点接续"));
+        f.at(40,f::attack);
+        f.at(46,()->h.assertTrue("attack_3".equals(LongswordCombat.move(f.p)),"第三段没有接续"));
+        // 伤害走原版攻击冷却：提前接刀的两下按恢复程度减伤，所以只要求三下都命中且累计超过一下。
+        f.at(70,()->{h.assertTrue(f.p.getMainHandItem().getDamageValue()==3 && f.target.getHealth()<90,"三段没有分别命中：生命="+f.target.getHealth()+" 耐久消耗="+f.p.getMainHandItem().getDamageValue());f.idle();f.succeed();});
     }
     private static void charge(GameTestHelper h) {
         var f=Fixture.create(h);f.at(30,f::use);

@@ -3,6 +3,7 @@ package dev.logos.dimension.client.longsword;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.combat.CombatPose;
 import dev.logos.dimension.combat.Moveset;
 import dev.logos.dimension.item.LongswordItem;
 import dev.logos.dimension.longsword.*;
@@ -32,6 +33,8 @@ import net.neoforged.neoforge.client.renderstate.*;
 @EventBusSubscriber(modid = LogosDimension.ID, value = Dist.CLIENT)
 public final class LongswordClient {
     private static final Map<UUID, LongswordPayload> STATES = new HashMap<>();
+    /** 上一个招式，用于进入新招式时从它在切换那一刻的姿势过渡。 */
+    private static final Map<UUID, LongswordPayload> PREVIOUS = new HashMap<>();
     public static final ContextKey<Frame> FRAME = new ContextKey<>(LogosDimension.id("longsword_frame"));
     private static int repeat;
     public record Frame(int variant, LongswordRig.Sample sample, net.minecraft.client.renderer.item.ItemStackRenderState effects) {}
@@ -39,17 +42,20 @@ public final class LongswordClient {
     public static LongswordPayload pose(UUID player) { return STATES.get(player); }
     @SubscribeEvent static void packets(RegisterClientPayloadHandlersEvent event) {
         event.register(LongswordPayload.TYPE, (p, ctx) -> {
-            if (p.cleared()) STATES.remove(p.player()); else STATES.put(p.player(), p);
+            if (p.cleared()) { STATES.remove(p.player()); PREVIOUS.remove(p.player()); return; }
+            var old = STATES.put(p.player(), p);
+            // 开始追踪时会重发当前招式，那不是换招，不覆盖过渡来源。
+            if (old != null && !(old.move().equals(p.move()) && old.started() == p.started())) PREVIOUS.put(p.player(), old);
         });
     }
-    @SubscribeEvent static void logout(ClientPlayerNetworkEvent.LoggingOut event) { STATES.clear(); repeat = 0; }
+    @SubscribeEvent static void logout(ClientPlayerNetworkEvent.LoggingOut event) { STATES.clear(); PREVIOUS.clear(); repeat = 0; }
     @SubscribeEvent static void reload(AddClientReloadListenersEvent event) {
         event.addListener(LogosDimension.id("longsword_rigs"),
                 (net.minecraft.server.packs.resources.ResourceManagerReloadListener) manager -> LongswordRig.clear());
     }
     @SubscribeEvent static void tick(ClientTickEvent.Post event) {
         var mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) { STATES.clear(); return; }
+        if (mc.player == null || mc.level == null) { STATES.clear(); PREVIOUS.clear(); return; }
         if (mc.screen == null && mc.options.keyAttack.isDown() && !mc.player.isUsingItem() && LongswordItem.variant(mc.player.getMainHandItem()) >= 0
                 && STATES.containsKey(mc.player.getUUID())) {
             if (repeat-- <= 0) { ClientPacketDistributor.sendToServer(new LongswordPayload.Attack()); repeat = 2; }
@@ -70,7 +76,8 @@ public final class LongswordClient {
         if (pose == null) return;
         if (event.isAttack()) {
             event.setCanceled(true); event.setSwingHand(false);
-            ClientPacketDistributor.sendToServer(new LongswordPayload.Attack());
+            // 按下这一刻已经发过；按住时每 3 刻再发一次，单击不会因为同一刻补发而被缓冲成两刀。
+            ClientPacketDistributor.sendToServer(new LongswordPayload.Attack()); repeat = 2;
         } else if (event.getHand() == InteractionHand.OFF_HAND) {
             event.setCanceled(true); event.setSwingHand(false);
         }
@@ -79,9 +86,24 @@ public final class LongswordClient {
     private static LongswordRig.Sample sample(LongswordPayload p, boolean firstPerson, double now) {
         var rig = LongswordRig.get(p.variant(), firstPerson);
         if (rig == null) return null;
+        var pose = pose(rig, p, now);
+        if (pose == null) return null;
+        // 进入新招式的前 blend 秒，从上一招式在切换那一刻的姿势平滑过渡过来。
+        var previous = PREVIOUS.get(p.player());
+        double blendTicks = p.blend() * 20, age = now - p.started();
+        if (previous != null && blendTicks > 0 && age < blendTicks) {
+            var from = pose(rig, previous, p.started());
+            if (from != null) {
+                float w = (float) Math.clamp(age / blendTicks, 0, 1);
+                pose = from.blend(pose, w * w * (3 - 2 * w));
+            }
+        }
+        return rig.sample(pose);
+    }
+    private static CombatPose pose(LongswordRig rig, LongswordPayload p, double time) {
         double length = rig.length(p.clip());
         if (length < 0) return null;
-        return rig.sample(p.clip(), (float) Moveset.playbackSeconds(p.playback(), length, now - p.started(), p.speed(), p.offset()));
+        return rig.pose(p.clip(), (float) Moveset.playbackSeconds(p.playback(), length, time - p.started(), p.speed(), p.offset()));
     }
     @SubscribeEvent static void modifiers(RegisterRenderStateModifiersEvent event) {
         event.registerAvatarEntityModifier(new AvatarRenderStateModifier() {
