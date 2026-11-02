@@ -46,6 +46,39 @@ public final class EconomyCommands {
                 .executes(c -> event(c.getSource(), StringArgumentType.getString(c, "kind"), 24))
                 .then(Commands.argument("hours", IntegerArgumentType.integer(1, 96))
                         .executes(c -> event(c.getSource(), StringArgumentType.getString(c, "kind"), IntegerArgumentType.getInteger(c, "hours"))))));
+        // 测强平：/fx shock wolf -10 让狼币立刻跌约 10%，之后照常回归
+        var shockCurrency = Commands.argument("currency", StringArgumentType.word())
+                .suggests((c, b) -> SharedSuggestionProvider.suggest(Currency.TRADED.stream().map(x -> x.id), b));
+        root.then(Commands.literal("shock").then(shockCurrency.then(Commands.argument("percent", IntegerArgumentType.integer(-90, 300))
+                .executes(c -> {
+                    var cur = parse(c.getSource(), StringArgumentType.getString(c, "currency"));
+                    if (cur == null) return 0;
+                    var server = c.getSource().getServer();
+                    var market = FxMarketData.market(server);
+                    market.advance(Economy.clock(server));
+                    market.shock(cur, Math.log1p(IntegerArgumentType.getInteger(c, "percent") / 100.0));
+                    FxMarketData.touch(server);
+                    Bank.update(server, market, Economy.clock(server));
+                    c.getSource().sendSuccess(() -> Component.literal("已推动 ").append(Component.translatable(cur.key())), true);
+                    return 1;
+                }))));
+        root.then(Commands.literal("bank").executes(c -> {
+            var player = c.getSource().getPlayerOrException();
+            var server = c.getSource().getServer();
+            var market = FxMarketData.market(server);
+            var account = Bank.of(server).account(player.getUUID());
+            for (var cur : Currency.values()) {
+                long v = account.balance(cur);
+                c.getSource().sendSuccess(() -> Component.translatable(cur.key()).append(" ").append(v < 0 ? Component.literal("-").append(Money.format(cur, -v)) : Money.format(cur, v)), false);
+            }
+            for (var p : account.positions()) {
+                double rate = market.rate(p.currency());
+                c.getSource().sendSuccess(() -> Component.literal("#" + p.id() + " ").append(Component.translatable(p.currency().key()))
+                        .append(" " + (p.side() > 0 ? "多" : "空") + " " + p.leverage() + "× 净值 ")
+                        .append(Money.top(Currency.IMPERIAL, Margin.equity(p, rate))), false);
+            }
+            return 1;
+        }));
         root.then(Commands.literal("reset").executes(c -> {
             var server = c.getSource().getServer();
             FxMarketData.reset(server, Economy.clock(server));

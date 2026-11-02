@@ -52,6 +52,8 @@ public final class Economy {
             p -> p.stacksTo(1).fireResistant().rarity(Rarity.UNCOMMON));
     public static final DeferredBlock<ExchangeCounterBlock> EXCHANGE = BLOCKS.registerBlock("exchange_counter", ExchangeCounterBlock::new,
             p -> p.mapColor(MapColor.WOOD).strength(2.5f).sound(SoundType.WOOD));
+    public static final DeferredBlock<BankBlock> BANK = BLOCKS.registerBlock("bank_counter", BankBlock::new,
+            p -> p.mapColor(MapColor.COLOR_RED).strength(3.5f).sound(SoundType.WOOD));
     static {
         for (var c : Currency.values()) {
             var list = new ArrayList<DeferredItem<CoinItem>>();
@@ -59,11 +61,13 @@ public final class Economy {
             COINS.put(c, list);
         }
         ITEMS.registerSimpleBlockItem("exchange_counter", EXCHANGE);
+        ITEMS.registerSimpleBlockItem("bank_counter", BANK);
         TABS.register("economy", () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.logos_dimension.economy"))
                 .icon(() -> coin(Currency.FOX, 2).getDefaultInstance())
                 .displayItems((params, out) -> {
                     out.accept(WALLET_ITEM.get());
                     out.accept(EXCHANGE.get());
+                    out.accept(BANK.get());
                     COINS.values().forEach(list -> list.forEach(out::accept));
                 }).build());
     }
@@ -74,7 +78,9 @@ public final class Economy {
         ITEMS.register(bus); BLOCKS.register(bus); COMPONENTS.register(bus); TABS.register(bus);
         bus.addListener((RegisterPayloadHandlersEvent event) -> event.registrar("1")
                 .playToClient(MarketPayload.TYPE, MarketPayload.CODEC)
-                .playToServer(EconomyActionPayload.TYPE, EconomyActionPayload.CODEC, Economy::handle));
+                .playToClient(BankPayload.TYPE, BankPayload.CODEC)
+                .playToServer(EconomyActionPayload.TYPE, EconomyActionPayload.CODEC, Economy::handle)
+                .playToServer(BankOrderPayload.TYPE, BankOrderPayload.CODEC, Economy::handleBank));
         NeoForge.EVENT_BUS.addListener(Economy::tick);
         NeoForge.EVENT_BUS.addListener(Economy::pickup);
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> WATCHERS.remove(e.getEntity().getUUID()));
@@ -83,7 +89,7 @@ public final class Economy {
 
     // ---------------------------------------------------------------- 面板与行情推送
 
-    /** 谁开着哪个面板：兑换台记方块位置，钱囊记哪只手。 */
+    /** 谁开着哪个面板：兑换台和钱庄记方块位置，钱囊记哪只手。 */
     private record Watch(int screen, int hand, BlockPos pos) {}
     private static final Map<UUID, Watch> WATCHERS = new HashMap<>();
     private static final double REACH = 8;
@@ -103,6 +109,19 @@ public final class Economy {
         PacketDistributor.sendToPlayer(player, MarketPayload.of(market(server), screen, hand, pos, clock(server)));
     }
 
+    /** 钱庄面板：先发行情（只刷新），再发账户；open 时客户端打开钱庄。 */
+    static void sendBank(ServerPlayer player, BlockPos pos, boolean open) {
+        var server = player.level().getServer();
+        PacketDistributor.sendToPlayer(player, MarketPayload.of(market(server), MarketPayload.UPDATE, 0, pos, clock(server)),
+                BankPayload.of(Bank.of(server).account(player.getUUID()), open, pos));
+    }
+
+    public static void openBank(ServerPlayer player, BlockPos pos) {
+        WATCHERS.put(player.getUUID(), new Watch(BANK_SCREEN, 0, pos.immutable()));
+        sendBank(player, pos, true);
+    }
+    private static final int BANK_SCREEN = 3;
+
     public static void openExchange(ServerPlayer player, BlockPos pos) {
         WATCHERS.put(player.getUUID(), new Watch(MarketPayload.EXCHANGE, 0, pos.immutable()));
         send(player, MarketPayload.EXCHANGE, 0, pos);
@@ -116,13 +135,14 @@ public final class Economy {
     private static void tick(ServerTickEvent.Post event) {
         var server = event.getServer();
         if (server.getTickCount() % FxMarket.STEP != 0) return;
-        market(server);
+        Bank.update(server, market(server), clock(server));
         for (var it = WATCHERS.entrySet().iterator(); it.hasNext(); ) {
             var entry = it.next();
             var player = server.getPlayerList().getPlayer(entry.getKey());
             if (player == null) { it.remove(); continue; }
             var w = entry.getValue();
-            send(player, MarketPayload.UPDATE, w.hand, w.pos);
+            if (w.screen == BANK_SCREEN) sendBank(player, w.pos, false);
+            else send(player, MarketPayload.UPDATE, w.hand, w.pos);
         }
         for (var player : server.getPlayerList().getPlayers()) milestones(player);
     }
@@ -189,6 +209,27 @@ public final class Economy {
             case EconomyActionPayload.AUTO -> Purse.set(wallet, Purse.contents(wallet).withAutoCollect(!Purse.contents(wallet).autoCollect()));
             default -> {}
         }
+    }
+
+    private static void handleBank(BankOrderPayload p, IPayloadContext context) {
+        if (!(context.player() instanceof ServerPlayer player)) return;
+        var watch = WATCHERS.get(player.getUUID());
+        if (watch == null || watch.screen != BANK_SCREEN) return;
+        if (!player.level().getBlockState(watch.pos).is(BANK.get()) || player.distanceToSqr(watch.pos.getCenter()) > REACH * REACH) {
+            player.sendOverlayMessage(Component.translatable("message.logos_dimension.fx.too_far"));
+            return;
+        }
+        var currencies = Currency.values();
+        if (p.currency() < 0 || p.currency() >= currencies.length) return;
+        var c = currencies[p.currency()];
+        switch (p.action()) {
+            case BankOrderPayload.DEPOSIT -> Bank.deposit(player, c, p.amount());
+            case BankOrderPayload.WITHDRAW -> Bank.withdraw(player, c, p.amount());
+            case BankOrderPayload.OPEN -> Bank.open(player, c, p.side(), p.amount(), p.leverage(), p.stop(), p.take());
+            case BankOrderPayload.CLOSE -> Bank.close(player, p.id());
+            default -> {}
+        }
+        sendBank(player, watch.pos, false);
     }
 
     /** 在兑换台成交：人要在台子旁边，台子还在，兑换商开着门，钱也够。 */

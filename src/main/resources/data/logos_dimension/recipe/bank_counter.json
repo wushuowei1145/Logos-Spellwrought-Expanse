@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "GCG",
+    "PIP",
+    "PPP"
+  ],
+  "key": {
+    "G": "minecraft:gold_ingot",
+    "C": "minecraft:chest",
+    "I": "minecraft:iron_ingot",
+    "P": "#minecraft:planks"
+  },
+  "result": {
+    "id": "logos_dimension:bank_counter",
+    "count": 1
+  }
+}

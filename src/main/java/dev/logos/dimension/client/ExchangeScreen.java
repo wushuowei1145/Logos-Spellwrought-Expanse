@@ -19,8 +19,8 @@ import net.minecraft.network.chat.Component;
  * 右边下单，底部是最近的告示与传闻。价格一律写成「一枚最大面额值多少银元」。
  */
 public final class ExchangeScreen extends Screen {
-    private static final int W = 360, H = 236, CHART_W = 222, CHART_H = 100, BARS = 60;
-    private static final int UP = 0xFFE05A4E, DOWN = 0xFF3FB27F, PANEL = 0xE0161218, EDGE = 0xFFB89A5A, DIM = 0xFF8C8478;
+    private static final int W = 360, H = 236, CHART_W = 222, CHART_H = 100;
+    private static final int PANEL = 0xE0161218, EDGE = 0xFFB89A5A, DIM = CandleChart.DIM;
     private final BlockPos pos;
     private Currency shown = Currency.FOX, from = Currency.IMPERIAL, to = Currency.FOX;
     private boolean wide;
@@ -131,82 +131,9 @@ public final class ExchangeScreen extends Screen {
 
     private void chart(GuiGraphicsExtractor g, dev.logos.dimension.economy.MarketPayload data, int mouseX, int mouseY) {
         int cx = x0 + 8, cy = y0 + 40;
-        g.fill(cx, cy, cx + CHART_W, cy + CHART_H, 0xC0080608);
-        g.outline(cx - 1, cy - 1, CHART_W + 2, CHART_H + 2, 0xFF4A4038);
-        var bars = bars(data == null ? List.of() : data.candles(shown));
-        if (bars.isEmpty()) {
-            g.centeredText(font, Component.translatable("screen.logos_dimension.fx.no_data"), cx + CHART_W / 2, cy + CHART_H / 2 - 4, DIM);
-            return;
-        }
-        double unit = shown.top().value() / 100.0; // 铜分 → 一枚最大面额值多少银元
-        float lo = Float.MAX_VALUE, hi = -Float.MAX_VALUE;
-        for (var k : bars) { lo = Math.min(lo, k.low()); hi = Math.max(hi, k.high()); }
-        float pad = Math.max((hi - lo) * .08f, hi * .002f);
-        lo -= pad; hi += pad;
-        final float min = lo, span = hi - lo;
-        int bw = CHART_W / BARS;
-        int left = cx + CHART_W - bars.size() * bw;
-        long lastDay = Long.MIN_VALUE;
-        for (int i = 0; i < bars.size(); i++) {
-            var k = bars.get(i);
-            int x = left + i * bw;
-            long day = Math.floorDiv(k.slot() * FxMarket.HOUR, FxMarket.DAY);
-            if (day != lastDay && i > 0) g.verticalLine(x - 1, cy, cy + CHART_H, 0x40FFFFFF);
-            lastDay = day;
-            int yHigh = y(k.high(), min, span, cy), yLow = y(k.low(), min, span, cy);
-            int yOpen = y(k.open(), min, span, cy), yClose = y(k.close(), min, span, cy);
-            int color = k.close() >= k.open() ? UP : DOWN;
-            int mid = x + Math.max(0, bw - 1) / 2;
-            g.verticalLine(mid, yHigh, yLow, color);
-            g.fill(x, Math.min(yOpen, yClose), x + Math.max(1, bw - 1), Math.max(yOpen, yClose) + 1, color);
-        }
-        var lastBar = bars.getLast();
-        int yNow = y(lastBar.close(), min, span, cy);
-        g.horizontalLine(cx, cx + CHART_W - 1, yNow, 0x60E8C77A);
-        g.text(font, fmt(hi * unit), cx + 2, cy + 2, DIM);
-        g.text(font, fmt(min * unit), cx + 2, cy + CHART_H - 10, DIM);
-        // 悬停显示那根 K 线
-        if (mouseX >= left && mouseX < cx + CHART_W && mouseY >= cy && mouseY < cy + CHART_H) {
-            int i = Math.min(bars.size() - 1, (mouseX - left) / bw);
-            var k = bars.get(i);
-            g.setTooltipForNextFrame(font, List.of(
-                    EconomyClient.when(k.slot() * FxMarket.HOUR, false),
-                    Component.translatable("screen.logos_dimension.fx.ohlc", fmt(k.open() * unit), fmt(k.high() * unit), fmt(k.low() * unit), fmt(k.close() * unit))
-            ), java.util.Optional.empty(), mouseX, mouseY);
-        }
-        // 当前报价与一天来的涨跌
-        double now = EconomyClient.rate(shown) * shown.top().value();
-        var all = data.candles(shown);
-        int back = Math.max(0, all.size() - 13);
-        double dayAgo = all.isEmpty() ? now : all.get(back).close() * shown.top().value();
-        double change = dayAgo == 0 ? 0 : (now / dayAgo - 1) * 100;
-        var quote = Component.literal("1 ").append(Component.translatable(shown.coinKey(shown.top()))).append(" = ")
-                .append(Money.top(Currency.IMPERIAL, now)).append("  ");
-        g.text(font, quote, cx, cy + CHART_H + 5, 0xFFE8E0D0);
-        String pct = String.format("%+.2f%%", change);
-        g.text(font, pct, cx + font.width(quote), cy + CHART_H + 5, change >= 0 ? UP : DOWN);
+        CandleChart.draw(g, font, data, shown, wide, cx, cy, CHART_W, CHART_H, mouseX, mouseY, List.of());
+        CandleChart.quote(g, font, data, shown, cx, cy + CHART_H + 5);
     }
-
-    /** 近二十天时四小时并成一根，保证屏幕上总是六十根左右。 */
-    private List<FxMarket.Candle> bars(List<FxMarket.Candle> candles) {
-        if (!wide) return candles.subList(Math.max(0, candles.size() - BARS), candles.size());
-        var merged = new ArrayList<FxMarket.Candle>();
-        FxMarket.Candle cur = null;
-        for (var k : candles) {
-            long group = Math.floorDiv(k.slot(), 4);
-            if (cur != null && Math.floorDiv(cur.slot(), 4) == group) {
-                cur = new FxMarket.Candle(cur.slot(), cur.open(), Math.max(cur.high(), k.high()), Math.min(cur.low(), k.low()), k.close());
-                merged.set(merged.size() - 1, cur);
-            } else { cur = k; merged.add(cur); }
-        }
-        return merged.subList(Math.max(0, merged.size() - BARS), merged.size());
-    }
-
-    private static int y(float price, float min, float span, int cy) {
-        return cy + CHART_H - 1 - Math.round((price - min) / span * (CHART_H - 2));
-    }
-
-    private static String fmt(double silver) { return String.format("%,.2f", silver); }
 
     // ---------------------------------------------------------------- 下单预览
 

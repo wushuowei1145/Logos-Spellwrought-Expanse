@@ -291,6 +291,62 @@ def counter_side():
     return im
 
 
+def bank_front():
+    """钱庄正面：朱漆柜面，中间一道铁箍包边的库门，门上金色钱纹。"""
+    im = Image.new('RGBA', (16, 16), hexc('#7a2a26'))
+    px = im.load()
+    for y in range(16):
+        for x in range(16):
+            if (x * 5 + y * 11) % 13 == 0:
+                px[x, y] = hexc('#6a2220')
+    for x in range(16):
+        px[x, 0] = hexc('#2e1410'); px[x, 15] = hexc('#2e1410')
+    for y in range(3, 15):
+        for x in range(4, 12):
+            px[x, y] = hexc('#3a3a42') if x in (4, 11) or y in (3, 14) else hexc('#5a4a3a')
+    for y in (6, 11):
+        for x in range(5, 11):
+            px[x, y] = hexc('#3a3a42')
+    stamp(im, ['.##.', '#..#', '#..#', '.##.'], hexc('#e2b23a'), 6, 7)
+    for x, y in [(7, 8), (8, 8), (7, 9), (8, 9)]:
+        px[x, y] = hexc('#2e1410')
+    return im
+
+
+def bank_side():
+    """侧面：朱漆板，铜钉成行。"""
+    im = Image.new('RGBA', (16, 16), hexc('#7a2a26'))
+    px = im.load()
+    for y in range(16):
+        for x in range(16):
+            if x in (0, 15) or y in (0, 15):
+                px[x, y] = hexc('#2e1410')
+            elif x in (7, 8):
+                px[x, y] = hexc('#6a2220')
+    for x in (3, 12):
+        for y in (3, 8, 12):
+            px[x, y] = hexc('#e2b23a'); px[x + 1, y + 1] = hexc('#a8741c')
+    return im
+
+
+def bank_top():
+    """台面：黑漆台面上一把算盘。"""
+    im = Image.new('RGBA', (16, 16), hexc('#2b1a16'))
+    px = im.load()
+    for x in range(16):
+        px[x, 0] = hexc('#1a0e0a'); px[x, 15] = hexc('#1a0e0a')
+    for y in range(4, 12):
+        px[2, y] = hexc('#8a5a30'); px[13, y] = hexc('#8a5a30')
+    for x in range(2, 14):
+        px[x, 4] = hexc('#8a5a30'); px[x, 11] = hexc('#8a5a30'); px[x, 6] = hexc('#6a4020')
+    for x in range(3, 13, 2):
+        px[x, 5] = hexc('#c9a24a')
+        for y in (8, 9, 10):
+            if (x + y) % 3:
+                px[x, y] = hexc('#c9a24a')
+    return im
+
+
 def main():
     tex = A / 'textures/item'
     tex.mkdir(parents=True, exist_ok=True)
@@ -313,6 +369,21 @@ def main():
         f'facing={f}': {'model': 'logos_dimension:block/exchange_counter', **({'y': r} if r else {})}
         for f, r in [('north', 0), ('east', 90), ('south', 180), ('west', 270)]}})
     write(A / 'items/exchange_counter.json', {'model': {'type': 'minecraft:model', 'model': 'logos_dimension:block/exchange_counter'}})
+    bank_top().save(btex / 'bank_counter_top.png')
+    bank_front().save(btex / 'bank_counter_front.png')
+    bank_side().save(btex / 'bank_counter_side.png')
+    write(A / 'models/block/bank_counter.json', {'parent': 'minecraft:block/orientable', 'textures': {
+        'top': 'logos_dimension:block/bank_counter_top', 'front': 'logos_dimension:block/bank_counter_front',
+        'side': 'logos_dimension:block/bank_counter_side'}})
+    write(A / 'blockstates/bank_counter.json', {'variants': {
+        f'facing={f}': {'model': 'logos_dimension:block/bank_counter', **({'y': r} if r else {})}
+        for f, r in [('north', 0), ('east', 90), ('south', 180), ('west', 270)]}})
+    write(A / 'items/bank_counter.json', {'model': {'type': 'minecraft:model', 'model': 'logos_dimension:block/bank_counter'}})
+    write(D / 'loot_table/blocks/bank_counter.json', {'type': 'minecraft:block', 'pools': [{'rolls': 1, 'entries': [
+        {'type': 'minecraft:item', 'name': 'logos_dimension:bank_counter'}], 'conditions': [{'condition': 'minecraft:survives_explosion'}]}]})
+    write(D / 'recipe/bank_counter.json', {'type': 'minecraft:crafting_shaped', 'category': 'misc',
+        'pattern': ['GCG', 'PIP', 'PPP'], 'key': {'G': 'minecraft:gold_ingot', 'C': 'minecraft:chest', 'I': 'minecraft:iron_ingot', 'P': '#minecraft:planks'},
+        'result': {'id': 'logos_dimension:bank_counter', 'count': 1}})
     write(D / 'loot_table/blocks/exchange_counter.json', {'type': 'minecraft:block', 'pools': [{'rolls': 1, 'entries': [
         {'type': 'minecraft:item', 'name': 'logos_dimension:exchange_counter'}], 'conditions': [{'condition': 'minecraft:survives_explosion'}]}]})
     # 钱币本身不能合成；钱囊和兑换台可以
@@ -325,6 +396,47 @@ def main():
 
     zh = {
         'itemGroup.logos_dimension.economy': '异世界货币',
+        'block.logos_dimension.bank_counter': '钱庄',
+        'screen.logos_dimension.bank.account': '账户',
+        'screen.logos_dimension.bank.leverage': '杠杆',
+        'screen.logos_dimension.bank.deposit': '存入',
+        'screen.logos_dimension.bank.withdraw': '取出',
+        'screen.logos_dimension.bank.deposit_all': '全部存入',
+        'screen.logos_dimension.bank.loan': '（借款）',
+        'screen.logos_dimension.bank.credit': '授信 %s · 已借 %s · 净值约 %s（含持仓）',
+        'screen.logos_dimension.bank.notices': '钱庄通知',
+        'screen.logos_dimension.bank.no_notices': '暂无通知',
+        'screen.logos_dimension.bank.margin': '保证金（金冠）',
+        'screen.logos_dimension.bank.leverage_hint': '倍数',
+        'screen.logos_dimension.bank.stop': '止损价',
+        'screen.logos_dimension.bank.take': '止盈价',
+        'screen.logos_dimension.bank.open': '开仓',
+        'screen.logos_dimension.bank.close': '平仓',
+        'screen.logos_dimension.bank.long': '做多 ▲（赌它涨）',
+        'screen.logos_dimension.bank.short': '做空 ▼（赌它跌）',
+        'screen.logos_dimension.bank.liq_short': '爆仓',
+        'screen.logos_dimension.bank.notional': '名义 ',
+        'screen.logos_dimension.bank.entry_liq': '开 %s · 爆 %s 银元',
+        'screen.logos_dimension.bank.overnight': '每夜利息 %s',
+        'screen.logos_dimension.bank.will_borrow': '存款不够，差额向钱庄借',
+        'screen.logos_dimension.bank.positions': '持仓 %s 笔',
+        'screen.logos_dimension.bank.pnl': '浮动盈亏 ',
+        'screen.logos_dimension.bank.no_positions': '还没有持仓',
+        'screen.logos_dimension.bank.row': '保证金 %s · 开 %s · 爆 %s',
+        'screen.logos_dimension.bank.crowns': '%s 金冠',
+        'bank.side.long': '多',
+        'bank.side.short': '空',
+        'bank.notice.liquidate': '%s%s仓被强平，盈亏 %s 金冠',
+        'bank.notice.stop': '%s%s仓触发止损，盈亏 %s 金冠',
+        'bank.notice.take': '%s%s仓触发止盈，盈亏 %s 金冠',
+        'bank.notice.close': '%s%s仓已平，盈亏 %s 金冠',
+        'message.logos_dimension.bank.not_enough': '%s不够',
+        'message.logos_dimension.bank.in_debt': '还欠着钱庄的钱，借款不能取现',
+        'message.logos_dimension.bank.closed': '开平仓只在 6:00–18:00，存取随时可以',
+        'message.logos_dimension.bank.leverage': '倍数最多 %s 倍',
+        'message.logos_dimension.bank.too_many': '最多同时持有 %s 笔',
+        'message.logos_dimension.bank.credit': '超出授信额度',
+        'message.logos_dimension.bank.bad_stop': '止损要在亏损一侧，止盈在盈利一侧',
         'item.logos_dimension.wallet': '万国钱囊',
         'block.logos_dimension.exchange_counter': '兑换台',
         'currency.logos_dimension.imperial': '帝国币', 'currency.logos_dimension.fox': '狐钱',
@@ -388,6 +500,47 @@ def main():
     }
     en = {
         'itemGroup.logos_dimension.economy': 'Otherworld Currencies',
+        'block.logos_dimension.bank_counter': 'Bank',
+        'screen.logos_dimension.bank.account': 'Account',
+        'screen.logos_dimension.bank.leverage': 'Margin',
+        'screen.logos_dimension.bank.deposit': 'Deposit',
+        'screen.logos_dimension.bank.withdraw': 'Withdraw',
+        'screen.logos_dimension.bank.deposit_all': 'Deposit all',
+        'screen.logos_dimension.bank.loan': '(loan)',
+        'screen.logos_dimension.bank.credit': 'Credit %s · borrowed %s · net about %s (incl. positions)',
+        'screen.logos_dimension.bank.notices': 'Bank notices',
+        'screen.logos_dimension.bank.no_notices': 'No notices',
+        'screen.logos_dimension.bank.margin': 'Margin (crowns)',
+        'screen.logos_dimension.bank.leverage_hint': 'Leverage',
+        'screen.logos_dimension.bank.stop': 'Stop',
+        'screen.logos_dimension.bank.take': 'Take',
+        'screen.logos_dimension.bank.open': 'Open',
+        'screen.logos_dimension.bank.close': 'Close',
+        'screen.logos_dimension.bank.long': 'Long ▲ (bet it rises)',
+        'screen.logos_dimension.bank.short': 'Short ▼ (bet it falls)',
+        'screen.logos_dimension.bank.liq_short': 'Liq',
+        'screen.logos_dimension.bank.notional': 'Notional ',
+        'screen.logos_dimension.bank.entry_liq': 'In %s · liq %s silver',
+        'screen.logos_dimension.bank.overnight': 'Overnight %s',
+        'screen.logos_dimension.bank.will_borrow': 'Short of funds; the bank lends the rest',
+        'screen.logos_dimension.bank.positions': '%s positions',
+        'screen.logos_dimension.bank.pnl': 'Open P&L ',
+        'screen.logos_dimension.bank.no_positions': 'No positions',
+        'screen.logos_dimension.bank.row': 'margin %s · in %s · liq %s',
+        'screen.logos_dimension.bank.crowns': '%s crowns',
+        'bank.side.long': ' long',
+        'bank.side.short': ' short',
+        'bank.notice.liquidate': '%s%s liquidated, P&L %s crowns',
+        'bank.notice.stop': '%s%s stopped out, P&L %s crowns',
+        'bank.notice.take': '%s%s took profit, P&L %s crowns',
+        'bank.notice.close': '%s%s closed, P&L %s crowns',
+        'message.logos_dimension.bank.not_enough': 'Not enough %s',
+        'message.logos_dimension.bank.in_debt': 'You owe the bank; loans cannot be withdrawn',
+        'message.logos_dimension.bank.closed': 'Positions trade 6:00–18:00; deposits any time',
+        'message.logos_dimension.bank.leverage': 'Leverage is at most %s×',
+        'message.logos_dimension.bank.too_many': 'At most %s open positions',
+        'message.logos_dimension.bank.credit': 'Over your credit line',
+        'message.logos_dimension.bank.bad_stop': 'Stop must be on the losing side, take on the winning side',
         'item.logos_dimension.wallet': 'Purse of Nations',
         'block.logos_dimension.exchange_counter': 'Exchange Counter',
         'currency.logos_dimension.imperial': 'Imperial', 'currency.logos_dimension.fox': 'Fox Coin',
