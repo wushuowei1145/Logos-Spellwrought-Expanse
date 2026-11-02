@@ -18,17 +18,20 @@ public record Moveset(String start, String sheathe, double comboMemory, Map<Stri
 
     /**
      * 一条转移。{@code from}–{@code until} 是本招式内接受输入的动作时间窗口（含端点）；
-     * {@code queue} 为真时输入先记下，到本招式结束的那一刻再切换；{@code combo} 为真时，
-     * 若上一段连招仍在记忆时间内，改去它的 {@code combo_next}。
+     * {@code queue} 为真时输入先记下（输入缓冲），到 {@code at}（取消点，动作时间）那一刻再切换，
+     * {@code at} 为 NaN 表示等本招式播完；{@code combo} 为真时，若上一段连招仍在记忆时间内，改去它的 {@code combo_next}。
      */
-    public record Transition(Input input, String to, double from, double until, boolean queue, boolean combo) {}
+    public record Transition(Input input, String to, double from, double until, boolean queue, double at, boolean combo) {
+        public boolean atEnd() { return Double.isNaN(at); }
+    }
 
     /**
      * 一个招式。{@code length} 为动作时长（秒）；{@code REVERSE} 招式没有固定时长，
-     * 从进入时上一招式已播放的位置倒放回 0。{@code contact} 为接触时刻，{@code next} 为播完后的去向。
+     * 从进入时上一招式已播放的位置倒放回 0。{@code contact} 为接触时刻，{@code next} 为播完后的去向，
+     * {@code blendIn} 为进入时从上一姿势过渡的时长（秒，只影响客户端画面）。
      */
     public record Move(String name, String clip, double length, Playback playback, double speedBase, double contact,
-                       boolean resetCombo, String comboNext, String next, List<Transition> on) {
+                       boolean resetCombo, String comboNext, String next, double blendIn, List<Transition> on) {
         public boolean scalesWithAttackSpeed() { return speedBase > 0; }
         public boolean hasContact() { return contact >= 0; }
         public boolean accepts(Input input) { return on.stream().anyMatch(t -> t.input == input); }
@@ -72,12 +75,14 @@ public record Moveset(String start, String sheathe, double comboMemory, Map<Stri
                 double from = 0, until = Double.POSITIVE_INFINITY;
                 if (t.has("window")) { var w = t.getAsJsonArray("window"); from = w.get(0).getAsDouble(); until = w.size() > 1 ? w.get(1).getAsDouble() : until; }
                 on.add(new Transition(Input.valueOf(t.get("input").getAsString().toUpperCase(Locale.ROOT)), t.get("to").getAsString(),
-                        from, until, t.has("queue") && t.get("queue").getAsBoolean(), t.has("combo") && t.get("combo").getAsBoolean()));
+                        from, until, t.has("queue") && t.get("queue").getAsBoolean(), t.has("at") ? t.get("at").getAsDouble() : Double.NaN,
+                        t.has("combo") && t.get("combo").getAsBoolean()));
             }
             moves.put(name, new Move(name, string(m, "clip", name), length, playback,
                     m.has("attack_speed_base") ? m.get("attack_speed_base").getAsDouble() : 0,
                     m.has("contact") ? m.get("contact").getAsDouble() : -1,
-                    m.has("reset_combo") && m.get("reset_combo").getAsBoolean(), string(m, "combo_next", null), string(m, "next", null), List.copyOf(on)));
+                    m.has("reset_combo") && m.get("reset_combo").getAsBoolean(), string(m, "combo_next", null), string(m, "next", null),
+                    m.has("blend_in") ? m.get("blend_in").getAsDouble() : 0, List.copyOf(on)));
         }
         var set = new Moveset(json.get("start").getAsString(), string(json, "sheathe", null),
                 json.has("combo_memory") ? json.get("combo_memory").getAsDouble() : 0, Map.copyOf(moves));
@@ -94,7 +99,16 @@ public record Moveset(String start, String sheathe, double comboMemory, Map<Stri
             else if (move.playback != Playback.LOOP) throw new IllegalArgumentException(move.name + " 不循环，必须写 next");
             if (move.comboNext != null) target(move.name + ".combo_next", move.comboNext, false);
             if (move.speedBase < 0) throw new IllegalArgumentException(move.name + " 的 attack_speed_base 不能为负");
-            for (var t : move.on) target(move.name + " 的转移", t.to, true);
+            if (move.blendIn < 0) throw new IllegalArgumentException(move.name + " 的 blend_in 不能为负");
+            for (var t : move.on) {
+                target(move.name + " 的转移", t.to, true);
+                if (!t.atEnd() && !t.queue) throw new IllegalArgumentException(move.name + " 的转移写了 at 却没有 queue");
+                // 取消点早于接触时刻会让缓冲的下一招吞掉这一下命中。
+                if (!t.atEnd() && move.hasContact() && t.at < move.contact)
+                    throw new IllegalArgumentException(move.name + " 的取消点 " + t.at + " 早于接触时刻 " + move.contact);
+                if (!t.atEnd() && move.playback != Playback.REVERSE && t.at > move.length)
+                    throw new IllegalArgumentException(move.name + " 的取消点超过动作时长");
+            }
         }
     }
     private void target(String where, String name, boolean clearAllowed) {

@@ -6,7 +6,7 @@ import java.util.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-/** 招式状态机：长剑数据与迁移前的时间轴逐刻一致，以及校验和容错。 */
+/** 招式状态机：长剑的取消点、输入缓冲、连招记忆、蓄力与收剑逐刻时间轴，以及校验和容错。 */
 class MovesetTest {
     private static Moveset longsword() throws Exception { return Moveset.parse(LongswordMotionTest.read("/data/logos_dimension/combat/movesets/longsword.json")); }
 
@@ -39,26 +39,33 @@ class MovesetTest {
             }
         }
     }
-    @Test void drawThenThreeHitComboKeepsTheOldCadence() throws Exception {
+    @Test void bufferedComboCancelsAtTheRecoveryPoint() throws Exception {
         var s = new Sim(longsword()).until(24);
         assertEquals("idle", s.move());
         s.until(30); assertTrue(s.input(Moveset.Input.ATTACK)); assertEquals("attack_1", s.move());
-        // 接触在 4.8 刻后：第 35 刻结算，与旧版 contact=4.8/rate 一致。
-        s.until(34); assertEquals(List.of(), s.actor.contacts);
+        // 出刀后 0.1 秒内的重复输入（同一次点击的补发）不缓冲。
+        s.until(31); assertFalse(s.input(Moveset.Input.ATTACK));
+        s.until(32); assertTrue(s.input(Moveset.Input.ATTACK)); assertEquals("attack_1", s.move());
+        // 接触在 4.8 刻后，缓冲的下一段等到取消点 0.36 秒（7.2 刻）才接上，不吞掉这一下命中。
         s.until(35); assertEquals(List.of(35.0), s.actor.contacts);
-        // 收势最后 4 刻（动作时间 0.425 秒起）才接受下一段。
-        s.until(38); assertFalse(s.input(Moveset.Input.ATTACK));
-        s.until(39); assertTrue(s.input(Moveset.Input.ATTACK));
-        s.until(43); assertEquals("attack_2", s.move()); assertEquals(42.5, s.runner.start(), 1e-9);
-        s.until(48); assertEquals(List.of(35.0, 48.0), s.actor.contacts);
-        s.until(50); assertFalse(s.input(Moveset.Input.ATTACK));
-        s.until(52); assertTrue(s.input(Moveset.Input.ATTACK));
-        s.until(54); assertEquals("attack_2", s.move());
-        s.until(55); assertEquals("attack_3", s.move()); assertEquals(55.0, s.runner.start(), 1e-9);
-        s.until(60); assertEquals(List.of(35.0, 48.0, 60.0), s.actor.contacts);
-        // 没有排队输入时按到点的那一刻回到待机，与旧版 begin(IDLE, now) 相同。
-        s.until(67); assertEquals("attack_3", s.move());
-        s.until(68); assertEquals("idle", s.move()); assertEquals(68.0, s.runner.start(), 1e-9);
+        s.until(37); assertEquals("attack_1", s.move());
+        s.until(38); assertEquals("attack_2", s.move()); assertEquals(37.2, s.runner.start(), 1e-9);
+        s.until(43); assertEquals(List.of(35.0, 43.0), s.actor.contacts);
+        // 取消点已过才输入时立即接下一段。
+        s.until(46); assertTrue(s.input(Moveset.Input.ATTACK));
+        assertEquals("attack_3", s.move()); assertEquals(46, s.runner.start(), 1e-9);
+        s.until(51); assertEquals(List.of(35.0, 43.0, 51.0), s.actor.contacts);
+        // 没有输入时播完收势再回待机。
+        s.until(58); assertEquals("attack_3", s.move());
+        s.until(59); assertEquals("idle", s.move()); assertEquals(59.0, s.runner.start(), 1e-9);
+    }
+    @Test void attackThreeCancelsAtItsOwnRecoveryPointAndLoopsToTheFirst() throws Exception {
+        var s = new Sim(longsword()).until(30); s.input(Moveset.Input.ATTACK);
+        s.until(40); s.input(Moveset.Input.ATTACK); assertEquals("attack_2", s.move());
+        s.until(50); s.input(Moveset.Input.ATTACK); assertEquals("attack_3", s.move());
+        s.until(53); s.input(Moveset.Input.ATTACK);
+        s.until(57); assertEquals("attack_3", s.move());
+        s.until(58); assertEquals("attack_1", s.move()); assertEquals(50 + .37 * 20, s.runner.start(), 1e-9);
     }
     @Test void comboMemoryLastsThirtyTicksFromTheLastStrike() throws Exception {
         var a = new Sim(longsword()).until(30); a.input(Moveset.Input.ATTACK);
@@ -133,8 +140,15 @@ class MovesetTest {
                 "{\"start\":\"a\",\"moves\":{\"a\":{\"length\":1}}}").getAsJsonObject()));
         assertThrows(IllegalArgumentException.class, () -> Moveset.parse(JsonParser.parseString(
                 "{\"start\":\"a\",\"moves\":{\"a\":{\"playback\":\"loop\"}}}").getAsJsonObject()));
+        var early = assertThrows(IllegalArgumentException.class, () -> Moveset.parse(JsonParser.parseString(
+                "{\"start\":\"a\",\"moves\":{\"a\":{\"length\":1,\"contact\":0.5,\"next\":\"a\","
+                + "\"on\":[{\"input\":\"attack\",\"to\":\"a\",\"queue\":true,\"at\":0.3}]}}}").getAsJsonObject()));
+        assertTrue(early.getMessage().contains("早于接触"));
+        assertThrows(IllegalArgumentException.class, () -> Moveset.parse(JsonParser.parseString(
+                "{\"start\":\"a\",\"moves\":{\"a\":{\"length\":1,\"next\":\"a\",\"on\":[{\"input\":\"attack\",\"to\":\"a\",\"at\":0.3}]}}}").getAsJsonObject()));
         var ok = Moveset.parse(JsonParser.parseString(
-                "{\"start\":\"a\",\"moves\":{\"a\":{\"length\":1,\"next\":\"$clear\"}}}").getAsJsonObject());
+                "{\"start\":\"a\",\"moves\":{\"a\":{\"length\":1,\"blend_in\":0.1,\"next\":\"$clear\"}}}").getAsJsonObject());
         assertEquals("a", ok.move("a").clip());
+        assertEquals(.1, ok.move("a").blendIn(), 1e-9);
     }
 }

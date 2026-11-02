@@ -11,6 +11,8 @@ import java.util.UUID;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.ItemStack;
@@ -40,25 +42,28 @@ public final class LongswordCombat {
         final int slot, variant;
         final Object level;
         MoveRunner runner;
+        /** 上一次命中的目标与游戏刻，用来判断目标的受击冷却是不是这套连招自己造成的。 */
+        Entity lastTarget;
+        long lastHit;
         State(ServerPlayer player, int variant) {
             this.player = player; this.stack = player.getMainHandItem(); this.variant = variant;
             this.slot = player.getInventory().getSelectedSlot(); this.level = player.level();
         }
         @Override public double attackSpeed() { return player.getAttributeValue(Attributes.ATTACK_SPEED); }
         @Override public void moveStarted(MoveRunner runner) { sync(player, payload(runner)); }
-        @Override public void contact(MoveRunner runner) { if (selected(player, this)) LongswordCombat.contact(player); }
+        @Override public void contact(MoveRunner runner) { if (selected(player, this)) LongswordCombat.contact(player, this); }
         LongswordPayload payload(MoveRunner runner) {
             if (runner.cleared()) return LongswordPayload.clear(player.getUUID());
             var move = runner.move(); var set = runner.moveset();
             byte flags = (byte) ((move.accepts(Moveset.Input.USE_PRESS) ? LongswordPayload.ACCEPTS_USE : 0)
                     | (move.name().equals(set.sheathe()) ? LongswordPayload.SHEATHING : 0));
             return new LongswordPayload(player.getUUID(), variant, move.name(), move.clip(), runner.start(),
-                    (float) runner.rate(), (float) runner.offset(), move.playback(), flags);
+                    (float) runner.rate(), (float) runner.offset(), move.playback(), (float) move.blendIn(), flags);
         }
     }
     @SubscribeEvent static void packets(RegisterPayloadHandlersEvent event) {
-        // 同步包改为招式快照，版本号随之提高，新旧版本不会互相解码。
-        var registrar = event.registrar("2");
+        // 同步包格式变化时提高版本号，新旧版本不会互相解码。
+        var registrar = event.registrar("3");
         registrar.playToClient(LongswordPayload.TYPE, LongswordPayload.CODEC);
         registrar.playToServer(LongswordPayload.Attack.TYPE, LongswordPayload.Attack.CODEC, (p, ctx) -> {
             if (ctx.player() instanceof ServerPlayer player) attack(player);
@@ -139,7 +144,7 @@ public final class LongswordCombat {
         // 松开右键的包可能早于或晚于这一刻到达；这里补一次，保证蓄力不会卡住。
         if (!player.isUsingItem() && selected(player, state)) state.runner.input(Moveset.Input.USE_RELEASE, now);
     }
-    private static void contact(ServerPlayer player) {
+    private static void contact(ServerPlayer player, State state) {
         var from = player.getEyePosition();
         var to = from.add(player.getLookAngle().scale(player.entityInteractionRange()));
         var block = player.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
@@ -148,8 +153,14 @@ public final class LongswordCombat {
                 player.getBoundingBox().expandTowards(to.subtract(from)).inflate(1), e -> !e.isSpectator() && e.isPickable(), 0);
         boolean attacked = hit != null && player.hasLineOfSight(hit.getEntity());
         if (attacked) {
+            var target = hit.getEntity(); long now = player.level().getGameTime();
+            // 取消点让连段间隔短于原版 10 刻受击冷却；只放过这套连招上一下自己造成的冷却，
+            // 冷却若被其他来源刷新过（剩余时间比预期长）就照原版规则处理。
+            if (target == state.lastTarget && target instanceof LivingEntity living && living.invulnerableTime > 0
+                    && living.invulnerableTime <= 20 - (now - state.lastHit)) living.invulnerableTime = 0;
             CONTACT.set(true);
-            try { player.attack(hit.getEntity()); } finally { CONTACT.remove(); }
+            try { player.attack(target); } finally { CONTACT.remove(); }
+            if (target instanceof LivingEntity living && living.invulnerableTime >= 20) { state.lastTarget = target; state.lastHit = now; }
         } else {
             player.resetAttackStrengthTicker();
             player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, .6f, 1);

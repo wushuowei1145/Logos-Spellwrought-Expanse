@@ -1,5 +1,25 @@
 # 首版验证记录
 
+## 长剑连招手感：取消点、输入缓冲与过渡混合
+
+2026-11-02：分支 `feat/combat-feel`，基于 main `de46d32`（已合并 PR #110）。招式转移新增 `at`（取消点），招式新增 `blend_in`（进入时的过渡时长），格式见 [战斗骨架与兼容性规范](docs/COMBAT_SKELETON.md) 第 5 节。长剑出刀 0.1 秒后的左键都会缓冲，在美术标注的收势起点（0.36 / 0.36 / 0.37 秒）接下一段；客户端从上一招在切换那一刻的姿势平滑过渡（攻击 0.08 秒、回待机 0.12 秒、蓄力 0.1 秒、下劈 0.05 秒、收剑 0.1 秒）。同步包加入过渡时长，通道版本升为 3。
+
+伤害仍走原版：提前接刀的两下按原版攻击冷却减伤（三连段实测 7 + 约 3.7 + 约 3.7），总输出与改动前接近，数值按维护者要求暂不调整。为不让连招被自己上一下的 10 刻受击冷却挡掉，同一目标的冷却若正是这套连招上一下造成的，下一下结算前清零；冷却来自其他来源时照原版处理。客户端单击只发一次攻击包，避免同一次点击被缓冲成两刀。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元与构建 | **130/130** 通过，`test build` 成功；`MovesetTest` 改为新时间轴：0.1 秒内重复输入不缓冲、缓冲在 37.2 刻（7.2 刻取消点）接上、取消点后输入立即接、第三段 0.37 秒取消回到第一段、取消点早于接触或 `at` 不带 `queue` 时报错 |
+| 世界测试 | 长剑 8 项各跑 6 次：1 次全过，其余 5 次只有 `longsword_combo` 失败，且都是“只有第一下掉血”，与 main 上已知的测试环境问题相同（main 同样 6 次 1 次全过）；三下都命中的运行里伤害和冷却处理符合预期。其余 7 项每次通过 |
+| 实际客户端 | `group:longsword` **3/3 场景、33/33 检查**；查看三把剑的连招截图，三段姿势与双手握剑正常 |
+
+没有测光影、联机延迟或 NPC；手感本身需要维护者在游戏里实际试。
+
+```text
+./gradlew --offline test build -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew --offline runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:longsword_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar -PldTest=group:longsword -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 招式状态机与长剑迁移
 
 2026-11-02：分支 `feat/combat-movesets`，基于 main `71e3816`（已合并 PR #109）。新增数据驱动的招式状态机（`Moveset`、`MoveRunner`、`Movesets`，格式见 [战斗骨架与兼容性规范](docs/COMBAT_SKELETON.md) 第 5 节），长剑的出招、接触、排队接段、连招记忆、蓄力、取消和收剑改由 `data/logos_dimension/combat/movesets/longsword.json` 描述，删除写死的 `LongswordPhase`。同步包改为招式快照（动作名、开始刻、速度、播放方式），通道版本由 1 升为 2。时序与手感不变；新增兼容行为：招式数据缺失或损坏时记日志，长剑按原版物品处理，客户端在服务端回报持剑动作前不拦截左键。

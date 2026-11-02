@@ -8,11 +8,11 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 /**
- * 只同步表现所需的动作快照：招式名、动作片段、开始刻、播放速度与方式；客户端不需要招式文件，
- * 也不能指定目标、伤害或连招段数。move 为空表示动作结束、恢复原版。
+ * 只同步表现所需的动作快照：招式名、动作片段、开始刻、播放速度与方式、进入时的过渡时长（秒）；
+ * 客户端不需要招式文件，也不能指定目标、伤害或连招段数。move 为空表示动作结束、恢复原版。
  */
 public record LongswordPayload(UUID player, int variant, String move, String clip, double started, float speed, float offset,
-                               Moveset.Playback playback, byte flags) implements CustomPacketPayload {
+                               Moveset.Playback playback, float blend, byte flags) implements CustomPacketPayload {
     /** 当前招式接受右键（可开始蓄力）。 */
     public static final byte ACCEPTS_USE = 1;
     /** 正在收剑：拦截攻击与使用，避免新换上的物品被误用。 */
@@ -20,10 +20,10 @@ public record LongswordPayload(UUID player, int variant, String move, String cli
     public static final Type<LongswordPayload> TYPE = new Type<>(LogosDimension.id("longsword_pose"));
     public static final StreamCodec<RegistryFriendlyByteBuf, LongswordPayload> CODEC = StreamCodec.of((b, p) -> {
         b.writeUUID(p.player); b.writeVarInt(p.variant); b.writeUtf(p.move); b.writeUtf(p.clip); b.writeDouble(p.started);
-        b.writeFloat(p.speed); b.writeFloat(p.offset); b.writeEnum(p.playback); b.writeByte(p.flags);
+        b.writeFloat(p.speed); b.writeFloat(p.offset); b.writeEnum(p.playback); b.writeFloat(p.blend); b.writeByte(p.flags);
     }, b -> new LongswordPayload(b.readUUID(), b.readVarInt(), b.readUtf(), b.readUtf(), b.readDouble(), b.readFloat(), b.readFloat(),
-            b.readEnum(Moveset.Playback.class), b.readByte()));
-    public static LongswordPayload clear(UUID player) { return new LongswordPayload(player, 0, "", "", 0, 1, 0, Moveset.Playback.ONCE, (byte) 0); }
+            b.readEnum(Moveset.Playback.class), b.readFloat(), b.readByte()));
+    public static LongswordPayload clear(UUID player) { return new LongswordPayload(player, 0, "", "", 0, 1, 0, Moveset.Playback.ONCE, 0, (byte) 0); }
     public boolean cleared() { return move.isEmpty(); }
     public boolean acceptsUse() { return (flags & ACCEPTS_USE) != 0; }
     public boolean sheathing() { return (flags & SHEATHING) != 0; }

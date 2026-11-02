@@ -43,14 +43,20 @@ public final class MoveRunner {
         double t = elapsed(now);
         for (var transition : move.on()) {
             if (transition.input() != input || t + EPSILON < transition.from() || t - EPSILON > transition.until()) continue;
-            if (transition.queue()) queued = transition;
-            else follow(transition, now);
+            // 取消点已经过了就立即切换，否则先缓冲到取消点。
+            if (!transition.queue() || now - start + EPSILON >= fireTicks(transition)) follow(transition, now);
+            else queued = transition;
             return true;
         }
         return false;
     }
 
-    /** 逐刻推进：先结算接触，再处理播完后的排队转移或默认去向。 */
+    /** 缓冲的转移生效的刻数（相对本招式开始）：取消点，或本招式结束。 */
+    private double fireTicks(Moveset.Transition transition) {
+        return transition.atEnd() ? move.durationTicks(rate, offset) : transition.at() * 20 / rate;
+    }
+
+    /** 逐刻推进：先结算接触，再处理到点的缓冲转移，最后是播完后的默认去向。 */
     public void tick(double now) {
         if (cleared) return;
         double age = now - start;
@@ -58,11 +64,12 @@ public final class MoveRunner {
             hit = true;
             actor.contact(this);
         }
-        double duration = move.durationTicks(rate, offset);
-        if (age + EPSILON < duration) return;
-        // 排队的输入在原招式结束的那一刻接上，不等到下一刻，连段节奏不因刻边界漂移。
-        if (queued != null) follow(queued, start + duration);
-        else go(move.next(), false, now);
+        // 缓冲的输入在取消点那一刻接上，不等到下一刻，连段节奏不因刻边界漂移。
+        if (queued != null) {
+            double fire = fireTicks(queued);
+            if (age + EPSILON >= fire) { follow(queued, start + fire); return; }
+        }
+        if (age + EPSILON >= move.durationTicks(rate, offset)) go(move.next(), false, now);
     }
 
     /** 不经转移规则直接切换，例如换下武器时收剑。 */
