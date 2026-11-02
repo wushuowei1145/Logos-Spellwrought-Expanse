@@ -9,16 +9,16 @@ import java.util.List;
  */
 public enum Currency {
     // 帝国：十进制，最好记。汇率由其他货币的波动体现，自身不动
-    IMPERIAL("imperial", 1, 0, 0, 0, List.of(
+    IMPERIAL("imperial", 1, 0, 0, 0, .0005, List.of(
             new Denomination("cent", 1), new Denomination("silver", 100), new Denomination("crown", 10_000))),
     // 神狐：避险货币，平日最稳，天下大乱时反而升值。一両 = 四分 = 四千文
-    FOX("fox", 2.5, .025, .008, 1 / 1.0e8, List.of(
+    FOX("fox", 2.5, .025, .008, 1 / 1.0e8, .0001, List.of(
             new Denomination("mon", 1), new Denomination("ichibu", 1_000), new Denomination("koban", 4_000))),
     // 灵猫：事件驱动，议会和贸易一有风吹草动就大起大落。一镑 = 二十先令 = 二百四十便士
-    CAT("cat", 40, .04, .01, 1 / 6.0e7, List.of(
+    CAT("cat", 40, .04, .01, 1 / 6.0e7, .0008, List.of(
             new Denomination("penny", 1), new Denomination("shilling", 12), new Denomination("sovereign", 240))),
     // 群狼：和战争绑在一起，高风险高回报。一奥里斯 = 二十五第纳尔 = 一百塞斯特斯 = 四百阿斯
-    WOLF("wolf", 25, .06, .015, 1 / 4.0e7, List.of(
+    WOLF("wolf", 25, .06, .015, 1 / 4.0e7, .002, List.of(
             new Denomination("as", 1), new Denomination("sestertius", 4), new Denomination("denarius", 16), new Denomination("aureus", 400)));
 
     /** 面额：{@code value} 是这枚钱币值多少个最小单位。 */
@@ -33,14 +33,17 @@ public enum Currency {
     public final double halfSpread;
     /** 每成交一铜分，对汇率造成的对数冲击；越小代表市场越深。 */
     public final double impact;
+    /** 钱庄的日利率：狐钱最低、狼币最高，借低息买高息就是套息交易。 */
+    public final double dailyRate;
     public final List<Denomination> denominations;
 
-    Currency(String id, double anchor, double dailyVol, double halfSpread, double impact, List<Denomination> denominations) {
+    Currency(String id, double anchor, double dailyVol, double halfSpread, double impact, double dailyRate, List<Denomination> denominations) {
         this.id = id;
         this.anchor = anchor;
         this.dailyVol = dailyVol;
         this.halfSpread = halfSpread;
         this.impact = impact;
+        this.dailyRate = dailyRate;
         this.denominations = denominations;
     }
 

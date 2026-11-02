@@ -20,6 +20,7 @@ import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlers
 @EventBusSubscriber(modid = LogosDimension.ID, value = Dist.CLIENT)
 public final class EconomyClient {
     static MarketPayload latest;
+    static dev.logos.dimension.economy.BankPayload bank;
 
     @SubscribeEvent static void payloads(RegisterClientPayloadHandlersEvent event) {
         event.register(MarketPayload.TYPE, (p, context) -> {
@@ -30,6 +31,10 @@ public final class EconomyClient {
                 case MarketPayload.WALLET -> mc.setScreen(new WalletScreen(p.hand()));
                 default -> {}
             }
+        });
+        event.register(dev.logos.dimension.economy.BankPayload.TYPE, (p, context) -> {
+            bank = p;
+            if (p.open()) Minecraft.getInstance().setScreen(new BankScreen(p.pos()));
         });
     }
 

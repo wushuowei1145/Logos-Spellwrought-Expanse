@@ -32,7 +32,9 @@ public final class EconomyGameTests {
                 "economy_wallet_deposit_withdraw", EconomyGameTests::wallet,
                 "economy_loose_coins_get_change", EconomyGameTests::change,
                 "economy_checkout_auto_exchange", EconomyGameTests::checkout,
-                "economy_counter_trades_by_day", EconomyGameTests::counter);
+                "economy_counter_trades_by_day", EconomyGameTests::counter,
+                "economy_bank_loan_stays_in_the_bank", EconomyGameTests::bankLoan,
+                "economy_bank_liquidates_and_stops", EconomyGameTests::bankLiquidation);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test)); FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
             var env = event.registerEnvironment(LogosDimension.id("economy"), new TestEnvironmentDefinition.AllOf());
@@ -135,6 +137,56 @@ public final class EconomyGameTests {
             h.assertTrue(wolf > 0 && Purse.contents(wallet).get(Currency.IMPERIAL) == 90_000, "兑换后余额不对");
             p.snapTo(pos.getX() + 30.5, pos.getY() + 1, pos.getZ() + .5);
             h.assertTrue(!Economy.trade(p, pos, Currency.WOLF.ordinal(), Currency.IMPERIAL.ordinal(), wolf), "离开兑换台不能远程交易");
+            h.succeed();
+        } finally { p.discard(); }
+    }
+
+    private static void bankLoan(GameTestHelper h) {
+        var p = player(h);
+        try {
+            setClock(h, 30 * FxMarket.DAY + 3_000);
+            var server = h.getLevel().getServer();
+            var wallet = giveWallet(p);
+            Purse.receive(p, Currency.IMPERIAL, 20_000);
+            Purse.receive(p, Currency.FOX, 8_000);
+            h.assertTrue(Bank.deposit(p, Currency.IMPERIAL, 0) && Bank.deposit(p, Currency.FOX, 0), "存入全部");
+            var account = Bank.of(server).account(p.getUUID());
+            h.assertTrue(account.balance(Currency.IMPERIAL) == 20_000 && Purse.contents(wallet).get(Currency.IMPERIAL) == 0, "存款进钱庄，钱囊清空");
+            h.assertTrue(!Bank.open(p, Currency.WOLF, 1, 10_000, Margin.PLAYER_MAX + 1, 0, 0), "玩家倍数不能超过上限");
+            // 保证金十金冠，存款只有两金冠：差额借来，帝国币变成负数
+            h.assertTrue(Bank.open(p, Currency.WOLF, 1, 100_000, 25, 0, 0), "保证金不够时应向钱庄借");
+            h.assertTrue(account.balance(Currency.IMPERIAL) == -80_000 && account.positions().size() == 1, "帝国币应欠八金冠");
+            h.assertTrue(!Bank.withdraw(p, Currency.FOX, 8_000), "欠着钱时不能把存款取光");
+            h.assertTrue(!Bank.open(p, Currency.FOX, 1, BankAccount.CREDIT_LIMIT, 2, 0, 0), "借款不能超过授信额度");
+            long id = account.positions().getFirst().id();
+            h.assertTrue(Bank.close(p, id) && account.positions().isEmpty(), "手动平仓");
+            h.assertTrue(account.balance(Currency.IMPERIAL) > -80_000 && account.balance(Currency.IMPERIAL) < 20_000, "平仓后拿回保证金扣去成本");
+            h.succeed();
+        } finally { p.discard(); }
+    }
+
+    private static void bankLiquidation(GameTestHelper h) {
+        var p = player(h);
+        try {
+            setClock(h, 40 * FxMarket.DAY + 3_000);
+            var server = h.getLevel().getServer();
+            var market = FxMarketData.market(server);
+            market.advance(Economy.clock(server));
+            var account = Bank.of(server).account(p.getUUID());
+            Purse.receive(p, Currency.IMPERIAL, 200_000);
+            Bank.deposit(p, Currency.IMPERIAL, 0);
+            double rate = market.rate(Currency.CAT);
+            h.assertTrue(Bank.open(p, Currency.WOLF, 1, 50_000, 25, 0, 0), "开 25 倍狼币多单");
+            h.assertTrue(Bank.open(p, Currency.CAT, -1, 50_000, 2, rate * 1.05, 0), "开猫币空单带止损");
+            market.shock(Currency.WOLF, Math.log(.9));
+            market.shock(Currency.CAT, Math.log(1.08));
+            Bank.update(server, market, Economy.clock(server));
+            h.assertTrue(account.positions().isEmpty(), "两笔都应被自动平掉");
+            var keys = account.notices().stream().map(FxMarket.News::key).toList();
+            h.assertTrue(keys.contains("bank.notice.liquidate") && keys.contains("bank.notice.stop"), "应有强平和止损通知：" + keys);
+            // 狼币爆仓最多亏光保证金；猫币止损亏一些
+            long balance = account.balance(Currency.IMPERIAL);
+            h.assertTrue(balance >= 100_000 && balance < 160_000, "结算后余额不对：" + balance);
             h.succeed();
         } finally { p.discard(); }
     }

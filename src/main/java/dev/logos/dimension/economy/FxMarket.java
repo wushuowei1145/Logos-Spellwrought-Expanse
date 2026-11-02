@@ -105,6 +105,18 @@ public final class FxMarket {
         return q;
     }
 
+    /** 杠杆单也留下冲击（对数，正数推高）。 */
+    void push(Currency c, double delta) {
+        var l = lines.get(c);
+        if (l != null) l.pressure += delta;
+    }
+
+    /** 管理员调试：直接把某种货币的汇率推一把（对数，0.1 约等于涨 10%），它会照常慢慢回归。 */
+    public void shock(Currency c, double delta) {
+        var l = lines.get(c);
+        if (l != null) l.x = clampLog(l.x + delta);
+    }
+
     /** 报价公式本身，只依赖两边的中间价；客户端拿快照里的汇率算预览，和服务端成交一致。 */
     public static Quote quote(Currency from, Currency to, long amount, double rateFrom, double rateTo) {
         if (amount <= 0 || from == to) return new Quote(from == to ? Math.max(0, amount) : 0, 0, 0);

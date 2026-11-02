@@ -1,5 +1,23 @@
 # 首版验证记录
 
+## 钱庄：存款、借款与杠杆交易
+
+2026-11-03：分支 `feat/fx-margin`，基于 main `9cb4b7d`。设计见 [异世界货币与外汇 · 钱庄](docs/ECONOMY.md#钱庄bankblockbankmargin)。新增钱庄方块（账户与杠杆两页）、按玩家记账的存款（死亡不掉）、帝国币借款当保证金（只显示负数，授信 100 金冠）、做多做空、玩家 1–25 倍（数据与计算兼容到 500 倍）、强平、止损止盈、隔夜利息。兑换台的 K 线抽成共用的 `CandleChart`。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | `MarginTest` **8/8**：一倍开平只亏点差、25 倍约跌 3% 强平且亏损不超过保证金、做空下跌赚钱、止损止盈方向、套息正负、500 倍可算且 501 倍拒绝、授信额度与借款不能变现及存读档、杠杆策略模拟；`FxMarketTest` 6/6 照旧 |
+| 世界测试 | 经济全部 **6/6**（新增 2）：存入全部、超玩家倍数拒绝、借钱开仓使帝国币为负、欠钱时不能取光存款、超授信拒绝、手动平仓；砸盘后 25 倍多单强平、带止损的空单止损，通知与余额正确 |
+| 实际客户端 | `bank_views` **1/1 场景、3/3 检查**（中文）：经网络存款、借钱开三笔、杠杆页 K 线画出开仓与爆仓线、砸盘后强平并出现通知；`economy_views` 4/4 照旧 |
+
+没测：多人同时开仓、离线期间跨多夜的利息累计（单元层面按夜数相乘）、光影。钱庄方块贴图是代码画的初版。
+
+```text
+./gradlew test --tests "dev.logos.dimension.economy.*" -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:economy_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=bank_views,economy_views" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 异世界货币与炒外汇（第一版：原型与现货）
 
 2026-11-03：分支 `feat/fx-economy`，基于 main `b983fb0`。设计见 [异世界货币与外汇](docs/ECONOMY.md)。新增帝国、神狐、灵猫、群狼四种货币共十三枚钱币，全服共享的动态汇率市场（随机事件、传闻、玩家冲击），兑换台方块（K 线、下单、告示与传闻），万国钱囊（无限存放、取一枚或一组、锁定、捡钱入囊），以及给以后商人用的自动换汇结账。顺带修好 main 上 `zh_cn.json`、`en_us.json` 打刀格挡提示后缺的逗号（两份语言文件原本都不是合法 JSON）。
