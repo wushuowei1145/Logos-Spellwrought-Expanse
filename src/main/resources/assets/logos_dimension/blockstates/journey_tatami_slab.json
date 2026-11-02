@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "logos_dimension:block/journey_tatami_slab"
+    },
+    "type=double": {
+      "model": "logos_dimension:block/journey_tatami"
+    },
+    "type=top": {
+      "model": "logos_dimension:block/journey_tatami_slab_top"
+    }
+  }
+}

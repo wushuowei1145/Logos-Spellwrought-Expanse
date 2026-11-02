@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "logos_dimension:block/journey_kawara_slab"
+    },
+    "type=double": {
+      "model": "logos_dimension:block/journey_kawara_roof"
+    },
+    "type=top": {
+      "model": "logos_dimension:block/journey_kawara_slab_top"
+    }
+  }
+}

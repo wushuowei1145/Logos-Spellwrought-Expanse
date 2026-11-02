@@ -1,0 +1,64 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "logos_dimension:journey_ema_rack",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "add": true,
+              "count": 1,
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "logos_dimension:journey_ema_rack",
+                  "properties": {
+                    "layers": "2"
+                  }
+                }
+              ]
+            },
+            {
+              "function": "minecraft:set_count",
+              "add": true,
+              "count": 1,
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "logos_dimension:journey_ema_rack",
+                  "properties": {
+                    "layers": "3"
+                  }
+                }
+              ]
+            },
+            {
+              "function": "minecraft:set_count",
+              "add": true,
+              "count": 1,
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "logos_dimension:journey_ema_rack",
+                  "properties": {
+                    "layers": "4"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ],
+  "random_sequence": "logos_dimension:blocks/journey_ema_rack"
+}

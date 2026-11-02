@@ -1,0 +1,14 @@
+{
+  "variants": {
+    "axis=z": {
+      "model": "logos_dimension:block/journey_tatami"
+    },
+    "axis=x": {
+      "model": "logos_dimension:block/journey_tatami",
+      "y": 90
+    },
+    "axis=y": {
+      "model": "logos_dimension:block/journey_tatami"
+    }
+  }
+}

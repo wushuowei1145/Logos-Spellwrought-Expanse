@@ -20,6 +20,17 @@
     "logos_dimension:cloudsea_lit_window",
     "logos_dimension:journey_limestone",
     "logos_dimension:journey_lime_plaster",
-    "logos_dimension:journey_roof_tile"
+    "logos_dimension:journey_roof_tile",
+    "logos_dimension:journey_white_plaster",
+    "logos_dimension:journey_kawara_roof",
+    "logos_dimension:journey_kawara_stairs",
+    "logos_dimension:journey_kawara_slab",
+    "logos_dimension:journey_stone_lantern",
+    "logos_dimension:journey_stone_lantern_tall",
+    "logos_dimension:journey_hot_spring_stone",
+    "logos_dimension:journey_fox_statue",
+    "logos_dimension:journey_stone_basin",
+    "logos_dimension:journey_stepping_stone",
+    "logos_dimension:journey_shrine_hokora"
   ]
 }

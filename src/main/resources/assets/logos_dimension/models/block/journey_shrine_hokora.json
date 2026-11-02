@@ -1,0 +1,439 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "stone": "logos_dimension:block/journey_fox_statue_base",
+    "wood": "logos_dimension:block/journey_shrine_hokora",
+    "door": "logos_dimension:block/journey_shrine_hokora_door",
+    "beam": "minecraft:block/stripped_dark_oak_log",
+    "roof": "logos_dimension:block/journey_kawara_roof",
+    "particle": "logos_dimension:block/journey_shrine_hokora"
+  },
+  "elements": [
+    {
+      "from": [
+        2,
+        0,
+        2
+      ],
+      "to": [
+        14,
+        3,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            13,
+            14,
+            16
+          ],
+          "texture": "#stone"
+        },
+        "south": {
+          "uv": [
+            2,
+            13,
+            14,
+            16
+          ],
+          "texture": "#stone"
+        },
+        "west": {
+          "uv": [
+            2,
+            13,
+            14,
+            16
+          ],
+          "texture": "#stone"
+        },
+        "east": {
+          "uv": [
+            2,
+            13,
+            14,
+            16
+          ],
+          "texture": "#stone"
+        },
+        "up": {
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ],
+          "texture": "#stone"
+        },
+        "down": {
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ],
+          "texture": "#stone"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        3,
+        4
+      ],
+      "to": [
+        12,
+        10,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            3,
+            14,
+            13
+          ],
+          "texture": "#door"
+        },
+        "south": {
+          "uv": [
+            4,
+            6,
+            12,
+            13
+          ],
+          "texture": "#wood"
+        },
+        "west": {
+          "uv": [
+            4,
+            6,
+            12,
+            13
+          ],
+          "texture": "#wood"
+        },
+        "east": {
+          "uv": [
+            4,
+            6,
+            12,
+            13
+          ],
+          "texture": "#wood"
+        },
+        "up": {
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ],
+          "texture": "#wood"
+        },
+        "down": {
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ],
+          "texture": "#wood"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        10,
+        3
+      ],
+      "to": [
+        13,
+        11,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            5,
+            13,
+            6
+          ],
+          "texture": "#beam"
+        },
+        "south": {
+          "uv": [
+            3,
+            5,
+            13,
+            6
+          ],
+          "texture": "#beam"
+        },
+        "west": {
+          "uv": [
+            3,
+            5,
+            13,
+            6
+          ],
+          "texture": "#beam"
+        },
+        "east": {
+          "uv": [
+            3,
+            5,
+            13,
+            6
+          ],
+          "texture": "#beam"
+        },
+        "up": {
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ],
+          "texture": "#beam"
+        },
+        "down": {
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ],
+          "texture": "#beam"
+        }
+      }
+    },
+    {
+      "from": [
+        1.5,
+        11,
+        2
+      ],
+      "to": [
+        8,
+        13,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8,
+            3,
+            14.5,
+            5
+          ],
+          "texture": "#roof"
+        },
+        "south": {
+          "uv": [
+            1.5,
+            3,
+            8,
+            5
+          ],
+          "texture": "#roof"
+        },
+        "west": {
+          "uv": [
+            2,
+            3,
+            14,
+            5
+          ],
+          "texture": "#roof"
+        },
+        "east": {
+          "uv": [
+            2,
+            3,
+            14,
+            5
+          ],
+          "texture": "#roof"
+        },
+        "up": {
+          "uv": [
+            1.5,
+            2,
+            8,
+            14
+          ],
+          "texture": "#roof"
+        },
+        "down": {
+          "uv": [
+            1.5,
+            2,
+            8,
+            14
+          ],
+          "texture": "#roof"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          11,
+          8
+        ],
+        "axis": "z",
+        "angle": 22.5
+      }
+    },
+    {
+      "from": [
+        8,
+        11,
+        2
+      ],
+      "to": [
+        14.5,
+        13,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1.5,
+            3,
+            8,
+            5
+          ],
+          "texture": "#roof"
+        },
+        "south": {
+          "uv": [
+            8,
+            3,
+            14.5,
+            5
+          ],
+          "texture": "#roof"
+        },
+        "west": {
+          "uv": [
+            2,
+            3,
+            14,
+            5
+          ],
+          "texture": "#roof"
+        },
+        "east": {
+          "uv": [
+            2,
+            3,
+            14,
+            5
+          ],
+          "texture": "#roof"
+        },
+        "up": {
+          "uv": [
+            8,
+            2,
+            14.5,
+            14
+          ],
+          "texture": "#roof"
+        },
+        "down": {
+          "uv": [
+            8,
+            2,
+            14.5,
+            14
+          ],
+          "texture": "#roof"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          11,
+          8
+        ],
+        "axis": "z",
+        "angle": -22.5
+      }
+    },
+    {
+      "from": [
+        7,
+        13,
+        1.5
+      ],
+      "to": [
+        9,
+        15,
+        14.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            7,
+            1,
+            9,
+            3
+          ],
+          "texture": "#beam"
+        },
+        "south": {
+          "uv": [
+            7,
+            1,
+            9,
+            3
+          ],
+          "texture": "#beam"
+        },
+        "west": {
+          "uv": [
+            1.5,
+            1,
+            14.5,
+            3
+          ],
+          "texture": "#beam"
+        },
+        "east": {
+          "uv": [
+            1.5,
+            1,
+            14.5,
+            3
+          ],
+          "texture": "#beam"
+        },
+        "up": {
+          "uv": [
+            7,
+            1.5,
+            9,
+            14.5
+          ],
+          "texture": "#beam"
+        },
+        "down": {
+          "uv": [
+            7,
+            1.5,
+            9,
+            14.5
+          ],
+          "texture": "#beam"
+        }
+      }
+    }
+  ]
+}

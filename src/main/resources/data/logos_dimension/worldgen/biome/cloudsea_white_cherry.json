@@ -32,21 +32,25 @@
     ],
     [],
     [
-      "logos_dimension:trees_cloudsea_white_cherry",
-      "logos_dimension:cloudsea_white_cherry_floor",
-      "logos_dimension:fallen_tree_cloudsea_white_cherry",
+      "logos_dimension:fox_wild_trees",
+      "logos_dimension:fox_wild_floor",
+      "logos_dimension:fox_wild_fallen_tree",
       "minecraft:patch_sugar_cane",
       "minecraft:patch_waterlily",
-      "logos_dimension:forest_rock_outcrop",
+      "logos_dimension:fox_wild_rock_outcrop",
       "logos_dimension:cherry_boulder",
-      "logos_dimension:cherry_pebbles",
+      "logos_dimension:fox_wild_pebbles",
       "logos_dimension:cherry_pool",
-      "logos_dimension:cherry_white_flowers",
+      "logos_dimension:fox_wild_flowers",
       "logos_dimension:cherry_paving",
       "logos_dimension:cherry_petal_drift"
     ],
     []
   ],
   "spawners": {},
-  "spawn_costs": {}
+  "spawn_costs": {},
+  "attributes": {
+    "minecraft:visual/fog_start_distance": 24.0,
+    "minecraft:visual/fog_end_distance": 240.0
+  }
 }

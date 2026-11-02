@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "logos_dimension:block/journey_shrine_hokora"
+    },
+    "facing=east": {
+      "model": "logos_dimension:block/journey_shrine_hokora",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "logos_dimension:block/journey_shrine_hokora",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "logos_dimension:block/journey_shrine_hokora",
+      "y": 270
+    }
+  }
+}
