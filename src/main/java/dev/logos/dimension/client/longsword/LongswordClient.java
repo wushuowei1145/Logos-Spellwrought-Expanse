@@ -5,7 +5,7 @@ import com.mojang.math.Axis;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.combat.CombatPose;
 import dev.logos.dimension.combat.Moveset;
-import dev.logos.dimension.item.LongswordItem;
+import dev.logos.dimension.combat.CombatWeapon;
 import dev.logos.dimension.longsword.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,11 +53,20 @@ public final class LongswordClient {
         event.addListener(LogosDimension.id("longsword_rigs"),
                 (net.minecraft.server.packs.resources.ResourceManagerReloadListener) manager -> LongswordRig.clear());
     }
+    /** 按住右键时原版会吞掉左键；当前招式接受左键（弹刀后接突刺）时先取走这次点击发给服务端。 */
+    @SubscribeEvent static void attackWhileUsing(ClientTickEvent.Pre event) {
+        var mc = Minecraft.getInstance();
+        if (mc.player == null || mc.screen != null || !mc.player.isUsingItem() || CombatWeapon.id(mc.player.getMainHandItem()) < 0) return;
+        var pose = STATES.get(mc.player.getUUID());
+        if (pose == null || !pose.acceptsAttack()) return;
+        while (mc.options.keyAttack.consumeClick()) { ClientPacketDistributor.sendToServer(new LongswordPayload.Attack()); repeat = 2; }
+    }
     @SubscribeEvent static void tick(ClientTickEvent.Post event) {
         var mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) { STATES.clear(); PREVIOUS.clear(); return; }
-        if (mc.screen == null && mc.options.keyAttack.isDown() && !mc.player.isUsingItem() && LongswordItem.variant(mc.player.getMainHandItem()) >= 0
-                && STATES.containsKey(mc.player.getUUID())) {
+        var own = STATES.get(mc.player.getUUID());
+        if (mc.screen == null && mc.options.keyAttack.isDown() && own != null && (!mc.player.isUsingItem() || own.acceptsAttack())
+                && CombatWeapon.id(mc.player.getMainHandItem()) >= 0) {
             if (repeat-- <= 0) { ClientPacketDistributor.sendToServer(new LongswordPayload.Attack()); repeat = 2; }
         } else repeat = 0;
     }
@@ -68,11 +77,11 @@ public final class LongswordClient {
         if (pose!=null && pose.sheathing() && (event.isAttack() || event.isUseItem())) {
             event.setCanceled(true); event.setSwingHand(false); return;
         }
-        if (LongswordItem.variant(mc.player.getMainHandItem()) < 0) return;
+        if (CombatWeapon.id(mc.player.getMainHandItem()) < 0) return;
         if (event.isUseItem() && (pose==null || !pose.acceptsUse())) {
             event.setCanceled(true); event.setSwingHand(false); return;
         }
-        // 服务端还没回报持剑动作（例如招式数据缺失）时不拦截左键，长剑按原版物品攻击。
+        // 服务端还没回报持剑动作（例如招式数据缺失）时不拦截左键，武器按原版物品攻击。
         if (pose == null) return;
         if (event.isAttack()) {
             event.setCanceled(true); event.setSwingHand(false);

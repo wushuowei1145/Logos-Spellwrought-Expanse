@@ -36,10 +36,12 @@ public final class LongswordRig {
 
     public static void clear() { MODELS.clear(); CLIPS.clear(); }
     /** 取不到资源时为 null。 */
-    public static LongswordRig get(int variant, boolean firstPerson) {
-        String name = variant == 1 ? "blacksteel_longsword" : "dawnvow", view = firstPerson ? "fp" : "tp";
+    public static LongswordRig get(int weapon, boolean firstPerson) {
+        var kind = CombatWeapon.byId(weapon);
+        if (kind == null) return null;
+        String name = kind.mesh(), view = firstPerson ? "fp" : "tp";
         return MODELS.computeIfAbsent(name + "_" + view, key -> {
-            try { return Optional.of(new LongswordRig(name, view)); }
+            try { return Optional.of(new LongswordRig(name, kind.animations(), view)); }
             catch (RuntimeException e) { LOGGER.error("长剑骨架 {} 加载失败，改用原版持物渲染", key, e); return Optional.empty(); }
         }).orElse(null);
     }
@@ -48,23 +50,24 @@ public final class LongswordRig {
             return JsonParser.parseReader(reader).getAsJsonObject();
         } catch (IOException e) { throw new IllegalStateException("无法读取战斗素材 " + path, e); }
     }
-    private static Map<String, CombatClip> clips(String view) {
-        return CLIPS.computeIfAbsent(view, key -> {
+    private static Map<String, CombatClip> clips(String animations, String view) {
+        return CLIPS.computeIfAbsent(animations + "_" + view, key -> {
             List<String> warnings = new ArrayList<>();
-            var clips = CombatClip.parseFile(read("combat/animations/longsword_" + view + ".animation.json"), warnings);
-            warnings.forEach(w -> LOGGER.warn("长剑动作 longsword_{}：{}", view, w));
+            var clips = CombatClip.parseFile(read("combat/animations/" + key + ".animation.json"), warnings);
+            warnings.forEach(w -> LOGGER.warn("战斗动作 {}：{}", key, w));
             return clips;
         });
     }
-    private LongswordRig(String name, String view) {
+    private LongswordRig(String name, String animations, String view) {
         var skeletonJson = read("combat/skeletons/player_" + view + ".json");
         skeleton = CombatSkeleton.fromJson(skeletonJson);
         if (!skeleton.missingRequired().isEmpty()) throw new IllegalStateException("玩家骨架缺少 " + skeleton.missingRequired());
-        clips = clips(view);
+        clips = clips(animations, view);
         weaponPivot = skeleton.bone(CombatBones.WEAPON).pivot();
-        weaponScale = skeletonJson.get("weapon_scale").getAsFloat();
-        for (var value : skeletonJson.getAsJsonArray("skin")) cube(value.getAsJsonObject(), true, new Matrix4f());
         var weapon = read("combat/weapons/" + name + ".json");
+        // 骨架给出视角的武器缩放，武器网格可再乘一个自己的 scale（打刀比长剑长）。
+        weaponScale = skeletonJson.get("weapon_scale").getAsFloat() * (weapon.has("scale") ? weapon.get("scale").getAsFloat() : 1);
+        for (var value : skeletonJson.getAsJsonArray("skin")) cube(value.getAsJsonObject(), true, new Matrix4f());
         texture = Identifier.parse(weapon.get("texture").getAsString());
         var size = weapon.getAsJsonArray("texture_size");
         float width = size.get(0).getAsFloat(), height = size.get(1).getAsFloat();

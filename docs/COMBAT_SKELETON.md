@@ -56,11 +56,13 @@ NPC 模型**不需要**添加这两根骨骼：运行时自己算出它们的位
 
 | 路径（`assets/logos_dimension/combat/` 下） | 内容 |
 |---|---|
-| `skeletons/player_tp.json`、`player_fp.json` | 玩家参考骨架：`bones`（名称、父级、枢轴，Blockbench 空间）、`weapon_scale`（该视角的武器缩放）、`skin`（按原版皮肤取 UV 的手臂分段）。第一人称的手臂枢轴与第三人称不同，所以分两份。 |
-| `weapons/<武器>.json` | 武器网格：`texture`、`texture_size`、`cubes`（`part` 为 `weapon` 或 `sheath`）。坐标相对握柄原点、按原始美术尺寸（缩放 1），等于物品模型像素坐标减去 (8, 1, 8)。 |
+| `skeletons/player_tp.json`、`player_fp.json` | 玩家参考骨架：`bones`（名称、父级、枢轴，Blockbench 空间）、`weapon_scale`（该视角的武器缩放）、`skin`（按原版皮肤取 UV 的手臂分段：上臂、前臂、手；手是一整块，截面与前臂相同，和原版手臂一样没有手指和手腕）。第一人称的手臂枢轴与第三人称不同，所以分两份。 |
+| `weapons/<武器>.json` | 武器网格：`texture`、`texture_size`、`cubes`（`part` 为 `weapon` 或 `sheath`），可选 `scale`（乘在骨架的 `weapon_scale` 上，默认 1；打刀为 1.25，第三人称正好 1 倍）。坐标相对握柄原点、按原始美术尺寸（缩放 1），长剑的网格等于物品模型像素坐标减去 (8, 1, 8)。 |
 | `animations/<类别>_<视角>.animation.json` | Bedrock 动作。 |
 
-两把长剑的数据由 `tools/import_longswords.py` 从仓库外的审定美术工程生成：曦誓工程提供玩家骨架和动作，两把剑各自提供网格。手改美术工程后重跑脚本，不要手改生成的 JSON。
+两把长剑的数据由 `tools/import_longswords.py` 从仓库外的审定美术工程生成：曦誓工程提供玩家骨架和动作，两把剑各自提供网格。手改美术工程后重跑脚本，不要手改生成的 JSON。神狐打刀的网格与贴图由 `tools/import_uchigatana.py` 导入，动作由 `tools/uchigatana_moves.py` 按编排烘焙（[UCHIGATANA.md](UCHIGATANA.md) 第 5 节）。
+
+哪件物品用哪份网格、动作和招式，由物品实现的 `CombatWeapon.Holder` 给出（`dev.logos.dimension.combat.CombatWeapon`）；同步包里只带武器编号，编号写死在代码里。
 
 招式（第 5 节）放在服务端数据包：`data/<命名空间>/combat/movesets/<名>.json`，长剑是 `data/logos_dimension/combat/movesets/longsword.json`。独立服务端不加载 `assets`，所以招式不和动作放在一起；客户端也不需要招式文件。
 
@@ -99,7 +101,7 @@ NPC 模型**不需要**添加这两根骨骼：运行时自己算出它们的位
 | `blend_in` | 进入这一招时，从上一招在切换那一刻的姿势过渡到本招的时长（秒，按游戏时间，平滑步进曲线）；只影响客户端画面。不写为 0。 |
 | `on` | 转移列表，按顺序取第一条满足条件的。 |
 
-转移字段：`input` 为 `attack`、`use_press`、`use_release`；`to` 为目标招式或 `$clear`；`window` 为 `[起, 止]` 动作时间窗口（含端点，`止` 可省略表示到结束）；`queue` 为真时输入先记下（输入缓冲），到 `at`（取消点，动作时间）那一刻切换，没写 `at` 就等本招式播完；取消点已过才输入则立即切换；切换时刻不对齐游戏刻，连段节奏不漂移。`at` 不能早于本招式的 `contact`，否则缓冲的下一招会吞掉这一下命中；`combo` 为真时若连招记忆有效，改去记忆中那一段的 `combo_next`。
+转移字段：`input` 为 `attack`、`use_press`、`use_release`、`block`（原版格挡组件挡下一次攻击，由服务端在 `LivingShieldBlockEvent` 里给出；接受时这次格挡不耗耐久）；`to` 为目标招式或 `$clear`；`window` 为 `[起, 止]` 动作时间窗口（含端点，`止` 可省略表示到结束）；`queue` 为真时输入先记下（输入缓冲），到 `at`（取消点，动作时间）那一刻切换，没写 `at` 就等本招式播完；取消点已过才输入则立即切换；切换时刻不对齐游戏刻，连段节奏不漂移。`at` 不能早于本招式的 `contact`，否则缓冲的下一招会吞掉这一下命中；`combo` 为真时若连招记忆有效，改去记忆中那一段的 `combo_next`。
 
 时间约定：招式里的时间都是**动作时间**，带 `attack_speed_base` 的招式按攻速缩放；`combo_memory` 与 `blend_in` 用游戏时间。没有缓冲输入时播完整段（包括收势）再进入 `next`。
 
@@ -163,7 +165,7 @@ NPC 模型**不需要**添加这两根骨骼：运行时自己算出它们的位
 - `MoveRunner`：一名角色身上的招式状态机，只依赖游戏刻和攻速，通过 `Actor` 回调换招与接触。
 - `Movesets`：按服务端资源管理器缓存招式，`/reload` 后重新读取。
 
-长剑客户端 `LongswordRig` 用它们取样并绘制剑、剑鞘和分段手臂。迁移到本标准时，用迁移前的渲染算法对旧数据求了参考矩阵（`src/test/resources/combat/longsword_reference.json`），`LongswordMotionTest` 逐矩阵对照，保证动作外观没有变化。`MovesetTest` 逐刻检查长剑招式的出招、接触、输入缓冲与取消点、连招记忆、蓄力与取消、收剑；客户端的过渡混合在 `LongswordClient` 里按上一招在切换那一刻的姿势计算。
+客户端 `LongswordRig`（长剑与打刀共用）用它们取样并绘制武器、刀鞘和分段手臂。迁移到本标准时，用迁移前的渲染算法对旧数据求了参考矩阵（`src/test/resources/combat/longsword_reference.json`），`LongswordMotionTest` 逐矩阵对照，保证动作外观没有变化。`MovesetTest` 逐刻检查长剑招式的出招、接触、输入缓冲与取消点、连招记忆、蓄力与取消、收剑；客户端的过渡混合在 `LongswordClient` 里按上一招在切换那一刻的姿势计算。
 
 ## 8. 后续顺序
 

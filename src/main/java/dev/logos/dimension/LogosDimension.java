@@ -40,6 +40,10 @@ public final class LogosDimension {
                     out.accept(dev.logos.dimension.item.AncientEmbraceItem.ITEM.get());
                     out.accept(dev.logos.dimension.item.LongswordItem.DAWNVOW.get());
                     out.accept(dev.logos.dimension.item.LongswordItem.BLACKSTEEL.get());
+                    out.accept(dev.logos.dimension.item.UchigatanaItem.INK.get());
+                    out.accept(dev.logos.dimension.item.UchigatanaItem.VERMILION.get());
+                    out.accept(dev.logos.dimension.item.UchigatanaItem.INDIGO.get());
+                    out.accept(dev.logos.dimension.item.UchigatanaItem.WOOD.get());
                 }).build());
         TABS.register("crucible", () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.logos_dimension"))
                 .icon(() -> DimensionBlocks.SALT_CRYSTAL.get().asItem().getDefaultInstance())
@@ -53,6 +57,7 @@ public final class LogosDimension {
         dev.logos.dimension.item.NaturesForceItem.init();
         dev.logos.dimension.item.ElfSpearItem.init();
         dev.logos.dimension.item.LongswordItem.init();
+        dev.logos.dimension.item.UchigatanaItem.init();
         dev.logos.dimension.item.AncientEmbraceItem.register(bus);
         dev.logos.dimension.item.NatureAttachments.TYPES.register(bus);
         dev.logos.dimension.instance.CauldronBinding.register(bus);

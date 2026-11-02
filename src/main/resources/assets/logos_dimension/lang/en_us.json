@@ -429,5 +429,11 @@
   "item.logos_dimension.dawnvow": "Dawnvow",
   "item.logos_dimension.blacksteel_longsword": "Blacksteel Longsword",
   "tooltip.logos_dimension.longsword.combo": "Attack: three-cut combo (hold to chain)",
-  "tooltip.logos_dimension.longsword.charge": "Hold Use to charge upright; release for an overhead cut"
+  "tooltip.logos_dimension.longsword.charge": "Hold Use to charge upright; release for an overhead cut",
+  "item.logos_dimension.fox_uchigatana_ink": "Fox Uchigatana (Ink, Ivory Grip)",
+  "item.logos_dimension.fox_uchigatana_vermilion": "Fox Uchigatana (Ink, Vermilion Grip)",
+  "item.logos_dimension.fox_uchigatana_indigo": "Fox Uchigatana (Indigo)",
+  "item.logos_dimension.fox_uchigatana_wood": "Fox Uchigatana (Wiped Lacquer, Brown Grip)",
+  "tooltip.logos_dimension.uchigatana.combo": "Attack: four-cut combo (hold to chain)",
+  "tooltip.logos_dimension.uchigatana.guard": "Hold Use to guard instantly; a hit right as you guard is parried, then Attack to thrust"
 }

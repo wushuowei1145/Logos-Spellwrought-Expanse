@@ -17,6 +17,8 @@ public record LongswordPayload(UUID player, int variant, String move, String cli
     public static final byte ACCEPTS_USE = 1;
     /** 正在收剑：拦截攻击与使用，避免新换上的物品被误用。 */
     public static final byte SHEATHING = 2;
+    /** 当前招式接受左键；按住右键时客户端也要把左键发给服务端（例如弹刀后接突刺）。 */
+    public static final byte ACCEPTS_ATTACK = 4;
     public static final Type<LongswordPayload> TYPE = new Type<>(LogosDimension.id("longsword_pose"));
     public static final StreamCodec<RegistryFriendlyByteBuf, LongswordPayload> CODEC = StreamCodec.of((b, p) -> {
         b.writeUUID(p.player); b.writeVarInt(p.variant); b.writeUtf(p.move); b.writeUtf(p.clip); b.writeDouble(p.started);
@@ -27,6 +29,7 @@ public record LongswordPayload(UUID player, int variant, String move, String cli
     public boolean cleared() { return move.isEmpty(); }
     public boolean acceptsUse() { return (flags & ACCEPTS_USE) != 0; }
     public boolean sheathing() { return (flags & SHEATHING) != 0; }
+    public boolean acceptsAttack() { return (flags & ACCEPTS_ATTACK) != 0; }
     @Override public Type<LongswordPayload> type() { return TYPE; }
 
     public record Attack() implements CustomPacketPayload {
