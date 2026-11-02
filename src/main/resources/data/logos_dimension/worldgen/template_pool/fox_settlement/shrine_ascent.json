@@ -1,0 +1,16 @@
+{
+  "name": "logos_dimension:fox_settlement/shrine_ascent",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "logos_dimension:fox_settlement/shrine_ascent_torii",
+        "processors": "logos_dimension:settlement_preserve_void",
+        "override_liquid_settings": "ignore_waterlogging",
+        "projection": "rigid"
+      }
+    }
+  ]
+}

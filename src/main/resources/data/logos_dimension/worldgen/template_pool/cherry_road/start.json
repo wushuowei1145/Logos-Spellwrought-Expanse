@@ -6,8 +6,9 @@
       "weight": 1,
       "element": {
         "element_type": "minecraft:single_pool_element",
-        "location": "logos_dimension:cherry_road",
-        "processors": "minecraft:empty",
+        "location": "logos_dimension:cherry_mountain_trail/trail_grand_torii",
+        "processors": "logos_dimension:settlement_preserve_void",
+        "override_liquid_settings": "ignore_waterlogging",
         "projection": "rigid"
       }
     }

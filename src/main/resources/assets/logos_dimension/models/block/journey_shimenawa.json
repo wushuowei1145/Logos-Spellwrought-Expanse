@@ -1,0 +1,78 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "rope": "logos_dimension:block/journey_shimenawa",
+    "particle": "logos_dimension:block/journey_shimenawa"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        2,
+        7
+      ],
+      "to": [
+        16,
+        16,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            14
+          ],
+          "texture": "#rope"
+        },
+        "south": {
+          "uv": [
+            16,
+            0,
+            0,
+            14
+          ],
+          "texture": "#rope"
+        },
+        "east": {
+          "uv": [
+            7,
+            0,
+            9,
+            14
+          ],
+          "texture": "#rope"
+        },
+        "west": {
+          "uv": [
+            7,
+            0,
+            9,
+            14
+          ],
+          "texture": "#rope"
+        },
+        "up": {
+          "uv": [
+            0,
+            7,
+            16,
+            9
+          ],
+          "texture": "#rope"
+        },
+        "down": {
+          "uv": [
+            0,
+            7,
+            16,
+            9
+          ],
+          "texture": "#rope"
+        }
+      }
+    }
+  ]
+}

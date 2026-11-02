@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "logos_dimension:block/journey_tatami_top",
+    "up": "logos_dimension:block/journey_tatami_top",
+    "down": "logos_dimension:block/journey_tatami_side",
+    "north": "logos_dimension:block/journey_tatami_side",
+    "south": "logos_dimension:block/journey_tatami_side",
+    "east": "logos_dimension:block/journey_tatami_side",
+    "west": "logos_dimension:block/journey_tatami_side"
+  }
+}

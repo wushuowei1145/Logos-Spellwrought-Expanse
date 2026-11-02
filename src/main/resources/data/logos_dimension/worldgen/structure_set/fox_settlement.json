@@ -1,0 +1,15 @@
+{
+  "structures": [
+    {
+      "structure": "logos_dimension:fox_settlement",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1789234,
+    "spacing": 36,
+    "separation": 16,
+    "spread_type": "linear"
+  }
+}

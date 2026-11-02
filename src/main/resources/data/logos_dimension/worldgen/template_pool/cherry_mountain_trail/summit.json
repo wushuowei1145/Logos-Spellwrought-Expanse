@@ -1,0 +1,16 @@
+{
+  "name": "logos_dimension:cherry_mountain_trail/summit",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "logos_dimension:cherry_mountain_trail/trail_summit_stair",
+        "processors": "logos_dimension:settlement_preserve_void",
+        "override_liquid_settings": "ignore_waterlogging",
+        "projection": "rigid"
+      }
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "cloth": "logos_dimension:block/journey_noren",
+    "particle": "logos_dimension:block/journey_noren"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        4,
+        7
+      ],
+      "to": [
+        16,
+        16,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            12
+          ],
+          "texture": "#cloth"
+        },
+        "south": {
+          "uv": [
+            16,
+            0,
+            0,
+            12
+          ],
+          "texture": "#cloth"
+        },
+        "east": {
+          "uv": [
+            7,
+            0,
+            9,
+            12
+          ],
+          "texture": "#cloth"
+        },
+        "west": {
+          "uv": [
+            7,
+            0,
+            9,
+            12
+          ],
+          "texture": "#cloth"
+        },
+        "up": {
+          "uv": [
+            0,
+            7,
+            16,
+            9
+          ],
+          "texture": "#cloth"
+        },
+        "down": {
+          "uv": [
+            0,
+            7,
+            16,
+            9
+          ],
+          "texture": "#cloth"
+        }
+      }
+    }
+  ]
+}

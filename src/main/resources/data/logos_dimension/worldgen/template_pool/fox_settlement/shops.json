@@ -1,0 +1,36 @@
+{
+  "name": "logos_dimension:fox_settlement/shops",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 2,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "logos_dimension:fox_settlement/shop_tea_house",
+        "processors": "logos_dimension:settlement_preserve_void",
+        "override_liquid_settings": "ignore_waterlogging",
+        "projection": "rigid"
+      }
+    },
+    {
+      "weight": 2,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "logos_dimension:fox_settlement/shop_wagashi",
+        "processors": "logos_dimension:settlement_preserve_void",
+        "override_liquid_settings": "ignore_waterlogging",
+        "projection": "rigid"
+      }
+    },
+    {
+      "weight": 2,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "logos_dimension:fox_settlement/shop_noodle",
+        "processors": "logos_dimension:settlement_preserve_void",
+        "override_liquid_settings": "ignore_waterlogging",
+        "projection": "rigid"
+      }
+    }
+  ]
+}

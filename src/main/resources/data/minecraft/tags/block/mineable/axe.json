@@ -43,6 +43,21 @@
     "logos_dimension:elven_bookshelf",
     "logos_dimension:elven_flower_planter",
     "logos_dimension:elven_leaf_lamp",
-    "logos_dimension:elven_lamp_vine"
+    "logos_dimension:elven_lamp_vine",
+    "logos_dimension:journey_wood_wainscot",
+    "logos_dimension:journey_lacquer_log",
+    "logos_dimension:journey_lacquer_planks",
+    "logos_dimension:journey_lacquer_stairs",
+    "logos_dimension:journey_lacquer_slab",
+    "logos_dimension:journey_lacquer_fence",
+    "logos_dimension:journey_lacquer_fence_gate",
+    "logos_dimension:journey_tatami",
+    "logos_dimension:journey_tatami_slab",
+    "logos_dimension:journey_shoji_door",
+    "logos_dimension:journey_shoji_window",
+    "logos_dimension:journey_paper_lantern",
+    "logos_dimension:journey_bamboo_spout",
+    "logos_dimension:journey_noren",
+    "logos_dimension:journey_shimenawa"
   ]
 }

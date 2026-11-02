@@ -1,0 +1,26 @@
+{
+  "name": "logos_dimension:fox_settlement/street_segments",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 2,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "logos_dimension:fox_settlement/street_straight",
+        "processors": "logos_dimension:settlement_preserve_void",
+        "override_liquid_settings": "ignore_waterlogging",
+        "projection": "rigid"
+      }
+    },
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "logos_dimension:fox_settlement/street_curve",
+        "processors": "logos_dimension:settlement_preserve_void",
+        "override_liquid_settings": "ignore_waterlogging",
+        "projection": "rigid"
+      }
+    }
+  ]
+}

@@ -143,7 +143,9 @@ public final class CloudseaBlocks {
     }
     /** 灵狐樱野的地面落瓣 / 落叶：贴地、无碰撞、amount 1-4。 */
     public static final DeferredBlock<Block> WHITE_PETALS=petals("journey_white_petals"),FALLEN_LEAVES=cover("journey_fallen_leaves");
-    public static void init() {}
+    public static void init() {
+        FoxWildsBlocks.init();
+    }
     /** 白樱落瓣：支持 1~4 层叠加、相邻无缝连接、陆地与水面两用。 */
     private static DeferredBlock<Block> petals(String id){
         var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,JourneyPetalsBlock::new,p->p.mapColor(MapColor.PLANT).strength(.05f).sound(SoundType.GRASS).noCollision().noOcclusion());

@@ -1,0 +1,15 @@
+{
+  "structures": [
+    {
+      "structure": "logos_dimension:cherry_mountain_trail",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1572398,
+    "spacing": 28,
+    "separation": 12,
+    "spread_type": "linear"
+  }
+}

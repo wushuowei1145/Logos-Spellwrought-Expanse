@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/fence_post",
+  "textures": {
+    "texture": "logos_dimension:block/journey_lacquer_planks"
+  }
+}
