@@ -1,7 +1,8 @@
-"""白樱落瓣的模型：只保留贴地的花瓣，没有花茎。
-
-原版 flowerbed 模型底下带一段花茎贴图，我们这边缺那张图，游戏里会渲染成黑色块；
-这里干脆自己做四个档位的模型——只有水平铺在地上的小花瓣，不引入任何茎元素。
+"""白樱落瓣的模型与贴图生成器：
+1. 四象限 16x16 贴图，涵盖真实缺口樱花瓣、交叠花瓣、散落小瓣、微卷花瓣。
+2. 核心模型 core_1..4 (a/b 变体)，提供 1~4 层不同密度与厚度。
+3. 边缘连接模型 edge (a/b 变体)，邻近有落樱瓣时无缝相连消除接缝。
+4. 多向旋转与随机组合消除重复感。
 """
 from pathlib import Path
 import json, random
@@ -17,69 +18,127 @@ def write(path, obj):
     path.write_text(json.dumps(obj, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def texture():
-    """白粉色的小花瓣：纯代码画，和叶片同色系。"""
+def generate_texture():
     im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
-    q = ImageDraw.Draw(im)
-    r = random.Random(NAME)
-    for _ in range(9):
-        cx, cy = r.randrange(1, 15), r.randrange(1, 15)
-        w, h = r.randrange(1, 3), r.randrange(1, 2)
-        q.ellipse((cx - w, cy - h, cx + w, cy + h), fill=(246, 226, 235, 255), outline=(232, 196, 213, 255))
-        q.point((cx, cy), fill=(255, 246, 250, 255))
+    d = ImageDraw.Draw(im)
+
+    # 象限1 (0..7, 0..7): 经典缺口樱花瓣
+    # 浅粉白底色 (255, 244, 248), 边缘淡粉 (246, 212, 226), 浅阴影 (228, 186, 204)
+    body = (255, 244, 248, 255)
+    rim = (246, 212, 226, 255)
+    shadow = (228, 186, 204, 255)
+
+    # 绘制单瓣
+    d.polygon([(2, 1), (3, 2), (2, 4), (3, 6), (5, 5), (6, 3), (5, 1), (4, 2)], fill=body, outline=rim)
+    d.point((4, 2), fill=shadow)
+    d.point((3, 3), fill=body)
+    d.point((4, 3), fill=(255, 250, 252, 255))
+
+    # 象限2 (8..15, 0..7): 双瓣交叠
+    d.polygon([(9, 2), (10, 1), (13, 1), (14, 3), (13, 5), (10, 4)], fill=body, outline=rim)
+    d.polygon([(11, 3), (12, 2), (15, 3), (14, 6), (12, 5)], fill=(250, 235, 242, 255), outline=rim)
+    d.point((12, 4), fill=shadow)
+
+    # 象限3 (0..7, 8..15): 散落三小瓣
+    d.polygon([(1, 9), (3, 8), (3, 10), (1, 10)], fill=body, outline=rim)
+    d.polygon([(4, 11), (6, 10), (6, 12), (4, 12)], fill=body, outline=rim)
+    d.polygon([(1, 13), (3, 12), (3, 14), (1, 14)], fill=body, outline=rim)
+
+    # 象限4 (8..15, 8..15): 弧形微卷花瓣
+    d.polygon([(9, 10), (11, 8), (14, 9), (13, 12), (10, 12)], fill=body, outline=rim)
+    d.point((10, 11), fill=shadow)
+    d.point((11, 10), fill=(255, 252, 254, 255))
+
     im.save(A / "textures/block" / f"{NAME}.png")
 
 
-def quad(x0, z0, size, y):
+UV_QUADRANTS = [
+    [0, 0, 8, 8],
+    [8, 0, 16, 8],
+    [0, 8, 8, 16],
+    [8, 8, 16, 16],
+]
+
+
+def make_petal_quad(x, z, size_x, size_z, y_base, angle, uv_box):
     return {
-        "from": [round(x0, 2), y, round(z0, 2)],
-        "to": [round(x0 + size, 2), round(y + 0.05, 3), round(z0 + size, 2)],
-        "faces": {f: {"texture": "#flowerbed", "uv": [0, 0, 16, 16]} for f in ("up", "down")},
+        "from": [round(x, 2), round(y_base, 3), round(z, 2)],
+        "to": [round(x + size_x, 2), round(y_base + 0.05, 3), round(z + size_z, 2)],
+        "faces": {
+            "up": {"uv": uv_box, "texture": "#flowerbed"},
+            "down": {"uv": uv_box, "texture": "#flowerbed"},
+        },
+        "rotation": {
+            "origin": [round(x + size_x / 2, 2), round(y_base, 3), round(z + size_z / 2, 2)],
+            "axis": "y",
+            "angle": angle,
+        } if angle != 0 else None,
     }
 
 
-def model(amount):
-    r = random.Random(f"{NAME}{amount}")
-    elements = []
-    for _ in range(amount * 4):
-        cx, cz = r.uniform(1, 11), r.uniform(1, 11)
-        elements.append(quad(cx, cz, r.uniform(2.5, 4.0), 0.0))
-    write(A / "models/block" / f"{NAME}_{amount}.json", {
-        "parent": "minecraft:block/block",
-        "render_type": "neoforge:cutout",
-        "textures": {"flowerbed": f"logos_dimension:block/{NAME}", "particle": f"logos_dimension:block/{NAME}"},
-        "elements": elements,
-    })
+def clean_element(elem):
+    if elem.get("rotation") is None:
+        elem.pop("rotation", None)
+    return elem
+
+
+def generate_core_models():
+    for amount in range(1, 5):
+        for variant in ("a", "b"):
+            rng = random.Random(f"{NAME}_core_{amount}_{variant}")
+            count = amount * 4
+            elements = []
+            for i in range(count):
+                sx = rng.uniform(4.0, 5.2)
+                sz = rng.uniform(4.0, 5.2)
+                cx = rng.uniform(2.5, 13.5 - sx)
+                cz = rng.uniform(2.5, 13.5 - sz)
+                y = 0.02 + i * 0.015
+                angle = rng.choice([-45, -22.5, 0, 22.5, 45])
+                uv = rng.choice(UV_QUADRANTS)
+                elements.append(clean_element(make_petal_quad(cx, cz, sx, sz, y, angle, uv)))
+
+            write(A / "models/block" / f"{NAME}_core_{amount}_{variant}.json", {
+                "parent": "minecraft:block/block",
+                "render_type": "neoforge:cutout",
+                "textures": {
+                    "flowerbed": f"logos_dimension:block/{NAME}",
+                    "particle": f"logos_dimension:block/{NAME}"
+                },
+                "elements": elements,
+            })
+
+
+def generate_edge_models():
+    for variant in ("a", "b"):
+        rng = random.Random(f"{NAME}_edge_{variant}")
+        elements = []
+        for i in range(4):
+            sx = rng.uniform(4.2, 5.0)
+            sz = rng.uniform(4.2, 5.0)
+            cx = 1.0 + i * 3.2 + rng.uniform(-0.5, 0.5)
+            cz = rng.uniform(-0.5, 1.5)
+            y = 0.025 + (i % 3) * 0.015
+            angle = rng.choice([-45, -22.5, 0, 22.5, 45])
+            uv = rng.choice(UV_QUADRANTS)
+            elements.append(clean_element(make_petal_quad(cx, cz, sx, sz, y, angle, uv)))
+
+        write(A / "models/block" / f"{NAME}_edge_{variant}.json", {
+            "parent": "minecraft:block/block",
+            "render_type": "neoforge:cutout",
+            "textures": {
+                "flowerbed": f"logos_dimension:block/{NAME}",
+                "particle": f"logos_dimension:block/{NAME}"
+            },
+            "elements": elements,
+        })
 
 
 def main():
-    texture()
-    for n in range(1, 5):
-        model(n)
-
-    # 方块状态：沿用原版花瓣的朝向与档位，只是模型换成自己的
-    multipart = []
-    for facing, y in (("north", 0), ("east", 90), ("south", 180), ("west", 270)):
-        entry = {"apply": {"model": f"logos_dimension:block/{NAME}_1"}}
-        if y:
-            entry["apply"]["y"] = y
-        entry["when"] = {"facing": facing}
-        multipart.append(entry)
-    for n in range(2, 5):
-        for facing, y in (("north", 0), ("east", 90), ("south", 180), ("west", 270)):
-            entry = {"apply": {"model": f"logos_dimension:block/{NAME}_{n}"}}
-            if y:
-                entry["apply"]["y"] = y
-            entry["when"] = {"facing": facing, "flower_amount": "|".join(str(k) for k in range(n, 5))}
-            multipart.append(entry)
-    write(A / "blockstates" / f"{NAME}.json", {"multipart": multipart})
-
-    write(A / "models/item" / f"{NAME}.json", {
-        "parent": "minecraft:item/generated",
-        "textures": {"layer0": f"logos_dimension:block/{NAME}"},
-    })
-    write(A / "items" / f"{NAME}.json", {"model": {"type": "minecraft:model", "model": f"logos_dimension:item/{NAME}"}})
-    print("白樱落瓣模型重做完成：贴地花瓣，无花茎")
+    generate_texture()
+    generate_core_models()
+    generate_edge_models()
+    print("落樱瓣资源生成完成！")
 
 
 if __name__ == "__main__":

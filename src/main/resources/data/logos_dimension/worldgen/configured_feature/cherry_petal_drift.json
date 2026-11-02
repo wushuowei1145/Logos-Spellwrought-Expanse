@@ -33,9 +33,18 @@
         },
         {
           "data": {
+            "Name": "logos_dimension:journey_white_petals",
+            "Properties": {
+              "flower_amount": "4"
+            }
+          },
+          "weight": 1
+        },
+        {
+          "data": {
             "Name": "logos_dimension:journey_fallen_leaves",
             "Properties": {
-              "flower_amount": "2"
+              "amount": "2"
             }
           },
           "weight": 2

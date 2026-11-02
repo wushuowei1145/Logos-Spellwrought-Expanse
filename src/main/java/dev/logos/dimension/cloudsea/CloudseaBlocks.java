@@ -144,10 +144,10 @@ public final class CloudseaBlocks {
     /** 灵狐樱野的地面落瓣 / 落叶：贴地、无碰撞、amount 1-4。 */
     public static final DeferredBlock<Block> WHITE_PETALS=petals("journey_white_petals"),FALLEN_LEAVES=cover("journey_fallen_leaves");
     public static void init() {}
-    /** 白樱落瓣：直接沿用原版花瓣方块的行为与模型，只换贴图。 */
+    /** 白樱落瓣：支持 1~4 层叠加、相邻无缝连接、陆地与水面两用。 */
     private static DeferredBlock<Block> petals(String id){
-        var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id, net.minecraft.world.level.block.FlowerBedBlock::new,p->p.mapColor(MapColor.PLANT).strength(.05f).sound(SoundType.GRASS).noCollision().noOcclusion());
-        DimensionBlocks.ITEMS.registerSimpleBlockItem(id,block);PALETTE.add(block);return block;
+        var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,JourneyPetalsBlock::new,p->p.mapColor(MapColor.PLANT).strength(.05f).sound(SoundType.GRASS).noCollision().noOcclusion());
+        DimensionBlocks.ITEMS.registerItem(id,p->new JourneyPetalsBlockItem(block.get(),p));PALETTE.add(block);return block;
     }
     private static DeferredBlock<Block> cover(String id){
         var block=DimensionBlocks.BLOCKS.<Block>registerBlock(id,JourneyCoverBlock::new,p->p.mapColor(MapColor.PLANT).strength(.05f).sound(SoundType.GRASS).noCollision().noOcclusion().replaceable());
