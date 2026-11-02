@@ -1,0 +1,63 @@
+{
+  "start": "draw",
+  "sheathe": "sheathe",
+  "combo_memory": 1.5,
+  "moves": {
+    "draw": {"length": 1.0, "next": "idle"},
+    "idle": {
+      "length": 2.4, "playback": "loop", "blend_in": 0.12,
+      "on": [
+        {"input": "attack", "to": "slash_1", "combo": true},
+        {"input": "use_press", "to": "guard"}
+      ]
+    },
+    "slash_1": {
+      "length": 0.48, "attack_speed_base": 1.8, "contact": 0.15, "blend_in": 0.06,
+      "combo_next": "slash_2", "next": "idle",
+      "on": [
+        {"input": "use_press", "to": "guard"},
+        {"input": "attack", "to": "slash_2", "window": [0.08], "queue": true, "at": 0.3}
+      ]
+    },
+    "slash_2": {
+      "length": 0.52, "attack_speed_base": 1.8, "contact": 0.18, "blend_in": 0.06,
+      "combo_next": "slash_3", "next": "idle",
+      "on": [
+        {"input": "use_press", "to": "guard"},
+        {"input": "attack", "to": "slash_3", "window": [0.08], "queue": true, "at": 0.32}
+      ]
+    },
+    "slash_3": {
+      "length": 0.52, "attack_speed_base": 1.8, "contact": 0.2, "blend_in": 0.06,
+      "combo_next": "slash_4", "next": "idle",
+      "on": [
+        {"input": "use_press", "to": "guard"},
+        {"input": "attack", "to": "slash_4", "window": [0.08], "queue": true, "at": 0.34}
+      ]
+    },
+    "slash_4": {
+      "length": 0.78, "attack_speed_base": 1.8, "contact": 0.38, "blend_in": 0.06,
+      "combo_next": "slash_1", "next": "idle",
+      "on": [
+        {"input": "use_press", "to": "guard"},
+        {"input": "attack", "to": "slash_1", "window": [0.1], "queue": true, "at": 0.58}
+      ]
+    },
+    "guard": {
+      "length": 1.6, "playback": "loop", "reset_combo": true, "blend_in": 0.05,
+      "on": [
+        {"input": "block", "to": "parry", "window": [0, 0.3]},
+        {"input": "use_release", "to": "idle"}
+      ]
+    },
+    "parry": {
+      "length": 0.42, "blend_in": 0.03, "next": "guard",
+      "on": [{"input": "attack", "to": "riposte", "window": [0], "queue": true, "at": 0.12}]
+    },
+    "riposte": {
+      "length": 0.42, "contact": 0.09, "blend_in": 0.03, "next": "idle",
+      "on": [{"input": "use_press", "to": "guard", "window": [0.24]}]
+    },
+    "sheathe": {"length": 2.3, "blend_in": 0.1, "next": "$clear"}
+  }
+}

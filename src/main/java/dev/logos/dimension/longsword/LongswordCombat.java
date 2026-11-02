@@ -1,10 +1,10 @@
 package dev.logos.dimension.longsword;
 
 import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.combat.CombatWeapon;
 import dev.logos.dimension.combat.MoveRunner;
 import dev.logos.dimension.combat.Moveset;
 import dev.logos.dimension.combat.Movesets;
-import dev.logos.dimension.item.LongswordItem;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -19,6 +19,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
@@ -28,25 +29,25 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.NetworkRegistry;
 
 /**
- * 长剑接入招式状态机（数据包 combat/movesets/longsword.json）：服务端决定出招、接触时刻和射线命中；
- * 切物品、死亡、离线都会取消待结算攻击。招式读不到时长剑按原版物品处理。
+ * 本附属的战斗武器（长剑、打刀，见 {@link CombatWeapon}）接入招式状态机（数据包 combat/movesets/*.json）：
+ * 服务端决定出招、接触时刻和射线命中；切物品、死亡、离线都会取消待结算攻击。招式读不到时武器按原版物品处理。
  */
 @EventBusSubscriber(modid = LogosDimension.ID)
 public final class LongswordCombat {
-    public static final net.minecraft.resources.Identifier MOVESET = LogosDimension.id("longsword");
     private static final Map<UUID, State> STATES = new HashMap<>();
     private static final ThreadLocal<Boolean> CONTACT = ThreadLocal.withInitial(() -> false);
     private static final class State implements MoveRunner.Actor {
         final ServerPlayer player;
         final ItemStack stack;
-        final int slot, variant;
+        final int slot;
+        final CombatWeapon weapon;
         final Object level;
         MoveRunner runner;
         /** 上一次命中的目标与游戏刻，用来判断目标的受击冷却是不是这套连招自己造成的。 */
         Entity lastTarget;
         long lastHit;
-        State(ServerPlayer player, int variant) {
-            this.player = player; this.stack = player.getMainHandItem(); this.variant = variant;
+        State(ServerPlayer player, CombatWeapon weapon) {
+            this.player = player; this.stack = player.getMainHandItem(); this.weapon = weapon;
             this.slot = player.getInventory().getSelectedSlot(); this.level = player.level();
         }
         @Override public double attackSpeed() { return player.getAttributeValue(Attributes.ATTACK_SPEED); }
@@ -56,8 +57,9 @@ public final class LongswordCombat {
             if (runner.cleared()) return LongswordPayload.clear(player.getUUID());
             var move = runner.move(); var set = runner.moveset();
             byte flags = (byte) ((move.accepts(Moveset.Input.USE_PRESS) ? LongswordPayload.ACCEPTS_USE : 0)
-                    | (move.name().equals(set.sheathe()) ? LongswordPayload.SHEATHING : 0));
-            return new LongswordPayload(player.getUUID(), variant, move.name(), move.clip(), runner.start(),
+                    | (move.name().equals(set.sheathe()) ? LongswordPayload.SHEATHING : 0)
+                    | (move.accepts(Moveset.Input.ATTACK) ? LongswordPayload.ACCEPTS_ATTACK : 0));
+            return new LongswordPayload(player.getUUID(), weapon.id(), move.name(), move.clip(), runner.start(),
                     (float) runner.rate(), (float) runner.offset(), move.playback(), (float) move.blendIn(), flags);
         }
     }
@@ -87,14 +89,16 @@ public final class LongswordCombat {
         return player.isAlive() && !player.isSpectator() && !state.stack.isEmpty() && state.level == player.level()
                 && player.getInventory().getSelectedSlot() == state.slot && player.getMainHandItem() == state.stack;
     }
-    private static Moveset moveset(ServerPlayer player) { return Movesets.get(player.level().getServer(), MOVESET); }
+    private static Moveset moveset(ServerPlayer player, CombatWeapon weapon) { return Movesets.get(player.level().getServer(), weapon.moveset()); }
     private static State active(ServerPlayer player) {
         var state = STATES.get(player.getUUID());
         return state == null || !selected(player, state) ? null : state;
     }
     public static void attack(ServerPlayer player) {
         var state = active(player);
-        if (state != null && !player.isUsingItem()) state.runner.input(Moveset.Input.ATTACK, player.level().getGameTime());
+        // 按住右键时只有接受左键的招式（例如弹刀后接突刺）才收左键，长剑蓄力中仍不出招。
+        if (state != null && (!player.isUsingItem() || state.runner.move().accepts(Moveset.Input.ATTACK)))
+            state.runner.input(Moveset.Input.ATTACK, player.level().getGameTime());
     }
     public static boolean charge(ServerPlayer player) {
         var state = active(player);
@@ -104,10 +108,17 @@ public final class LongswordCombat {
         var state = active(player);
         if (state != null) state.runner.input(Moveset.Input.USE_RELEASE, player.level().getGameTime());
     }
+    /** 原版格挡成功：交给招式文件的 block 输入（打刀格挡开始 0.3 秒内转入弹刀）；弹刀不消耗耐久。 */
+    @SubscribeEvent static void blocked(LivingShieldBlockEvent event) {
+        if (!event.getBlocked() || !(event.getEntity() instanceof ServerPlayer player)) return;
+        var state = active(player);
+        if (state != null && state.runner.input(Moveset.Input.BLOCK, player.level().getGameTime())) event.setShieldDamage(0);
+    }
     @SubscribeEvent static void vanillaAttack(AttackEntityEvent event) {
-        if (LongswordItem.variant(event.getEntity().getMainHandItem()) < 0 || CONTACT.get()) return;
-        // 招式缺失时不拦截，长剑按原版物品攻击。
-        if (!(event.getEntity() instanceof ServerPlayer player) || moveset(player) == null) return;
+        var weapon = CombatWeapon.of(event.getEntity().getMainHandItem());
+        if (weapon == null || CONTACT.get()) return;
+        // 招式缺失时不拦截，武器按原版物品攻击。
+        if (!(event.getEntity() instanceof ServerPlayer player) || moveset(player, weapon) == null) return;
         event.setCanceled(true);
         attack(player);
     }
@@ -131,11 +142,11 @@ public final class LongswordCombat {
             else if (!state.runner.move().name().equals(sheathe)) state.runner.force(sheathe, now);
         }
         if (state == null) {
-            int variant = LongswordItem.variant(player.getMainHandItem());
-            if (variant < 0) return;
-            var set = moveset(player);
+            var weapon = CombatWeapon.of(player.getMainHandItem());
+            if (weapon == null) return;
+            var set = moveset(player, weapon);
             if (set == null) return;
-            state = new State(player, variant); STATES.put(player.getUUID(), state);
+            state = new State(player, weapon); STATES.put(player.getUUID(), state);
             state.runner = new MoveRunner(set, state, now);
             return;
         }
@@ -143,6 +154,8 @@ public final class LongswordCombat {
         if (state.runner.cleared()) { STATES.remove(player.getUUID()); return; }
         // 松开右键的包可能早于或晚于这一刻到达；这里补一次，保证蓄力不会卡住。
         if (!player.isUsingItem() && selected(player, state)) state.runner.input(Moveset.Input.USE_RELEASE, now);
+        // 一直按着右键时，招式结束回到可格挡的状态（例如突刺收势）就重新进入格挡。
+        else if (player.isUsingItem() && selected(player, state)) state.runner.input(Moveset.Input.USE_PRESS, now);
     }
     private static void contact(ServerPlayer player, State state) {
         var from = player.getEyePosition();

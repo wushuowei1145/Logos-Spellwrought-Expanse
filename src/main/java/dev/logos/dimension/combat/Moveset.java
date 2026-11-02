@@ -13,7 +13,8 @@ import java.util.*;
 public record Moveset(String start, String sheathe, double comboMemory, Map<String, Move> moves) {
     /** 特殊去向：结束整套招式，交回原版。 */
     public static final String CLEAR = "$clear";
-    public enum Input { ATTACK, USE_PRESS, USE_RELEASE }
+    /** {@code BLOCK}：原版格挡成功挡下一次攻击（服务端给出）。 */
+    public enum Input { ATTACK, USE_PRESS, USE_RELEASE, BLOCK }
     public enum Playback { ONCE, LOOP, REVERSE }
 
     /**

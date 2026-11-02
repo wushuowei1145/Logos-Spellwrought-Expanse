@@ -1,5 +1,22 @@
 # 首版验证记录
 
+## 神狐打刀：四套刀装、连招、零延迟格挡与弹刀
+
+2026-11-02：分支 `feat/fox-uchigatana`，基于 main `1b51501`。规划与做法见 [神狐打刀](docs/UCHIGATANA.md)。新增四件打刀物品（墨漆米白柄、墨漆朱绳柄、靛漆靛青柄、拭漆木褐绳柄），左键四段连招，右键按住立即格挡（原版格挡组件，延迟 0），格挡开始 0.3 秒内被击中弹刀（不耗耐久），弹刀后左键突刺，切走物品时转刀两圈收刀。长剑与打刀改为共用运行时（`CombatWeapon`），招式文件新增 `block` 输入。玩家的手改为原版那样的一整块（长剑同样生效）。动作按刀路编排，用两段式逆运动学烘焙到第三、第一人称骨架，没有腕关节。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元与构建 | **135/135** 通过，`test build` 成功；新增 `UchigatanaTest` 5 项：两个视角的动作与招式文件时长和动作标记一致、四段连招与出刀中立即格挡、只有 0.3 秒内的格挡才弹刀并接突刺、弹刀后回到格挡、四套刀装共用网格且立体物品模型就是刀身网格平移 (8, 1, 8) |
+| 世界测试 | 长剑 8 项跑 3 次：1 次全过，2 次只有 `longsword_combo` 失败，报错都是“只有第一下掉血”，与 main 上已知的测试环境问题相同；其余 7 项每次通过 |
+| 实际客户端 | 新增 `group:uchigatana` **1/1 场景、8/8 检查**：实际按键拔刀、四段连招造成伤害、出刀中按右键服务端当刻即在格挡、刚架刀被击中弹刀且不掉血不耗耐久、按住左键接突刺并命中、超过 0.3 秒只格挡且照常耗耐久、第一与第三人称魔力缠绕都贴在刀上、切槽收刀；`group:longsword` **3/3 场景、33/33 检查**（换成整块手之后重跑） |
+
+维护者在实际客户端试玩过第一、第三人称，按反馈去掉了腕关节、修正了前臂自转造成的肘部破面和第三人称手肘外翻，并让魔力缠绕对齐刀身。物品栏图标是按刀装配色生成的占位图。没有测光影、联机延迟；弹开后禁用对方武器与神狐 NPC 还没做。
+
+```text
+./gradlew --offline test build -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew --offline runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:longsword_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar -PldTest=group:uchigatana -PldTestHeadless -PldTestWindow=1280x720
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar -PldTest=group:longsword -PldTestHeadless -PldTestWindow=1280x720
 ## 神狐聚落：山顶聚落、上山小路与和风小品
 
 2026-11-02：分支 `feat/fox-sanctuary`，基于 main `1b51501`。重做灵狐樱野的聚落生成（取代未合并的 `f7f8435` 与 main 上的 `cherry_road`），详见 [神狐聚落](docs/FOX_SANCTUARY.md)。维护者同意此结构用 Java 结构类型，AGENTS.md 记有例外。

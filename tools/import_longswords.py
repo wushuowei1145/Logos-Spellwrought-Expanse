@@ -84,7 +84,23 @@ def skeleton(model, view):
             skin.append(dict(name=cube['name'], bone=RENAME[bone], start=cube['from'], end=cube['to'],
                              pivot=cube['origin'], rotation=cube['rotation']))
     return dict(view=view, weapon_scale=SCALE[view],
-                bones=[dict(name=n, parent=bones[n]['parent'], pivot=bones[n]['pivot']) for n in ORDER], skin=skin)
+                bones=[dict(name=n, parent=bones[n]['parent'], pivot=bones[n]['pivot']) for n in ORDER], skin=plain_hands(skin))
+
+
+def plain_hands(skin):
+    """美术工程里的手是掌、四指、拇指三块拼成的握拳；换成原版那样的一整块手，截面与前臂袖子相同、上端接前臂。"""
+    out = []
+    for side in ('right', 'left'):
+        fore = next(c for c in skin if c['name'] == side + '_fore_sleeve')
+        hand = [c for c in skin if c['bone'] == ('Right' if side == 'right' else 'Left') + 'Hand']
+        out += [c for c in skin if c['name'].startswith(side + '_') and c not in hand]
+        bottom = min(min(c['start'][1], c['end'][1]) for c in hand)
+        top = min(fore['start'][1], fore['end'][1])
+        start, end = list(fore['start']), list(fore['end'])
+        start[1], end[1] = bottom, top
+        out.append(dict(name=side + '_hand', bone=hand[0]['bone'], start=start, end=end,
+                        pivot=[(start[i] + end[i]) / 2 for i in range(3)], rotation=[0, 0, 0]))
+    return out
 
 
 def weapon(model, variant):
