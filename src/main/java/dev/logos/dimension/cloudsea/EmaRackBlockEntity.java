@@ -30,7 +30,13 @@ public class EmaRackBlockEntity extends BlockEntity implements ListBackedContain
 
     /** 挂到第一个空位；挂满返回 false。 */
     public boolean hang(ItemStack ema) {
-        for (int i = 0; i < SLOTS; i++) {
+        return hang(0, ema);
+    }
+
+    /** 优先挂到指着的那一格，那格已有绘马就挂到第一个空位；挂满返回 false。 */
+    boolean hang(int preferred, ItemStack ema) {
+        for (int k = 0; k < SLOTS; k++) {
+            int i = k == 0 ? preferred : k - (k <= preferred ? 1 : 0);
             if (items.get(i).isEmpty()) {
                 items.set(i, ema);
                 changed();
@@ -40,16 +46,13 @@ public class EmaRackBlockEntity extends BlockEntity implements ListBackedContain
         return false;
     }
 
-    ItemStack takeLast() {
-        for (int i = SLOTS - 1; i >= 0; i--) {
-            if (!items.get(i).isEmpty()) {
-                ItemStack out = items.get(i);
-                items.set(i, ItemStack.EMPTY);
-                changed();
-                return out;
-            }
-        }
-        return ItemStack.EMPTY;
+    /** 取下指着的那一块；那一格空着就返回空。 */
+    ItemStack take(int slot) {
+        ItemStack out = items.get(slot);
+        if (out.isEmpty()) return ItemStack.EMPTY;
+        items.set(slot, ItemStack.EMPTY);
+        changed();
+        return out;
     }
 
     private void changed() {
