@@ -1,0 +1,22 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "color": "logos_dimension:block/paint_surface",
+    "board": "logos_dimension:block/paint_palette",
+    "particle": "logos_dimension:block/paint_palette"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "north": { "uv": [0, 0, 16, 16], "texture": "#board" },
+        "south": { "uv": [0, 0, 16, 16], "texture": "#board" },
+        "east": { "uv": [0, 0, 16, 16], "texture": "#board" },
+        "west": { "uv": [0, 0, 16, 16], "texture": "#board" },
+        "up": { "uv": [0, 0, 16, 16], "texture": "#color", "tintindex": 0 },
+        "down": { "uv": [0, 0, 16, 16], "texture": "#board" }
+      }
+    }
+  ]
+}

@@ -68,6 +68,7 @@ public final class LogosDimension {
         DimensionParticles.register(bus);
         dev.logos.dimension.fox.FoxSanctuary.register(bus);
         dev.logos.dimension.economy.Economy.register(bus);
+        dev.logos.dimension.paint.PaintSystem.register(bus);
         dev.logos.dimension.npc.NpcEntities.register(bus);
         GENERATORS.register(bus); BIOME_SOURCES.register(bus); TABS.register(bus);
         DimensionGameTests.register(bus);
@@ -92,6 +93,21 @@ public final class LogosDimension {
         bus.addListener(DimensionSpawns::register);
         bus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
                 event.registrar("1").playToClient(dev.logos.dimension.net.HauntPayload.TYPE, dev.logos.dimension.net.HauntPayload.CODEC));
+        bus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
+                event.registrar("1").playToServer(
+                        dev.logos.dimension.net.PaintColorPayload.TYPE,
+                        dev.logos.dimension.net.PaintColorPayload.CODEC,
+                        (payload, context) -> context.enqueueWork(() -> {
+                            if (context.player() instanceof net.minecraft.server.level.ServerPlayer player) {
+                                net.minecraft.world.InteractionHand hand = payload.hand() == 0
+                                        ? net.minecraft.world.InteractionHand.MAIN_HAND
+                                        : net.minecraft.world.InteractionHand.OFF_HAND;
+                                net.minecraft.world.item.ItemStack stack = player.getItemInHand(hand);
+                                if (stack.getItem() instanceof dev.logos.dimension.paint.PaletteItem) {
+                                    stack.set(dev.logos.dimension.paint.PaintSystem.PAINT_COLOR.get(), payload.color());
+                                }
+                            }
+                        })));
         NeoForge.EVENT_BUS.addListener(DimensionCommands::register);
         NeoForge.EVENT_BUS.addListener(dev.logos.dimension.wind.WindCommands::register);
         NeoForge.EVENT_BUS.addListener(IslandSanctum::placement);

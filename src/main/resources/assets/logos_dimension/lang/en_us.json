@@ -625,5 +625,9 @@
   "message.logos_dimension.bank.leverage": "Leverage is at most %s×",
   "message.logos_dimension.bank.too_many": "At most %s open positions",
   "message.logos_dimension.bank.credit": "Over your credit line",
-  "message.logos_dimension.bank.bad_stop": "Stop must be on the losing side, take on the winning side"
+  "message.logos_dimension.bank.bad_stop": "Stop must be on the losing side, take on the winning side",
+  "item.logos_dimension.paint_brush": "Paint Brush",
+  "item.logos_dimension.paint_palette": "Palette",
+  "block.logos_dimension.paint_palette": "Palette",
+  "block.logos_dimension.paint_surface": "Paint Surface"
 }

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=north": { "model": "logos_dimension:block/paint_surface" },
+    "facing=east": { "model": "logos_dimension:block/paint_surface", "y": 90 },
+    "facing=south": { "model": "logos_dimension:block/paint_surface", "y": 180 },
+    "facing=west": { "model": "logos_dimension:block/paint_surface", "y": 270 },
+    "facing=up": { "model": "logos_dimension:block/paint_surface", "x": 270 },
+    "facing=down": { "model": "logos_dimension:block/paint_surface", "x": 90 }
+  }
+}
