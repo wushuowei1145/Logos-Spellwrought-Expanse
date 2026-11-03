@@ -4,9 +4,12 @@ import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.paint.PaintSurfaceBlockEntity;
 import dev.logos.dimension.paint.PaintSystem;
 import java.util.List;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockTintSource;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -34,6 +37,11 @@ public final class PaintClient {
     @SubscribeEvent
     static void registerBlockColors(RegisterColorHandlersEvent.BlockTintSources event) {
         event.register(List.of(SURFACE_TINT), PaintSystem.SURFACE.get(), PaintSystem.PALETTE.get());
+    }
+
+    /** 调色盘物品右键空气：打开调配页。签名只用通用类型，供 PaletteItem 在客户端调用。 */
+    public static void openPalette(Player player, InteractionHand hand) {
+        Minecraft.getInstance().setScreen(new PaintPaletteScreen(player, hand, player.getItemInHand(hand)));
     }
 
     private PaintClient() {}

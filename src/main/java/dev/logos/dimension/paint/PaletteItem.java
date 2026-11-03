@@ -1,11 +1,9 @@
 package dev.logos.dimension.paint;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 
@@ -18,8 +16,8 @@ public class PaletteItem extends BlockItem {
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         if (level.isClientSide()) {
-            Minecraft.getInstance().setScreen(
-                new dev.logos.dimension.client.PaintPaletteScreen(player, hand, player.getItemInHand(hand)));
+            // 界面类只在客户端存在：经 PaintClient 的静态入口打开，本类不出现任何客户端类型，专用服务器才能加载
+            dev.logos.dimension.client.PaintClient.openPalette(player, hand);
         }
         return InteractionResult.SUCCESS;
     }
