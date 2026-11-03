@@ -1,6 +1,8 @@
 {
   "entity.logos_dimension.forest_elf": "森林精灵",
   "item.logos_dimension.forest_elf_spawn_egg": "森林精灵刷怪蛋",
+  "entity.logos_dimension.divine_fox": "神狐",
+  "item.logos_dimension.divine_fox_spawn_egg": "神狐刷怪蛋",
   "subtitles.logos_dimension.forest_elf.ambient": "森林精灵：低语",
   "subtitles.logos_dimension.forest_elf.greet": "森林精灵：打招呼",
   "subtitles.logos_dimension.forest_elf.yes": "森林精灵：同意",

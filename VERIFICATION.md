@@ -13,6 +13,24 @@
 
 截图：[调配页](docs/screenshots/paint/palette.png) · [漆面与木纹](docs/screenshots/paint/surface-on-wood.png) · [顶面](docs/screenshots/paint/tops.png)
 
+## 神狐：第一版生物、侧倒死亡与常驻叠加层
+
+2026-11-03：分支 `feat/divine-fox`，基于 main `8625daf`。说明见 [神狐](docs/NPC_RACE_DIVINE_FOX.md)。新增神狐实体与刷怪蛋（随机外观、闲逛看人、受伤逃开），模型、贴图、零件表与动画由 `tools/divine_fox_assets.py` 从仓库外模型目录导入：待机、借用的车万女仆移动动作、维护者选定的侧倒死亡，以及眨眼（睫毛随眼皮移动、睁开后高光抖一下）、耳朵抖动、尾巴轻摆三个常驻叠加层。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | `DivineFoxAssetsTest` **8/8**（含表情登记）：零件组都在模型里、随机外观往返、应有的动作齐全、动画骨骼都在模型里、没有 `ysm.*`、死亡停在末帧、叠加层首尾一致；叠加层不被待机与移动类动作盖过、死亡时全部被接管。`NpcPartsTest`、`ForestElfAnimationFileTest` 照旧。全部单元 159/160：唯一失败的 `LangCoverageTest` 是 main 上兑换台与钱庄柜台缺中文名，与本分支无关 |
+| 世界测试 | 没跑：这一版只有原版的闲逛与逃跑，没有需要世界测试的玩法逻辑 |
+| 实际客户端 | `npc_divine_fox_lineup`、`npc_divine_fox_back`、`npc_divine_fox_face`、`npc_divine_fox_death` **4/4 场景、18/18 检查**：五种外观同步与正确显示，三个叠加层控制器都在播放，死亡时三只按倒地、侧倒中、受击的顺序。另做了一次诊断（临时把眨眼层定在闭眼那一帧）确认游戏里眼球与瞳孔收拢、睫毛不变形只下移；正常眨眼只闭约 0.1 秒，截图步骤太慢，拍不到。维护者调整了全部狐耳角度、下移脸颊纹、给垂眼加睫毛方块后重新导入，4/4、18/18 照旧；加入五种表情后另加 `npc_divine_fox_expressions`，5/5 场景、23/23 检查 |
+
+没测：多人、光影、真实玩家打死的完整流程（场景里用一击致命）。注意 main 上 `placed_feature/settlement_wheat.json` 的 `xz_spread` 超过原版上限 ±16，任何世界都加载不了；客户端测试时临时改成 ±16，没有提交，修复另开分支。
+
+```text
+python tools/divine_fox_assets.py
+./gradlew --offline test --tests dev.logos.dimension.DivineFoxAssetsTest -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=npc_divine_fox_lineup,npc_divine_fox_back,npc_divine_fox_face,npc_divine_fox_death" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 钱庄：存款、借款与杠杆交易
 
 2026-11-03：分支 `feat/fx-margin`，基于 main `9cb4b7d`。设计见 [异世界货币与外汇 · 钱庄](docs/ECONOMY.md#钱庄bankblockbankmargin)。新增钱庄方块（账户与杠杆两页）、按玩家记账的存款（死亡不掉）、帝国币借款当保证金（只显示负数，授信 100 金冠）、做多做空、玩家 1–25 倍（数据与计算兼容到 500 倍）、强平、止损止盈、隔夜利息。兑换台的 K 线抽成共用的 `CandleChart`。

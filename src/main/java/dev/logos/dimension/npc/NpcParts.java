@@ -231,5 +231,8 @@ public final class NpcParts {
     /** 森林精灵：零件表来自 forest-elf-model/forest_elf 的合并结果；NpcPartsTest 核对它和模型的组一一对应。 */
     public static final Race FOREST_ELF = Race.load("forest_elf");
 
+    /** 神狐：零件表来自仓库外 fox_model/divine_fox 的合并结果（tools/divine_fox_assets.py 导入）。 */
+    public static final Race DIVINE_FOX = Race.load("divine_fox");
+
     private NpcParts() {}
 }

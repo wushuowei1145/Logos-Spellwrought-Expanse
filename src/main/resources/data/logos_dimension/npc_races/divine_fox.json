@@ -1,0 +1,498 @@
+{
+ "race": "divine_fox",
+ "body_cubes": 36,
+ "slots": {
+  "hair": {
+   "optional": true,
+   "parts": [
+    {
+     "id": "hair_fox_layered",
+     "groups": [
+      "hair_fox_layered"
+     ],
+     "default": true,
+     "cubes": 47
+    },
+    {
+     "id": "hair_front_braids",
+     "groups": [
+      "hair_front_braids"
+     ],
+     "default": false,
+     "cubes": 107
+    },
+    {
+     "id": "hair_high_ponytail",
+     "groups": [
+      "hair_high_ponytail"
+     ],
+     "default": false,
+     "cubes": 80
+    },
+    {
+     "id": "hair_hime_cut",
+     "groups": [
+      "hair_hime_cut_cap",
+      "hair_hime_cut_bang_0",
+      "hair_hime_cut_bang_1",
+      "hair_hime_cut_bang_2",
+      "hair_hime_cut_bang_3",
+      "hair_hime_cut_bang_4",
+      "hair_hime_cut_bang_5",
+      "hair_hime_cut_left_hime_lock",
+      "hair_hime_cut_left_bob",
+      "hair_hime_cut_right_hime_lock",
+      "hair_hime_cut_right_bob",
+      "hair_hime_cut_back_0",
+      "hair_hime_cut_back_1",
+      "hair_hime_cut_back_2",
+      "hair_hime_cut_back_3",
+      "hair_hime_cut_back_4"
+     ],
+     "default": false,
+     "cubes": 104
+    },
+    {
+     "id": "hair_shimada_updo",
+     "groups": [
+      "hair_shimada_updo"
+     ],
+     "default": false,
+     "cubes": 44
+    }
+   ]
+  },
+  "headwear": {
+   "optional": true,
+   "parts": [
+    {
+     "id": "headwear_red_ribbon",
+     "groups": [
+      "headwear_red_ribbon"
+     ],
+     "default": true,
+     "cubes": 5
+    },
+    {
+     "id": "headwear_fox_mask",
+     "groups": [
+      "headwear_fox_mask"
+     ],
+     "default": false,
+     "cubes": 8
+    },
+    {
+     "id": "headwear_sakura_kanzashi",
+     "groups": [
+      "headwear_sakura_kanzashi"
+     ],
+     "default": false,
+     "cubes": 9
+    }
+   ]
+  },
+  "ears": {
+   "optional": false,
+   "parts": [
+    {
+     "id": "ear_fox_upright",
+     "groups": [
+      "ear_fox_upright_left",
+      "ear_fox_upright_right"
+     ],
+     "default": true,
+     "cubes": 136
+    },
+    {
+     "id": "ear_fox_airplane",
+     "groups": [
+      "ear_fox_airplane_left",
+      "ear_fox_airplane_right"
+     ],
+     "default": false,
+     "cubes": 136
+    },
+    {
+     "id": "ear_fox_drooping",
+     "groups": [
+      "ear_fox_drooping_left",
+      "ear_fox_drooping_right"
+     ],
+     "default": false,
+     "cubes": 342
+    },
+    {
+     "id": "ear_fox_flared",
+     "groups": [
+      "ear_fox_flared_left",
+      "ear_fox_flared_right"
+     ],
+     "default": false,
+     "cubes": 174
+    },
+    {
+     "id": "ear_fox_relaxed",
+     "groups": [
+      "ear_fox_relaxed_left",
+      "ear_fox_relaxed_right"
+     ],
+     "default": false,
+     "cubes": 136
+    }
+   ]
+  },
+  "tails": {
+   "optional": false,
+   "parts": [
+    {
+     "id": "tail_fox_fluffy",
+     "groups": [
+      "tail_fox_fluffy_chain1_seg01"
+     ],
+     "default": true,
+     "cubes": 81
+    },
+    {
+     "id": "tail_fox_long",
+     "groups": [
+      "tail_fox_long_chain1_seg01"
+     ],
+     "default": false,
+     "cubes": 102
+    },
+    {
+     "id": "tail_fox_triple",
+     "groups": [
+      "tail_fox_triple_chain1_seg01",
+      "tail_fox_triple_chain2_seg01",
+      "tail_fox_triple_chain3_seg01"
+     ],
+     "default": false,
+     "cubes": 207
+    }
+   ]
+  },
+  "eyebrows": {
+   "optional": false,
+   "parts": [
+    {
+     "id": "eyebrows_fox_standard",
+     "groups": [
+      "eyebrows_fox_standard_left",
+      "eyebrows_fox_standard_right"
+     ],
+     "default": true,
+     "cubes": 4
+    },
+    {
+     "id": "eyebrows_fox_maro",
+     "groups": [
+      "eyebrows_fox_maro_left",
+      "eyebrows_fox_maro_right"
+     ],
+     "default": false,
+     "cubes": 6
+    }
+   ]
+  },
+  "eyes": {
+   "optional": false,
+   "parts": [
+    {
+     "id": "eyes_amber_round",
+     "groups": [
+      "eyes_amber_round_left_pupil",
+      "eyes_amber_round_left",
+      "eyes_amber_round_right_pupil",
+      "eyes_amber_round_right"
+     ],
+     "default": true,
+     "cubes": 16
+    },
+    {
+     "id": "eyes_amber_droopy",
+     "groups": [
+      "eyes_amber_droopy_left_pupil",
+      "eyes_amber_droopy_left",
+      "eyes_amber_droopy_right_pupil",
+      "eyes_amber_droopy_right"
+     ],
+     "default": false,
+     "cubes": 16
+    }
+   ]
+  },
+  "mouth": {
+   "optional": false,
+   "parts": [
+    {
+     "id": "mouth_smile",
+     "groups": [
+      "mouth_smile"
+     ],
+     "default": true,
+     "cubes": 3
+    },
+    {
+     "id": "mouth_fox_smile",
+     "groups": [
+      "mouth_fox_smile"
+     ],
+     "default": false,
+     "cubes": 4
+    }
+   ]
+  },
+  "markings": {
+   "optional": true,
+   "parts": [
+    {
+     "id": "markings_fox_red",
+     "groups": [
+      "markings_fox_red"
+     ],
+     "default": true,
+     "cubes": 5
+    }
+   ]
+  },
+  "outfit": {
+   "optional": true,
+   "parts": [
+    {
+     "id": "outfit_miko",
+     "groups": [
+      "outfit_miko_left_sleeve_forearm",
+      "outfit_miko_left_sleeve_arm",
+      "outfit_miko_right_sleeve_forearm",
+      "outfit_miko_right_sleeve_arm",
+      "outfit_miko_body",
+      "outfit_miko_leftfoot",
+      "outfit_miko_left_shin_cloth",
+      "outfit_miko_left_thigh_cloth",
+      "outfit_miko_rightfoot",
+      "outfit_miko_right_shin_cloth",
+      "outfit_miko_right_thigh_cloth",
+      "outfit_miko_waistband",
+      "outfit_miko_hakama_hips",
+      "outfit_miko_hip_vent_-1",
+      "outfit_miko_hip_vent_1"
+     ],
+     "default": true,
+     "cubes": 277
+    },
+    {
+     "id": "outfit_everyday_kosode",
+     "groups": [
+      "outfit_everyday_kosode_left_sleeve_forearm",
+      "outfit_everyday_kosode_left_sleeve_arm",
+      "outfit_everyday_kosode_right_sleeve_forearm",
+      "outfit_everyday_kosode_right_sleeve_arm",
+      "outfit_everyday_kosode_body",
+      "outfit_everyday_kosode_leftfoot",
+      "outfit_everyday_kosode_left_shin_cloth",
+      "outfit_everyday_kosode_left_thigh_cloth",
+      "outfit_everyday_kosode_rightfoot",
+      "outfit_everyday_kosode_right_shin_cloth",
+      "outfit_everyday_kosode_right_thigh_cloth",
+      "outfit_everyday_kosode_waistband",
+      "outfit_everyday_kosode_hakama_hips",
+      "outfit_everyday_kosode_hip_vent_-1",
+      "outfit_everyday_kosode_hip_vent_1"
+     ],
+     "default": false,
+     "cubes": 282
+    },
+    {
+     "id": "outfit_furisode",
+     "groups": [
+      "outfit_furisode_left_sleeve_forearm",
+      "outfit_furisode_left_sleeve_arm",
+      "outfit_furisode_right_sleeve_forearm",
+      "outfit_furisode_right_sleeve_arm",
+      "outfit_furisode_body",
+      "outfit_furisode_underskirt_front_left_upper",
+      "outfit_furisode_underskirt_front_right_upper",
+      "outfit_furisode_underskirt_back_left_upper",
+      "outfit_furisode_underskirt_back_right_upper",
+      "outfit_furisode_underskirt_left_upper",
+      "outfit_furisode_underskirt_right_upper",
+      "outfit_furisode_lining_-1_upper",
+      "outfit_furisode_lining_1_upper",
+      "outfit_furisode_outercoat_front_left_upper",
+      "outfit_furisode_outercoat_front_right_upper",
+      "outfit_furisode_outercoat_back_left_upper",
+      "outfit_furisode_outercoat_back_right_upper",
+      "outfit_furisode_outercoat_left_upper",
+      "outfit_furisode_outercoat_right_upper",
+      "outfit_furisode_leftfoot",
+      "outfit_furisode_left_underlining_shin",
+      "outfit_furisode_left_underlining_thigh",
+      "outfit_furisode_rightfoot",
+      "outfit_furisode_right_underlining_shin",
+      "outfit_furisode_right_underlining_thigh",
+      "outfit_furisode_waistband"
+     ],
+     "default": false,
+     "cubes": 387
+    },
+    {
+     "id": "outfit_kagura",
+     "groups": [
+      "outfit_kagura_left_sleeve_forearm",
+      "outfit_kagura_left_sleeve_arm",
+      "outfit_kagura_right_sleeve_forearm",
+      "outfit_kagura_right_sleeve_arm",
+      "outfit_kagura_body",
+      "outfit_kagura_underskirt_front_left_upper",
+      "outfit_kagura_underskirt_front_right_upper",
+      "outfit_kagura_underskirt_back_left_upper",
+      "outfit_kagura_underskirt_back_right_upper",
+      "outfit_kagura_underskirt_left_upper",
+      "outfit_kagura_underskirt_right_upper",
+      "outfit_kagura_lining_-1_upper",
+      "outfit_kagura_lining_1_upper",
+      "outfit_kagura_outercoat_front_left_upper",
+      "outfit_kagura_outercoat_front_right_upper",
+      "outfit_kagura_outercoat_back_left_upper",
+      "outfit_kagura_outercoat_back_right_upper",
+      "outfit_kagura_outercoat_left_upper",
+      "outfit_kagura_outercoat_right_upper",
+      "outfit_kagura_leftfoot",
+      "outfit_kagura_left_underlining_shin",
+      "outfit_kagura_left_underlining_thigh",
+      "outfit_kagura_rightfoot",
+      "outfit_kagura_right_underlining_shin",
+      "outfit_kagura_right_underlining_thigh",
+      "outfit_kagura_waistband"
+     ],
+     "default": false,
+     "cubes": 429
+    },
+    {
+     "id": "outfit_kyudo",
+     "groups": [
+      "outfit_kyudo_left_sleeve_forearm",
+      "outfit_kyudo_left_sleeve_arm",
+      "outfit_kyudo_archer_glove",
+      "outfit_kyudo_right_sleeve_forearm",
+      "outfit_kyudo_right_sleeve_arm",
+      "outfit_kyudo_body",
+      "outfit_kyudo_leftfoot",
+      "outfit_kyudo_left_shin_cloth",
+      "outfit_kyudo_left_thigh_cloth",
+      "outfit_kyudo_rightfoot",
+      "outfit_kyudo_right_shin_cloth",
+      "outfit_kyudo_right_thigh_cloth",
+      "outfit_kyudo_waistband",
+      "outfit_kyudo_hakama_hips",
+      "outfit_kyudo_hip_vent_-1",
+      "outfit_kyudo_hip_vent_1"
+     ],
+     "default": false,
+     "cubes": 287
+    },
+    {
+     "id": "outfit_sakura_yukata",
+     "groups": [
+      "outfit_sakura_yukata_left_sleeve_forearm",
+      "outfit_sakura_yukata_left_sleeve_arm",
+      "outfit_sakura_yukata_right_sleeve_forearm",
+      "outfit_sakura_yukata_right_sleeve_arm",
+      "outfit_sakura_yukata_body",
+      "outfit_sakura_yukata_yukata_front_left_upper",
+      "outfit_sakura_yukata_yukata_front_right_upper",
+      "outfit_sakura_yukata_yukata_back_left_upper",
+      "outfit_sakura_yukata_yukata_back_right_upper",
+      "outfit_sakura_yukata_yukata_left_upper",
+      "outfit_sakura_yukata_yukata_right_upper",
+      "outfit_sakura_yukata_wrap_overlap_upper",
+      "outfit_sakura_yukata_leftfoot",
+      "outfit_sakura_yukata_left_underlining_shin",
+      "outfit_sakura_yukata_left_underlining_thigh",
+      "outfit_sakura_yukata_rightfoot",
+      "outfit_sakura_yukata_right_underlining_shin",
+      "outfit_sakura_yukata_right_underlining_thigh",
+      "outfit_sakura_yukata_waistband"
+     ],
+     "default": false,
+     "cubes": 232
+    }
+   ]
+  }
+ },
+ "conflicts": [],
+ "requires": {},
+ "expressions": [
+  {
+   "id": "expression_teasing",
+   "groups": [
+    "expression_teasing"
+   ],
+   "hides": [
+    "Eyelid",
+    "Mouth"
+   ],
+   "parts": {
+    "eyes_fox_teasing": 8,
+    "mouth_fox_teasing": 1
+   }
+  },
+  {
+   "id": "expression_kitsune",
+   "groups": [
+    "expression_kitsune"
+   ],
+   "hides": [
+    "Eyelid",
+    "Mouth"
+   ],
+   "parts": {
+    "eyes_fox_kitsune": 10,
+    "mouth_fox_kitsune": 1
+   }
+  },
+  {
+   "id": "expression_happy",
+   "groups": [
+    "expression_happy"
+   ],
+   "hides": [
+    "Eyelid",
+    "Mouth"
+   ],
+   "parts": {
+    "eyes_fox_happy": 12,
+    "mouth_fox_happy": 1
+   }
+  },
+  {
+   "id": "expression_surprised",
+   "groups": [
+    "expression_surprised"
+   ],
+   "hides": [
+    "Eyelid",
+    "Mouth"
+   ],
+   "parts": {
+    "eyes_fox_surprised": 8,
+    "mouth_fox_surprised": 1
+   }
+  },
+  {
+   "id": "expression_angry",
+   "groups": [
+    "expression_angry"
+   ],
+   "hides": [
+    "Eyelid",
+    "Mouth"
+   ],
+   "parts": {
+    "eyes_fox_angry": 10,
+    "mouth_fox_angry": 1
+   }
+  }
+ ]
+}
