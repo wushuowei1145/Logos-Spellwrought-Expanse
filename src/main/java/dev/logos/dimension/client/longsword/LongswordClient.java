@@ -6,6 +6,8 @@ import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.combat.CombatPose;
 import dev.logos.dimension.combat.Moveset;
 import dev.logos.dimension.combat.CombatWeapon;
+import dev.logos.dimension.client.vfx.DawnvowBlade;
+import dev.logos.dimension.client.vfx.DawnvowClient;
 import dev.logos.dimension.longsword.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -121,6 +123,7 @@ public final class LongswordClient {
                 var level = Minecraft.getInstance().level;
                 var sample = p == null || level == null || state.isSpectator ? null : sample(p, false, level.getGameTime() + state.partialTick);
                 state.setRenderData(FRAME, sample == null ? null : new Frame(p.variant(), sample, state.getMainHandItemState()));
+                state.setRenderData(DawnvowBlade.GLOW, DawnvowClient.blade(avatar.getId(), state.partialTick));
             }
         });
     }
@@ -147,6 +150,8 @@ public final class LongswordClient {
         LongswordRig.get(p.variant(), true).submit(sample, pose,
                 event.getSubmitNodeCollector(), event.getPackedLight(), mc.player.getSkin().body().texturePath(), !mc.player.isInvisible());
         LongswordAuras.firstPerson(mc.player,sample,pose,event.getSubmitNodeCollector());
+        DawnvowBlade.submit(DawnvowClient.blade(mc.player.getId(), event.getPartialTick()), sample, pose, event.getSubmitNodeCollector(), true,
+                mc.player.tickCount + event.getPartialTick());
         pose.popPose();
     }
     private static final class SwordLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
@@ -164,6 +169,8 @@ public final class LongswordClient {
             pose.scale(state.mainArm == HumanoidArm.LEFT ? 1/16f : -1/16f, -1/16f, 1/16f);
             LongswordRig.get(frame.variant, false).submit(frame.sample, pose, collector, light, state.skin.body().texturePath(), !state.isInvisible);
             LongswordAuras.submit(frame.effects,frame.sample,pose,collector);
+            Float glow = state.getRenderData(DawnvowBlade.GLOW);
+            if (glow != null) DawnvowBlade.submit(glow, frame.sample, pose, collector, false, state.ageInTicks);
             pose.popPose();
             var equippable=state.chestEquipment.get(net.minecraft.core.component.DataComponents.EQUIPPABLE);
             if(equippable!=null && equippable.slot()==net.minecraft.world.entity.EquipmentSlot.CHEST && equippable.assetId().isPresent()) {

@@ -640,5 +640,6 @@
   "message.logos_dimension.dawnvow.unmoved": "The sword will not move. The light on it is still too faint…",
   "message.logos_dimension.dawnvow.sworn": "Dawnvow has already chosen you. Return your sword to a stone to swear again.",
   "message.logos_dimension.dawnvow.drawn": "%s drew Dawnvow from the stone at daybreak.",
-  "message.logos_dimension.dawnvow.returned": "You set Dawnvow back in the stone. Your vow is released."
+  "message.logos_dimension.dawnvow.returned": "You set Dawnvow back in the stone. Your vow is released.",
+  "message.logos_dimension.dawnvow.mana": "The grand charge needs %s mana; you ran out (%s left)"
 }
