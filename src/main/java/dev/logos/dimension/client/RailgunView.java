@@ -99,12 +99,12 @@ public class RailgunView implements UIScenario {
             var stand = EntityType.ARMOR_STAND.create(ctx.server().overworld(), EntitySpawnReason.COMMAND);
             stand.setInvisible(true);
             stand.setNoGravity(true);
-            stand.snapTo(4.5, 99.7, -8.5, 0, 0);
+            stand.snapTo(2, 99.7, -9.5, 0, 0);
             ctx.server().overworld().addFreshEntity(stand);
             camera = stand.getId();
         }).waitUntil("机位同步", ctx -> Minecraft.getInstance().level.getEntity(camera) != null)
                 .step("切到侧面", ctx -> Minecraft.getInstance().setCameraEntity(Minecraft.getInstance().level.getEntity(camera)));
-        shot(s, "side", new int[] {4, 12, 20, 26}, new int[] {1, 3, 6, 12, 30});
+        shot(s, "side", new int[] {4, 12, 20, 26}, new int[] {1, 3, 6, 9, 14, 30});
         s.step("回到玩家", ctx -> {
             var mc = Minecraft.getInstance();
             mc.setCameraEntity(mc.player);

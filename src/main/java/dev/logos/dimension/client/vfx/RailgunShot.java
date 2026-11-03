@@ -35,6 +35,8 @@ final class RailgunShot {
     /** 射线尖端穿过全长的刻数；亮线保持到 HOT，到 AFTER 收成余线，余线在 GONE 前闪完。 */
     private static final float SHOOT = 1.5f, HOT = 9, AFTER = 16, GONE = 64, LIFE = 66;
     private static final float COIL_LIFE = 14, RING_LIFE = 13, RING_SPACING = 3.5f;
+    /** 身后锥形张开的气浪线、往后喷的尘团各有几道。 */
+    private static final int BACK_LINES = 26, DUST = 26;
     private static final int SHEATH = 0xFF6A12, CORE = 0xFFC870, WHITE = 0xFFFBEA, EMBER = 0xFF8A3A, STREAK = 0xFF9A40;
     private static final int SHOCK = 0xF6F8FF, VAPOUR = 0xF2E6DA, AIR_GREY = 0xC8CED6, WIND = 0xE8F0FF, LENS = 0xE6A8FF;
 
@@ -95,9 +97,11 @@ final class RailgunShot {
         // 镜头离出口越近（第一人称自己开炮）越是 0：出口的装饰往前推、收小
         float near = (float) Math.min(1, Math.max(0, (eye.distanceTo(muzzle) - .8) / 3));
         layers.apply(1).submitCustomGeometry(pose, AIR, (p, buf) -> air(p, buf, t, near));
+        layers.apply(1).submitCustomGeometry(pose, SMOKE, (p, buf) -> dust(p, buf, view, t));
         layers.apply(2).submitCustomGeometry(pose, LINE, (p, buf) -> {
             beam(p, buf, t, eye);
             shockEdges(p, buf, t, near, eye);
+            backLines(p, buf, t, eye);
         });
         layers.apply(2).submitCustomGeometry(pose, BOLT, (p, buf) -> lightning(p, buf, t, eye));
         layers.apply(2).submitCustomGeometry(pose, GLOW, (p, buf) -> glows(p, buf, view, t, near));
@@ -149,6 +153,51 @@ final class RailgunShot {
             lineRing(p, buf, ringAt.add(axis.scale(1.4 + 1.2 * e)), axis, .3f + 1.6f * e, .22f, eye, seed + 5, 56,
                     VfxParts.argb((1 - q) * (1 - q) * .8f, SHOCK));
         }
+    }
+
+    /** 气浪线：从出口前方起，顺着身子四周往后呈锥形张开的一道道白线（参考动画里发射时人物身后的线条）。 */
+    private void backLines(PoseStack.Pose p, VertexConsumer buf, float t, Vec3 eye) {
+        Vec3 apex = muzzle.add(axis.scale(.8));
+        for (int i = 0; i < BACK_LINES; i++) {
+            float b = hash(seed, i, 401) * 3, life = 9 + 5 * hash(seed, i, 403), age = t - b;
+            if (age < 0 || age > life) continue;
+            double spread = Math.toRadians(14 + 24 * hash(seed, i, 405)), angle = hash(seed, i, 407) * Math.PI * 2;
+            Vec3 dir = axis.scale(-Math.cos(spread)).add(right.scale(Math.cos(angle) * Math.sin(spread)))
+                    .add(up.scale(Math.sin(angle) * Math.sin(spread)));
+            float q = age / life, reach = 5 + 6 * hash(seed, i, 409);
+            float head = .3f + reach * easeOut(Math.min(1, age / (life * .7f)));
+            float len = (1.5f + 3f * hash(seed, i, 411)) * Math.min(1, age / 2 + .2f) * (1 - .6f * q);
+            Vec3 h = apex.add(dir.scale(head)), tl = apex.add(dir.scale(Math.max(0, head - len)));
+            float a = (float) Math.pow(1 - q, 1.4) * (own ? .35f : .75f) * VfxParts.fade(eye, h.add(tl).scale(.5), 1, 3);
+            band(p, buf, tl, h, eye, .07f + .07f * hash(seed, i, 413), VfxParts.argb(a, WIND));
+        }
+    }
+
+    /** 往后喷的尘土：从脚边和身侧被气浪推出去，一边滚大一边往两侧散开，慢慢淡掉（参考动画）。悬空开炮时没有。 */
+    private void dust(PoseStack.Pose p, VertexConsumer buf, VfxParts.View view, float t) {
+        if (Double.isNaN(ground)) return;
+        Vec3 back = backward(), side = new Vec3(-back.z, 0, back.x);
+        int color = shade(VfxParts.lerpColor(tint, 0xE6E0D6, .75f));
+        for (int i = 0; i < DUST; i++) {
+            float b = hash(seed, i, 501) * 4, life = 18 + 14 * hash(seed, i, 503), age = t - b;
+            if (age < 0 || age > life) continue;
+            float q = age / life, e = easeOut(q), lift = hash(seed, i, 509);
+            double lateral = (hash(seed, i, 505) - .5) * 2, reach = 3 + 6 * hash(seed, i, 507);
+            Vec3 c = new Vec3(feet.x, ground + .2 + 1.3 * lift * lift, feet.z).add(side.scale(lateral * .5))
+                    .add(back.scale(reach * e)).add(side.scale(lateral * reach * .45 * e)).add(0, .6 * e * hash(seed, i, 511), 0);
+            float size = .4f + (1.2f + 1.2f * hash(seed, i, 513)) * e;
+            int frame = Math.min(15, (int) (q * 16));
+            float u0 = (frame % 4) / 4f, v0 = (frame / 4) / 4f;
+            float a = (float) Math.pow(1 - q, 1.6) * .7f * Math.min(1, age / 1.5f) * VfxParts.fade(view.cam(), c, size + 1, size + 4);
+            VfxParts.sprite(p, buf, view, c, size, size, hash(seed, i, 515) * 6.28f, u0, v0, u0 + .25f, v0 + .25f, VfxParts.argb(a, color));
+        }
+    }
+
+    /** 射线反方向在地面上的投影：尘土和碎块往这边喷。 */
+    private Vec3 backward() {
+        Vec3 flat = new Vec3(-axis.x, 0, -axis.z);
+        if (flat.lengthSqr() < 1e-4) flat = new Vec3(-up.x, 0, -up.z);
+        return flat.lengthSqr() < 1e-4 ? new Vec3(1, 0, 0) : flat.normalize();
     }
 
     /** 余线：一根细细的橙线断成几截，一截截闪灭。 */
@@ -372,9 +421,16 @@ final class RailgunShot {
 
     private void particles(Level level) {
         RandomSource r = level.getRandom();
-        // 脚下被掀起的碎块，贴地往四周推开（尘环在 air 里画）
+        // 脚下被掀起的碎块：一部分贴地往四周推开（尘环在 air 里画），更多的被气浪往身后掀飞
         if (!Double.isNaN(ground)) {
             BlockState floor = level.getBlockState(BlockPos.containing(feet.x, ground - .5, feet.z));
+            Vec3 back = backward();
+            if (!floor.isAir()) for (int i = 0; i < 28; i++) {
+                double spread = (r.nextDouble() - .5) * 1.2, v = .45 + r.nextDouble() * .55;
+                Vec3 d = back.add(-back.z * spread, 0, back.x * spread).normalize();
+                level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, floor), feet.x + (r.nextDouble() - .5) * .8,
+                        ground + .1 + r.nextDouble() * .6, feet.z + (r.nextDouble() - .5) * .8, d.x * v, .2 + r.nextDouble() * .35, d.z * v);
+            }
             if (!floor.isAir()) for (int i = 0; i < 14; i++) {
                 double a = r.nextDouble() * Math.PI * 2, v = .2 + r.nextDouble() * .25;
                 level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, floor), feet.x + Math.cos(a) * .6, ground + .05,
