@@ -47,7 +47,7 @@ Logos 升级 Photon / LDLib2 时，同步改这里的 `photon_version`、`ldlib2
 规则：
 
 - 只调用 Logos 的 **public** 类。`dev.logos.client.*Visual` 是主模组的内部实现，大多是包级私有，不要用反射调用，也不要把代码复制过来。缺少入口时，到主模组提 PR 加一个公开方法，再把附属的 `logos` 依赖下限抬到包含它的版本。
-- **持续型特效**（`trail`、`beam`、`field`）用一个 id 标识，客户端按 id 更新。这个 id 和 Logos 法术物体的计数器（`SpellObject`）在同一个空间里，附属自己挑的 id 会和玩家法术撞车。第一次需要持续型特效时，先在主模组加一个公开的 id 分配方法，不要硬编码 id。
+- **持续型特效**（`trail`、`beam`、`field`）用一个 id 标识，客户端按 id 更新。这个 id 和 Logos 法术物体的计数器（`SpellObject`）在同一个空间里，附属自己挑的 id 会和玩家法术撞车。第一次需要持续型特效时，先在主模组加一个公开的 id 分配方法，不要硬编码 id。在那之前，曦誓的剑气（`dawnvow/SwordWave`）用负数 id，从 −1,000,000 往下数：法术物体从 1 往上数，两边不会撞；以后有了公开方法再换过去。
 - 元素用 `dev.logos.lang.Element`，配色、形状、拖尾都由 Logos 按元素生成，附属不要另外定义一套颜色。
 
 ## 三、附属新特效：Photon 或自定义几何

@@ -68,6 +68,7 @@ public final class LogosDimension {
         dev.logos.dimension.cloudsea.CloudseaBlocks.init();
         dev.logos.dimension.elven.ElvenBlocks.init();
         dev.logos.dimension.dawnvow.Dawnvow.register(bus);
+        dev.logos.dimension.dawnvow.DawnvowCharge.register(bus);
         DimensionBlocks.BLOCKS.register(bus); DimensionBlocks.ITEMS.register(bus);
         DimensionFluids.TYPES.register(bus); DimensionFluids.FLUIDS.register(bus);
         DimensionParticles.register(bus);
@@ -95,6 +96,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.AncientEmbraceGameTests.register(bus);
         dev.logos.dimension.gametest.LongswordGameTests.register(bus);
         dev.logos.dimension.gametest.DawnvowGameTests.register(bus);
+        dev.logos.dimension.gametest.DawnvowChargeGameTests.register(bus);
         dev.logos.dimension.gametest.ForestElfGameTests.register(bus);
         dev.logos.dimension.gametest.EconomyGameTests.register(bus);
         dev.logos.dimension.gametest.RailgunGameTests.register(bus);

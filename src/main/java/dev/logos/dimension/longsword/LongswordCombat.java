@@ -5,6 +5,7 @@ import dev.logos.dimension.combat.CombatWeapon;
 import dev.logos.dimension.combat.MoveRunner;
 import dev.logos.dimension.combat.Moveset;
 import dev.logos.dimension.combat.Movesets;
+import dev.logos.dimension.dawnvow.DawnvowCharge;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -52,7 +53,11 @@ public final class LongswordCombat {
         }
         @Override public double attackSpeed() { return player.getAttributeValue(Attributes.ATTACK_SPEED); }
         @Override public void moveStarted(MoveRunner runner) { sync(player, payload(runner)); }
-        @Override public void contact(MoveRunner runner) { if (selected(player, this)) LongswordCombat.contact(player, this); }
+        @Override public void contact(MoveRunner runner) {
+            if (!selected(player, this)) return;
+            DawnvowCharge.contact(player, runner.move().name());
+            LongswordCombat.contact(player, this);
+        }
         LongswordPayload payload(MoveRunner runner) {
             if (runner.cleared()) return LongswordPayload.clear(player.getUUID());
             var move = runner.move(); var set = runner.moveset();
@@ -126,6 +131,7 @@ public final class LongswordCombat {
         for (var player : event.getServer().getPlayerList().getPlayers()) tick(player);
     }
     private static void clear(ServerPlayer player) {
+        DawnvowCharge.end(player);
         if (STATES.remove(player.getUUID()) != null) sync(player, LongswordPayload.clear(player.getUUID()));
     }
     private static boolean carried(ServerPlayer player, ItemStack stack) {
@@ -151,11 +157,12 @@ public final class LongswordCombat {
             return;
         }
         state.runner.tick(now);
-        if (state.runner.cleared()) { STATES.remove(player.getUUID()); return; }
+        if (state.runner.cleared()) { DawnvowCharge.end(player); STATES.remove(player.getUUID()); return; }
         // 松开右键的包可能早于或晚于这一刻到达；这里补一次，保证蓄力不会卡住。
         if (!player.isUsingItem() && selected(player, state)) state.runner.input(Moveset.Input.USE_RELEASE, now);
         // 一直按着右键时，招式结束回到可格挡的状态（例如突刺收势）就重新进入格挡。
         else if (player.isUsingItem() && selected(player, state)) state.runner.input(Moveset.Input.USE_PRESS, now);
+        if (DawnvowCharge.dawnvow(state.stack)) DawnvowCharge.tick(player, state.stack, state.runner.move().name());
     }
     private static void contact(ServerPlayer player, State state) {
         var from = player.getEyePosition();
@@ -184,6 +191,9 @@ public final class LongswordCombat {
                 && NetworkRegistry.hasChannel(viewer.connection, LongswordPayload.TYPE.id()))
             PacketDistributor.sendToPlayer(viewer, pose(target));
     }
-    @SubscribeEvent static void logout(PlayerEvent.PlayerLoggedOutEvent event) { STATES.remove(event.getEntity().getUUID()); }
+    @SubscribeEvent static void logout(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) DawnvowCharge.end(player);
+        STATES.remove(event.getEntity().getUUID());
+    }
     @SubscribeEvent static void stopped(ServerStoppedEvent event) { STATES.clear(); CONTACT.remove(); }
 }
