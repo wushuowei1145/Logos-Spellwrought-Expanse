@@ -10,7 +10,7 @@
   "elements": [
     {
       "from": [0, 0, 0],
-      "to": [16, 16, 1],
+      "to": [16, 16, 0.25],
       "faces": {
         "north": { "uv": [0, 0, 16, 16], "texture": "#paint", "tintindex": 0 },
         "south": { "uv": [0, 0, 16, 16], "texture": "#paint", "tintindex": 0 },

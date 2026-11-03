@@ -13,18 +13,24 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 /**
- * 调色盘：独立全屏调配页。16×16 = 256 色（HSV 采样），点击选中并写回服务端，
- * 顶部一块大预览区实时显示当前颜色。
+ * 调色盘：独立全屏调配页。16×16 共 256 色（HSV 采样），点击选中并写回服务端，
+ * 顶部色块与十六进制实时显示当前颜色。配色与钱囊等界面一致：墨色面板、金色描边。
  */
 public class PaintPaletteScreen extends Screen {
     private static final int GRID = 16;
     private static final int CELL = 14;
+    private static final int PANEL_FILL = 0xE0161218;
+    private static final int PANEL_EDGE = 0xFFB89A5A;
+    private static final int TITLE_COLOR = 0xFFE8C77A;
+    private static final int TEXT_COLOR = 0xFFE8E0D0;
+    private static final int HINT_COLOR = 0xFF8C8478;
     private static final List<Integer> PALETTE = buildPalette();
 
     private final Player player;
     private final InteractionHand hand;
-    private int gridLeft, gridTop;
+    private int x0, y0, gridLeft, gridTop;
     private int previewColor;
+    private int selected;
 
     public PaintPaletteScreen(Player player, InteractionHand hand, ItemStack stack) {
         super(Component.literal("调色盘"));
@@ -33,31 +39,55 @@ public class PaintPaletteScreen extends Screen {
         this.previewColor = stack.getOrDefault(
                 dev.logos.dimension.paint.PaintSystem.PAINT_COLOR.get(),
                 dev.logos.dimension.paint.PaintSurfaceBlockEntity.DEFAULT_COLOR);
+        this.selected = PALETTE.indexOf(previewColor & 0xFFFFFF);
+    }
+
+    private static int panelWidth() {
+        return GRID * CELL + 24;
+    }
+
+    private static int panelHeight() {
+        return GRID * CELL + 96;
     }
 
     @Override
     protected void init() {
-        gridLeft = (this.width - GRID * CELL) / 2;
-        gridTop = (this.height - GRID * CELL) / 2 + 20;
+        x0 = (this.width - panelWidth()) / 2;
+        y0 = (this.height - panelHeight()) / 2;
+        gridLeft = x0 + 12;
+        gridTop = y0 + 56;
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
-        graphics.fill(0, 0, this.width, this.height, 0xCC000000);
-        graphics.text(this.font, this.title, this.width / 2 - this.font.width(this.title) / 2, 16, 0xFFFFFF);
-        // 预览区
-        int previewW = 80, previewH = 24;
-        int px = (this.width - previewW) / 2, py = 36;
-        graphics.fill(px, py, px + previewW, py + previewH, 0xFF000000 | previewColor);
-        graphics.outline(px, py, previewW, previewH, 0xFFFFFFFF);
+        int panelW = panelWidth(), panelH = panelHeight();
+        graphics.fill(x0, y0, x0 + panelW, y0 + panelH, PANEL_FILL);
+        graphics.outline(x0, y0, panelW, panelH, PANEL_EDGE);
+        graphics.text(this.font, this.title, x0 + 10, y0 + 8, TITLE_COLOR);
+
+        // 当前颜色：色块 + 十六进制
+        int sw = 96, sh = 22, sx = x0 + 12, sy = y0 + 26;
+        graphics.fill(sx, sy, sx + sw, sy + sh, 0xFF000000 | previewColor);
+        graphics.outline(sx, sy, sw, sh, PANEL_EDGE);
+        graphics.text(this.font, Component.literal(String.format("#%06X", previewColor & 0xFFFFFF)),
+                sx + sw + 10, sy + 7, TEXT_COLOR);
+
         // 256 色网格
         for (int i = 0; i < PALETTE.size(); i++) {
             int x = gridLeft + (i % GRID) * CELL;
             int y = gridTop + (i / GRID) * CELL;
             graphics.fill(x, y, x + CELL - 1, y + CELL - 1, 0xFF000000 | PALETTE.get(i));
         }
-        graphics.text(this.font, "点击颜色完成调配", 8, this.height - 14, 0xAAAAAA);
+        graphics.outline(gridLeft - 1, gridTop - 1, GRID * CELL + 2, GRID * CELL + 2, PANEL_EDGE);
+        if (selected >= 0) {
+            int x = gridLeft + (selected % GRID) * CELL;
+            int y = gridTop + (selected / GRID) * CELL;
+            graphics.outline(x - 1, y - 1, CELL + 1, CELL + 1, 0xFFFFFFFF);
+        }
+
+        graphics.text(this.font, Component.literal("点击颜色完成调配"),
+                x0 + 10, y0 + panelH - 16, HINT_COLOR);
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
     }
 
     @Override
@@ -69,6 +99,7 @@ public class PaintPaletteScreen extends Screen {
             int cy = (int) ((mouseY - gridTop) / CELL);
             int index = cy * GRID + cx;
             if (index >= 0 && index < PALETTE.size()) {
+                selected = index;
                 previewColor = PALETTE.get(index);
                 ClientPacketDistributor.sendToServer(new PaintColorPayload(0xFF000000 | previewColor, hand.ordinal()));
                 return true;
