@@ -14,6 +14,8 @@
 移动类动作借用本模组森林精灵动画文件里已经按 2 倍制作换算好的车万女仆（TLM）动画（CC BY-NC-SA 4.0，CREDITS.md 登记），
 两者骨架相同，只保留神狐模型里有的骨骼。
 
+死亡动画按 160 帧/秒逐帧烘焙，导入时去掉能由前后两帧线性插值还原（误差 < 0.001）的中间帧，动作不变、文件小得多。
+
 叠加层在主状态之前播放，主状态动画用到同一骨骼时会盖过它（docs/NPC_ANIMATIONS.md）。死亡动画本身已经接管整条尾巴；
 这里再给眨眼与抖耳两层用到的骨骼通道补上静止帧，倒下后不再眨眼、抖耳。
 """
@@ -53,6 +55,30 @@ def only(anim, bones):
     return out
 
 
+def prune(anim, tolerance=1e-3):
+    """去掉线性插值就能还原的中间关键帧（只处理纯数组的线性帧），保留首尾帧。"""
+    for channels in anim["bones"].values():
+        for ch, keys in channels.items():
+            if not isinstance(keys, dict) or len(keys) < 3 or not all(isinstance(v, list) for v in keys.values()):
+                continue
+            times = sorted(keys, key=float)
+            t = [float(k) for k in times]
+            v = [keys[k] for k in times]
+
+            def fits(a, b):
+                # a、b 之间的每一帧都落在 a→b 的直线上
+                return all(abs(v[m][i] - (v[a][i] + (v[b][i] - v[a][i]) * (t[m] - t[a]) / (t[b] - t[a]))) < tolerance
+                           for m in range(a + 1, b) for i in range(3))
+
+            kept = [0]
+            for i in range(1, len(t) - 1):
+                if not fits(kept[-1], i + 1):
+                    kept.append(i)
+            kept.append(len(t) - 1)
+            channels[ch] = {times[i]: v[i] for i in kept}
+    return anim
+
+
 def animations(source, bones):
     exported = read(source / "build/exports/divine_fox.animation.json")["animations"]
     elf = read(ELF_ANIMATION)["animations"]
@@ -61,7 +87,7 @@ def animations(source, bones):
     out = {"idle": only(exported["idle"], bones)}
     for name in BORROWED:
         out[name] = only(elf[name], bones)
-    death = only(death, bones)
+    death = prune(only(death, bones))
     # 倒下后停止眨眼、高光抖动与抖耳：叠加层用到的每个骨骼通道，死亡动画没有的都补一个静止帧
     rest = {"rotation": [0, 0, 0], "position": [0, 0, 0], "scale": [1, 1, 1]}
     for layer in ["pre_parallel0", "pre_parallel1"]:

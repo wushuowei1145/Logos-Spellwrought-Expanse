@@ -27,7 +27,8 @@ import net.minecraft.world.phys.Vec3;
  * 实际客户端预览神狐：白瓷台上五只神狐，换着穿六套衣装中的五套，耳朵、尾巴、发型各不相同。
  * 待机时眨眼、耳朵抖动、尾巴轻摆三个常驻叠加层照常循环。截图：正面、背面（尾巴）、脸部近景；
  * 死亡预览里三只神狐错开时间受到致命一击，截图时从左到右是倒地停住、侧倒中、受击中；
- * 表情预览里五只神狐依次换上调侃、狐狸眯眼、开心、惊讶、愤怒。
+ * 表情预览里五只神狐依次换上调侃、狐狸眯眼、开心、惊讶、愤怒；
+ * 短装预览里八只神狐一字排开，穿四款短和服与短浴衣，左四只短袜、右四只过膝袜。
  */
 public abstract class DivineFoxViews implements UIScenario {
     /** 每只神狐的外观（只写和默认不同的槽位）。 */
@@ -42,6 +43,8 @@ public abstract class DivineFoxViews implements UIScenario {
     /** 表情预览里五只神狐各自换上的表情（零件表 expressions）。 */
     static final List<String> EXPRESSIONS = List.of("expression_teasing", "expression_kitsune", "expression_happy",
             "expression_surprised", "expression_angry");
+    /** 短装预览：四款短和服与短浴衣，每款短袜、过膝袜两版。 */
+    static final List<String> SHORT_OUTFITS = List.of("short_miko_kimono", "short_brocade_kimono", "short_rose_yukata", "short_sakura_yukata");
     /** 常驻叠加层的控制器与动画名（NpcAnimations 的 TLM 结构）。 */
     private static final String[] LAYERS = {"pre_parallel0", "pre_parallel1", "pre_parallel2"};
     private static final double SPACING = 1.7;
@@ -49,9 +52,9 @@ public abstract class DivineFoxViews implements UIScenario {
     private static final AABB AREA = new AABB(-9, FLOOR, -6, 10, FLOOR + 6, 9);
     /** 死亡预览截图时三只的死亡刻数（至少）：倒地停住、侧倒中、受击中（受击约 9 刻，死亡动画 31 刻，60 刻消失）。 */
     private static final int LYING = 44, FALLING = 24, HIT = 4;
-    private final int[] ids = new int[LINEUP.size()];
+    private final int[] ids = new int[2 * SHORT_OUTFITS.size()];
 
-    /** 0 正面，1 背面，2 脸部近景，3 死亡，4 五种表情。 */
+    /** 0 正面，1 背面，2 脸部近景，3 死亡，4 五种表情，5 短装。 */
     protected abstract int view();
 
     private boolean death() {
@@ -59,7 +62,7 @@ public abstract class DivineFoxViews implements UIScenario {
     }
 
     private int count() {
-        return death() ? 3 : LINEUP.size();
+        return death() ? 3 : view() == 5 ? 2 * SHORT_OUTFITS.size() : LINEUP.size();
     }
 
     static Map<String, String> appearance(int i) {
@@ -68,8 +71,19 @@ public abstract class DivineFoxViews implements UIScenario {
         return NpcParts.DIVINE_FOX.sanitize(a);
     }
 
+    /** 短装预览第 i 只：左四只短袜，右四只过膝袜。 */
+    static Map<String, String> shortAppearance(int i) {
+        Map<String, String> a = new LinkedHashMap<>(NpcParts.DIVINE_FOX.defaults());
+        a.put("outfit", "outfit_" + SHORT_OUTFITS.get(i % SHORT_OUTFITS.size()) + (i < SHORT_OUTFITS.size() ? "_ankle" : "_overknee"));
+        return NpcParts.DIVINE_FOX.sanitize(a);
+    }
+
+    private Map<String, String> appearanceOf(int i) {
+        return view() == 5 ? shortAppearance(i) : appearance(death() || view() == 4 ? 0 : i);
+    }
+
     private double x(int i) {
-        return (i - (count() - 1) / 2.0) * (death() ? 2.4 : view() == 4 ? 0.9 : SPACING) + 0.5;
+        return (i - (count() - 1) / 2.0) * (death() ? 2.4 : view() == 4 ? 0.9 : view() == 5 ? 1.0 : SPACING) + 0.5;
     }
 
     private Vec3 eye() {
@@ -78,6 +92,7 @@ public abstract class DivineFoxViews implements UIScenario {
             case 2 -> new Vec3(0.5, FLOOR + 2.15, 2.0);
             case 3 -> new Vec3(3.6, FLOOR + 2.2, 4.4);
             case 4 -> new Vec3(0.5, FLOOR + 2.2, 3.6);
+            case 5 -> new Vec3(0.5, FLOOR + 1.9, 5.4);
             default -> new Vec3(0.5, FLOOR + 1.8, 4.7);
         };
     }
@@ -96,6 +111,7 @@ public abstract class DivineFoxViews implements UIScenario {
             case 2 -> "divine_fox_face";
             case 3 -> "divine_fox_death";
             case 4 -> "divine_fox_expressions";
+            case 5 -> "divine_fox_short_outfits";
             default -> "divine_fox_lineup";
         };
     }
@@ -132,7 +148,7 @@ public abstract class DivineFoxViews implements UIScenario {
                     level.getEntitiesOfClass(DivineFox.class, AREA).forEach(e -> e.discard());
                     for (int i = 0; i < count(); i++) {
                         DivineFox fox = NpcEntities.DIVINE_FOX.get().create(level, EntitySpawnReason.COMMAND);
-                        fox.setAppearance(appearance(death() || view() == 4 ? 0 : i));
+                        fox.setAppearance(appearanceOf(i));
                         if (view() == 4) fox.setExpression(EXPRESSIONS.get(i));
                         fox.snapTo(x(i), FLOOR + 1, 0.5, 0, 0);
                         fox.setYHeadRot(0);
@@ -159,7 +175,7 @@ public abstract class DivineFoxViews implements UIScenario {
                 .check("外观同步到客户端", ctx -> {
                     List<DivineFox> foxes = foxes();
                     for (int i = 0; i < foxes.size(); i++)
-                        if (!foxes.get(i).npcAppearance().equals(appearance(death() || view() == 4 ? 0 : i))) return false;
+                        if (!foxes.get(i).npcAppearance().equals(appearanceOf(i))) return false;
                     return true;
                 })
                 .check("动画文件有三个常驻叠加层", ctx -> NpcAnimations.available(foxes().get(0).npcAnimationAsset()).containsAll(List.of(LAYERS)))
@@ -252,5 +268,10 @@ public abstract class DivineFoxViews implements UIScenario {
     @LDLRegisterClient(name = "npc_divine_fox_expressions", group = "npc_preview", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
     public static class Expressions extends DivineFoxViews {
         @Override protected int view() { return 4; }
+    }
+
+    @LDLRegisterClient(name = "npc_divine_fox_short_outfits", group = "npc_preview", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class ShortOutfits extends DivineFoxViews {
+        @Override protected int view() { return 5; }
     }
 }
