@@ -32,11 +32,17 @@
 
 叠加层的制作脚本是模型目录的 `tools/create_ambient_loops.py`（Blockbench 工程与预览在 `Animation/ambient/`）。
 
-## 3. 死亡
+## 3. 表情
+
+五种表情：`expression_teasing` 调侃、`expression_kitsune` 狐狸眯眼、`expression_happy` 开心、`expression_surprised` 惊讶、`expression_angry` 愤怒。每种是一组眼睛加一张嘴，由模型目录 `race.json` 的 `expressions` 登记，合并时挂到 `Head` 下以表情 id 命名的骨骼里，零件表 `expressions` 写明它替换 `Eyelid`（常态眼、瞳孔与睫毛）和 `Mouth`，眉毛保留。
+
+表情不参与随机外观：神狐不会生来就是一张生气或惊讶的脸。`DivineFox#setExpression` 临时换上一个（不存档），渲染器显示表情骨骼、隐藏被替换的常态五官；这一版还没有动作或剧情去调用它。表情眼睛的睫毛是方块，没有眨眼骨骼，表情期间不眨眼。
+
+## 4. 死亡
 
 与森林精灵相同的节奏：最后一击先播受击，再播死亡动画，共 60 刻后消失（原版是 20 刻）；倒下后朝向固定（`NpcDeathPose`）。不染红，不按原版侧倒。消失时用原版白烟，以后可以换成狐火之类的专属效果。
 
-## 4. 更新资源
+## 5. 更新资源
 
 模型目录重新合并或改了动画之后：
 
@@ -45,8 +51,8 @@ python tools/divine_fox_assets.py [--source <fox_model/divine_fox 目录>]
 ./gradlew test --tests dev.logos.dimension.DivineFoxAssetsTest -PlogosJar=/absolute/path/logos-0.6.0.jar
 ```
 
-实际客户端预览（白瓷台上五只不同外观的神狐，正面、背面、脸部近景与死亡）：
+实际客户端预览（白瓷台上五只不同外观的神狐，正面、背面、脸部近景、死亡与五种表情）：
 
 ```text
-./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=npc_divine_fox_lineup,npc_divine_fox_back,npc_divine_fox_face,npc_divine_fox_death" -PldTestHeadless -PldTestWindow=1280x720
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=npc_divine_fox_lineup,npc_divine_fox_back,npc_divine_fox_face,npc_divine_fox_death,npc_divine_fox_expressions" -PldTestHeadless -PldTestWindow=1280x720
 ```

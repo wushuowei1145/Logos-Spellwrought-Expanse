@@ -422,5 +422,77 @@
   }
  },
  "conflicts": [],
- "requires": {}
+ "requires": {},
+ "expressions": [
+  {
+   "id": "expression_teasing",
+   "groups": [
+    "expression_teasing"
+   ],
+   "hides": [
+    "Eyelid",
+    "Mouth"
+   ],
+   "parts": {
+    "eyes_fox_teasing": 8,
+    "mouth_fox_teasing": 1
+   }
+  },
+  {
+   "id": "expression_kitsune",
+   "groups": [
+    "expression_kitsune"
+   ],
+   "hides": [
+    "Eyelid",
+    "Mouth"
+   ],
+   "parts": {
+    "eyes_fox_kitsune": 10,
+    "mouth_fox_kitsune": 1
+   }
+  },
+  {
+   "id": "expression_happy",
+   "groups": [
+    "expression_happy"
+   ],
+   "hides": [
+    "Eyelid",
+    "Mouth"
+   ],
+   "parts": {
+    "eyes_fox_happy": 10,
+    "mouth_fox_happy": 1
+   }
+  },
+  {
+   "id": "expression_surprised",
+   "groups": [
+    "expression_surprised"
+   ],
+   "hides": [
+    "Eyelid",
+    "Mouth"
+   ],
+   "parts": {
+    "eyes_fox_surprised": 8,
+    "mouth_fox_surprised": 1
+   }
+  },
+  {
+   "id": "expression_angry",
+   "groups": [
+    "expression_angry"
+   ],
+   "hides": [
+    "Eyelid",
+    "Mouth"
+   ],
+   "parts": {
+    "eyes_fox_angry": 10,
+    "mouth_fox_angry": 1
+   }
+  }
+ ]
 }
