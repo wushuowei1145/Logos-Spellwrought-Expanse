@@ -26,7 +26,8 @@ import net.minecraft.world.phys.Vec3;
 /**
  * 实际客户端预览神狐：白瓷台上五只神狐，换着穿六套衣装中的五套，耳朵、尾巴、发型各不相同。
  * 待机时眨眼、耳朵抖动、尾巴轻摆三个常驻叠加层照常循环。截图：正面、背面（尾巴）、脸部近景；
- * 死亡预览里三只神狐错开时间受到致命一击，截图时从左到右是倒地停住、侧倒中、受击中。
+ * 死亡预览里三只神狐错开时间受到致命一击，截图时从左到右是倒地停住、侧倒中、受击中；
+ * 表情预览里五只神狐依次换上调侃、狐狸眯眼、开心、惊讶、愤怒。
  */
 public abstract class DivineFoxViews implements UIScenario {
     /** 每只神狐的外观（只写和默认不同的槽位）。 */
@@ -38,6 +39,9 @@ public abstract class DivineFoxViews implements UIScenario {
             Map.of("outfit", "outfit_kagura", "hair", "hair_front_braids", "headwear", "headwear_fox_mask", "ears", "ear_fox_drooping"),
             Map.of("outfit", "outfit_furisode", "hair", "hair_hime_cut", "eyebrows", "eyebrows_fox_maro", "ears", "ear_fox_flared",
                     "eyes", "eyes_amber_droopy"));
+    /** 表情预览里五只神狐各自换上的表情（零件表 expressions）。 */
+    static final List<String> EXPRESSIONS = List.of("expression_teasing", "expression_kitsune", "expression_happy",
+            "expression_surprised", "expression_angry");
     /** 常驻叠加层的控制器与动画名（NpcAnimations 的 TLM 结构）。 */
     private static final String[] LAYERS = {"pre_parallel0", "pre_parallel1", "pre_parallel2"};
     private static final double SPACING = 1.7;
@@ -47,7 +51,7 @@ public abstract class DivineFoxViews implements UIScenario {
     private static final int LYING = 44, FALLING = 24, HIT = 4;
     private final int[] ids = new int[LINEUP.size()];
 
-    /** 0 正面，1 背面，2 脸部近景，3 死亡。 */
+    /** 0 正面，1 背面，2 脸部近景，3 死亡，4 五种表情。 */
     protected abstract int view();
 
     private boolean death() {
@@ -65,7 +69,7 @@ public abstract class DivineFoxViews implements UIScenario {
     }
 
     private double x(int i) {
-        return (i - (count() - 1) / 2.0) * (death() ? 2.4 : SPACING) + 0.5;
+        return (i - (count() - 1) / 2.0) * (death() ? 2.4 : view() == 4 ? 0.9 : SPACING) + 0.5;
     }
 
     private Vec3 eye() {
@@ -73,13 +77,14 @@ public abstract class DivineFoxViews implements UIScenario {
             case 1 -> new Vec3(0.5, FLOOR + 2.0, -5.0);
             case 2 -> new Vec3(0.5, FLOOR + 2.15, 2.0);
             case 3 -> new Vec3(3.6, FLOOR + 2.2, 4.4);
+            case 4 -> new Vec3(0.5, FLOOR + 2.2, 3.6);
             default -> new Vec3(0.5, FLOOR + 1.8, 4.7);
         };
     }
 
     private Vec3 look() {
         return switch (view()) {
-            case 2 -> new Vec3(0.5, FLOOR + 2.25, 0.5);
+            case 2, 4 -> new Vec3(0.5, FLOOR + 2.25, 0.5);
             case 3 -> new Vec3(0.5, FLOOR + 0.8, 0.5);
             default -> new Vec3(0.5, FLOOR + 1.75, 0.5);
         };
@@ -90,6 +95,7 @@ public abstract class DivineFoxViews implements UIScenario {
             case 1 -> "divine_fox_back";
             case 2 -> "divine_fox_face";
             case 3 -> "divine_fox_death";
+            case 4 -> "divine_fox_expressions";
             default -> "divine_fox_lineup";
         };
     }
@@ -112,7 +118,7 @@ public abstract class DivineFoxViews implements UIScenario {
                     mc.gameRenderer.resize(1600, 900);
                     mc.resizeGui();
                     mc.options.hideGui = true;
-                    mc.options.fov().set(view() == 2 ? 40 : 55);
+                    mc.options.fov().set(view() == 2 ? 40 : view() == 4 ? 60 : 55);
                     mc.options.renderDistance().set(8);
                     mc.options.broadcastOptions();
                 })
@@ -126,7 +132,8 @@ public abstract class DivineFoxViews implements UIScenario {
                     level.getEntitiesOfClass(DivineFox.class, AREA).forEach(e -> e.discard());
                     for (int i = 0; i < count(); i++) {
                         DivineFox fox = NpcEntities.DIVINE_FOX.get().create(level, EntitySpawnReason.COMMAND);
-                        fox.setAppearance(appearance(death() ? 0 : i));
+                        fox.setAppearance(appearance(death() || view() == 4 ? 0 : i));
+                        if (view() == 4) fox.setExpression(EXPRESSIONS.get(i));
                         fox.snapTo(x(i), FLOOR + 1, 0.5, 0, 0);
                         fox.setYHeadRot(0);
                         fox.setYBodyRot(0);
@@ -151,14 +158,27 @@ public abstract class DivineFoxViews implements UIScenario {
                 }).ticks(40)
                 .check("外观同步到客户端", ctx -> {
                     List<DivineFox> foxes = foxes();
-                    for (int i = 0; i < foxes.size(); i++) if (!foxes.get(i).npcAppearance().equals(appearance(death() ? 0 : i))) return false;
+                    for (int i = 0; i < foxes.size(); i++)
+                        if (!foxes.get(i).npcAppearance().equals(appearance(death() || view() == 4 ? 0 : i))) return false;
                     return true;
                 })
                 .check("动画文件有三个常驻叠加层", ctx -> NpcAnimations.available(foxes().get(0).npcAnimationAsset()).containsAll(List.of(LAYERS)))
                 // 近景只拍到中间那只；镜头外的神狐 GeckoLib 不建动画状态
                 .check("眨眼、耳朵抖动、尾巴轻摆在待机时都在循环", ctx -> (view() == 2 ? List.of(foxes().get(2)) : foxes()).stream()
                         .allMatch(DivineFoxViews::layersPlaying));
-        if (death()) {
+        if (view() == 4) {
+            s.check("表情同步到客户端，换掉常态眼嘴", ctx -> {
+                        List<DivineFox> foxes = foxes();
+                        for (int i = 0; i < foxes.size(); i++) {
+                            DivineFox fox = foxes.get(i);
+                            var hidden = fox.npcRace().hiddenGroups(fox.npcAppearance(), fox.npcExpression());
+                            if (!EXPRESSIONS.get(i).equals(fox.npcExpression()) || !hidden.containsAll(List.of("Eyelid", "Mouth"))
+                                    || hidden.contains(EXPRESSIONS.get(i))) return false;
+                        }
+                        return true;
+                    })
+                    .screenshot(shot());
+        } else if (death()) {
             s.server("左边的神狐受到致命一击", ctx -> kill(ctx.server().overworld(), 0))
                     .waitUntilServer("左边的神狐倒下了一阵", ctx -> deathTime(ctx.server().overworld(), 0) >= LYING - FALLING)
                     .server("中间的神狐受到致命一击", ctx -> kill(ctx.server().overworld(), 1))
@@ -227,5 +247,10 @@ public abstract class DivineFoxViews implements UIScenario {
     @LDLRegisterClient(name = "npc_divine_fox_death", group = "npc_preview", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
     public static class Death extends DivineFoxViews {
         @Override protected int view() { return 3; }
+    }
+
+    @LDLRegisterClient(name = "npc_divine_fox_expressions", group = "npc_preview", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class Expressions extends DivineFoxViews {
+        @Override protected int view() { return 4; }
     }
 }
