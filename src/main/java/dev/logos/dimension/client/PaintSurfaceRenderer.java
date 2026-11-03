@@ -63,8 +63,11 @@ public class PaintSurfaceRenderer implements BlockEntityRenderer<PaintSurfaceBlo
     public void extractRenderState(PaintSurfaceBlockEntity be, State state, float partialTicks, Vec3 camera,
                                    ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
         BlockEntityRenderer.super.extractRenderState(be, state, partialTicks, camera, breakProgress);
-        state.color = be.paint();
+        state.sprite = null;
         var blockState = be.getBlockState();
+        // 调色盘与漆面共用方块实体类型，这里只处理漆面；调色盘走方块模型
+        if (!(blockState.getBlock() instanceof PaintSurfaceBlock)) return;
+        state.color = be.paint();
         state.facing = blockState.getValue(PaintSurfaceBlock.FACING);
         state.cover = blockState.getValue(PaintSurfaceBlock.COVER);
         state.sprite = null;

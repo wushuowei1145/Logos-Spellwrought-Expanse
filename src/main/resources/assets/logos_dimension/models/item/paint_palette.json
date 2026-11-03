@@ -1,3 +1,6 @@
 {
-  "parent": "logos_dimension:block/paint_palette"
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "logos_dimension:item/paint_palette"
+  }
 }

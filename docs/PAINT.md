@@ -22,7 +22,10 @@
 ## 维护
 
 ```text
+python tools/paint_art.py   # 画刷/调色盘图标、调色盘方块的木板贴图与 3D 模型
 ./gradlew runClient -PlogosJar=... -PldTest=paint_views,paint_tops,paint_palette_ui -PldTestHeadless -PldTestWindow=1280x720
 ```
+
+调色盘方块是 3D 木质调色板（两端圆角、中央颜料池按所选颜色染色），物品图标单独出图；画刷图标为斜放画刷（木柄、金属箍、沾漆刷毛）。
 
 场景截图在 `build/ldlib2-uitest/screenshots/`；`paint_views` 是漆面/未刷交替对照（含支撑消失清理检查），`paint_tops` 是原木顶面与下砖顶面，`paint_palette_ui` 是调配页。截图存档见 [油漆截图](screenshots/paint/)。

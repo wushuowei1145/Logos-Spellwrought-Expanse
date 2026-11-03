@@ -87,6 +87,12 @@ public abstract class PaintViews implements UIScenario {
                     painted[i] = surface;
                     level.setBlockAndUpdate(origin.offset(-6 + i * 2, 1, 0), woodState);
                 }
+                // 调色盘方块与漆面共用方块实体类型，摆一个验证渲染器不会误处理它
+                BlockPos palettePos = origin.offset(8, 1, 0);
+                level.setBlockAndUpdate(palettePos, dev.logos.dimension.paint.PaintSystem.PALETTE.get().defaultBlockState());
+                if (level.getBlockEntity(palettePos) instanceof dev.logos.dimension.paint.PaintSurfaceBlockEntity be) {
+                    be.setPaint(0xFFB03030);
+                }
                 eye = new Vec3(origin.getX() + eyeX(), GROUND + 2.7, origin.getZ() + eyeZ());
                 DimensionTravel.teleport(ctx.player(), level, eye, 180f, pitch());
             })
