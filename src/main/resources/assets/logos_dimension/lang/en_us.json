@@ -631,5 +631,13 @@
   "item.logos_dimension.paint_brush": "Paint Brush",
   "item.logos_dimension.paint_palette": "Palette",
   "block.logos_dimension.paint_palette": "Palette",
-  "block.logos_dimension.paint_surface": "Paint Surface"
+  "block.logos_dimension.paint_surface": "Paint Surface",
+  "block.logos_dimension.dawnvow_stone": "Dawnvow Stone",
+  "block.logos_dimension.dawnvow_stone_empty": "Empty Sword Stone",
+  "item.logos_dimension.dawnvow_stone": "Dawnvow Stone",
+  "item.logos_dimension.dawnvow_stone_empty": "Empty Sword Stone",
+  "message.logos_dimension.dawnvow.unmoved": "The sword will not move. The light on it is still too faint…",
+  "message.logos_dimension.dawnvow.sworn": "Dawnvow has already chosen you. Return your sword to a stone to swear again.",
+  "message.logos_dimension.dawnvow.drawn": "%s drew Dawnvow from the stone at daybreak.",
+  "message.logos_dimension.dawnvow.returned": "You set Dawnvow back in the stone. Your vow is released."
 }

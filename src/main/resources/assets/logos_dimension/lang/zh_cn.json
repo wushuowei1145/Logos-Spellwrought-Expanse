@@ -631,5 +631,13 @@
   "item.logos_dimension.paint_brush": "漆刷",
   "item.logos_dimension.paint_palette": "调色盘",
   "block.logos_dimension.paint_palette": "调色盘",
-  "block.logos_dimension.paint_surface": "漆面"
+  "block.logos_dimension.paint_surface": "漆面",
+  "block.logos_dimension.dawnvow_stone": "曦誓石座",
+  "block.logos_dimension.dawnvow_stone_empty": "空石座",
+  "item.logos_dimension.dawnvow_stone": "曦誓石座",
+  "item.logos_dimension.dawnvow_stone_empty": "空石座",
+  "message.logos_dimension.dawnvow.unmoved": "剑在石中纹丝不动。照在剑上的光还太淡……",
+  "message.logos_dimension.dawnvow.sworn": "曦誓已经认过你了。把你的剑插回石中，才能再立一次誓。",
+  "message.logos_dimension.dawnvow.drawn": "%s 在破晓时从石中拔出了曦誓。",
+  "message.logos_dimension.dawnvow.returned": "你把曦誓插回石中，誓约解除了。"
 }

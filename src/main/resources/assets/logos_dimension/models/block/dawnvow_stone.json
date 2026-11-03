@@ -1,0 +1,332 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": true,
+  "textures": {
+    "particle": "minecraft:block/stone",
+    "stone": "minecraft:block/stone",
+    "andesite": "minecraft:block/andesite",
+    "mossy": "minecraft:block/mossy_cobblestone",
+    "moss": "minecraft:block/moss_block",
+    "tuff": "minecraft:block/tuff"
+  },
+  "elements": [
+    {
+      "from": [
+        1,
+        0,
+        1.5
+      ],
+      "to": [
+        15,
+        4,
+        14.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#stone"
+        },
+        "south": {
+          "texture": "#stone"
+        },
+        "east": {
+          "texture": "#stone"
+        },
+        "west": {
+          "texture": "#stone"
+        },
+        "up": {
+          "texture": "#mossy"
+        },
+        "down": {
+          "texture": "#stone"
+        }
+      },
+      "name": "base"
+    },
+    {
+      "from": [
+        1.5,
+        0,
+        0.5
+      ],
+      "to": [
+        14,
+        3,
+        15.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#andesite"
+        },
+        "south": {
+          "texture": "#andesite"
+        },
+        "east": {
+          "texture": "#andesite"
+        },
+        "west": {
+          "texture": "#andesite"
+        },
+        "up": {
+          "texture": "#mossy"
+        },
+        "down": {
+          "texture": "#andesite"
+        }
+      },
+      "name": "base_skirt"
+    },
+    {
+      "from": [
+        2,
+        4,
+        2.5
+      ],
+      "to": [
+        14,
+        8,
+        13.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#stone"
+        },
+        "south": {
+          "texture": "#stone"
+        },
+        "east": {
+          "texture": "#stone"
+        },
+        "west": {
+          "texture": "#stone"
+        },
+        "up": {
+          "texture": "#mossy"
+        },
+        "down": {
+          "texture": "#stone"
+        }
+      },
+      "name": "waist"
+    },
+    {
+      "from": [
+        3,
+        4,
+        1.8
+      ],
+      "to": [
+        9,
+        7,
+        3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#moss"
+        },
+        "east": {
+          "texture": "#moss"
+        },
+        "west": {
+          "texture": "#moss"
+        },
+        "up": {
+          "texture": "#moss"
+        },
+        "down": {
+          "texture": "#moss"
+        }
+      },
+      "name": "moss_front"
+    },
+    {
+      "from": [
+        13,
+        2,
+        6
+      ],
+      "to": [
+        14.6,
+        7,
+        12
+      ],
+      "faces": {
+        "south": {
+          "texture": "#moss"
+        },
+        "north": {
+          "texture": "#moss"
+        },
+        "east": {
+          "texture": "#moss"
+        },
+        "up": {
+          "texture": "#moss"
+        },
+        "down": {
+          "texture": "#moss"
+        }
+      },
+      "name": "moss_side"
+    },
+    {
+      "from": [
+        4,
+        8,
+        4
+      ],
+      "to": [
+        12,
+        10,
+        12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#tuff"
+        },
+        "south": {
+          "texture": "#tuff"
+        },
+        "east": {
+          "texture": "#tuff"
+        },
+        "west": {
+          "texture": "#tuff"
+        },
+        "up": {
+          "texture": "#stone"
+        },
+        "down": {
+          "texture": "#tuff"
+        }
+      },
+      "rotation": {
+        "angle": 22.5,
+        "axis": "y",
+        "origin": [
+          8,
+          8,
+          8
+        ]
+      },
+      "name": "crown"
+    },
+    {
+      "from": [
+        5,
+        8,
+        3.5
+      ],
+      "to": [
+        11,
+        9.2,
+        12.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#stone"
+        },
+        "south": {
+          "texture": "#stone"
+        },
+        "east": {
+          "texture": "#stone"
+        },
+        "west": {
+          "texture": "#stone"
+        },
+        "up": {
+          "texture": "#stone"
+        },
+        "down": {
+          "texture": "#stone"
+        }
+      },
+      "name": "crown_shoulder"
+    },
+    {
+      "from": [
+        0,
+        0,
+        10
+      ],
+      "to": [
+        3,
+        1.5,
+        13.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#andesite"
+        },
+        "south": {
+          "texture": "#andesite"
+        },
+        "east": {
+          "texture": "#andesite"
+        },
+        "west": {
+          "texture": "#andesite"
+        },
+        "up": {
+          "texture": "#mossy"
+        },
+        "down": {
+          "texture": "#andesite"
+        }
+      },
+      "rotation": {
+        "angle": -22.5,
+        "axis": "y",
+        "origin": [
+          1.5,
+          0,
+          11.5
+        ]
+      },
+      "name": "rubble_a"
+    },
+    {
+      "from": [
+        12.5,
+        0,
+        0.5
+      ],
+      "to": [
+        15.5,
+        2,
+        3.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#stone"
+        },
+        "south": {
+          "texture": "#stone"
+        },
+        "east": {
+          "texture": "#stone"
+        },
+        "west": {
+          "texture": "#stone"
+        },
+        "up": {
+          "texture": "#stone"
+        },
+        "down": {
+          "texture": "#stone"
+        }
+      },
+      "rotation": {
+        "angle": 22.5,
+        "axis": "y",
+        "origin": [
+          14,
+          0,
+          2
+        ]
+      },
+      "name": "rubble_b"
+    }
+  ]
+}

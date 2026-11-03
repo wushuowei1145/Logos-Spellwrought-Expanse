@@ -1,0 +1,15 @@
+{
+  "structures": [
+    {
+      "structure": "logos_dimension:dawnvow_grotto",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 20261103,
+    "spacing": 20,
+    "separation": 7,
+    "spread_type": "linear"
+  }
+}
