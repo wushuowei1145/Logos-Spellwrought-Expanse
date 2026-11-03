@@ -26,7 +26,7 @@ import net.minecraft.world.phys.Vec3;
  *       从脚边往上散开、闪烁的细光线，绕身体盘旋上升的火星，从四周飞进身体的带拖尾光点；</li>
  *   <li>蓄满的一刻：胸前一团爆闪、放射的光芒，脚下一圈光向外扩开；之后身上的光更盛。</li>
  * </ul>
- * 结束（放出或中断）后不再生出新的光点，已有的走完；身上的光一秒内淡出。
+ * 结束（放出或中断）后不再生出新的光点，四周的光点与身上的光一起在一秒内淡出。
  * 颜色都是半透明的金色，贴图复用 Logos：{@code fire_beam/dot}、{@code laser}、{@code glow}，{@code surface/trail}，
  * {@code force/streak}，{@code fire_impact/flash}，{@code lightning_beam/rays}。
  */
@@ -133,7 +133,8 @@ final class DawnvowAura {
             if (m.age >= m.life) it.remove();
         }
         inflow.removeIf(f -> now - f.born() > INFLOW_TICKS + 6);
-        return live || !motes.isEmpty() || !sparks.isEmpty() || !inflow.isEmpty() || now - ended < FADE;
+        // 结束后所有光点与身上的光一起在 FADE 刻内淡完，然后整个丢掉，不再让已经升起的光点飘完自己的寿命
+        return live || now - ended < FADE;
     }
 
     /** 在四周 {@link #FIELD} 格内找一处地面放一个光点；那一列附近找不到地面就算了。 */
@@ -163,17 +164,17 @@ final class DawnvowAura {
 
     /** 每帧。{@code feet} 是这一帧插值后的脚下，{@code near} 是贴近镜头时的淡出（第一人称看自己时身上的层几乎不画）。 */
     void submit(PoseStack pose, SubmitNodeCollector out, VfxParts.View view, Vec3 feet, float height, double now, float pt, float near) {
-        float s = strength(now);
+        float s = strength(now), end = fading(now);
         Vec3 chest = feet.add(0, height * .55, 0);
         if (!motes.isEmpty()) {
             out.submitCustomGeometry(pose, LASER, (p, buf) -> {
-                for (Mote m : motes) trail(p, buf, view, m, pt, .6f * VfxParts.fade(view.cam(), m.pos, .8, 3), GOLD);
+                for (Mote m : motes) trail(p, buf, view, m, pt, .6f * end * VfxParts.fade(view.cam(), m.pos, .8, 3), GOLD);
             });
             out.submitCustomGeometry(pose, DOT, (p, buf) -> {
                 for (Mote m : motes) {
                     Vec3 at = lerp(m, pt);
                     float tw = .75f + .25f * Mth.sin((float) now * .3f + m.phase * 6);
-                    VfxParts.sprite(p, buf, view, at, m.size, 0, VfxParts.argb(.85f * m.alpha(pt) * tw * VfxParts.fade(view.cam(), at, .8, 3), MOTE));
+                    VfxParts.sprite(p, buf, view, at, m.size, 0, VfxParts.argb(.85f * end * m.alpha(pt) * tw * VfxParts.fade(view.cam(), at, .8, 3), MOTE));
                 }
             });
         }
@@ -200,13 +201,13 @@ final class DawnvowAura {
                 VfxParts.streak(p, buf, view, base, base.add(out2.scale(len)), .22f, VfxParts.argb(.28f * s * flicker * (.4f + .6f * near), MOTE));
             }
         });
-        if (!sparks.isEmpty()) out.submitCustomGeometry(pose, LASER, (p, buf) -> { for (Mote m : sparks) trail(p, buf, view, m, pt, .9f * near, MOTE); });
+        if (!sparks.isEmpty()) out.submitCustomGeometry(pose, LASER, (p, buf) -> { for (Mote m : sparks) trail(p, buf, view, m, pt, .9f * near * end, MOTE); });
         if (!inflow.isEmpty()) out.submitCustomGeometry(pose, DOT, (p, buf) -> {
             for (Inflow f : inflow) {
                 double age = now - f.born();
                 if (age < 0 || age > INFLOW_TICKS) continue;
                 Vec3 at = chest.add(inflowAt(f, age));
-                float a = VfxParts.smooth(0, 4, (float) age) * (1 - VfxParts.smooth(INFLOW_TICKS - 4, INFLOW_TICKS, (float) age));
+                float a = end * VfxParts.smooth(0, 4, (float) age) * (1 - VfxParts.smooth(INFLOW_TICKS - 4, INFLOW_TICKS, (float) age));
                 VfxParts.sprite(p, buf, view, at, f.size(), 0, VfxParts.argb(.75f * a * VfxParts.fade(view.cam(), at, .6, 2), MOTE));
                 for (int k = 1; k <= 5; k++) {
                     Vec3 back = chest.add(inflowAt(f, Math.max(0, age - k * .9)));

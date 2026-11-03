@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.logos.client.VfxParts;
 import dev.logos.dimension.dawnvow.DawnvowCharge;
+import dev.logos.dimension.dawnvow.SwordWave;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -15,9 +16,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 蓄满后劈出的巨型金色剑气（客户端）：一面向前鼓起的金色弧形光墙，每刻 {@link DawnvowCharge#GRAND_SPEED} 格冲出去，
- * 身后留下一条宽阔的光流，过一秒多淡去；剑气头四散金色火星。走到头（服务端定好的长度）时十字爆闪，
- * 随后 Logos 的金色光柱冲起（服务端放）。挥剑的一刻剑前一闪。
+ * 蓄满后劈出的巨型金色剑气（客户端）：一面向前鼓起的金色弧形光墙，每刻 {@link DawnvowCharge#GRAND_SPEED} 格沿地面冲出去
+ * （服务端定好的路线，贴着地形起伏），身后留下一条宽阔的光流，过一秒多淡去；剑气头四散金色火星。走到头时十字爆闪、
+ * 镜头一震，随后 Logos 的金色光柱冲起（服务端放），再震一下。挥剑的一刻剑前一闪。
  * 光墙与光流用 Logos 物理射线的 {@code physical_ray/wind}（向前滚动），十字爆闪用 {@code arcane_ray/impact_cross}。
  */
 final class ExcaliburWave {
@@ -32,18 +33,27 @@ final class ExcaliburWave {
     private record Spark(Vec3 at, Vec3 vel, long born, int life, float size) {}
 
     private final Vec3 from, dir, side, up = new Vec3(0, 1, 0);
+    private final float[] path;
     private final double length;
     private final long start;
     private final int entity;
     private final List<Spark> sparks = new ArrayList<>();
+    private boolean flashed, pillared;
 
-    ExcaliburWave(int entity, Vec3 from, Vec3 dir, double length, long start) {
+    ExcaliburWave(int entity, Vec3 from, Vec3 dir, float[] path, long start) {
         this.entity = entity;
         this.from = from;
         this.dir = dir.normalize();
         this.side = new Vec3(-this.dir.z, 0, this.dir.x);
-        this.length = length;
+        this.path = path.length == 0 ? new float[]{(float) from.y} : path;
+        this.length = (this.path.length - 1) * SwordWave.PATH_STEP;
         this.start = start;
+    }
+
+    /** 路线上离起点 {@code s} 处的地面点。 */
+    private Vec3 point(double s) {
+        Vec3 at = from.add(dir.scale(s));
+        return new Vec3(at.x, SwordWave.heightAt(path, s), at.z);
     }
 
     int entity() { return entity; }
@@ -59,14 +69,17 @@ final class ExcaliburWave {
     }
 
     Vec3 end() {
-        return from.add(dir.scale(length));
+        return point(length);
     }
 
     /** 一个客户端刻；全部画完返回 false。 */
     boolean tick(Level level, long now) {
         RandomSource r = level.getRandom();
+        // 爆闪与光柱冲起时镜头各震一下，离得越近越重
+        if (!flashed && now >= arrive()) { flashed = true; DawnvowShake.at(end(), 1); }
+        if (!pillared && now >= arrive() + SwordWave.PILLAR_DELAY) { pillared = true; DawnvowShake.at(end(), .7f); }
         if (now <= arrive()) {
-            Vec3 head = from.add(dir.scale(head(now)));
+            Vec3 head = point(head(now));
             for (int i = 0; i < 10; i++) {
                 double across = (r.nextDouble() - .5) * WIDTH, high = r.nextDouble() * HEIGHT * .8;
                 Vec3 at = head.add(side.scale(across)).add(0, high, 0);
@@ -90,7 +103,7 @@ final class ExcaliburWave {
         out.submitCustomGeometry(pose, WIND_GLOW, (p, buf) -> wake(p, buf, now, head, false));
         out.submitCustomGeometry(pose, DawnvowAura.LASER, (p, buf) -> wake(p, buf, now, head, true));
         if (travelling) {
-            Vec3 at = from.add(dir.scale(head));
+            Vec3 at = point(head);
             float scroll = (float) now * .25f;
             out.submitCustomGeometry(pose, WIND_BODY, (p, buf) -> wall(p, buf, at, scroll, .55f, DawnvowAura.GOLD));
             out.submitCustomGeometry(pose, WIND_GLOW, (p, buf) -> wall(p, buf, at, scroll, .75f, DawnvowAura.PALE));
@@ -145,14 +158,14 @@ final class ExcaliburWave {
      */
     private void wake(PoseStack.Pose pose, VertexConsumer buf, double now, double head, boolean core) {
         if (head <= 0) return;
-        double step = 2;
+        double step = 1;
         Vec3 mid = new Vec3(0, HEIGHT * .42, 0);
         float scroll = (float) now * .3f;
         for (double s0 = 0; s0 < head; s0 += step) {
             double s1 = Math.min(head, s0 + step);
             float a0 = wakeAlpha(now, s0, head), a1 = wakeAlpha(now, s1, head);
             if (a0 <= 0 && a1 <= 0) continue;
-            Vec3 p0 = from.add(dir.scale(s0)).add(mid), p1 = from.add(dir.scale(s1)).add(mid);
+            Vec3 p0 = point(s0).add(mid), p1 = point(s1).add(mid);
             if (core) {
                 quad(pose, buf, p0, p1, side.scale(.7), a0 * .8f, a1 * .8f, DawnvowAura.HOT, .5f, .5f);
                 quad(pose, buf, p0, p1, up.scale(.7), a0 * .8f, a1 * .8f, DawnvowAura.HOT, .5f, .5f);
