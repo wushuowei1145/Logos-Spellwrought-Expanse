@@ -190,8 +190,8 @@ column={'type':'minecraft:block_column','config':{'direction':'up','prioritize_t
 ]}}
 write(D/'worldgen/configured_feature/settlement_wheat_column.json',column)
 write(D/'worldgen/placed_feature/settlement_wheat.json',{'feature':'logos_dimension:settlement_wheat_column','placement':[
-    {'type':'minecraft:count','count':1000},
-    {'type':'minecraft:random_offset','xz_spread':{'type':'minecraft:uniform','min_inclusive':-20,'max_inclusive':20},'y_spread':0},
+    {'type':'minecraft:count','count':384},
+    {'type':'minecraft:random_offset','xz_spread':{'type':'minecraft:uniform','min_inclusive':-7,'max_inclusive':7},'y_spread':0},
     {'type':'minecraft:heightmap','heightmap':'MOTION_BLOCKING_NO_LEAVES'},
     {'type':'minecraft:random_offset','xz_spread':0,'y_spread':-1},
     {'type':'minecraft:block_predicate_filter','predicate':{'type':'minecraft:all_of','predicates':[

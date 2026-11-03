@@ -3,14 +3,14 @@
   "placement": [
     {
       "type": "minecraft:count",
-      "count": 1000
+      "count": 384
     },
     {
       "type": "minecraft:random_offset",
       "xz_spread": {
         "type": "minecraft:uniform",
-        "min_inclusive": -20,
-        "max_inclusive": 20
+        "min_inclusive": -7,
+        "max_inclusive": 7
       },
       "y_spread": 0
     },
