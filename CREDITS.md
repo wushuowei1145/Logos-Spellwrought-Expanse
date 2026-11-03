@@ -29,8 +29,11 @@ NPC 的骨骼命名、动画名、动画控制器结构与优先级、手部条�
 | `forest_elf.animation.json` | `ladder_down` | `ladder_down` | 位移 ×2；去掉 `LongHair` |
 | `forest_elf.animation.json` | `swim_stand` | `swim_stand` | 位移 ×2 |
 | `forest_elf.animation.json` | `swing_hand` | `swing_hand` | 无 |
+| `divine_fox.animation.json` | `walk`、`jump`、`attacked`、`ladder_up`、`ladder_stillness`、`ladder_down`、`swim_stand`、`swing_hand` | 同名 | 取自 `forest_elf.animation.json` 里已换算好的版本（修改同上），神狐与精灵骨架相同 |
 
 来源固定在车万女仆 1.21 分支的提交 `207647c85740b1d0971de6040d6dd57cea62528c`，由 `tools/forest_elf_animations.py` 读取、修改后写入。因此 `forest_elf.animation.json` 整个文件（包括同一文件里自绘的持弓、拉弓、治疗、行礼、拒绝动画）以 CC BY-NC-SA 4.0 发布。
+
+`divine_fox.animation.json` 由 `tools/divine_fox_assets.py` 从精灵文件复制这些动画，整个文件（包括神狐自己的待机、死亡与常驻叠加层）同样以 CC BY-NC-SA 4.0 发布。
 
 借用新动画时在这里加一行；只参照节奏和姿势、自己从头制作的动画不用登记。
 

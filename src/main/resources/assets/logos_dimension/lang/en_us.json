@@ -1,6 +1,8 @@
 {
   "entity.logos_dimension.forest_elf": "Forest Elf",
   "item.logos_dimension.forest_elf_spawn_egg": "Forest Elf Spawn Egg",
+  "entity.logos_dimension.divine_fox": "Divine Fox",
+  "item.logos_dimension.divine_fox_spawn_egg": "Divine Fox Spawn Egg",
   "subtitles.logos_dimension.forest_elf.ambient": "Forest Elf murmurs",
   "subtitles.logos_dimension.forest_elf.greet": "Forest Elf greets",
   "subtitles.logos_dimension.forest_elf.yes": "Forest Elf agrees",

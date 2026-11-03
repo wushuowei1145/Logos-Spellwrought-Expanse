@@ -30,6 +30,14 @@ public final class NpcEntities {
     public static final DeferredItem<SpawnEggItem> FOREST_ELF_SPAWN_EGG = DimensionBlocks.ITEMS.registerItem("forest_elf_spawn_egg",
             SpawnEggItem::new, p -> p.spawnEgg(FOREST_ELF.get()));
 
+    /** 神狐与精灵同一套素体：眼睛约 1.26 格，发顶约 1.39 格，竖耳尖约 1.75 格。 */
+    public static final Supplier<EntityType<DivineFox>> DIVINE_FOX = TYPES.register("divine_fox", () ->
+            EntityType.Builder.of(DivineFox::new, MobCategory.CREATURE).sized(0.6f, 1.5f).eyeHeight(1.26f).clientTrackingRange(10)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("divine_fox"))));
+
+    public static final DeferredItem<SpawnEggItem> DIVINE_FOX_SPAWN_EGG = DimensionBlocks.ITEMS.registerItem("divine_fox_spawn_egg",
+            SpawnEggItem::new, p -> p.spawnEgg(DIVINE_FOX.get()));
+
     public static void register(IEventBus bus) {
         TYPES.register(bus);
         ElfSounds.register(bus);
@@ -40,10 +48,14 @@ public final class NpcEntities {
 
     private static void attributes(EntityAttributeCreationEvent event) {
         event.put(FOREST_ELF.get(), ForestElf.createAttributes().build());
+        event.put(DIVINE_FOX.get(), DivineFox.createAttributes().build());
     }
 
     private static void creativeTab(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey() == CreativeModeTabs.SPAWN_EGGS) event.accept(FOREST_ELF_SPAWN_EGG.get());
+        if (event.getTabKey() == CreativeModeTabs.SPAWN_EGGS) {
+            event.accept(FOREST_ELF_SPAWN_EGG.get());
+            event.accept(DIVINE_FOX_SPAWN_EGG.get());
+        }
     }
 
     private NpcEntities() {}
