@@ -177,6 +177,10 @@ public class FoxSanctuaryViews implements UIScenario {
         shot(s, "chozuya", g -> look(g.designPoint(131, 21, 43), g.designPoint(131, 17, 38)));
         shot(s, "chozuya_low", g -> look(g.designPoint(136, 18.6, 38.5), g.designPoint(131.5, 18, 38.5)));
         shot(s, "tea_garden", g -> look(g.designPoint(136, 6, 92), g.designPoint(148, 0, 82)));
+        shot(s, "tea_bridge", g -> look(g.designPoint(146, 5, 92), g.designPoint(146, 1, 83.5)));
+        shot(s, "court_bridge", g -> look(g.designPoint(121, 7, 140), g.designPoint(113.5, 1, 132)));
+        shot(s, "shrine_back", g -> look(g.designPoint(150, 24, -6), g.designPoint(148, 12, 18)));
+        shot(s, "lantern_posts", g -> look(g.designPoint(47, 3, 92), g.designPoint(42, 5, 87)));
         shot(s, "fields", g -> look(g.designPoint(40, 6, 106), g.designPoint(55, -4, 138)));
         shot(s, "houses", g -> look(g.designPoint(60, 6, 72), g.designPoint(62, 2, 40)));
         // 主街中央的屋台：高处顺街看一排；站在北侧通道（脚踩街面）看第一组与最后一组的长凳和暖帘

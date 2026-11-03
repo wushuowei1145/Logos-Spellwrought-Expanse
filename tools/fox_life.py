@@ -31,16 +31,20 @@ def _pick(rnd, table):
 
 
 def lantern_strings(s, street_v, u0=30, u1=124, step=12):
-    """横跨主街的纸灯笼串：一道铁链挂在两侧屋檐之上，链下每隔一格吊一盏灯笼。"""
+    """横跨主街的纸灯笼串：两侧路沿各立一根朱漆栅栏柱，柱顶之间拉一道铁链，链下隔一格吊一盏灯笼。
+    两侧商铺是随机变体，有两种只有一层、墙面退在檐后两格，链子未必够得到墙，所以两端都立柱，不靠房子。"""
     c = s.c
     for u in range(u0, u1, step):
         if 62 <= u <= 84:  # 食摊广场那段另有布置
             continue
         vc = street_v(u)
-        va, vb = int(math.floor(vc - 6)), int(math.ceil(vc + 5))
-        for v in range(va, vb + 1):
+        va, vb = int(math.floor(vc - 3)), int(math.ceil(vc + 3))  # 北侧水渠内沿、南侧铺面外沿
+        for v in (va, vb):
+            for y in range(s.H(u, v) + 1, 8):
+                c.set(u, y, v, lacquer_fence())
+        for v in range(va + 1, vb):
             c.set(u, 7, v, B('iron_chain', axis='z', waterlogged=False))
-        for v in range(va + 2, vb - 1, 2):
+        for v in range(va + 1, vb, 2):
             c.set(u, 6, v, paper_lantern(True))
 
 
@@ -82,8 +86,8 @@ def tea_garden(s, u0, v0, u1, v1, rnd):
     w, d = u1 - u0, v1 - v0
     pc_u, pc_v = u0 + w * 0.45, v0 + d * 0.5
     pool = fl.rock_pool(c, pc_u, pc_v, w * 0.22, d * 0.18, depth=2, seed=91)
-    # 拱桥横跨池的窄处
-    fl.arched_bridge(c, int(pc_u) - 3, int(pc_v) - 1, 1, axis='x')
+    # 拱桥东西横跨，两端落在岸上
+    fl.bridge_over(c, pool, 'x', int(pc_v), 1)
     # 四柱亭：在池东侧
     au, av = int(u0 + w * 0.78), int(v0 + d * 0.3)
     c.box(au - 2, 0, av - 2, au + 2, 0, av + 2, B('spruce_planks'))

@@ -112,6 +112,44 @@ def base_terrain(s):
     g[:] = np.where(r < 0.55, LAWN, g)
 
 
+def soften_shrine_hill(s):
+    """神社山包的平台四周不留直壁：平台外的草坡按到平台的距离每格至多降一格，一直铺到聚落边缘，坡面带一点起伏。
+    只抬高不压低，只动草皮、草坪与苔地（地块、街道、石阶、田地都不动）；放在外缘之后，外圈山坡从抬高后的边缘接着往下降。"""
+    top = 16
+    plateau = (s.h >= top) & (s.u >= 120) & (s.v <= 50)
+    region = ~plateau & (s.u >= 96) & (s.v <= 72) & np.isin(s.g, (SOFT_TURF, TURF, LAWN, MOSS))
+    ru, rv = s.u[region].astype(float), s.v[region].astype(float)
+
+    def reach(mask, base):
+        """每个待抬高格到 mask 中各格的「高度 + 距离」的最小值：从这些格往外每格至多高出一格。"""
+        mu, mv, mh = s.u[mask].astype(float), s.v[mask].astype(float), base[mask].astype(float)
+        out = np.full(ru.shape, 1e9)
+        for i in range(0, len(mu), 256):
+            dist = np.sqrt((ru[:, None] - mu[None, i:i + 256]) ** 2 + (rv[:, None] - mv[None, i:i + 256]) ** 2)
+            out = np.minimum(out, (mh[None, i:i + 256] + dist).min(axis=1))
+        return out
+
+    d = reach(plateau, np.zeros_like(s.h))
+    wobble = 0.8 * np.sin(ru * 0.37 + 1.3) + 0.7 * np.cos(rv * 0.29 + ru * 0.11)
+    skirt = np.floor(top - d * 0.95 + wobble)
+    # 旁边不动的格子（住宅地块、小路、田坎）不能被抬高的草坡压成一道墙
+    fixed = ~plateau & ~region & (s.u >= 86) & (s.v <= 82)
+    skirt = np.minimum(skirt, np.floor(reach(fixed, s.h)))
+    s.h[region] = np.maximum(s.h[region], skirt)
+    # 还剩的陡坎（贴着平台、落差超过 3 格）砌一道石垣，不露土壁
+    for v in range(1, 72):
+        for u in range(100, S - 1):
+            if plateau[v, u]:
+                continue
+            low = int(s.h[v, u])
+            if not any(plateau[v + dv, u + du] and s.h[v + dv, u + du] - low > 3 for du, dv in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                continue
+            for y in range(low + 1, top + 1):
+                if s.c.get(u, y, v) is None:
+                    k = (u * 7 + v * 13 + y * 5) % 9
+                    s.c.set(u, y, v, B('mossy_stone_bricks') if k < 3 else B('cobblestone') if k == 3 else B('stone_bricks'))
+
+
 def edge_band(s):
     """外缘：由内侧高度降到边界 -12，并在内侧堆一道遮挡视线的土埂；入口处切出石阶槽。"""
     u, v, h, g = s.u, s.v, s.h, s.g
@@ -305,7 +343,7 @@ def shrine(s):
     hn = Canvas()
     fl.honden(hn, 0, 0)
     s.put(hn, hall_u - 4, 16, turns=2, y=16)
-    s.flat(140, 12, 158, 40, 16, LAWN)
+    s.flat(140, 15, 158, 40, 16, LAWN)
     ch = Canvas()
     fl.chozuya(ch, 0, 0)
     s.put(ch, su - 3, 36, turns=1, y=16)
@@ -569,6 +607,7 @@ def compose():
     residences(s)
     fields(s)
     edge_band(s)
+    soften_shrine_hill(s)
     entrance(s)
     rim_planting(s)
     # 生活气息：灯笼串、巷口杂物、街尾茶庭、住宅区的树与花坛、草坪上的草与野花

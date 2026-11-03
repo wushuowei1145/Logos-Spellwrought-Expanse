@@ -174,28 +174,50 @@ def rock_pool(c, cx, cz, rx, rz, depth=2, seed=1, hot=False, lilies=True):
     return inside
 
 
-def arched_bridge(c, x0, z0, y, length=7, axis='x'):
-    """朱漆扶手的木拱桥：两端台阶，中段抬高一格。"""
-    profile = [('stairs', 0), ('slab_top', 0), ('slab', 1), ('slab', 1), ('slab', 1), ('slab_top', 0), ('stairs_back', 0)][:length]
-    up = 'east' if axis == 'x' else 'south'
-    down = 'west' if axis == 'x' else 'north'
-    for i, (kind, dy) in enumerate(profile):
-        for w in (0, 1):
-            x, z = (x0 + i, z0 + w) if axis == 'x' else (x0 + w, z0 + i)
-            if kind == 'stairs':
-                st = B('spruce_stairs', facing=up, half='bottom', shape='straight', waterlogged=False)
-            elif kind == 'stairs_back':
-                st = B('spruce_stairs', facing=down, half='bottom', shape='straight', waterlogged=False)
-            elif kind == 'slab_top':
+def arched_bridge(c, x0, z0, y, length=7, axis='x', width=4):
+    """朱漆扶手的木拱桥：两端一级台阶落在岸上，再一格上半砖，中段抬高一格。
+    桥面占 z0-1 起 width 排（axis='z' 时为 x0-1 起），扶手立在最外两排桥面上：中段外沿用上半砖垫高，扶手不悬空；
+    扶手只和同高的相邻扶手相连。"""
+    n = max(length, 5)
+    up, down = ('east', 'west') if axis == 'x' else ('south', 'north')
+    ws = list(range(-1, width - 1))
+
+    def at(i, w):
+        return (x0 + i, z0 + w) if axis == 'x' else (x0 + w, z0 + i)
+
+    rail = {}
+    for i in range(n):
+        end, shoulder = i in (0, n - 1), i in (1, n - 2)
+        dy = 0 if end or shoulder else 1
+        for w in ws:
+            x, z = at(i, w)
+            if end:
+                st = B('spruce_stairs', facing=up if i == 0 else down, half='bottom', shape='straight', waterlogged=False)
+            elif shoulder or w in (ws[0], ws[-1]):
                 st = B('spruce_slab', type='top', waterlogged=False)
             else:
                 st = B('spruce_slab', type='bottom', waterlogged=False)
             c.set(x, y + dy, z, st)
-        for w in (-1, 2):
-            if 0 < i < length - 1:
-                x, z = (x0 + i, z0 + w) if axis == 'x' else (x0 + w, z0 + i)
-                sides = {'east': True, 'west': True} if axis == 'x' else {'north': True, 'south': True}
-                c.set(x, y + dy + 1, z, lacquer_fence(**sides))
+            for k in range(dy + 1, 4):  # 岸边叠石别压在桥面上
+                c.set(x, y + k, z, AIR)
+        if not end:
+            rail[i] = y + dy + 1
+    for i, h in rail.items():
+        sides = {down: rail.get(i - 1) == h, up: rail.get(i + 1) == h}
+        for w in (ws[0], ws[-1]):
+            x, z = at(i, w)
+            c.set(x, h, z, lacquer_fence(**sides))
+
+
+def bridge_over(c, pool, axis, line, y, width=4):
+    """量出池在桥面那几排的宽度，架一座两端都落在岸上的拱桥。line 为桥面第二排（同 arched_bridge 的 z0/x0）。"""
+    rows = range(line - 1, line - 1 + width)
+    along = [p[0] if axis == 'x' else p[1] for p in pool if (p[1] if axis == 'x' else p[0]) in rows]
+    a, b = min(along) - 1, max(along) + 1
+    if axis == 'x':
+        arched_bridge(c, a, line, y, length=b - a + 1, axis='x', width=width)
+    else:
+        arched_bridge(c, line, a, y, length=b - a + 1, axis='z', width=width)
 
 
 def bamboo_clump(c, x0, z0, x1, z1, y, seed=0, density=0.6):
@@ -316,13 +338,12 @@ def ryokan():
         for z in range(cz0, cz1 + 1):
             r = rnd.random()
             c.set(x, 0, z, B('moss_block') if r < 0.28 else B('coarse_dirt') if r < 0.33 else B('gravel'))
-    rock_pool(c, 20, 31, 6.5, 4.2, depth=2, seed=7)
+    court_pool = rock_pool(c, 20, 31, 6.5, 4.2, depth=2, seed=7)
     # 池西岸叠石，竹筧往池里注水
     for (x, z, h) in ((13, 30, 3), (13, 31, 2), (14, 29, 2), (13, 32, 1), (14, 32, 2)):
         for k in range(h):
             c.set(x, 1 + k, z, rock(rnd))
     c.set(14, 3, 31, L('journey_bamboo_spout', facing='east', waterlogged=False))
-    arched_bridge(c, 17, 30, 1, axis='x')
     # 踏步石：北廊门口 → 拱桥 → 浴屋门
     for (x, z) in ((28, 26), (27, 27), (26, 28), (25, 29), (28, 33), (29, 34), (28, 35), (29, 36), (28, 37), (28, 38)):
         c.set(x, 1, z, L('journey_stepping_stone', waterlogged=False))
@@ -330,6 +351,8 @@ def ryokan():
         for z in (31, 32):
             c.set(x, 0, z, PAVING)
             c.set(x, 1, z, AIR)
+    # 拱桥南北横跨池的窄处，北端落在本馆南墙下，南端落在碎石地上
+    bridge_over(c, [p for p in court_pool if p[0] < 24], 'z', 19, 1)
     cherry_tree(c, 36, 1, 30, height=7, radius=5, seed=11)
     pine(c, 25, 1, 36, seed=12)
     bamboo_clump(c, 40, 34, 43, 37, 1, seed=13)
