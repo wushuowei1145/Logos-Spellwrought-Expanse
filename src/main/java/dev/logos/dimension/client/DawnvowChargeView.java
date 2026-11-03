@@ -6,6 +6,7 @@ import com.lowdragmc.lowdraglib2.uitest.*;
 import dev.logos.dimension.DimensionTravel;
 import dev.logos.dimension.client.longsword.LongswordClient;
 import dev.logos.dimension.client.vfx.DawnvowClient;
+import dev.logos.dimension.client.vfx.DawnvowShake;
 import dev.logos.dimension.item.LongswordItem;
 import dev.logos.runtime.PlayerMagic;
 import java.util.Arrays;
@@ -112,6 +113,12 @@ public class DawnvowChargeView implements UIScenario {
                         level.setBlockAndUpdate(new BlockPos(x, 99, z), Blocks.SMOOTH_STONE.defaultBlockState());
                         for (int y = 100; y < 112; y++) level.removeBlock(new BlockPos(x, y, z), false);
                     }
+                    // 八格处一格高的台阶，十二到十四格处四格高的土石墙：巨型剑气迈上台阶、削开墙
+                    for (int z = -8; z <= 8; z++) {
+                        level.setBlockAndUpdate(new BlockPos(8, 100, z), Blocks.SMOOTH_STONE.defaultBlockState());
+                        for (int x = 12; x <= 14; x++) for (int y = 100; y < 104; y++)
+                            level.setBlockAndUpdate(new BlockPos(x, y, z), (y < 102 ? Blocks.DIRT : Blocks.COBBLESTONE).defaultBlockState());
+                    }
                     var player = ctx.player();
                     DimensionTravel.teleport(player, level, new Vec3(.5, 100, .5), -90, 0);
                     player.getInventory().clearContent();
@@ -125,6 +132,25 @@ public class DawnvowChargeView implements UIScenario {
                 })
                 .setGameMode(GameType.SURVIVAL)
                 .waitUntil("拔剑", ctx -> phase("idle")).ticks(4)
+                .step("按住右键（中途取消）", ctx -> {
+                    var mc = Minecraft.getInstance();
+                    mc.options.keyUse.setDown(true);
+                    mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+                    started = mc.level.getGameTime();
+                })
+                .waitUntil("蓄力同步（中途取消）", ctx -> phase("charge_start", "charge_hold"));
+        at(s, "进入大型蓄力（中途取消）", 165).check("中途取消前已进入大型蓄力", ctx -> DawnvowClient.auras() > 0)
+                .step("中途松开", ctx -> {
+                    var mc = Minecraft.getInstance();
+                    mc.options.keyUse.setDown(false);
+                    mc.gameMode.releaseUsingItem(mc.player);
+                })
+                .waitUntil("中途取消后收势", ctx -> phase("idle")).ticks(30)
+                .check("中途取消后身上的光与剑身金光都收掉", ctx -> DawnvowClient.auras() == 0
+                        && DawnvowClient.blade(Minecraft.getInstance().player.getId(), 0) == 0)
+                .screenshot("cancel_cleared")
+                .server("补满魔力", ctx -> PlayerMagic.of(ctx.player()).mana = 3000)
+                .ticks(10)
                 .step("按住右键", ctx -> {
                     var mc = Minecraft.getInstance();
                     mc.options.keyUse.setDown(true);
@@ -158,7 +184,8 @@ public class DawnvowChargeView implements UIScenario {
                 .waitUntil("巨型剑气", ctx -> DawnvowClient.waves() > 0).ticks(1).screenshot("release")
                 .ticks(3).screenshot("wave")
                 .ticks(3).screenshot("wave_late")
-                .ticks(5).screenshot("cross_flash");
+                .waitUntil("爆发时镜头抖动", ctx -> DawnvowShake.strength() > .05)
+                .ticks(2).screenshot("cross_flash");
         side(s, "光柱远景", new Vec3(-10, 112, 30), new Vec3(30, 106, 0));
         s.ticks(3).screenshot("pillar_wide")
                 .server("记下生命", ctx -> {
@@ -169,7 +196,18 @@ public class DawnvowChargeView implements UIScenario {
                 })
                 .checkServer("尸壳被直接击杀", ctx -> !(ctx.server().overworld().getEntity(targets[0]) instanceof LivingEntity l && l.isAlive()))
                 .checkServer("铁傀儡受 50 点伤害", ctx -> ((LivingEntity) ctx.server().overworld().getEntity(targets[1])).getHealth() == 50)
-                .checkServer("监守者吃到光柱 200 点", ctx -> ((LivingEntity) ctx.server().overworld().getEntity(targets[2])).getHealth() == 300);
+                .checkServer("监守者吃到光柱 200 点", ctx -> ((LivingEntity) ctx.server().overworld().getEntity(targets[2])).getHealth() == 300)
+                .checkServer("土石墙被削开、台阶与地面还在", ctx -> {
+                    var level = ctx.server().overworld();
+                    return level.getBlockState(new BlockPos(13, 100, 0)).isAir() && level.getBlockState(new BlockPos(13, 103, 0)).isAir()
+                            && level.getBlockState(new BlockPos(8, 100, 0)).is(Blocks.SMOOTH_STONE) && level.getBlockState(new BlockPos(13, 99, 0)).is(Blocks.SMOOTH_STONE);
+                });
+        side(s, "削开的墙", new Vec3(4, 109, 13), new Vec3(14, 100, 0));
+        s.ticks(2).screenshot("trench");
+        own(s, "正面 剑身金光", CameraType.THIRD_PERSON_FRONT);
+        s.ticks(40).check("放出后剑身金光保留", ctx -> DawnvowClient.blade(Minecraft.getInstance().player.getId(), 0) != 0)
+                .checkServer("攻击距离变长", ctx -> ctx.player().getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ENTITY_INTERACTION_RANGE) > 5.9)
+                .screenshot("blessed_front");
         own(s, "背后 普通蓄力斩", CameraType.THIRD_PERSON_BACK);
         s.waitUntil("收势", ctx -> phase("idle")).ticks(10)
                 .step("再蓄一下", ctx -> {

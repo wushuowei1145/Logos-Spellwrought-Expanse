@@ -22,6 +22,9 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import dev.logos.lang.Element;
+import dev.logos.runtime.Effects;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -36,6 +39,8 @@ import org.jspecify.annotations.Nullable;
  *   <li>第 {@link #BLADE_TICKS} 刻（12 秒）剑身发出长长的金光；</li>
  *   <li>第 {@link #FULL_TICKS} 刻（15 秒）蓄满：剑身喷出金色流火（Logos 的物品表面火焰，转成金色）；</li>
  *   <li>蓄满后松手劈下，放出巨型剑气（{@link SwordWave#grand}）。没蓄满就松手，只放普通剑气，已付的魔力不退。</li>
+ *   <li>巨型剑气放出后 {@link #BLESS_TICKS} 刻（60 秒）内，剑身的长金光不散：手持曦誓时攻击距离多 {@link #BLESS_REACH} 格，
+ *       每一下命中另加 {@link #BLESS_DAMAGE} 点物理伤害。</li>
  * </ul>
  * 只看招式状态机给的招式名（{@code charge_start}、{@code charge_hold}、{@code charge_release}），不改长剑的动作。
  */
@@ -48,11 +53,16 @@ public final class DawnvowCharge {
     public static final double GRAND_SPEED = 4;
     /** 蓄满时剑身火焰转的色相（Logos 的火焰原本是橙色，转一点成金色）。 */
     public static final float FLAME_HUE = 0.045f;
-    private static final Identifier ROOTED = LogosDimension.id("dawnvow_rooted");
+    private static final Identifier ROOTED = LogosDimension.id("dawnvow_rooted"), REACH = LogosDimension.id("dawnvow_blessed_reach");
+    /** 放出巨型剑气后剑身金光保留的刻数，期间多出的攻击距离与每击的额外物理伤害。 */
+    public static final int BLESS_TICKS = 1200;
+    public static final double BLESS_REACH = 3, BLESS_DAMAGE = 15;
     /** 多远的玩家看得到蓄力和剑气。 */
     private static final double VIEW = 160;
 
     private static final Map<UUID, Charge> CHARGES = new HashMap<>();
+    /** 剑身金光保留到哪一刻。 */
+    private static final Map<UUID, Long> BLESSED = new HashMap<>();
 
     private DawnvowCharge() {}
 
@@ -70,8 +80,10 @@ public final class DawnvowCharge {
         bus.addListener((RegisterPayloadHandlersEvent event) -> event.registrar("1").playToClient(DawnvowPayload.TYPE, DawnvowPayload.CODEC));
         NeoForge.EVENT_BUS.addListener(SwordWave::tick);
         NeoForge.EVENT_BUS.addListener(SwordWave::stopped);
-        NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> CHARGES.clear());
+        NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> { CHARGES.clear(); BLESSED.clear(); });
         NeoForge.EVENT_BUS.addListener(DawnvowCharge::login);
+        NeoForge.EVENT_BUS.addListener(DawnvowCharge::playerTick);
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent event) -> BLESSED.remove(event.getEntity().getUUID()));
     }
 
     public static boolean dawnvow(ItemStack stack) { return stack.is(LongswordItem.DAWNVOW.get()); }
@@ -91,6 +103,40 @@ public final class DawnvowCharge {
     public static double paid(ServerPlayer p) {
         Charge c = CHARGES.get(p.getUUID());
         return c == null ? 0 : c.paid;
+    }
+
+    /** 剑身的长金光还在（巨型剑气放出后 60 秒内）。 */
+    public static boolean blessed(ServerPlayer p) {
+        Long until = BLESSED.get(p.getUUID());
+        return until != null && p.level().getGameTime() < until;
+    }
+
+    /** 让剑身的长金光保留 {@link #BLESS_TICKS} 刻（巨型剑气放出时调用；世界测试也直接调用）。 */
+    public static void bless(ServerPlayer p) {
+        long until = p.level().getGameTime() + BLESS_TICKS;
+        BLESSED.put(p.getUUID(), until);
+        send((ServerLevel) p.level(), p.position(), DawnvowPayload.of(DawnvowPayload.BLESS, p.getId(), until));
+    }
+
+    /** 金光在时，手持曦誓才多出攻击距离；离开曦誓、时间到或死亡就收回。 */
+    private static void playerTick(PlayerTickEvent.Post event) {
+        if (!(event.getEntity() instanceof ServerPlayer p)) return;
+        Long until = BLESSED.get(p.getUUID());
+        if (until != null && (!p.isAlive() || p.level().getGameTime() >= until)) {
+            BLESSED.remove(p.getUUID());
+            until = null;
+        }
+        AttributeInstance reach = p.getAttribute(Attributes.ENTITY_INTERACTION_RANGE);
+        if (reach == null) return;
+        boolean on = until != null && dawnvow(p.getMainHandItem());
+        if (on && !reach.hasModifier(REACH)) reach.addTransientModifier(new AttributeModifier(REACH, BLESS_REACH, AttributeModifier.Operation.ADD_VALUE));
+        else if (!on && reach.hasModifier(REACH)) reach.removeModifier(REACH);
+    }
+
+    /** 长剑招式命中了目标之后：金光在时另加 {@link #BLESS_DAMAGE} 点物理伤害。 */
+    public static void hit(ServerPlayer p, net.minecraft.world.entity.Entity target) {
+        if (blessed(p) && dawnvow(p.getMainHandItem()) && target instanceof net.minecraft.world.entity.LivingEntity living && living.isAlive())
+            Effects.followUp(p, living, BLESS_DAMAGE, Element.PHYSICAL);
     }
 
     public static boolean full(ServerPlayer p) {
@@ -181,10 +227,11 @@ public final class DawnvowCharge {
             return;
         }
         Vec3 dir = SwordWave.flat(p.getLookAngle());
-        Vec3 from = p.position().add(dir.scale(1.2));
-        double length = SwordWave.grand(level, p, from, dir);
-        send(level, from.add(dir.scale(length / 2)),
-                new DawnvowPayload(DawnvowPayload.RELEASE, p.getId(), level.getGameTime(), from, dir, (float) length));
+        Vec3 from = p.position().add(dir.scale(1.2)).with(net.minecraft.core.Direction.Axis.Y, p.getY());
+        float[] path = SwordWave.grand(level, p, from, dir);
+        double length = (path.length - 1) * SwordWave.PATH_STEP;
+        send(level, from.add(dir.scale(length / 2)), new DawnvowPayload(DawnvowPayload.RELEASE, p.getId(), level.getGameTime(), from, dir, path));
+        bless(p);
         level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.TRIDENT_THUNDER.value(), SoundSource.PLAYERS, 4, .9f);
         level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 2, .5f);
     }
@@ -194,7 +241,8 @@ public final class DawnvowCharge {
         CHARGES.remove(p.getUUID());
         root(p, false);
         if (c.full) SurfaceAura.set(c.stack, c.saved == null ? null : c.saved.style(), c.saved == null ? 0 : c.saved.hue());
-        if (c.grand && !c.fired) send((ServerLevel) p.level(), p.position(), DawnvowPayload.of(DawnvowPayload.STOP, p.getId(), c.start));
+        // 中途松手也会劈出普通剑气（fired），身上的光同样要收掉；放出巨型剑气时客户端已经收了，再收一次无妨
+        if (c.grand) send((ServerLevel) p.level(), p.position(), DawnvowPayload.of(DawnvowPayload.STOP, p.getId(), c.start));
     }
 
     /** 招式状态被清掉（收剑完、死亡、离线、换维度）。 */

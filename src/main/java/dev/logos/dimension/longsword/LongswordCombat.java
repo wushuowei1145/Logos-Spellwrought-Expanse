@@ -181,6 +181,7 @@ public final class LongswordCombat {
             CONTACT.set(true);
             try { player.attack(target); } finally { CONTACT.remove(); }
             if (target instanceof LivingEntity living && living.invulnerableTime >= 20) { state.lastTarget = target; state.lastHit = now; }
+            DawnvowCharge.hit(player, target);
         } else {
             player.resetAttackStrengthTicker();
             player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, .6f, 1);
