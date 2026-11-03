@@ -1,5 +1,18 @@
 # 首版验证记录
 
+## 绘马：书写页与绘马挂的挂、看、取
+
+2026-11-03：分支 `feat/ema-writing`，基于 main `8e9dc79`。说明见 [神狐聚落](docs/FOX_SANCTUARY.md) 的绘马与绘马挂两行。`journey_ema` 改为可书写的绘马：右键打开照实物用代码画的绘马页（LDLib2，五角屋形板、白编绳、竖印「願意」），文字存在 `logos_dimension:ema_wish` 组件里，合上即存、可改写；只有写好的绘马能挂，挂到指着的那一格，右键翻看，潜行空手右键取下指着的那块。
+
+| 层级 | 结果 |
+| --- | --- |
+| 编译 | `./gradlew --offline compileJava -PlogosJar=…`（Logos 0.6.0）通过 |
+| 单元 / 世界测试 | 未新增，未运行 |
+| 实际客户端 | `ema_views` **1/1 场景、13/13 检查**：`./gradlew --offline runClient -PlogosJar=… -PldTest=ema_views -PldTestHeadless -PldTestWindow=1280x720`。书写区打开即获得焦点；一行打到板边后不再收字；合上后服务端从三块一叠里分出一块写好的、手上剩两块空白；空白绘马挂不上；写好的挂到点中的右格并被用掉；翻看从点中的那块开始、翻页顺序正确、页码显示「2 / 3」；潜行取下中间那块，其他两块留着，取下的仍带愿望与署名。人工查看截图 |
+| 未测 | 输入法实际打中文（依赖 Logos 的 LdlibIme，对所有 LDLib 界面生效）、「写好了」按钮的真实点击（测试器的松开动作落在已关闭的页面上，改用 Esc 路径合上）、联机多客户端、专用服务器加载 |
+
+截图：[书写页](docs/screenshots/ema/write.png) · [翻看页](docs/screenshots/ema/view.png) · [挂了三块的绘马挂](docs/screenshots/ema/rack.png)
+
 ## 石中剑：曦誓之洞
 
 2026-11-03：分支 `feat/dawnvow-stone`，基于 main `5c5efc4`。说明见 [石中剑：曦誓之洞](docs/DAWNVOW_STONE.md)。新增插着曦誓的石座（不可破坏、亮度 14、斜光）与空石座，破晓按住右键拔剑、一人一誓、插回解除；远行大陆山体里的隐蔽山洞由 Java 结构 `logos_dimension:dawnvow_grotto` 选址开凿（维护者同意，AGENTS.md 已登记）。
