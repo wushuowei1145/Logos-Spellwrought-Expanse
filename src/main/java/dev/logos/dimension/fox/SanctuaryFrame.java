@@ -19,7 +19,7 @@ final class SanctuaryFrame {
     /** 核心外山坡的宽度。核心半宽加上它不能超过结构引用范围（起始区块周围 8 个区块）。 */
     static final int RING = 40;
 
-    final SanctuaryLayout layout = SanctuaryLayout.get();
+    final SanctuaryLayout layout;
     final int originX, originZ;
     final Mirror mirror;
     final Rotation rotation;
@@ -28,7 +28,8 @@ final class SanctuaryFrame {
     final long seed;
     private final SimplexNoise noise;
 
-    SanctuaryFrame(int originX, int originZ, Mirror mirror, Rotation rotation, int p, int foot, long seed) {
+    SanctuaryFrame(int plan, int originX, int originZ, Mirror mirror, Rotation rotation, int p, int foot, long seed) {
+        this.layout = SanctuaryLayout.get(plan);
         this.originX = originX;
         this.originZ = originZ;
         this.mirror = mirror;
@@ -42,7 +43,7 @@ final class SanctuaryFrame {
 
     /** 让核心中心落在 (centerX, centerZ) 的原点。 */
     static int[] originFor(int centerX, int centerZ, Mirror mirror, Rotation rotation) {
-        int half = SanctuaryLayout.get().size / 2;
+        int half = SanctuaryLayout.get(0).size / 2;  // 各方案核心区一样大
         BlockPos c = StructureTemplate.transform(new BlockPos(half, 0, half), mirror, rotation, BlockPos.ZERO);
         return new int[]{centerX - c.getX(), centerZ - c.getZ()};
     }

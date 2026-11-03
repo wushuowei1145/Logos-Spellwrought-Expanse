@@ -70,6 +70,9 @@ public class FoxSanctuaryViews implements UIScenario {
             .server("locate", ctx -> {
                 var level = ctx.server().getLevel(LogosDimension.CLOUDSEA);
                 level.getGameRules().set(GameRules.RANDOM_TICK_SPEED, 0, ctx.server());
+                // 指定布局方案：-Dlogos.foxPlan=N 或环境变量 LOGOS_FOX_PLAN=N；不指定时随机
+                String forced = System.getProperty("logos.foxPlan", System.getenv("LOGOS_FOX_PLAN"));
+                dev.logos.dimension.fox.FoxSanctuaryStructure.devPlan = forced == null ? -1 : Integer.parseInt(forced.trim());
                 var holder = level.registryAccess().lookupOrThrow(Registries.STRUCTURE)
                     .getOrThrow(ResourceKey.create(Registries.STRUCTURE, LogosDimension.id("fox_sanctuary")));
                 // 测试世界关闭了结构生成；这里只为预览把它打开，让聚落像正常存档一样随区块自然生成
@@ -107,7 +110,7 @@ public class FoxSanctuaryViews implements UIScenario {
                 System.out.println("[fox] candidates tried: " + tried.size());
                 if (start == null) throw new IllegalStateException("没找到神狐聚落");
                 grounds = (SanctuaryGroundsPiece) start.getPieces().getFirst();
-                System.out.println("[fox] sanctuary at " + start.getChunkPos() + " street y=" + grounds.streetLevel() + " trail=" + grounds.trailSize());
+                System.out.println("[fox] sanctuary at " + start.getChunkPos() + " plan=" + grounds.plan() + " street y=" + grounds.streetLevel() + " trail=" + grounds.trailSize());
                 level.clockManager().setTotalTicks(level.registryAccess().lookupOrThrow(Registries.WORLD_CLOCK).getOrThrow(JourneySeasons.CLOCK), 6000);
                 Vec3 c = grounds.designPoint(88, 0, 88);
                 view(level, ctx.player(), c.add(0, 60, 0), c);

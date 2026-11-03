@@ -31,6 +31,8 @@ public class FoxSanctuaryStructure extends Structure {
     private static final int REACH = 128;
     /** 与 worldgen/structure_set/fox_sanctuary.json 保持一致（由 tools/fox_sanctuary.py 生成）。 */
     private static final int SPACING = 8, SEPARATION = 4, SALT = 20261102;
+    /** 开发预览用：≥ 0 时每处聚落都用这套布局方案，便于逐套截图。 */
+    public static volatile int devPlan = -1;
     private static final RandomSpreadStructurePlacement PLACEMENT = new RandomSpreadStructurePlacement(SPACING, SEPARATION, RandomSpreadType.LINEAR, SALT);
     /** 两处聚落中心的最小间距：大于整个聚落的宽度。 */
     private static final double EXCLUSION = 300;
@@ -92,6 +94,7 @@ public class FoxSanctuaryStructure extends Structure {
         if (p - foot > 64 || p + 64 > ctx.heightAccessor().getMaxY()) return Optional.empty();
 
         long seed = ctx.random().nextLong();
+        int plan = devPlan >= 0 ? devPlan : ctx.random().nextInt(SanctuaryLayout.plans());
         java.util.function.DoubleBinaryOperator natural = (x, z) -> {
             double fx = Mth.clamp((x - cx + HALF) / STEP, 0, n - 1.001), fz = Mth.clamp((z - cz + HALF) / STEP, 0, n - 1.001);
             int i = (int) fx, j = (int) fz;
@@ -103,7 +106,7 @@ public class FoxSanctuaryStructure extends Structure {
         for (Mirror mirror : new Mirror[]{Mirror.NONE, Mirror.FRONT_BACK}) {
             for (Rotation rotation : Rotation.values()) {
                 int[] origin = SanctuaryFrame.originFor(cx, cz, mirror, rotation);
-                SanctuaryFrame frame = new SanctuaryFrame(origin[0], origin[1], mirror, rotation, p, foot, seed);
+                SanctuaryFrame frame = new SanctuaryFrame(plan, origin[0], origin[1], mirror, rotation, p, foot, seed);
                 SanctuaryTrail trail = SanctuaryTrail.plan(frame, natural);
                 if (bestTrail == null || trail.cost < bestTrail.cost) {
                     best = frame;

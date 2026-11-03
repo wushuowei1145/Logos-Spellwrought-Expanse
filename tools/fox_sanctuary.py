@@ -8,6 +8,7 @@
 设计坐标 (u, v)：u 向东、v 向南，核心区 176×176，高度相对主街标高 P（地表那一层方块的 y）。
 入口石阶在西侧，山路由 Java 结构从入口往北绕山下行（FoxSanctuaryStructure）。
 """
+from dataclasses import dataclass, field
 from pathlib import Path
 import base64
 import math
@@ -45,10 +46,25 @@ FIELD_V0 = 114
 RYOKAN_U0, RYOKAN_V0 = 94, 101
 
 
+@dataclass
+class Plan:
+    """一套布局方案：每处聚落生成时随机挑一套，再叠加地块变体、朝向与放置时的小替换。"""
+    name: str
+    #: 主街 S 形弯曲：一阶、二阶正弦的振幅（两端都回到入口所在的 v，不能加相位）
+    bend: tuple = (5.5, -2.5)
+
+
+PLANS = [
+    Plan('a'),
+]
+PLAN = PLANS[0]
+
+
 def street_v(u):
-    """主街中线：自入口向东顺地形略作 S 形弯曲。"""
+    """主街中线：自入口向东顺地形作 S 形弯曲，弯法随方案。"""
+    a1, a2 = PLAN.bend
     t = (u - 22) / 104
-    return ENTRANCE_V + 5.5 * math.sin(t * math.pi) - 2.5 * math.sin(t * 2 * math.pi)
+    return ENTRANCE_V + a1 * math.sin(t * math.pi) + a2 * math.sin(t * 2 * math.pi)
 
 
 def smooth(t):
@@ -480,10 +496,9 @@ def rim_planting(s):
 
 
 # ==================== 输出 ====================
-def write_templates(s):
-    OUT.mkdir(parents=True, exist_ok=True)
-    for old in OUT.glob('*.nbt'):
-        old.unlink()
+def write_core(s, out, prefix):
+    """聚落画布切成 44×44 的分块模板；方案 0 放在 fox_sanctuary/ 下，其余在 plan_N/ 下。"""
+    out.mkdir(parents=True, exist_ok=True)
     tiles = []
     ys = [k[1] for k in s.c.cells]
     top = max(ys)
@@ -497,8 +512,13 @@ def write_templates(s):
             if not cells:
                 continue
             name = f'core_{tu // TILE}_{tv // TILE}'
-            write_structure(OUT / f'{name}.nbt', [TILE, height, TILE], cells, data_version=DATA_VERSION)
-            tiles.append({'template': name, 'u': tu, 'v': tv})
+            write_structure(out / f'{name}.nbt', [TILE, height, TILE], cells, data_version=DATA_VERSION)
+            tiles.append({'template': prefix + name, 'u': tu, 'v': tv})
+    return tiles
+
+
+def write_variants():
+    """各方案共用的地块变体：商铺、住宅、食摊。"""
     for table, (w, d) in ((fb.SHOP_VARIANTS, (fb.SHOP_W, fb.SHOP_D)), (fb.HOUSE_VARIANTS, (13, 13)), (fb.STALL_VARIANTS, (5, 5))):
         for name, make in table.items():
             b = make()
@@ -509,10 +529,9 @@ def write_templates(s):
                 if all(0 <= k[i] < size[i] for i in range(3)):
                     cells[k] = st
             write_structure(OUT / f'{name}.nbt', size, cells, data_version=DATA_VERSION)
-    return tiles
 
 
-def layout(s, tiles):
+def layout(s, tiles, path):
     obj = {
         'size': S,
         'heights': base64.b64encode(np.round(s.h).astype(np.int8).tobytes()).decode(),
@@ -523,7 +542,7 @@ def layout(s, tiles):
         'lots': s.lots,
         'variants': s.variants,
     }
-    write_json(D / 'fox_sanctuary/layout.json', obj)
+    write_json(path, obj)
 
 
 def worldgen():
@@ -621,14 +640,28 @@ def compose():
 
 
 def main():
-    s = compose()
-    tiles = write_templates(s)
+    global PLAN
+    import shutil
+    for old in OUT.glob('*.nbt'):
+        old.unlink()
+    for old in list(OUT.glob('plan_*')) + list((D / 'fox_sanctuary').glob('plan_*')):
+        shutil.rmtree(old)
+    sites = []
+    for i, plan in enumerate(PLANS):
+        PLAN = plan
+        s = compose()
+        sub = '' if i == 0 else f'plan_{i}/'
+        tiles = write_core(s, OUT / sub, sub)
+        layout(s, tiles, D / 'fox_sanctuary' / sub / 'layout.json')
+        print(f'plan {i} {plan.name}: layout', int(s.h.min()), int(s.h.max()), 'cells', len(s.c.cells), 'lots', len(s.lots), 'tiles', len(tiles))
+        sites.append(s)
+    write_json(D / 'fox_sanctuary/plans.json', {'count': len(PLANS)})
+    write_variants()
     fy.write_templates(OUT, DATA_VERSION)
-    layout(s, tiles)
     worldgen()
     wild_features()
-    print('layout', int(s.h.min()), int(s.h.max()), 'cells', len(s.c.cells), 'lots', len(s.lots), 'tiles', len(tiles))
-    return s
+    PLAN = PLANS[0]
+    return sites
 
 
 if __name__ == '__main__':
