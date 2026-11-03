@@ -196,8 +196,8 @@ public final class FoxWildsBlocks {
             SuzuRopeBlock::new,
             p -> p.mapColor(MapColor.COLOR_RED).strength(0.3f).sound(SoundType.WOOL).noOcclusion().noCollision()
     );
-    /** 绘马：在铁砧上改名即写下愿望，挂到绘马挂上会显示出来。 */
-    public static final DeferredItem<Item> EMA = DimensionBlocks.ITEMS.registerSimpleItem("journey_ema", p -> p.stacksTo(16));
+    /** 绘马：右键写下愿望，写好的挂到绘马挂上。 */
+    public static final DeferredItem<EmaItem> EMA = DimensionBlocks.ITEMS.registerItem("journey_ema", EmaItem::new, p -> p.stacksTo(16));
 
     private static DeferredBlock<NorenBlock> noren(String id, MapColor color) {
         return register(id, NorenBlock::new, p -> p.mapColor(color).strength(0.5f).sound(SoundType.WOOL).noOcclusion().noCollision());

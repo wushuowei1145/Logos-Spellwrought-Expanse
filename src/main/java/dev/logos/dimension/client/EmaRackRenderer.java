@@ -4,7 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.cloudsea.EmaRackBlock;
+import dev.logos.dimension.cloudsea.EmaItem;
 import dev.logos.dimension.cloudsea.EmaRackBlockEntity;
+import dev.logos.dimension.cloudsea.EmaWish;
 import dev.logos.dimension.fox.FoxSanctuary;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -31,7 +33,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
-/** 绘马挂：玩家挂上的三块绘马画在框的最外面一排，铁砧上写的名字写在绘马上。 */
+/** 绘马挂：玩家挂上的三块绘马画在框的最外面一排，写下的愿望（旧存档是铁砧上的名字）写在绘马上。 */
 @EventBusSubscriber(modid = LogosDimension.ID, value = Dist.CLIENT)
 public class EmaRackRenderer implements BlockEntityRenderer<EmaRackBlockEntity, EmaRackRenderer.State> {
     private static final float[] SLOT_X = {-0.3f, 0f, 0.3f};
@@ -72,7 +74,8 @@ public class EmaRackRenderer implements BlockEntityRenderer<EmaRackBlockEntity, 
             ItemStackRenderState item = new ItemStackRenderState();
             items.updateForTopItem(item, stack, ItemDisplayContext.FIXED, rack.getLevel(), null, i);
             state.items[i] = item;
-            Component name = stack.get(DataComponents.CUSTOM_NAME);
+            EmaWish wish = stack.get(EmaItem.WISH.get());
+            Component name = wish != null ? Component.literal(wish.text().replace('\n', ' ')) : stack.get(DataComponents.CUSTOM_NAME);
             if (name != null) state.lines[i] = font.split(name, 46);
         }
     }

@@ -73,6 +73,7 @@ public final class LogosDimension {
         DimensionFluids.TYPES.register(bus); DimensionFluids.FLUIDS.register(bus);
         DimensionParticles.register(bus);
         dev.logos.dimension.fox.FoxSanctuary.register(bus);
+        dev.logos.dimension.cloudsea.EmaItem.register(bus);
         dev.logos.dimension.economy.Economy.register(bus);
         dev.logos.dimension.paint.PaintSystem.register(bus);
         dev.logos.dimension.npc.NpcEntities.register(bus);

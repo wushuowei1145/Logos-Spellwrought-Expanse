@@ -32,8 +32,8 @@ import org.jspecify.annotations.Nullable;
  * 绘马挂：深木框与小瓦顶，框上本来就挂着一层层旧绘马。
  *
  * <p>像粉色花簇一样可以叠放 1–4 层，每多一层，框上的绘马更密。左右、上下并排放置会连成一个大架子。
- * 手持绘马右键把它挂上去（最多三块），这三块总挂在最外面一排；潜行空手右键取回最后挂上的一块。
- * 绘马在铁砧上改名就是写下的愿望，名字会写在挂出的绘马上。
+ * 手持写好的绘马右键把它挂到指着的位置（最多三块），这三块总挂在最外面一排；右键翻看架上玩家写的绘马，
+ * 潜行空手右键取下指着的那一块。旧存档里在铁砧上改过名的绘马仍把名字写在绘马上。
  */
 public class EmaRackBlock extends HorizontalDirectionalBlock implements EntityBlock {
     public static final MapCodec<EmaRackBlock> CODEC = simpleCodec(EmaRackBlock::new);
@@ -100,9 +100,10 @@ public class EmaRackBlock extends HorizontalDirectionalBlock implements EntityBl
 
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (!stack.is(FoxWildsBlocks.EMA.get())) return InteractionResult.TRY_WITH_EMPTY_HAND;
+        // 空白绘马不挂：转去看架上的绘马，架上空着就落到物品本身，打开书写页
+        if (!stack.is(FoxWildsBlocks.EMA.get()) || !EmaItem.isWritten(stack)) return InteractionResult.TRY_WITH_EMPTY_HAND;
         if (!(level.getBlockEntity(pos) instanceof EmaRackBlockEntity rack)) return InteractionResult.PASS;
-        if (!rack.hang(stack.copyWithCount(1))) return InteractionResult.FAIL;
+        if (!rack.hang(slotAt(state, pos, hit), stack.copyWithCount(1))) return InteractionResult.FAIL;
         if (!level.isClientSide()) {
             stack.consume(1, player);
             level.playSound(null, pos, SoundEvents.BAMBOO_WOOD_HANGING_SIGN_PLACE, SoundSource.BLOCKS, 0.8f, 1.2f);
@@ -110,16 +111,32 @@ public class EmaRackBlock extends HorizontalDirectionalBlock implements EntityBl
         return InteractionResult.SUCCESS;
     }
 
+    /** 右键看架上玩家写的绘马（从指着的那块翻起）；潜行空手右键取下指着的那一块。 */
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!player.isSecondaryUseActive() || !(level.getBlockEntity(pos) instanceof EmaRackBlockEntity rack)) return InteractionResult.PASS;
-        ItemStack taken = rack.takeLast();
+        if (!(level.getBlockEntity(pos) instanceof EmaRackBlockEntity rack) || rack.isEmpty()) return InteractionResult.PASS;
+        int slot = slotAt(state, pos, hit);
+        if (!player.isSecondaryUseActive()) {
+            if (level.isClientSide()) dev.logos.dimension.client.EmaScreen.openRack(pos, slot);
+            return InteractionResult.SUCCESS;
+        }
+        ItemStack taken = rack.take(slot);
         if (taken.isEmpty()) return InteractionResult.PASS;
         if (!level.isClientSide()) {
             if (!player.getInventory().add(taken)) player.drop(taken, false);
             level.playSound(null, pos, SoundEvents.BAMBOO_WOOD_HANGING_SIGN_BREAK, SoundSource.BLOCKS, 0.6f, 1.3f);
         }
         return InteractionResult.SUCCESS;
+    }
+
+    /**
+     * 指着的是哪一块：三块并排挂在框正面，左、中、右各占三分之一宽（与 EmaRackRenderer 的 SLOT_X 一致）。
+     * 绘马的局部 +x 在世界里是朝向的逆时针方向。
+     */
+    static int slotAt(BlockState state, BlockPos pos, BlockHitResult hit) {
+        Direction side = state.getValue(FACING).getCounterClockWise();
+        double x = (hit.getLocation().x - pos.getX() - 0.5) * side.getStepX() + (hit.getLocation().z - pos.getZ() - 0.5) * side.getStepZ();
+        return x < -0.15 ? 0 : x > 0.15 ? 2 : 1;
     }
 
     @Override
