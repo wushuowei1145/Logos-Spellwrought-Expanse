@@ -1,0 +1,13 @@
+{
+  "entries": [
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "LOGOS_DIMENSION_RAILGUN",
+      "constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {
+        "class": "dev/logos/dimension/client/vfx/RailgunClient",
+        "field": "POSE"
+      }
+    }
+  ]
+}

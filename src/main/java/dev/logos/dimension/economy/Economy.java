@@ -79,10 +79,13 @@ public final class Economy {
         bus.addListener((RegisterPayloadHandlersEvent event) -> event.registrar("1")
                 .playToClient(MarketPayload.TYPE, MarketPayload.CODEC)
                 .playToClient(BankPayload.TYPE, BankPayload.CODEC)
+                .playToClient(RailgunPayload.TYPE, RailgunPayload.CODEC)
                 .playToServer(EconomyActionPayload.TYPE, EconomyActionPayload.CODEC, Economy::handle)
                 .playToServer(BankOrderPayload.TYPE, BankOrderPayload.CODEC, Economy::handleBank));
         NeoForge.EVENT_BUS.addListener(Economy::tick);
         NeoForge.EVENT_BUS.addListener(Economy::pickup);
+        NeoForge.EVENT_BUS.addListener(Railgun::sweep);
+        NeoForge.EVENT_BUS.addListener(Railgun::stopped);
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> WATCHERS.remove(e.getEntity().getUUID()));
         NeoForge.EVENT_BUS.addListener(EconomyCommands::register);
     }
