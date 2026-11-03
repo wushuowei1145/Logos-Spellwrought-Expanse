@@ -281,36 +281,38 @@ def shrine(s):
     for u in (su - 6, su + 6):
         c.set(u, 1, v_bottom + 5, tall_lantern('lower'))
         c.set(u, 2, v_bottom + 5, tall_lantern('upper'))
-    # 境内：平整空地，参道转向东边的拝殿
+    # 境内：平整空地，参道转向东边的拝殿；拝殿、本殿、狐像与参道都对齐在拝殿中线 hall_u 上
+    hall_u = 151
     s.flat(su - 4, 26, 160, v_top, 16, LAWN)
     for u in range(su - 4, 161):
         for v in range(26, v_top + 1):
             c.set(u, 16, v, B('gravel') if (u + v) % 6 else B('coarse_dirt'))
-    for u in range(su, 150):
+    for u in range(su, hall_u + 2):
         for v in (v_top - 2, v_top - 1, v_top):
             c.set(u, 16, v, PAVING if (u + v) % 4 else B('stone_bricks'))
     for v in range(40, v_top):
-        for u in (147, 148, 149):
+        for u in (hall_u - 1, hall_u, hall_u + 1):
             c.set(u, 16, v, PAVING)
-    for u in range(su + 4, 147, 5):
+    for u in range(su + 4, hall_u - 5, 5):
         for v in (v_top - 3, v_top + 1):
             c.set(u, 17, v, tall_lantern('lower'))
             c.set(u, 18, v, tall_lantern('upper'))
-    fl.fox_pair(c, 148, 16, v_top - 4, axis='x', gap=6)
+    fl.fox_pair(c, hall_u, 16, v_top - 4, axis='x', gap=10)
     # 拝殿朝南，本殿在其后
     hb = Canvas()
     fl.haiden(hb, 0, 4)
     s.put(hb, 142, 26, turns=2, y=16)
     hn = Canvas()
     fl.honden(hn, 0, 0)
-    s.put(hn, 145, 16, turns=2, y=16)
+    s.put(hn, hall_u - 4, 16, turns=2, y=16)
     s.flat(140, 12, 158, 40, 16, LAWN)
     ch = Canvas()
     fl.chozuya(ch, 0, 0)
     s.put(ch, su - 3, 36, turns=1, y=16)
-    fl.ema_racks(c, 151, 17, 44, count=3, facing='north')
-    fl.great_cherry(c, 156, 17, 32, seed=9)
-    c.set(152, 17, 36, L('journey_shrine_hokora', facing='west'))
+    fl.ema_racks(c, hall_u + 6, 17, v_top - 2, count=3, facing='north')
+    # 拝殿东侧的神木老樱，树下小石龛
+    fl.great_cherry(c, 160, 17, 31, seed=9)
+    c.set(159, 17, 36, L('journey_shrine_hokora', facing='west'))
 
 
 # ==================== 温泉旅馆 ====================
@@ -322,6 +324,14 @@ def ryokan(s):
         for v in range(int(math.ceil(street_v(u) + 3)), RYOKAN_V0):
             s.c.set(u, 0, v, PAVING)
             s.h[v, u] = 0
+    # 旅馆西墙外到田坎之间的窄条：樱与灌木相间成一道绿篱
+    for i, v in enumerate(range(RYOKAN_V0 + 18, RYOKAN_V0 + fl.RYOKAN_D - 2, 7)):
+        u = RYOKAN_U0 - 2
+        y = s.H(u, v) + 1
+        if i % 2 == 0:
+            fl.cherry_tree(s.c, u, y, v, height=5, radius=3, seed=300 + i)
+        else:
+            fl.shrub(s.c, u, y, v, flowering=i % 4 == 1)
 
 
 # ==================== 住宅 ====================
@@ -521,9 +531,26 @@ def wild_features():
                 m['heightmap'] = m['heightmap'][:-3]
         obj['placement'] = placement + [ground, {'type': 'minecraft:biome'}]
         write_json(pf / f'{dst}.json', obj)
+    # 浮萍只落在底下是自然水底的水面上：温泉池底是含水半砖与地热石，不长浮萍。
+    # 26.1 的浮萍在放置规则里自己撒开（count + random_offset），所以判定加在最后，逐格检查
+    natural_bottom = ['minecraft:water', 'minecraft:gravel', 'minecraft:dirt', 'minecraft:sand', 'minecraft:clay', 'minecraft:mud',
+                      f'{NS}:cloudsea_white_cherry_ground']
+    write_json(pf / 'fox_wild_waterlily.json', {'feature': 'minecraft:waterlily', 'placement': [
+        {'type': 'minecraft:count', 'count': 4}, {'type': 'minecraft:in_square'},
+        {'type': 'minecraft:heightmap', 'heightmap': 'WORLD_SURFACE'},
+        {'type': 'minecraft:biome'},
+        {'type': 'minecraft:count', 'count': 10},
+        {'type': 'minecraft:random_offset',
+         'xz_spread': {'type': 'minecraft:trapezoid', 'max': 7, 'min': -7, 'plateau': 0},
+         'y_spread': {'type': 'minecraft:trapezoid', 'max': 3, 'min': -3, 'plateau': 0}},
+        {'type': 'minecraft:block_predicate_filter', 'predicate': {'type': 'minecraft:all_of', 'predicates': [
+            {'type': 'minecraft:matching_block_tag', 'tag': 'minecraft:air'},
+            {'type': 'minecraft:matching_blocks', 'offset': [0, -1, 0], 'blocks': 'minecraft:water'},
+            {'type': 'minecraft:matching_blocks', 'offset': [0, -2, 0], 'blocks': natural_bottom}]}}]})
     biome = D / 'worldgen/biome/cloudsea_white_cherry.json'
     obj = _json.loads(biome.read_text(encoding='utf-8'))
-    obj['features'] = [[f'{NS}:{WILD[f.split(":")[1]]}' if f.split(':')[1] in WILD else f for f in step] for step in obj['features']]
+    wild = dict(WILD, patch_waterlily='fox_wild_waterlily')
+    obj['features'] = [[f'{NS}:{wild[f.split(":")[1]]}' if f.split(':')[1] in wild else f for f in step] for step in obj['features']]
     # 樱野常有一层薄雾：近处清楚，百余格外渐渐隐去，上山时看不清山顶
     attrs = obj.setdefault('attributes', {})
     attrs['minecraft:visual/fog_start_distance'] = 24.0
