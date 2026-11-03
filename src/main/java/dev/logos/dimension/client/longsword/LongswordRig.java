@@ -41,7 +41,7 @@ public final class LongswordRig {
         if (kind == null) return null;
         String name = kind.mesh(), view = firstPerson ? "fp" : "tp";
         return MODELS.computeIfAbsent(name + "_" + view, key -> {
-            try { return Optional.of(new LongswordRig(name, kind.animations(), view)); }
+            try { return Optional.of(new LongswordRig(name, kind.animations(), view, kind.sheathed())); }
             catch (RuntimeException e) { LOGGER.error("长剑骨架 {} 加载失败，改用原版持物渲染", key, e); return Optional.empty(); }
         }).orElse(null);
     }
@@ -58,7 +58,7 @@ public final class LongswordRig {
             return clips;
         });
     }
-    private LongswordRig(String name, String animations, String view) {
+    private LongswordRig(String name, String animations, String view, boolean sheathed) {
         var skeletonJson = read("combat/skeletons/player_" + view + ".json");
         skeleton = CombatSkeleton.fromJson(skeletonJson);
         if (!skeleton.missingRequired().isEmpty()) throw new IllegalStateException("玩家骨架缺少 " + skeleton.missingRequired());
@@ -74,8 +74,8 @@ public final class LongswordRig {
         for (var value : weapon.getAsJsonArray("cubes")) {
             var cube = value.getAsJsonObject();
             boolean sheath = cube.get("part").getAsString().equals("sheath");
-            // 第一人称只画剑，剑鞘只在第三人称挂在腰侧。
-            if (sheath && view.equals("fp")) continue;
+            // 第一人称只画剑，剑鞘只在第三人称挂在腰侧；不挂剑鞘的武器（曦誓）都不画。
+            if (sheath && (view.equals("fp") || !sheathed)) continue;
             var bone = skeleton.bone(sheath ? CombatBones.SHEATH : CombatBones.WEAPON);
             var origin = new Matrix4f().translation(bone.pivot()).scale(weaponScale);
             cube.addProperty("bone", bone.name());
@@ -148,7 +148,11 @@ public final class LongswordRig {
         return new float[]{(u+offset[0])/64,(v+offset[1])/64,(u+offset[2])/64,(v+offset[3])/64};
     }
     public void submit(Sample sample, PoseStack pose, SubmitNodeCollector collector, int light, Identifier skin, boolean arms) {
-        submitMaterial(sample, pose, collector, light, texture, false);
+        submit(sample, pose, collector, light, skin, arms, true);
+    }
+    /** {@code weapon} 为 false 时只画手臂（曦誓拔剑凝成之前、收剑散去之后）。 */
+    public void submit(Sample sample, PoseStack pose, SubmitNodeCollector collector, int light, Identifier skin, boolean arms, boolean weapon) {
+        if (weapon) submitMaterial(sample, pose, collector, light, texture, false);
         if (arms) submitMaterial(sample, pose, collector, light, skin, true);
     }
     private void submitMaterial(Sample sample, PoseStack pose, SubmitNodeCollector collector, int light, Identifier texture, boolean skin) {
