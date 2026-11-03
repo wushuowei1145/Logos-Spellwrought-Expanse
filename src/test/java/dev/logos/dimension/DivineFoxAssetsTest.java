@@ -87,6 +87,34 @@ class DivineFoxAssetsTest {
         assertTrue(shown.containsAll(java.util.List.of("Eyelid", "Mouth")));
     }
 
+    /**
+     * 四款短和服与短浴衣各有短袜、过膝袜两版，都是可随机抽到的衣装；过膝袜的大腿段挂在大腿骨骼上，短袜没有。
+     * 侧倒死亡动画给它们的垂袖和裙片都加了关键帧，倒地时布料不穿进地面。
+     */
+    @Test
+    void shortOutfitsAreRollableAndCoveredByDeath() throws Exception {
+        Map<String, String> parent = new java.util.HashMap<>();
+        for (JsonElement b : read("models/entity/divine_fox.geo.json").getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject()
+                .getAsJsonArray("bones")) {
+            JsonObject o = b.getAsJsonObject();
+            parent.put(o.get("name").getAsString(), o.has("parent") ? o.get("parent").getAsString() : null);
+        }
+        var outfits = FOX.slots().stream().filter(s -> s.name().equals("outfit")).findFirst().orElseThrow().parts().stream()
+                .map(NpcParts.Part::id).toList();
+        Set<String> death = bonesOf("death");
+        for (String style : new String[] {"short_miko_kimono", "short_brocade_kimono", "short_rose_yukata", "short_sakura_yukata"})
+            for (String socks : new String[] {"ankle", "overknee"}) {
+                String id = "outfit_" + style + "_" + socks;
+                assertTrue(outfits.contains(id), id);
+                assertEquals(socks.equals("overknee") ? "LeftLeg" : null, parent.get(id + "_left_sock_thigh"), id);
+                assertEquals("LeftLowerLeg", parent.get(id + "_left_sock_shin"), id);
+                for (String bone : java.util.List.of(id + "_left_sleeve_drop_upper", id + "_right_sleeve_drop_lower", id + "_skirt_front_right_00")) {
+                    assertTrue(parent.containsKey(bone), bone);
+                    assertTrue(death.contains(bone), bone);
+                }
+            }
+    }
+
     @Test
     void hasEveryStateAndLayer() throws Exception {
         Set<String> names = animations().keySet();

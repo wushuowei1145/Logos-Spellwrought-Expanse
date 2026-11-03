@@ -6,7 +6,7 @@
 
 ## 1. 第一版的范围
 
-- **外观**：生成时按零件表随机抽一次（`data/logos_dimension/npc_races/divine_fox.json`，即模型目录 `build/parts.json`），存进存档。共 29 个零件：五种发型、三种头饰、五种狐耳、三种尾巴、两种眉毛、两种眼睛、两种嘴、狐纹，以及巫女、日常小袖、樱花浴衣、弓道、振袖、神乐礼装六套衣装。
+- **外观**：生成时按零件表随机抽一次（`data/logos_dimension/npc_races/divine_fox.json`，即模型目录 `build/parts.json`），存进存档。共 37 个零件：五种发型、三种头饰、五种狐耳、三种尾巴、两种眉毛、两种眼睛、两种嘴、狐纹，以及十四套衣装：巫女、日常小袖、樱花浴衣、弓道、振袖、神乐礼装六套长装，和朱白巫女短和服、紫绛金边短和服、夜紫玫瑰短浴衣、米白樱花短浴衣四款短装（每款短袜、过膝袜各一版，袜子与木屐随衣装一起换）。
 - **行为**：闲逛、看人、四处张望，受伤时逃开；不主动攻击。
 - **还没有**：战斗（神狐打刀，见 [COMBAT_SKELETON.md](COMBAT_SKELETON.md)）、语音、剧情动作、聚落里的生成。刷怪蛋可以召唤。
 
@@ -18,7 +18,7 @@
 | --- | --- |
 | `idle` | 素体自带的待机（上身、头、手臂、耳朵的小幅呼吸） |
 | `walk`、`jump`、`attacked`、`ladder_*`、`swim_stand`、`swing_hand` | 借用森林精灵文件里已换算好的车万女仆动画（[CREDITS.md](../CREDITS.md) 登记），骨架相同 |
-| `death` | 维护者选定的「侧倒后面朝地面、尾巴先僵直后松垂」版本，1.55 秒，停在末帧 |
+| `death` | 维护者选定的「侧倒后面朝地面、尾巴先僵直后松垂」版本，1.55 秒，停在末帧。按全部零件生成，每套衣装的裙片、垂袖与飘带倒地时都不穿进地面；导入时去掉线性插值就能还原的中间帧（误差 < 0.001） |
 | `pre_parallel0` | 眨眼：每种眼睛零件自己的骨骼。眼球与瞳孔向下眼缘上方 0.4 处收拢，主要是上眼皮往下合；睫毛不缩放，上睫毛随上眼皮下移、下睫毛随下眼皮上移；睁开后高光左右抖一下。5.3 秒循环里一次单眨、一次连眨 |
 | `pre_parallel1` | 耳朵抖动：每种狐耳零件自己的根骨骼（`Left_ear` / `Right_ear` 的子骨骼）短促抖一下，7 秒循环里左右耳错开 |
 | `pre_parallel2` | 尾巴轻摆：`Tail` 左右 ±4°，各节尾巴依次延迟、各加 ±0.8°，2.8 秒一个来回 |
@@ -51,8 +51,8 @@ python tools/divine_fox_assets.py [--source <fox_model/divine_fox 目录>]
 ./gradlew test --tests dev.logos.dimension.DivineFoxAssetsTest -PlogosJar=/absolute/path/logos-0.6.0.jar
 ```
 
-实际客户端预览（白瓷台上五只不同外观的神狐，正面、背面、脸部近景、死亡与五种表情）：
+实际客户端预览（白瓷台上五只不同外观的神狐，正面、背面、脸部近景、死亡与五种表情；另有八只穿四款短装的神狐，左四只短袜、右四只过膝袜）：
 
 ```text
-./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=npc_divine_fox_lineup,npc_divine_fox_back,npc_divine_fox_face,npc_divine_fox_death,npc_divine_fox_expressions" -PldTestHeadless -PldTestWindow=1280x720
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=npc_divine_fox_lineup,npc_divine_fox_back,npc_divine_fox_face,npc_divine_fox_death,npc_divine_fox_expressions,npc_divine_fox_short_outfits" -PldTestHeadless -PldTestWindow=1280x720
 ```
