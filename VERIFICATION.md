@@ -1,5 +1,23 @@
 # 首版验证记录
 
+## 炒汇：挂单、持仓管理、预警与随身行情
+
+2026-11-04：分支 `feat/fx-orders`，基于 main（含 #119 钱庄与 #128/#131 超电磁炮）。设计见 [异世界货币与外汇](docs/ECONOMY.md)。钱庄改为账户、杠杆、持仓三页并加账户总览；杠杆可挂单、设移动止损，预览约可承受反向波动；持仓可追加保证金、加仓、部分平仓、一键全平、改止损；兑换台可挂现货单；爆仓预警、价格提醒、离线通知上线补发；钱囊加行情、持仓两页；屏幕角落行情条。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | `MarginTest` **14/14**（新增 6：追加保证金推远爆仓线、加仓按均价合并、分两半平与一次平一致、移动止损只进不退且多空方向正确、挂单与提醒的触发方向、账户连同挂单提醒存读档与总览）；`FxMarketTest` 6/6；模拟结果不变 |
+| 世界测试 | 经济全部 **8/8**，连跑 4 次都通过（新增 2：现货买卖挂单冻结与成交入钱庄、杠杆挂单夜里不撮合、撤单退款、夜里提醒照样触发；追加保证金、预警不强平、移动止损从现价起算、平一半、加仓、一键全平） |
+| 实际客户端 | `bank_views` **1/1 场景、6/6 检查** 与 `economy_views` 4/4（中文）：经网络挂单、追加保证金、设移动止损，持仓页选中管理，钱囊行情页设提醒、持仓页，屏幕角落行情条收到数据 |
+
+测试里发现：各测试来回拨世界时钟时，钱庄会补算跨过的夜的利息，世界测试先结一次再开仓。这是正常行为（睡觉跳过夜晚也会计息）。没测：多人同时挂单撮合、光影。
+
+```text
+./gradlew test --tests "dev.logos.dimension.economy.*" -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:economy_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=bank_views,economy_views" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 曦誓：去掉剑鞘，拔剑与收剑改为光点聚散
 
 2026-11-04：分支 `feat/dawnvow-summon`，基于 main `ae3f1aa`。按维护者意见：

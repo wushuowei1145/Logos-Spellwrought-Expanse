@@ -80,13 +80,15 @@ public final class Economy {
                 .playToClient(MarketPayload.TYPE, MarketPayload.CODEC)
                 .playToClient(BankPayload.TYPE, BankPayload.CODEC)
                 .playToClient(RailgunPayload.TYPE, RailgunPayload.CODEC)
+                .playToClient(TickerPayload.TYPE, TickerPayload.CODEC)
                 .playToServer(EconomyActionPayload.TYPE, EconomyActionPayload.CODEC, Economy::handle)
                 .playToServer(BankOrderPayload.TYPE, BankOrderPayload.CODEC, Economy::handleBank));
         NeoForge.EVENT_BUS.addListener(Economy::tick);
         NeoForge.EVENT_BUS.addListener(Economy::pickup);
         NeoForge.EVENT_BUS.addListener(Railgun::sweep);
         NeoForge.EVENT_BUS.addListener(Railgun::stopped);
-        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> WATCHERS.remove(e.getEntity().getUUID()));
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> { WATCHERS.remove(e.getEntity().getUUID()); TICKER.remove(e.getEntity().getUUID()); });
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> { if (e.getEntity() instanceof ServerPlayer player) Bank.login(player); });
         NeoForge.EVENT_BUS.addListener(EconomyCommands::register);
     }
 
@@ -95,6 +97,8 @@ public final class Economy {
     /** 谁开着哪个面板：兑换台和钱庄记方块位置，钱囊记哪只手。 */
     private record Watch(int screen, int hand, BlockPos pos) {}
     private static final Map<UUID, Watch> WATCHERS = new HashMap<>();
+    /** 打开了屏幕角落行情条的玩家；身上有钱囊时才推送。 */
+    private static final java.util.Set<UUID> TICKER = new java.util.HashSet<>();
     private static final double REACH = 8;
 
     public static long clock(MinecraftServer server) { return server.overworld().getOverworldClockTime(); }
@@ -107,9 +111,11 @@ public final class Economy {
         return market;
     }
 
+    /** 兑换台、钱囊面板：行情快照后面跟一份账户快照（不打开钱庄），用来显示挂单、持仓和提醒。 */
     static void send(ServerPlayer player, int screen, int hand, BlockPos pos) {
         var server = player.level().getServer();
-        PacketDistributor.sendToPlayer(player, MarketPayload.of(market(server), screen, hand, pos, clock(server)));
+        PacketDistributor.sendToPlayer(player, MarketPayload.of(market(server), screen, hand, pos, clock(server)),
+                BankPayload.of(Bank.of(server).account(player.getUUID()), false, pos));
     }
 
     /** 钱庄面板：先发行情（只刷新），再发账户；open 时客户端打开钱庄。 */
@@ -121,6 +127,7 @@ public final class Economy {
 
     public static void openBank(ServerPlayer player, BlockPos pos) {
         WATCHERS.put(player.getUUID(), new Watch(BANK_SCREEN, 0, pos.immutable()));
+        Bank.seen(player);
         sendBank(player, pos, true);
     }
     private static final int BANK_SCREEN = 3;
@@ -148,6 +155,11 @@ public final class Economy {
             else send(player, MarketPayload.UPDATE, w.hand, w.pos);
         }
         for (var player : server.getPlayerList().getPlayers()) milestones(player);
+        for (var id : TICKER) {
+            var player = server.getPlayerList().getPlayer(id);
+            if (player != null && !Purse.wallet(player).isEmpty())
+                PacketDistributor.sendToPlayer(player, TickerPayload.of(market(server), Bank.of(server).account(id)));
+        }
     }
 
     // ---------------------------------------------------------------- 剧情与探索推动的基本面
@@ -188,6 +200,7 @@ public final class Economy {
     private static void handle(EconomyActionPayload p, IPayloadContext context) {
         if (!(context.player() instanceof ServerPlayer player)) return;
         if (p.action() == EconomyActionPayload.CLOSE) { WATCHERS.remove(player.getUUID()); return; }
+        if (p.action() == EconomyActionPayload.TICKER) { if (p.amount() > 0) TICKER.add(player.getUUID()); else TICKER.remove(player.getUUID()); return; }
         var watch = WATCHERS.get(player.getUUID());
         if (p.action() == EconomyActionPayload.TRADE) {
             if (watch == null || watch.screen != MarketPayload.EXCHANGE) return;
@@ -214,25 +227,46 @@ public final class Economy {
         }
     }
 
+    /**
+     * 账户操作分三类：存取与持仓管理要在钱庄柜台旁，现货挂单要在兑换台旁，撤单和价格提醒开着哪个面板都行。
+     */
     private static void handleBank(BankOrderPayload p, IPayloadContext context) {
         if (!(context.player() instanceof ServerPlayer player)) return;
         var watch = WATCHERS.get(player.getUUID());
-        if (watch == null || watch.screen != BANK_SCREEN) return;
-        if (!player.level().getBlockState(watch.pos).is(BANK.get()) || player.distanceToSqr(watch.pos.getCenter()) > REACH * REACH) {
-            player.sendOverlayMessage(Component.translatable("message.logos_dimension.fx.too_far"));
-            return;
-        }
+        if (watch == null) return;
         var currencies = Currency.values();
         if (p.currency() < 0 || p.currency() >= currencies.length) return;
         var c = currencies[p.currency()];
-        switch (p.action()) {
+        int a = p.action();
+        boolean anywhere = a == BankOrderPayload.CANCEL || a == BankOrderPayload.ALERT || a == BankOrderPayload.UNALERT;
+        if (!anywhere) {
+            var need = a == BankOrderPayload.LIMIT_SPOT ? MarketPayload.EXCHANGE : BANK_SCREEN;
+            var block = a == BankOrderPayload.LIMIT_SPOT ? EXCHANGE.get() : (net.minecraft.world.level.block.Block) BANK.get();
+            if (watch.screen != need) return;
+            if (!player.level().getBlockState(watch.pos).is(block) || player.distanceToSqr(watch.pos.getCenter()) > REACH * REACH) {
+                player.sendOverlayMessage(Component.translatable("message.logos_dimension.fx.too_far"));
+                return;
+            }
+        }
+        switch (a) {
             case BankOrderPayload.DEPOSIT -> Bank.deposit(player, c, p.amount());
             case BankOrderPayload.WITHDRAW -> Bank.withdraw(player, c, p.amount());
-            case BankOrderPayload.OPEN -> Bank.open(player, c, p.side(), p.amount(), p.leverage(), p.stop(), p.take());
+            case BankOrderPayload.OPEN -> Bank.open(player, c, p.side(), p.amount(), p.leverage(), p.stop(), p.take(), p.trail());
             case BankOrderPayload.CLOSE -> Bank.close(player, p.id());
+            case BankOrderPayload.REDUCE -> Bank.reduce(player, p.id(), Math.clamp(p.amount(), 1, 1000) / 1000.0);
+            case BankOrderPayload.CLOSE_ALL -> Bank.closeAll(player);
+            case BankOrderPayload.ADD_MARGIN -> Bank.addMargin(player, p.id(), p.amount());
+            case BankOrderPayload.INCREASE -> Bank.increase(player, p.id(), p.amount(), p.leverage());
+            case BankOrderPayload.MODIFY -> Bank.modify(player, p.id(), p.stop(), p.take(), p.trail());
+            case BankOrderPayload.LIMIT_OPEN -> Bank.placeOpen(player, c, p.side(), p.amount(), p.leverage(), p.price(), p.stop(), p.take(), p.trail());
+            case BankOrderPayload.LIMIT_SPOT -> Bank.placeSpot(player, c, p.side(), p.amount(), p.price());
+            case BankOrderPayload.CANCEL -> Bank.cancel(player, p.id());
+            case BankOrderPayload.ALERT -> Bank.addAlert(player, c, p.price());
+            case BankOrderPayload.UNALERT -> Bank.removeAlert(player, p.id());
             default -> {}
         }
-        sendBank(player, watch.pos, false);
+        if (watch.screen == BANK_SCREEN) sendBank(player, watch.pos, false);
+        else send(player, MarketPayload.UPDATE, watch.hand, watch.pos);
     }
 
     /** 在兑换台成交：人要在台子旁边，台子还在，兑换商开着门，钱也够。 */

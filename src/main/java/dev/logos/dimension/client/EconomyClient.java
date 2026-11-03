@@ -36,6 +36,7 @@ public final class EconomyClient {
             bank = p;
             if (p.open()) Minecraft.getInstance().setScreen(new BankScreen(p.pos()));
         });
+        event.register(dev.logos.dimension.economy.TickerPayload.TYPE, (p, context) -> TickerHud.receive(p));
     }
 
     static void send(int action, int hand, int a, int b, long amount) {

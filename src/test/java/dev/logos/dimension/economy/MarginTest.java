@@ -83,6 +83,86 @@ class MarginTest {
         assertEquals(a.balance(Currency.FOX), copy.balance(Currency.FOX));
     }
 
+    // ---------------------------------------------------------------- 持仓管理
+
+    @Test void addingMarginPushesTheLiquidationAway() {
+        var m = market(11);
+        double rate = m.rate(Currency.WOLF);
+        var p = Margin.open(m, 1, Currency.WOLF, 1, 10 * CROWN, 25, 0, 0, 0, false);
+        var more = p.withMargin(p.margin() + 10 * CROWN);
+        assertTrue(Margin.liquidationRate(more) < Margin.liquidationRate(p), "追加保证金后爆仓价应更远");
+        assertTrue(Margin.room(more, rate) > Margin.room(p, rate) * 1.8, "可承受波动约翻倍");
+        assertEquals(12.5, more.effectiveLeverage(), .5, "实际倍数减半");
+    }
+
+    @Test void increasingAveragesTheEntry() {
+        var m = market(12);
+        var p = Margin.open(m, 1, Currency.CAT, 1, 10 * CROWN, 5, 0, 0, 0, true);
+        m.shock(Currency.CAT, Math.log(1.05));
+        var merged = Margin.increase(m, p, 10 * CROWN, 5, false);
+        assertTrue(merged.entry() > p.entry() && merged.entry() < m.rate(Currency.CAT) * 1.01, "均价落在两次开仓价之间");
+        assertEquals(20 * CROWN, merged.margin());
+        assertEquals(p.notional() * 2, merged.notional(), p.notional() * .06, "名义金额约为两倍");
+    }
+
+    @Test void partialClosesAddUpToAFullClose() {
+        var m = market(13);
+        var p = Margin.open(m, 1, Currency.FOX, -1, 20 * CROWN, 10, 0, 0, 0, false);
+        double rate = m.rate(Currency.FOX) * .98;
+        var half = p.scaled(.5);
+        var rest = p.scaled(.5).withMargin(p.margin() - half.margin());
+        long split = Margin.payout(half, rate) + Margin.payout(rest, rate);
+        assertEquals(Margin.payout(p, rate), split, 20 * CROWN * .01, "分两半平和一次平几乎一样（只差冲击）");
+    }
+
+    @Test void trailingStopsOnlyRatchet() {
+        var m = market(14);
+        double rate = m.rate(Currency.FOX);
+        var p = Margin.open(m, 1, Currency.FOX, 1, 10 * CROWN, 5, 0, 0, .03, 0, false);
+        assertEquals(rate * .97, p.stop(), rate * 1e-6, "开仓即按现价设好移动止损");
+        var up = Margin.trailed(p, rate * 1.1);
+        assertEquals(rate * 1.1 * .97, up.stop(), rate * 1e-6, "价格上涨，止损跟上");
+        var down = Margin.trailed(up, rate * 1.02);
+        assertEquals(up.stop(), down.stop(), 0, "价格回落，止损不退");
+        assertEquals(Margin.Trigger.STOP, Margin.check(down, rate * 1.06));
+        var shortP = Margin.trailed(Margin.open(m, 2, Currency.FOX, -1, 10 * CROWN, 5, 0, 0, .05, 0, false), rate * .9);
+        assertEquals(rate * .9 * 1.05, shortP.stop(), rate * 1e-6, "做空的移动止损在上方往下压");
+        assertFalse(Margin.validStops(1, rate, rate * 1.01, 0, 0), "做多的止损不能在现价上方");
+        assertFalse(Margin.validStops(1, rate, 0, 0, Margin.MAX_TRAIL + .01));
+    }
+
+    @Test void ordersAndAlertsTriggerOnTheRightSide() {
+        var buy = new Orders.Pending(1, Orders.BUY, Currency.FOX, 1, CROWN, 1, 2.4, 0, 0, 0, 0);
+        var sell = new Orders.Pending(2, Orders.SELL, Currency.FOX, -1, 4_000, 1, 2.6, 0, 0, 0, 0);
+        var shortOpen = new Orders.Pending(3, Orders.OPEN, Currency.WOLF, -1, CROWN, 10, 26, 0, 0, 0, 0);
+        assertTrue(buy.due(2.39) && !buy.due(2.41), "买单等跌到挂价");
+        assertTrue(sell.due(2.61) && !sell.due(2.59), "卖单等涨到挂价");
+        assertTrue(shortOpen.due(26.1) && !shortOpen.due(25.9), "做空挂单等涨到挂价");
+        assertEquals(Currency.FOX, sell.refundCurrency());
+        assertEquals(Currency.IMPERIAL, shortOpen.refundCurrency());
+        var up = new Orders.Alert(4, Currency.CAT, true, 41);
+        assertTrue(up.due(41.2) && !up.due(40.9));
+    }
+
+    @Test void accountsKeepOrdersAlertsAndStops() {
+        var m = market(15);
+        var a = new BankAccount();
+        a.add(Currency.IMPERIAL, -20 * CROWN);
+        a.positions.add(Margin.open(m, 7, Currency.WOLF, 1, 10 * CROWN, 8, 0, 0, .04, 0, false).withWarned(true));
+        a.orders.add(new Orders.Pending(8, Orders.OPEN, Currency.CAT, -1, 5 * CROWN, 12, 41, 43, 38, .02, 100));
+        a.alerts.add(new Orders.Alert(9, Currency.FOX, false, 2.3));
+        a.seen = 1234;
+        var copy = BankAccount.load(a.save());
+        assertEquals(a.positions(), copy.positions());
+        assertEquals(a.orders(), copy.orders());
+        assertEquals(a.alerts(), copy.alerts());
+        assertEquals(1234, copy.seen);
+        var s = BankAccount.summary(new long[] {-20 * CROWN, 0, 0, 0}, copy.positions(), copy.orders(), m::rate);
+        assertEquals(10 * CROWN, s.margin());
+        assertEquals(5 * CROWN, s.frozen(), 1);
+        assertTrue(s.equity() < 0 && s.equity() > -20 * CROWN + 10 * CROWN, "总权益 = 借款 + 持仓净值 + 冻结");
+    }
+
     // ---------------------------------------------------------------- 杠杆策略模拟
 
     private interface Strategy { void act(FxMarket m, double[] cash, java.util.List<Margin.Position> open, java.util.List<FxMarket.News> fresh, int hour, Random r); }
