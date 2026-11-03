@@ -7,23 +7,33 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 /**
- * 调色盘：独立全屏调配页。16×16 共 256 色（HSV 采样），点击选中并写回服务端，
- * 顶部色块与十六进制实时显示当前颜色。配色与钱囊等界面一致：墨色面板、金色描边。
+ * 调色盘：独立全屏调配页，外观沿用 Logos 的法术编辑器羊皮纸（木框 + 黄铜角件）。
+ * 16×16 共 256 色（HSV 采样），点击选中并写回服务端，顶部色块与十六进制实时显示当前颜色。
  */
 public class PaintPaletteScreen extends Screen {
     private static final int GRID = 16;
-    private static final int CELL = 14;
-    private static final int PANEL_FILL = 0xE0161218;
-    private static final int PANEL_EDGE = 0xFFB89A5A;
-    private static final int TITLE_COLOR = 0xFFE8C77A;
-    private static final int TEXT_COLOR = 0xFFE8E0D0;
-    private static final int HINT_COLOR = 0xFF8C8478;
+    private static final int CELL = 13;
+    /** 内边距避开羊皮纸的木框与黄铜角件；整体要能放进 640×360 的逻辑分辨率。 */
+    private static final int PANEL_MARGIN_X = 44;
+    private static final int HEADER = 84;
+    private static final int FOOTER = 44;
+    /** Logos 法术编辑器的羊皮纸背景（附属要求：已有贴图用 logos: 路径引用）。 */
+    private static final Identifier PARCHMENT =
+        Identifier.fromNamespaceAndPath("logos", "textures/gui/spell_editor_parchment.png");
+    private static final int TEX_W = 1672, TEX_H = 941;
+    private static final int[] SRC_X = {0, 128, 1544, 1672};
+    private static final int[] SRC_Y = {0, 128, 813, 941};
+    private static final int INK = 0xFF3A2414;
+    private static final int INK_TITLE = 0xFF5A3410;
+    private static final int INK_HINT = 0xFF7A5A3A;
+    private static final int BRASS = 0xFF9C7A30;
     private static final List<Integer> PALETTE = buildPalette();
 
     private final Player player;
@@ -43,51 +53,63 @@ public class PaintPaletteScreen extends Screen {
     }
 
     private static int panelWidth() {
-        return GRID * CELL + 24;
+        return GRID * CELL + PANEL_MARGIN_X * 2;
     }
 
     private static int panelHeight() {
-        return GRID * CELL + 96;
+        return HEADER + GRID * CELL + FOOTER;
     }
 
     @Override
     protected void init() {
         x0 = (this.width - panelWidth()) / 2;
         y0 = (this.height - panelHeight()) / 2;
-        gridLeft = x0 + 12;
-        gridTop = y0 + 56;
+        gridLeft = x0 + PANEL_MARGIN_X;
+        gridTop = y0 + HEADER;
+    }
+
+    /** 与 Logos 的 SpellEditorBackground 相同的九宫格：木框、黄铜角件不被拉伸。 */
+    private static void parchment(GuiGraphicsExtractor g, int x, int y, int w, int h) {
+        int corner = Math.min(40, Math.min(w, h) / 2);
+        int[] dx = {x, x + corner, x + w - corner, x + w};
+        int[] dy = {y, y + corner, y + h - corner, y + h};
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                g.blit(PARCHMENT, dx[col], dy[row], dx[col + 1], dy[row + 1],
+                    SRC_X[col] / (float) TEX_W, SRC_X[col + 1] / (float) TEX_W,
+                    SRC_Y[row] / (float) TEX_H, SRC_Y[row + 1] / (float) TEX_H);
+            }
+        }
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        int panelW = panelWidth(), panelH = panelHeight();
-        graphics.fill(x0, y0, x0 + panelW, y0 + panelH, PANEL_FILL);
-        graphics.outline(x0, y0, panelW, panelH, PANEL_EDGE);
-        graphics.text(this.font, this.title, x0 + 10, y0 + 8, TITLE_COLOR);
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
+        parchment(graphics, x0, y0, panelWidth(), panelHeight());
+        graphics.text(this.font, this.title, x0 + PANEL_MARGIN_X, y0 + 38, INK_TITLE);
 
         // 当前颜色：色块 + 十六进制
-        int sw = 96, sh = 22, sx = x0 + 12, sy = y0 + 26;
+        int sw = 96, sh = 22, sx = x0 + PANEL_MARGIN_X, sy = y0 + 56;
+        graphics.fill(sx - 1, sy - 1, sx + sw + 1, sy + sh + 1, INK);
         graphics.fill(sx, sy, sx + sw, sy + sh, 0xFF000000 | previewColor);
-        graphics.outline(sx, sy, sw, sh, PANEL_EDGE);
         graphics.text(this.font, Component.literal(String.format("#%06X", previewColor & 0xFFFFFF)),
-                sx + sw + 10, sy + 7, TEXT_COLOR);
+                sx + sw + 10, sy + 7, INK);
 
-        // 256 色网格
+        // 256 色网格（细墨线分隔，选中格黄铜边框）
         for (int i = 0; i < PALETTE.size(); i++) {
             int x = gridLeft + (i % GRID) * CELL;
             int y = gridTop + (i / GRID) * CELL;
             graphics.fill(x, y, x + CELL - 1, y + CELL - 1, 0xFF000000 | PALETTE.get(i));
         }
-        graphics.outline(gridLeft - 1, gridTop - 1, GRID * CELL + 2, GRID * CELL + 2, PANEL_EDGE);
+        graphics.outline(gridLeft - 1, gridTop - 1, GRID * CELL + 2, GRID * CELL + 2, INK);
         if (selected >= 0) {
             int x = gridLeft + (selected % GRID) * CELL;
             int y = gridTop + (selected / GRID) * CELL;
-            graphics.outline(x - 1, y - 1, CELL + 1, CELL + 1, 0xFFFFFFFF);
+            graphics.outline(x - 1, y - 1, CELL + 1, CELL + 1, BRASS);
         }
 
         graphics.text(this.font, Component.literal("点击颜色完成调配"),
-                x0 + 10, y0 + panelH - 16, HINT_COLOR);
-        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
+                x0 + PANEL_MARGIN_X, y0 + panelHeight() - 34, INK_HINT);
     }
 
     @Override
