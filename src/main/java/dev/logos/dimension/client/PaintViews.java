@@ -166,6 +166,59 @@ public abstract class PaintViews implements UIScenario {
     public static class Surfaces extends PaintViews {
     }
 
+    /** 调色盘放在草地上、草下面是空洞：核对它不会剔掉草顶面而露出地下（原先按整格遮挡）。 */
+    @LDLRegisterClient(name = "paint_palette_ground", group = "paint", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class PaletteGround extends PaintViews {
+        private BlockPos palettePos;
+
+        @Override
+        public void define(ScenarioBuilder s) {
+            s.setGameMode(GameType.CREATIVE)
+                .runCommand("difficulty peaceful")
+                .runCommand("time set day")
+                .step("camera", ctx -> {
+                    var mc = Minecraft.getInstance();
+                    mc.options.hideGui = true;
+                    mc.options.renderDistance().set(8);
+                    mc.options.fov().set(70);
+                    mc.options.broadcastOptions();
+                })
+                .server("stage palette on grass over a hollow", ctx -> {
+                    ServerLevel level = ctx.server().overworld();
+                    origin = new BlockPos(0, GROUND, 0);
+                    for (int x = -6; x <= 6; x++) {
+                        for (int z = -6; z <= 6; z++) {
+                            level.setBlockAndUpdate(origin.offset(x, -4, z), Blocks.STONE.defaultBlockState());
+                            for (int y = -3; y <= -1; y++) level.removeBlock(origin.offset(x, y, z), false);
+                            level.setBlockAndUpdate(origin.offset(x, 0, z), Blocks.GRASS_BLOCK.defaultBlockState());
+                            for (int y = 1; y <= 6; y++) level.removeBlock(origin.offset(x, y, z), false);
+                        }
+                    }
+                    palettePos = origin.above();
+                    level.setBlockAndUpdate(palettePos, PaintSystem.PALETTE.get().defaultBlockState());
+                    if (level.getBlockEntity(palettePos) instanceof dev.logos.dimension.paint.PaintSurfaceBlockEntity be) {
+                        be.setPaint(0xFF2F6F8F);
+                    }
+                    DimensionTravel.teleport(ctx.player(), level,
+                        new Vec3(origin.getX() + 0.5, GROUND + 3.4, origin.getZ() + 3.2), 180f, 50f);
+                })
+                .waitUntil("stage arrives", ctx -> {
+                    var mc = Minecraft.getInstance();
+                    return mc.level != null && mc.level.hasChunk(origin.getX() >> 4, origin.getZ() >> 4)
+                        && mc.level.getBlockState(palettePos).is(PaintSystem.PALETTE.get());
+                })
+                .ticks(60)
+                .check("palette does not occlude the grass below", ctx -> {
+                    var mc = Minecraft.getInstance();
+                    BlockState palette = mc.level.getBlockState(palettePos);
+                    return !palette.canOcclude()
+                        && palette.getShape(mc.level, palettePos).max(Direction.Axis.Y) < 0.2;
+                })
+                .screenshot("paint_palette_ground")
+                .teardown("restore HUD", ctx -> Minecraft.getInstance().options.hideGui = false);
+        }
+    }
+
     /** 俯视场景：原木顶面与下砖顶面刷漆，核对贴顶覆盖与半砖补半格。 */
     @LDLRegisterClient(name = "paint_tops", group = "paint", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
     public static class Tops extends PaintViews {
