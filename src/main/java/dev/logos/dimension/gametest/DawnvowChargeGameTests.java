@@ -51,7 +51,9 @@ public final class DawnvowChargeGameTests {
         var tests = Map.<String, Consumer<GameTestHelper>>of(
             "dawnvow_charge_small_wave", DawnvowChargeGameTests::smallWave,
             "dawnvow_charge_grand", DawnvowChargeGameTests::grand,
-            "dawnvow_charge_out_of_mana", DawnvowChargeGameTests::outOfMana);
+            "dawnvow_charge_out_of_mana", DawnvowChargeGameTests::outOfMana,
+            "dawnvow_charge_carves", DawnvowChargeGameTests::carves,
+            "dawnvow_charge_blessing", DawnvowChargeGameTests::blessing);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -181,6 +183,56 @@ public final class DawnvowChargeGameTests {
             f.p.releaseUsingItem();
         });
         f.at(USE + DawnvowCharge.FULL_TICKS + 40, f::succeed);
+    }
+
+    /**
+     * 巨型剑气贴地走：六格处三格高的泥土墙被削开（墙下的地面不动），十格处一格高的石台阶迈上去（台阶本身不动），
+     * 十六格处黑曜石墙劈不开，剑气停在它前面爆开。
+     */
+    private static void carves(GameTestHelper h) {
+        var f = Fixture.create(h, 0);
+        var level = h.getLevel();
+        BlockPos o = BlockPos.containing(f.origin);
+        for (int z = -2; z <= 2; z++) {
+            for (int y = 0; y < 3; y++) level.setBlockAndUpdate(o.offset(6, y, z), Blocks.DIRT.defaultBlockState());
+            level.setBlockAndUpdate(o.offset(10, 0, z), Blocks.STONE.defaultBlockState());
+            for (int y = 0; y < 3; y++) level.setBlockAndUpdate(o.offset(16, y, z), Blocks.OBSIDIAN.defaultBlockState());
+        }
+        f.at(5, () -> {
+            Vec3 dir = new Vec3(1, 0, 0);
+            float[] path = SwordWave.grand(level, f.p, f.origin.add(1.2, 0, 0), dir);
+            double length = (path.length - 1) * SwordWave.PATH_STEP;
+            h.assertTrue(length > 13 && length < 15, "剑气没有停在黑曜石墙前：长 " + length);
+            h.assertTrue(Math.abs(SwordWave.heightAt(path, 9.0) - (f.origin.y + 1)) < .01, "一格高的台阶没有迈上去");
+        });
+        f.at(5 + 6 + SwordWave.PILLAR_DELAY + 2, () -> {
+            for (int y = 0; y < 3; y++) h.assertTrue(level.getBlockState(o.offset(6, y, 0)).isAir(), "泥土墙第 " + y + " 层没有削开");
+            h.assertTrue(level.getBlockState(o.offset(6, -1, 0)).is(Blocks.STONE), "墙下的地面被削掉了");
+            h.assertTrue(level.getBlockState(o.offset(10, 0, 0)).is(Blocks.STONE), "迈上去的台阶被削掉了");
+            h.assertTrue(level.getBlockState(o.offset(16, 0, 0)).is(Blocks.OBSIDIAN), "黑曜石被削掉了");
+            Vec3 burst = SwordWave.lastBurst();
+            h.assertTrue(burst != null && Math.abs(burst.x - (f.origin.x + 15)) < 1 && Math.abs(burst.y - f.origin.y) < .01,
+                    "爆点不在黑曜石墙前的地面上：" + burst);
+            f.succeed();
+        });
+    }
+
+    /** 放出巨型剑气后的 60 秒：攻击距离多 3 格，四格半外的铁傀儡也砍得到，每下另加 15 点。 */
+    private static void blessing(GameTestHelper h) {
+        var f = Fixture.create(h, 0);
+        var golem = f.spawn(EntityType.IRON_GOLEM, 4.5);
+        f.at(USE, () -> DawnvowCharge.bless(f.p));
+        f.at(USE + 2, () -> {
+            h.assertTrue(DawnvowCharge.blessed(f.p), "没有进入剑身金光状态");
+            double reach = f.p.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE);
+            h.assertTrue(Math.abs(reach - (3 + DawnvowCharge.BLESS_REACH)) < .01, "攻击距离没有变长：" + reach);
+            dev.logos.dimension.longsword.LongswordCombat.attack(f.p);
+        });
+        f.at(USE + 20, () -> {
+            h.assertTrue(Math.abs(golem.getHealth() - (100 - 7 - DawnvowCharge.BLESS_DAMAGE)) < .01, "四格半外没有砍中或没有额外 15 点：" + golem.getHealth());
+            golem.discard();
+            f.succeed();
+        });
     }
 
     private DawnvowChargeGameTests() {}

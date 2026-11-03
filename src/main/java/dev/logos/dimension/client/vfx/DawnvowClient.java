@@ -32,6 +32,10 @@ import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlers
 public final class DawnvowClient {
     private static final Map<Integer, DawnvowAura> AURAS = new HashMap<>();
     private static final List<ExcaliburWave> WAVES = new ArrayList<>();
+    /** 巨型剑气放出后剑身的长金光保留到哪一刻。 */
+    private static final Map<Integer, Long> BLESSED = new HashMap<>();
+    /** 金光最后这么多刻淡去。 */
+    private static final int BLESS_FADE = 40;
     private static Level shown;
 
     private DawnvowClient() {}
@@ -55,8 +59,9 @@ public final class DawnvowClient {
             case DawnvowPayload.STOP -> { if (aura != null && aura.ended < 0) aura.ended = now; }
             case DawnvowPayload.RELEASE -> {
                 if (aura != null && aura.ended < 0) aura.ended = now;
-                WAVES.add(new ExcaliburWave(p.entity(), p.from(), p.dir(), p.length(), p.tick()));
+                WAVES.add(new ExcaliburWave(p.entity(), p.from(), p.dir(), p.path(), p.tick()));
             }
+            case DawnvowPayload.BLESS -> BLESSED.put(p.entity(), p.tick());
             default -> {}
         }
     }
@@ -64,15 +69,22 @@ public final class DawnvowClient {
     private static void clear(Level level) {
         AURAS.clear();
         WAVES.clear();
+        BLESSED.clear();
         shown = level;
     }
 
-    /** 这位玩家的剑身金光（{@link DawnvowBlade#encode} 后的值），没在大型蓄力时为 0。 */
+    /**
+     * 这位玩家的剑身金光（{@link DawnvowBlade#encode} 后的值）：大型蓄力 12 秒起亮起，放出巨型剑气后按蓄满的样子保留 60 秒，
+     * 最后两秒淡去；都不是时为 0。
+     */
     public static float blade(int entity, float partialTick) {
-        DawnvowAura aura = AURAS.get(entity);
         Level level = Minecraft.getInstance().level;
-        if (aura == null || level == null) return 0;
+        if (level == null) return 0;
         double now = level.getGameTime() + partialTick;
+        Long until = BLESSED.get(entity);
+        if (until != null && now < until) return DawnvowBlade.encode(VfxParts.smooth(0, BLESS_FADE, (float) (until - now)), true);
+        DawnvowAura aura = AURAS.get(entity);
+        if (aura == null) return 0;
         return DawnvowBlade.encode(aura.blade(now), aura.full >= 0 && now >= aura.full && aura.ended < 0);
     }
 
@@ -95,6 +107,7 @@ public final class DawnvowClient {
             return !aura.tick(mc.level, body, now);
         });
         WAVES.removeIf(w -> !w.tick(mc.level, now));
+        BLESSED.values().removeIf(until -> until <= now);
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
