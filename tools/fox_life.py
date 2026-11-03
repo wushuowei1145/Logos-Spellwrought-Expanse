@@ -16,7 +16,11 @@ LAWN_PLANTS = (('short_grass', 60), ('fern', 12), ('oxeye_daisy', 6), ('azure_bl
 
 
 def _free(s, u, v, y=1):
+    """这一格上方几格是空的；y=1 时地面那层也不能被铺过（石板、碎石、小路都算占用）。"""
     c = s.c
+    ground = c.get(u, s.H(u, v), v)
+    if y == 1 and ground is not None and ground['Name'] not in ('minecraft:grass_block', 'minecraft:moss_block'):
+        return False
     return all(c.get(u, s.H(u, v) + k, v) is None for k in range(y, y + 3))
 
 
@@ -126,45 +130,169 @@ def tea_garden(s, u0, v0, u1, v1, rnd):
     c.set(u0 + 3, 1, int(pc_v) + 3, L('journey_bamboo_spout', facing='west', waterlogged=False))
 
 
-def greenery(s, area, rnd, lawn=2):
-    """在空草坪上点树、花坛、竹丛与石灯：网格加抖动，每处要求周围一圈都是空草坪。"""
+def end_plot(s, kind, box, rnd):
+    """街尾空地：'tea' 茶庭、'pagoda' 五重塔、'bamboo' 竹林小径。"""
+    {'tea': tea_garden, 'pagoda': pagoda_garden, 'bamboo': bamboo_grove}[kind](s, *box, rnd)
+
+
+def _ground(s, u0, v0, u1, v1, rnd, mix=(('moss_block', 0.45), ('grass_block', 0.35), ('gravel', 0.2))):
     c = s.c
+    for u in range(u0, u1 + 1):
+        for v in range(v0, v1 + 1):
+            s.h[v, u] = 0
+            s.g[v, u] = 3  # MOSS
+            r, acc = rnd.random(), 0
+            for name, w in mix:
+                acc += w
+                if r < acc:
+                    c.set(u, 0, v, B(name, snowy=False) if name == 'grass_block' else B(name))
+                    break
+
+
+def pagoda_garden(s, u0, v0, u1, v1, rnd):
+    """五重塔的院子：碎石院心、石板参道从北口进来，四角石灯、两株樱、松与灌木，低矮竹垣围起。"""
+    c = s.c
+    _ground(s, u0, v0, u1, v1, rnd)
+    w, d = u1 - u0, v1 - v0
+    cx, cz = u0 + w // 2, v0 + d // 2 + 2
+    for u in range(cx - 7, cx + 8):
+        for v in range(cz - 7, cz + 8):
+            c.set(u, 0, v, B('gravel'))
+    for v in range(v0, cz - 6):
+        for u in (cx - 1, cx, cx + 1):
+            c.set(u, 0, v, PAVING if (u + v) % 4 else B('stone_bricks'))
+    fl.pagoda(c, cx, 0, cz)
+    for du, dv in ((-7, -7), (7, -7), (-7, 7), (7, 7)):
+        c.set(cx + du, 1, cz + dv, tall_lantern('lower'))
+        c.set(cx + du, 2, cz + dv, tall_lantern('upper'))
+    fl.cherry_tree(c, u0 + 3, 1, v1 - 4, height=7, radius=4, seed=401)
+    fl.cherry_tree(c, u1 - 3, 1, v0 + 4, height=6, radius=4, seed=402)
+    fl.pine(c, u0 + 3, 1, v0 + 4, seed=403)
+    for (u, v) in ((u1 - 2, v1 - 3), (u0 + 2, cz), (u1 - 2, cz + 2)):
+        fl.shrub(c, u, 1, v, flowering=rnd.random() < 0.5)
+    c.set(cx - 3, 1, v0 + 2, L('journey_stone_basin', waterlogged=False))
+    c.set(cx - 4, 1, v0 + 2, L('journey_bamboo_spout', facing='east', waterlogged=False))
+    fl.bench(c, cx + 3, 1, v0 + 2, 'north', length=2)
+    pts = [(u, v1) for u in range(u0, u1 + 1)] + [(u0, v) for v in range(v0 + 2, v1)] + [(u1, v) for v in range(v0 + 2, v1)]
+    fence_line(c, pts, 1, wood='bamboo')
+
+
+def bamboo_grove(s, u0, v0, u1, v1, rnd):
+    """竹林小径：密竹之间一条蜿蜒的碎石小径，中段一小块空地，石龛、石灯与长凳。"""
+    c = s.c
+    _ground(s, u0, v0, u1, v1, rnd, mix=(('podzol', 0.55), ('moss_block', 0.3), ('coarse_dirt', 0.15)))
+    w, d = u1 - u0, v1 - v0
+    path = set()
+    for t in range(0, d + 1):
+        v = v0 + t
+        uc = u0 + w / 2 + (w / 3.2) * math.sin(t / d * math.pi * 2.2)
+        for du in (-1, 0, 1):
+            path.add((int(round(uc + du)), v))
+    mid_v = v0 + d // 2
+    mid_u = int(round(u0 + w / 2 + (w / 3.2) * math.sin(0.5 * math.pi * 2.2)))
+    clearing = {(u, v) for u in range(mid_u - 3, mid_u + 4) for v in range(mid_v - 2, mid_v + 3)}
+    for (u, v) in path | clearing:
+        if u0 <= u <= u1:
+            c.set(u, 0, v, B('gravel'))
+    for (u, v) in sorted(path):
+        if (u + v) % 5 == 0 and u0 <= u <= u1:
+            c.set(u, 1, v, L('journey_stepping_stone', waterlogged=False))
+    open_ = path | clearing
+    for u in range(u0, u1 + 1):
+        for v in range(v0, v1 + 1):
+            if (u, v) in open_ or any((u + du, v + dv) in open_ for du in (-1, 1) for dv in (-1, 1)):
+                continue
+            if rnd.random() < 0.55:
+                h = rnd.randint(8, 14)
+                c.set(u, 0, v, B('podzol', snowy=False))
+                for k in range(h):
+                    leaves = 'large' if k >= h - 2 else 'small' if k == h - 3 else 'none'
+                    c.set(u, 1 + k, v, B('bamboo', age=1, leaves=leaves, stage=0))
+    c.set(mid_u, 1, mid_v - 2, L('journey_shrine_hokora', facing='south'))
+    for du in (-2, 2):
+        c.set(mid_u + du, 1, mid_v - 2, stone_lantern())
+    fl.bench(c, mid_u - 1, 1, mid_v + 2, 'south', length=3)
+
+
+def greenery(s, area, rnd, lawn=2):
+    """在空草坪上留出 5×5 的园景地块：网格加抖动，每处要求周围一圈都是空草坪。
+    地块里放什么（樱、松、花坛、竹丛、灌木与石灯、水井或只有草）由聚落生成时现场挑，见 GARDEN_VARIANTS。"""
     u0, v0, u1, v1 = area
     for gu in range(u0, u1, 7):
         for gv in range(v0, v1, 7):
             u, v = gu + rnd.randint(0, 3), gv + rnd.randint(0, 3)
             ok = all(0 <= u + du < 176 and 0 <= v + dv < 176 and s.g[v + dv, u + du] == lawn and _free(s, u + du, v + dv)
                      for du in range(-2, 3) for dv in range(-2, 3))
-            if not ok:
+            box = (u - 2, v - 2, u + 2, v + 2)
+            if not ok or any(box[0] <= o[2] + 1 and o[0] - 1 <= box[2] and box[1] <= o[3] + 1 and o[1] - 1 <= box[3] for o in s.boxes):
                 continue
-            y = s.H(u, v) + 1
-            r = rnd.random()
-            if r < 0.3:
-                fl.cherry_tree(c, u, y, v, height=rnd.randint(5, 7), radius=rnd.randint(3, 4), seed=rnd.randint(0, 9999))
-            elif r < 0.45:
-                fl.pine(c, u, y, v, seed=rnd.randint(0, 9999))
-            elif r < 0.6:
-                # 花坛：一圈苔石围着花
-                for du in (-1, 0, 1):
-                    for dv in (-1, 0, 1):
-                        if du or dv:
-                            c.set(u + du, y - 1, v + dv, B('mossy_cobblestone'))
-                        c.set(u + du, y, v + dv, B(rnd.choice(('poppy', 'oxeye_daisy', 'allium', 'azure_bluet', 'cornflower', 'pink_tulip'))))
-                c.set(u, y - 1, v, B('grass_block', snowy=False))
-            elif r < 0.72:
-                fl.bamboo_clump(c, u - 1, v - 1, u + 1, v + 1, y, seed=rnd.randint(0, 9999), density=0.6)
-            elif r < 0.84:
-                fl.shrub(c, u, y, v, flowering=rnd.random() < 0.6)
-                c.set(u + 2, y, v, stone_lantern())
-            else:
-                # 井与水桶
-                c.box(u - 1, y, v - 1, u + 1, y, v + 1, B('cobblestone'))
-                c.set(u, y, v, B('water', level=0))
-                c.set(u, y - 1, v, B('water', level=0))
-                for du, dv in ((-1, -1), (1, 1)):
-                    c.box(u + du, y + 1, v + dv, u + du, y + 2, v + dv, fence('spruce'))
-                c.box(u - 1, y + 3, v - 1, u + 1, y + 3, v + 1, tile_slab('bottom'))
-                c.set(u + 2, y, v, B('barrel', facing='up', open=False))
+            s.lot('garden', u - 2, v - 2, 5, 5, 0, y=s.H(u, v), ground=None)
+    # 重复的名字是权重：樱与松多一些
+    s.variants['garden'] = sorted(GARDEN_VARIANTS) + ['garden_cherry_a', 'garden_cherry_b', 'garden_pine']
+
+
+def _garden(build):
+    def make():
+        c = Canvas()
+        build(c, random.Random(0))
+        return c
+    return make
+
+
+def _cherry_a(c, rnd):
+    fl.cherry_tree(c, 2, 1, 2, height=7, radius=3, seed=511)
+
+
+def _cherry_b(c, rnd):
+    fl.cherry_tree(c, 2, 1, 2, height=5, radius=3, seed=512)
+
+
+def _pine(c, rnd):
+    fl.pine(c, 2, 1, 2, seed=513)
+
+
+def _bed(c, rnd):
+    """花坛：一圈苔石围着花。"""
+    for du in (-1, 0, 1):
+        for dv in (-1, 0, 1):
+            if du or dv:
+                c.set(2 + du, 0, 2 + dv, B('mossy_cobblestone'))
+            c.set(2 + du, 1, 2 + dv, B(('poppy', 'oxeye_daisy', 'allium', 'azure_bluet', 'cornflower', 'pink_tulip')[(du + 1) * 3 + dv + 1 & 5]))
+    c.set(2, 0, 2, B('grass_block', snowy=False))
+
+
+def _bamboo(c, rnd):
+    fl.bamboo_clump(c, 1, 1, 3, 3, 1, seed=514, density=0.6)
+
+
+def _shrub(c, rnd):
+    fl.shrub(c, 2, 1, 2, flowering=True)
+    c.set(4, 1, 2, stone_lantern())
+
+
+def _well(c, rnd):
+    """井与水桶。"""
+    c.box(1, 1, 1, 3, 1, 3, B('cobblestone'))
+    c.set(2, 1, 2, B('water', level=0))
+    c.set(2, 0, 2, B('water', level=0))
+    for du, dv in ((-1, -1), (1, 1)):
+        c.box(2 + du, 2, 2 + dv, 2 + du, 3, 2 + dv, fence('spruce'))
+    c.box(1, 4, 1, 3, 4, 3, tile_slab('bottom'))
+    c.set(4, 1, 2, B('barrel', facing='up', open=False))
+
+
+def _grass(c, rnd):
+    """留空：只有几丛草与野花。"""
+    for (x, z, name) in ((1, 1, 'short_grass'), (3, 2, 'fern'), (2, 3, 'oxeye_daisy'), (0, 3, 'short_grass')):
+        c.set(x, 1, z, B(name))
+
+
+#: 园景地块的变体；地块 5×5，模板外扩 2 格，树冠可以伸出地块
+GARDEN_VARIANTS = {
+    'garden_cherry_a': _garden(_cherry_a), 'garden_cherry_b': _garden(_cherry_b), 'garden_pine': _garden(_pine),
+    'garden_bed': _garden(_bed), 'garden_bamboo': _garden(_bamboo), 'garden_shrub': _garden(_shrub),
+    'garden_well': _garden(_well), 'garden_grass': _garden(_grass),
+}
 
 
 def lawn_cover(s, rnd, lawn=2):

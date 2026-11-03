@@ -64,6 +64,12 @@ class Plan:
     end_box: tuple = (137, 69, 157, 99)
     #: 草坪上点树与花坛的范围
     greenery: tuple = (14, 14, 162, 112)
+    #: 神社参道：'senbon' 千本鸟居直阶，'winding' 九十九折，'terraced' 三段石阶
+    approach: str = 'senbon'
+    #: 街尾空地：'tea' 茶庭，'pagoda' 五重塔，'bamboo' 竹林小径
+    end_plot: str = 'tea'
+    #: 温泉旅馆格局（见 fox_landmarks.ryokan）
+    ryokan: str = 'grand'
 
 
 PLANS = [
@@ -71,9 +77,11 @@ PLANS = [
     # 神社翻到东南、旅馆到东北；主街短一些、弯向另一边；住宅只在西北，两排挤一些
     # 街尾空地挪到南侧商铺与神社山包之间
     Plan('b', bend=(3.0, 2.5), street_end=120, shrine_side='s', houses=((54, 1, 1), (38, 2, 3), (22, 3, 4)),
-         fields='tea', end_box=(94, 110, 117, 140), greenery=(14, 14, 162, 162)),
+         fields='tea', end_box=(94, 110, 117, 140), greenery=(14, 14, 162, 162), approach='winding', end_plot='pagoda',
+         ryokan='garden'),
     # 主街大弯；住宅只有两排，院子宽
-    Plan('c', bend=(7.0, -1.0), street_end=122, houses=((54, 0, 7), (28, 3, 13)), fields='orchard'),
+    Plan('c', bend=(7.0, -1.0), street_end=122, houses=((54, 0, 7), (28, 3, 13)), fields='orchard',
+         approach='terraced', end_plot='bamboo', ryokan='terrace'),
 ]
 PLAN = PLANS[0]
 #: 片区翻转用：非 None 时 street_v 返回以此为两倍轴的镜像（见 district）
@@ -113,8 +121,9 @@ class Site:
         if ground is not None:
             self.g[v0:v1 + 1, u0:u1 + 1] = ground
 
-    def lot(self, kind, u0, v0, w, d, turns, y=None):
-        """登记一块可替换地块：名义占地 w×d（旋转前），旋转后左上角对齐 (u0, v0)。模板原点为建筑坐标 (-2, -2, -2)。"""
+    def lot(self, kind, u0, v0, w, d, turns, y=None, ground=COARSE):
+        """登记一块可替换地块：名义占地 w×d（旋转前），旋转后左上角对齐 (u0, v0)。模板原点为建筑坐标 (-2, -2, -2)。
+        ground 为 None 时不平整也不改地表（园景地块就地放在草坪上）。"""
         cw = [rotate_pos(x, z, turns) for x, z in ((0, 0), (w - 1, 0), (0, d - 1), (w - 1, d - 1))]
         ax, az = u0 - min(p[0] for p in cw), v0 - min(p[1] for p in cw)
         ox, oz = rotate_pos(-2, -2, turns)
@@ -126,7 +135,8 @@ class Site:
             if box[0] <= o[2] and o[0] <= box[2] and box[1] <= o[3] and o[1] <= box[3]:
                 raise ValueError(f'{PLAN.name}: 地块 {kind} {box} 与 {o} 重叠')
         self.boxes.append(box)
-        self.flat(u0, v0, u0 + fw - 1, v0 + fd - 1, y, COARSE)
+        if ground is not None:
+            self.flat(u0, v0, u0 + fw - 1, v0 + fd - 1, y, ground)
         self.lots.append({'kind': kind, 'u': ax + ox, 'y': y - 2, 'v': az + oz, 'turns': turns})
         return y
 
@@ -388,22 +398,8 @@ def shrine(s):
     for u in range(STREET_U1 - 2, su + 7):
         for v in range(v_bottom - 2, v_bottom + 9):
             c.set(u, 0, v, PAVING if (u + v) % 5 else B('stone_bricks'))
-    # 石阶：自广场向北升到山包顶面，两侧千本鸟居
-    n = v_bottom - 2 - v_top
-    for i in range(n + 1):
-        v = v_bottom - 2 - i
-        y = int(math.floor(i * 16 / n))
-        prev = int(math.floor((i - 1) * 16 / n)) if i else 0
-        for u in range(su - 3, su + 4):
-            s.h[v, u] = y
-            s.g[v, u] = STONE
-        for u in range(su - 1, su + 2):
-            c.set(u, y, v, B('stone_brick_stairs', facing='north', half='bottom', shape='straight', waterlogged=False) if y > prev
-                  else B('stone_bricks'))
-        for u in (su - 2, su + 2, su - 3, su + 3):
-            c.set(u, y, v, B('mossy_cobblestone'))
-        if i % 2 == 0 and 2 <= i <= n - 2:
-            fl.torii(c, su, y + 1, v, axis='x')
+    # 参道：自广场向北升到山包顶面，样式随方案
+    {'senbon': approach_senbon, 'winding': approach_winding, 'terraced': approach_terraced}[PLAN.approach](s, su, v_bottom - 2, v_top)
     # 街尾巨大鸟居
     fl.torii(c, su, 1, v_bottom + 3, axis='x', big=True)
     fl.fox_pair(c, su, 0, v_bottom + 6, axis='x', gap=10)
@@ -445,10 +441,118 @@ def shrine(s):
     c.set(159, 17, 36, L('journey_shrine_hokora', facing='west'))
 
 
+def approach_senbon(s, su, vb, vt):
+    """千本鸟居：一道直上的石阶，隔一级一座鸟居。"""
+    c = s.c
+    n = vb - vt
+    for i in range(n + 1):
+        v = vb - i
+        y = int(math.floor(i * 16 / n))
+        prev = int(math.floor((i - 1) * 16 / n)) if i else 0
+        for u in range(su - 3, su + 4):
+            s.h[v, u] = y
+            s.g[v, u] = STONE
+        for u in range(su - 1, su + 2):
+            c.set(u, y, v, B('stone_brick_stairs', facing='north', half='bottom', shape='straight', waterlogged=False) if y > prev
+                  else B('stone_bricks'))
+        for u in (su - 2, su + 2, su - 3, su + 3):
+            c.set(u, y, v, B('mossy_cobblestone'))
+        if i % 2 == 0 and 2 <= i <= n - 2:
+            fl.torii(c, su, y + 1, v, axis='x')
+
+
+def approach_winding(s, su, vb, vt):
+    """九十九折：石阶在山坡上来回折两次，坡缓；转角平台立石灯，只在起点和终点各一座鸟居。"""
+    c = s.c
+    span = vb - vt
+    k = max(6, (span - 8) // 3)
+    pts = [(su, vb), (su, vb - k), (su + 10, vb - k), (su + 10, vb - 2 * k), (su, vb - 2 * k), (su, vt)]
+    cells = []
+    for a, b in zip(pts, pts[1:]):
+        du, dv = (b[0] > a[0]) - (b[0] < a[0]), (b[1] > a[1]) - (b[1] < a[1])
+        u, v = a
+        while (u, v) != b:
+            u, v = u + du, v + dv
+            cells.append((u, v, du, dv))
+    total = len(cells)
+    path = {}
+    prev = 0
+    for i, (u, v, du, dv) in enumerate(cells):
+        y = int(math.floor((i + 1) * 16 / total))
+        facing = {(0, -1): 'north', (1, 0): 'east', (-1, 0): 'west', (0, 1): 'south'}[(du, dv)]
+        rise = y > prev
+        prev = y
+        for w in (-1, 0, 1):
+            pu, pv = (u + w, v) if du == 0 else (u, v + w)
+            if (pu, pv) not in path or rise:
+                path[(pu, pv)] = (y, facing if rise else None)
+    for (u, v), (y, facing) in path.items():
+        s.h[v, u] = y
+        s.g[v, u] = STONE
+        c.set(u, y, v, B('stone_brick_stairs', facing=facing, half='bottom', shape='straight', waterlogged=False) if facing
+              else (B('mossy_stone_bricks') if (u * 3 + v) % 7 == 0 else B('stone_bricks')))
+    # 路肩：一圈苔石，高度跟路面
+    for (u, v), (y, _) in list(path.items()):
+        for du in (-1, 0, 1):
+            for dv in (-1, 0, 1):
+                q = (u + du, v + dv)
+                if q not in path and 0 <= q[0] < S and 0 <= q[1] < S:
+                    s.h[q[1], q[0]] = y
+                    s.g[q[1], q[0]] = STONE
+                    c.set(q[0], y, q[1], B('mossy_cobblestone'))
+    for (u, v) in pts[1:-1]:
+        y = path[(u, v)][0]
+        for du, dv in ((-2, -2), (2, 2), (-2, 2), (2, -2)):
+            q = (u + du, v + dv)
+            if q not in path and c.get(q[0], y + 1, q[1]) is None:
+                c.set(q[0], y + 1, q[1], stone_lantern())
+                break
+    fl.torii(c, su, path[(su, vb - 2)][0] + 1, vb - 2, axis='x')
+    fl.torii(c, su, path[(su, vt + 2)][0] + 1, vt + 2, axis='x')
+
+
+def approach_terraced(s, su, vb, vt):
+    """三段石阶：三跑直阶之间两处平台，两侧石垣带矮墙，每跑阶脚一座鸟居，平台上一对石灯。"""
+    c = s.c
+    rises = (5, 5, 6)
+    land = 5
+    run = sum(rises) + land * (len(rises) - 1)
+    pad = max(0, vb - vt - run)
+    profile = [0] * pad
+    y = 0
+    starts = []
+    for f, r in enumerate(rises):
+        starts.append((len(profile), y))
+        for _ in range(r):
+            y += 1
+            profile.append(y)
+        if f < len(rises) - 1:
+            profile += [y] * land
+    profile += [y] * max(0, vb - vt + 1 - len(profile))
+    for i, y in enumerate(profile[:vb - vt + 1]):
+        v = vb - i
+        prev = profile[i - 1] if i else 0
+        for u in range(su - 4, su + 5):
+            s.h[v, u] = y
+            s.g[v, u] = STONE
+        for u in range(su - 2, su + 3):
+            c.set(u, y, v, B('stone_brick_stairs', facing='north', half='bottom', shape='straight', waterlogged=False) if y > prev
+                  else (B('stone_bricks') if (u + v) % 3 else B('mossy_stone_bricks')))
+        for u in (su - 4, su - 3, su + 3, su + 4):
+            c.set(u, y, v, B('mossy_stone_bricks') if (u + v) % 3 == 0 else B('stone_bricks'))
+            if abs(u - su) == 4:
+                c.set(u, y + 1, v, B('stone_brick_wall', north='low', south='low', east='none', west='none', up=False, waterlogged=False))
+    for (i, y) in starts:
+        fl.torii(c, su, y + 1, vb - i + 1, axis='x')
+    for (i, y) in starts[1:]:
+        for du in (-3, 3):
+            c.set(su + du, y + 1, vb - i + 3, stone_lantern())
+
+
 # ==================== 温泉旅馆 ====================
 def ryokan(s):
     s.flat(RYOKAN_U0, RYOKAN_V0, RYOKAN_U0 + fl.RYOKAN_W - 1, RYOKAN_V0 + fl.RYOKAN_D - 1, 0, MOSS)
-    s.put(fl.ryokan(), RYOKAN_U0, RYOKAN_V0, 0, y=0)
+    s.put(fl.ryokan(PLAN.ryokan), RYOKAN_U0, RYOKAN_V0, 0, y=0)
     # 门前接主街的石板
     for u in range(RYOKAN_U0 + 26, RYOKAN_U0 + 31):
         for v in range(int(math.ceil(street_v(u) + 3)), RYOKAN_V0):
@@ -624,7 +728,8 @@ def write_core(s, out, prefix):
 
 def write_variants():
     """各方案共用的地块变体：商铺、住宅、食摊。"""
-    for table, (w, d) in ((fb.SHOP_VARIANTS, (fb.SHOP_W, fb.SHOP_D)), (fb.HOUSE_VARIANTS, (13, 13)), (fb.STALL_VARIANTS, (5, 5))):
+    for table, (w, d) in ((fb.SHOP_VARIANTS, (fb.SHOP_W, fb.SHOP_D)), (fb.HOUSE_VARIANTS, (13, 13)), (fb.STALL_VARIANTS, (5, 5)),
+                          (life.GARDEN_VARIANTS, (5, 5))):
         for name, make in table.items():
             b = make()
             size = [w + 4, 24, d + 4]
@@ -742,7 +847,7 @@ def compose():
     rnd = random.Random(2026)
     life.lantern_strings(s, street_v, u1=STREET_U1 - 2)
     life.alley_props(s, street_v, rnd)
-    life.tea_garden(s, *PLAN.end_box, rnd)
+    life.end_plot(s, PLAN.end_plot, PLAN.end_box, rnd)
     life.greenery(s, PLAN.greenery, rnd)
     life.lawn_cover(s, rnd)
     return s

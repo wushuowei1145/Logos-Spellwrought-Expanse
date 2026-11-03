@@ -36,6 +36,23 @@ public class FoxSanctuaryViews implements UIScenario {
         o.tags("fox_dev").defaultTimeoutMs(400000).scenarioTimeoutMs(900000);
     }
 
+    /** 各方案的神社参道 u（主街东端 + 6），与 tools/fox_sanctuary.py 的 PLANS 对应。 */
+    private static final int[] SHRINE_U = {132, 126, 128};
+
+    private static int su(SanctuaryGroundsPiece g) {
+        return SHRINE_U[g.plan()];
+    }
+
+    /** 神社与旅馆片区的设计点：方案 b 把两者以主街为轴南北翻过去（翻转轴两倍为 176，连续坐标 v → 177 - v）。 */
+    private static Vec3 sp(SanctuaryGroundsPiece g, double u, double dy, double v) {
+        return g.designPoint(u, dy, g.plan() == 1 ? 177 - v : v);
+    }
+
+    /** 露天风吕岩岸池中间一格（terrace 格局的岩岸池在西边）。 */
+    private static Vec3 bath(SanctuaryGroundsPiece g, double dy) {
+        return sp(g, g.plan() == 2 ? 116.5 : 122.5, dy, 155.5);
+    }
+
     private static Vec3[] look(Vec3 from, Vec3 to) {
         return new Vec3[]{from, to};
     }
@@ -73,6 +90,8 @@ public class FoxSanctuaryViews implements UIScenario {
                 // 指定布局方案：-Dlogos.foxPlan=N 或环境变量 LOGOS_FOX_PLAN=N；不指定时随机
                 String forced = System.getProperty("logos.foxPlan", System.getenv("LOGOS_FOX_PLAN"));
                 dev.logos.dimension.fox.FoxSanctuaryStructure.devPlan = forced == null ? -1 : Integer.parseInt(forced.trim());
+                String style = System.getProperty("logos.foxStyle", System.getenv("LOGOS_FOX_STYLE"));
+                dev.logos.dimension.fox.FoxSanctuaryStructure.devStyle = style == null ? -1 : Integer.parseInt(style.trim());
                 var holder = level.registryAccess().lookupOrThrow(Registries.STRUCTURE)
                     .getOrThrow(ResourceKey.create(Registries.STRUCTURE, LogosDimension.id("fox_sanctuary")));
                 // 测试世界关闭了结构生成；这里只为预览把它打开，让聚落像正常存档一样随区块自然生成
@@ -126,17 +145,24 @@ public class FoxSanctuaryViews implements UIScenario {
         shot(s, "stair_foot", g -> look(g.trailPoint(3).add(0, 0.6, 0), g.designPoint(20, 1, 88)));
         shot(s, "reveal", g -> look(g.designPoint(21, 1.6, 88.5), g.designPoint(88, 2, 86)));
         shot(s, "food_plaza", g -> look(g.designPoint(73, 2.6, 93), g.designPoint(73, 2, 76)));
-        shot(s, "street_end", g -> look(g.designPoint(108, 2.6, 92), g.designPoint(132, 6, 74)));
-        shot(s, "senbon", g -> look(g.designPoint(132.5, 2.6, 84), g.designPoint(132.5, 14, 50)));
-        shot(s, "shrine", g -> look(g.designPoint(133, 18.6, 47), g.designPoint(147, 21, 31)));
-        shot(s, "shrine_front", g -> look(g.designPoint(151.5, 19.6, 50), g.designPoint(151.5, 18, 38)));
-        shot(s, "ryokan_gate", g -> look(g.designPoint(122.5, 2.6, 94), g.designPoint(122.5, 4, 112)));
-        shot(s, "ryokan_court", g -> look(g.designPoint(124, 15, 128), g.designPoint(118, 0, 135)));
-        shot(s, "onsen", g -> look(g.designPoint(140, 6, 157), g.designPoint(124, 0, 150)));
+        shot(s, "street_end", g -> look(g.designPoint(108, 2.6, 92), sp(g, su(g), 6, 74)));
+        // 神社参道（千本鸟居 / 九十九折 / 三段石阶）与境内
+        shot(s, "approach", g -> look(sp(g, su(g) + 0.5, 2.6, 84), sp(g, su(g) + 0.5, 14, 50)));
+        shot(s, "shrine", g -> look(sp(g, su(g) + 1, 18.6, 47), sp(g, 147, 21, 31)));
+        shot(s, "shrine_front", g -> look(sp(g, 151.5, 19.6, 50), sp(g, 151.5, 18, 38)));
+        shot(s, "shrine_back", g -> look(sp(g, 150, 24, -6), sp(g, 148, 12, 18)));
+        shot(s, "chozuya", g -> look(sp(g, su(g) - 1, 21, 43), sp(g, su(g) - 1, 17, 38)));
+        // 温泉旅馆（方案 b 在主街北侧）
+        shot(s, "ryokan_gate", g -> look(sp(g, 122.5, 2.6, 94), sp(g, 122.5, 4, 112)));
+        shot(s, "ryokan_court", g -> look(sp(g, 124, 15, 128), sp(g, 118, 0, 135)));
+        shot(s, "onsen", g -> look(sp(g, 140, 6, 157), sp(g, 124, 0, 150)));
+        shot(s, "onsen_bath", g -> look(sp(g, 122.5, 2.6, 149.5), sp(g, 122.5, 0, 156)));
+        shot(s, "ryokan_west_yard", g -> look(sp(g, 100, 24, 136), sp(g, 100, 0, 152)));
+        shot(s, "ryokan_east_yard", g -> look(sp(g, 145, 24, 136), sp(g, 145, 0, 152)));
         // 露天风吕池底是含水石半砖、下面才是地热石：放一头受伤的牛进池子，三秒后应当在回血
         s.server("hot spring", ctx -> {
             var level = ctx.server().getLevel(LogosDimension.CLOUDSEA);
-            Vec3 p = grounds.designPoint(122.5, -0.5, 155.5);
+            Vec3 p = bath(grounds, -0.5);
             BlockPos slab = BlockPos.containing(p);
             if (!HotSpringStoneBlock.heatedFrom(level, slab)) {
                 throw new IllegalStateException("露天风吕池底找不到地热石：" + level.getBlockState(slab) + " / " + level.getBlockState(slab.below()));
@@ -152,37 +178,34 @@ public class FoxSanctuaryViews implements UIScenario {
             soaker.discard();
             if (!regen) throw new IllegalStateException("泡在露天风吕里的牛没有得到生命恢复");
         }).server("hot spring winter", ctx -> {
-            // 冬天：中庭池（碎石底）会结冰，露天风吕（地热石）不结冰
+            // 冬天：主街水渠会结冰，露天风吕（地热石）不结冰
             var level = ctx.server().getLevel(LogosDimension.CLOUDSEA);
-            BlockPos bath = BlockPos.containing(grounds.designPoint(122.5, 0, 155.5));
-            BlockPos pond = null;
-            for (int u = 108; u <= 120 && pond == null; u++) for (int v = 127; v <= 136 && pond == null; v++) {
+            BlockPos bath = BlockPos.containing(bath(grounds, 0));
+            BlockPos ditch = null;
+            for (int u = 40; u <= 60 && ditch == null; u++) for (int v = 70; v <= 100 && ditch == null; v++) {
                 BlockPos p = BlockPos.containing(grounds.designPoint(u + 0.5, 0, v + 0.5));
-                if (level.getBlockState(p).is(net.minecraft.world.level.block.Blocks.WATER)
-                        && level.getBlockState(p.below(2)).is(net.minecraft.world.level.block.Blocks.GRAVEL)) pond = p;
+                if (level.getBlockState(p).is(net.minecraft.world.level.block.Blocks.WATER) && !HotSpringStoneBlock.heatedFrom(level, p)) ditch = p;
             }
-            if (pond == null) throw new IllegalStateException("没找到中庭池的水面");
+            if (ditch == null) throw new IllegalStateException("没找到主街水渠");
             JourneySeasons.CONTEXT.set(3);
             try {
                 boolean bathFreezes = level.getBiome(bath).value().shouldFreeze(level, bath, false);
-                boolean pondFreezes = level.getBiome(pond).value().shouldFreeze(level, pond, false);
-                System.out.println("[fox] winter: bath freezes=" + bathFreezes + " pond freezes=" + pondFreezes);
-                if (bathFreezes || !pondFreezes) throw new IllegalStateException("冬天应当只有中庭池结冰、温泉不结冰");
+                boolean ditchFreezes = level.getBiome(ditch).value().shouldFreeze(level, ditch, false);
+                System.out.println("[fox] winter: bath freezes=" + bathFreezes + " ditch freezes=" + ditchFreezes);
+                if (bathFreezes || !ditchFreezes) throw new IllegalStateException("冬天应当只有水渠结冰、温泉不结冰");
             } finally {
                 JourneySeasons.CONTEXT.remove();
             }
         });
-        shot(s, "ryokan_west_yard", g -> look(g.designPoint(100, 24, 136), g.designPoint(100, 0, 152)));
-        shot(s, "ryokan_east_yard", g -> look(g.designPoint(145, 24, 136), g.designPoint(145, 0, 152)));
-        shot(s, "onsen_bath", g -> look(g.designPoint(122.5, 2.6, 149.5), g.designPoint(122.5, 0, 156)));
-        shot(s, "nodate", g -> look(g.designPoint(136, 3.5, 99), g.designPoint(146, 1, 106)));
-        shot(s, "ryokan_stairs", g -> look(g.designPoint(111.5, 2.8, 121.5), g.designPoint(107.5, 4, 116)));
-        shot(s, "chozuya", g -> look(g.designPoint(131, 21, 43), g.designPoint(131, 17, 38)));
-        shot(s, "chozuya_low", g -> look(g.designPoint(136, 18.6, 38.5), g.designPoint(131.5, 18, 38.5)));
-        shot(s, "tea_garden", g -> look(g.designPoint(136, 6, 92), g.designPoint(148, 0, 82)));
-        shot(s, "tea_bridge", g -> look(g.designPoint(146, 5, 92), g.designPoint(146, 1, 83.5)));
-        shot(s, "court_bridge", g -> look(g.designPoint(121, 7, 140), g.designPoint(113.5, 1, 132)));
-        shot(s, "shrine_back", g -> look(g.designPoint(150, 24, -6), g.designPoint(148, 12, 18)));
+        shot(s, "nodate", g -> look(sp(g, 136, 3.5, 99), sp(g, 146, 1, 106)));
+        shot(s, "ryokan_stairs", g -> look(sp(g, 111.5, 2.8, 121.5), sp(g, 107.5, 4, 116)));
+        // 街尾空地：茶庭 / 五重塔 / 竹林小径
+        shot(s, "end_plot", g -> switch (g.plan()) {
+            case 1 -> look(g.designPoint(105.5, 16, 103), g.designPoint(105.5, 10, 127));
+            case 2 -> look(g.designPoint(147, 7, 63), g.designPoint(147, 1, 84));
+            default -> look(g.designPoint(136, 6, 92), g.designPoint(148, 0, 82));
+        });
+        shot(s, "court_bridge", g -> look(sp(g, 121, 7, 140), sp(g, 113.5, 1, 132)));
         shot(s, "lantern_posts", g -> look(g.designPoint(47, 3, 92), g.designPoint(42, 5, 87)));
         shot(s, "fields", g -> look(g.designPoint(40, 6, 106), g.designPoint(55, -4, 138)));
         shot(s, "houses", g -> look(g.designPoint(60, 6, 72), g.designPoint(62, 2, 40)));

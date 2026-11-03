@@ -398,6 +398,139 @@
       "y": 1,
       "v": 33,
       "turns": 2
+    },
+    {
+      "kind": "garden",
+      "u": 18,
+      "y": -2,
+      "v": 67,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 17,
+      "y": -2,
+      "v": 97,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 18,
+      "y": -2,
+      "v": 104,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 31,
+      "y": 1,
+      "v": 19,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 34,
+      "y": -1,
+      "v": 38,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 55,
+      "y": -2,
+      "v": 68,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 76,
+      "y": 0,
+      "v": 34,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 83,
+      "y": -2,
+      "v": 66,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 87,
+      "y": 1,
+      "v": 20,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 95,
+      "y": -2,
+      "v": 69,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 110,
+      "y": 1,
+      "v": 20,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 110,
+      "y": -2,
+      "v": 48,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 110,
+      "y": -2,
+      "v": 55,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 110,
+      "y": -2,
+      "v": 61,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 108,
+      "y": -2,
+      "v": 67,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 117,
+      "y": -2,
+      "v": 62,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 117,
+      "y": -2,
+      "v": 69,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 138,
+      "y": 14,
+      "v": 46,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 150,
+      "y": -2,
+      "v": 104,
+      "turns": 0
     }
   ],
   "variants": {
@@ -427,6 +560,19 @@
       "house_a",
       "house_b",
       "house_c"
+    ],
+    "garden": [
+      "garden_bamboo",
+      "garden_bed",
+      "garden_cherry_a",
+      "garden_cherry_b",
+      "garden_grass",
+      "garden_pine",
+      "garden_shrub",
+      "garden_well",
+      "garden_cherry_a",
+      "garden_cherry_b",
+      "garden_pine"
     ]
   }
 }

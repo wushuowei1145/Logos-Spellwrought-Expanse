@@ -65,10 +65,16 @@ final class SanctuaryTrail {
         return new double[]{dx / len, dz / len};
     }
 
+    /** 山路样式的数量：0 山野小径，1 石段参道，2 竹林道。 */
+    static final int STYLES = 3;
+
     /**
      * @param natural 自然地表高度的估计（生成前用生成器采样）
+     * @param style   0 山野小径：土路木阶 → 乱石阶 → 石板路，鸟居只在近山顶一段；
+     *                1 石段参道：全程石阶与乱石，一路鸟居，石灯密；
+     *                2 竹林道：土路与乱石为主，两侧长段竹林，鸟居只在山顶几座，石灯稀
      */
-    static SanctuaryTrail plan(SanctuaryFrame frame, DoubleBinaryOperator natural) {
+    static SanctuaryTrail plan(SanctuaryFrame frame, DoubleBinaryOperator natural, int style) {
         SanctuaryLayout layout = frame.layout;
         int s = layout.size;
         int y0 = frame.p + layout.entranceY;
@@ -162,7 +168,11 @@ final class SanctuaryTrail {
             z8[i] = (int) Math.round(wz[i] * 8);
             y[i] = ys[i];
             double f = (double) i / n;
-            zone[i] = (byte) (f < 0.32 ? 2 : f < 0.62 ? 1 : 0);
+            zone[i] = (byte) switch (style) {
+                case 1 -> f < 0.55 ? 2 : 1;
+                case 2 -> f < 0.12 ? 2 : f < 0.45 ? 1 : 0;
+                default -> f < 0.32 ? 2 : f < 0.62 ? 1 : 0;
+            };
         }
 
         // 溪流：自靠近山顶处的泉眼起沿路外侧下行，在两处从路下穿过换到内侧再换回
@@ -179,11 +189,12 @@ final class SanctuaryTrail {
             sy[i - start] = ys[i] - 2;
         }
 
-        // 鸟居：只在快到山顶的一段出现，越靠近入口越密
+        // 鸟居：山野小径只在快到山顶的一段，越靠近入口越密；石段参道一路都有；竹林道只在山顶几座
         List<Integer> toriiList = new ArrayList<>();
         int lastTorii = -100;
-        for (int i = 6; i < n * 0.36; i++) {
-            int gap = i < n * 0.15 ? 9 : 14;
+        double toriiEnd = style == 1 ? n - 10 : style == 2 ? n * 0.12 : n * 0.36;
+        for (int i = 6; i < toriiEnd; i++) {
+            int gap = style == 1 ? 11 : i < n * 0.15 ? 9 : 14;
             if (i - lastTorii < gap) continue;
             double tx = x(x8, i + 2, n) - x(x8, i - 2, n), tz = x(z8, i + 2, n) - x(z8, i - 2, n);
             double len = Math.hypot(tx, tz);
@@ -195,17 +206,22 @@ final class SanctuaryTrail {
 
         // 石灯笼：沿路疏落地放在溪流的另一侧；山脚一对
         List<Integer> lanternList = new ArrayList<>();
-        for (int i = 20; i < n - 8; i += 31) {
+        int lanternGap = style == 1 ? 13 : style == 2 ? 41 : 31;
+        for (int i = 20; i < n - 8; i += lanternGap) {
             boolean streamInner = i >= start && sideAt(i, cross1, cross2) < 0;
             lanternList.add(i * 2 + (streamInner ? 1 : 0));
         }
         lanternList.add((n - 3) * 2);
         lanternList.add((n - 3) * 2 + 1);
 
-        int[] bamboo = {
-            (int) (n * 0.44), (int) (n * 0.62), 1,
-            (int) (n * 0.20), (int) (n * 0.30), -1,
-            (int) (n * 0.80), (int) (n * 0.92), 1,
+        int[] bamboo = switch (style) {
+            case 1 -> new int[]{(int) (n * 0.70), (int) (n * 0.80), 1};
+            case 2 -> new int[]{(int) (n * 0.10), (int) (n * 0.90), 1, (int) (n * 0.14), (int) (n * 0.86), -1};
+            default -> new int[]{
+                (int) (n * 0.44), (int) (n * 0.62), 1,
+                (int) (n * 0.20), (int) (n * 0.30), -1,
+                (int) (n * 0.80), (int) (n * 0.92), 1,
+            };
         };
 
         double cost = 0;
