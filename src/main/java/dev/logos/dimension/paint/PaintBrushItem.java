@@ -4,6 +4,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -78,11 +80,19 @@ public class PaintBrushItem extends Item {
             HitResult hit = calculateHitResult(player);
             if (hit instanceof BlockHitResult blockHit && hit.getType() == HitResult.Type.BLOCK) {
                 Direction face = blockHit.getDirection();
-                BlockPos surfacePos = blockHit.getBlockPos().relative(face);
+                BlockPos targetPos = blockHit.getBlockPos();
+                BlockState target = level.getBlockState(targetPos);
+                // 只刷木制方块（按原版音效材质判定，覆盖原木、木板、楼梯、半砖、栅栏等）
+                if (target.getSoundType(level, targetPos, player) != SoundType.WOOD) {
+                    return stack;
+                }
+                BlockPos surfacePos = targetPos.relative(face);
                 if (level.getBlockState(surfacePos).isAir()) {
                     int color = stack.getOrDefault(PaintSystem.PAINT_COLOR.get(), PaintSurfaceBlockEntity.DEFAULT_COLOR);
-                    level.setBlock(surfacePos,
-                            PaintSystem.SURFACE.get().defaultBlockState().setValue(DirectionalBlock.FACING, face), 3);
+                    // 漆层贴在漆面格子里靠目标方块的一侧，所以朝向取被刷面的反方向
+                    level.setBlock(surfacePos, PaintSystem.SURFACE.get().defaultBlockState()
+                            .setValue(DirectionalBlock.FACING, face.getOpposite())
+                            .setValue(PaintSurfaceBlock.COVER, PaintSurfaceBlock.coverFor(target, face)), 3);
                     if (level.getBlockEntity(surfacePos) instanceof PaintSurfaceBlockEntity surface) {
                         surface.setPaint(color);
                     }

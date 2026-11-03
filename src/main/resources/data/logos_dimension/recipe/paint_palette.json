@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "#minecraft:planks",
+    "#minecraft:planks",
+    "minecraft:white_dye"
+  ],
+  "result": {
+    "id": "logos_dimension:paint_palette",
+    "count": 1
+  }
+}

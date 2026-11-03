@@ -44,6 +44,8 @@ public final class LogosDimension {
                     out.accept(dev.logos.dimension.item.UchigatanaItem.VERMILION.get());
                     out.accept(dev.logos.dimension.item.UchigatanaItem.INDIGO.get());
                     out.accept(dev.logos.dimension.item.UchigatanaItem.WOOD.get());
+                    out.accept(dev.logos.dimension.paint.PaintSystem.BRUSH.get());
+                    out.accept(dev.logos.dimension.paint.PaintSystem.PALETTE_ITEM.get());
                 }).build());
         TABS.register("crucible", () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.logos_dimension"))
                 .icon(() -> DimensionBlocks.SALT_CRYSTAL.get().asItem().getDefaultInstance())

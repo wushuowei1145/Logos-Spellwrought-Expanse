@@ -1,24 +1,6 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "paint": {
-      "force_translucent": true,
-      "sprite": "logos_dimension:block/paint_surface"
-    },
     "particle": "logos_dimension:block/paint_surface"
-  },
-  "elements": [
-    {
-      "from": [0, 0, 0],
-      "to": [16, 16, 0.25],
-      "faces": {
-        "north": { "uv": [0, 0, 16, 16], "texture": "#paint", "tintindex": 0 },
-        "south": { "uv": [0, 0, 16, 16], "texture": "#paint", "tintindex": 0 },
-        "east": { "uv": [0, 0, 16, 16], "texture": "#paint", "tintindex": 0 },
-        "west": { "uv": [0, 0, 16, 16], "texture": "#paint", "tintindex": 0 },
-        "up": { "uv": [0, 0, 16, 16], "texture": "#paint", "tintindex": 0 },
-        "down": { "uv": [0, 0, 16, 16], "texture": "#paint", "tintindex": 0 }
-      }
-    }
-  ]
+  }
 }

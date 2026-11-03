@@ -1,5 +1,18 @@
 # 首版验证记录
 
+## 油漆：漆面、画刷与调色盘
+
+2026-11-03：分支 `feat/paint-system`，基于 main `e5a9206`。设计见 [油漆](docs/PAINT.md)。新增漆面方块（薄层、无碰撞、颜色存方块实体、按目标轮廓选形状）、画刷（原版刷子动作，按住刷）、调色盘（可放置，右键打开 256 色调配页），配方、创造栏与掉落表一并补齐。
+
+| 层级 | 结果 |
+| --- | --- |
+| 编译 | `./gradlew build -PlogosJar=…` 编译与资源处理通过；本机 `:test` 测试执行器无法启动（Gradle 报 `version is null`），**单元测试未运行，不计为已验证** |
+| 世界测试 | 未新增 GameTest |
+| 实际客户端 | **3/3 场景、7/7 检查**：`./gradlew --offline runClient -PlogosJar=… -PldTest=paint_stairs,paint_views,paint_palette_ui -PldTestHeadless -PldTestWindow=1280x720`。漆面颜色写入方块实体、半砖与三种楼梯的 `cover` 变体、楼梯 `shape=straight` 均断言通过；人工查看截图确认染色后木纹清晰、楼梯 L 形贴合 |
+| 未验证 | 光影包、多人颜色同步、生存获取（配方与掉落已加，未实测） |
+
+截图：[调配页](docs/screenshots/paint/palette.png) · [漆面与木纹](docs/screenshots/paint/surface-on-wood.png) · [楼梯贴合](docs/screenshots/paint/stairs.png)
+
 ## 钱庄：存款、借款与杠杆交易
 
 2026-11-03：分支 `feat/fx-margin`，基于 main `9cb4b7d`。设计见 [异世界货币与外汇 · 钱庄](docs/ECONOMY.md#钱庄bankblockbankmargin)。新增钱庄方块（账户与杠杆两页）、按玩家记账的存款（死亡不掉）、帝国币借款当保证金（只显示负数，授信 100 金冠）、做多做空、玩家 1–25 倍（数据与计算兼容到 500 倍）、强平、止损止盈、隔夜利息。兑换台的 K 线抽成共用的 `CandleChart`。

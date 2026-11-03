@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:stick",
+    "minecraft:white_wool"
+  ],
+  "result": {
+    "id": "logos_dimension:paint_brush",
+    "count": 1
+  }
+}
