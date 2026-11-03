@@ -151,6 +151,10 @@ def rock_pool(c, cx, cz, rx, rz, depth=2, seed=1, hot=False, lilies=True):
                 for k in range(depth):
                     c.set(x, -k, z, B('water', level=0))
                 c.set(x, -depth, z, L('journey_hot_spring_stone') if hot else B('gravel'))
+                if hot and depth >= 2:
+                    # 地热石上铺一层含水石半砖，站在池底时头露出水面；地热石照样加热上面整段水柱
+                    slab = 'andesite_slab' if rnd.random() < 0.25 else 'stone_slab'
+                    c.set(x, 1 - depth, z, B(slab, type='bottom', waterlogged=True))
                 c.set(x, 1, z, AIR)
                 if lilies and not hot and d > 0.55 and rnd.random() < 0.12:
                     c.set(x, 1, z, B('lily_pad'))
@@ -432,7 +436,103 @@ def ryokan():
     c.set(38, 2, D - 1, tall_lantern('upper'))
     cherry_tree(c, 42, 1, D - 2, height=7, radius=5, seed=21)
     pine(c, 14, 1, D - 2, seed=22)
+    ryokan_yards(c, W, D)
     return c
+
+
+def ryokan_yards(c, W, D):
+    """露天风吕两侧的后院与门前东侧：西边客房翼外的枯山水，东边食堂后的菜园、柴棚与水井，门前一处野点。"""
+    rnd = random.Random(61)
+    # ---- 西后院：枯山水，客房翼南端的檐廊看得到 ----
+    gx0, gz0, gx1, gz1 = 1, 43, 10, 52
+    for x in range(gx0 - 1, gx1 + 2):
+        for z in range(gz0 - 1, gz1 + 2):
+            edge = x in (gx0 - 1, gx1 + 1) or z in (gz0 - 1, gz1 + 1)
+            c.set(x, 0, z, PAVING if edge else B('gravel'))
+    # 三组立石，石脚一圈苔岛
+    for (x, z, hs) in ((3, 46, (2, 1, 1)), (8, 49, (1, 1)), (6, 44, (1,))):
+        for dx in (-1, 0, 1):
+            for dz in (-1, 0, 1):
+                if gx0 <= x + dx <= gx1 and gz0 <= z + dz <= gz1 and rnd.random() < 0.75:
+                    c.set(x + dx, 0, z + dz, B('moss_block'))
+        for i, h in enumerate(hs):
+            rx, rz = (x, z) if i == 0 else (x + (1 if i == 1 else 0), z + (0 if i == 1 else 1))
+            for k in range(h):
+                c.set(rx, 1 + k, rz, rock(rnd))
+        c.set(x - 1, 1, z, B('moss_carpet'))
+    # 客房翼外的檐廊
+    c.box(0, 0, 41, 9, 0, 41, FLOOR)
+    for x in (0, 9):
+        c.box(x, 1, 41, x, 3, 41, POST)
+    for x in range(0, 10):
+        c.set(x, 4, 41, tile_slab('bottom'))
+    c.set(4, 3, 41, paper_lantern(True))
+    # 南半：踏步石通到看庭的长凳，松、樱、石灯、灌木
+    for (x, z) in ((5, 54), (6, 55), (5, 56), (6, 57)):
+        c.set(x, 1, z, L('journey_stepping_stone', waterlogged=False))
+    bench(c, 4, 1, 58, 'south', length=3)
+    pine(c, 2, 1, 55, seed=62)
+    cherry_tree(c, 9, 1, 57, height=6, radius=4, seed=63)
+    c.set(8, 1, 54, stone_lantern())
+    for (x, z) in ((1, 59), (10, 53)):
+        shrub(c, x, 1, z, flowering=x > 5)
+    # ---- 东后院：食堂后面的菜园、柴棚、水井 ----
+    for x in range(47, 55):
+        for z in range(43, 49):
+            if z == 45:
+                c.set(x, 0, z, B('water', level=0))
+                continue
+            c.set(x, 0, z, B('farmland', moisture=7))
+            crop, age = (('carrots', 7), ('potatoes', 7), ('beetroots', 3), ('wheat', 7))[(x - 47) // 2]
+            c.set(x, 1, z, B(crop, age=rnd.randint(age - 2, age)))
+    for x in range(46, 56):
+        for z in (42, 49):
+            c.set(x, 0, z, B('coarse_dirt'))
+    for z in range(43, 49):
+        for x in (46, 55):
+            c.set(x, 0, z, B('coarse_dirt'))
+    # 柴棚：四柱小檐，背墙码着柴，门口劈柴墩与酒桶
+    sx0, sz0, sx1, sz1 = 51, 52, 55, 55
+    for x in (sx0, sx1):
+        for z in (sz0, sz1):
+            c.box(x, 1, z, x, 3, z, POST)
+    c.box(sx0, 4, sz0, sx1, 4, sz1, B('spruce_slab', type='bottom', waterlogged=False))
+    for x in range(sx0 + 1, sx1):
+        c.box(x, 1, sz1, x, 2, sz1, B('oak_log', axis='x'))
+        c.set(x, 1, sz1 - 1, B('oak_log', axis='z') if x % 2 else B('birch_log', axis='z'))
+    c.set(sx0 + 2, 1, sz0 - 1, B('stripped_oak_log', axis='y'))
+    c.set(sx1, 1, sz0 - 1, B('barrel', facing='up', open=False))
+    c.set(sx1 - 1, 1, sz0 - 1, B('hay_block', axis='y'))
+    # 水井
+    wx, wz = 48, 53
+    c.box(wx - 1, 1, wz - 1, wx + 1, 1, wz + 1, B('cobblestone'))
+    c.set(wx, 1, wz, B('water', level=0))
+    c.set(wx, 0, wz, B('water', level=0))
+    for dx, dz in ((-1, -1), (1, 1)):
+        c.box(wx + dx, 2, wz + dz, wx + dx, 3, wz + dz, fence('spruce'))
+    c.box(wx - 1, 4, wz - 1, wx + 1, 4, wz + 1, tile_slab('bottom'))
+    c.set(wx + 2, 1, wz, B('barrel', facing='up', open=False))
+    # 角落竹丛、松、樱与灌木
+    bamboo_clump(c, 55, 41, 56, 43, 1, seed=64, density=0.7)
+    pine(c, 54, 1, 58, seed=65)
+    cherry_tree(c, 47, 1, 58, height=6, radius=4, seed=66)
+    c.set(50, 1, 57, stone_lantern())
+    shrub(c, 51, 1, 50, flowering=True)
+    for (x, z) in ((46, 51), (46, 53), (46, 55)):
+        c.set(x, 1, z, L('journey_stepping_stone', waterlogged=False))
+    # ---- 两侧院子靠田地、靠山一边围竹垣 ----
+    fence_line(c, [(0, z) for z in range(42, D + 1)] + [(x, D) for x in range(1, 11)], 1, wood='bamboo')
+    fence_line(c, [(W, z) for z in range(44, D + 1)] + [(x, D) for x in range(46, W)], 1, wood='bamboo')
+    # ---- 门前东侧：野点，红毡与大伞 ----
+    for x in range(49, 53):
+        for z in range(4, 7):
+            c.set(x, 1, z, B('red_carpet'))
+    c.box(53, 1, 5, 53, 3, 5, fence('spruce'))
+    for dx, dz in ((0, 0), (-1, 0), (1, 0), (0, -1), (0, 1)):
+        c.set(53 + dx, 4, 5 + dz, B('red_wool'))
+    c.set(53, 5, 5, B('red_wool'))
+    c.set(50, 1, 5, B('decorated_pot', facing='north', cracked=False, waterlogged=False))
+    c.set(54, 1, 7, stone_lantern())
 
 
 # ==================== 神社 ====================
@@ -558,26 +658,37 @@ def honden(c, x0, z0):
 
 
 def chozuya(c, x0, z0):
-    """手水舍：四根朱柱的小亭；中央一块石砖托着石水钵，四周一圈朝内的含水石砖楼梯围成水槽，竹筧注水。"""
+    """手水舍：四根朱柱的小亭。地面一层石砖台基，四边各一级朝里的石阶上到中间的石砖台；
+    台上一圈含水石砖楼梯围成水槽，楼梯高的一半在外沿当槽壁、低的一半朝里盛水，四角用内角楼梯封住，水不外流；
+    中央一块石砖托着石水钵，竹筧注水。"""
     for x in (x0, x0 + 4):
         for z in (z0, z0 + 4):
-            c.box(x, 1, z, x, 4, z, LACQUER_LOG)
+            c.box(x, 1, z, x, 5, z, LACQUER_LOG)
     c.box(x0, 0, z0, x0 + 4, 0, z0 + 4, B('stone_bricks'))
     cx, cz = x0 + 2, z0 + 2
-    c.set(cx, 1, cz, B('stone_bricks'))
-    c.set(cx, 2, cz, L('journey_stone_basin', waterlogged=False))
+    c.box(cx - 1, 1, cz - 1, cx + 1, 1, cz + 1, B('stone_bricks'))
+    # 外圈一级石阶，朝里上台
+    for s in (-1, 0, 1):
+        for (x, z, f) in ((cx + s, z0, 'south'), (cx + s, z0 + 4, 'north'), (x0, cz + s, 'east'), (x0 + 4, cz + s, 'west')):
+            c.set(x, 1, z, B('stone_brick_stairs', facing=f, half='bottom', shape='straight', waterlogged=False))
+    c.set(cx, 2, cz, B('stone_bricks'))
+    c.set(cx, 3, cz, L('journey_stone_basin', waterlogged=False))
+    # 水槽：楼梯的 facing 是高的一侧，朝外；四角是两面都高的内角（inner_left 为 facing 加逆时针一侧）
+    corners = {(-1, -1): ('north', 'inner_left'), (1, -1): ('north', 'inner_right'),
+               (-1, 1): ('south', 'inner_right'), (1, 1): ('south', 'inner_left')}
     for dx in (-1, 0, 1):
         for dz in (-1, 0, 1):
             if dx == 0 and dz == 0:
                 continue
             if dx and dz:
-                c.set(cx + dx, 1, cz + dz, B('stone_brick_slab', type='bottom', waterlogged=True))
-                continue
-            facing = 'east' if dx < 0 else 'west' if dx > 0 else 'south' if dz < 0 else 'north'
-            c.set(cx + dx, 1, cz + dz, B('stone_brick_stairs', facing=facing, half='bottom', shape='straight', waterlogged=True))
-    c.set(cx, 2, cz + 1, L('journey_bamboo_spout', facing='north', waterlogged=False))
-    c.box(x0, 5, z0, x0 + 4, 5, z0 + 4, LACQUER_PLANKS)
-    hip_roof(c, x0, x0 + 4, z0, z0 + 4, 5, eave=1)
+                facing, shape = corners[(dx, dz)]
+            else:
+                facing, shape = ('west' if dx < 0 else 'east' if dx > 0 else 'north' if dz < 0 else 'south'), 'straight'
+            c.set(cx + dx, 2, cz + dz, B('stone_brick_stairs', facing=facing, half='bottom', shape=shape, waterlogged=True))
+    c.set(cx, 3, cz + 1, L('journey_bamboo_spout', facing='north', waterlogged=False))
+    c.box(x0, 6, z0, x0 + 4, 6, z0 + 4, LACQUER_PLANKS)
+    hip_roof(c, x0, x0 + 4, z0, z0 + 4, 6, eave=1)
+
 
 def ema_racks(c, x0, y, z0, count=3, rows=2, facing='north'):
     """绘马挂拼成的大架子（默认 3 宽 2 高），朝北时左边在西；叠层多少交错，看起来挂得满满的。"""

@@ -5,6 +5,7 @@ import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegisterClient;
 import com.lowdragmc.lowdraglib2.uitest.*;
 import dev.logos.dimension.DimensionTravel;
 import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.cloudsea.HotSpringStoneBlock;
 import dev.logos.dimension.cloudsea.JourneySeasons;
 import dev.logos.dimension.fox.SanctuaryGroundsPiece;
 import net.minecraft.client.Minecraft;
@@ -13,6 +14,10 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.gamerules.GameRules;
@@ -25,6 +30,7 @@ import java.util.function.Function;
 @LDLRegisterClient(name = "fox_sanctuary_views", group = "fox_dev", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
 public class FoxSanctuaryViews implements UIScenario {
     private static SanctuaryGroundsPiece grounds;
+    private static LivingEntity soaker;
 
     @Override public void configure(ScenarioOptions o) {
         o.tags("fox_dev").defaultTimeoutMs(400000).scenarioTimeoutMs(900000);
@@ -120,11 +126,36 @@ public class FoxSanctuaryViews implements UIScenario {
         shot(s, "street_end", g -> look(g.designPoint(108, 2.6, 92), g.designPoint(132, 6, 74)));
         shot(s, "senbon", g -> look(g.designPoint(132.5, 2.6, 84), g.designPoint(132.5, 14, 50)));
         shot(s, "shrine", g -> look(g.designPoint(133, 18.6, 47), g.designPoint(147, 21, 31)));
+        shot(s, "shrine_front", g -> look(g.designPoint(151.5, 19.6, 50), g.designPoint(151.5, 18, 38)));
         shot(s, "ryokan_gate", g -> look(g.designPoint(122.5, 2.6, 94), g.designPoint(122.5, 4, 112)));
         shot(s, "ryokan_court", g -> look(g.designPoint(124, 15, 128), g.designPoint(118, 0, 135)));
         shot(s, "onsen", g -> look(g.designPoint(140, 6, 157), g.designPoint(124, 0, 150)));
+        // 露天风吕池底是含水石半砖、下面才是地热石：放一头受伤的牛进池子，三秒后应当在回血
+        s.server("hot spring", ctx -> {
+            var level = ctx.server().getLevel(LogosDimension.CLOUDSEA);
+            Vec3 p = grounds.designPoint(122.5, -0.5, 155.5);
+            BlockPos slab = BlockPos.containing(p);
+            if (!HotSpringStoneBlock.heatedFrom(level, slab)) {
+                throw new IllegalStateException("露天风吕池底找不到地热石：" + level.getBlockState(slab) + " / " + level.getBlockState(slab.below()));
+            }
+            var cow = EntityType.COW.create(level, EntitySpawnReason.COMMAND);
+            cow.snapTo(p.x, p.y, p.z, 0, 0);
+            cow.setHealth(4);
+            level.addFreshEntity(cow);
+            soaker = cow;
+        }).ticks(60).server("hot spring regen", ctx -> {
+            boolean regen = soaker.hasEffect(MobEffects.REGENERATION);
+            System.out.println("[fox] hot spring: regeneration=" + regen + " health=" + soaker.getHealth() + " at " + soaker.blockPosition());
+            soaker.discard();
+            if (!regen) throw new IllegalStateException("泡在露天风吕里的牛没有得到生命恢复");
+        });
+        shot(s, "ryokan_west_yard", g -> look(g.designPoint(100, 24, 136), g.designPoint(100, 0, 152)));
+        shot(s, "ryokan_east_yard", g -> look(g.designPoint(145, 24, 136), g.designPoint(145, 0, 152)));
+        shot(s, "onsen_bath", g -> look(g.designPoint(122.5, 2.6, 149.5), g.designPoint(122.5, 0, 156)));
+        shot(s, "nodate", g -> look(g.designPoint(136, 3.5, 99), g.designPoint(146, 1, 106)));
         shot(s, "ryokan_stairs", g -> look(g.designPoint(111.5, 2.8, 121.5), g.designPoint(107.5, 4, 116)));
         shot(s, "chozuya", g -> look(g.designPoint(131, 21, 43), g.designPoint(131, 17, 38)));
+        shot(s, "chozuya_low", g -> look(g.designPoint(136, 18.6, 38.5), g.designPoint(131.5, 18, 38.5)));
         shot(s, "tea_garden", g -> look(g.designPoint(136, 6, 92), g.designPoint(148, 0, 82)));
         shot(s, "fields", g -> look(g.designPoint(40, 6, 106), g.designPoint(55, -4, 138)));
         shot(s, "houses", g -> look(g.designPoint(60, 6, 72), g.designPoint(62, 2, 40)));
