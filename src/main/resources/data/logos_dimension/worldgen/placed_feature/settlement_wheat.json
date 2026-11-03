@@ -8,9 +8,26 @@
     {
       "type": "minecraft:random_offset",
       "xz_spread": {
+        "type": "minecraft:weighted_list",
+        "distribution": [
+          {
+            "data": -10,
+            "weight": 1
+          },
+          {
+            "data": 10,
+            "weight": 1
+          }
+        ]
+      },
+      "y_spread": 0
+    },
+    {
+      "type": "minecraft:random_offset",
+      "xz_spread": {
         "type": "minecraft:uniform",
-        "min_inclusive": -20,
-        "max_inclusive": 20
+        "min_inclusive": -10,
+        "max_inclusive": 9
       },
       "y_spread": 0
     },
