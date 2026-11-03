@@ -34,7 +34,7 @@ public final class PaintSystem {
     public static final DeferredBlock<PaletteBlock> PALETTE = DimensionBlocks.BLOCKS.registerBlock(
         "paint_palette",
         PaletteBlock::new,
-        p -> p.mapColor(MapColor.WOOD).strength(1.5f).sound(SoundType.WOOD)
+        p -> p.mapColor(MapColor.WOOD).strength(1.5f).sound(SoundType.WOOD).noOcclusion()
     );
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PaintSurfaceBlockEntity>> SURFACE_ENTITY =
