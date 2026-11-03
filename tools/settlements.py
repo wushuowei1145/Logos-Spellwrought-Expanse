@@ -191,7 +191,11 @@ column={'type':'minecraft:block_column','config':{'direction':'up','prioritize_t
 write(D/'worldgen/configured_feature/settlement_wheat_column.json',column)
 write(D/'worldgen/placed_feature/settlement_wheat.json',{'feature':'logos_dimension:settlement_wheat_column','placement':[
     {'type':'minecraft:count','count':1000},
-    {'type':'minecraft:random_offset','xz_spread':{'type':'minecraft:uniform','min_inclusive':-20,'max_inclusive':20},'y_spread':0},
+    # 原版 random_offset 的 xz_spread 只允许 ±16，超出会让整个注册表加载失败、进不了世界。
+    # 拆成两步凑出 ±20 的均匀麦田：先整体偏 ±10，再在 [-10,9] 里均匀挑，合起来正好均匀铺满 [-20,19]。
+    # 不用两次 ±10 均匀相加：那是三角分布，中心密、边缘稀，麦田会缩成一团。
+    {'type':'minecraft:random_offset','xz_spread':{'type':'minecraft:weighted_list','distribution':[{'data':-10,'weight':1},{'data':10,'weight':1}]},'y_spread':0},
+    {'type':'minecraft:random_offset','xz_spread':{'type':'minecraft:uniform','min_inclusive':-10,'max_inclusive':9},'y_spread':0},
     {'type':'minecraft:heightmap','heightmap':'MOTION_BLOCKING_NO_LEAVES'},
     {'type':'minecraft:random_offset','xz_spread':0,'y_spread':-1},
     {'type':'minecraft:block_predicate_filter','predicate':{'type':'minecraft:all_of','predicates':[
