@@ -1,5 +1,18 @@
 # 首版验证记录
 
+## 油漆：漆面、画刷与调色盘
+
+2026-11-03：分支 `feat/paint-system`，基于 main `e5a9206`。设计见 [油漆](docs/PAINT.md)。新增漆面方块（薄层、无碰撞、颜色存方块实体、整面/半砖两种轮廓）、画刷（原版刷子动作，按住刷）、调色盘（可放置，右键打开 256 色调配页），配方、创造栏与掉落表一并补齐。楼梯、栅栏等非整面方块不支持刷漆。
+
+| 层级 | 结果 |
+| --- | --- |
+| 编译 | `./gradlew build -PlogosJar=…` 编译与资源处理通过；本机 `:test` 测试执行器无法启动（Gradle 报 `version is null`），**单元测试未运行，不计为已验证** |
+| 世界测试 | 未新增 GameTest |
+| 实际客户端 | **3/3 场景、7/7 检查**：`./gradlew --offline runClient -PlogosJar=… -PldTest=paint_tops,paint_views,paint_palette_ui -PldTestHeadless -PldTestWindow=1280x720`。漆面颜色写入方块实体、半砖 `cover=half_bottom`、顶面整面/半砖变体、支撑方块移除后漆面自动消失均断言通过；人工查看截图确认染色后木纹清晰、顶面贴平 |
+| 未验证 | 光影包、多人颜色同步、生存获取（配方与掉落已加，未实测） |
+
+截图：[调配页](docs/screenshots/paint/palette.png) · [漆面与木纹](docs/screenshots/paint/surface-on-wood.png) · [顶面](docs/screenshots/paint/tops.png)
+
 ## 神狐：第一版生物、侧倒死亡与常驻叠加层
 
 2026-11-03：分支 `feat/divine-fox`，基于 main `8625daf`。说明见 [神狐](docs/NPC_RACE_DIVINE_FOX.md)。新增神狐实体与刷怪蛋（随机外观、闲逛看人、受伤逃开），模型、贴图、零件表与动画由 `tools/divine_fox_assets.py` 从仓库外模型目录导入：待机、借用的车万女仆移动动作、维护者选定的侧倒死亡，以及眨眼（睫毛随眼皮移动、睁开后高光抖一下）、耳朵抖动、尾巴轻摆三个常驻叠加层。

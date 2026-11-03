@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "logos_dimension:block/paint_surface"
+  }
+}

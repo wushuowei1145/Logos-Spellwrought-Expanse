@@ -627,5 +627,9 @@
   "message.logos_dimension.bank.leverage": "倍数最多 %s 倍",
   "message.logos_dimension.bank.too_many": "最多同时持有 %s 笔",
   "message.logos_dimension.bank.credit": "超出授信额度",
-  "message.logos_dimension.bank.bad_stop": "止损要在亏损一侧，止盈在盈利一侧"
+  "message.logos_dimension.bank.bad_stop": "止损要在亏损一侧，止盈在盈利一侧",
+  "item.logos_dimension.paint_brush": "漆刷",
+  "item.logos_dimension.paint_palette": "调色盘",
+  "block.logos_dimension.paint_palette": "调色盘",
+  "block.logos_dimension.paint_surface": "漆面"
 }
