@@ -27,6 +27,8 @@ final class RailgunDraw {
     static final RenderType GLOW = material("glow", "physical_ray_fx", "physical_ray/glow", "RAY_FLASH", true);
     static final RenderType AIR = material("air", "physical_ray_fx", "physical_ray/air", "RAY_AIR", false);
     static final RenderType BOLT = material("bolt", "lightning_ray_line", "lightning_ray/line", "RAY_LINE", true);
+    /** 往后喷的尘土：Logos 物理射线命中烟团的 4×4 序列帧，半透明。 */
+    static final RenderType SMOKE = VfxParts.blend("physical_ray/smoke");
     /** 抛起的那枚硬币，就用银元的物品贴图。 */
     static final RenderType COIN = VfxParts.cut(LogosDimension.id("textures/item/imperial_silver.png"));
 
