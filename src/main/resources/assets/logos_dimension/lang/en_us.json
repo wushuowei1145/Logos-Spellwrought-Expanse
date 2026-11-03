@@ -525,6 +525,7 @@
   "item.logos_dimension.wolf_denarius": "Denarius",
   "item.logos_dimension.wolf_aureus": "Aureus",
   "tooltip.logos_dimension.coin.worth": "Worth %s %s",
+  "message.logos_dimension.railgun.mana": "Not enough mana to flick the coin: needs %s, have %s",
   "tooltip.logos_dimension.wallet.empty": "Empty",
   "tooltip.logos_dimension.wallet.use": "Use to open · click coins onto it in the inventory to deposit",
   "screen.logos_dimension.fx.amount": "Amount (largest coin)",

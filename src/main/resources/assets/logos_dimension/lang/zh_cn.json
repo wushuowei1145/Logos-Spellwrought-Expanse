@@ -525,6 +525,7 @@
   "item.logos_dimension.wolf_denarius": "第纳尔",
   "item.logos_dimension.wolf_aureus": "奥里斯",
   "tooltip.logos_dimension.coin.worth": "面值 %s %s",
+  "message.logos_dimension.railgun.mana": "魔力不够弹出硬币：需要 %s，现有 %s",
   "tooltip.logos_dimension.wallet.empty": "空空如也",
   "tooltip.logos_dimension.wallet.use": "右键打开 · 物品栏里把钱币点上来存入",
   "screen.logos_dimension.fx.amount": "数量（按最大面额）",

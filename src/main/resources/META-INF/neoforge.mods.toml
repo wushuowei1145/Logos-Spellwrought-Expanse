@@ -10,6 +10,7 @@ displayName="Logos: The Alchemical Crucible"
 description='''
 Native data-driven terrain: finite UUID cauldron worlds and a seasonal journey continent with dense woodlands, glades and sparse medieval settlements. Requires Logos.
 '''
+enumExtensions="META-INF/enumextensions.json"
 
 [[dependencies.logos_dimension]]
 modId="neoforge"
