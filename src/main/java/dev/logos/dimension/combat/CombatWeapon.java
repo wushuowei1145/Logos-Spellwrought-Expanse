@@ -11,6 +11,8 @@ import net.minecraft.world.item.ItemStack;
  */
 public record CombatWeapon(int id, String mesh, String animations, Identifier moveset) {
     private static final Map<Integer, CombatWeapon> BY_ID = new ConcurrentHashMap<>();
+    /** 不挂剑鞘的武器：网格里的剑鞘部件不画（曦誓拔剑、收剑是光点聚散）。 */
+    private static final java.util.Set<Integer> SHEATHLESS = ConcurrentHashMap.newKeySet();
 
     /** 战斗武器物品。 */
     public interface Holder { CombatWeapon combatWeapon(); }
@@ -21,6 +23,10 @@ public record CombatWeapon(int id, String mesh, String animations, Identifier mo
         return weapon;
     }
     public static CombatWeapon byId(int id) { return BY_ID.get(id); }
+    /** 标记为不挂剑鞘。 */
+    public CombatWeapon withoutSheath() { SHEATHLESS.add(id); return this; }
+    /** 腰侧挂不挂剑鞘。 */
+    public boolean sheathed() { return !SHEATHLESS.contains(id); }
     public static CombatWeapon of(ItemStack stack) { return stack.getItem() instanceof Holder holder ? holder.combatWeapon() : null; }
     /** 物品的战斗武器编号；不是战斗武器时为 -1。 */
     public static int id(ItemStack stack) {

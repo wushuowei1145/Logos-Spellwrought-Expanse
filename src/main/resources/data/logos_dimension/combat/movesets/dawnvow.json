@@ -1,0 +1,16 @@
+{
+  "extends": "logos_dimension:longsword",
+  "moves": {
+    "draw": {
+      "clip": "idle",
+      "length": 1.0,
+      "next": "idle"
+    },
+    "sheathe": {
+      "clip": "idle",
+      "length": 0.6,
+      "blend_in": 0.1,
+      "next": "$clear"
+    }
+  }
+}

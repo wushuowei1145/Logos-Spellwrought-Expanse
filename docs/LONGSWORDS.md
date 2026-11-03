@@ -24,13 +24,25 @@
 
 | 操作 | 动作 |
 | --- | --- |
-| 主手选中长剑 | 从身体左侧拔出，双手握持，转到右侧待机；约 1.2 秒 |
+| 主手选中长剑 | 从身体左侧拔出，双手握持，转到右侧待机；约 1.2 秒。曦誓不同：见下文「曦誓的拔剑与收剑」 |
 | 左键／攻击键 | 斜斩、反向回斩、横斩三段循环；可连续点按或按住 |
 | 按住右键／使用键 | 约 0.55 秒将剑竖直移到前方中央，随后保持蓄力 |
 | 蓄力后松开右键 | 举过头顶再下劈，最后回到侧持待机 |
 | 很快松开右键 | 未完成竖剑时反向回到待机，不攻击 |
 | 切换到另一格 | 翻剑、收回身体一侧，约 1.2 秒后恢复原版持物；切到另一把长剑会接着重新拔剑 |
 | 丢弃、剑损坏、死亡或换维度 | 取消未结算攻击，清理动作 |
+
+### 曦誓的拔剑与收剑
+
+曦誓不挂剑鞘。拔剑时双手直接摆成持剑的样子，手里先是空的；金色光点从四周旋着聚拢到剑的轮廓上（剑身、护手、握柄、剑首），剑的虚影随之渐亮，0.7 秒时剑凝成实体、整把剑一闪，1 秒后进入待机。收剑时剑先亮起，0.15 秒时散成光点，向外飘散、上浮、半秒内淡去，0.6 秒后双手放开。第一、第三人称一样，光点画在剑骨骼上、跟着手走。
+
+| 第三人称：光点聚拢 | 凝成 | 收剑：散成光点 |
+| --- | --- | --- |
+| ![光点聚拢](screenshots/dawnvow-summon/draw_gather.png) | ![凝成](screenshots/dawnvow-summon/draw_formed.png) | ![散去](screenshots/dawnvow-summon/sheathe_glow.png) |
+
+![第一人称：光点聚拢](screenshots/dawnvow-summon/fp_draw_gather.png)
+
+招式文件 `combat/movesets/dawnvow.json` 用 `"extends": "logos_dimension:longsword"` 继承长剑，只换 `draw`（`idle` 动作 1 秒）和 `sheathe`（`idle` 动作 0.6 秒）两段，连招与蓄力照搬，以后调长剑手感曦誓跟着变。招式文件的 `extends` 是这次加的：顶层字段和同名招式以子文件为准，其余照搬父文件。剑鞘由武器注册时的 `withoutSheath()` 去掉，网格文件不改，重新导入美术也不会把剑鞘带回来。光点与光影在 `client/vfx/DawnvowSummon`，贴图复用 Logos 的 `fire_beam/dot` 与 `laser`。
 
 双手占用期间不显示副手物品，也不执行副手使用。第一人称待机剑身靠右，中央准星区域留空；蓄力和攻击按动作需要进入中央。左手惯用设置镜像整套动作。第三人称使用玩家本人的皮肤，保留原版头部和腿部；原版胸甲的双臂分段跟随动作，收剑后恢复原版双臂。
 
@@ -48,7 +60,7 @@
 
 ## 动作与素材维护
 
-两种视角各使用同一套九个动作：`draw`、`idle`、`attack_1`、`attack_2`、`attack_3`、`charge_start`、`charge_hold`、`charge_release`、`sheathe`。两把剑只换几何、剑鞘和材质，不复制动作。
+两种视角各使用同一套九个动作：`draw`、`idle`、`attack_1`、`attack_2`、`attack_3`、`charge_start`、`charge_hold`、`charge_release`、`sheathe`。两把剑只换几何、剑鞘和材质，不复制动作；曦誓的拔剑、收剑借用 `idle`。
 
 运行时骨架、剑网格与动作按 [战斗骨架与兼容性规范](COMBAT_SKELETON.md) 存放在 `assets/logos_dimension/combat/`（`skeletons/player_*.json`、`weapons/*.json`、`animations/longsword_*.animation.json`），骨骼使用 TLM 名称。它们从用户审定的曦誓 v04、黑钢长剑 v01 素材导入；运行时剔除预览人偶的头、躯干和腿。`tools/import_longswords.py <本地素材目录>` 可从原始交付文件重新导入，目录中需包含 `dawnvow/v01`、`dawnvow/v04_preview_fix`、`blacksteel_longsword/v01`。保留原始采样与接触帧，只合并恒定轨道，第一人称靠右的根骨轨道也保留。
 

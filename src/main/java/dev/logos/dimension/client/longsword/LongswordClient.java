@@ -8,6 +8,7 @@ import dev.logos.dimension.combat.Moveset;
 import dev.logos.dimension.combat.CombatWeapon;
 import dev.logos.dimension.client.vfx.DawnvowBlade;
 import dev.logos.dimension.client.vfx.DawnvowClient;
+import dev.logos.dimension.client.vfx.DawnvowSummon;
 import dev.logos.dimension.longsword.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,7 +40,9 @@ public final class LongswordClient {
     private static final Map<UUID, LongswordPayload> PREVIOUS = new HashMap<>();
     public static final ContextKey<Frame> FRAME = new ContextKey<>(LogosDimension.id("longsword_frame"));
     private static int repeat;
-    public record Frame(int variant, LongswordRig.Sample sample, net.minecraft.client.renderer.item.ItemStackRenderState effects) {}
+    /** {@code move} 与 {@code time} 是取样的招式与时刻（曦誓拔剑、收剑的光点要用）。 */
+    public record Frame(int variant, LongswordRig.Sample sample, net.minecraft.client.renderer.item.ItemStackRenderState effects,
+                        LongswordPayload move, double time) {}
 
     public static LongswordPayload pose(UUID player) { return STATES.get(player); }
     @SubscribeEvent static void packets(RegisterClientPayloadHandlersEvent event) {
@@ -121,8 +124,9 @@ public final class LongswordClient {
             @Override public <T extends Avatar & ClientAvatarEntity> void accept(T avatar, AvatarRenderState state) {
                 var p = STATES.get(avatar.getUUID());
                 var level = Minecraft.getInstance().level;
-                var sample = p == null || level == null || state.isSpectator ? null : sample(p, false, level.getGameTime() + state.partialTick);
-                state.setRenderData(FRAME, sample == null ? null : new Frame(p.variant(), sample, state.getMainHandItemState()));
+                double now = level == null ? 0 : level.getGameTime() + state.partialTick;
+                var sample = p == null || level == null || state.isSpectator ? null : sample(p, false, now);
+                state.setRenderData(FRAME, sample == null ? null : new Frame(p.variant(), sample, state.getMainHandItemState(), p, now));
                 state.setRenderData(DawnvowBlade.GLOW, DawnvowClient.blade(avatar.getId(), state.partialTick));
             }
         });
@@ -138,7 +142,8 @@ public final class LongswordClient {
         if (mc.player == null || mc.level == null || mc.player.isSpectator()) return;
         var p = STATES.get(mc.player.getUUID());
         if (p == null) return;
-        var sample=sample(p,true,mc.level.getGameTime()+event.getPartialTick());
+        double now=mc.level.getGameTime()+event.getPartialTick();
+        var sample=sample(p,true,now);
         if (sample == null) return;
         event.setCanceled(true);
         if (event.getHand() != InteractionHand.MAIN_HAND) return;
@@ -147,10 +152,12 @@ public final class LongswordClient {
         pose.scale(1/16f, 1/16f, 1/16f);
         pose.translate(0, -29, .6f);
         if (mc.player.getMainArm() == HumanoidArm.LEFT) pose.scale(-1,1,1);
+        boolean shown = DawnvowSummon.visible(p, now);
         LongswordRig.get(p.variant(), true).submit(sample, pose,
-                event.getSubmitNodeCollector(), event.getPackedLight(), mc.player.getSkin().body().texturePath(), !mc.player.isInvisible());
-        LongswordAuras.firstPerson(mc.player,sample,pose,event.getSubmitNodeCollector());
-        DawnvowBlade.submit(DawnvowClient.blade(mc.player.getId(), event.getPartialTick()), sample, pose, event.getSubmitNodeCollector(), true,
+                event.getSubmitNodeCollector(), event.getPackedLight(), mc.player.getSkin().body().texturePath(), !mc.player.isInvisible(), shown);
+        if (shown) LongswordAuras.firstPerson(mc.player,sample,pose,event.getSubmitNodeCollector());
+        DawnvowSummon.submit(p, now, sample, pose, event.getSubmitNodeCollector(), true);
+        if (shown) DawnvowBlade.submit(DawnvowClient.blade(mc.player.getId(), event.getPartialTick()), sample, pose, event.getSubmitNodeCollector(), true,
                 mc.player.tickCount + event.getPartialTick());
         pose.popPose();
     }
@@ -167,10 +174,14 @@ public final class LongswordClient {
             pose.mulPose(LongswordStance.base(state.isCrouching,1/16f));
             pose.translate(0, 1.5f, 0);
             pose.scale(state.mainArm == HumanoidArm.LEFT ? 1/16f : -1/16f, -1/16f, 1/16f);
-            LongswordRig.get(frame.variant, false).submit(frame.sample, pose, collector, light, state.skin.body().texturePath(), !state.isInvisible);
-            LongswordAuras.submit(frame.effects,frame.sample,pose,collector);
-            Float glow = state.getRenderData(DawnvowBlade.GLOW);
-            if (glow != null) DawnvowBlade.submit(glow, frame.sample, pose, collector, false, state.ageInTicks);
+            boolean shown = DawnvowSummon.visible(frame.move, frame.time);
+            LongswordRig.get(frame.variant, false).submit(frame.sample, pose, collector, light, state.skin.body().texturePath(), !state.isInvisible, shown);
+            DawnvowSummon.submit(frame.move, frame.time, frame.sample, pose, collector, false);
+            if (shown) {
+                LongswordAuras.submit(frame.effects,frame.sample,pose,collector);
+                Float glow = state.getRenderData(DawnvowBlade.GLOW);
+                if (glow != null) DawnvowBlade.submit(glow, frame.sample, pose, collector, false, state.ageInTicks);
+            }
             pose.popPose();
             var equippable=state.chestEquipment.get(net.minecraft.core.component.DataComponents.EQUIPPABLE);
             if(equippable!=null && equippable.slot()==net.minecraft.world.entity.EquipmentSlot.CHEST && equippable.assetId().isPresent()) {
