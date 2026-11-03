@@ -148,6 +148,26 @@ public class FoxSanctuaryViews implements UIScenario {
             System.out.println("[fox] hot spring: regeneration=" + regen + " health=" + soaker.getHealth() + " at " + soaker.blockPosition());
             soaker.discard();
             if (!regen) throw new IllegalStateException("泡在露天风吕里的牛没有得到生命恢复");
+        }).server("hot spring winter", ctx -> {
+            // 冬天：中庭池（碎石底）会结冰，露天风吕（地热石）不结冰
+            var level = ctx.server().getLevel(LogosDimension.CLOUDSEA);
+            BlockPos bath = BlockPos.containing(grounds.designPoint(122.5, 0, 155.5));
+            BlockPos pond = null;
+            for (int u = 108; u <= 120 && pond == null; u++) for (int v = 127; v <= 136 && pond == null; v++) {
+                BlockPos p = BlockPos.containing(grounds.designPoint(u + 0.5, 0, v + 0.5));
+                if (level.getBlockState(p).is(net.minecraft.world.level.block.Blocks.WATER)
+                        && level.getBlockState(p.below(2)).is(net.minecraft.world.level.block.Blocks.GRAVEL)) pond = p;
+            }
+            if (pond == null) throw new IllegalStateException("没找到中庭池的水面");
+            JourneySeasons.CONTEXT.set(3);
+            try {
+                boolean bathFreezes = level.getBiome(bath).value().shouldFreeze(level, bath, false);
+                boolean pondFreezes = level.getBiome(pond).value().shouldFreeze(level, pond, false);
+                System.out.println("[fox] winter: bath freezes=" + bathFreezes + " pond freezes=" + pondFreezes);
+                if (bathFreezes || !pondFreezes) throw new IllegalStateException("冬天应当只有中庭池结冰、温泉不结冰");
+            } finally {
+                JourneySeasons.CONTEXT.remove();
+            }
         });
         shot(s, "ryokan_west_yard", g -> look(g.designPoint(100, 24, 136), g.designPoint(100, 0, 152)));
         shot(s, "ryokan_east_yard", g -> look(g.designPoint(145, 24, 136), g.designPoint(145, 0, 152)));
