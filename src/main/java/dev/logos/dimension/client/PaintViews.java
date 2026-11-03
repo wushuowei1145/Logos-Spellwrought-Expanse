@@ -118,6 +118,13 @@ public abstract class PaintViews implements UIScenario {
                 return true;
             })
             .screenshot(shot())
+            .checkServer("surface drops when its support is removed", ctx -> {
+                ServerLevel level = ctx.server().overworld();
+                BlockPos surface = painted[0];
+                BlockPos support = surface.relative(level.getBlockState(surface).getValue(DirectionalBlock.FACING));
+                level.setBlockAndUpdate(support, Blocks.AIR.defaultBlockState());
+                return level.getBlockState(surface).isAir();
+            })
             .teardown("restore HUD", ctx -> Minecraft.getInstance().options.hideGui = false);
     }
 
@@ -151,5 +158,81 @@ public abstract class PaintViews implements UIScenario {
 
     @LDLRegisterClient(name = "paint_views", group = "paint", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
     public static class Surfaces extends PaintViews {
+    }
+
+    /** 俯视场景：原木顶面与下砖顶面刷漆，核对贴顶覆盖与半砖补半格。 */
+    @LDLRegisterClient(name = "paint_tops", group = "paint", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class Tops extends PaintViews {
+        private BlockPos logTop, slabTop;
+
+        @Override
+        public void define(ScenarioBuilder s) {
+            s.setGameMode(GameType.CREATIVE)
+                .runCommand("difficulty peaceful")
+                .runCommand("time set day")
+                .step("camera", ctx -> {
+                    var mc = Minecraft.getInstance();
+                    mc.options.hideGui = true;
+                    mc.options.renderDistance().set(8);
+                    mc.options.fov().set(70);
+                    mc.options.broadcastOptions();
+                })
+                .server("stage painted tops", ctx -> {
+                    ServerLevel level = ctx.server().overworld();
+                    origin = new BlockPos(0, GROUND, 0);
+                    for (int x = -6; x <= 6; x++) {
+                        for (int z = -6; z <= 10; z++) {
+                            level.setBlockAndUpdate(origin.offset(x, 0, z), Blocks.STONE.defaultBlockState());
+                            for (int y = 1; y <= 6; y++) level.removeBlock(origin.offset(x, y, z), false);
+                        }
+                    }
+                    BlockPos log = origin.offset(-2, 1, 0);
+                    level.setBlockAndUpdate(log, ElvenBlocks.LOG.get().defaultBlockState());
+                    logTop = log.above();
+                    level.setBlockAndUpdate(logTop, PaintSystem.SURFACE.get().defaultBlockState()
+                        .setValue(DirectionalBlock.FACING, Direction.DOWN)
+                        .setValue(dev.logos.dimension.paint.PaintSurfaceBlock.COVER,
+                            dev.logos.dimension.paint.PaintSurfaceBlock.Cover.FULL));
+                    if (level.getBlockEntity(logTop) instanceof dev.logos.dimension.paint.PaintSurfaceBlockEntity be) {
+                        be.setPaint(0xFF58D060);
+                    }
+                    BlockPos slab = origin.offset(2, 1, 0);
+                    level.setBlockAndUpdate(slab, Blocks.OAK_SLAB.defaultBlockState());
+                    slabTop = slab.above();
+                    level.setBlockAndUpdate(slabTop, PaintSystem.SURFACE.get().defaultBlockState()
+                        .setValue(DirectionalBlock.FACING, Direction.DOWN)
+                        .setValue(dev.logos.dimension.paint.PaintSurfaceBlock.COVER,
+                            dev.logos.dimension.paint.PaintSurfaceBlock.Cover.HALF_BOTTOM));
+                    if (level.getBlockEntity(slabTop) instanceof dev.logos.dimension.paint.PaintSurfaceBlockEntity be) {
+                        be.setPaint(0xFF4F80FF);
+                    }
+                    // 对照：同样的原木、下砖不刷
+                    level.setBlockAndUpdate(origin.offset(-4, 1, 0), ElvenBlocks.LOG.get().defaultBlockState());
+                    level.setBlockAndUpdate(origin.offset(4, 1, 0), Blocks.OAK_SLAB.defaultBlockState());
+                    DimensionTravel.teleport(ctx.player(), level,
+                        new Vec3(origin.getX() + 0.5, GROUND + 4.2, origin.getZ() + 9.0), 180f, 26f);
+                })
+                .waitUntil("stage arrives", ctx -> {
+                    var mc = Minecraft.getInstance();
+                    return mc.level != null && mc.level.hasChunk(origin.getX() >> 4, origin.getZ() >> 4)
+                        && !mc.level.getBlockState(logTop).isAir();
+                })
+                .ticks(60)
+                .checkServer("top covers correct", ctx -> {
+                    ServerLevel level = ctx.server().overworld();
+                    var cover = dev.logos.dimension.paint.PaintSurfaceBlock.COVER;
+                    return level.getBlockState(logTop).getValue(cover)
+                            == dev.logos.dimension.paint.PaintSurfaceBlock.Cover.FULL
+                        && level.getBlockState(slabTop).getValue(cover)
+                            == dev.logos.dimension.paint.PaintSurfaceBlock.Cover.HALF_BOTTOM;
+                })
+                .check("top surfaces present on client", ctx -> {
+                    var mc = Minecraft.getInstance();
+                    return mc.level.getBlockState(logTop).is(PaintSystem.SURFACE.get())
+                        && mc.level.getBlockState(slabTop).is(PaintSystem.SURFACE.get());
+                })
+                .screenshot("paint_tops")
+                .teardown("restore HUD", ctx -> Minecraft.getInstance().options.hideGui = false);
+        }
     }
 }

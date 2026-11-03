@@ -90,8 +90,17 @@ public class PaintBrushItem extends Item {
                     return stack;
                 }
                 BlockPos surfacePos = targetPos.relative(face);
-                if (level.getBlockState(surfacePos).isAir()) {
-                    int color = stack.getOrDefault(PaintSystem.PAINT_COLOR.get(), PaintSurfaceBlockEntity.DEFAULT_COLOR);
+                int color = stack.getOrDefault(PaintSystem.PAINT_COLOR.get(), PaintSurfaceBlockEntity.DEFAULT_COLOR);
+                BlockState existing = level.getBlockState(surfacePos);
+                // 同一面已有漆面时直接改色（重复刷漆 = 换色）
+                if (existing.is(PaintSystem.SURFACE.get())
+                    && existing.getValue(DirectionalBlock.FACING) == face.getOpposite()) {
+                    level.setBlock(surfacePos, existing.setValue(PaintSurfaceBlock.COVER,
+                            PaintSurfaceBlock.coverFor(target)), 3);
+                    if (level.getBlockEntity(surfacePos) instanceof PaintSurfaceBlockEntity surface) {
+                        surface.setPaint(color);
+                    }
+                } else if (existing.isAir()) {
                     // 漆层贴在漆面格子里靠目标方块的一侧，所以朝向取被刷面的反方向
                     level.setBlock(surfacePos, PaintSystem.SURFACE.get().defaultBlockState()
                             .setValue(DirectionalBlock.FACING, face.getOpposite())

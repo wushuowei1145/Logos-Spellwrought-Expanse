@@ -8,9 +8,9 @@
 2. **调色盘**（`logos_dimension:paint_palette`）：任意木板 ×2 + 白色染料，无序合成。可以拿在手上，也可以放置。
 3. 手持调色盘**右键**打开调配页：16×16 共 256 色（HSV），顶部显示当前颜色与 `#RRGGBB`，点击颜色即写回调色盘。页面沿用 Logos 法术编辑器的羊皮纸背景（木框 + 黄铜角件，直接引用 `logos:textures/gui/spell_editor_parchment.png` 九宫格拉伸）。
 4. 手持画刷**右键放置的调色盘**：蘸色（画刷记下调色盘的颜色）。
-5. 手持画刷**按住右键**对着木方块刷（沿用原版刷子的动作与音效），松开后在那一面形成对应颜色的漆面。
+5. 手持画刷**按住右键**对着木方块刷（沿用原版刷子的动作与音效），松开后在那一面形成对应颜色的漆面。同一面重复刷漆直接换色；目标方块被拆掉时漆面一起消失。
 
-漆面只覆盖平齐的那一面：整面方块按整面覆盖，半砖只盖实际的那一半（上/下）。
+漆面只覆盖平齐的那一面：整面方块按整面覆盖，半砖只盖实际的那一半（上/下）；顶面和底面同样支持，半砖刷「缺的一半」的顶/底面时会自动补半格贴平。
 
 ## 实现
 
@@ -22,7 +22,7 @@
 ## 维护
 
 ```text
-./gradlew runClient -PlogosJar=... -PldTest=paint_views,paint_palette_ui -PldTestHeadless -PldTestWindow=1280x720
+./gradlew runClient -PlogosJar=... -PldTest=paint_views,paint_tops,paint_palette_ui -PldTestHeadless -PldTestWindow=1280x720
 ```
 
-场景截图在 `build/ldlib2-uitest/screenshots/`；`paint_views` 是漆面/未刷交替对照，`paint_palette_ui` 是调配页。截图存档见 [油漆截图](screenshots/paint/)。
+场景截图在 `build/ldlib2-uitest/screenshots/`；`paint_views` 是漆面/未刷交替对照（含支撑消失清理检查），`paint_tops` 是原木顶面与下砖顶面，`paint_palette_ui` 是调配页。截图存档见 [油漆截图](screenshots/paint/)。

@@ -86,10 +86,16 @@ public class PaintSurfaceRenderer implements BlockEntityRenderer<PaintSurfaceBlo
         int r = (state.color >> 16) & 0xFF, g = (state.color >> 8) & 0xFF, b = state.color & 0xFF;
         int light = state.lightCoords;
         List<float[]> boxes = boxes(state.cover);
-        collector.order(-1).submitCustomGeometry(pose, Sheets.cutoutBlockSheet(), (p, buffer) -> {
+        float depth = planeDepth(state.facing, state.cover);
+        // 上/下面的局部轴映射到水平的 z 轴，绕序与侧面相反；两面各发一次，避免被背面剔除
+        boolean flip = state.facing.getAxis() == Direction.Axis.Y;
+        for (int pass = 0; pass < (flip ? 2 : 1); pass++) {
+            final int shift = pass == 0 ? 0 : 1;
+            collector.order(-1).submitCustomGeometry(pose, Sheets.cutoutBlockSheet(), (p, buffer) -> {
             for (float[] box : boxes) {
-                float x0 = box[0], y0 = box[1], x1 = box[2], y1 = box[3], depth = box[4];
-                for (int i = 0; i < 4; i++) {
+                float x0 = box[0], y0 = box[1], x1 = box[2], y1 = box[3];
+                for (int k = 0; k < 4; k++) {
+                    int i = flip && shift == 0 ? 3 - k : k;
                     float lx = switch (i) { case 0, 3 -> x0; default -> x1; };
                     float ly = i < 2 ? y0 : y1;
                     float[] world = world(state.facing, lx, ly, depth);
@@ -102,7 +108,19 @@ public class PaintSurfaceRenderer implements BlockEntityRenderer<PaintSurfaceBlo
                         .setNormal(p, normal[0], normal[1], normal[2]);
                 }
             }
-        });
+            });
+        }
+    }
+
+    /**
+     * 漆层外表面的深度。半砖刷「缺的一半」的顶/底面时（下砖的顶、上砖的底），
+     * 目标表面比漆面格子低半格，要往下补 8 像素才贴平。
+     */
+    private static float planeDepth(Direction facing, PaintSurfaceBlock.Cover cover) {
+        // 刷下砖顶面（facing=DOWN）或上砖底面（facing=UP）时，目标表面比漆面格子低半格
+        if (facing == Direction.DOWN && cover == PaintSurfaceBlock.Cover.HALF_BOTTOM) return THICKNESS - 8f;
+        if (facing == Direction.UP && cover == PaintSurfaceBlock.Cover.HALF_TOP) return THICKNESS - 8f;
+        return THICKNESS;
     }
 
     /** 局部 (lx, ly, 深度) → 方块内坐标 [0,1]。 */
@@ -113,28 +131,30 @@ public class PaintSurfaceRenderer implements BlockEntityRenderer<PaintSurfaceBlo
             case SOUTH -> new float[]{1f - l, u, 1f - d};
             case EAST -> new float[]{1f - d, u, l};
             case WEST -> new float[]{d, u, 1f - l};
-            case UP -> new float[]{l, d, 1f - u};
-            case DOWN -> new float[]{l, 1f - d, u};
+            // facing=UP：漆层贴在格子顶部（目标在上一格）；facing=DOWN：贴在格子底部（目标在下一格）
+            case UP -> new float[]{l, 1f - d, 1f - u};
+            case DOWN -> new float[]{l, d, u};
         };
     }
 
+    /** 漆层朝外的一面永远背着目标方块，所以是 FACING 的反方向。 */
     private static float[] normal(Direction facing) {
         return switch (facing) {
             case NORTH -> new float[]{0, 0, 1};
             case SOUTH -> new float[]{0, 0, -1};
             case EAST -> new float[]{-1, 0, 0};
             case WEST -> new float[]{1, 0, 0};
-            case UP -> new float[]{0, 1, 0};
-            case DOWN -> new float[]{0, -1, 0};
+            case UP -> new float[]{0, -1, 0};
+            case DOWN -> new float[]{0, 1, 0};
         };
     }
 
-    /** 每个元素：{x0, y0, x1, y1, 距贴面深度}。 */
+    /** 每个元素：{x0, y0, x1, y1}（局部贴图坐标，16 = 一格）。 */
     private static List<float[]> boxes(PaintSurfaceBlock.Cover cover) {
         return switch (cover) {
-            case FULL -> List.of(new float[]{0, 0, 16, 16, THICKNESS});
-            case HALF_BOTTOM -> List.of(new float[]{0, 0, 16, 8, THICKNESS});
-            case HALF_TOP -> List.of(new float[]{0, 8, 16, 16, THICKNESS});
+            case FULL -> List.of(new float[]{0, 0, 16, 16});
+            case HALF_BOTTOM -> List.of(new float[]{0, 0, 16, 8});
+            case HALF_TOP -> List.of(new float[]{0, 8, 16, 16});
         };
     }
 }

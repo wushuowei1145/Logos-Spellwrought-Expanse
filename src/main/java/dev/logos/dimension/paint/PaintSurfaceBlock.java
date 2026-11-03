@@ -93,6 +93,21 @@ public class PaintSurfaceBlock extends DirectionalBlock implements EntityBlock {
         return Cover.FULL;
     }
 
+    /** 漆面依赖被刷的那一格；目标方块没了就一起消失，不留悬空色片。 */
+    @Override
+    protected boolean canSurvive(BlockState state, net.minecraft.world.level.LevelReader level, BlockPos pos) {
+        return !level.getBlockState(pos.relative(state.getValue(FACING))).isAir();
+    }
+
+    @Override
+    protected void neighborChanged(BlockState state, net.minecraft.world.level.Level level, BlockPos pos,
+                                   Block neighborBlock, net.minecraft.world.level.redstone.Orientation orientation, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighborBlock, orientation, movedByPiston);
+        if (!canSurvive(state, level, pos)) {
+            level.removeBlock(pos, false);
+        }
+    }
+
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return Shapes.empty();

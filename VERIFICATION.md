@@ -8,10 +8,10 @@
 | --- | --- |
 | 编译 | `./gradlew build -PlogosJar=…` 编译与资源处理通过；本机 `:test` 测试执行器无法启动（Gradle 报 `version is null`），**单元测试未运行，不计为已验证** |
 | 世界测试 | 未新增 GameTest |
-| 实际客户端 | **2/2 场景、4/4 检查**：`./gradlew --offline runClient -PlogosJar=… -PldTest=paint_views,paint_palette_ui -PldTestHeadless -PldTestWindow=1280x720`。漆面颜色写入方块实体、半砖 `cover=half_bottom` 均断言通过；人工查看截图确认染色后木纹清晰 |
+| 实际客户端 | **3/3 场景、7/7 检查**：`./gradlew --offline runClient -PlogosJar=… -PldTest=paint_tops,paint_views,paint_palette_ui -PldTestHeadless -PldTestWindow=1280x720`。漆面颜色写入方块实体、半砖 `cover=half_bottom`、顶面整面/半砖变体、支撑方块移除后漆面自动消失均断言通过；人工查看截图确认染色后木纹清晰、顶面贴平 |
 | 未验证 | 光影包、多人颜色同步、生存获取（配方与掉落已加，未实测） |
 
-截图：[调配页](docs/screenshots/paint/palette.png) · [漆面与木纹](docs/screenshots/paint/surface-on-wood.png)
+截图：[调配页](docs/screenshots/paint/palette.png) · [漆面与木纹](docs/screenshots/paint/surface-on-wood.png) · [顶面](docs/screenshots/paint/tops.png)
 
 ## 钱庄：存款、借款与杠杆交易
 

@@ -3,15 +3,24 @@
   "pools": [
     {
       "rolls": 1,
-      "entries": [
-        {
-          "type": "minecraft:item",
-          "name": "logos_dimension:paint_palette"
-        }
-      ],
       "conditions": [
         {
           "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "logos_dimension:paint_palette",
+          "functions": [
+            {
+              "function": "minecraft:copy_components",
+              "include": [
+                "logos_dimension:paint_color"
+              ],
+              "source": "block_entity"
+            }
+          ]
         }
       ]
     }
