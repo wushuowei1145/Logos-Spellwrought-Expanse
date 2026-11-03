@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.InteractionHand;
@@ -82,8 +83,10 @@ public class PaintBrushItem extends Item {
                 Direction face = blockHit.getDirection();
                 BlockPos targetPos = blockHit.getBlockPos();
                 BlockState target = level.getBlockState(targetPos);
-                // 只刷木制方块（按原版音效材质判定，覆盖原木、木板、楼梯、半砖、栅栏等）
-                if (target.getSoundType(level, targetPos, player) != SoundType.WOOD) {
+                // 只刷木制的整面方块和半砖：楼梯、栅栏等非整面方块不做（会留下悬空色片）
+                boolean paintable = target.getSoundType(level, targetPos, player) == SoundType.WOOD
+                    && (target.getBlock() instanceof SlabBlock || target.isCollisionShapeFullBlock(level, targetPos));
+                if (!paintable) {
                     return stack;
                 }
                 BlockPos surfacePos = targetPos.relative(face);
@@ -92,7 +95,7 @@ public class PaintBrushItem extends Item {
                     // 漆层贴在漆面格子里靠目标方块的一侧，所以朝向取被刷面的反方向
                     level.setBlock(surfacePos, PaintSystem.SURFACE.get().defaultBlockState()
                             .setValue(DirectionalBlock.FACING, face.getOpposite())
-                            .setValue(PaintSurfaceBlock.COVER, PaintSurfaceBlock.coverFor(target, face)), 3);
+                            .setValue(PaintSurfaceBlock.COVER, PaintSurfaceBlock.coverFor(target)), 3);
                     if (level.getBlockEntity(surfacePos) instanceof PaintSurfaceBlockEntity surface) {
                         surface.setPaint(color);
                     }

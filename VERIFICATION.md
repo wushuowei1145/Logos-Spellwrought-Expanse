@@ -2,16 +2,16 @@
 
 ## 油漆：漆面、画刷与调色盘
 
-2026-11-03：分支 `feat/paint-system`，基于 main `e5a9206`。设计见 [油漆](docs/PAINT.md)。新增漆面方块（薄层、无碰撞、颜色存方块实体、按目标轮廓选形状）、画刷（原版刷子动作，按住刷）、调色盘（可放置，右键打开 256 色调配页），配方、创造栏与掉落表一并补齐。
+2026-11-03：分支 `feat/paint-system`，基于 main `e5a9206`。设计见 [油漆](docs/PAINT.md)。新增漆面方块（薄层、无碰撞、颜色存方块实体、整面/半砖两种轮廓）、画刷（原版刷子动作，按住刷）、调色盘（可放置，右键打开 256 色调配页），配方、创造栏与掉落表一并补齐。楼梯、栅栏等非整面方块不支持刷漆。
 
 | 层级 | 结果 |
 | --- | --- |
 | 编译 | `./gradlew build -PlogosJar=…` 编译与资源处理通过；本机 `:test` 测试执行器无法启动（Gradle 报 `version is null`），**单元测试未运行，不计为已验证** |
 | 世界测试 | 未新增 GameTest |
-| 实际客户端 | **3/3 场景、7/7 检查**：`./gradlew --offline runClient -PlogosJar=… -PldTest=paint_stairs,paint_views,paint_palette_ui -PldTestHeadless -PldTestWindow=1280x720`。漆面颜色写入方块实体、半砖与三种楼梯的 `cover` 变体、楼梯 `shape=straight` 均断言通过；人工查看截图确认染色后木纹清晰、楼梯 L 形贴合 |
+| 实际客户端 | **2/2 场景、4/4 检查**：`./gradlew --offline runClient -PlogosJar=… -PldTest=paint_views,paint_palette_ui -PldTestHeadless -PldTestWindow=1280x720`。漆面颜色写入方块实体、半砖 `cover=half_bottom` 均断言通过；人工查看截图确认染色后木纹清晰 |
 | 未验证 | 光影包、多人颜色同步、生存获取（配方与掉落已加，未实测） |
 
-截图：[调配页](docs/screenshots/paint/palette.png) · [漆面与木纹](docs/screenshots/paint/surface-on-wood.png) · [楼梯贴合](docs/screenshots/paint/stairs.png)
+截图：[调配页](docs/screenshots/paint/palette.png) · [漆面与木纹](docs/screenshots/paint/surface-on-wood.png)
 
 ## 钱庄：存款、借款与杠杆交易
 

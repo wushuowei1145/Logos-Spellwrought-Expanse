@@ -129,28 +129,12 @@ public class PaintSurfaceRenderer implements BlockEntityRenderer<PaintSurfaceBlo
         };
     }
 
-    /** 每个元素：{x0, y0, x1, y1, 距贴面深度}；深度 8 的是楼梯高台后退的那一截。 */
+    /** 每个元素：{x0, y0, x1, y1, 距贴面深度}。 */
     private static List<float[]> boxes(PaintSurfaceBlock.Cover cover) {
         return switch (cover) {
             case FULL -> List.of(new float[]{0, 0, 16, 16, THICKNESS});
             case HALF_BOTTOM -> List.of(new float[]{0, 0, 16, 8, THICKNESS});
             case HALF_TOP -> List.of(new float[]{0, 8, 16, 16, THICKNESS});
-            case FRONT_STEP -> List.of(new float[]{0, 0, 16, 8, THICKNESS},
-                                       new float[]{0, 8, 16, 16, 8f + THICKNESS});
-            case FRONT_STEP_UD -> List.of(new float[]{0, 8, 16, 16, THICKNESS},
-                                          new float[]{0, 0, 16, 8, 8f + THICKNESS});
-            case SIDE_LEFT -> List.of(new float[]{0, 0, 16, 8, THICKNESS},
-                                      new float[]{0, 8, 8, 16, THICKNESS});
-            case SIDE_RIGHT -> List.of(new float[]{0, 0, 16, 8, THICKNESS},
-                                       new float[]{8, 8, 16, 16, THICKNESS});
-            case SIDE_LEFT_UD -> List.of(new float[]{0, 8, 16, 16, THICKNESS},
-                                         new float[]{0, 0, 8, 8, THICKNESS});
-            case SIDE_RIGHT_UD -> List.of(new float[]{0, 8, 16, 16, THICKNESS},
-                                          new float[]{8, 0, 16, 8, THICKNESS});
-            case STRIP_Y0 -> List.of(new float[]{0, 0, 16, 8, THICKNESS});
-            case STRIP_Y1 -> List.of(new float[]{0, 8, 16, 16, THICKNESS});
-            case STRIP_X0 -> List.of(new float[]{0, 0, 8, 16, THICKNESS});
-            case STRIP_X1 -> List.of(new float[]{8, 0, 16, 16, THICKNESS});
         };
     }
 }

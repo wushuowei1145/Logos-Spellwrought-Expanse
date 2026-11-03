@@ -1,6 +1,6 @@
 # 油漆：漆面、画刷与调色盘
 
-给本附属自己的木制方块（原木、木板、楼梯、半砖、栅栏、木料等，按原版音效材质 `SoundType.WOOD` 判定）刷上任意颜色的薄漆层，只改颜色、不盖住木纹。
+给本附属自己的木制整面方块和半砖（原木、木板、木料、半砖等，按原版音效材质 `SoundType.WOOD` 判定）刷上任意颜色的薄漆层，只改颜色、不盖住木纹。楼梯、栅栏等非整面方块不支持刷漆（避免留下悬空色片）。
 
 ## 用法
 
@@ -10,7 +10,7 @@
 4. 手持画刷**右键放置的调色盘**：蘸色（画刷记下调色盘的颜色）。
 5. 手持画刷**按住右键**对着木方块刷（沿用原版刷子的动作与音效），松开后在那一面形成对应颜色的漆面。
 
-漆面只覆盖平齐的那一面：半砖按上/下半覆盖，楼梯按被刷的正面（L 形，上半后退）、侧面（L 形，上半落在高侧）、倒置楼梯（上半齐平、下半凹陷）、上/下表面（只盖高侧半条）选轮廓。
+漆面只覆盖平齐的那一面：整面方块按整面覆盖，半砖只盖实际的那一半（上/下）。
 
 ## 实现
 
@@ -22,7 +22,7 @@
 ## 维护
 
 ```text
-./gradlew runClient -PlogosJar=... -PldTest=paint_stairs,paint_views,paint_palette_ui -PldTestHeadless -PldTestWindow=1280x720
+./gradlew runClient -PlogosJar=... -PldTest=paint_views,paint_palette_ui -PldTestHeadless -PldTestWindow=1280x720
 ```
 
-场景截图在 `build/ldlib2-uitest/screenshots/`；`paint_views` 是漆面/未刷交替对照，`paint_stairs` 是三种楼梯近景，`paint_palette_ui` 是调配页。截图存档见 [油漆截图](screenshots/paint/)。
+场景截图在 `build/ldlib2-uitest/screenshots/`；`paint_views` 是漆面/未刷交替对照，`paint_palette_ui` 是调配页。截图存档见 [油漆截图](screenshots/paint/)。
