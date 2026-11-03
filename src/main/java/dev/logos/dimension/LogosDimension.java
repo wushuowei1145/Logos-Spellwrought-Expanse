@@ -39,6 +39,8 @@ public final class LogosDimension {
                     out.accept(dev.logos.dimension.item.ElfSpearItem.ITEM.get());
                     out.accept(dev.logos.dimension.item.AncientEmbraceItem.ITEM.get());
                     out.accept(dev.logos.dimension.item.LongswordItem.DAWNVOW.get());
+                    out.accept(dev.logos.dimension.dawnvow.Dawnvow.STONE.get());
+                    out.accept(dev.logos.dimension.dawnvow.Dawnvow.EMPTY_STONE.get());
                     out.accept(dev.logos.dimension.item.LongswordItem.BLACKSTEEL.get());
                     out.accept(dev.logos.dimension.item.UchigatanaItem.INK.get());
                     out.accept(dev.logos.dimension.item.UchigatanaItem.VERMILION.get());
@@ -65,6 +67,7 @@ public final class LogosDimension {
         dev.logos.dimension.instance.CauldronBinding.register(bus);
         dev.logos.dimension.cloudsea.CloudseaBlocks.init();
         dev.logos.dimension.elven.ElvenBlocks.init();
+        dev.logos.dimension.dawnvow.Dawnvow.register(bus);
         DimensionBlocks.BLOCKS.register(bus); DimensionBlocks.ITEMS.register(bus);
         DimensionFluids.TYPES.register(bus); DimensionFluids.FLUIDS.register(bus);
         DimensionParticles.register(bus);
@@ -90,6 +93,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.ElfSpearGameTests.register(bus);
         dev.logos.dimension.gametest.AncientEmbraceGameTests.register(bus);
         dev.logos.dimension.gametest.LongswordGameTests.register(bus);
+        dev.logos.dimension.gametest.DawnvowGameTests.register(bus);
         dev.logos.dimension.gametest.ForestElfGameTests.register(bus);
         dev.logos.dimension.gametest.EconomyGameTests.register(bus);
         dev.logos.dimension.gametest.RailgunGameTests.register(bus);
