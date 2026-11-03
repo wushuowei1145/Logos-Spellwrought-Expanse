@@ -58,6 +58,35 @@ class DivineFoxAssetsTest {
         }
     }
 
+    /** 五种表情登记在零件表的 expressions 里，挂在 Head 下，换掉常态眼嘴；它们的零件不在任何随机槽位里。 */
+    @Test
+    void expressionsReplaceEyesAndMouthAndAreNeverRolled() throws Exception {
+        Map<String, String> parent = new java.util.HashMap<>();
+        for (JsonElement b : read("models/entity/divine_fox.geo.json").getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject()
+                .getAsJsonArray("bones")) {
+            JsonObject o = b.getAsJsonObject();
+            parent.put(o.get("name").getAsString(), o.has("parent") ? o.get("parent").getAsString() : null);
+        }
+        var ids = FOX.expressions().stream().map(NpcParts.Expression::id).toList();
+        assertEquals(java.util.List.of("expression_teasing", "expression_kitsune", "expression_happy", "expression_surprised",
+                "expression_angry"), ids);
+        Set<String> rolled = new HashSet<>();
+        for (var slot : FOX.slots()) for (var part : slot.parts()) rolled.addAll(part.groups());
+        for (var e : FOX.expressions()) {
+            assertEquals(java.util.List.of("Eyelid", "Mouth"), e.hides(), e.id());
+            for (String g : e.groups()) {
+                assertEquals("Head", parent.get(g), g);
+                assertFalse(rolled.contains(g), g);
+            }
+            for (String g : rolled) assertFalse(g.startsWith(e.id().replace("expression_", "eyes_fox_")), g);
+        }
+        Map<String, String> look = FOX.defaults();
+        assertTrue(FOX.hiddenGroups(look, null).containsAll(ids));
+        var shown = FOX.hiddenGroups(look, "expression_happy");
+        assertFalse(shown.contains("expression_happy"));
+        assertTrue(shown.containsAll(java.util.List.of("Eyelid", "Mouth")));
+    }
+
     @Test
     void hasEveryStateAndLayer() throws Exception {
         Set<String> names = animations().keySet();

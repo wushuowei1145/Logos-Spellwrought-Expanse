@@ -34,11 +34,14 @@ import net.minecraft.world.level.storage.ValueOutput;
  * 神狐：灵狐樱野的居民（docs/NPC_RACE_DIVINE_FOX.md）。
  *
  * <p>第一版只有外观与动作：生成时按零件表随机抽一次外观（同 {@link ForestElf}），平时闲逛、看人，受伤时逃开。
+ * 另有五种表情（{@link #setExpression}），不参与随机外观，由以后的动作与剧情临时换上。
  * 眨眼、耳朵抖动、尾巴轻摆是动画文件里的常驻叠加层，在待机、走路等大部分状态下一直循环；
  * 死亡时先播受击，再播侧倒后面朝地面的死亡动画。战斗（神狐打刀）、语音与聚落里的生成以后再加。
  */
 public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHolder {
     private static final EntityDataAccessor<String> APPEARANCE = SynchedEntityData.defineId(DivineFox.class, EntityDataSerializers.STRING);
+    /** 当前表情（零件表 {@code expressions} 里的 id，空为常态），见 {@link #setExpression}。 */
+    private static final EntityDataAccessor<String> EXPRESSION = SynchedEntityData.defineId(DivineFox.class, EntityDataSerializers.STRING);
     private static final Codec<Map<String, String>> APPEARANCE_CODEC = Codec.unboundedMap(Codec.STRING, Codec.STRING);
     private static final Identifier ASSET = LogosDimension.id("divine_fox");
     /** 受击（约 0.46 秒）与死亡动画（1.55 秒）播完，在地上停约 1 秒后消失。 */
@@ -62,6 +65,7 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(APPEARANCE, NpcParts.encode(NpcParts.DIVINE_FOX.defaults()));
+        builder.define(EXPRESSION, "");
     }
 
     @Override
@@ -105,6 +109,23 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
             decodedFrom = text;
         }
         return decoded;
+    }
+
+    // ---------------------------------------------------------------- 表情
+
+    /**
+     * 换上一个表情（调侃、狐狸眯眼、开心、惊讶、愤怒，零件表 {@code expressions} 的 id），传 null 或空串回到常态。
+     * 表情替换常态的眼与嘴，眉毛不变；不认识的 id 不生效。表情是临时状态，不存档。
+     */
+    public void setExpression(String id) {
+        boolean known = id != null && NpcParts.DIVINE_FOX.expressions().stream().anyMatch(e -> e.id().equals(id));
+        entityData.set(EXPRESSION, known ? id : "");
+    }
+
+    @Override
+    public String npcExpression() {
+        String id = entityData.get(EXPRESSION);
+        return id.isEmpty() ? null : id;
     }
 
     // ---------------------------------------------------------------- 死亡
