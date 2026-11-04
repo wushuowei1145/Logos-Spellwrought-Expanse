@@ -273,13 +273,14 @@ def two_bone(S, W, a, b, pole, sign):
     bend = math.degrees(math.acos(max(-1, min(1, np.dot(u, f)))))
     return F, sign * bend, reach - (a + b)
 
-def rigid_arm(S, G, a, b, pref, target, previous, twist=120.0, previous_tau=None, up=(0, 1, 0), body=None):
+def rigid_arm(S, G, a, b, pref, target, previous, twist=120.0, previous_tau=None, up=(0, 1, 0), body=None, axial=False):
     """没有腕关节的手臂：手与前臂一体，只用肩（三向）和肘（弯曲加前臂自转）把拳心送到握点 G。
 
     b 是肘到拳心的长度（前臂加手）。到了握点后还剩手肘绕“肩—握点”连线的转角，逐个试，
     前臂自转按闭式让拳心正对 target（期望的手部朝向）给出的刀身方向；剩下对不上的就是刀柄穿过拳心的偏角。
     pref 是偏好的手肘朝向，previous 是上一帧的手肘位置（保持连续，不翻面）；
     body 给出世界坐标点陷进躯干的深度，手臂穿进身体重罚。
+    axial 为真时是转枪：杆在拳中绕前臂转，方块拳头看不出这个转动，只算杆偏离“垂直于前臂”的角度，前臂不自转。
     返回 (上臂世界旋转, 弯曲角, 前臂自转角, 手肘位置, 刀在拳中的残差角, 够不着的长度)。"""
     dhat = unit(G - S)
     u1 = np.asarray(pref, float) - dhat * np.dot(pref, dhat)
@@ -300,14 +301,19 @@ def rigid_arm(S, G, a, b, pref, target, previous, twist=120.0, previous_tau=None
                 inside += body(p)
         # 方块拳头只看得出刀柄穿过拳心的方向：前臂自转让拳心正对刀身，刀绕自身轴的转动看不出来。
         # 袖子截面是正方形，twist 为 None 时只转 90° 的整数倍，肘部棱角保持对齐；换档有代价，避免来回跳。
-        if twist is None:
+        if axial:
+            options = (previous_tau if previous_tau is not None else 0.0,)
+        elif twist is None:
             options = (-90.0, 0.0, 90.0, 180.0)
         else:
             options = (max(-twist, min(twist, math.degrees(math.atan2(-local[0], -local[2])))),)
         best = None
         for tau in options:
             through = rot_y(tau) @ np.array([0, 0, -1.0])
-            residual = math.acos(max(-1.0, min(1.0, float(np.dot(through, local)))))
+            if axial:
+                residual = math.asin(min(1.0, abs(float(local[1]))))
+            else:
+                residual = math.acos(max(-1.0, min(1.0, float(np.dot(through, local)))))
             # 手肘偏离默认朝向（向下、略向后外）和抬过肩下方 1/4 上臂处都扣分，第三人称姿势才自然。
             lift = max(0.0, float(np.dot(elbow - S, up)) / a + 0.25)
             cost = residual + ELBOW_PREF * (1 - math.cos(phi)) + 2.5 * lift + 6.0 * inside / a + (0.05 if tau else 0)
@@ -366,6 +372,15 @@ class Baker:
             grip, blade, edge = p + R @ (grip - p), R @ blade, R @ edge
         return grip, blade, edge
 
+    def shaft(self, clip, t, side):
+        """手握在武器 Y 轴上的位置（武器网格单位）：默认取骨架的 grips（打刀为 PRIMARY / SECONDARY），
+        关键帧的 rpos / lpos 让手沿枪杆滑动。grip 关键帧给的始终是右手的位置。"""
+        default = getattr(self.sk, 'grips', (PRIMARY, SECONDARY))[0 if side == 'Right' else 1]
+        field = 'rpos' if side == 'Right' else 'lpos'
+        if not any(field in k for k in clip['keys']):
+            return default
+        return float(np.atleast_1d(hermite(channel(clip, field, default), t))[0])
+
     def sword(self, clip, t):
         keys = [k for k in clip['keys'] if 'grip' in k or 'sheathed' in k]
         s = self.sk.weapon_scale
@@ -384,7 +399,7 @@ class Baker:
         blade = hermite([(t0, v[1], e) for t0, v, e in converted], t, loop)
         edge = hermite([(t0, v[2], e) for t0, v, e in converted], t, loop)
         R = frame(blade, edge)
-        return grip - R @ np.array([0, PRIMARY * s, 0]), R
+        return grip - R @ np.array([0, self.shaft(clip, t, 'Right') * s, 0]), R
 
     def pose(self, clip, t, prev=None):
         sk = self.sk
@@ -417,7 +432,25 @@ class Baker:
 
         def target(side, mode):
             if mode in ('sword', 'two'):
-                y = PRIMARY if side == 'Right' else SECONDARY
+                y = self.shaft(clip, t, side)
+                return (weapon_world @ np.array([0, y * s, 0, 1]))[:3], weapon_world[:3, :3] @ GRIP.T
+            if mode == 'slide':
+                # 前手不动、杆从手里滑过（长枪连刺）：手的目标点投到杆上取最近处，夹在骨架给的可握范围里。
+                # 够不着最近处时，改取够得着的那段杆上离目标最近的点；整段都够不着就取离肩最近的点。
+                p = (torso @ np.append(sk.model(hermite(channel(clip, side[0].lower() + 'hand'), t)), 1))[:3]
+                origin, axis = weapon_world[:3, 3], weapon_world[:3, 1]
+                lo, hi = getattr(sk, 'slide', (-30.0, 30.0))
+                shoulder = (W['Arm'] @ np.append(sk.pivot(side + 'Arm'), 1))[:3]
+                reach = 0.97 * (np.linalg.norm(sk.pivot(side + 'ForeArm') - sk.pivot(side + 'Arm'))
+                                + np.linalg.norm(sk.pivot(side + 'Hand') - sk.pivot(side + 'ForeArm')) + abs(sk.hand_grip[1]))
+                ys = np.arange(lo, hi + 1e-9, 0.25)
+                points = origin[None, :] + np.outer(ys * s, axis)
+                to_shoulder = np.linalg.norm(points - shoulder, axis=1)
+                ok = to_shoulder <= reach
+                if ok.any():
+                    y = ys[ok][np.argmin(np.linalg.norm(points[ok] - p, axis=1))]
+                else:
+                    y = ys[np.argmin(to_shoulder)]
                 return (weapon_world @ np.array([0, y * s, 0, 1]))[:3], weapon_world[:3, :3] @ GRIP.T
             if mode == 'saya':
                 return (sheath_world @ np.array([0, 3.1 * s, 0, 1]))[:3], sheath_world[:3, :3] @ GRIP.T
@@ -456,9 +489,10 @@ class Baker:
             b = np.linalg.norm(sk.pivot(hand) - sk.pivot(fore))
             pole = Rt @ unit(hermite(channel(clip, side[0].lower() + 'pole', ARM_POLE[side]), t))
             # 玩家模型没有手腕：手与前臂一体，拳心在前臂延长线上（握点偏移只取沿前臂的分量）。
+            axial = bool(self.mode(clip, t, side[0].lower() + 'axial', False)[0])
             F, bend, tau, elbow, residual, over = rigid_arm(S, grip, a, b + abs(sk.hand_grip[1]), pole, Rh,
                                                             self.elbows.get(side), getattr(sk, 'twist', TWIST),
-                                                            self.taus.get(side), Rt[:, 1], body)
+                                                            self.taus.get(side), Rt[:, 1], body, axial)
             self.elbows[side] = elbow
             self.taus[side] = tau
             self.residuals.append((clip['name'], t, side, residual))
@@ -558,9 +592,26 @@ def bedrock(clips, baked, skeleton, bones, markers=True):
             tracks[name] = track
         anim['bones'] = tracks
         if markers and clip.get('markers'):
-            anim['timeline'] = {f'{t:g}': name for name, t in sorted(clip['markers'].items(), key=lambda kv: kv[1])}
+            anim['timeline'] = timeline(clip['markers'])
         out[clip['name']] = anim
     return {'format_version': '1.8.0', 'animations': out}
+
+
+def marker_list(markers):
+    """标记表 {名: 时刻或时刻列表} 展开成按时间排序的 (时刻, 名)；连刺这类多段命中的 contact 可以有多个。"""
+    out = []
+    for name, value in (markers or {}).items():
+        for t in (value if isinstance(value, (list, tuple)) else [value]):
+            out.append((float(t), name))
+    return sorted(out)
+
+
+def timeline(markers):
+    """Bedrock timeline：同一时刻只有一个标记时写字符串，有几个时写数组。"""
+    grouped = {}
+    for t, name in marker_list(markers):
+        grouped.setdefault(f'{t:g}', []).append(name)
+    return {t: names[0] if len(names) == 1 else names for t, names in grouped.items()}
 
 
 def compress(track):

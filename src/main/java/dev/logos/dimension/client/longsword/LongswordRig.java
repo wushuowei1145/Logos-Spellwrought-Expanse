@@ -110,6 +110,11 @@ public final class LongswordRig {
         var animation = clips.get(clip);
         return animation == null ? -1 : animation.length();
     }
+    /** 一段动作里某个标记的各次时刻（动作时间，升序）；没有这段动作或标记时为空数组。 */
+    public float[] markers(String clip, String name) {
+        var animation = clips.get(clip);
+        return animation == null ? new float[0] : animation.markers(name);
+    }
     /** 取样一帧姿势；动作文件里没有这段动作时为 null。 */
     public CombatPose pose(String clip, float seconds) {
         var animation = clips.get(clip);

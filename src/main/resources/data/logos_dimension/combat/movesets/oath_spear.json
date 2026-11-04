@@ -1,0 +1,74 @@
+{
+  "start": "draw",
+  "sheathe": "sheathe",
+  "combo_memory": 1.6,
+  "moves": {
+    "draw": {"length": 1.3, "next": "idle"},
+    "idle": {
+      "length": 2.4, "playback": "loop", "blend_in": 0.12,
+      "on": [
+        {"input": "attack", "to": "thrust_1", "combo": true},
+        {"input": "use_press", "to": "flurry_a"}
+      ]
+    },
+    "thrust_1": {
+      "length": 0.5, "attack_speed_base": 1.4, "contact": 0.16, "blend_in": 0.06, "cone": 40,
+      "combo_next": "sweep_2", "next": "idle",
+      "on": [
+        {"input": "use_press", "to": "flurry_a", "window": [0.16]},
+        {"input": "attack", "to": "sweep_2", "window": [0.08], "queue": true, "at": 0.3}
+      ]
+    },
+    "sweep_2": {
+      "length": 0.62, "attack_speed_base": 1.4, "contact": 0.24, "blend_in": 0.06, "cone": 120, "damage": 0.9,
+      "combo_next": "overhand_3", "next": "idle",
+      "on": [
+        {"input": "use_press", "to": "flurry_a", "window": [0.24]},
+        {"input": "attack", "to": "overhand_3", "window": [0.08], "queue": true, "at": 0.4}
+      ]
+    },
+    "overhand_3": {
+      "length": 0.66, "attack_speed_base": 1.4, "contact": 0.27, "blend_in": 0.06, "cone": 40, "damage": 1.15,
+      "combo_next": "launch_4", "next": "idle",
+      "on": [
+        {"input": "use_press", "to": "flurry_a", "window": [0.27]},
+        {"input": "attack", "to": "launch_4", "window": [0.08], "queue": true, "at": 0.42}
+      ]
+    },
+    "launch_4": {
+      "length": 0.86, "attack_speed_base": 1.4, "contact": 0.36, "blend_in": 0.06, "cone": 70,
+      "knockback": false, "effect": "launch",
+      "combo_next": "thrust_1", "next": "idle",
+      "on": [
+        {"input": "use_press", "to": "flurry_a", "window": [0.36]},
+        {"input": "attack", "to": "thrust_1", "window": [0.1], "queue": true, "at": 0.6}
+      ]
+    },
+    "flurry_a": {
+      "length": 1.0, "reset_combo": true, "blend_in": 0.08,
+      "contact": [0.045, 0.17, 0.295, 0.42, 0.545, 0.67, 0.795, 0.92],
+      "cone": 30, "damage": 0.1, "knockback": false, "full_strength": true, "effect": "flurry",
+      "next": "flurry_b",
+      "on": [{"input": "use_release", "to": "idle"}]
+    },
+    "flurry_b": {
+      "length": 1.0,
+      "contact": [0.045, 0.17, 0.295, 0.42, 0.545, 0.67, 0.795, 0.92],
+      "cone": 30, "damage": 0.1, "knockback": false, "full_strength": true, "effect": "flurry",
+      "next": "flurry_c",
+      "on": [{"input": "use_release", "to": "idle"}]
+    },
+    "flurry_c": {
+      "length": 1.0,
+      "contact": [0.045, 0.17, 0.295, 0.42, 0.545, 0.67, 0.795, 0.92],
+      "cone": 30, "damage": 0.1, "knockback": false, "full_strength": true, "effect": "flurry",
+      "next": "slam",
+      "on": [{"input": "use_release", "to": "idle"}]
+    },
+    "slam": {
+      "length": 1.15, "contact": 0.72, "cone": 80, "damage": 1.6, "knockback": false, "full_strength": true,
+      "effect": "slam", "next": "idle"
+    },
+    "sheathe": {"length": 1.45, "blend_in": 0.1, "next": "$clear"}
+  }
+}

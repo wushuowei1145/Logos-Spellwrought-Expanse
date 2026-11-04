@@ -28,13 +28,26 @@ public record Moveset(String start, String sheathe, double comboMemory, Map<Stri
 
     /**
      * 一个招式。{@code length} 为动作时长（秒）；{@code REVERSE} 招式没有固定时长，
-     * 从进入时上一招式已播放的位置倒放回 0。{@code contact} 为接触时刻，{@code next} 为播完后的去向，
-     * {@code blendIn} 为进入时从上一姿势过渡的时长（秒，只影响客户端画面）。
+     * 从进入时上一招式已播放的位置倒放回 0。{@code contacts} 为各次接触时刻（升序，多数招式只有一次，连刺一段有好几次），
+     * {@code next} 为播完后的去向，{@code blendIn} 为进入时从上一姿势过渡的时长（秒，只影响客户端画面）。
+     * <p>结算参数由使用招式的武器解释：{@code damage} 乘在这一下的伤害上；{@code cone} 大于 0 时代替武器的命中锥形张角；
+     * {@code knockback} 为假时这一下不击退；{@code fullStrength} 为真时每一下都按蓄满的攻击结算（连刺自己就是节奏，
+     * 不吃原版攻击冷却）；{@code effect} 是武器自己的附加效果名（长枪的挑飞、连刺、下砸），没有为 null。
      */
-    public record Move(String name, String clip, double length, Playback playback, double speedBase, double contact,
-                       boolean resetCombo, String comboNext, String next, double blendIn, List<Transition> on) {
+    public record Move(String name, String clip, double length, Playback playback, double speedBase, List<Double> contacts,
+                       boolean resetCombo, String comboNext, String next, double blendIn, List<Transition> on,
+                       double damage, double cone, boolean knockback, boolean fullStrength, String effect) {
+        public Move(String name, String clip, double length, Playback playback, double speedBase, double contact,
+                    boolean resetCombo, String comboNext, String next, double blendIn, List<Transition> on) {
+            this(name, clip, length, playback, speedBase, contact >= 0 ? List.of(contact) : List.of(), resetCombo, comboNext,
+                    next, blendIn, on, 1, 0, true, false, null);
+        }
         public boolean scalesWithAttackSpeed() { return speedBase > 0; }
-        public boolean hasContact() { return contact >= 0; }
+        public boolean hasContact() { return !contacts.isEmpty(); }
+        /** 第一次接触时刻；没有接触为 -1。 */
+        public double contact() { return contacts.isEmpty() ? -1 : contacts.getFirst(); }
+        /** 最后一次接触时刻；没有接触为 -1。 */
+        public double lastContact() { return contacts.isEmpty() ? -1 : contacts.getLast(); }
         public boolean accepts(Input input) { return on.stream().anyMatch(t -> t.input == input); }
         /** 招式持续的游戏刻；循环招式为无穷大。 */
         public double durationTicks(double rate, double offset) {
@@ -79,11 +92,19 @@ public record Moveset(String start, String sheathe, double comboMemory, Map<Stri
                         from, until, t.has("queue") && t.get("queue").getAsBoolean(), t.has("at") ? t.get("at").getAsDouble() : Double.NaN,
                         t.has("combo") && t.get("combo").getAsBoolean()));
             }
+            List<Double> contacts = new ArrayList<>();
+            if (m.has("contact")) {
+                var c = m.get("contact");
+                if (c.isJsonArray()) for (var v : c.getAsJsonArray()) contacts.add(v.getAsDouble());
+                else contacts.add(c.getAsDouble());
+            }
             moves.put(name, new Move(name, string(m, "clip", name), length, playback,
-                    m.has("attack_speed_base") ? m.get("attack_speed_base").getAsDouble() : 0,
-                    m.has("contact") ? m.get("contact").getAsDouble() : -1,
+                    m.has("attack_speed_base") ? m.get("attack_speed_base").getAsDouble() : 0, List.copyOf(contacts),
                     m.has("reset_combo") && m.get("reset_combo").getAsBoolean(), string(m, "combo_next", null), string(m, "next", null),
-                    m.has("blend_in") ? m.get("blend_in").getAsDouble() : 0, List.copyOf(on)));
+                    m.has("blend_in") ? m.get("blend_in").getAsDouble() : 0, List.copyOf(on),
+                    m.has("damage") ? m.get("damage").getAsDouble() : 1, m.has("cone") ? m.get("cone").getAsDouble() : 0,
+                    !m.has("knockback") || m.get("knockback").getAsBoolean(), m.has("full_strength") && m.get("full_strength").getAsBoolean(),
+                    string(m, "effect", null)));
         }
         var set = new Moveset(json.get("start").getAsString(), string(json, "sheathe", null),
                 json.has("combo_memory") ? json.get("combo_memory").getAsDouble() : 0, Map.copyOf(moves));
@@ -101,12 +122,20 @@ public record Moveset(String start, String sheathe, double comboMemory, Map<Stri
             if (move.comboNext != null) target(move.name + ".combo_next", move.comboNext, false);
             if (move.speedBase < 0) throw new IllegalArgumentException(move.name + " 的 attack_speed_base 不能为负");
             if (move.blendIn < 0) throw new IllegalArgumentException(move.name + " 的 blend_in 不能为负");
+            for (int i = 0; i < move.contacts.size(); i++) {
+                double c = move.contacts.get(i);
+                if (c < 0 || i > 0 && c <= move.contacts.get(i - 1))
+                    throw new IllegalArgumentException(move.name + " 的 contact 要非负且严格递增");
+                if (move.playback != Playback.REVERSE && c > move.length) throw new IllegalArgumentException(move.name + " 的 contact 超过动作时长");
+            }
+            if (move.damage < 0) throw new IllegalArgumentException(move.name + " 的 damage 不能为负");
+            if (move.cone < 0 || move.cone > 180) throw new IllegalArgumentException(move.name + " 的 cone 要在 [0, 180] 内");
             for (var t : move.on) {
                 target(move.name + " 的转移", t.to, true);
                 if (!t.atEnd() && !t.queue) throw new IllegalArgumentException(move.name + " 的转移写了 at 却没有 queue");
-                // 取消点早于接触时刻会让缓冲的下一招吞掉这一下命中。
-                if (!t.atEnd() && move.hasContact() && t.at < move.contact)
-                    throw new IllegalArgumentException(move.name + " 的取消点 " + t.at + " 早于接触时刻 " + move.contact);
+                // 取消点早于接触时刻会让缓冲的下一招吞掉这一下命中（多次接触时看最后一次）。
+                if (!t.atEnd() && move.hasContact() && t.at < move.lastContact())
+                    throw new IllegalArgumentException(move.name + " 的取消点 " + t.at + " 早于接触时刻 " + move.lastContact());
                 if (!t.atEnd() && move.playback != Playback.REVERSE && t.at > move.length)
                     throw new IllegalArgumentException(move.name + " 的取消点超过动作时长");
             }
