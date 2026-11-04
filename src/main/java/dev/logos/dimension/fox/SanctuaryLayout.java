@@ -32,9 +32,12 @@ final class SanctuaryLayout {
     static final int GRAVEL = 6;
     static final int STONE = 7;
 
-    private static final String RESOURCE = "/data/logos_dimension/fox_sanctuary/layout.json";
-    private static SanctuaryLayout instance;
+    /** 方案 0 沿用最早的位置（旧存档里生成到一半的聚落还认这些模板），其余方案在 plan_N/ 下。 */
+    private static final String ROOT = "/data/logos_dimension/fox_sanctuary/";
+    private static SanctuaryLayout[] plans;
 
+    /** 第几套布局方案。 */
+    final int plan;
     final int size;
     final byte[] heights;
     final byte[] ground;
@@ -52,19 +55,39 @@ final class SanctuaryLayout {
     record Lot(String kind, int u, int y, int v, int quarterTurns) {
     }
 
-    static synchronized SanctuaryLayout get() {
-        if (instance == null) {
-            try (InputStream in = SanctuaryLayout.class.getResourceAsStream(RESOURCE)) {
-                if (in == null) throw new IllegalStateException("缺少 " + RESOURCE);
-                instance = new SanctuaryLayout(JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject());
-            } catch (java.io.IOException e) {
-                throw new IllegalStateException("读取神狐聚落设计数据失败", e);
-            }
-        }
-        return instance;
+    /** 布局方案的数量（plans.json）。 */
+    static int plans() {
+        return all().length;
     }
 
-    private SanctuaryLayout(JsonObject json) {
+    static SanctuaryLayout get(int plan) {
+        SanctuaryLayout[] all = all();
+        return all[Math.floorMod(plan, all.length)];
+    }
+
+    private static synchronized SanctuaryLayout[] all() {
+        if (plans == null) {
+            int count = read(ROOT + "plans.json").get("count").getAsInt();
+            SanctuaryLayout[] loaded = new SanctuaryLayout[count];
+            for (int i = 0; i < count; i++) {
+                loaded[i] = new SanctuaryLayout(i, read(ROOT + (i == 0 ? "" : "plan_" + i + "/") + "layout.json"));
+            }
+            plans = loaded;
+        }
+        return plans;
+    }
+
+    private static JsonObject read(String resource) {
+        try (InputStream in = SanctuaryLayout.class.getResourceAsStream(resource)) {
+            if (in == null) throw new IllegalStateException("缺少 " + resource);
+            return JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("读取神狐聚落设计数据失败", e);
+        }
+    }
+
+    private SanctuaryLayout(int plan, JsonObject json) {
+        this.plan = plan;
         size = json.get("size").getAsInt();
         heights = Base64.getDecoder().decode(json.get("heights").getAsString());
         ground = Base64.getDecoder().decode(json.get("ground").getAsString());

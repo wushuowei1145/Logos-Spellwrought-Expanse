@@ -8,6 +8,7 @@
 设计坐标 (u, v)：u 向东、v 向南，核心区 176×176，高度相对主街标高 P（地表那一层方块的 y）。
 入口石阶在西侧，山路由 Java 结构从入口往北绕山下行（FoxSanctuaryStructure）。
 """
+from dataclasses import dataclass, field
 from pathlib import Path
 import base64
 import math
@@ -45,10 +46,54 @@ FIELD_V0 = 114
 RYOKAN_U0, RYOKAN_V0 = 94, 101
 
 
+@dataclass
+class Plan:
+    """一套布局方案：每处聚落生成时随机挑一套，再叠加地块变体、朝向与放置时的小替换。"""
+    name: str
+    #: 主街 S 形弯曲：一阶、二阶正弦的振幅（两端都回到入口所在的 v，不能加相位）
+    bend: tuple = (5.5, -2.5)
+    #: 主街东端；神社参道在它东边 6 格
+    street_end: int = 126
+    #: 神社山包在主街哪一侧：'n' 北侧（旅馆在南），'s' 南侧（旅馆在北）
+    shrine_side: str = 'n'
+    #: 住宅各排：(北端 v, 前后错落, 间距)；排距不小于 15（住宅进深 13）
+    houses: tuple = ((52, 0, 2), (34, 2, 5), (18, 3, 9))
+    #: 西南台地种什么：'paddy' 旱田与水田，'tea' 茶园，'orchard' 果园
+    fields: str = 'paddy'
+    #: 街尾空地的范围 (u0, v0, u1, v1)
+    end_box: tuple = (137, 69, 157, 99)
+    #: 草坪上点树与花坛的范围
+    greenery: tuple = (14, 14, 162, 112)
+    #: 神社参道：'senbon' 千本鸟居直阶，'winding' 九十九折，'terraced' 三段石阶
+    approach: str = 'senbon'
+    #: 街尾空地：'tea' 茶庭，'pagoda' 五重塔，'bamboo' 竹林小径
+    end_plot: str = 'tea'
+    #: 温泉旅馆格局（见 fox_landmarks.ryokan）
+    ryokan: str = 'grand'
+
+
+PLANS = [
+    Plan('a'),
+    # 神社翻到东南、旅馆到东北；主街短一些、弯向另一边；住宅只在西北，两排挤一些
+    # 街尾空地挪到南侧商铺与神社山包之间
+    Plan('b', bend=(3.0, 2.5), street_end=120, shrine_side='s', houses=((54, 1, 1), (38, 2, 3), (22, 3, 4)),
+         fields='tea', end_box=(94, 110, 117, 140), greenery=(14, 14, 162, 162), approach='winding', end_plot='pagoda',
+         ryokan='garden'),
+    # 主街大弯；住宅只有两排，院子宽
+    Plan('c', bend=(7.0, -1.0), street_end=122, houses=((54, 0, 7), (28, 3, 13)), fields='orchard',
+         approach='terraced', end_plot='bamboo', ryokan='terrace'),
+]
+PLAN = PLANS[0]
+#: 片区翻转用：非 None 时 street_v 返回以此为两倍轴的镜像（见 district）
+_AXIS2 = None
+
+
 def street_v(u):
-    """主街中线：自入口向东顺地形略作 S 形弯曲。"""
-    t = (u - 22) / 104
-    return ENTRANCE_V + 5.5 * math.sin(t * math.pi) - 2.5 * math.sin(t * 2 * math.pi)
+    """主街中线：自入口向东顺地形作 S 形弯曲，弯法随方案。"""
+    a1, a2 = PLAN.bend
+    t = (u - 22) / (STREET_U1 - 22)
+    v = ENTRANCE_V + a1 * math.sin(t * math.pi) + a2 * math.sin(t * 2 * math.pi)
+    return v if _AXIS2 is None else _AXIS2 - v
 
 
 def smooth(t):
@@ -64,6 +109,7 @@ class Site:
         self.g = np.full((S, S), LAWN, dtype=np.int8)
         self.c = Canvas()
         self.lots = []
+        self.boxes = []
         self.variants = {}
         self.rnd = random.Random(20261102)
 
@@ -75,15 +121,22 @@ class Site:
         if ground is not None:
             self.g[v0:v1 + 1, u0:u1 + 1] = ground
 
-    def lot(self, kind, u0, v0, w, d, turns, y=None):
-        """登记一块可替换地块：名义占地 w×d（旋转前），旋转后左上角对齐 (u0, v0)。模板原点为建筑坐标 (-2, -2, -2)。"""
+    def lot(self, kind, u0, v0, w, d, turns, y=None, ground=COARSE):
+        """登记一块可替换地块：名义占地 w×d（旋转前），旋转后左上角对齐 (u0, v0)。模板原点为建筑坐标 (-2, -2, -2)。
+        ground 为 None 时不平整也不改地表（园景地块就地放在草坪上）。"""
         cw = [rotate_pos(x, z, turns) for x, z in ((0, 0), (w - 1, 0), (0, d - 1), (w - 1, d - 1))]
         ax, az = u0 - min(p[0] for p in cw), v0 - min(p[1] for p in cw)
         ox, oz = rotate_pos(-2, -2, turns)
         if y is None:
             y = int(np.round(np.median(self.h[v0:v0 + (d if turns % 2 == 0 else w), u0:u0 + (w if turns % 2 == 0 else d)])))
         fw, fd = (w, d) if turns % 2 == 0 else (d, w)
-        self.flat(u0, v0, u0 + fw - 1, v0 + fd - 1, y, COARSE)
+        box = (u0, v0, u0 + fw - 1, v0 + fd - 1)
+        for o in self.boxes:
+            if box[0] <= o[2] and o[0] <= box[2] and box[1] <= o[3] and o[1] <= box[3]:
+                raise ValueError(f'{PLAN.name}: 地块 {kind} {box} 与 {o} 重叠')
+        self.boxes.append(box)
+        if ground is not None:
+            self.flat(u0, v0, u0 + fw - 1, v0 + fd - 1, y, ground)
         self.lots.append({'kind': kind, 'u': ax + ox, 'y': y - 2, 'v': az + oz, 'turns': turns})
         return y
 
@@ -92,6 +145,39 @@ class Site:
         if y is None:
             y = self.H(u0, v0)
         self.c.paste(building, u0, y, v0, turns)
+
+
+def district(s, build, flip, axis2):
+    """在「北侧」坐标里建一片区；flip 时以 v = axis2 / 2 为轴整片南北翻过来再并入聚落。
+    片区读到的地形、地表与主街都是翻过的，写下的高度、地表与方块再翻回来；方块状态按南北镜像。"""
+    global _AXIS2
+    if not flip:
+        build(s)
+        return
+    t = Site()
+    t.rnd = s.rnd
+    t.lanes_n, t.lanes_s = getattr(s, 'lanes_s', []), getattr(s, 'lanes_n', [])
+    src = [axis2 - v for v in range(S)]
+    rows = [(v, sv) for v, sv in enumerate(src) if 0 <= sv < S]
+    for v, sv in rows:
+        t.h[v], t.g[v] = s.h[sv], s.g[sv]
+    h0, g0 = t.h.copy(), t.g.copy()
+    _AXIS2 = axis2
+    try:
+        build(t)
+    finally:
+        _AXIS2 = None
+    for v, sv in rows:
+        changed = (t.h[v] != h0[v]) | (t.g[v] != g0[v])
+        s.h[sv][changed] = t.h[v][changed]
+        s.g[sv][changed] = t.g[v][changed]
+    for (x, y, z), st in t.c.cells.items():
+        if 0 <= axis2 - z < S:
+            s.c.set(x, y, axis2 - z, mirror_state(st))
+    for name in ('shrine_box',):
+        if hasattr(t, name):
+            u0, v0, u1, v1 = getattr(t, name)
+            setattr(s, name, (u0, axis2 - v1, u1, axis2 - v0))
 
 
 # ==================== 地形 ====================
@@ -104,12 +190,62 @@ def base_terrain(s):
     steps = np.clip((v - FIELD_V0) // 8 + 1, 0, 6)
     h[:] = np.where(field, -steps, h)
     g[:] = np.where(field, COARSE, g)
-    # 东北神社山包：顶面 +16
-    r = np.sqrt(((u - 144) / 25.0) ** 2 + ((v - 40) / 28.0) ** 2)
+    # 神社山包：顶面 +16，北侧方案在东北，南侧方案以街尾主街中线为轴翻到东南
+    hv = 40 if PLAN.shrine_side == 'n' else shrine_axis2() - 40
+    r = np.sqrt(((u - 144) / 25.0) ** 2 + ((v - hv) / 28.0) ** 2)
     hill = 16 * smooth((1.0 - r) / 0.45)
     h[:] = np.where(hill >= 0.5, np.maximum(h, np.round(hill)), h)  # 只在山包范围内抬高，别把田地台阶抹回 0
     g[:] = np.where(r < 1.0, MOSS, g)
     g[:] = np.where(r < 0.55, LAWN, g)
+
+
+def shrine_axis2():
+    """神社片区翻转轴的两倍（整数，保证翻转后格子一一对应）。"""
+    return int(round(2 * street_v(SHRINE_U)))
+
+
+def ryokan_axis2():
+    return int(round(2 * street_v(RYOKAN_U0 + 28)))
+
+
+def soften_shrine_hill(s):
+    """神社山包的平台四周不留直壁：平台外的草坡按到平台的距离每格至多降一格，一直铺到聚落边缘，坡面带一点起伏。
+    只抬高不压低，只动草皮、草坪与苔地（地块、街道、石阶、田地都不动）；放在外缘之后，外圈山坡从抬高后的边缘接着往下降。"""
+    top = 16
+    u0, v0, u1, v1 = s.shrine_box
+    near = lambda m: (s.u >= u0 - m) & (s.u <= u1 + m) & (s.v >= v0 - m) & (s.v <= v1 + m)
+    plateau = (s.h >= top) & near(4)
+    region = ~plateau & near(28) & np.isin(s.g, (SOFT_TURF, TURF, LAWN, MOSS))
+    ru, rv = s.u[region].astype(float), s.v[region].astype(float)
+
+    def reach(mask, base):
+        """每个待抬高格到 mask 中各格的「高度 + 距离」的最小值：从这些格往外每格至多高出一格。"""
+        mu, mv, mh = s.u[mask].astype(float), s.v[mask].astype(float), base[mask].astype(float)
+        out = np.full(ru.shape, 1e9)
+        for i in range(0, len(mu), 256):
+            dist = np.sqrt((ru[:, None] - mu[None, i:i + 256]) ** 2 + (rv[:, None] - mv[None, i:i + 256]) ** 2)
+            out = np.minimum(out, (mh[None, i:i + 256] + dist).min(axis=1))
+        return out
+
+    d = reach(plateau, np.zeros_like(s.h))
+    wobble = 0.8 * np.sin(ru * 0.37 + 1.3) + 0.7 * np.cos(rv * 0.29 + ru * 0.11)
+    skirt = np.floor(top - d * 0.95 + wobble)
+    # 旁边不动的格子（住宅地块、小路、田坎）不能被抬高的草坡压成一道墙
+    fixed = ~plateau & ~region & near(38)
+    skirt = np.minimum(skirt, np.floor(reach(fixed, s.h)))
+    s.h[region] = np.maximum(s.h[region], skirt)
+    # 还剩的陡坎（贴着平台、落差超过 3 格）砌一道石垣，不露土壁
+    for v in range(max(1, v0 - 30), min(S - 1, v1 + 31)):
+        for u in range(max(1, u0 - 30), S - 1):
+            if plateau[v, u]:
+                continue
+            low = int(s.h[v, u])
+            if not any(plateau[v + dv, u + du] and s.h[v + dv, u + du] - low > 3 for du, dv in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                continue
+            for y in range(low + 1, top + 1):
+                if s.c.get(u, y, v) is None:
+                    k = (u * 7 + v * 13 + y * 5) % 9
+                    s.c.set(u, y, v, B('mossy_stone_bricks') if k < 3 else B('cobblestone') if k == 3 else B('stone_bricks'))
 
 
 def edge_band(s):
@@ -175,15 +311,18 @@ def street(s):
         c.set(u, 0, vw, B('water', level=0))
     lots_north, lots_south = [], []
     # 北侧：入口到神社前，留出食摊广场与几条巷口
+    # 旅馆在北侧的方案里，北侧商铺停在旅馆西墙外；南侧商铺停在旅馆或街尾神社广场前
+    north_end = RYOKAN_U0 - 2 if PLAN.shrine_side == 's' else STREET_U1 - 2
+    south_end = RYOKAN_U0 - 2 if PLAN.shrine_side == 'n' else STREET_U1 - 4
     u = STREET_U0 + 2
-    while u + fb.SHOP_W <= STREET_U1 - 2:
-        if 64 <= u <= 82:
+    while u + fb.SHOP_W <= north_end:
+        if u + fb.SHOP_W > 64 and u <= 82:  # 整间商铺都不能伸进食摊广场
             u = 84
             continue
         lots_north.append(u)
         u += fb.SHOP_W + (3 if len(lots_north) % 3 == 0 else 1)
     u = STREET_U0 + 2
-    while u + fb.SHOP_W <= RYOKAN_U0 - 2:
+    while u + fb.SHOP_W <= south_end:
         lots_south.append(u)
         u += fb.SHOP_W + (3 if len(lots_south) % 3 == 0 else 1)
     for u in lots_north:
@@ -259,22 +398,8 @@ def shrine(s):
     for u in range(STREET_U1 - 2, su + 7):
         for v in range(v_bottom - 2, v_bottom + 9):
             c.set(u, 0, v, PAVING if (u + v) % 5 else B('stone_bricks'))
-    # 石阶：自广场向北升到山包顶面，两侧千本鸟居
-    n = v_bottom - 2 - v_top
-    for i in range(n + 1):
-        v = v_bottom - 2 - i
-        y = int(math.floor(i * 16 / n))
-        prev = int(math.floor((i - 1) * 16 / n)) if i else 0
-        for u in range(su - 3, su + 4):
-            s.h[v, u] = y
-            s.g[v, u] = STONE
-        for u in range(su - 1, su + 2):
-            c.set(u, y, v, B('stone_brick_stairs', facing='north', half='bottom', shape='straight', waterlogged=False) if y > prev
-                  else B('stone_bricks'))
-        for u in (su - 2, su + 2, su - 3, su + 3):
-            c.set(u, y, v, B('mossy_cobblestone'))
-        if i % 2 == 0 and 2 <= i <= n - 2:
-            fl.torii(c, su, y + 1, v, axis='x')
+    # 参道：自广场向北升到山包顶面，样式随方案
+    {'senbon': approach_senbon, 'winding': approach_winding, 'terraced': approach_terraced}[PLAN.approach](s, su, v_bottom - 2, v_top)
     # 街尾巨大鸟居
     fl.torii(c, su, 1, v_bottom + 3, axis='x', big=True)
     fl.fox_pair(c, su, 0, v_bottom + 6, axis='x', gap=10)
@@ -283,6 +408,7 @@ def shrine(s):
         c.set(u, 2, v_bottom + 5, tall_lantern('upper'))
     # 境内：平整空地，参道转向东边的拝殿；拝殿、本殿、狐像与参道都对齐在拝殿中线 hall_u 上
     hall_u = 151
+    s.shrine_box = (su - 4, 15, 160, v_top)
     s.flat(su - 4, 26, 160, v_top, 16, LAWN)
     for u in range(su - 4, 161):
         for v in range(26, v_top + 1):
@@ -305,7 +431,7 @@ def shrine(s):
     hn = Canvas()
     fl.honden(hn, 0, 0)
     s.put(hn, hall_u - 4, 16, turns=2, y=16)
-    s.flat(140, 12, 158, 40, 16, LAWN)
+    s.flat(140, 15, 158, 40, 16, LAWN)
     ch = Canvas()
     fl.chozuya(ch, 0, 0)
     s.put(ch, su - 3, 36, turns=1, y=16)
@@ -315,10 +441,118 @@ def shrine(s):
     c.set(159, 17, 36, L('journey_shrine_hokora', facing='west'))
 
 
+def approach_senbon(s, su, vb, vt):
+    """千本鸟居：一道直上的石阶，隔一级一座鸟居。"""
+    c = s.c
+    n = vb - vt
+    for i in range(n + 1):
+        v = vb - i
+        y = int(math.floor(i * 16 / n))
+        prev = int(math.floor((i - 1) * 16 / n)) if i else 0
+        for u in range(su - 3, su + 4):
+            s.h[v, u] = y
+            s.g[v, u] = STONE
+        for u in range(su - 1, su + 2):
+            c.set(u, y, v, B('stone_brick_stairs', facing='north', half='bottom', shape='straight', waterlogged=False) if y > prev
+                  else B('stone_bricks'))
+        for u in (su - 2, su + 2, su - 3, su + 3):
+            c.set(u, y, v, B('mossy_cobblestone'))
+        if i % 2 == 0 and 2 <= i <= n - 2:
+            fl.torii(c, su, y + 1, v, axis='x')
+
+
+def approach_winding(s, su, vb, vt):
+    """九十九折：石阶在山坡上来回折两次，坡缓；转角平台立石灯，只在起点和终点各一座鸟居。"""
+    c = s.c
+    span = vb - vt
+    k = max(6, (span - 8) // 3)
+    pts = [(su, vb), (su, vb - k), (su + 10, vb - k), (su + 10, vb - 2 * k), (su, vb - 2 * k), (su, vt)]
+    cells = []
+    for a, b in zip(pts, pts[1:]):
+        du, dv = (b[0] > a[0]) - (b[0] < a[0]), (b[1] > a[1]) - (b[1] < a[1])
+        u, v = a
+        while (u, v) != b:
+            u, v = u + du, v + dv
+            cells.append((u, v, du, dv))
+    total = len(cells)
+    path = {}
+    prev = 0
+    for i, (u, v, du, dv) in enumerate(cells):
+        y = int(math.floor((i + 1) * 16 / total))
+        facing = {(0, -1): 'north', (1, 0): 'east', (-1, 0): 'west', (0, 1): 'south'}[(du, dv)]
+        rise = y > prev
+        prev = y
+        for w in (-1, 0, 1):
+            pu, pv = (u + w, v) if du == 0 else (u, v + w)
+            if (pu, pv) not in path or rise:
+                path[(pu, pv)] = (y, facing if rise else None)
+    for (u, v), (y, facing) in path.items():
+        s.h[v, u] = y
+        s.g[v, u] = STONE
+        c.set(u, y, v, B('stone_brick_stairs', facing=facing, half='bottom', shape='straight', waterlogged=False) if facing
+              else (B('mossy_stone_bricks') if (u * 3 + v) % 7 == 0 else B('stone_bricks')))
+    # 路肩：一圈苔石，高度跟路面
+    for (u, v), (y, _) in list(path.items()):
+        for du in (-1, 0, 1):
+            for dv in (-1, 0, 1):
+                q = (u + du, v + dv)
+                if q not in path and 0 <= q[0] < S and 0 <= q[1] < S:
+                    s.h[q[1], q[0]] = y
+                    s.g[q[1], q[0]] = STONE
+                    c.set(q[0], y, q[1], B('mossy_cobblestone'))
+    for (u, v) in pts[1:-1]:
+        y = path[(u, v)][0]
+        for du, dv in ((-2, -2), (2, 2), (-2, 2), (2, -2)):
+            q = (u + du, v + dv)
+            if q not in path and c.get(q[0], y + 1, q[1]) is None:
+                c.set(q[0], y + 1, q[1], stone_lantern())
+                break
+    fl.torii(c, su, path[(su, vb - 2)][0] + 1, vb - 2, axis='x')
+    fl.torii(c, su, path[(su, vt + 2)][0] + 1, vt + 2, axis='x')
+
+
+def approach_terraced(s, su, vb, vt):
+    """三段石阶：三跑直阶之间两处平台，两侧石垣带矮墙，每跑阶脚一座鸟居，平台上一对石灯。"""
+    c = s.c
+    rises = (5, 5, 6)
+    land = 5
+    run = sum(rises) + land * (len(rises) - 1)
+    pad = max(0, vb - vt - run)
+    profile = [0] * pad
+    y = 0
+    starts = []
+    for f, r in enumerate(rises):
+        starts.append((len(profile), y))
+        for _ in range(r):
+            y += 1
+            profile.append(y)
+        if f < len(rises) - 1:
+            profile += [y] * land
+    profile += [y] * max(0, vb - vt + 1 - len(profile))
+    for i, y in enumerate(profile[:vb - vt + 1]):
+        v = vb - i
+        prev = profile[i - 1] if i else 0
+        for u in range(su - 4, su + 5):
+            s.h[v, u] = y
+            s.g[v, u] = STONE
+        for u in range(su - 2, su + 3):
+            c.set(u, y, v, B('stone_brick_stairs', facing='north', half='bottom', shape='straight', waterlogged=False) if y > prev
+                  else (B('stone_bricks') if (u + v) % 3 else B('mossy_stone_bricks')))
+        for u in (su - 4, su - 3, su + 3, su + 4):
+            c.set(u, y, v, B('mossy_stone_bricks') if (u + v) % 3 == 0 else B('stone_bricks'))
+            if abs(u - su) == 4:
+                c.set(u, y + 1, v, B('stone_brick_wall', north='low', south='low', east='none', west='none', up=False, waterlogged=False))
+    for (i, y) in starts:
+        fl.torii(c, su, y + 1, vb - i + 1, axis='x')
+    for (i, y) in starts[1:]:
+        for du in (-3, 3):
+            c.set(su + du, y + 1, vb - i + 3, stone_lantern())
+
+
 # ==================== 温泉旅馆 ====================
 def ryokan(s):
     s.flat(RYOKAN_U0, RYOKAN_V0, RYOKAN_U0 + fl.RYOKAN_W - 1, RYOKAN_V0 + fl.RYOKAN_D - 1, 0, MOSS)
-    s.put(fl.ryokan(), RYOKAN_U0, RYOKAN_V0, 0, y=0)
+    s.put(fl.ryokan(PLAN.ryokan), RYOKAN_U0, RYOKAN_V0, 0, y=0)
     # 门前接主街的石板
     for u in range(RYOKAN_U0 + 26, RYOKAN_U0 + 31):
         for v in range(int(math.ceil(street_v(u) + 3)), RYOKAN_V0):
@@ -337,13 +571,14 @@ def ryokan(s):
 # ==================== 住宅 ====================
 def residences(s):
     """住宅自主街向北逐渐疏开：三排，越往外间距越大，屋前屋后有菜园与柴棚。"""
-    rows = [(52, 0, 2), (34, 2, 5), (18, 3, 9)]
     placed = []
-    for v0, jitter, gap in rows:
+    # 神社在北的方案里东北是神社山包；旅馆在北的方案里住宅停在旅馆西边
+    u_end = STREET_U1 if PLAN.shrine_side == 'n' else RYOKAN_U0 - 2
+    for v0, jitter, gap in PLAN.houses:
         u = 18 + s.rnd.randint(0, 3)
-        while u + 13 < 126:
+        while u + 13 < u_end:
             vv = v0 + s.rnd.randint(-jitter, jitter)
-            if u > 116 and vv < 40:
+            if PLAN.shrine_side == 'n' and u > SHRINE_U - 16 and vv < 40:
                 break
             s.lot('house', u, vv, 13, 13, 2)
             placed.append((u, vv))
@@ -373,12 +608,28 @@ def fields(s):
         if v0 > v1:
             continue
         y = -step
-        paddy = step >= 4
+        paddy = step >= 4 and PLAN.fields == 'paddy'
         for u in range(17, 90):
             for v in range(v0, v1 + 1):
                 edge = v == v1 or u in (17, 89) or (u - 17) % 18 == 0
                 if edge:
                     c.set(u, y, v, B('mossy_cobblestone') if v == v1 else B('grass_block', snowy=False))
+                    continue
+                if PLAN.fields == 'tea':
+                    # 茶园：顺等高线一垄垄修成圆背的茶树，垄间留一格土路
+                    if (v - v0) % 3 == 2:
+                        c.set(u, y, v, B('coarse_dirt'))
+                    else:
+                        c.set(u, y, v, B('grass_block', snowy=False))
+                        c.set(u, y + 1, v, B('azalea_leaves', distance=1, persistent=True, waterlogged=False))
+                    continue
+                if PLAN.fields == 'orchard':
+                    # 果园：每层台地一排果树，树下草地与野花
+                    c.set(u, y, v, B('grass_block', snowy=False))
+                    if (u - 17) % 6 == 3 and v == v0 + 3:
+                        fruit_tree(c, u, y + 1, v, rnd)
+                    elif c.get(u, y + 1, v) is None and rnd.random() < 0.25:
+                        c.set(u, y + 1, v, B(rnd.choice(('short_grass', 'short_grass', 'dandelion', 'oxeye_daisy'))))
                     continue
                 if paddy:
                     c.set(u, y - 1, v, B('mud'))
@@ -412,6 +663,18 @@ def fields(s):
                 s.g[v, u] = PATH
 
 
+def fruit_tree(c, u, y, v, rnd):
+    """果园的矮果树：两格树干，扁圆树冠，开花杜鹃叶当果花。"""
+    for k in range(2):
+        c.set(u, y + k, v, B('oak_log', axis='y'))
+    for du in range(-2, 3):
+        for dv in range(-2, 3):
+            for k in (2, 3):
+                if du * du + dv * dv + (k - 2.4) ** 2 * 2 <= 5.2 and rnd.random() < 0.92:
+                    leaf = 'flowering_azalea_leaves' if rnd.random() < 0.35 else 'oak_leaves'
+                    c.set(u + du, y + k, v + dv, B(leaf, distance=1, persistent=True, waterlogged=False))
+
+
 # ==================== 外缘植被 ====================
 def rim_planting(s):
     """土埂上的樱与竹：从山路上看不到聚落，进了大鸟居才豁然开朗。"""
@@ -442,10 +705,9 @@ def rim_planting(s):
 
 
 # ==================== 输出 ====================
-def write_templates(s):
-    OUT.mkdir(parents=True, exist_ok=True)
-    for old in OUT.glob('*.nbt'):
-        old.unlink()
+def write_core(s, out, prefix):
+    """聚落画布切成 44×44 的分块模板；方案 0 放在 fox_sanctuary/ 下，其余在 plan_N/ 下。"""
+    out.mkdir(parents=True, exist_ok=True)
     tiles = []
     ys = [k[1] for k in s.c.cells]
     top = max(ys)
@@ -459,9 +721,15 @@ def write_templates(s):
             if not cells:
                 continue
             name = f'core_{tu // TILE}_{tv // TILE}'
-            write_structure(OUT / f'{name}.nbt', [TILE, height, TILE], cells, data_version=DATA_VERSION)
-            tiles.append({'template': name, 'u': tu, 'v': tv})
-    for table, (w, d) in ((fb.SHOP_VARIANTS, (fb.SHOP_W, fb.SHOP_D)), (fb.HOUSE_VARIANTS, (13, 13)), (fb.STALL_VARIANTS, (5, 5))):
+            write_structure(out / f'{name}.nbt', [TILE, height, TILE], cells, data_version=DATA_VERSION)
+            tiles.append({'template': prefix + name, 'u': tu, 'v': tv})
+    return tiles
+
+
+def write_variants():
+    """各方案共用的地块变体：商铺、住宅、食摊。"""
+    for table, (w, d) in ((fb.SHOP_VARIANTS, (fb.SHOP_W, fb.SHOP_D)), (fb.HOUSE_VARIANTS, (13, 13)), (fb.STALL_VARIANTS, (5, 5)),
+                          (life.GARDEN_VARIANTS, (5, 5))):
         for name, make in table.items():
             b = make()
             size = [w + 4, 24, d + 4]
@@ -471,10 +739,9 @@ def write_templates(s):
                 if all(0 <= k[i] < size[i] for i in range(3)):
                     cells[k] = st
             write_structure(OUT / f'{name}.nbt', size, cells, data_version=DATA_VERSION)
-    return tiles
 
 
-def layout(s, tiles):
+def layout(s, tiles, path):
     obj = {
         'size': S,
         'heights': base64.b64encode(np.round(s.h).astype(np.int8).tobytes()).decode(),
@@ -485,7 +752,7 @@ def layout(s, tiles):
         'lots': s.lots,
         'variants': s.variants,
     }
-    write_json(D / 'fox_sanctuary/layout.json', obj)
+    write_json(path, obj)
 
 
 def worldgen():
@@ -559,37 +826,56 @@ def wild_features():
 
 
 def compose():
+    global STREET_U1, SHRINE_U
+    STREET_U1 = PLAN.street_end
+    SHRINE_U = STREET_U1 + 6
     s = Site()
     base_terrain(s)
     street(s)
     fy.street_row(s, street_v)
     food_plaza(s)
-    shrine(s)
-    ryokan(s)
+    south = PLAN.shrine_side == 's'
+    district(s, shrine, south, shrine_axis2())
+    district(s, ryokan, south, ryokan_axis2())
     residences(s)
     fields(s)
     edge_band(s)
+    soften_shrine_hill(s)
     entrance(s)
     rim_planting(s)
     # 生活气息：灯笼串、巷口杂物、街尾茶庭、住宅区的树与花坛、草坪上的草与野花
     rnd = random.Random(2026)
-    life.lantern_strings(s, street_v)
+    life.lantern_strings(s, street_v, u1=STREET_U1 - 2)
     life.alley_props(s, street_v, rnd)
-    life.tea_garden(s, 137, 69, 157, 99, rnd)
-    life.greenery(s, (14, 14, 162, 112), rnd)
+    life.end_plot(s, PLAN.end_plot, PLAN.end_box, rnd)
+    life.greenery(s, PLAN.greenery, rnd)
     life.lawn_cover(s, rnd)
     return s
 
 
 def main():
-    s = compose()
-    tiles = write_templates(s)
+    global PLAN
+    import shutil
+    for old in OUT.glob('*.nbt'):
+        old.unlink()
+    for old in list(OUT.glob('plan_*')) + list((D / 'fox_sanctuary').glob('plan_*')):
+        shutil.rmtree(old)
+    sites = []
+    for i, plan in enumerate(PLANS):
+        PLAN = plan
+        s = compose()
+        sub = '' if i == 0 else f'plan_{i}/'
+        tiles = write_core(s, OUT / sub, sub)
+        layout(s, tiles, D / 'fox_sanctuary' / sub / 'layout.json')
+        print(f'plan {i} {plan.name}: layout', int(s.h.min()), int(s.h.max()), 'cells', len(s.c.cells), 'lots', len(s.lots), 'tiles', len(tiles))
+        sites.append(s)
+    write_json(D / 'fox_sanctuary/plans.json', {'count': len(PLANS)})
+    write_variants()
     fy.write_templates(OUT, DATA_VERSION)
-    layout(s, tiles)
     worldgen()
     wild_features()
-    print('layout', int(s.h.min()), int(s.h.max()), 'cells', len(s.c.cells), 'lots', len(s.lots), 'tiles', len(tiles))
-    return s
+    PLAN = PLANS[0]
+    return sites
 
 
 if __name__ == '__main__':

@@ -54,6 +54,31 @@ def rotate_state(state, turns):
     return {'Name': state['Name'], 'Properties': p}
 
 
+_FLIP_NS = {'north': 'south', 'south': 'north'}
+_HANDED = {'left': 'right', 'right': 'left', 'inner_left': 'inner_right', 'inner_right': 'inner_left',
+           'outer_left': 'outer_right', 'outer_right': 'outer_left'}
+
+
+def mirror_state(state):
+    """南北镜像（z 翻转，同原版 Mirror.LEFT_RIGHT）：南北朝向互换，南北连接互换，楼梯转角、门铰、箱子左右与绘马挂左右互换。"""
+    if 'Properties' not in state:
+        return state
+    p = dict(state['Properties'])
+    for key in ('facing', 'horizontal_facing'):
+        if p.get(key) in _FLIP_NS:
+            p[key] = _FLIP_NS[p[key]]
+    if 'north' in p and 'south' in p:
+        p['north'], p['south'] = p['south'], p['north']
+    if 'rotation' in p:
+        p['rotation'] = str((8 - int(p['rotation'])) % 16)
+    for key in ('shape', 'hinge', 'type'):
+        if p.get(key) in _HANDED:
+            p[key] = _HANDED[p[key]]
+    if 'left' in p and 'right' in p:
+        p['left'], p['right'] = p['right'], p['left']
+    return {'Name': state['Name'], 'Properties': p}
+
+
 def rotate_pos(x, z, turns):
     """绕原点顺时针旋转（与原版 Rotation.CLOCKWISE_90 相同：(x, z) → (-z, x)）。"""
     for _ in range(turns % 4):

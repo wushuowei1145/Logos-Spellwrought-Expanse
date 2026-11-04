@@ -29,8 +29,20 @@ class FoxSanctuaryDataTest {
         return FoxSanctuaryDataTest.class.getResource("/data/logos_dimension/" + path) != null;
     }
 
+    /** 每套布局方案的设计图：方案 0 在老位置，其余在 plan_N/ 下。 */
+    private static List<JsonObject> layouts() throws IOException {
+        int count = json("fox_sanctuary/plans.json").get("count").getAsInt();
+        assertTrue(count >= 1, "没有布局方案");
+        List<JsonObject> out = new ArrayList<>();
+        for (int i = 0; i < count; i++) out.add(json("fox_sanctuary/" + (i == 0 ? "" : "plan_" + i + "/") + "layout.json"));
+        return out;
+    }
+
     @Test void layoutIsCompleteAndSquare() throws Exception {
-        var layout = json("fox_sanctuary/layout.json");
+        for (var layout : layouts()) checkLayout(layout);
+    }
+
+    private static void checkLayout(JsonObject layout) {
         int size = layout.get("size").getAsInt();
         assertEquals(size * size, Base64.getDecoder().decode(layout.get("heights").getAsString()).length);
         assertEquals(size * size, Base64.getDecoder().decode(layout.get("ground").getAsString()).length);
@@ -43,7 +55,10 @@ class FoxSanctuaryDataTest {
     }
 
     @Test void everyTemplateAndVariantExists() throws Exception {
-        var layout = json("fox_sanctuary/layout.json");
+        for (var layout : layouts()) checkTemplates(layout);
+    }
+
+    private static void checkTemplates(JsonObject layout) {
         List<String> missing = new ArrayList<>();
         for (var t : layout.getAsJsonArray("tiles")) {
             String name = t.getAsJsonObject().get("template").getAsString();
