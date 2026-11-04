@@ -22,7 +22,10 @@
     [],
     [],
     [],
-    [],
+    [
+      "logos_dimension:journey_seagrass",
+      "logos_dimension:underwater_rock_pile"
+    ],
     []
   ],
   "spawners": {},

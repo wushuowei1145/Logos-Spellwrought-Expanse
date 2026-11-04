@@ -48,6 +48,9 @@ public final class LogosDimension {
                     out.accept(dev.logos.dimension.item.UchigatanaItem.WOOD.get());
                     out.accept(dev.logos.dimension.paint.PaintSystem.BRUSH.get());
                     out.accept(dev.logos.dimension.paint.PaintSystem.PALETTE_ITEM.get());
+                    out.accept(dev.logos.dimension.cloudsea.AquaticFlora.SEAGRASS_ITEM.get());
+                    out.accept(dev.logos.dimension.cloudsea.AquaticFlora.GLOW_SEAGRASS_ITEM.get());
+                    out.accept(dev.logos.dimension.cloudsea.AquaticFlora.KELP_ITEM.get());
                     out.accept(dev.logos.dimension.cloudsea.FoxWildsBlocks.EMA_RACK.get());
                     out.accept(dev.logos.dimension.cloudsea.FoxWildsBlocks.EMA.get());
                 }).build());
@@ -75,6 +78,7 @@ public final class LogosDimension {
         DimensionFluids.TYPES.register(bus); DimensionFluids.FLUIDS.register(bus);
         DimensionParticles.register(bus);
         dev.logos.dimension.fox.FoxSanctuary.register(bus);
+        dev.logos.dimension.cloudsea.AquaticFlora.register(bus);
         dev.logos.dimension.cloudsea.EmaItem.register(bus);
         dev.logos.dimension.economy.Economy.register(bus);
         dev.logos.dimension.paint.PaintSystem.register(bus);

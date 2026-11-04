@@ -707,5 +707,13 @@
   "screen.logos_dimension.wallet.positions_note": "开平仓请到钱庄",
   "screen.logos_dimension.wallet.alert_mark": "提醒",
   "screen.logos_dimension.fx.limit_imperial": "挂单要有一边是帝国币",
-  "screen.logos_dimension.fx.limit_note": "成交的钱存入钱庄"
+  "screen.logos_dimension.fx.limit_note": "成交的钱存入钱庄",
+  "block.logos_dimension.journey_seagrass": "远行海草",
+  "block.logos_dimension.journey_tall_seagrass": "高远行海草",
+  "block.logos_dimension.journey_glow_seagrass": "萤光海草",
+  "block.logos_dimension.journey_kelp": "远行海带",
+  "block.logos_dimension.journey_kelp_plant": "远行海带茎",
+  "item.logos_dimension.journey_seagrass": "远行海草",
+  "item.logos_dimension.journey_glow_seagrass": "萤光海草",
+  "item.logos_dimension.journey_kelp": "远行海带"
 }

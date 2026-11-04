@@ -20,7 +20,12 @@
     [],
     [],
     [],
-    [],
+    [
+      "logos_dimension:journey_seagrass",
+      "logos_dimension:journey_glow_seagrass",
+      "logos_dimension:journey_kelp",
+      "logos_dimension:underwater_rock_pile"
+    ],
     []
   ],
   "spawners": {},

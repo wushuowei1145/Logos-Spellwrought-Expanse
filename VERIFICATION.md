@@ -1,5 +1,17 @@
 # 首版验证记录
 
+## 远行大陆水下景观
+
+2026-11-04：分支 `feat/underwater-flora`。设计见 [水下景观](docs/UNDERWATER.md)。新增海草、高海草、萤光海草、海带（头/茎）与海底小石堆，方块类照原版 SeagrassBlock / TallSeagrassBlock / KelpBlock / KelpPlantBlock / BlockPileFeature 改写（石堆允许放在水里）；生成特征接在水面群系与海底的 `cloudsea_root_caves`。
+
+| 层级 | 结果 |
+| --- | --- |
+| 编译 | `./gradlew compileJava -PlogosJar=…` 通过 |
+| 世界测试 | 未新增 GameTest |
+| 专用服务器 | `./gradlew --offline runServer -PlogosJar=…` 启动成功（`Done (0.296s)!`），水下植物的方块与 configured/placed feature 正常加载，无未知 feature 或数据包错误 |
+| 实际客户端 | `underwater_views` **1/1 场景、4/4 检查**：群系接入 placed feature、远行大陆实生水下植物计数 > 0（本次 1713）、水箱内海草/高海草/海带/石堆存活；统计显示水草支撑方块为沙 460 / 砾 4（补地表规则前是石头 463）；截图 `docs/screenshots/underwater/tank.png` |
+| 未验证 | 珊瑚、鱼群（后续批次）；光影包；多人同步 |
+
 ## 曦誓拔剑与收剑的动作：托剑凝成、剑花、插地
 
 2026-11-04：分支 `feat/dawnvow-flourish`，基于 main `ba681e1`。按维护者意见：

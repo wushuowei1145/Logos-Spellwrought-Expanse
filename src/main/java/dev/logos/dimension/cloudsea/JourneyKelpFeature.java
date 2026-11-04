@@ -1,0 +1,59 @@
+package dev.logos.dimension.cloudsea;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.GrowingPlantHeadBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
+import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
+
+/**
+ * 远行大陆的海带生成。类内容照原版 KelpFeature 原样抄写，只把
+ * Blocks.KELP / Blocks.KELP_PLANT 换成本附属的海带头与海带茎。
+ */
+public class JourneyKelpFeature extends Feature<NoneFeatureConfiguration> {
+    public JourneyKelpFeature() {
+        super(NoneFeatureConfiguration.CODEC);
+    }
+
+    @Override
+    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
+        int placed = 0;
+        WorldGenLevel level = context.level();
+        BlockPos origin = context.origin();
+        RandomSource random = context.random();
+        int y = level.getHeight(Heightmap.Types.OCEAN_FLOOR, origin.getX(), origin.getZ());
+        BlockPos kelpPos = new BlockPos(origin.getX(), y, origin.getZ());
+        if (level.getBlockState(kelpPos).is(Blocks.WATER)) {
+            BlockState stateTop = AquaticFlora.KELP.get().defaultBlockState();
+            BlockState state = AquaticFlora.KELP_PLANT.get().defaultBlockState();
+            int height = 1 + random.nextInt(10);
+            for (int h = 0; h <= height; h++) {
+                if (level.getBlockState(kelpPos).is(Blocks.WATER)
+                    && level.getBlockState(kelpPos.above()).is(Blocks.WATER)
+                    && state.canSurvive(level, kelpPos)) {
+                    if (h == height) {
+                        level.setBlock(kelpPos, stateTop.setValue(GrowingPlantHeadBlock.AGE, random.nextInt(4) + 20), 2);
+                        placed++;
+                    } else {
+                        level.setBlock(kelpPos, state, 2);
+                    }
+                } else if (h > 0) {
+                    BlockPos below = kelpPos.below();
+                    if (stateTop.canSurvive(level, below)
+                        && !level.getBlockState(below.below()).is(AquaticFlora.KELP.get())) {
+                        level.setBlock(below, stateTop.setValue(GrowingPlantHeadBlock.AGE, random.nextInt(4) + 20), 2);
+                        placed++;
+                    }
+                    break;
+                }
+                kelpPos = kelpPos.above();
+            }
+        }
+        return placed > 0;
+    }
+}

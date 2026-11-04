@@ -707,5 +707,13 @@
   "screen.logos_dimension.wallet.positions_note": "Trade positions at a bank",
   "screen.logos_dimension.wallet.alert_mark": "alert",
   "screen.logos_dimension.fx.limit_imperial": "Limit orders need imperial on one side",
-  "screen.logos_dimension.fx.limit_note": "Proceeds go to the bank"
+  "screen.logos_dimension.fx.limit_note": "Proceeds go to the bank",
+  "block.logos_dimension.journey_seagrass": "Journey Seagrass",
+  "block.logos_dimension.journey_tall_seagrass": "Tall Journey Seagrass",
+  "block.logos_dimension.journey_glow_seagrass": "Glowing Seagrass",
+  "block.logos_dimension.journey_kelp": "Journey Kelp",
+  "block.logos_dimension.journey_kelp_plant": "Journey Kelp Plant",
+  "item.logos_dimension.journey_seagrass": "Journey Seagrass",
+  "item.logos_dimension.journey_glow_seagrass": "Glowing Seagrass",
+  "item.logos_dimension.journey_kelp": "Journey Kelp"
 }
