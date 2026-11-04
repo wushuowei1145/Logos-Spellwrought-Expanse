@@ -1,5 +1,27 @@
 # 首版验证记录
 
+## 远行大陆水下景观
+
+2026-11-04：分支 `feat/underwater-flora`。设计见 [水下景观](docs/UNDERWATER.md)。新增海草、高海草、萤光海草、海带（头/茎）与海底小石堆，方块类照原版 SeagrassBlock / TallSeagrassBlock / KelpBlock / KelpPlantBlock / BlockPileFeature 改写（石堆允许放在水里）；生成特征接在水面群系与海底的 `cloudsea_root_caves`。
+
+| 层级 | 结果 |
+| --- | --- |
+| 编译 | `./gradlew compileJava -PlogosJar=…` 通过 |
+| 世界测试 | 未新增 GameTest |
+| 专用服务器 | `./gradlew --offline runServer -PlogosJar=…` 启动成功（`Done (0.296s)!`），水下植物的方块与 configured/placed feature 正常加载，无未知 feature 或数据包错误 |
+| 实际客户端 | `underwater_views` **1/1 场景、4/4 检查**：群系接入 placed feature、远行大陆实生水下植物计数 > 0（本次 1713）、水箱内海草/高海草/海带/石堆存活；统计显示水草支撑方块为沙 460 / 砾 4（补地表规则前是石头 463）；截图 `docs/screenshots/underwater/tank.png` |
+| 未验证 | 珊瑚、鱼群（后续批次）；光影包；多人同步 |
+
+第二轮（同分支）：海床改照原版主世界地表规则，只作用于被水淹没的地面（沙底群系水下为沙，其他群系浅水泥土、深水砾石），并接入原版沙/黏土/砾石海床圆盘；海草与海带的数量和高海草比例改用原版暖海/河流/深海的数值；海底小石堆只往水格里堆；方块类改为继承原版类，只覆盖写死原版方块的方法；萤光海草改用原版 `simple_block`，删除重复的生成特征；三张只差颜色的海草贴图重画为各自不同的形状；海草/高海草改为剪刀才掉落；五种水下植物加入 `logos:fragile_plants`。
+
+| 层级 | 结果 |
+| --- | --- |
+| 编译 | `./gradlew jar -PlogosJar=…`（Logos 0.6.0）通过 |
+| 专用服务器 | 扫描构建出的 jar：除 `client` 包与 mixins.json 里 `client` 段的 mixin 外，没有类引用 `net.minecraft.client`；通用类指向 `client` 包的只有只传通用类型的静态调用。未在真专用服务器上启动 |
+| 世界测试 | 未新增 GameTest |
+| 实际客户端 | `underwater_views` **1/1 场景、8/8 检查**：群系接线（含原版 `disk_clay`）、衰退标签、海草空手不掉/剪刀才掉、海带空手可掉；泻湖与海湾附近各生成 7×7 区块统计——泻湖海床 9409 列：砾 8796、石 613（其中 552 列在洞穴/峡谷挖开处 4 格内，海床裸石 61 列 0.6%）；海湾 9409 列：砾 8200、沙 568、泥土 305、黏土 18、石 318（挖开处 227，海床裸石 91 列 0.97%）；水下植物 8183 / 3683；水下石堆 42 / 29 块，岸上石堆 0。截图 `docs/screenshots/underwater/tank.png`（水箱）、`docs/screenshots/underwater/seabed.png`（实际生成的海湾海床） |
+| 未验证 | 衰退法术的实际施放（只核对了标签）；珊瑚、鱼群；光影包；多人同步 |
+
 ## 命中锥形张角按武器设定
 
 2026-11-04：分支 `feat/weapon-cone-param`，基于 main `ed4527f`。按维护者意见，锥形命中判定（#142）写进文档，并让以后新增的武器能给自己的参数：
@@ -29,6 +51,7 @@
 ./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:economy_*"
 ./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=bank_views,economy_views" -PldTestHeadless -PldTestWindow=1280x720
 ```
+
 ## 曦誓拔剑与收剑的动作：托剑凝成、剑花、插地
 
 2026-11-04：分支 `feat/dawnvow-flourish`，基于 main `ba681e1`。按维护者意见：
