@@ -35,6 +35,8 @@ public final class LongswordRig {
     private final Map<String, CombatClip> clips;
     private final List<Quad> quads = new ArrayList<>();
     private final Identifier texture;
+    /** 剑身发光层的贴图（武器网格的 {@code glow}，只有发光的像素不透明）；没有时为 null。 */
+    private final Identifier glow;
     private final Vector3f weaponPivot;
     private final float weaponScale;
 
@@ -84,6 +86,7 @@ public final class LongswordRig {
             cube(value.getAsJsonObject(), Layer.SLIM, new Matrix4f());
         }
         texture = Identifier.parse(weapon.get("texture").getAsString());
+        glow = weapon.has("glow") ? Identifier.parse(weapon.get("glow").getAsString()) : null;
         var size = weapon.getAsJsonArray("texture_size");
         float width = size.get(0).getAsFloat(), height = size.get(1).getAsFloat();
         for (var value : weapon.getAsJsonArray("cubes")) {
@@ -126,6 +129,55 @@ public final class LongswordRig {
         var weapon = new Matrix4f(bones.get(CombatBones.WEAPON)).translate(weaponPivot).scale(weaponScale);
         return new Sample(bones, pose.rotation(CombatBones.UP_BODY), weapon);
     }
+    /**
+     * 右臂（连同剑）绕右肩按 {@code degrees} 抬起或压下，转轴是肩部骨骼 {@code Arm} 的 X 轴：第三人称施法时剑尖跟着视线俯仰。
+     * 正值把手臂往上抬。
+     */
+    public Sample aim(Sample sample, float degrees) {
+        if (degrees == 0) return sample;
+        var arm = sample.bones.get(CombatBones.ARM);
+        var pivot = arm.transformPosition(new Vector3f(skeleton.bone(CombatBones.RIGHT_ARM).pivot()));
+        var axis = arm.transformDirection(new Vector3f(1, 0, 0)).normalize();
+        var turn = new Matrix4f().translation(pivot).rotate((float) Math.toRadians(degrees), axis).translate(-pivot.x, -pivot.y, -pivot.z);
+        var bones = new HashMap<>(sample.bones);
+        for (var bone : List.of(CombatBones.RIGHT_ARM, CombatBones.RIGHT_FORE_ARM, CombatBones.RIGHT_HAND, CombatBones.WEAPON))
+            bones.put(bone, new Matrix4f(turn).mul(bones.get(bone)));
+        return new Sample(Map.copyOf(bones), sample.bodyRotation, new Matrix4f(turn).mul(sample.weapon));
+    }
+
+    /** 武器网格坐标（像素，原点在握柄）里的一点在这一帧骨架空间的位置。 */
+    public static Vector3f onWeapon(Sample sample, Vector3f point) {
+        return sample.weapon.transformPosition(new Vector3f(point));
+    }
+
+    /** 武器有没有发光层。 */
+    public boolean glows() { return glow != null; }
+
+    /**
+     * 剑身发光：剑的面再画一遍发光层贴图，叠加混合、不受光照，经 Logos 的光影兼容通道提交。
+     * {@code strength} 0–1，{@code rgb} 为发光颜色。
+     */
+    public void submitGlow(Sample sample, PoseStack pose, SubmitNodeCollector collector, boolean firstPerson, float strength, int rgb) {
+        if (glow == null || strength <= 0.003f) return;
+        List<Vector3f[]> faces = new ArrayList<>();
+        List<float[]> uvs = new ArrayList<>();
+        for (var quad : quads) if (quad.layer == Layer.WEAPON && quad.bone.equals(CombatBones.WEAPON)) {
+            var matrix = sample.bones.get(quad.bone);
+            var points = new Vector3f[4];
+            for (int i = 0; i < 4; i++) points[i] = matrix.transformPosition(new Vector3f(quad.points[i]));
+            faces.add(points);
+            uvs.add(quad.uv);
+        }
+        int color = dev.logos.client.VfxParts.argb(Math.min(1, strength), rgb);
+        dev.logos.client.ShaderPackOverlay.item(collector, firstPerson).submitCustomGeometry(pose, dev.logos.client.VfxParts.add(glow), (p, buffer) -> {
+            for (int f = 0; f < faces.size(); f++) for (int i = 0; i < 4; i++) {
+                var point = faces.get(f)[i]; var uv = uvs.get(f);
+                float u = i == 0 || i == 3 ? uv[2] : uv[0], v = i < 2 ? uv[3] : uv[1];
+                dev.logos.client.VfxParts.vertex(p, buffer, new net.minecraft.world.phys.Vec3(point.x, point.y, point.z), u, v, color);
+            }
+        });
+    }
+
     private void cube(JsonObject cube, Layer layer, Matrix4f origin) {
         var from = vector(cube.getAsJsonArray("start")); var to = vector(cube.getAsJsonArray("end"));
         if (layer == Layer.SLIM) {

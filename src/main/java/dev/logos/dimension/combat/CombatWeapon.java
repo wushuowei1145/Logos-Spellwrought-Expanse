@@ -19,7 +19,13 @@ public record CombatWeapon(int id, String mesh, String animations, Identifier mo
     private static final Map<Integer, Double> CONES = new ConcurrentHashMap<>();
 
     /** 战斗武器物品。 */
-    public interface Holder { CombatWeapon combatWeapon(); }
+    public interface Holder {
+        CombatWeapon combatWeapon();
+        /** 左键将要交给招式状态机前调用（{@code move} 为当前招式）；返回 false 时这次左键作废。施法剑在格挡里借此开始蓄力。 */
+        default boolean allowsAttack(net.minecraft.server.level.ServerPlayer player, String move) { return true; }
+        /** 招式状态机每刻结算之后调用。 */
+        default void combatTick(net.minecraft.server.level.ServerPlayer player, String move) {}
+    }
 
     public static CombatWeapon register(int id, String mesh, String animations, Identifier moveset) {
         var weapon = new CombatWeapon(id, mesh, animations, moveset);

@@ -41,6 +41,7 @@ ORDER = ['Root', 'AllBody', 'UpBody', 'UpperBody', 'AllHead', 'Head', 'Arm',
 GRIP = [0, 1, 0]  # 剑与剑鞘骨骼的枢轴，也是网格的原点
 SCALE = {'tp': 0.8, 'fp': 0.58}  # 美术包里两个视角相对原始剑模型的缩放
 LOOP = {'loop': True, 'once': False, 'hold': 'hold_on_last_frame'}
+GLOW = {'blacksteel_longsword'}  # 施法、魔力缠绕时剑身铭文发光
 
 
 def write(path, value):
@@ -117,8 +118,10 @@ def weapon(model, variant):
         cubes.append(dict(name=cube['name'], part='sheath' if bone.startswith('scabbard_') else 'weapon',
                           start=local(cube['from']), end=local(cube['to']), pivot=local(cube['origin']),
                           rotation=cube['rotation'], uv={face: data['uv'] for face, data in cube['faces'].items()}))
-    return dict(texture=f'logos_dimension:textures/item/{variant}_rig.png',
-                texture_size=[model['resolution']['width'], model['resolution']['height']], cubes=cubes)
+    out = dict(texture=f'logos_dimension:textures/item/{variant}_rig.png',
+               texture_size=[model['resolution']['width'], model['resolution']['height']], cubes=cubes)
+    # 剑身会发光的武器另有发光层（tools/make_blacksteel_glow.py 从铭文像素生成）。
+    return {'glow': f'logos_dimension:textures/item/{variant}_rig_glow.png', **out} if variant in GLOW else out
 
 
 def animations(model):

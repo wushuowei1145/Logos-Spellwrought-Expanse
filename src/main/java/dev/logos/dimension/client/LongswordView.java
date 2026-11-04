@@ -26,6 +26,10 @@ public class LongswordView implements UIScenario {
     private float health;
     protected int variant() { return 0; }
     protected HumanoidArm arm() { return HumanoidArm.RIGHT; }
+    /** 按住右键时进入的招式：曦誓是双手竖剑蓄力，黑钢长剑是竖剑格挡（施法另见 {@link BlacksteelCastView}）。 */
+    protected String[] holdMoves() { return new String[]{"charge_start","charge_hold"}; }
+    /** 松开右键是否举剑下劈（黑钢长剑只是放下剑）。 */
+    protected boolean slashes() { return true; }
     private boolean phase(String... moves) {
         var mc = Minecraft.getInstance(); var p = LongswordClient.pose(mc.player.getUUID());
         return p != null && p.variant() == variant() && Arrays.asList(moves).contains(p.move());
@@ -66,7 +70,7 @@ public class LongswordView implements UIScenario {
                 .waitUntil("拔剑同步", ctx -> phase("draw")).ticks(5).screenshot("draw")
                 .step("拔剑中提前按住右键",ctx->Minecraft.getInstance().options.keyUse.setDown(true)).ticks(3)
                 .check("拔剑中没有提前开始使用物品",ctx->!Minecraft.getInstance().player.isUsingItem())
-                .waitUntil("拔剑后持续按键开始蓄力",ctx->phase("charge_start","charge_hold")).ticks(14)
+                .waitUntil("拔剑后持续按键开始蓄力",ctx->phase(holdMoves())).ticks(14)
                 .step("释放提前按住的右键",ctx->{
                     var mc=Minecraft.getInstance();mc.options.keyUse.setDown(false);mc.gameMode.releaseUsingItem(mc.player);
                 }).waitUntil("恢复侧持",ctx->phase("idle"))
@@ -95,20 +99,29 @@ public class LongswordView implements UIScenario {
                 .server("恢复魔力缠绕",ctx->dev.logos.runtime.ManaWrap.wrap(ctx.player(),variant()==0?dev.logos.lang.Element.ARCANE:dev.logos.lang.Element.FIRE,4,300))
                 .waitUntil("恢复缠绕同步",ctx->dev.logos.runtime.ManaWrap.of(Minecraft.getInstance().player)!=null)
                 .server("记录蓄力前生命", ctx -> health=((LivingEntity)ctx.server().overworld().getEntity(target)).getHealth())
+                // 黑钢长剑也是法杖：潜行右键打开载页栏位，所以格挡前先站起来，测完再潜行。
+                .step("黑钢长剑先站起", ctx -> { if (!slashes()) Minecraft.getInstance().options.keyShift.setDown(false); })
+                .waitUntil("可以右键", ctx -> slashes() || !Minecraft.getInstance().player.isCrouching())
                 .step("右键蓄力", ctx -> {
                     var mc=Minecraft.getInstance(); mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.keyUse.setDown(true);
                     mc.gameMode.useItem(mc.player,InteractionHand.MAIN_HAND);
-                }).waitUntil("蓄力同步", ctx -> phase("charge_start","charge_hold")).ticks(20).screenshot("first_person_charge")
+                }).waitUntil("蓄力同步", ctx -> phase(holdMoves())).ticks(20).screenshot("first_person_charge")
                 .checkServer("持续蓄力不提前伤害", ctx -> ((LivingEntity)ctx.server().overworld().getEntity(target)).getHealth()==health)
                 .step("第三人称竖剑", ctx -> Minecraft.getInstance().options.setCameraType(CameraType.THIRD_PERSON_FRONT))
                 .ticks(3).screenshot("third_person_charge")
                 .step("松开右键", ctx -> {
                     var mc=Minecraft.getInstance(); mc.options.keyUse.setDown(false); mc.gameMode.releaseUsingItem(mc.player);
-                }).waitUntil("下劈同步", ctx -> phase("charge_release")).ticks(6).screenshot("release_raised")
+                });
+        if (slashes()) s.waitUntil("下劈同步", ctx -> phase("charge_release")).ticks(6).screenshot("release_raised")
                 .ticks(5).screenshot("release_contact")
                 .waitUntil("下劈结束", ctx -> phase("idle"))
-                .checkServer("松开后下劈伤害", ctx -> ((LivingEntity)ctx.server().overworld().getEntity(target)).getHealth()<health)
-                .server("检查分段胸甲",ctx->ctx.player().setItemSlot(EquipmentSlot.CHEST,new ItemStack(net.minecraft.world.item.Items.DIAMOND_CHESTPLATE)))
+                .checkServer("松开后下劈伤害", ctx -> ((LivingEntity)ctx.server().overworld().getEntity(target)).getHealth()<health);
+        else s.waitUntil("放下剑", ctx -> phase("guard_lower")).ticks(4).screenshot("guard_lower")
+                .waitUntil("放下剑结束", ctx -> phase("idle"))
+                .checkServer("格挡放下没有伤害", ctx -> ((LivingEntity)ctx.server().overworld().getEntity(target)).getHealth()==health)
+                .step("重新潜行", ctx -> Minecraft.getInstance().options.keyShift.setDown(true))
+                .waitUntil("重新进入潜行", ctx -> Minecraft.getInstance().player.isCrouching());
+        s.server("检查分段胸甲",ctx->ctx.player().setItemSlot(EquipmentSlot.CHEST,new ItemStack(net.minecraft.world.item.Items.DIAMOND_CHESTPLATE)))
                 .ticks(5).screenshot("third_person_armor")
                 .check("穿胸甲后潜行腰部仍连接",ctx->crouchedWaistConnected())
                 .step("结束潜行",ctx->Minecraft.getInstance().options.keyShift.setDown(false))
@@ -140,7 +153,11 @@ public class LongswordView implements UIScenario {
                 });
     }
     @LDLRegisterClient(name="blacksteel", group="longsword", registry=UIScenario.REGISTRY, environment=RegistrationEnvironment.DEV_ONLY)
-    public static class Blacksteel extends LongswordView { @Override protected int variant(){return 1;} }
+    public static class Blacksteel extends LongswordView {
+        @Override protected int variant(){return 1;}
+        @Override protected String[] holdMoves(){return new String[]{"guard_raise","guard"};}
+        @Override protected boolean slashes(){return false;}
+    }
     @LDLRegisterClient(name="blacksteel_left", group="longsword", registry=UIScenario.REGISTRY, environment=RegistrationEnvironment.DEV_ONLY)
     public static class Left extends Blacksteel { @Override protected HumanoidArm arm(){return HumanoidArm.LEFT;} }
 }
