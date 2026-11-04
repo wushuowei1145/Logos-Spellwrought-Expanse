@@ -37,7 +37,8 @@ import net.neoforged.neoforge.network.registration.NetworkRegistry;
  * 本附属的战斗武器（长剑、打刀，见 {@link CombatWeapon}）接入招式状态机（数据包 combat/movesets/*.json）：
  * 服务端决定出招、接触时刻和命中；切物品、死亡、离线都会取消待结算攻击。招式读不到时武器按原版物品处理。
  * <p>
- * 命中判定是准星前方的锥形（{@link #cone}）：顶点在眼睛，默认张角 {@link #CONE} 度，长度是原版攻击距离
+ * 命中判定是准星前方的锥形（{@link #cone}）：顶点在眼睛，张角是武器注册时给的 {@link CombatWeapon#withCone}，
+ * 不给就是 {@link CombatWeapon#DEFAULT_CONE} 度；长度是原版攻击距离
  * （{@code entity_interaction_range}，被属性修饰时跟着变）。锥形里看得见的生物都挨一刀（原版攻击，护甲、附魔、
  * 受击冷却照常）；准星正对着的那个暴击（经 NeoForge 的暴击事件，原版的 1.5 倍、粒子与音效）。这一刀不再另触发原版横扫。
  * 本附属以后的近战武器都走这里。
@@ -48,8 +49,6 @@ public final class LongswordCombat {
     private static final ThreadLocal<Boolean> CONTACT = ThreadLocal.withInitial(() -> false);
     /** 这一刀要暴击的目标（准星正对着的），由暴击事件读。 */
     private static final ThreadLocal<Entity> CRIT = new ThreadLocal<>();
-    /** 命中锥形的默认张角（度）。 */
-    public static final double CONE = 60;
     /** 一刀最多打几个目标。 */
     private static final int MAX_TARGETS = 8;
     private static final class State implements MoveRunner.Actor {
@@ -188,9 +187,10 @@ public final class LongswordCombat {
         if (DawnvowCharge.dawnvow(state.stack)) DawnvowCharge.tick(player, state.stack, state.runner.move().name());
         if (selected(player, state) && state.stack.getItem() instanceof CombatWeapon.Holder holder) holder.combatTick(player, state.runner.move().name());
     }
-    /** 这一刀命中锥形的张角（度）：默认 {@link #CONE}；曦誓剑身金光在时更宽。 */
+    /** 这一刀命中锥形的张角（度）：手上武器的 {@link CombatWeapon#cone}；曦誓剑身金光在时更宽。 */
     public static double cone(ServerPlayer player) {
-        return DawnvowCharge.cone(player, CONE);
+        var weapon = CombatWeapon.of(player.getMainHandItem());
+        return DawnvowCharge.cone(player, weapon == null ? CombatWeapon.DEFAULT_CONE : weapon.cone());
     }
 
     /**

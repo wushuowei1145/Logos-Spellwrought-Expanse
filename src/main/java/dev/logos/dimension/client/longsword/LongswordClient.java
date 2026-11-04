@@ -167,7 +167,7 @@ public final class LongswordClient {
         boolean shown = DawnvowSummon.visible(p, now);
         var rig = LongswordRig.get(p.variant(), true);
         rig.submit(sample, pose,
-                event.getSubmitNodeCollector(), event.getPackedLight(), mc.player.getSkin().body().texturePath(), !mc.player.isInvisible(), shown);
+                event.getSubmitNodeCollector(), event.getPackedLight(), mc.player.getSkin(), !mc.player.isInvisible(), shown);
         if (rig.glows() && shown) {
             float glow = SwordCastClient.glow(mc.player, p, now, event.getPartialTick());
             if (glow > 0) rig.submitGlow(sample, pose, event.getSubmitNodeCollector(), true, glow, SwordCastClient.color(mc.player));
@@ -195,7 +195,7 @@ public final class LongswordClient {
             pose.scale(state.mainArm == HumanoidArm.LEFT ? 1/16f : -1/16f, -1/16f, 1/16f);
             boolean shown = DawnvowSummon.visible(frame.move, frame.time);
             var rig = LongswordRig.get(frame.variant, false);
-            rig.submit(frame.sample, pose, collector, light, state.skin.body().texturePath(), !state.isInvisible, shown);
+            rig.submit(frame.sample, pose, collector, light, state.skin, !state.isInvisible, shown);
             if (shown && frame.glow > 0) rig.submitGlow(frame.sample, pose, collector, false, frame.glow, frame.glowColor);
             if (frame.tip != null) SwordCastClient.reportThirdPerson(state.id, pose.last().pose(), LongswordRig.onWeapon(frame.sample, frame.tip));
             DawnvowSummon.submit(frame.move, frame.time, frame.sample, pose, collector, false);

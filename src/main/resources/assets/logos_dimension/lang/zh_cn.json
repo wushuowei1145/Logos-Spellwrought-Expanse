@@ -710,5 +710,7 @@
   "screen.logos_dimension.wallet.positions_note": "开平仓请到钱庄",
   "screen.logos_dimension.wallet.alert_mark": "提醒",
   "screen.logos_dimension.fx.limit_imperial": "挂单要有一边是帝国币",
-  "screen.logos_dimension.fx.limit_note": "成交的钱存入钱庄"
+  "screen.logos_dimension.fx.limit_note": "成交的钱存入钱庄",
+  "message.logos_dimension.bank.too_deep": "单笔太大，超出市场深度，请分批",
+  "bank.notice.voided": "%s%s仓超出市场深度（旧版本的错误），已作废并退回保证金"
 }
