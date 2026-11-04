@@ -1,0 +1,32 @@
+{
+  "extends": "logos_dimension:longsword",
+  "moves": {
+    "idle": {
+      "clip": "idle", "length": 2.4, "playback": "loop", "blend_in": 0.12,
+      "on": [
+        {"input": "attack", "to": "attack_1", "combo": true},
+        {"input": "use_press", "to": "guard_raise"}
+      ]
+    },
+    "guard_raise": {
+      "clip": "charge_start", "length": 0.55, "reset_combo": true, "blend_in": 0.1, "next": "guard",
+      "on": [
+        {"input": "attack", "to": "cast_charge"},
+        {"input": "use_release", "to": "guard_cancel"}
+      ]
+    },
+    "guard": {
+      "clip": "charge_hold", "length": 1.6, "playback": "loop",
+      "on": [
+        {"input": "attack", "to": "cast_charge"},
+        {"input": "use_release", "to": "guard_lower"}
+      ]
+    },
+    "guard_cancel": {"clip": "charge_start", "playback": "reverse", "next": "idle"},
+    "guard_lower": {"clip": "guard_lower", "length": 0.55, "blend_in": 0.08, "next": "idle"},
+    "cast_charge": {"clip": "cast_aim", "length": 2.0, "playback": "loop", "attack_speed_base": 1.6, "blend_in": 0.15},
+    "cast_beam": {"clip": "cast_aim", "length": 2.0, "playback": "loop", "attack_speed_base": 1.6, "blend_in": 0.05},
+    "cast_thrust": {"clip": "cast_thrust", "length": 0.6, "attack_speed_base": 1.6, "blend_in": 0.03, "next": "idle"},
+    "cast_lower": {"clip": "cast_lower", "length": 0.4, "attack_speed_base": 1.6, "blend_in": 0.05, "next": "idle"}
+  }
+}

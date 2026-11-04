@@ -1,5 +1,23 @@
 # 首版验证记录
 
+## 黑钢长剑：格挡与施法
+
+2026-11-04：分支 `feat/blacksteel-cast`，基于 main `ed4527f`。按维护者意见，黑钢长剑可以像法杖一样施法：
+
+- 潜行右键打开 6 格载页栏位，R 打开术式轮盘，蓄力速度为 Logos 第 3 档法杖（流量 70、加速 130）。
+- 右键竖剑格挡（原版格挡组件，0.3 秒前摇，不损耗耐久），前方浮现一圈奥秘符文；格挡中左键开始蓄力，蓄满后松开右键施放。
+- 蓄力时单手剑尖指向前，施放后按 Logos #373 的 `CastPose.gesture` 判定：光柱开头一直前指到光柱结束，其他向前一送再收回。
+- 物品模型加 `wand_tip` 挂点（剑尖），按剑实际画出的位置上报给 Logos 的 `CastPoints`。
+- 用它施放的魔力缠绕及其引发的符文花费 −30%、伤害 +30%（Logos 新增的 `wrap_cost`、`wrap_power` 属性，见 MagicFoxDemon/MinecraftLogosMod#374）。
+- 施法和魔力缠绕时剑身铭文按元素色发光。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元与构建 | 全部通过（编译依赖带 `wrap_cost`、`wrap_power` 的 Logos 分支 `feat/wrap-focus`） |
+| 世界测试 | `logos_dimension:longsword_*` 12/12：新增 `longsword_guard`、`longsword_cast`、`longsword_cast_beam`；`longsword_charge`、`longsword_cancel` 改用曦誓（黑钢长剑没有蓄力下劈了，曦誓松手另有剑气，下劈伤害改为不少于 10.5）；`longsword_contact` 照旧通过，说明补回的剑伤害与攻速没变 |
+| 实际客户端 | `group:longsword` 4/4 场景、35/35 检查。新场景 `blacksteel_cast`：格挡第一、第三人称与符文圈，蓄力第一人称、正面、斜侧（平视、抬头、低头）、背后，施放向前一送，光柱期间前指与第一人称光柱；日志 `[cast point]` 在两种视角都是剑尖坐标（第一人称约在眼前 1.6 格，第三人称约 1.6 格、偏右 0.1 格） |
+| 未测 | 光影包、联机多客户端、言出法随与连咏坠挂在剑上的情况；施法动作是程序编排的临时动作，第一人称送剑时右手有约 0.08 臂长够不着 |
+
 ## 曦誓拔剑与收剑的动作：托剑凝成、剑花、插地
 
 2026-11-04：分支 `feat/dawnvow-flourish`，基于 main `ba681e1`。按维护者意见：

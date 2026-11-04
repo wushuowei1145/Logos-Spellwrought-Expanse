@@ -13,14 +13,15 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.registries.DeferredItem;
 
-/** 共用钻石剑的伤害、耐久与攻速；右键进入双手竖剑蓄力。 */
+/** 共用钻石剑的伤害、耐久与攻速；右键进入双手竖剑蓄力。黑钢长剑另是一根法杖（{@link BlacksteelLongswordItem}）。 */
 public final class LongswordItem extends Item implements CombatWeapon.Holder {
-    private static final net.minecraft.resources.Identifier MOVESET = LogosDimension.id("longsword");
     /** 曦誓不挂剑鞘，拔剑、收剑是光点聚散（招式 dawnvow 继承 longsword，只换这两段）。 */
     private static final CombatWeapon DAWNVOW_WEAPON = CombatWeapon.register(0, "dawnvow", "longsword", LogosDimension.id("dawnvow")).withoutSheath();
-    private static final CombatWeapon BLACKSTEEL_WEAPON = CombatWeapon.register(1, "blacksteel_longsword", "longsword", MOVESET);
+    private static final CombatWeapon BLACKSTEEL_WEAPON = CombatWeapon.register(1, "blacksteel_longsword", "longsword",
+            LogosDimension.id("blacksteel_longsword"));
     public static final DeferredItem<LongswordItem> DAWNVOW = DimensionBlocks.ITEMS.registerItem("dawnvow", p -> new LongswordItem(p, DAWNVOW_WEAPON));
-    public static final DeferredItem<LongswordItem> BLACKSTEEL = DimensionBlocks.ITEMS.registerItem("blacksteel_longsword", p -> new LongswordItem(p, BLACKSTEEL_WEAPON));
+    public static final DeferredItem<BlacksteelLongswordItem> BLACKSTEEL = DimensionBlocks.ITEMS.registerItem("blacksteel_longsword",
+            p -> new BlacksteelLongswordItem(p, BLACKSTEEL_WEAPON));
     private final CombatWeapon weapon;
     public LongswordItem(Properties p, CombatWeapon weapon) {
         super(p.sword(ToolMaterial.DIAMOND, 3, -2.4f).component(net.minecraft.core.component.DataComponents.LORE,
