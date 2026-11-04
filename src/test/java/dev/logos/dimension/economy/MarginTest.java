@@ -30,7 +30,7 @@ class MarginTest {
         assertTrue(liq < rate && liq > rate * .95, "爆仓价 " + liq / rate);
         assertEquals(Margin.Trigger.LIQUIDATE, Margin.check(p, liq * .999));
         assertEquals(Margin.Trigger.NONE, Margin.check(p, liq * 1.001));
-        assertEquals(0, Margin.payout(p, rate * .5), "亏损最多到保证金为止");
+        assertTrue(Margin.payout(p, rate * .5) < -10 * CROWN * 10, "跳空穿仓的亏损超出保证金，记成欠款");
     }
 
     @Test void shortsWinWhenTheCurrencyFalls() {
@@ -81,6 +81,57 @@ class MarginTest {
         var copy = BankAccount.load(a.save());
         assertEquals(a.balance(Currency.IMPERIAL), copy.balance(Currency.IMPERIAL));
         assertEquals(a.balance(Currency.FOX), copy.balance(Currency.FOX));
+    }
+
+    // ---------------------------------------------------------------- 冲击不能凭空造钱
+
+    @Test void theReportedOrderIsRefused() {
+        var m = market(21);
+        // 玩家报告的单子：25 倍做空 5 万金冠狐钱，名义 125 万金冠，冲击把狐钱砸到接近零
+        assertTrue(Margin.tooDeep(Currency.FOX, 50_000.0 * CROWN * 25, m.rate(Currency.FOX)), "超出市场深度的单子必须拒绝");
+        assertFalse(Margin.tooDeep(Currency.FOX, 100.0 * CROWN * 25, m.rate(Currency.FOX)), "一百金冠 25 倍照常可以开");
+    }
+
+    @Test void selfImpactCannotPrintMoney() {
+        for (var c : Currency.TRADED) for (int side : new int[] {1, -1}) {
+            var m = market(22);
+            double rate = m.rate(c);
+            // 找到刚好不超出深度的最大保证金（25 倍）
+            long margin = CROWN;
+            while (!Margin.tooDeep(c, (margin * 2.0) * 25, rate)) margin *= 2;
+            var p = Margin.open(m, 1, c, side, margin, 25, 0, 0, 0, true);
+            assertTrue(Math.abs(Math.log(m.rate(c) / rate)) > .05, "大单应明显推动价格");
+            long back = Margin.close(m, p);
+            assertTrue(back < margin, c + (side > 0 ? " 多" : " 空") + " 立刻开平不能赚钱：" + back + " / " + margin);
+            assertEquals(rate, m.rate(c), rate * 1e-9, "开平之后冲击正好抵消");
+        }
+    }
+
+    @Test void shortsCannotProfitFromCrushingThePrice() {
+        // 分几笔连续做空把价格一路往下砸，再全部平掉：总账不能为正
+        var m = market(23);
+        double rate = m.rate(Currency.FOX);
+        var opened = new java.util.ArrayList<Margin.Position>();
+        long posted = 0;
+        for (int i = 0; i < 8; i++) {
+            long margin = 250 * CROWN;
+            assertFalse(Margin.tooDeep(Currency.FOX, margin * 25.0, m.rate(Currency.FOX)));
+            opened.add(Margin.open(m, i, Currency.FOX, -1, margin, 25, 0, 0, 0, true));
+            posted += margin;
+        }
+        assertTrue(m.rate(Currency.FOX) < rate * .7, "连砸八笔应把价格压低三成以上");
+        long back = 0;
+        for (var p : opened) back += Margin.close(m, p);
+        assertTrue(back < posted, "砸盘做空全平后不能赚钱：" + back + " / " + posted);
+    }
+
+    @Test void pressureIsCapped() {
+        var m = market(24);
+        m.push(Currency.FOX, -1e6);
+        double low = m.rate(Currency.FOX);
+        assertTrue(low > 0 && low >= Currency.FOX.anchor * Math.exp(-FxMarket.HARD - FxMarket.MAX_PRESSURE) * .999, "冲击封顶，汇率不会归零");
+        m.push(Currency.FOX, 2e6);
+        assertTrue(Double.isFinite(m.rate(Currency.FOX)), "也不会涨到无穷");
     }
 
     // ---------------------------------------------------------------- 持仓管理

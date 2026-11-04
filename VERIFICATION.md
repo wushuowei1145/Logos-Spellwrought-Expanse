@@ -1,5 +1,20 @@
 # 首版验证记录
 
+## 修复：大额杠杆单靠自己的冲击凭空赚钱
+
+2026-11-04：分支 `fix/fx-impact`，基于 main（含 #139）。玩家在创造模式拿大量钱 25 倍做空 5 万金冠狐钱，冲击把狐钱砸到接近零，浮盈显示一百多万金冠。原因有三：冲击按成交时的价值算，砸低价格后原数买回几乎不推价；穿仓亏损封顶在保证金，用自己的平仓冲击把另一笔仓位推到穿仓就能让钱庄替自己赔；成交价取冲击中点，大单拆开换顺序时开平不完全抵消。改为冲击按数量、以锚定价折算，成交价对冲击路径积分，单笔冲击超过 0.3（对数）拒绝、累计冲击封顶 ±1.5，穿仓亏损记成欠款，旧的超大仓位作废并退回保证金。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | `MarginTest` **18/18**（新增 4：玩家报告的单子被拒、三种货币多空各以最大允许单子立刻开平都不赚钱且价格回到原处、连砸八笔做空再全平不赚钱、累计冲击封顶不归零不无穷；穿仓测试改为欠款）；`FxMarketTest` **7/7**（新增：三种货币最大允许现货单原路换回不赚钱且价格回到原处）；模拟结果见设计文档，25 倍乱炒因可欠款变为平均 −108% |
+| 世界测试 | 经济全部 **8/8**，连跑 3 次都通过（钱庄管理测试加上玩家报告的情形：6 万金冠存款下 25 倍做空 5 万金冠狐钱的市价单和挂单都被拒、价格不动；强平测试改为穿仓扣进余额） |
+| 实际客户端 | `bank_views` 6/6、`economy_views` 4/4，照旧 |
+
+```text
+./gradlew test --tests "dev.logos.dimension.economy.*" -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:economy_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=bank_views,economy_views" -PldTestHeadless -PldTestWindow=1280x720
+```
 ## 曦誓拔剑与收剑的动作：托剑凝成、剑花、插地
 
 2026-11-04：分支 `feat/dawnvow-flourish`，基于 main `ba681e1`。按维护者意见：
