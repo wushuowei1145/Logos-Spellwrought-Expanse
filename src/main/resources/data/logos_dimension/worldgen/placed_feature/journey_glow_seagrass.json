@@ -2,6 +2,10 @@
   "feature": "logos_dimension:journey_glow_seagrass",
   "placement": [
     {
+      "type": "minecraft:count",
+      "count": 16
+    },
+    {
       "type": "minecraft:in_square"
     },
     {
@@ -9,8 +13,11 @@
       "heightmap": "OCEAN_FLOOR_WG"
     },
     {
-      "type": "minecraft:count",
-      "count": 16
+      "type": "minecraft:block_predicate_filter",
+      "predicate": {
+        "type": "minecraft:matching_blocks",
+        "blocks": "minecraft:water"
+      }
     },
     {
       "type": "minecraft:biome"

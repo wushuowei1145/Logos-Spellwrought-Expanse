@@ -17,29 +17,55 @@ DATA = ROOT / 'src/main/resources/data/logos_dimension'
 
 def write(path, obj):
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(obj, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    path.write_text(json.dumps(obj, ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline='\n')
 
 
-def blade(d, x, y0, y1, color, dark, width=1):
-    """一根略微弯曲的水草叶片。"""
-    phase = (x * 7) % 3 - 1
-    for y in range(y0, y1 + 1):
-        xx = x + (phase if y > (y0 + y1) // 2 else 0)
-        d.point((xx, y), fill=color)
-        if width > 1:
-            d.point((xx + 1, y), fill=dark)
+def mix(a, b, t):
+    return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3)) + (255,)
 
 
-def seagrass_texture(name, colors, tall=False):
+def blades(img, specs, base, tip, shade):
+    """画一丛水草叶片。specs 为 (根部 x, 叶尖 y, 摆向, 是否两像素宽)；颜色从根部 base 渐变到叶尖 tip，
+    两像素宽的叶片右侧一列用 shade 压暗，叶片在上半段按摆向弯出一格。"""
+    h = img.height
+    for x, top, sway, wide in specs:
+        length = h - 1 - top
+        for y in range(top, h):
+            t = (h - 1 - y) / max(1, length)
+            xx = x + (sway if t > 0.55 else 0) + (sway if t > 0.85 and length > 12 else 0)
+            img.putpixel((xx, y), mix(base, tip, t))
+            if wide and t < 0.8:
+                img.putpixel((xx + 1, y), mix(shade, base, t))
+
+
+SEAGRASS = ((46, 98, 58), (128, 190, 116), (34, 76, 46))
+
+
+def seagrass_textures():
+    # 矮海草：一丛高低不齐的叶片
     img = Image.new('RGBA', (16, 16), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    light, dark = colors
-    blades = [(3, 9, 15), (6, 4, 15), (9, 6, 15), (12, 10, 15)]
-    if tall:
-        blades = [(2, 2, 15), (5, 0, 15), (8, 3, 15), (11, 1, 15), (14, 5, 15)]
-    for x, y0, y1 in blades:
-        blade(d, x, y0, y1, light, dark)
-    img.save(ASSETS / 'textures/block' / f'{name}.png')
+    blades(img, [(2, 9, 0, False), (4, 4, 1, True), (7, 6, -1, False), (9, 2, 1, True), (13, 8, -1, True)],
+           *SEAGRASS)
+    img.save(ASSETS / 'textures/block/journey_seagrass.png')
+
+    # 高海草：在 16×32 上画一丛连贯的长叶，再切成上下两半，上下两格接缝处叶片连续
+    tall = Image.new('RGBA', (16, 32), (0, 0, 0, 0))
+    blades(tall, [(1, 12, 1, False), (3, 3, 1, True), (6, 8, -1, False), (8, 0, 1, True),
+                  (11, 5, -1, True), (14, 14, -1, False)], *SEAGRASS)
+    tall.crop((0, 0, 16, 16)).save(ASSETS / 'textures/block/journey_tall_seagrass_top.png')
+    tall.crop((0, 16, 16, 32)).save(ASSETS / 'textures/block/journey_tall_seagrass_bottom.png')
+
+    # 萤光海草：更细的淡青叶片，叶尖挂着发光的小球
+    img = Image.new('RGBA', (16, 16), (0, 0, 0, 0))
+    specs = [(3, 6, 1, False), (7, 3, -1, False), (10, 5, 1, False), (13, 9, -1, False)]
+    blades(img, specs, (40, 112, 108), (110, 206, 186), (30, 86, 84))
+    for x, top, sway, _ in specs:
+        tx = x + sway
+        for px, py, c in [(tx, top - 1, (236, 255, 228)), (tx - 1, top, (172, 250, 214)),
+                          (tx + 1, top, (172, 250, 214)), (tx, top, (214, 255, 236))]:
+            if 0 <= px < 16 and 0 <= py < 16:
+                img.putpixel((px, py), c + (255,))
+    img.save(ASSETS / 'textures/block/journey_glow_seagrass.png')
 
 
 def kelp_textures():
@@ -111,32 +137,45 @@ def states_and_items():
 
 
 def loot():
-    def drop(name, item, count=1):
+    """掉落照原版：海草类只有用剪刀才掉（高海草掉两株海草），海带不挑工具、经得住爆炸才掉。"""
+    def drop(name, item, condition, count=None):
+        entry = {'type': 'minecraft:item', 'name': item}
+        if count:
+            entry['functions'] = [{'function': 'minecraft:set_count', 'count': count, 'add': False}]
         write(DATA / 'loot_table/blocks' / f'{name}.json', {
             'type': 'minecraft:block',
-            'pools': [{
-                'rolls': 1,
-                'conditions': [{'condition': 'minecraft:survives_explosion'}],
-                'entries': [{'type': 'minecraft:item', 'name': item,
-                             'functions': [{'function': 'minecraft:set_count', 'count': count}]}],
-            }],
+            'pools': [{'rolls': 1, 'bonus_rolls': 0, 'conditions': [condition], 'entries': [entry]}],
+            'random_sequence': f'logos_dimension:blocks/{name}',
         })
-    drop('journey_seagrass', 'logos_dimension:journey_seagrass')
-    drop('journey_glow_seagrass', 'logos_dimension:journey_glow_seagrass')
-    drop('journey_kelp', 'logos_dimension:journey_kelp')
-    drop('journey_tall_seagrass', 'logos_dimension:journey_seagrass')
-    drop('journey_kelp_plant', 'logos_dimension:journey_kelp')
+    shears = {'condition': 'minecraft:match_tool', 'predicate': {'items': 'minecraft:shears'}}
+    explosion = {'condition': 'minecraft:survives_explosion'}
+    drop('journey_seagrass', 'logos_dimension:journey_seagrass', shears)
+    drop('journey_glow_seagrass', 'logos_dimension:journey_glow_seagrass', shears)
+    drop('journey_tall_seagrass', 'logos_dimension:journey_seagrass', shears, count=2)
+    drop('journey_kelp', 'logos_dimension:journey_kelp', explosion)
+    drop('journey_kelp_plant', 'logos_dimension:journey_kelp', explosion)
+
+
+FLORA = ['journey_seagrass', 'journey_tall_seagrass', 'journey_glow_seagrass', 'journey_kelp', 'journey_kelp_plant']
+
+
+def fragile_tag():
+    """水下植物都加进 Logos 的 logos:fragile_plants，衰退才会毁掉它们（见 docs/LOGOS_TAGS.md）。"""
+    path = ROOT / 'src/main/resources/data/logos/tags/block/fragile_plants.json'
+    data = json.loads(path.read_text(encoding='utf-8'))
+    for name in FLORA:
+        if 'logos_dimension:' + name not in data['values']:
+            data['values'].append('logos_dimension:' + name)
+    write(path, data)
 
 
 def main():
-    seagrass_texture('journey_seagrass', ((86, 148, 96), (52, 104, 66)))
-    seagrass_texture('journey_tall_seagrass_top', ((96, 160, 104), (58, 112, 70)), tall=True)
-    seagrass_texture('journey_tall_seagrass_bottom', ((78, 138, 88), (48, 96, 60)))
-    seagrass_texture('journey_glow_seagrass', ((120, 236, 196), (64, 172, 152)))
+    seagrass_textures()
     kelp_textures()
     models()
     states_and_items()
     loot()
+    fragile_tag()
     print('underwater art written')
 
 

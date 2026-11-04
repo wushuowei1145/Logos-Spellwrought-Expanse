@@ -17,17 +17,22 @@
     [],
     [],
     [],
+    [
+      "logos_dimension:underwater_rock_pile"
+    ],
     [],
-    [],
-    [],
+    [
+      "minecraft:disk_sand",
+      "minecraft:disk_clay",
+      "minecraft:disk_gravel"
+    ],
     [],
     [],
     [
       "logos_dimension:trees_cloudsea_glass_lagoons",
       "logos_dimension:meadow_floor",
-      "logos_dimension:journey_seagrass",
-      "logos_dimension:journey_glow_seagrass",
-      "logos_dimension:underwater_rock_pile"
+      "logos_dimension:journey_seagrass_river",
+      "logos_dimension:journey_glow_seagrass"
     ],
     []
   ],

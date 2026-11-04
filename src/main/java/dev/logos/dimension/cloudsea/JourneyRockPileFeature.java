@@ -12,8 +12,8 @@ import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.BlockPileConfiguration;
 
 /**
- * 海底小石堆，照原版 BlockPileFeature 改写：原版只往空气里堆，这里把水格也当作可放位置，
- * 于是石堆会落在水下海底，而不是只出现在陆地上。
+ * 海底小石堆，照原版 BlockPileFeature 改写：原版只往空气里堆，这里改为只往水格里堆，
+ * 于是石堆只落在水下海底，不会出现在陆地上。
  */
 public class JourneyRockPileFeature extends Feature<BlockPileConfiguration> {
     public JourneyRockPileFeature() {
@@ -50,9 +50,8 @@ public class JourneyRockPileFeature extends Feature<BlockPileConfiguration> {
     }
 
     private void tryPlaceBlock(WorldGenLevel level, BlockPos pos, RandomSource random, BlockPileConfiguration config) {
-        BlockState current = level.getBlockState(pos);
-        boolean open = level.isEmptyBlock(pos) || current.is(Blocks.WATER);
-        if (open && mayPlaceOn(level, pos, random)) {
+        // 只往水格里堆：石堆是海底景观，接在有陆地的群系上也不会堆到岸上
+        if (level.getBlockState(pos).is(Blocks.WATER) && mayPlaceOn(level, pos, random)) {
             level.setBlock(pos, config.stateProvider.getState(level, random, pos), 260);
         }
     }

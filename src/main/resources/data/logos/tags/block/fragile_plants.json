@@ -68,6 +68,11 @@
     "logos_dimension:journey_false_chanterelle",
     "logos_dimension:journey_meadow_grass_young",
     "logos_dimension:journey_white_petals",
-    "logos_dimension:journey_fallen_leaves"
+    "logos_dimension:journey_fallen_leaves",
+    "logos_dimension:journey_seagrass",
+    "logos_dimension:journey_tall_seagrass",
+    "logos_dimension:journey_glow_seagrass",
+    "logos_dimension:journey_kelp",
+    "logos_dimension:journey_kelp_plant"
   ]
 }

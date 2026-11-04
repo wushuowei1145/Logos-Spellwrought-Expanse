@@ -50,8 +50,6 @@ public final class AquaticFlora {
 
     public static final DeferredHolder<Feature<?>, JourneySeagrassFeature> SEAGRASS_FEATURE =
         FEATURES.register("journey_seagrass", JourneySeagrassFeature::new);
-    public static final DeferredHolder<Feature<?>, JourneyGlowSeagrassFeature> GLOW_SEAGRASS_FEATURE =
-        FEATURES.register("journey_glow_seagrass", JourneyGlowSeagrassFeature::new);
     public static final DeferredHolder<Feature<?>, JourneyKelpFeature> KELP_FEATURE =
         FEATURES.register("journey_kelp", JourneyKelpFeature::new);
     public static final DeferredHolder<Feature<?>, JourneyRockPileFeature> ROCK_PILE_FEATURE =
