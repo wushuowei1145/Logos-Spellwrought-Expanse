@@ -40,7 +40,8 @@ public final class LongswordGameTests {
                 "longsword_switch",LongswordGameTests::switchSlot,
                 "longsword_drop",LongswordGameTests::drop,
                 "longsword_wall",h->obstruction(h,false),
-                "longsword_reach",h->obstruction(h,true));
+                "longsword_reach",h->obstruction(h,true),
+                "longsword_cone",LongswordGameTests::cone);
         tests.forEach((name,test)->FUNCTIONS.register(name,()->test)); FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event)->{
             var env=event.registerEnvironment(LogosDimension.id("longsword"),new TestEnvironmentDefinition.AllOf());
@@ -75,8 +76,8 @@ public final class LongswordGameTests {
         var f=Fixture.create(h);
         f.at(30,()->{f.idle();h.assertTrue(Math.abs(f.p.getAttributeValue(Attributes.ATTACK_SPEED)-1.6)<.001,"攻速不是原版剑节奏");for(int i=0;i<100;i++)f.attack();});
         f.at(33,()->h.assertTrue(f.target.getHealth()==100,"前摇提前造成伤害"));
-        f.at(38,()->h.assertTrue(f.target.getHealth()==93 && f.p.getMainHandItem().getDamageValue()==1,"没有保留七点伤害和耐久"));
-        f.at(47,()->{f.idle();h.assertTrue(f.target.getHealth()==93,"同一刻输入重复命中或跳过冷却");f.succeed();});
+        f.at(38,()->h.assertTrue(f.target.getHealth()==89.5f && f.p.getMainHandItem().getDamageValue()==1,"准星正对的目标没有暴击（7×1.5）或没有消耗一点耐久：生命="+f.target.getHealth()));
+        f.at(47,()->{f.idle();h.assertTrue(f.target.getHealth()==89.5f,"同一刻输入重复命中或跳过冷却");f.succeed();});
     }
     private static void combo(GameTestHelper h) {
         var f=Fixture.create(h);
@@ -93,7 +94,7 @@ public final class LongswordGameTests {
         var f=Fixture.create(h);f.at(30,f::use);
         f.at(55,()->{h.assertTrue(List.of("charge_start","charge_hold").contains(LongswordCombat.move(f.p)) && f.target.getHealth()==100,"蓄力期间伤害或结束");f.p.releaseUsingItem();});
         f.at(62,()->h.assertTrue(f.target.getHealth()==100,"下劈前举提前造成伤害"));
-        f.at(69,()->h.assertTrue(f.target.getHealth()==93,"释放后没有下劈命中"));
+        f.at(69,()->h.assertTrue(f.target.getHealth()==89.5f,"释放后没有下劈命中（准星正对的暴击 10.5）：生命="+f.target.getHealth()));
         f.at(80,f::succeed);
     }
     private static void cancel(GameTestHelper h) {
@@ -111,6 +112,34 @@ public final class LongswordGameTests {
         f.at(40,()->{
             h.assertTrue(f.p.getInventory().getSelectedSlot()==slot && f.p.getMainHandItem().isEmpty(),"丢弃后切槽或主手未空");
             h.assertTrue(LongswordCombat.move(f.p)==null && f.target.getHealth()==100,"Q 丢弃未清除动作或仍结算攻击");
+            f.succeed();
+        });
+    }
+    /**
+     * 命中锥形：准星正对的铁傀儡暴击（7×1.5），斜前方 35° 的挨普通一刀（7），70° 外的和攻击距离外的不受伤；
+     * 同一刀不再触发原版横扫。
+     */
+    private static void cone(GameTestHelper h) {
+        var f=Fixture.create(h);
+        var golems=new ArrayList<LivingEntity>();
+        f.at(29,()->{
+            f.target.setPos(f.origin.add(2.6,0,0));
+            double[][] at={{35,2.7},{70,2.7},{0,5.2}};
+            for(var a:at){
+                var g=EntityType.IRON_GOLEM.create(h.getLevel(),EntitySpawnReason.COMMAND);
+                g.setNoAi(true);g.setNoGravity(true);
+                double r=Math.toRadians(a[0]);
+                g.setPos(f.origin.add(Math.cos(r)*a[1],0,Math.sin(r)*a[1]));h.getLevel().addFreshEntity(g);golems.add(g);
+            }
+        });
+        f.at(30,f::attack);
+        f.at(45,()->{
+            try{
+                h.assertTrue(f.target.getHealth()==89.5f,"准星正对的铁傀儡没有暴击：生命="+f.target.getHealth());
+                h.assertTrue(golems.get(0).getHealth()==93,"斜前方 35° 的铁傀儡没有挨到普通一刀：生命="+golems.get(0).getHealth());
+                h.assertTrue(golems.get(1).getHealth()==100,"70° 外的铁傀儡也被打到了：生命="+golems.get(1).getHealth());
+                h.assertTrue(golems.get(2).getHealth()==100,"攻击距离外的铁傀儡也被打到了：生命="+golems.get(2).getHealth());
+            }finally{golems.forEach(Entity::discard);}
             f.succeed();
         });
     }

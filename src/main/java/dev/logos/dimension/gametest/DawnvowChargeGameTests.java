@@ -44,8 +44,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  */
 public final class DawnvowChargeGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS = DeferredRegister.create(Registries.TEST_FUNCTION, LogosDimension.ID);
-    /** 拔剑（1.2 秒）之后开始蓄力的那一刻。 */
-    private static final int USE = 30;
+    /** 拔剑（曦誓 1.8 秒）之后开始蓄力的那一刻。 */
+    private static final int USE = 40;
 
     public static void register(IEventBus bus) {
         var tests = Map.<String, Consumer<GameTestHelper>>of(
@@ -53,7 +53,8 @@ public final class DawnvowChargeGameTests {
             "dawnvow_charge_grand", DawnvowChargeGameTests::grand,
             "dawnvow_charge_out_of_mana", DawnvowChargeGameTests::outOfMana,
             "dawnvow_charge_carves", DawnvowChargeGameTests::carves,
-            "dawnvow_charge_blessing", DawnvowChargeGameTests::blessing);
+            "dawnvow_charge_blessing", DawnvowChargeGameTests::blessing,
+            "dawnvow_charge_blessed_wave", DawnvowChargeGameTests::blessedWave);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -217,7 +218,7 @@ public final class DawnvowChargeGameTests {
         });
     }
 
-    /** 放出巨型剑气后的 60 秒：攻击距离多 3 格，四格半外的铁傀儡也砍得到，每下另加 15 点。 */
+    /** 放出巨型剑气后的 60 秒：攻击距离多 3 格，四格半外的铁傀儡也砍得到（准星正对，暴击），每下另加 15 点；命中锥形张角 90°。 */
     private static void blessing(GameTestHelper h) {
         var f = Fixture.create(h, 0);
         var golem = f.spawn(EntityType.IRON_GOLEM, 4.5);
@@ -226,10 +227,25 @@ public final class DawnvowChargeGameTests {
             h.assertTrue(DawnvowCharge.blessed(f.p), "没有进入剑身金光状态");
             double reach = f.p.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE);
             h.assertTrue(Math.abs(reach - (3 + DawnvowCharge.BLESS_REACH)) < .01, "攻击距离没有变长：" + reach);
+            h.assertTrue(dev.logos.dimension.longsword.LongswordCombat.cone(f.p) == DawnvowCharge.BLESS_CONE, "金光在时命中锥形没有放宽到 90°");
             dev.logos.dimension.longsword.LongswordCombat.attack(f.p);
         });
         f.at(USE + 20, () -> {
-            h.assertTrue(Math.abs(golem.getHealth() - (100 - 7 - DawnvowCharge.BLESS_DAMAGE)) < .01, "四格半外没有砍中或没有额外 15 点：" + golem.getHealth());
+            h.assertTrue(Math.abs(golem.getHealth() - (100 - 7 * 1.5 - DawnvowCharge.BLESS_DAMAGE)) < .01, "四格半外没有砍中（准星正对，暴击 10.5）或没有额外 15 点：" + golem.getHealth());
+            golem.discard();
+            f.succeed();
+        });
+    }
+
+    /** 金光在时蓄力斩的剑气走两倍远：二十格外的铁傀儡（平时 16 格够不着）也受 15 点。 */
+    private static void blessedWave(GameTestHelper h) {
+        var f = Fixture.create(h, 100);
+        var golem = f.spawn(EntityType.IRON_GOLEM, 20);
+        f.at(USE - 2, () -> DawnvowCharge.bless(f.p));
+        f.at(USE, f::use);
+        f.at(USE + 20, () -> f.p.releaseUsingItem());
+        f.at(USE + 60, () -> {
+            h.assertTrue(Math.abs(golem.getHealth() - (100 - SwordWave.SMALL_DAMAGE)) < .01, "金光在时剑气没有走到二十格外：生命 " + golem.getHealth());
             golem.discard();
             f.succeed();
         });

@@ -34,15 +34,32 @@
 
 ### 曦誓的拔剑与收剑
 
-曦誓不挂剑鞘。拔剑时双手直接摆成持剑的样子，手里先是空的；金色光点从四周旋着聚拢到剑的轮廓上（剑身、护手、握柄、剑首），剑的虚影随之渐亮，0.7 秒时剑凝成实体、整把剑一闪，1 秒后进入待机。收剑时剑先亮起，0.15 秒时散成光点，向外飘散、上浮、半秒内淡去，0.6 秒后双手放开。第一、第三人称一样，光点画在剑骨骼上、跟着手走。
+曦誓不挂剑鞘，拔剑与收剑有自己的动作（第一、第三人称各一份）：
 
-| 第三人称：光点聚拢 | 凝成 | 收剑：散成光点 |
+- **拔剑**（1.8 秒）：双臂抬起、伸直到身前，掌心向上；金色光点从四周旋着聚拢到横在掌上的剑的轮廓上（剑身、护手、握柄、剑首），剑的虚影随之渐亮，0.7 秒时剑凝成实体、整把剑一闪。右手握住剑柄，把剑转到身体右侧、剑尖朝前，手腕连转两圈剑花，左手合上，回到长剑的待机架势。
+- **收剑**（1 秒）：双手把剑倒转举到胸前，0.3 秒猛地插进身前的地面，剑随之亮起；0.52 秒松手，0.62 秒剑散成光点，向外飘散、上浮、淡去，双手放回身侧。
+
+光点画在剑骨骼上、跟着手走。第一人称看不到身体右下侧与脚下，剑花挪到画面右前方，插地的位置往前、往上挪到画面下方。
+
+| 光点聚拢 | 凝成 | 剑花 |
 | --- | --- | --- |
-| ![光点聚拢](screenshots/dawnvow-summon/draw_gather.png) | ![凝成](screenshots/dawnvow-summon/draw_formed.png) | ![散去](screenshots/dawnvow-summon/sheathe_glow.png) |
+| ![光点聚拢](screenshots/dawnvow-summon/draw_gather.png) | ![凝成](screenshots/dawnvow-summon/draw_formed.png) | ![剑花](screenshots/dawnvow-summon/draw_spin_1.png) |
 
-![第一人称：光点聚拢](screenshots/dawnvow-summon/fp_draw_gather.png)
+| 收剑：插地 | 松手发亮 | 散成光点 |
+| --- | --- | --- |
+| ![插地](screenshots/dawnvow-summon/sheathe_plunge.png) | ![松手](screenshots/dawnvow-summon/sheathe_release.png) | ![散去](screenshots/dawnvow-summon/sheathe_scatter.png) |
 
-招式文件 `combat/movesets/dawnvow.json` 用 `"extends": "logos_dimension:longsword"` 继承长剑，只换 `draw`（`idle` 动作 1 秒）和 `sheathe`（`idle` 动作 0.6 秒）两段，连招与蓄力照搬，以后调长剑手感曦誓跟着变。招式文件的 `extends` 是这次加的：顶层字段和同名招式以子文件为准，其余照搬父文件。剑鞘由武器注册时的 `withoutSheath()` 去掉，网格文件不改，重新导入美术也不会把剑鞘带回来。光点与光影在 `client/vfx/DawnvowSummon`，贴图复用 Logos 的 `fire_beam/dot` 与 `laser`。
+| 第一人称：托剑聚拢 | 剑花 | 插地散去 |
+| --- | --- | --- |
+| ![第一人称聚拢](screenshots/dawnvow-summon/fp_draw_gather.png) | ![第一人称剑花](screenshots/dawnvow-summon/fp_draw_spin_1.png) | ![第一人称散去](screenshots/dawnvow-summon/fp_sheathe_release.png) |
+
+**素材与代码位置**
+
+- **动作文件**：由 `tools/dawnvow_moves.py` 用 `tools/combat_author.py` 编排、IK、烘焙生成，写进 `combat/animations/dawnvow_{tp,fp}.animation.json`，片段名 `dawnvow_draw`、`dawnvow_sheathe`。拔剑的终点从长剑现有的 `idle` 第 0 帧反算（剑柄位置、剑尖与刃的朝向、躯干转角、第一人称根骨），接进待机不跳。`uv run --with numpy --with pillow python tools/dawnvow_moves.py <预览目录>` 重新生成，并出离线预览图。
+- **动作加载**：长剑骨架加载动作时，若有 `<武器网格名>_<视角>.animation.json`，就叠在共用动作上，同名的以武器自己的为准。
+- **招式文件**：`combat/movesets/dawnvow.json` 用 `"extends": "logos_dimension:longsword"` 继承长剑，只换 `draw`、`sheathe` 两段，连招与蓄力照搬。
+- **剑鞘**：武器注册时的 `withoutSheath()` 去掉。
+- **光点与光影**：在 `client/vfx/DawnvowSummon`，时刻与动作对齐，贴图复用 Logos 的 `fire_beam/dot` 与 `laser`。
 
 双手占用期间不显示副手物品，也不执行副手使用。第一人称待机剑身靠右，中央准星区域留空；蓄力和攻击按动作需要进入中央。左手惯用设置镜像整套动作。第三人称使用玩家本人的皮肤，保留原版头部和腿部；原版胸甲的双臂分段跟随动作，收剑后恢复原版双臂。
 
@@ -57,6 +74,13 @@
 普通连招每段原始长度 0.625 秒，随攻击速度属性缩放；收势最后四刻可缓存下一段输入，两次出招间隔超过 1.5 秒重新从第一段开始。原版伤害结算仍会考虑攻击冷却、附魔、暴击、护甲、盾牌和耐久。0.625 秒不是整刻，连续攻击时原版冷却的取整可能造成很小的伤害差异。
 
 攻击按剑刃接触时刻结算，而非按下鼠标时：前三段约在出招后 0.24／0.25／0.25 秒，蓄力释放约在 0.54 秒。服务端在这一刻读取当前朝向、原版近战距离和方块遮挡，调用原版玩家攻击，不接收客户端指定的目标或伤害。切槽、丢弃和死亡可取消尚未接触的攻击。
+
+命中判定是准星前方的锥形（本附属所有近战武器相同，见 [战斗骨架规范](COMBAT_SKELETON.md) 第 1 节第 2 条）：
+
+- 顶点在眼睛，张角 60°（准星左右各 30°），长度是原版攻击距离（`entity_interaction_range`，被属性修饰时跟着变）。
+- 锥形里看得见的生物都挨一刀，最多 8 个。准星正对着的那个暴击（原版暴击的 1.5 倍，带暴击粒子与音效），其余照常。
+- 每个目标都按出刀那一刻的攻击蓄力算，不会因为前一个目标先结算而变弱。
+- 这一刀不再另触发原版横扫。每打中一个目标消耗一点耐久。
 
 ## 动作与素材维护
 

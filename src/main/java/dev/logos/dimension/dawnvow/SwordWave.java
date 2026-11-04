@@ -88,12 +88,12 @@ public final class SwordWave {
         return !(e instanceof TamableAnimal pet && pet.isOwnedBy(p));
     }
 
-    /** 从脚前一格的地面放出蓄力斩的剑气；前面没有地面时不放。 */
-    static void small(ServerLevel level, ServerPlayer p) {
+    /** 从脚前一格的地面放出蓄力斩的剑气，最远走 {@code range} 格；前面没有地面时不放。 */
+    static void small(ServerLevel level, ServerPlayer p, double range) {
         Vec3 dir = flat(p.getLookAngle());
         Vec3 start = groundBelow(level, p, p.position().add(dir.scale(.8)).add(0, .6, 0));
         if (start == null) return;
-        WAVES.add(new Small(level, p, start, dir));
+        WAVES.add(new Small(level, p, start, dir, range));
         level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1, .7f);
     }
 
@@ -228,11 +228,12 @@ public final class SwordWave {
         final int id = nextVeinId--;
         final Vec3 dir;
         final Set<UUID> struck = new HashSet<>();
+        final double range;
         Vec3 pos;
         double travelled;
 
-        Small(ServerLevel level, ServerPlayer player, Vec3 start, Vec3 dir) {
-            this.level = level; this.player = player; this.pos = start; this.dir = dir;
+        Small(ServerLevel level, ServerPlayer player, Vec3 start, Vec3 dir, double range) {
+            this.level = level; this.player = player; this.pos = start; this.dir = dir; this.range = range;
             show();
         }
 
@@ -268,7 +269,7 @@ public final class SwordWave {
                 pos = next;
                 travelled += ds;
                 if (blocked) return stop(true);
-                if (travelled >= SMALL_RANGE) return stop(false);
+                if (travelled >= range) return stop(false);
             }
             show();
             return false;

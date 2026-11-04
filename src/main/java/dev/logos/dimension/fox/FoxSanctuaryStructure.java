@@ -31,6 +31,10 @@ public class FoxSanctuaryStructure extends Structure {
     private static final int REACH = 128;
     /** 与 worldgen/structure_set/fox_sanctuary.json 保持一致（由 tools/fox_sanctuary.py 生成）。 */
     private static final int SPACING = 8, SEPARATION = 4, SALT = 20261102;
+    /** 开发预览用：≥ 0 时每处聚落都用这套布局方案，便于逐套截图。 */
+    public static volatile int devPlan = -1;
+    /** 开发预览用：≥ 0 时山路都用这种样式（见 SanctuaryTrail.plan）。 */
+    public static volatile int devStyle = -1;
     private static final RandomSpreadStructurePlacement PLACEMENT = new RandomSpreadStructurePlacement(SPACING, SEPARATION, RandomSpreadType.LINEAR, SALT);
     /** 两处聚落中心的最小间距：大于整个聚落的宽度。 */
     private static final double EXCLUSION = 300;
@@ -92,6 +96,8 @@ public class FoxSanctuaryStructure extends Structure {
         if (p - foot > 64 || p + 64 > ctx.heightAccessor().getMaxY()) return Optional.empty();
 
         long seed = ctx.random().nextLong();
+        int plan = devPlan >= 0 ? devPlan : ctx.random().nextInt(SanctuaryLayout.plans());
+        int style = devStyle >= 0 ? devStyle : ctx.random().nextInt(SanctuaryTrail.STYLES);
         java.util.function.DoubleBinaryOperator natural = (x, z) -> {
             double fx = Mth.clamp((x - cx + HALF) / STEP, 0, n - 1.001), fz = Mth.clamp((z - cz + HALF) / STEP, 0, n - 1.001);
             int i = (int) fx, j = (int) fz;
@@ -103,8 +109,8 @@ public class FoxSanctuaryStructure extends Structure {
         for (Mirror mirror : new Mirror[]{Mirror.NONE, Mirror.FRONT_BACK}) {
             for (Rotation rotation : Rotation.values()) {
                 int[] origin = SanctuaryFrame.originFor(cx, cz, mirror, rotation);
-                SanctuaryFrame frame = new SanctuaryFrame(origin[0], origin[1], mirror, rotation, p, foot, seed);
-                SanctuaryTrail trail = SanctuaryTrail.plan(frame, natural);
+                SanctuaryFrame frame = new SanctuaryFrame(plan, origin[0], origin[1], mirror, rotation, p, foot, seed);
+                SanctuaryTrail trail = SanctuaryTrail.plan(frame, natural, style);
                 if (bestTrail == null || trail.cost < bestTrail.cost) {
                     best = frame;
                     bestTrail = trail;
@@ -122,14 +128,14 @@ public class FoxSanctuaryStructure extends Structure {
             SanctuaryLayout layout = frame.layout;
             for (SanctuaryLayout.Tile tile : layout.tiles) {
                 builder.addPiece(new SanctuaryTemplatePiece(ctx.structureTemplateManager(), "logos_dimension:fox_sanctuary/" + tile.template(),
-                    frame.world(tile.u(), p + layout.tileMinY, tile.v()), frame.mirror, frame.rotation));
+                    frame.world(tile.u(), p + layout.tileMinY, tile.v()), frame.mirror, frame.rotation, pieceSeed(seed, tile.u(), tile.v())));
             }
             for (SanctuaryLayout.Lot lot : layout.lots) {
                 List<String> options = layout.variants.get(lot.kind());
                 if (options == null || options.isEmpty()) continue;
                 String template = options.get(ctx.random().nextInt(options.size()));
                 builder.addPiece(new SanctuaryTemplatePiece(ctx.structureTemplateManager(), "logos_dimension:fox_sanctuary/" + template,
-                    frame.world(lot.u(), p + lot.y(), lot.v()), frame.mirror, lotRotation(frame, lot.quarterTurns())));
+                    frame.world(lot.u(), p + lot.y(), lot.v()), frame.mirror, lotRotation(frame, lot.quarterTurns()), pieceSeed(seed, lot.u(), lot.v())));
             }
         }));
     }
@@ -144,6 +150,12 @@ public class FoxSanctuaryStructure extends Structure {
     /** 某区块所在网格的候选区块（开发预览用）。 */
     public static ChunkPos candidate(long seed, int chunkX, int chunkZ) {
         return PLACEMENT.getPotentialStructureChunk(seed, chunkX, chunkZ);
+    }
+
+    /** 模板的小替换种子：高 24 位跟整处聚落（风化程度一致），低位混进模板位置（每家店的颜色各不相同）；保证非 0。 */
+    private static long pieceSeed(long siteSeed, int u, int v) {
+        long low = (u * 73856093L ^ v * 19349663L ^ siteSeed) * 0x9E3779B97F4A7C15L;
+        return (siteSeed & 0xFFFFFF0000000000L) | (low >>> 24) | 1L;
     }
 
     public static int spacing() {

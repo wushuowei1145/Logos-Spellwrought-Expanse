@@ -115,6 +115,33 @@ class DivineFoxAssetsTest {
             }
     }
 
+    /** 尾巴静止时就是弯的：每条尾链先往下垂（中间的支点低于尾根），尾尖再翘起来（最后一节支点高于最低点）；三尾中间那条向上拱。 */
+    @Test
+    void tailsCurveAtRest() throws Exception {
+        Map<String, double[]> pivot = new java.util.TreeMap<>();
+        for (JsonElement b : read("models/entity/divine_fox.geo.json").getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject()
+                .getAsJsonArray("bones")) {
+            JsonObject o = b.getAsJsonObject();
+            String name = o.get("name").getAsString();
+            if (name.startsWith("tail_fox_") && name.contains("_seg")) {
+                var p = o.getAsJsonArray("pivot");
+                pivot.put(name, new double[] {p.get(0).getAsDouble(), p.get(1).getAsDouble(), p.get(2).getAsDouble()});
+            }
+        }
+        Map<String, java.util.List<double[]>> chains = new java.util.TreeMap<>();
+        pivot.forEach((name, p) -> chains.computeIfAbsent(name.substring(0, name.lastIndexOf("_seg")), k -> new java.util.ArrayList<>()).add(p));
+        assertEquals(5, chains.size(), chains.keySet().toString());
+        for (var chain : chains.entrySet()) {
+            var p = chain.getValue();
+            double root = p.get(0)[1], low = p.stream().mapToDouble(v -> v[1]).min().orElseThrow(), tip = p.get(p.size() - 1)[1];
+            if (chain.getKey().equals("tail_fox_triple_chain1")) assertTrue(tip > root + 5, chain.getKey());
+            else {
+                assertTrue(low < root - 3, chain.getKey() + " 应先下垂");
+                assertTrue(tip > low + 1, chain.getKey() + " 尾尖应上翘");
+            }
+        }
+    }
+
     @Test
     void hasEveryStateAndLayer() throws Exception {
         Set<String> names = animations().keySet();

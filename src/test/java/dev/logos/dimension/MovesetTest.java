@@ -10,19 +10,21 @@ import static org.junit.jupiter.api.Assertions.*;
 class MovesetTest {
     private static Moveset longsword() throws Exception { return Moveset.parse(LongswordMotionTest.read("/data/logos_dimension/combat/movesets/longsword.json")); }
 
-    /** 曦誓的招式继承长剑：拔剑、收剑换成直接持剑（光点聚散由客户端画），连招与蓄力照搬。 */
+    /** 曦誓的招式继承长剑：拔剑、收剑换成自己的动作（光点聚散由客户端画），连招与蓄力照搬。 */
     @Test void dawnvowInheritsLongswordWithOwnDrawAndSheathe() throws Exception {
         var parent = LongswordMotionTest.read("/data/logos_dimension/combat/movesets/longsword.json");
         var child = LongswordMotionTest.read("/data/logos_dimension/combat/movesets/dawnvow.json");
         assertEquals("logos_dimension:longsword", child.get("extends").getAsString());
         var set = Moveset.parse(Movesets.inherit(parent, child));
-        assertEquals("idle", set.move("draw").clip());
-        assertEquals("idle", set.move("sheathe").clip());
+        assertEquals("dawnvow_draw", set.move("draw").clip());
+        assertEquals("dawnvow_sheathe", set.move("sheathe").clip());
         assertEquals("$clear", set.move("sheathe").next());
         for (var name : List.of("idle", "attack_1", "attack_2", "attack_3", "charge_start", "charge_hold", "charge_release", "charge_cancel"))
             assertEquals(longsword().move(name), set.move(name), name + " 应当照搬长剑");
-        // 拔剑一秒后进入待机
-        var sim = new Sim(set).until(20);
+        // 拔剑 1.8 秒后进入待机
+        var sim = new Sim(set).until(35);
+        assertEquals("draw", sim.move());
+        sim.until(37);
         assertEquals("idle", sim.move());
     }
 

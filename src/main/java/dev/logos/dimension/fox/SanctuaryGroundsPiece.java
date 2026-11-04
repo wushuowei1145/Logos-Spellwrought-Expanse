@@ -57,13 +57,19 @@ public class SanctuaryGroundsPiece extends StructurePiece {
 
     public SanctuaryGroundsPiece(CompoundTag tag) {
         super(FoxSanctuary.GROUNDS.get(), tag);
-        this.frame = new SanctuaryFrame(tag.getIntOr("OX", 0), tag.getIntOr("OZ", 0),
+        // 早期存档没有 Plan，按方案 0
+        this.frame = new SanctuaryFrame(tag.getIntOr("Plan", 0), tag.getIntOr("OX", 0), tag.getIntOr("OZ", 0),
             Mirror.valueOf(tag.getStringOr("Mirror", "NONE")), Rotation.valueOf(tag.getStringOr("Rot", "NONE")),
             tag.getIntOr("P", 100), tag.getIntOr("Foot", 70), tag.getLongOr("Seed", 0));
         this.trail = SanctuaryTrail.load(tag);
         double[] c = frame.worldCont(frame.layout.size / 2.0, frame.layout.size / 2.0);
         this.centerX = c[0];
         this.centerZ = c[1];
+    }
+
+    /** 布局方案（开发预览用）。 */
+    public int plan() {
+        return frame.layout.plan;
     }
 
     /** 主街标高（开发预览用）。 */
@@ -89,6 +95,7 @@ public class SanctuaryGroundsPiece extends StructurePiece {
 
     @Override
     protected void addAdditionalSaveData(StructurePieceSerializationContext context, CompoundTag tag) {
+        tag.putInt("Plan", frame.layout.plan);
         tag.putInt("OX", frame.originX);
         tag.putInt("OZ", frame.originZ);
         tag.putString("Mirror", frame.mirror.name());
