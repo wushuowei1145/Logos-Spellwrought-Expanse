@@ -145,7 +145,8 @@ public final class ExchangeScreen extends Screen {
         price.visible = limit;
         tradeButton.setMessage(Component.translatable(limit ? "screen.logos_dimension.bank.place" : "screen.logos_dimension.fx.trade"));
         var target = limitTarget();
-        tradeButton.active = typed > 0 && typed <= held(from) && (limit ? target != null && limitRate(target) > 0 : open);
+        tradeButton.active = typed > 0 && typed <= held(from) && (limit ? target != null && limitRate(target) > 0 : open)
+                && !FxMarket.tooLarge(from, to, typed, EconomyClient.rate(from), EconomyClient.rate(to));
         super.extractRenderState(g, mouseX, mouseY, a);
 
         chart(g, data, mouseX, mouseY);
@@ -184,6 +185,8 @@ public final class ExchangeScreen extends Screen {
         for (var line : font.split(get, rw)) { g.text(font, line, rx, gy, 0xFFE8E0D0); gy += 9; }
         g.text(font, Component.translatable("screen.logos_dimension.fx.cost").append(Money.top(Currency.IMPERIAL, Math.max(0, q.cost()))), rx, gy, DIM);
         if (typed > held(from)) g.text(font, Component.translatable("screen.logos_dimension.fx.short"), rx, gy + 9, 0xFFE09070);
+        else if (FxMarket.tooLarge(from, to, typed, EconomyClient.rate(from), EconomyClient.rate(to)))
+            g.text(font, Component.translatable("message.logos_dimension.bank.too_deep"), rx, gy + 9, 0xFFE09070);
         else if (limit) g.text(font, Component.translatable("screen.logos_dimension.fx.limit_note"), rx, gy + 9, DIM);
     }
 

@@ -707,5 +707,7 @@
   "screen.logos_dimension.wallet.positions_note": "Trade positions at a bank",
   "screen.logos_dimension.wallet.alert_mark": "alert",
   "screen.logos_dimension.fx.limit_imperial": "Limit orders need imperial on one side",
-  "screen.logos_dimension.fx.limit_note": "Proceeds go to the bank"
+  "screen.logos_dimension.fx.limit_note": "Proceeds go to the bank",
+  "message.logos_dimension.bank.too_deep": "Too large for the market; split it up",
+  "bank.notice.voided": "%s%s exceeded market depth (an old-version bug); voided and margin refunded"
 }

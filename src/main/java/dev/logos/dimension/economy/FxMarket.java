@@ -99,16 +99,39 @@ public final class FxMarket {
     private Quote exchange(Currency from, Currency to, long amount, boolean apply) {
         var q = quote(from, to, amount, rate(from), rate(to));
         if (apply && amount > 0 && from != to) {
-            if (lines.containsKey(from)) lines.get(from).pressure -= from.impact * q.value;
-            if (lines.containsKey(to)) lines.get(to).pressure += to.impact * q.value;
+            push(from, -impact(from, amount));
+            push(to, impact(to, q.received));
         }
         return q;
     }
 
-    /** 杠杆单也留下冲击（对数，正数推高）。 */
+    /** 单笔成交最多把汇率推动多少（对数，约 35%）；再大就拒绝，让玩家分批下单。 */
+    public static final double MAX_IMPACT = .3;
+    /** 冲击累计的上下限，兜底防止任何情况把汇率推到零或无穷。 */
+    static final double MAX_PRESSURE = 1.5;
+
+    /**
+     * 一笔成交对某货币的对数冲击：按成交了多少枚（最小单位）、以锚定价折算，和成交那一刻的价格无关。
+     * 这样买进再原数卖出正好抵消；若按当时的价值算，大单把价格砸到接近零后，原数买回几乎不推价，
+     * 空单就能靠自己的冲击凭空赚钱。
+     */
+    public static double impact(Currency c, double units) { return c.impact * units * c.anchor; }
+
+    /**
+     * 价格沿着自己的冲击从 p 走到 p·e^delta 时的平均成交价倍数（对路径积分，不是取中点）。
+     * 用积分而不是中点，任何一串自己的买卖加起来都正好抵消，拆单、换顺序都赚不到钱。
+     */
+    public static double along(double delta) { return Math.abs(delta) < 1e-12 ? 1 : Math.expm1(delta) / delta; }
+
+    /** 这笔兑换会不会超出市场深度（任一边的冲击超过 MAX_IMPACT）。 */
+    public static boolean tooLarge(Currency from, Currency to, long amount, double rateFrom, double rateTo) {
+        return impact(from, amount) > MAX_IMPACT || impact(to, amount * rateFrom / rateTo) > MAX_IMPACT;
+    }
+
+    /** 留下冲击（对数，正数推高），杠杆单也走这里。累计冲击封顶。 */
     void push(Currency c, double delta) {
         var l = lines.get(c);
-        if (l != null) l.pressure += delta;
+        if (l != null) l.pressure = Math.clamp(l.pressure + delta, -MAX_PRESSURE, MAX_PRESSURE);
     }
 
     /** 管理员调试：直接把某种货币的汇率推一把（对数，0.1 约等于涨 10%），它会照常慢慢回归。 */
@@ -121,9 +144,9 @@ public final class FxMarket {
     public static Quote quote(Currency from, Currency to, long amount, double rateFrom, double rateTo) {
         if (amount <= 0 || from == to) return new Quote(from == to ? Math.max(0, amount) : 0, 0, 0);
         double value = amount * rateFrom;
-        // 线性冲击按成交前后的中点成交：立刻买进再卖出只亏点差，等冲击散了才多亏
-        double bid = rateFrom * Math.exp(-from.impact * value / 2) * (1 - from.halfSpread);
-        double ask = rateTo * Math.exp(to.impact * value / 2) * (1 + to.halfSpread);
+        // 沿冲击路径的平均价成交：立刻买进再卖出只亏点差，等冲击散了才多亏
+        double bid = rateFrom * along(-impact(from, amount)) * (1 - from.halfSpread);
+        double ask = rateTo * along(impact(to, value / rateTo)) * (1 + to.halfSpread);
         long received = (long) Math.floor(amount * bid / ask + 1e-9);
         return new Quote(received, value, value - received * rateTo);
     }
@@ -374,7 +397,7 @@ public final class FxMarket {
         m.last = tag.getLongOr("last", Long.MIN_VALUE);
         for (var entry : m.lines.entrySet()) {
             var lt = tag.getCompoundOrEmpty(entry.getKey().id); var l = entry.getValue();
-            l.x = lt.getDoubleOr("x", 0); l.f = lt.getDoubleOr("f", 0); l.d = lt.getDoubleOr("d", 0); l.pressure = lt.getDoubleOr("pressure", 0); l.boost = lt.getDoubleOr("boost", 1);
+            l.x = lt.getDoubleOr("x", 0); l.f = lt.getDoubleOr("f", 0); l.d = lt.getDoubleOr("d", 0); l.pressure = Math.clamp(lt.getDoubleOr("pressure", 0), -MAX_PRESSURE, MAX_PRESSURE); l.boost = lt.getDoubleOr("boost", 1);
             var cs = lt.getListOrEmpty("candles");
             for (int i = 0; i < cs.size(); i++) {
                 var ct = cs.getCompoundOrEmpty(i);
