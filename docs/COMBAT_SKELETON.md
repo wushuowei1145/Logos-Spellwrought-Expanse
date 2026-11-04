@@ -189,6 +189,7 @@ CombatWeapon.register(6, "glaive", "glaive", GLAIVE_MOVESET).withCone(90);
 - `Moveset`：读取并校验招式文件（去向不存在、不循环却没有 `next` 等都报出原因）；`playbackSeconds` 是客户端与服务端共用的取样时间换算。
 - `MoveRunner`：一名角色身上的招式状态机，只依赖游戏刻和攻速，通过 `Actor` 回调换招与接触。
 - `Movesets`：按服务端资源管理器缓存招式，`/reload` 后重新读取。
+- `CombatWeapon.Holder`：战斗武器物品。`allowsAttack` 在左键交给状态机前把关（返回 false 这次左键作废），`combatTick` 在每刻结算之后调用。施法剑（黑钢长剑，`longsword/SwordCasting`）借这两处接上 Logos 的蓄力：格挡中左键先试着开始蓄力，开得起来才转到蓄力招式；施放结果用 `LongswordCombat.force` 切到对应收势。
 
 客户端 `LongswordRig`（长剑与打刀共用）用它们取样并绘制武器、刀鞘和分段手臂。迁移到本标准时，用迁移前的渲染算法对旧数据求了参考矩阵（`src/test/resources/combat/longsword_reference.json`），`LongswordMotionTest` 逐矩阵对照，保证动作外观没有变化。`MovesetTest` 逐刻检查长剑招式的出招、接触、输入缓冲与取消点、连招记忆、蓄力与取消、收剑；客户端的过渡混合在 `LongswordClient` 里按上一招在切换那一刻的姿势计算。
 

@@ -118,8 +118,14 @@ public final class LongswordCombat {
     public static void attack(ServerPlayer player) {
         var state = active(player);
         // 按住右键时只有接受左键的招式（例如弹刀后接突刺）才收左键，长剑蓄力中仍不出招。
-        if (state != null && (!player.isUsingItem() || state.runner.move().accepts(Moveset.Input.ATTACK)))
+        if (state != null && (!player.isUsingItem() || state.runner.move().accepts(Moveset.Input.ATTACK))
+                && (!(state.stack.getItem() instanceof CombatWeapon.Holder holder) || holder.allowsAttack(player, state.runner.move().name())))
             state.runner.input(Moveset.Input.ATTACK, player.level().getGameTime());
+    }
+    /** 直接切到招式文件里的 {@code move}（施法剑按施放结果选收势）；没有持剑动作或招式文件里没有这个招式时不动。 */
+    public static void force(ServerPlayer player, String move) {
+        var state = active(player);
+        if (state != null) state.runner.force(move, player.level().getGameTime());
     }
     public static boolean charge(ServerPlayer player) {
         var state = active(player);
@@ -179,6 +185,7 @@ public final class LongswordCombat {
         // 一直按着右键时，招式结束回到可格挡的状态（例如突刺收势）就重新进入格挡。
         else if (player.isUsingItem() && selected(player, state)) state.runner.input(Moveset.Input.USE_PRESS, now);
         if (DawnvowCharge.dawnvow(state.stack)) DawnvowCharge.tick(player, state.stack, state.runner.move().name());
+        if (selected(player, state) && state.stack.getItem() instanceof CombatWeapon.Holder holder) holder.combatTick(player, state.runner.move().name());
     }
     /** 这一刀命中锥形的张角（度）：手上武器的 {@link CombatWeapon#cone}；曦誓剑身金光在时更宽。 */
     public static double cone(ServerPlayer player) {
