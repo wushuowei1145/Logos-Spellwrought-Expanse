@@ -57,6 +57,8 @@ public final class DawnvowCharge {
     /** 放出巨型剑气后剑身金光保留的刻数，期间多出的攻击距离与每击的额外物理伤害。 */
     public static final int BLESS_TICKS = 1200;
     public static final double BLESS_REACH = 3, BLESS_DAMAGE = 15;
+    /** 金光在时长剑招式的命中锥形张角（度），与普通蓄力斩剑气的长度倍数。 */
+    public static final double BLESS_CONE = 90, BLESS_WAVE = 2;
     /** 多远的玩家看得到蓄力和剑气。 */
     private static final double VIEW = 160;
 
@@ -131,6 +133,11 @@ public final class DawnvowCharge {
         boolean on = until != null && dawnvow(p.getMainHandItem());
         if (on && !reach.hasModifier(REACH)) reach.addTransientModifier(new AttributeModifier(REACH, BLESS_REACH, AttributeModifier.Operation.ADD_VALUE));
         else if (!on && reach.hasModifier(REACH)) reach.removeModifier(REACH);
+    }
+
+    /** 长剑招式命中锥形的张角：金光在且手持曦誓时 {@link #BLESS_CONE} 度，否则 {@code normal}。 */
+    public static double cone(ServerPlayer p, double normal) {
+        return blessed(p) && dawnvow(p.getMainHandItem()) ? Math.max(normal, BLESS_CONE) : normal;
     }
 
     /** 长剑招式命中了目标之后：金光在时另加 {@link #BLESS_DAMAGE} 点物理伤害。 */
@@ -223,7 +230,8 @@ public final class DawnvowCharge {
         c.fired = true;
         ServerLevel level = (ServerLevel) p.level();
         if (!c.full) {
-            SwordWave.small(level, p);
+            // 剑身金光在时（上一次巨型剑气之后的一分钟）剑气走两倍远
+            SwordWave.small(level, p, SwordWave.SMALL_RANGE * (blessed(p) ? BLESS_WAVE : 1));
             return;
         }
         Vec3 dir = SwordWave.flat(p.getLookAngle());
