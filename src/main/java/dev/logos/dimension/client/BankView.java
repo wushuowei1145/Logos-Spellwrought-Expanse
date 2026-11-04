@@ -20,7 +20,7 @@ import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 public class BankView implements UIScenario {
     private static final BlockPos BANK = new BlockPos(0, 100, 2);
     private static void order(int action, Currency c, int side, int leverage, long amount, double stop) {
-        ClientPacketDistributor.sendToServer(new BankOrderPayload(action, c.ordinal(), side, leverage, amount, 0, stop, 0));
+        ClientPacketDistributor.sendToServer(new BankOrderPayload(action, c.ordinal(), side, leverage, amount, 0, 0, stop, 0, 0));
     }
     @Override public void configure(ScenarioOptions o) { o.tags("economy").defaultTimeoutMs(60000).scenarioTimeoutMs(180000); }
     @Override public void define(ScenarioBuilder s) {
@@ -71,6 +71,35 @@ public class BankView implements UIScenario {
                 .screenshot("bank_leverage_after_liquidation")
                 .step("回到账户页", ctx -> ((BankScreen) Minecraft.getInstance().screen).mode(false)).ticks(3)
                 .screenshot("bank_account_notices")
-                .step("关闭", ctx -> Minecraft.getInstance().setScreen(null));
+                .step("挂一张狼币多单、给狐钱单追加保证金、猫币单设移动止损", ctx -> {
+                    AccountViews.order(BankOrderPayload.LIMIT_OPEN, Currency.WOLF.ordinal(), 1, 10, 20_000, 0, EconomyClient.rate(Currency.WOLF) * .95, 0, 0, 0);
+                    for (var p : EconomyClient.bank.positions()) {
+                        if (p.currency() == Currency.FOX) AccountViews.order(BankOrderPayload.ADD_MARGIN, 0, 0, 0, 50_000, p.id(), 0, 0, 0, 0);
+                        if (p.currency() == Currency.CAT) AccountViews.order(BankOrderPayload.MODIFY, 0, 0, 0, 0, p.id(), 0, 0, 0, .03);
+                    }
+                }).ticks(10)
+                .checkServer("挂单、追加保证金、移动止损都生效", ctx -> {
+                    var a = Bank.of(ctx.server()).account(ctx.player().getUUID());
+                    return a.orders().size() == 1 && a.positions().stream().anyMatch(p -> p.currency() == Currency.FOX && p.margin() == 300_000)
+                            && a.positions().stream().anyMatch(p -> p.currency() == Currency.CAT && p.trail() > 0);
+                })
+                .step("持仓页，选中狐钱单", ctx -> {
+                    var screen = (BankScreen) Minecraft.getInstance().screen;
+                    screen.page(2);
+                    for (var p : EconomyClient.bank.positions()) if (p.currency() == Currency.FOX) screen.select(p.id());
+                }).ticks(3).screenshot("bank_positions_selected")
+                .step("关闭钱庄", ctx -> Minecraft.getInstance().setScreen(null)).ticks(3)
+                .server("打开钱囊", ctx -> Economy.openWallet(ctx.player(), InteractionHand.MAIN_HAND))
+                .waitUntil("钱囊面板", ctx -> Minecraft.getInstance().screen instanceof WalletScreen).ticks(3)
+                .step("钱囊行情页、设提醒", ctx -> {
+                    ((WalletScreen) Minecraft.getInstance().screen).page(1);
+                    AccountViews.order(BankOrderPayload.ALERT, Currency.FOX.ordinal(), 0, 0, 0, 0, EconomyClient.rate(Currency.FOX) * 1.05, 0, 0, 0);
+                }).ticks(10).screenshot("wallet_market")
+                .checkServer("提醒已设", ctx -> Bank.of(ctx.server()).account(ctx.player().getUUID()).alerts().size() == 1)
+                .step("钱囊持仓页", ctx -> ((WalletScreen) Minecraft.getInstance().screen).page(2)).ticks(3).screenshot("wallet_positions")
+                .step("关闭钱囊、打开行情条", ctx -> { Minecraft.getInstance().setScreen(null); TickerHud.toggle(); }).ticks(115)
+                .check("行情条收到数据", ctx -> TickerHud.enabled() && TickerHud.hasData())
+                .screenshot("ticker_hud")
+                .step("关掉行情条", ctx -> TickerHud.toggle());
     }
 }

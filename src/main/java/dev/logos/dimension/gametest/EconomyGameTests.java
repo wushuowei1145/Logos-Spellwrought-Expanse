@@ -34,7 +34,9 @@ public final class EconomyGameTests {
                 "economy_checkout_auto_exchange", EconomyGameTests::checkout,
                 "economy_counter_trades_by_day", EconomyGameTests::counter,
                 "economy_bank_loan_stays_in_the_bank", EconomyGameTests::bankLoan,
-                "economy_bank_liquidates_and_stops", EconomyGameTests::bankLiquidation);
+                "economy_bank_liquidates_and_stops", EconomyGameTests::bankLiquidation,
+                "economy_bank_orders_fill_and_refund", EconomyGameTests::bankOrders,
+                "economy_bank_manage_position", EconomyGameTests::bankManage);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test)); FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
             var env = event.registerEnvironment(LogosDimension.id("economy"), new TestEnvironmentDefinition.AllOf());
@@ -187,6 +189,88 @@ public final class EconomyGameTests {
             // 狼币爆仓最多亏光保证金；猫币止损亏一些
             long balance = account.balance(Currency.IMPERIAL);
             h.assertTrue(balance >= 100_000 && balance < 160_000, "结算后余额不对：" + balance);
+            h.succeed();
+        } finally { p.discard(); }
+    }
+
+    private static void bankOrders(GameTestHelper h) {
+        var p = player(h);
+        try {
+            setClock(h, 50 * FxMarket.DAY + 3_000);
+            var server = h.getLevel().getServer();
+            var market = FxMarketData.market(server);
+            market.advance(Economy.clock(server));
+            var wallet = giveWallet(p);
+            Purse.receive(p, Currency.IMPERIAL, 300_000);
+            Purse.receive(p, Currency.FOX, 8_000);
+            var account = Bank.of(server).account(p.getUUID());
+            double fox = market.rate(Currency.FOX), wolf = market.rate(Currency.WOLF), cat = market.rate(Currency.CAT);
+            h.assertTrue(Bank.placeSpot(p, Currency.FOX, 1, 20_000, fox * .95), "现货买单");
+            h.assertTrue(Bank.placeSpot(p, Currency.FOX, -1, 4_000, fox * 1.1), "现货卖单");
+            h.assertTrue(Purse.contents(wallet).get(Currency.IMPERIAL) == 280_000 && Purse.contents(wallet).get(Currency.FOX) == 4_000, "挂单时钱就冻结");
+            h.assertTrue(Bank.placeOpen(p, Currency.WOLF, 1, 50_000, 10, wolf * .97, 0, 0, 0), "杠杆挂单");
+            h.assertTrue(account.balance(Currency.IMPERIAL) == -50_000, "挂单保证金从钱庄扣（可以借）");
+            Bank.update(server, market, Economy.clock(server));
+            h.assertTrue(account.orders().size() == 3, "没到价不能成交");
+            market.shock(Currency.FOX, Math.log(.9));
+            Bank.update(server, market, Economy.clock(server));
+            h.assertTrue(account.orders().size() == 2 && account.balance(Currency.FOX) > 0, "狐钱跌到挂价，买单成交进钱庄");
+            market.shock(Currency.FOX, Math.log(1.25));
+            Bank.update(server, market, Economy.clock(server));
+            h.assertTrue(account.orders().size() == 1 && account.balance(Currency.IMPERIAL) > -50_000, "狐钱涨到挂价，卖单成交");
+            // 夜里不撮合
+            setClock(h, 50 * FxMarket.DAY + 15_000);
+            market.shock(Currency.WOLF, Math.log(.95));
+            Bank.update(server, market, Economy.clock(server));
+            h.assertTrue(account.orders().size() == 1, "夜里兑换商关门，挂单不成交");
+            long before = account.balance(Currency.IMPERIAL);
+            h.assertTrue(Bank.cancel(p, account.orders().getFirst().id()) && account.balance(Currency.IMPERIAL) == before + 50_000, "撤单退回保证金");
+            h.assertTrue(Bank.addAlert(p, Currency.CAT, cat * 1.03), "设提醒");
+            market.shock(Currency.CAT, Math.log(1.06));
+            Bank.update(server, market, Economy.clock(server));
+            var keys = account.notices().stream().map(FxMarket.News::key).toList();
+            h.assertTrue(account.alerts().isEmpty() && keys.contains("bank.notice.alert"), "夜里提醒照样触发：" + keys);
+            h.assertTrue(keys.contains("bank.notice.buy") && keys.contains("bank.notice.sell"), "成交通知：" + keys);
+            h.succeed();
+        } finally { p.discard(); }
+    }
+
+    private static void bankManage(GameTestHelper h) {
+        var p = player(h);
+        try {
+            setClock(h, 60 * FxMarket.DAY + 3_000);
+            var server = h.getLevel().getServer();
+            var market = FxMarketData.market(server);
+            market.advance(Economy.clock(server));
+            // 别的测试把时钟拨来拨去；先让钱庄结掉跨过的夜，免得下面这笔仓位白拿几夜利息
+            Bank.update(server, market, Economy.clock(server));
+            var account = Bank.of(server).account(p.getUUID());
+            Purse.receive(p, Currency.IMPERIAL, 300_000);
+            Bank.deposit(p, Currency.IMPERIAL, 0);
+            h.assertTrue(Bank.open(p, Currency.WOLF, 1, 50_000, 25, 0, 0), "开 25 倍");
+            long id = account.positions().getFirst().id();
+            h.assertTrue(Bank.addMargin(p, id, 50_000) && account.positions().getFirst().margin() == 100_000, "追加保证金");
+            h.assertTrue(account.balance(Currency.IMPERIAL) == 200_000, "追加的钱从存款扣");
+            // 市场是各个测试共用的，按这笔仓位自己算出让净值落到保证金 35% 的跌幅
+            var held = account.positions().getFirst();
+            double now = market.rate(Currency.WOLF), lo = .5, hi = 1;
+            for (int i = 0; i < 60; i++) { double mid = (lo + hi) / 2; if (Margin.equity(held, now * mid) > held.margin() * .35) hi = mid; else lo = mid; }
+            market.shock(Currency.WOLF, Math.log((lo + hi) / 2));
+            Bank.update(server, market, Economy.clock(server));
+            h.assertTrue(account.positions().size() == 1 && account.positions().getFirst().warned(), "跌到一半保证金时预警，不强平");
+            h.assertTrue(account.notices().stream().anyMatch(n -> n.key().equals("bank.notice.warning")), "预警通知");
+            double rate = market.rate(Currency.WOLF);
+            h.assertTrue(Bank.modify(p, id, 0, 0, .02), "设移动止损");
+            double stop = account.positions().getFirst().stop();
+            h.assertTrue(stop < rate && stop > rate * .97, "移动止损从现价起算：" + stop / rate);
+            Bank.update(server, market, Economy.clock(server));
+            h.assertTrue(account.positions().size() == 1, "刚设的移动止损不该立刻触发");
+            long cash = account.balance(Currency.IMPERIAL);
+            h.assertTrue(Bank.reduce(p, id, .5) && account.positions().getFirst().margin() == 50_000, "平一半");
+            h.assertTrue(account.balance(Currency.IMPERIAL) > cash, "平掉的部分拿回钱");
+            h.assertTrue(Bank.increase(p, id, 20_000, 5) && account.positions().getFirst().margin() == 70_000, "加仓");
+            h.assertTrue(Bank.open(p, Currency.FOX, -1, 10_000, 3, 0, 0) && account.positions().size() == 2, "再开一笔");
+            h.assertTrue(Bank.closeAll(p) && account.positions().isEmpty(), "一键全平");
             h.succeed();
         } finally { p.discard(); }
     }

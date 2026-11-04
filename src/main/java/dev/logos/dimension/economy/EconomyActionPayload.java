@@ -14,10 +14,11 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
  *   <li>AUTO：切换捡钱自动入囊</li>
  *   <li>TRADE：在兑换台把 amount 个 a 货币最小单位换成 b 货币</li>
  *   <li>CLOSE：面板关了，不再推送行情</li>
+ *   <li>TICKER：amount 为 1 时开始推送屏幕角落的行情条，0 停止</li>
  * </ul>
  */
 public record EconomyActionPayload(int action, int hand, int a, int b, long amount) implements CustomPacketPayload {
-    public static final int WITHDRAW = 0, DEPOSIT = 1, LOCK = 2, AUTO = 3, TRADE = 4, CLOSE = 5;
+    public static final int WITHDRAW = 0, DEPOSIT = 1, LOCK = 2, AUTO = 3, TRADE = 4, CLOSE = 5, TICKER = 6;
     public static final Type<EconomyActionPayload> TYPE = new Type<>(LogosDimension.id("fx_action"));
     public static final StreamCodec<RegistryFriendlyByteBuf, EconomyActionPayload> CODEC = StreamCodec.of(
             (buf, p) -> { buf.writeVarInt(p.action); buf.writeVarInt(p.hand); buf.writeVarInt(p.a); buf.writeVarInt(p.b); buf.writeVarLong(p.amount); },
