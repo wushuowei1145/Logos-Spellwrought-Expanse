@@ -154,7 +154,7 @@ public final class LongswordClient {
         if (mc.player.getMainArm() == HumanoidArm.LEFT) pose.scale(-1,1,1);
         boolean shown = DawnvowSummon.visible(p, now);
         LongswordRig.get(p.variant(), true).submit(sample, pose,
-                event.getSubmitNodeCollector(), event.getPackedLight(), mc.player.getSkin().body().texturePath(), !mc.player.isInvisible(), shown);
+                event.getSubmitNodeCollector(), event.getPackedLight(), mc.player.getSkin(), !mc.player.isInvisible(), shown);
         if (shown) LongswordAuras.firstPerson(mc.player,sample,pose,event.getSubmitNodeCollector());
         DawnvowSummon.submit(p, now, sample, pose, event.getSubmitNodeCollector(), true);
         if (shown) DawnvowBlade.submit(DawnvowClient.blade(mc.player.getId(), event.getPartialTick()), sample, pose, event.getSubmitNodeCollector(), true,
@@ -175,7 +175,7 @@ public final class LongswordClient {
             pose.translate(0, 1.5f, 0);
             pose.scale(state.mainArm == HumanoidArm.LEFT ? 1/16f : -1/16f, -1/16f, 1/16f);
             boolean shown = DawnvowSummon.visible(frame.move, frame.time);
-            LongswordRig.get(frame.variant, false).submit(frame.sample, pose, collector, light, state.skin.body().texturePath(), !state.isInvisible, shown);
+            LongswordRig.get(frame.variant, false).submit(frame.sample, pose, collector, light, state.skin, !state.isInvisible, shown);
             DawnvowSummon.submit(frame.move, frame.time, frame.sample, pose, collector, false);
             if (shown) {
                 LongswordAuras.submit(frame.effects,frame.sample,pose,collector);
