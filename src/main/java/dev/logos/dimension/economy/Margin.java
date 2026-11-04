@@ -2,9 +2,10 @@ package dev.logos.dimension.economy;
 
 /**
  * 钱庄的杠杆交易：拿帝国币作保证金，对狐钱、猫币或狼币开多（赌它对帝国币涨）或开空（赌它跌）。
- * 名义金额 = 保证金 × 倍数，盈亏按名义金额算；净值跌到保证金的两成时强制平仓，亏损最多到保证金为止。
+ * 名义金额 = 保证金 × 倍数，盈亏按名义金额算；净值跌到保证金的两成时强制平仓。跳空穿仓时超出保证金的亏损记成欠款。
  *
- * <p>开仓、平仓都按名义金额推动市场，但杠杆单的冲击只有现货的一成（{@link #DERIVATIVE_DEPTH}），
+ * <p>开仓、平仓按仓位数量推动市场（以锚定价折算，开平正好抵消），但杠杆单的冲击只有现货的一成（{@link #DERIVATIVE_DEPTH}），
+ * 单笔冲击超过 {@link FxMarket#MAX_IMPACT} 的单子拒绝，要分批；
  * 点差也只收兑换台的一成（{@link #DERIVATIVE_SPREAD}）：按兑换台的点差，25 倍狼币一开仓就亏掉七成半保证金。
  * 每过一夜按两种货币的利差收付利息，钱庄另收一点融资费。
  *
@@ -49,18 +50,27 @@ public final class Margin {
 
     public enum Trigger { NONE, LIQUIDATE, STOP, TAKE }
 
-    /** 名义金额 notional 铜分进场的成交价：做多付卖价并往上推，做空拿买价并往下压，都按冲击中点成交。 */
+    /** 杠杆单对汇率的对数冲击：按仓位数量、以锚定价折算（见 {@link FxMarket#impact}），开仓和平仓正好抵消。 */
+    static double impact(Currency c, double units) { return DERIVATIVE_DEPTH * FxMarket.impact(c, units); }
+
+    /** 这么大的单子会不会超出市场深度（单笔冲击超过 {@link FxMarket#MAX_IMPACT}）。 */
+    public static boolean tooDeep(Currency c, double notional, double rate) { return impact(c, notional / rate) > FxMarket.MAX_IMPACT; }
+
+    /**
+     * 名义金额 notional 铜分进场的成交价：做多付卖价并往上推，做空拿买价并往下压，
+     * 按冲击路径的平均价成交（{@link FxMarket#along}），所以任何一串自己的开平加起来都只亏点差。
+     */
     public static double entryPrice(Currency c, int side, double notional, double rate) {
-        double impact = c.impact * DERIVATIVE_DEPTH * notional;
+        double impact = impact(c, notional / rate);
         double spread = c.halfSpread * DERIVATIVE_SPREAD;
-        return side > 0 ? rate * Math.exp(impact / 2) * (1 + spread) : rate * Math.exp(-impact / 2) * (1 - spread);
+        return side > 0 ? rate * FxMarket.along(impact) * (1 + spread) : rate * FxMarket.along(-impact) * (1 - spread);
     }
 
     /** 现在平仓的成交价：做多是卖出，做空是买回。 */
     public static double exitPrice(Position p, double rate) {
-        double impact = p.currency.impact * DERIVATIVE_DEPTH * p.units * rate;
+        double impact = impact(p.currency, p.units);
         double spread = p.currency.halfSpread * DERIVATIVE_SPREAD;
-        return p.side > 0 ? rate * Math.exp(-impact / 2) * (1 - spread) : rate * Math.exp(impact / 2) * (1 + spread);
+        return p.side > 0 ? rate * FxMarket.along(-impact) * (1 - spread) : rate * FxMarket.along(impact) * (1 + spread);
     }
 
     public static double pnl(Position p, double rate) { return p.side * p.units * (exitPrice(p, rate) - p.entry); }
@@ -68,8 +78,14 @@ public final class Margin {
     /** 净值：保证金加浮动盈亏加累计利息。 */
     public static double equity(Position p, double rate) { return p.margin + pnl(p, rate) + p.accrued; }
 
-    /** 平仓能拿回多少铜分：亏损最多到保证金为止，不会倒欠。 */
-    public static long payout(Position p, double rate) { return Math.max(0, (long) Math.floor(equity(p, rate))); }
+    /**
+     * 平仓结算多少铜分。跳空穿仓时可以是负数：超出保证金的亏损记成欠钱庄的钱。
+     * 若亏损封顶在保证金，玩家就能用自己的平仓冲击把另一笔仓位推到穿仓，让钱庄替他赔，凭空赚钱。
+     */
+    public static long payout(Position p, double rate) {
+        double e = equity(p, rate);
+        return Double.isNaN(e) ? 0 : (long) Math.floor(Math.clamp(e, -1e15, 1e15));
+    }
 
     /** 爆仓价：净值正好等于维持保证金时的中间价。没有冲击时可直接解，这里用二分把冲击也算进去。 */
     public static double liquidationRate(Position p) {
@@ -130,9 +146,11 @@ public final class Margin {
             throw new IllegalArgumentException("开仓参数不对");
         double notional = (double) margin * leverage;
         double rate = market.rate(c);
+        // 仓位数量按现价折算一次，成交价、推价和日后平仓都用这同一个数，开平的冲击才正好抵消
+        double units = notional / rate;
         double entry = entryPrice(c, side, notional, rate);
-        if (apply) market.push(c, side * c.impact * DERIVATIVE_DEPTH * notional);
-        var p = new Position(id, c, side, margin, leverage, entry, notional / entry, t, Math.max(0, stop), Math.max(0, take), 0,
+        if (apply) market.push(c, side * impact(c, units));
+        var p = new Position(id, c, side, margin, leverage, entry, units, t, Math.max(0, stop), Math.max(0, take), 0,
                 Math.clamp(trail, 0, MAX_TRAIL), rate, false);
         return trailed(p, rate);
     }
@@ -150,7 +168,7 @@ public final class Margin {
     public static long close(FxMarket market, Position p) {
         double rate = market.rate(p.currency);
         long back = payout(p, rate);
-        market.push(p.currency, -p.side * p.currency.impact * DERIVATIVE_DEPTH * p.units * rate);
+        market.push(p.currency, -p.side * impact(p.currency, p.units));
         return back;
     }
 

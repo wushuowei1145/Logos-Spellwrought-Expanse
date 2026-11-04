@@ -715,5 +715,7 @@
   "block.logos_dimension.journey_kelp_plant": "远行海带茎",
   "item.logos_dimension.journey_seagrass": "远行海草",
   "item.logos_dimension.journey_glow_seagrass": "萤光海草",
-  "item.logos_dimension.journey_kelp": "远行海带"
+  "item.logos_dimension.journey_kelp": "远行海带",
+  "message.logos_dimension.bank.too_deep": "单笔太大，超出市场深度，请分批",
+  "bank.notice.voided": "%s%s仓超出市场深度（旧版本的错误），已作废并退回保证金"
 }

@@ -715,5 +715,7 @@
   "block.logos_dimension.journey_kelp_plant": "Journey Kelp Plant",
   "item.logos_dimension.journey_seagrass": "Journey Seagrass",
   "item.logos_dimension.journey_glow_seagrass": "Glowing Seagrass",
-  "item.logos_dimension.journey_kelp": "Journey Kelp"
+  "item.logos_dimension.journey_kelp": "Journey Kelp",
+  "message.logos_dimension.bank.too_deep": "Too large for the market; split it up",
+  "bank.notice.voided": "%s%s exceeded market depth (an old-version bug); voided and margin refunded"
 }

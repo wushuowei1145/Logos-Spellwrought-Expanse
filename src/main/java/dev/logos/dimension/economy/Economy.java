@@ -289,6 +289,10 @@ public final class Economy {
             player.sendOverlayMessage(Component.translatable("message.logos_dimension.fx.too_small"));
             return false;
         }
+        if (FxMarket.tooLarge(from, to, amount, market.rate(from), market.rate(to))) {
+            player.sendOverlayMessage(Component.translatable("message.logos_dimension.bank.too_deep"));
+            return false;
+        }
         if (!Purse.spend(player, from, amount)) {
             player.sendOverlayMessage(Component.translatable("message.logos_dimension.fx.not_enough", Component.translatable(from.key())));
             return false;

@@ -45,6 +45,21 @@ class FxMarketTest {
         assertTrue(Math.abs(line.pressure) < Math.abs(pressure) * .02, "冲击应在几天内散去");
     }
 
+    @Test void bigSpotRoundTripsReturnThePriceAndLoseMoney() {
+        for (var c : Currency.TRADED) {
+            var m = new FxMarket(77);
+            m.advance(FxMarket.DAY + 1_000);
+            double rate = m.rate(c);
+            long cents = CROWN;
+            while (!FxMarket.tooLarge(Currency.IMPERIAL, c, cents * 2, 1, m.rate(c))) cents *= 2;
+            long got = m.trade(Currency.IMPERIAL, c, cents);
+            assertTrue(m.rate(c) > rate * 1.05, "大单应明显推高价格");
+            long back = m.trade(c, Currency.IMPERIAL, got);
+            assertTrue(back < cents, c + " 原路换回不能赚钱：" + back + " / " + cents);
+            assertEquals(rate, m.rate(c), rate * 1e-9, "原路换回后价格回到原处");
+        }
+    }
+
     @Test void saveAndLoadKeepEverything() {
         var m = new FxMarket(99);
         m.advance(12 * FxMarket.DAY + 5_000);

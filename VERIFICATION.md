@@ -22,6 +22,36 @@
 | 实际客户端 | `underwater_views` **1/1 场景、8/8 检查**：群系接线（含原版 `disk_clay`）、衰退标签、海草空手不掉/剪刀才掉、海带空手可掉；泻湖与海湾附近各生成 7×7 区块统计——泻湖海床 9409 列：砾 8796、石 613（其中 552 列在洞穴/峡谷挖开处 4 格内，海床裸石 61 列 0.6%）；海湾 9409 列：砾 8200、沙 568、泥土 305、黏土 18、石 318（挖开处 227，海床裸石 91 列 0.97%）；水下植物 8183 / 3683；水下石堆 42 / 29 块，岸上石堆 0。截图 `docs/screenshots/underwater/tank.png`（水箱）、`docs/screenshots/underwater/seabed.png`（实际生成的海湾海床） |
 | 未验证 | 衰退法术的实际施放（只核对了标签）；珊瑚、鱼群；光影包；多人同步 |
 
+## 命中锥形张角按武器设定
+
+2026-11-04：分支 `feat/weapon-cone-param`，基于 main `ed4527f`。按维护者意见，锥形命中判定（#142）写进文档，并让以后新增的武器能给自己的参数：
+
+- `CombatWeapon` 注册时链式调用 `withCone(度数)` 给出张角，不给就是 `CombatWeapon.DEFAULT_CONE`（60°）；张角须在 (0, 180] 内，越界在注册时报错。长度仍是攻击距离属性。两把长剑和打刀都用默认值，手感不变。
+- 曦誓金光取武器自己的张角与 90° 中较大的那个。
+- [战斗骨架规范](docs/COMBAT_SKELETON.md) 第 4 节新增「命中锥形」：注册示例、参数表、所有武器共用的规则。
+- README 补回合并 #143 时被覆盖掉的锥形判定那句话。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 全部通过（新增 `CombatWeaponTest`：不给张角时为 60°，给了用自己的，越界报错） |
+| 世界测试 | `logos_dimension:longsword*` 9/9；`logos_dimension:dawnvow*` 12/12 |
+
+## 修复：大额杠杆单靠自己的冲击凭空赚钱
+
+2026-11-04：分支 `fix/fx-impact`，基于 main（含 #139）。玩家在创造模式拿大量钱 25 倍做空 5 万金冠狐钱，冲击把狐钱砸到接近零，浮盈显示一百多万金冠。原因有三：冲击按成交时的价值算，砸低价格后原数买回几乎不推价；穿仓亏损封顶在保证金，用自己的平仓冲击把另一笔仓位推到穿仓就能让钱庄替自己赔；成交价取冲击中点，大单拆开换顺序时开平不完全抵消。改为冲击按数量、以锚定价折算，成交价对冲击路径积分，单笔冲击超过 0.3（对数）拒绝、累计冲击封顶 ±1.5，穿仓亏损记成欠款，旧的超大仓位作废并退回保证金。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | `MarginTest` **18/18**（新增 4：玩家报告的单子被拒、三种货币多空各以最大允许单子立刻开平都不赚钱且价格回到原处、连砸八笔做空再全平不赚钱、累计冲击封顶不归零不无穷；穿仓测试改为欠款）；`FxMarketTest` **7/7**（新增：三种货币最大允许现货单原路换回不赚钱且价格回到原处）；模拟结果见设计文档，25 倍乱炒因可欠款变为平均 −108% |
+| 世界测试 | 经济全部 **8/8**，连跑 3 次都通过（钱庄管理测试加上玩家报告的情形：6 万金冠存款下 25 倍做空 5 万金冠狐钱的市价单和挂单都被拒、价格不动；强平测试改为穿仓扣进余额） |
+| 实际客户端 | `bank_views` 6/6、`economy_views` 4/4，照旧 |
+
+```text
+./gradlew test --tests "dev.logos.dimension.economy.*" -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:economy_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=bank_views,economy_views" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 曦誓拔剑与收剑的动作：托剑凝成、剑花、插地
 
 2026-11-04：分支 `feat/dawnvow-flourish`，基于 main `ba681e1`。按维护者意见：
