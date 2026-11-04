@@ -60,7 +60,7 @@ NPC 模型**不需要**添加这两根骨骼：运行时自己算出它们的位
 | `weapons/<武器>.json` | 武器网格：`texture`、`texture_size`、`cubes`（`part` 为 `weapon` 或 `sheath`），可选 `scale`（乘在骨架的 `weapon_scale` 上，默认 1；打刀为 1.25，第三人称正好 1 倍）。坐标相对握柄原点、按原始美术尺寸（缩放 1），长剑的网格等于物品模型像素坐标减去 (8, 1, 8)。 |
 | `animations/<类别>_<视角>.animation.json` | Bedrock 动作。 |
 
-两把长剑的数据由 `tools/import_longswords.py` 从仓库外的审定美术工程生成：曦誓工程提供玩家骨架和动作，两把剑各自提供网格。手改美术工程后重跑脚本，不要手改生成的 JSON。神狐打刀的网格与贴图由 `tools/import_uchigatana.py` 导入，动作由 `tools/uchigatana_moves.py` 按编排烘焙（[UCHIGATANA.md](UCHIGATANA.md) 第 5 节）。
+两把长剑的数据由 `tools/import_longswords.py` 从仓库外的审定美术工程生成：曦誓工程提供玩家骨架和动作，两把剑各自提供网格。手改美术工程后重跑脚本，不要手改生成的 JSON。神狐打刀的网格与贴图由 `tools/import_uchigatana.py` 导入，动作由 `tools/uchigatana_moves.py` 按编排烘焙（[UCHIGATANA.md](UCHIGATANA.md) 第 5 节）。群誓·狼牙长枪同理：`tools/import_oath_spear.py` 与 `tools/oath_spear_moves.py`（[OATH_SPEAR.md](OATH_SPEAR.md)）。
 
 哪件物品用哪份网格、动作和招式，由物品实现的 `CombatWeapon.Holder` 给出（`dev.logos.dimension.combat.CombatWeapon`）；同步包里只带武器编号，编号写死在代码里。
 
@@ -77,7 +77,7 @@ CombatWeapon.register(6, "glaive", "glaive", GLAIVE_MOVESET).withCone(90);
 
 | 参数 | 在哪给 | 默认 | 说明 |
 |---|---|---|---|
-| 张角 | `withCone(度数)` | `CombatWeapon.DEFAULT_CONE` = 60° | 整个锥形的张角，准星左右各一半；大于 0、不超过 180，越界在注册时报错 |
+| 张角 | `withCone(度数)` | `CombatWeapon.DEFAULT_CONE` = 60° | 整个锥形的张角，准星左右各一半；大于 0、不超过 180，越界在注册时报错。单招可以在招式文件里用 `cone` 覆盖（第 5 节），例如长枪直刺 40°、横扫 120° |
 | 长度 | 物品的 `entity_interaction_range` 属性修饰 | 原版攻击距离（3 格） | 不单独设参数，跟着玩家的攻击距离走，附魔、药水、其他模组改了这个属性也跟着变 |
 
 其余规则所有武器一样，不按武器设：
@@ -119,14 +119,21 @@ CombatWeapon.register(6, "glaive", "glaive", GLAIVE_MOVESET).withCone(90);
 | `length` | 动作时长（秒），必须与动作文件一致（`MovesetTest` 检查）。 |
 | `playback` | `once`（播完停在末帧，默认）、`loop`（循环，不会自动结束）、`reverse`（从进入时上一招式已播到的位置倒放回 0，用于中途取消）。 |
 | `attack_speed_base` | 写了就按攻速缩放：播放速度 = 实际攻速 ÷ 该值（限制在 0.2–4 倍），进入招式时确定。 |
-| `contact` | 接触时刻（动作时间，秒）；到点时由武器或生物结算一次命中。 |
+| `contact` | 接触时刻（动作时间，秒）；到点时由武器或生物结算一次命中。多段命中的招式写成严格递增的数组（长枪连刺一秒八下：`[0.045, 0.17, …]`），一刻里跨过几个就按顺序结算几次。 |
 | `next` | 播完后的去向；`$clear` 表示结束整套招式。不循环的招式必须写。 |
 | `combo_next` | 连招的下一段，配合 `combo_memory` 与转移的 `combo`。 |
 | `reset_combo` | 进入时清空连招记忆（例如蓄力）。 |
 | `blend_in` | 进入这一招时，从上一招在切换那一刻的姿势过渡到本招的时长（秒，按游戏时间，平滑步进曲线）；只影响客户端画面。不写为 0。 |
+| `damage` | 这一招的伤害倍数，乘在原版攻击算出的伤害上（只作用于这一招打中的目标）。不写为 1。 |
+| `cone` | 这一招的命中锥形张角（度，0–180），代替武器注册时的张角；不写或 0 用武器的。 |
+| `knockback` | 为 `false` 时这一招不击退（连刺不把目标推出枪尖）。不写为 `true`。 |
+| `full_strength` | 为 `true` 时每一下都按蓄满的攻击结算，不吃原版攻击冷却（连刺自己就是节奏）。不写为 `false`。 |
+| `effect` | 武器自己的附加效果名，由 `CombatEffects` 解释：`launch`（挑飞）、`flurry`（连刺：打浮空目标伤害翻倍、延长浮空）、`slam`（下砸：砸落浮空目标、结算摔落）。不认识的名字没有效果。 |
 | `on` | 转移列表，按顺序取第一条满足条件的。 |
 
-转移字段：`input` 为 `attack`、`use_press`、`use_release`、`block`（原版格挡组件挡下一次攻击，由服务端在 `LivingShieldBlockEvent` 里给出；接受时这次格挡不耗耐久）；`to` 为目标招式或 `$clear`；`window` 为 `[起, 止]` 动作时间窗口（含端点，`止` 可省略表示到结束）；`queue` 为真时输入先记下（输入缓冲），到 `at`（取消点，动作时间）那一刻切换，没写 `at` 就等本招式播完；取消点已过才输入则立即切换；切换时刻不对齐游戏刻，连段节奏不漂移。`at` 不能早于本招式的 `contact`，否则缓冲的下一招会吞掉这一下命中；`combo` 为真时若连招记忆有效，改去记忆中那一段的 `combo_next`。
+伤害仍走原版 `player.attack`：`damage` 与效果的倍数在 NeoForge 的 `LivingIncomingDamageEvent` 里只乘到这一招的目标上，击退在 `LivingKnockBackEvent` 里取消（浮空目标总是不击退）。
+
+转移字段：`input` 为 `attack`、`use_press`、`use_release`、`block`（原版格挡组件挡下一次攻击，由服务端在 `LivingShieldBlockEvent` 里给出；接受时这次格挡不耗耐久）；`to` 为目标招式或 `$clear`；`window` 为 `[起, 止]` 动作时间窗口（含端点，`止` 可省略表示到结束）；`queue` 为真时输入先记下（输入缓冲），到 `at`（取消点，动作时间）那一刻切换，没写 `at` 就等本招式播完；取消点已过才输入则立即切换；切换时刻不对齐游戏刻，连段节奏不漂移。`at` 不能早于本招式的 `contact`（多段命中看最后一段），否则缓冲的下一招会吞掉这一下命中；`combo` 为真时若连招记忆有效，改去记忆中那一段的 `combo_next`。
 
 时间约定：招式里的时间都是**动作时间**，带 `attack_speed_base` 的招式按攻速缩放；`combo_memory` 与 `blend_in` 用游戏时间。没有缓冲输入时播完整段（包括收势）再进入 `next`。
 
@@ -146,11 +153,12 @@ CombatWeapon.register(6, "glaive", "glaive", GLAIVE_MOVESET).withCone(90);
 | `cancel` | 可接下一招的动作必需 | 可以接下一招的时刻：挥斩的惯性已经释放完、剑和手回到能自然起下一刀的位置，之后的部分只是“回到待机”。连段时这之后的收势不会播放，所以不能早于 `contact`，也不要留在挥斩还很快的时候。 | 转移的 `at` |
 | `input_open` | 可选 | 开始接受下一次输入（缓冲）的时刻，用来避开同一次点击的重复输入。不标时默认 0.1 秒。 | 转移 `window` 的起点 |
 | `trail_start`、`trail_end` | 可选 | 刀光的开始与结束，一般包住 `contact` 前后挥得最快的一段。 | 刀光功能做好后使用 |
+| `tip_fx` | 可选 | 枪尖残影：刺到头的那一刻，客户端在枪尖放出一枚沿刺出方向冲出去的枪头光影（长枪连刺，[OATH_SPEAR.md](OATH_SPEAR.md) 第 4 节）。一般与 `contact` 同一时刻。 | 客户端直接读动作 |
 
 规则：
 
 - 时间是**动作时间**（秒），即 Blockbench 时间轴上的时间，不考虑攻速缩放。
-- 顺序必须是 `input_open` ≤ `cancel`、`contact` ≤ `cancel` ≤ 动作时长；`trail_start` < `trail_end`。每个标记在一段动作里最多出现一次。
+- 顺序必须是 `input_open` ≤ `cancel`、`contact` ≤ `cancel` ≤ 动作时长；`trail_start` < `trail_end`。`contact` 与 `tip_fx` 在多段命中的动作里可以出现多次（个数与招式文件的 `contact` 数组相同），其余标记在一段动作里最多出现一次。
 - 第一人称与第三人称两套动作的同名标记**必须在同一时刻**：服务端只有一条时间轴，两边只是画面不同。
 - 拔剑、待机、蓄力保持这类没有命中的动作不需要标；蓄力下劈要标 `contact`，可以不标 `cancel`。
 - 需要新标记（例如脚步声、换手）时，名字用小写 `snake_case`，先在本表登记再用。
@@ -159,7 +167,7 @@ CombatWeapon.register(6, "glaive", "glaive", GLAIVE_MOVESET).withCone(90);
 
 ### 6.2 怎么标
 
-在 Blockbench 的动画模式里，用时间轴顶部的**效果**（Effects）行的**指令**通道（导出名为 `timeline`）在对应时刻加关键帧，内容只写标记名，一行一个，例如 `cancel`。不同 Blockbench 版本界面上的叫法可能略有不同，以导出结果为准：
+在 Blockbench 的动画模式里，用时间轴顶部的**效果**（Effects）行的**指令**通道（导出名为 `timeline`）在对应时刻加关键帧，内容只写标记名，一行一个，例如 `cancel`；同一时刻有几个标记时，导出的值是字符串数组。不同 Blockbench 版本界面上的叫法可能略有不同，以导出结果为准：
 
 ```json
 "animations": {

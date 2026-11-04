@@ -1,6 +1,8 @@
 package dev.logos.dimension.longsword;
 
 import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.combat.Airborne;
+import dev.logos.dimension.combat.CombatEffects;
 import dev.logos.dimension.combat.CombatWeapon;
 import dev.logos.dimension.combat.MoveRunner;
 import dev.logos.dimension.combat.Moveset;
@@ -22,6 +24,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
 import net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.entity.player.CriticalHitEvent;
@@ -49,6 +53,11 @@ public final class LongswordCombat {
     private static final ThreadLocal<Boolean> CONTACT = ThreadLocal.withInitial(() -> false);
     /** 这一刀要暴击的目标（准星正对着的），由暴击事件读。 */
     private static final ThreadLocal<Entity> CRIT = new ThreadLocal<>();
+    /** 正在结算的招式与目标：招式的 damage、knockback 与附加效果的伤害倍数由伤害、击退事件读。 */
+    private static final ThreadLocal<Moveset.Move> MOVE = new ThreadLocal<>();
+    private static final ThreadLocal<Entity> TARGET = new ThreadLocal<>();
+    /** 招式要求按蓄满的攻击结算时写进攻击蓄力计时的值（远大于任何攻击间隔）。 */
+    private static final int FULL_STRENGTH_TICKS = 1000;
     /** 一刀最多打几个目标。 */
     private static final int MAX_TARGETS = 8;
     private static final class State implements MoveRunner.Actor {
@@ -192,6 +201,10 @@ public final class LongswordCombat {
         var weapon = CombatWeapon.of(player.getMainHandItem());
         return DawnvowCharge.cone(player, weapon == null ? CombatWeapon.DEFAULT_CONE : weapon.cone());
     }
+    /** 某一招的张角：招式写了 {@code cone} 就用它（例如长枪的直刺窄、横扫宽），否则同 {@link #cone(ServerPlayer)}。 */
+    public static double cone(ServerPlayer player, Moveset.Move move) {
+        return move.cone() > 0 ? DawnvowCharge.cone(player, move.cone()) : cone(player);
+    }
 
     /**
      * 这一刀打到谁：准星正对着的（原版射线，碰到方块为止）排第一个，其余是锥形里看得见的生物，近的在前。
@@ -235,17 +248,21 @@ public final class LongswordCombat {
     }
 
     private static void contact(ServerPlayer player, State state) {
-        var targets = targets(player, cone(player));
+        var move = state.runner.move();
+        var targets = targets(player, cone(player, move));
+        CombatEffects.contact(player, move, targets);
         if (targets.isEmpty()) {
             player.resetAttackStrengthTicker();
-            player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, .6f, 1);
+            if (!CombatEffects.quietWhiff(move))
+                player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, .6f, 1);
             return;
         }
         long now = player.level().getGameTime();
         state.lastHits.values().removeIf(hit -> now - hit[1] > 20);
         // 原版打完一下就把攻击蓄力清零；每个目标都按出刀时的蓄力算，最后一下之后照常清零
         var strength = (dev.logos.dimension.mixin.AttackStrengthAccess) player;
-        int ticker = strength.logos_dimension$attackStrengthTicker(), swap = strength.logos_dimension$itemSwapTicker();
+        int ticker = move.fullStrength() ? FULL_STRENGTH_TICKS : strength.logos_dimension$attackStrengthTicker();
+        int swap = strength.logos_dimension$itemSwapTicker();
         boolean first = true;
         for (var target : targets) {
             if (!selected(player, state) || !player.isAlive()) break;
@@ -258,13 +275,28 @@ public final class LongswordCombat {
             if (last != null && target instanceof LivingEntity living && living.invulnerableTime > 0
                     && living.getLastHurtByMob() == player && living.getLastHurtByMobTimestamp() == last[0]) living.invulnerableTime = 0;
             CONTACT.set(true);
+            MOVE.set(move); TARGET.set(target);
             if (first) CRIT.set(target);
-            try { player.attack(target); } finally { CONTACT.remove(); CRIT.remove(); }
+            try { player.attack(target); } finally { CONTACT.remove(); CRIT.remove(); MOVE.remove(); TARGET.remove(); }
             if (target instanceof LivingEntity living && living.invulnerableTime >= 20 && living.getLastHurtByMob() == player)
                 state.lastHits.put(target.getUUID(), new long[]{living.getLastHurtByMobTimestamp(), now});
             DawnvowCharge.hit(player, target);
+            CombatEffects.hit(player, target, move);
             first = false;
         }
+    }
+
+    /** 招式的伤害倍数（damage）与附加效果的倍数（例如连刺打浮空目标翻倍），只作用于这一刀的目标。 */
+    @SubscribeEvent static void damage(LivingIncomingDamageEvent event) {
+        var move = MOVE.get();
+        if (move == null || event.getEntity() != TARGET.get()) return;
+        float scale = (float) move.damage() * CombatEffects.multiplier(move, event.getEntity());
+        if (scale != 1) event.setAmount(event.getAmount() * scale);
+    }
+    /** 招式不击退（knockback 为假）或目标浮空时，这一刀的击退取消：连刺不把目标推出枪尖，浮空目标停在原处。 */
+    @SubscribeEvent static void knockback(LivingKnockBackEvent event) {
+        var move = MOVE.get();
+        if (move != null && event.getEntity() == TARGET.get() && (!move.knockback() || Airborne.is(event.getEntity()))) event.setCanceled(true);
     }
 
     /** 准星正对着的目标暴击：原版暴击的 1.5 倍、粒子与音效。 */
@@ -287,5 +319,5 @@ public final class LongswordCombat {
         if (event.getEntity() instanceof ServerPlayer player) DawnvowCharge.end(player);
         STATES.remove(event.getEntity().getUUID());
     }
-    @SubscribeEvent static void stopped(ServerStoppedEvent event) { STATES.clear(); CONTACT.remove(); }
+    @SubscribeEvent static void stopped(ServerStoppedEvent event) { STATES.clear(); CONTACT.remove(); MOVE.remove(); TARGET.remove(); }
 }

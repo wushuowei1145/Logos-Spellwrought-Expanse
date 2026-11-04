@@ -17,7 +17,8 @@ public final class MoveRunner {
     private final Actor actor;
     private Moveset.Move move;
     private double start, rate = 1, offset;
-    private boolean hit, cleared;
+    private int hits;
+    private boolean cleared;
     private Moveset.Transition queued;
     private String comboMove;
     private double comboTime;
@@ -33,6 +34,8 @@ public final class MoveRunner {
     public double rate() { return rate; }
     public double offset() { return offset; }
     public boolean cleared() { return cleared; }
+    /** 正在结算的是本招式第几次接触（从 0 开始）；只在 {@link Actor#contact} 回调里有意义。 */
+    public int contactIndex() { return hits - 1; }
     public double age(double now) { return now - start; }
     /** 当前招式已经播放的动作时间（秒），不取模、不截断。 */
     private double elapsed(double now) { return Math.max(0, now - start) / 20 * rate; }
@@ -60,9 +63,13 @@ public final class MoveRunner {
     public void tick(double now) {
         if (cleared) return;
         double age = now - start;
-        if (move.hasContact() && !hit && age + EPSILON >= move.contact() * 20 / rate) {
-            hit = true;
+        // 一刻里过了几个接触时刻就按顺序结算几次（连刺一秒八下，比游戏刻还密时也不丢）。
+        var current = move;
+        while (hits < current.contacts().size() && age + EPSILON >= current.contacts().get(hits) * 20 / rate) {
+            hits++;
             actor.contact(this);
+            // 结算时可能已经换招（例如被打断），后面的接触不再属于这一招。
+            if (cleared || move != current) return;
         }
         // 缓冲的输入在取消点那一刻接上，不等到下一刻，连段节奏不因刻边界漂移。
         if (queued != null) {
@@ -91,7 +98,7 @@ public final class MoveRunner {
     private void begin(Moveset.Move next, double time) {
         // 倒放招式从上一招式已播放的位置退回，例如蓄力未满时松手。
         double from = move == null ? 0 : move.seconds(time - start, rate, offset);
-        move = next; start = time; hit = false; queued = null;
+        move = next; start = time; hits = 0; queued = null;
         rate = next.scalesWithAttackSpeed() ? Math.clamp(actor.attackSpeed() / next.speedBase(), .2, 4) : 1;
         offset = next.playback() == Moveset.Playback.REVERSE ? from : 0;
         if (next.resetCombo()) comboMove = null;

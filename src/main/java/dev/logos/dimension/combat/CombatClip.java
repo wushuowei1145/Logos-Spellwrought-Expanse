@@ -21,10 +21,14 @@ public final class CombatClip {
     private final float length;
     private final Loop loop;
     private final Map<String, EnumMap<Channel, Track>> bones;
+    /** 动作标记（docs/COMBAT_SKELETON.md 第 6 节）：名字到升序时刻。 */
+    private final Map<String, float[]> markers;
 
-    private CombatClip(float length, Loop loop, Map<String, EnumMap<Channel, Track>> bones) {
-        this.length = length; this.loop = loop; this.bones = bones;
+    private CombatClip(float length, Loop loop, Map<String, EnumMap<Channel, Track>> bones, Map<String, float[]> markers) {
+        this.length = length; this.loop = loop; this.bones = bones; this.markers = markers;
     }
+    /** 某个标记的各次时刻（升序，动作时间）；没有这个标记时为空数组。 */
+    public float[] markers(String name) { return markers.getOrDefault(name, new float[0]).clone(); }
     public float length() { return length; }
     public Loop loop() { return loop; }
     public Set<String> bones() { return bones.keySet(); }
@@ -62,7 +66,36 @@ public final class CombatClip {
         Loop loop = loopJson == null ? Loop.ONCE : loopJson.getAsJsonPrimitive().isBoolean()
                 ? (loopJson.getAsBoolean() ? Loop.LOOP : Loop.ONCE)
                 : "hold_on_last_frame".equals(loopJson.getAsString()) ? Loop.HOLD : Loop.ONCE;
-        return new CombatClip(length, loop, bones);
+        return new CombatClip(length, loop, bones, markers(json.get("timeline")));
+    }
+
+    /**
+     * 读 Bedrock 的 timeline：键是时刻，值是一行字符串或字符串数组。只认作标记名的内容（小写 snake_case 单词），
+     * 真正的 Molang 指令之类原样忽略。
+     */
+    private static Map<String, float[]> markers(JsonElement timeline) {
+        Map<String, List<Float>> found = new HashMap<>();
+        if (timeline != null && timeline.isJsonObject()) for (var e : timeline.getAsJsonObject().entrySet()) {
+            float t;
+            try { t = Float.parseFloat(e.getKey()); } catch (NumberFormatException bad) { continue; }
+            List<JsonElement> values = new ArrayList<>();
+            if (e.getValue().isJsonArray()) e.getValue().getAsJsonArray().forEach(values::add); else values.add(e.getValue());
+            for (var v : values) {
+                if (!v.isJsonPrimitive()) continue;
+                for (var line : v.getAsString().split("[;\n]")) {
+                    var name = line.trim();
+                    if (name.matches("[a-z][a-z0-9_]*")) found.computeIfAbsent(name, k -> new ArrayList<>()).add(t);
+                }
+            }
+        }
+        Map<String, float[]> out = new HashMap<>();
+        found.forEach((name, times) -> {
+            float[] a = new float[times.size()];
+            for (int i = 0; i < a.length; i++) a[i] = times.get(i);
+            Arrays.sort(a);
+            out.put(name, a);
+        });
+        return out;
     }
 
     private static Track track(JsonElement value, Channel channel, String where, List<String> warnings) {
