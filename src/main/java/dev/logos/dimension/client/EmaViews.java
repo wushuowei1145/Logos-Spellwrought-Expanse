@@ -71,6 +71,13 @@ public class EmaViews implements UIScenario {
                 player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(FoxWildsBlocks.EMA.get(), 3));
             })
             .awaitClientBlockEntity(RACK)
+            .check("creative tab lists the ema and the rack", ctx -> {
+                var mc = Minecraft.getInstance();
+                net.minecraft.world.item.CreativeModeTabs.tryRebuildTabContents(mc.player.connection.enabledFeatures(), true, mc.level.registryAccess());
+                var tab = net.minecraft.core.registries.BuiltInRegistries.CREATIVE_MODE_TAB.getValue(dev.logos.dimension.LogosDimension.id("cloudsea"));
+                return tab != null && tab.getDisplayItems().stream().anyMatch(i -> i.is(FoxWildsBlocks.EMA.get()))
+                    && tab.getDisplayItems().stream().anyMatch(i -> i.is(FoxWildsBlocks.EMA_RACK.get().asItem()));
+            })
             .step("open the writing page", ctx -> EmaScreen.openWrite(Minecraft.getInstance().player, InteractionHand.MAIN_HAND))
             .awaitModularUI()
             .ticks(5)
