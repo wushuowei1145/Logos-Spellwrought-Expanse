@@ -17,12 +17,20 @@
     [],
     [],
     [],
+    [
+      "logos_dimension:underwater_rock_pile"
+    ],
+    [],
+    [
+      "minecraft:disk_sand",
+      "minecraft:disk_clay",
+      "minecraft:disk_gravel"
+    ],
     [],
     [],
-    [],
-    [],
-    [],
-    [],
+    [
+      "logos_dimension:journey_seagrass_river"
+    ],
     []
   ],
   "spawners": {},

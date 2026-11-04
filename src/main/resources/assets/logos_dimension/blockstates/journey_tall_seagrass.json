@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "half=lower": {
+      "model": "logos_dimension:block/journey_tall_seagrass_bottom"
+    },
+    "half=upper": {
+      "model": "logos_dimension:block/journey_tall_seagrass_top"
+    }
+  }
+}
