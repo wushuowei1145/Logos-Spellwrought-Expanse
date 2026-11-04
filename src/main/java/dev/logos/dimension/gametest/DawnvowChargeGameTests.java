@@ -44,8 +44,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  */
 public final class DawnvowChargeGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS = DeferredRegister.create(Registries.TEST_FUNCTION, LogosDimension.ID);
-    /** 拔剑（1.2 秒）之后开始蓄力的那一刻。 */
-    private static final int USE = 30;
+    /** 拔剑（曦誓 1.8 秒）之后开始蓄力的那一刻。 */
+    private static final int USE = 40;
 
     public static void register(IEventBus bus) {
         var tests = Map.<String, Consumer<GameTestHelper>>of(

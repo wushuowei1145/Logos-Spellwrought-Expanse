@@ -62,7 +62,15 @@ public final class LongswordRig {
         var skeletonJson = read("combat/skeletons/player_" + view + ".json");
         skeleton = CombatSkeleton.fromJson(skeletonJson);
         if (!skeleton.missingRequired().isEmpty()) throw new IllegalStateException("玩家骨架缺少 " + skeleton.missingRequired());
-        clips = clips(animations, view);
+        var shared = clips(animations, view);
+        // 武器自己的动作（曦誓的拔剑、收剑）叠在共用动作上，同名的以武器自己的为准。
+        if (!name.equals(animations) && Minecraft.getInstance().getResourceManager()
+                .getResource(LogosDimension.id("combat/animations/" + name + "_" + view + ".animation.json")).isPresent()) {
+            var merged = new HashMap<>(shared);
+            merged.putAll(clips(name, view));
+            shared = Map.copyOf(merged);
+        }
+        clips = shared;
         weaponPivot = skeleton.bone(CombatBones.WEAPON).pivot();
         var weapon = read("combat/weapons/" + name + ".json");
         // 骨架给出视角的武器缩放，武器网格可再乘一个自己的 scale（打刀比长剑长）。

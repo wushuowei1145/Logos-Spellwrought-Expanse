@@ -13,16 +13,19 @@ import net.minecraft.world.phys.Vec3;
 /**
  * 曦誓不挂剑鞘，拔剑与收剑换成光：
  * <ul>
- *   <li>拔剑（{@code draw}）：双手直接摆成持剑的样子，手里先是空的；金色光点从四周旋着聚拢到剑的轮廓上
- *       （剑身、护手、握柄、剑首），剑的虚影随之渐亮，{@link #FORM} 秒时剑凝成实体、整把剑一闪；</li>
- *   <li>收剑（{@code sheathe}）：剑先亮起，{@link #VANISH} 秒时散成光点，向外飘散、上浮、淡去。</li>
+ *   <li>拔剑（{@code draw}，动作 {@code dawnvow_draw}）：双臂伸直到身前、掌心向上，金色光点从四周旋着聚拢到横在掌上的剑的轮廓上
+ *       （剑身、护手、握柄、剑首），剑的虚影随之渐亮，{@link #FORM} 秒时剑凝成实体、整把剑一闪；随后右手握住剑柄转两圈剑花，
+ *       双手合握回到待机；</li>
+ *   <li>收剑（{@code sheathe}，动作 {@code dawnvow_sheathe}）：双手把剑倒转，{@link #PLUNGE} 秒插进身前的地面，剑随之亮起；
+ *       松手之后 {@link #VANISH} 秒散成光点，向外飘散、上浮、淡去。</li>
  * </ul>
  * 都画在剑骨骼上（像素单位，原点在握柄，剑身沿 +Y），跟着手走；第一、第三人称一样。光点是三片互相垂直的小光片，
- * 从哪个角度看都是一颗亮点。贴图复用 Logos 的 {@code fire_beam/dot} 与 {@code laser}。
+ * 从哪个角度看都是一颗亮点。贴图复用 Logos 的 {@code fire_beam/dot} 与 {@code laser}。动作由 tools/dawnvow_moves.py 生成，
+ * 时刻与这里对齐。
  */
 public final class DawnvowSummon {
     /** 剑凝成实体的时刻、凝成后的一闪持续多久、收剑时剑消失的时刻、散开的光点飘多久（秒）。 */
-    private static final double FORM = 0.7, FLASH = 0.3, VANISH = 0.15, DRIFT = 0.5;
+    private static final double FORM = 0.7, FLASH = 0.3, PLUNGE = 0.3, VANISH = 0.62, DRIFT = 0.35;
     private static final int MOTES = 56;
     /** 光点的金色（与大型蓄力的光点同色）。 */
     private static final int MOTE = 0xFFDB8C;
@@ -59,7 +62,7 @@ public final class DawnvowSummon {
         // 剑的光影：拔剑时随光点聚拢渐亮、凝成时一闪；收剑时先亮起再随剑散去
         float shade = draw
                 ? (float) (age < FORM ? .35 * Math.pow(age / FORM, 2) : 1 - (age - FORM) / FLASH)
-                : (float) (age < VANISH ? .3 + .7 * age / VANISH : Math.max(0, 1 - (age - VANISH) / .12));
+                : (float) (age < PLUNGE ? 0 : age < VANISH ? (age - PLUNGE) / (VANISH - PLUNGE) : Math.max(0, 1 - (age - VANISH) / .12));
         if (shade > .005f) out.submitCustomGeometry(pose, DawnvowAura.LASER, (q, buf) -> {
             for (int k = 0; k < 3; k++) {
                 Vec3 across = new Vec3(Math.cos(k * Math.PI / 3), 0, Math.sin(k * Math.PI / 3));
@@ -83,7 +86,7 @@ public final class DawnvowSummon {
                     a = VfxParts.smooth(0, .15f, (float) k) * (1 - VfxParts.smooth(.85f, 1, (float) k));
                 } else {
                     // 从剑上散开，往外飘、往上浮
-                    double k = Mth.clamp((age - VANISH * .6) / DRIFT, 0, 1);
+                    double k = Mth.clamp((age - VANISH + .05) / DRIFT, 0, 1);
                     if (k <= 0 || k >= 1) continue;
                     double out2 = 1 - (1 - k) * (1 - k);
                     at = target.add(scatter(i).scale(9 * out2)).add(0, 6 * k * k, 0);
