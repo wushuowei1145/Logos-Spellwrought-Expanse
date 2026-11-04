@@ -6,7 +6,9 @@ import dev.logos.dimension.combat.MoveRunner;
 import dev.logos.dimension.combat.Moveset;
 import dev.logos.dimension.combat.Movesets;
 import dev.logos.dimension.dawnvow.DawnvowCharge;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,6 +24,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
+import net.neoforged.neoforge.event.entity.player.CriticalHitEvent;
+import net.neoforged.neoforge.event.entity.player.SweepAttackEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -31,12 +35,23 @@ import net.neoforged.neoforge.network.registration.NetworkRegistry;
 
 /**
  * 本附属的战斗武器（长剑、打刀，见 {@link CombatWeapon}）接入招式状态机（数据包 combat/movesets/*.json）：
- * 服务端决定出招、接触时刻和射线命中；切物品、死亡、离线都会取消待结算攻击。招式读不到时武器按原版物品处理。
+ * 服务端决定出招、接触时刻和命中；切物品、死亡、离线都会取消待结算攻击。招式读不到时武器按原版物品处理。
+ * <p>
+ * 命中判定是准星前方的锥形（{@link #cone}）：顶点在眼睛，默认张角 {@link #CONE} 度，长度是原版攻击距离
+ * （{@code entity_interaction_range}，被属性修饰时跟着变）。锥形里看得见的生物都挨一刀（原版攻击，护甲、附魔、
+ * 受击冷却照常）；准星正对着的那个暴击（经 NeoForge 的暴击事件，原版的 1.5 倍、粒子与音效）。这一刀不再另触发原版横扫。
+ * 本附属以后的近战武器都走这里。
  */
 @EventBusSubscriber(modid = LogosDimension.ID)
 public final class LongswordCombat {
     private static final Map<UUID, State> STATES = new HashMap<>();
     private static final ThreadLocal<Boolean> CONTACT = ThreadLocal.withInitial(() -> false);
+    /** 这一刀要暴击的目标（准星正对着的），由暴击事件读。 */
+    private static final ThreadLocal<Entity> CRIT = new ThreadLocal<>();
+    /** 命中锥形的默认张角（度）。 */
+    public static final double CONE = 60;
+    /** 一刀最多打几个目标。 */
+    private static final int MAX_TARGETS = 8;
     private static final class State implements MoveRunner.Actor {
         final ServerPlayer player;
         final ItemStack stack;
@@ -44,9 +59,11 @@ public final class LongswordCombat {
         final CombatWeapon weapon;
         final Object level;
         MoveRunner runner;
-        /** 上一次命中的目标与游戏刻，用来判断目标的受击冷却是不是这套连招自己造成的。 */
-        Entity lastTarget;
-        long lastHit;
+        /**
+         * 这套连招最近打中各目标的记录：目标自己记下的“最后被生物打中”的时刻（它的 tickCount）与当时的游戏刻。
+         * 下一刀前目标的最后一下若仍是这一刀留下的，受击冷却就是连招自己造成的。
+         */
+        final Map<UUID, long[]> lastHits = new HashMap<>();
         State(ServerPlayer player, CombatWeapon weapon) {
             this.player = player; this.stack = player.getMainHandItem(); this.weapon = weapon;
             this.slot = player.getInventory().getSelectedSlot(); this.level = player.level();
@@ -164,28 +181,95 @@ public final class LongswordCombat {
         else if (player.isUsingItem() && selected(player, state)) state.runner.input(Moveset.Input.USE_PRESS, now);
         if (DawnvowCharge.dawnvow(state.stack)) DawnvowCharge.tick(player, state.stack, state.runner.move().name());
     }
+    /** 这一刀命中锥形的张角（度）：默认 {@link #CONE}；曦誓剑身金光在时更宽。 */
+    public static double cone(ServerPlayer player) {
+        return DawnvowCharge.cone(player, CONE);
+    }
+
+    /**
+     * 这一刀打到谁：准星正对着的（原版射线，碰到方块为止）排第一个，其余是锥形里看得见的生物，近的在前。
+     * 锥形以眼睛为顶点、朝视线，生物身上离视线最近的那一点要在攻击距离内、与视线的夹角不超过张角的一半。
+     */
+    public static List<Entity> targets(ServerPlayer player, double degrees) {
+        var level = player.level();
+        var from = player.getEyePosition(); var look = player.getLookAngle();
+        double reach = player.entityInteractionRange();
+        var to = from.add(look.scale(reach));
+        var block = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+        var end = block.getLocation();
+        var hit = ProjectileUtil.getEntityHitResult(level, player, from, end,
+                player.getBoundingBox().expandTowards(end.subtract(from)).inflate(1), e -> !e.isSpectator() && e.isPickable(), 0);
+        List<Entity> out = new ArrayList<>();
+        Entity aimed = hit != null && player.hasLineOfSight(hit.getEntity()) ? hit.getEntity() : null;
+        if (aimed != null) out.add(aimed);
+        double cos = Math.cos(Math.toRadians(degrees / 2));
+        List<Entity> cone = level.getEntities(player, player.getBoundingBox().inflate(reach + 1), e -> {
+            if (e == aimed || !(e instanceof LivingEntity living) || !living.isAlive() || e.isSpectator() || !e.isPickable()) return false;
+            if (e.isPassengerOfSameVehicle(player) || e instanceof net.minecraft.world.entity.TamableAnimal pet && pet.isOwnedBy(player)) return false;
+            var near = nearest(e.getBoundingBox(), from, look, reach);
+            var d = near.subtract(from);
+            double dist = d.length();
+            if (dist > reach) return false;
+            if (dist > 1e-4 && d.dot(look) / dist < cos) return false;
+            return player.hasLineOfSight(e) || level.clip(new ClipContext(from, near, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player))
+                    .getType() == net.minecraft.world.phys.HitResult.Type.MISS;
+        });
+        cone.sort(java.util.Comparator.comparingDouble(e -> e.getBoundingBox().distanceToSqr(from)));
+        for (var e : cone) if (out.size() < MAX_TARGETS) out.add(e);
+        return out;
+    }
+
+    /** 盒子里离视线最近的一点：先取视线上离盒心最近的点（不超过攻击距离），再夹进盒子。 */
+    private static net.minecraft.world.phys.Vec3 nearest(net.minecraft.world.phys.AABB box, net.minecraft.world.phys.Vec3 from,
+                                                        net.minecraft.world.phys.Vec3 look, double reach) {
+        double t = Math.clamp(box.getCenter().subtract(from).dot(look), 0, reach);
+        var p = from.add(look.scale(t));
+        return new net.minecraft.world.phys.Vec3(Math.clamp(p.x, box.minX, box.maxX), Math.clamp(p.y, box.minY, box.maxY), Math.clamp(p.z, box.minZ, box.maxZ));
+    }
+
     private static void contact(ServerPlayer player, State state) {
-        var from = player.getEyePosition();
-        var to = from.add(player.getLookAngle().scale(player.entityInteractionRange()));
-        var block = player.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
-        to = block.getLocation();
-        var hit = ProjectileUtil.getEntityHitResult(player.level(), player, from, to,
-                player.getBoundingBox().expandTowards(to.subtract(from)).inflate(1), e -> !e.isSpectator() && e.isPickable(), 0);
-        boolean attacked = hit != null && player.hasLineOfSight(hit.getEntity());
-        if (attacked) {
-            var target = hit.getEntity(); long now = player.level().getGameTime();
-            // 取消点让连段间隔短于原版 10 刻受击冷却；只放过这套连招上一下自己造成的冷却，
-            // 冷却若被其他来源刷新过（剩余时间比预期长）就照原版规则处理。
-            if (target == state.lastTarget && target instanceof LivingEntity living && living.invulnerableTime > 0
-                    && living.invulnerableTime <= 20 - (now - state.lastHit)) living.invulnerableTime = 0;
-            CONTACT.set(true);
-            try { player.attack(target); } finally { CONTACT.remove(); }
-            if (target instanceof LivingEntity living && living.invulnerableTime >= 20) { state.lastTarget = target; state.lastHit = now; }
-            DawnvowCharge.hit(player, target);
-        } else {
+        var targets = targets(player, cone(player));
+        if (targets.isEmpty()) {
             player.resetAttackStrengthTicker();
             player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, .6f, 1);
+            return;
         }
+        long now = player.level().getGameTime();
+        state.lastHits.values().removeIf(hit -> now - hit[1] > 20);
+        // 原版打完一下就把攻击蓄力清零；每个目标都按出刀时的蓄力算，最后一下之后照常清零
+        var strength = (dev.logos.dimension.mixin.AttackStrengthAccess) player;
+        int ticker = strength.logos_dimension$attackStrengthTicker(), swap = strength.logos_dimension$itemSwapTicker();
+        boolean first = true;
+        for (var target : targets) {
+            if (!selected(player, state) || !player.isAlive()) break;
+            strength.logos_dimension$setAttackStrengthTicker(ticker);
+            strength.logos_dimension$setItemSwapTicker(swap);
+            // 取消点让连段间隔短于原版 10 刻受击冷却；只放过这套连招上一下自己造成的冷却：
+            // 目标最后一次被生物打中仍是这一刀留下的（同一个人、同一时刻）。之后若被别人打过就照原版规则处理。
+            // 不按游戏刻推算剩余冷却：目标所在区块没在 tick 时冷却不会递减，推算会误判成被别人刷新过。
+            long[] last = state.lastHits.get(target.getUUID());
+            if (last != null && target instanceof LivingEntity living && living.invulnerableTime > 0
+                    && living.getLastHurtByMob() == player && living.getLastHurtByMobTimestamp() == last[0]) living.invulnerableTime = 0;
+            CONTACT.set(true);
+            if (first) CRIT.set(target);
+            try { player.attack(target); } finally { CONTACT.remove(); CRIT.remove(); }
+            if (target instanceof LivingEntity living && living.invulnerableTime >= 20 && living.getLastHurtByMob() == player)
+                state.lastHits.put(target.getUUID(), new long[]{living.getLastHurtByMobTimestamp(), now});
+            DawnvowCharge.hit(player, target);
+            first = false;
+        }
+    }
+
+    /** 准星正对着的目标暴击：原版暴击的 1.5 倍、粒子与音效。 */
+    @SubscribeEvent static void critical(CriticalHitEvent event) {
+        if (CRIT.get() == null || event.getTarget() != CRIT.get()) return;
+        event.setCriticalHit(true);
+        event.setDamageMultiplier(Math.max(event.getDamageMultiplier(), 1.5f));
+    }
+
+    /** 锥形判定已经打到了附近的生物，这一刀不再另触发原版横扫。 */
+    @SubscribeEvent static void sweep(SweepAttackEvent event) {
+        if (CONTACT.get() && CombatWeapon.of(event.getEntity().getMainHandItem()) != null) event.setSweeping(false);
     }
     @SubscribeEvent static void tracking(PlayerEvent.StartTracking event) {
         if (event.getEntity() instanceof ServerPlayer viewer && event.getTarget() instanceof ServerPlayer target
