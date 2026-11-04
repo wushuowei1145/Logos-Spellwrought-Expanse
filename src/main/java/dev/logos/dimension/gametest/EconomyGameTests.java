@@ -186,9 +186,9 @@ public final class EconomyGameTests {
             h.assertTrue(account.positions().isEmpty(), "两笔都应被自动平掉");
             var keys = account.notices().stream().map(FxMarket.News::key).toList();
             h.assertTrue(keys.contains("bank.notice.liquidate") && keys.contains("bank.notice.stop"), "应有强平和止损通知：" + keys);
-            // 狼币爆仓最多亏光保证金；猫币止损亏一些
+            // 狼币一下跌 10%，25 倍穿仓，超出保证金的部分记成欠款；猫币止损亏一些
             long balance = account.balance(Currency.IMPERIAL);
-            h.assertTrue(balance >= 100_000 && balance < 160_000, "结算后余额不对：" + balance);
+            h.assertTrue(balance > 0 && balance < 100_000, "穿仓亏损应扣进余额：" + balance);
             h.succeed();
         } finally { p.discard(); }
     }
@@ -271,6 +271,13 @@ public final class EconomyGameTests {
             h.assertTrue(Bank.increase(p, id, 20_000, 5) && account.positions().getFirst().margin() == 70_000, "加仓");
             h.assertTrue(Bank.open(p, Currency.FOX, -1, 10_000, 3, 0, 0) && account.positions().size() == 2, "再开一笔");
             h.assertTrue(Bank.closeAll(p) && account.positions().isEmpty(), "一键全平");
+            // 玩家报告的情形：创造模式拿了大量的钱，25 倍做空 5 万金冠狐钱，冲击把狐钱砸到接近零
+            Purse.receive(p, Currency.IMPERIAL, 600_000_000L);
+            Bank.deposit(p, Currency.IMPERIAL, 0);
+            double fox = market.rate(Currency.FOX);
+            h.assertTrue(!Bank.open(p, Currency.FOX, -1, 500_000_000L, 25, 0, 0) && account.positions().isEmpty(), "超出市场深度的单子要拒绝");
+            h.assertTrue(!Bank.placeOpen(p, Currency.FOX, -1, 500_000_000L, 25, fox, 0, 0, 0) && account.orders().isEmpty(), "挂单也拒绝");
+            h.assertTrue(Math.abs(market.rate(Currency.FOX) / fox - 1) < 1e-9, "被拒的单子不推动价格");
             h.succeed();
         } finally { p.discard(); }
     }

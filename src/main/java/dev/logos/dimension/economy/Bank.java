@@ -53,6 +53,13 @@ public final class Bank extends SavedData {
             var owner = entry.getKey();
             var account = entry.getValue();
             for (var p0 : List.copyOf(account.positions)) {
+                // 冲击修正之前开出的超大仓位（数量远超市场深度）作废，退回保证金，不让它按新算法结出天文数字
+                if (Margin.impact(p0.currency(), p0.units()) > 3 * FxMarket.MAX_IMPACT) {
+                    account.positions.remove(p0);
+                    account.add(Currency.IMPERIAL, p0.margin());
+                    notify(server, bank, owner, account, clock, "voided", List.of(p0.currency().key(), side(p0.side())), ChatFormatting.GRAY);
+                    continue;
+                }
                 double rate = market.rate(p0.currency());
                 var p = Margin.trailed(p0, rate);
                 if (p != p0) { account.replace(p0, p); bank.setDirty(); }
@@ -245,6 +252,7 @@ public final class Bank extends SavedData {
         if (!Currency.TRADED.contains(c) || (side != 1 && side != -1) || margin <= 0) return false;
         if (leverage < 1 || leverage > Margin.PLAYER_MAX) { say(player, "leverage", Margin.PLAYER_MAX); return false; }
         if (!account.canPost(margin)) { say(player, "credit"); return false; }
+        if (Margin.tooDeep(c, (double) margin * leverage, price)) { say(player, "too_deep"); return false; }
         if (!Margin.validStops(side, price, stop, take, trail)) { say(player, "bad_stop"); return false; }
         return true;
     }
@@ -310,8 +318,10 @@ public final class Bank extends SavedData {
         var p = account.find(id);
         if (p == null) return false;
         if (!account.canPost(margin)) { say(player, "credit"); return false; }
+        var market = FxMarketData.market(server);
+        if (Margin.tooDeep(p.currency(), (double) margin * leverage, market.rate(p.currency()))) { say(player, "too_deep"); return false; }
         account.add(Currency.IMPERIAL, -margin);
-        account.replace(p, Margin.increase(FxMarketData.market(server), p, margin, leverage, true));
+        account.replace(p, Margin.increase(market, p, margin, leverage, true));
         bank.setDirty();
         FxMarketData.touch(server);
         player.playSound(SoundEvents.CHAIN_PLACE, .7f, 1.1f);
@@ -358,6 +368,8 @@ public final class Bank extends SavedData {
         var account = bank.account(player.getUUID());
         if (account.orders.size() >= Orders.MAX_ORDERS) { say(player, "too_many_orders", Orders.MAX_ORDERS); return false; }
         var pay = side > 0 ? Currency.IMPERIAL : c;
+        var get = side > 0 ? c : Currency.IMPERIAL;
+        if (FxMarket.tooLarge(pay, get, amount, pay == c ? price : 1, get == c ? price : 1)) { say(player, "too_deep"); return false; }
         if (!Purse.spend(player, pay, amount)) { say(player, "not_enough", Component.translatable(pay.key())); return false; }
         account.orders.add(new Orders.Pending(bank.nextId++, side > 0 ? Orders.BUY : Orders.SELL, c, side, amount, 1, price, 0, 0, 0, Economy.clock(player.level().getServer())));
         bank.setDirty();

@@ -325,7 +325,9 @@ public final class BankScreen extends Screen {
         price.visible = limit;
         openButton.setMessage(Component.translatable(limit ? "screen.logos_dimension.bank.place" : "screen.logos_dimension.bank.open"));
         int l = lev();
-        boolean ready = typed(margin, Currency.IMPERIAL) > 0 && l >= 1 && l <= playerMax();
+        long m = typed(margin, Currency.IMPERIAL);
+        double at = limit && price(price, shown) > 0 ? price(price, shown) : EconomyClient.rate(shown);
+        boolean ready = m > 0 && l >= 1 && l <= playerMax() && !Margin.tooDeep(shown, (double) m * l, at);
         openButton.active = ready && (limit ? price(price, shown) > 0 : open);
     }
 
@@ -362,6 +364,7 @@ public final class BankScreen extends Screen {
             g.text(font, Component.translatable("screen.logos_dimension.bank.overnight", Bank.crownsText(night)), rx, py + 27, night >= 0 ? CandleChart.UP : CandleChart.DOWN);
             var b = bank();
             if (l > playerMax()) g.text(font, Component.translatable("message.logos_dimension.bank.leverage", playerMax()), rx, py + 36, RED);
+            else if (Margin.tooDeep(shown, notional, at)) g.text(font, Component.translatable("message.logos_dimension.bank.too_deep"), rx, py + 36, RED);
             else if (b != null && b.balance(Currency.IMPERIAL) - m < -b.credit()) g.text(font, Component.translatable("message.logos_dimension.bank.credit"), rx, py + 36, RED);
             else if (b != null && b.balance(Currency.IMPERIAL) < m) g.text(font, Component.translatable("screen.logos_dimension.bank.will_borrow"), rx, py + 36, 0xFFE0A060);
             else if (limit) g.text(font, Component.translatable("screen.logos_dimension.bank.limit_note"), rx, py + 36, DIM);

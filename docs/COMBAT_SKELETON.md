@@ -56,7 +56,7 @@ NPC 模型**不需要**添加这两根骨骼：运行时自己算出它们的位
 
 | 路径（`assets/logos_dimension/combat/` 下） | 内容 |
 |---|---|
-| `skeletons/player_tp.json`、`player_fp.json` | 玩家参考骨架：`bones`（名称、父级、枢轴，Blockbench 空间）、`weapon_scale`（该视角的武器缩放）、`skin`（按原版皮肤取 UV 的手臂分段：上臂、前臂、手；手是一整块，截面与前臂相同，和原版手臂一样没有手指和手腕）。第一人称的手臂枢轴与第三人称不同，所以分两份。 |
+| `skeletons/player_tp.json`、`player_fp.json` | 玩家参考骨架：`bones`（名称、父级、枢轴，Blockbench 空间）、`weapon_scale`（该视角的武器缩放）、`skin`（按原版皮肤取 UV 的手臂分段：上臂、前臂、手；手是一整块，截面与前臂相同，和原版手臂一样没有手指和手腕）。细臂皮肤（Alex 一类）按 3 像素宽的排布取 UV，分段在宽度方向按中心收窄到 3/4；按宽臂取会采到空白列，原版加载皮肤时把这些空白变成黑色。第一人称的手臂枢轴与第三人称不同，所以分两份。 |
 | `weapons/<武器>.json` | 武器网格：`texture`、`texture_size`、`cubes`（`part` 为 `weapon` 或 `sheath`），可选 `scale`（乘在骨架的 `weapon_scale` 上，默认 1；打刀为 1.25，第三人称正好 1 倍）。坐标相对握柄原点、按原始美术尺寸（缩放 1），长剑的网格等于物品模型像素坐标减去 (8, 1, 8)。 |
 | `animations/<类别>_<视角>.animation.json` | Bedrock 动作。 |
 
