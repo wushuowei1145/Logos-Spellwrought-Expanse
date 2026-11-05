@@ -26,12 +26,12 @@ import net.minecraft.world.phys.Vec3;
 /**
  * 神狐和弓的实际按键试玩：取弓、举弓中松手（不放箭、弓放回）、第三人称完整射法（打起し、引分け、会、離れ与残心）、
  * 满弓命中远处的木桩（伤害明显高于原版弓）、第一人称拉弓、左手惯用时的射法，最后让骷髅拿着它当原版弓射箭。
- * 会时核对画出来的箭在世界里指着视线（含拉满后转动视线、左手惯用），并从正上方截图。
+ * 会时核对画出来的箭在世界里指着视线（含拉满后转动视线、左手惯用），并从正上方和胸前一侧截图。
  */
 @LDLRegisterClient(name="yumi", group="yumi", registry=UIScenario.REGISTRY, environment=RegistrationEnvironment.DEV_ONLY)
 public class YumiView implements UIScenario {
     private boolean previousHideGui;
-    private int target, skeleton, arrows, overhead;
+    private int target, skeleton, arrows, overhead, side;
     private float health;
     private boolean phase(String... moves) {
         var p = LongswordClient.pose(Minecraft.getInstance().player.getUUID());
@@ -58,11 +58,11 @@ public class YumiView implements UIScenario {
         var p = Minecraft.getInstance().player;
         p.setYRot(yaw); p.yRotO = yaw; p.setYHeadRot(yaw); p.yHeadRotO = yaw;
     }
-    /** 从玩家正上方往下看（镜头上方是 +Z，即朝向 0 的正前方）；玩家本身照常画出。 */
-    private ScenarioBuilder overhead(ScenarioBuilder s, String shot) {
-        return s.step("俯视", ctx -> {
-                    var mc = Minecraft.getInstance(); var stand = mc.level.getEntity(overhead);  // 玩家一直站在 (0.5, 100, 0.5)
-                    mc.setCameraEntity(stand);
+    /** 换到一个固定的盔甲架镜头截图（玩家一直站在 (0.5, 100, 0.5)，本身照常画出）。 */
+    private ScenarioBuilder view(ScenarioBuilder s, java.util.function.IntSupplier stand, String shot) {
+        return s.step("换镜头", ctx -> {
+                    var mc = Minecraft.getInstance();
+                    mc.setCameraEntity(mc.level.getEntity(stand.getAsInt()));
                 }).ticks(3).screenshot(shot)
                 .step("回到玩家镜头", ctx -> Minecraft.getInstance().setCameraEntity(Minecraft.getInstance().player));
     }
@@ -94,12 +94,17 @@ public class YumiView implements UIScenario {
                     ctx.player().getInventory().clearContent(); ctx.player().getInventory().setSelectedSlot(0);
                     ctx.player().setItemInHand(InteractionHand.MAIN_HAND,new ItemStack(YumiItem.BAMBOO.get()));
                     ctx.player().getInventory().setItem(8,new ItemStack(Items.ARROW,16));
-                    // 俯视用的镜头：隐形、不动的盔甲架，朝正下方看。
+                    // 截图用的镜头：隐形、不动的盔甲架。一个在正上方朝下看（画面上方是 +Z，即朝向 0 的正前方）；
+                    // 一个在 -X 一侧朝 +X 看：朝向 0 拉弓时身体朝 -X，正对胸前，靶在画面右边。
                     var stand = new ArmorStand(EntityType.ARMOR_STAND, level);
                     stand.setInvisible(true); stand.setNoGravity(true); stand.setPos(.5,103,.5); stand.setXRot(90); stand.setYRot(0);
                     level.addFreshEntity(stand); overhead = stand.getId();
+                    var chest = new ArmorStand(EntityType.ARMOR_STAND, level);
+                    chest.setInvisible(true); chest.setNoGravity(true); chest.setPos(-3.5,100,1.5); chest.setYRot(-90); chest.setYHeadRot(-90);
+                    level.addFreshEntity(chest); side = chest.getId();
                 }).setGameMode(GameType.SURVIVAL)
-                .waitUntil("俯视镜头就位", ctx -> Minecraft.getInstance().level.getEntity(overhead) != null)
+                .waitUntil("截图镜头就位", ctx -> Minecraft.getInstance().level.getEntity(overhead) != null
+                        && Minecraft.getInstance().level.getEntity(side) != null)
                 .waitUntil("取弓", ctx -> phase("ready","idle")).waitUntil("执弓", ctx -> phase("idle")).ticks(4).screenshot("idle_third_person")
                 .server("记录箭数", ctx -> arrows = ammo(ctx.player()))
                 // 举弓中松手：不放箭，弓倒放回执弓。
@@ -117,7 +122,8 @@ public class YumiView implements UIScenario {
                 .step("斜上方看足踏み", ctx -> { var p = Minecraft.getInstance().player; p.setXRot(55); p.xRotO = 55; }).ticks(2).screenshot("kai_above")
                 .step("抬头回到平视", ctx -> { var p = Minecraft.getInstance().player; p.setXRot(0); p.xRotO = 0; })
                 .check("会：箭指着视线", ctx -> aim() > 0.97);
-        overhead(s, "kai_top")
+        view(s, () -> overhead, "kai_top");
+        view(s, () -> side, "kai_side")
                 // 拉满后转动视线：原版身体会落后视线，箭仍要跟着视线。
                 .step("会中向左转 70°", ctx -> face(70)).ticks(4)
                 .check("转动视线后箭仍指着视线", ctx -> aim() > 0.97)
@@ -145,7 +151,7 @@ public class YumiView implements UIScenario {
                 .step("背后看", ctx -> camera(CameraType.THIRD_PERSON_BACK))
                 .step("左手惯用拉弓", ctx -> press()).waitUntil("会", ctx -> phase("kai")).ticks(6)
                 .check("左手惯用：箭指着视线", ctx -> aim() > 0.97);
-        overhead(s, "kai_top_left_handed")
+        view(s, () -> overhead, "kai_top_left_handed")
                 .step("放箭", ctx -> release()).waitUntil("回到执弓", ctx -> phase("idle"))
                 .step("改回右手惯用", ctx -> hand(HumanoidArm.RIGHT))
                 .waitUntil("右手惯用生效", ctx -> Minecraft.getInstance().player.getMainArm() == HumanoidArm.RIGHT)
@@ -168,7 +174,7 @@ public class YumiView implements UIScenario {
                         .noneMatch(a -> a.getData(NatureAttachments.YUMI_ARROW)))
                 .server("移除骷髅", ctx -> {
                     var e = ctx.server().overworld().getEntity(skeleton); if (e != null) e.discard();
-                    var stand = ctx.server().overworld().getEntity(overhead); if (stand != null) stand.discard();
+                    for (int id : new int[]{overhead, side}) { var stand = ctx.server().overworld().getEntity(id); if (stand != null) stand.discard(); }
                     ctx.server().overworld().getEntitiesOfClass(AbstractArrow.class, new AABB(-10,95,-10,10,110,22)).forEach(Entity::discard);
                 })
                 .runCommand("time set day")

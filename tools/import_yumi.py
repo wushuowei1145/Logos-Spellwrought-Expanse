@@ -23,8 +23,8 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 ASSETS = ROOT / 'src/main/resources/assets/logos_dimension'
-# 骨架的武器缩放乘上它：第三人称 0.8 × 1.25 = 1，弓高 32 像素，与玩家等高。
-SCALE = 1.25
+# 骨架的武器缩放乘上它：第三人称 0.8 × 1.625 = 1.3，弓高 41.6 像素，约玩家身高的 1.3 倍（真实的和弓约 2.2 米）。
+SCALE = 1.625
 # 弦上的搭箭点（交付的 attachment_points.json 的 nock_rest），箭筈在这里。
 NOCK = [0.0, 0.85, 3.08965625]
 
