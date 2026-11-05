@@ -18,5 +18,9 @@ public final class NatureAttachments {
             () -> AttachmentType.builder(() -> SproutMark.EMPTY)
                     .serialize(SproutMark.CODEC, mark -> mark.expiresAt() > 0)
                     .sync(SproutMark.STREAM_CODEC).build());
+    /** 和弓射出的箭（YumiItem）：客户端画成和弓的矢；存档时保留，插在地上的箭重进世界后仍是矢。 */
+    public static final Supplier<AttachmentType<Boolean>> YUMI_ARROW = TYPES.register("yumi_arrow",
+            () -> AttachmentType.builder(() -> false).serialize(com.mojang.serialization.Codec.BOOL.fieldOf("marked"), marked -> marked)
+                    .sync(ByteBufCodecs.BOOL).build());
     private NatureAttachments() {}
 }

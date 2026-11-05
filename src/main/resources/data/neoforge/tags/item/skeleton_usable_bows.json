@@ -1,6 +1,10 @@
 {
   "replace": false,
   "values": [
-    "logos_dimension:natures_force"
+    "logos_dimension:natures_force",
+    "logos_dimension:fox_yumi_bamboo",
+    "logos_dimension:fox_yumi_vermilion",
+    "logos_dimension:fox_yumi_indigo",
+    "logos_dimension:fox_yumi_chestnut"
   ]
 }
