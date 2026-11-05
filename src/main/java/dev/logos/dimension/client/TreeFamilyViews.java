@@ -57,7 +57,7 @@ public abstract class TreeFamilyViews implements UIScenario {
                 for(var item:level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,new net.minecraft.world.phys.AABB(-24,Y-1,-23,24,Y+14,20)))item.discard();
                 DimensionTravel.teleport(ctx.player(),level,camera,180,pitch);ctx.player().getAbilities().flying=true;ctx.player().onUpdateAbilities();
             }).waitUntil("tree chunks arrive",ctx->{var mc=Minecraft.getInstance();return mc.level!=null&&mc.level.dimension().equals(LogosDimension.CLOUDSEA)&&mc.level.hasChunk(0,0);}).ticks(100)
-            .checkServer("all named trunks registered",ctx->CloudseaBlocks.TRUNKS.size()==32)
+            .checkServer("all named trunks registered",ctx->CloudseaBlocks.TRUNKS.size()==CloudseaBiome.values().length)
             .check("tree materials received",ctx->!Minecraft.getInstance().level.getBlockState(new BlockPos(0,Y,0)).isAir())
             .check("camera clear",ctx->{var mc=Minecraft.getInstance();var pos=BlockPos.containing(mc.player.getEyePosition());return mc.level.getBlockState(pos).getCollisionShape(mc.level,pos).isEmpty();})
             .screenshot(shot())

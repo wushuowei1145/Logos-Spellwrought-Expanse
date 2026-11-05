@@ -24,7 +24,7 @@ public final class CloudseaGameTests {
         var level=level(h);h.assertTrue(NativeWorlds.vanilla(level),"Journey does not use minecraft:noise");
         var biomes=level.registryAccess().lookupOrThrow(Registries.BIOME);
         for(var b:CloudseaBiome.values())biomes.getOrThrow(ResourceKey.create(Registries.BIOME,LogosDimension.id(b.id())));
-        h.assertTrue(CloudseaBiome.values().length==32,"New forest and glade biomes missing");
+        h.assertTrue(CloudseaBiome.values().length==33,"New forest and glade biomes missing");
         h.assertTrue(!BuiltInRegistries.ITEM.containsKey(LogosDimension.id("cloudsea_portal")),"Unrequested entrance item added");h.succeed();
     }
     private static void terrain(GameTestHelper h){
@@ -36,8 +36,27 @@ public final class CloudseaGameTests {
         }
         h.assertTrue(air>30,"Native caves missing");h.succeed();
     }
+    /**
+     * 找一块四周都是目标群系的样地。locateBiome 搜不到内部点时会退回边界点，样方就可能跨进相邻群系；
+     * 相邻群系的树冠还会伸过边界，所以 reach 要比样方再大一圈。找不到就让测试失败，不退回边界点。
+     */
+    private static BlockPos interior(ServerLevel level,CloudseaBiome biome,int reach){
+        var target=ResourceKey.create(Registries.BIOME,LogosDimension.id(biome.id()));
+        var generator=level.getChunkSource().getGenerator();var source=generator.getBiomeSource();var random=level.getChunkSource().randomState();
+        for(int ring=0;ring*32<=14000;ring++)for(int dx=-ring;dx<=ring;dx++)for(int dz=-ring;dz<=ring;dz+=Math.abs(dx)==ring||ring==0?1:2*ring){
+            int x=dx*32,z=dz*32;
+            if(!source.getNoiseBiome(x>>2,24,z>>2,random.sampler()).is(target))continue;
+            boolean inside=true;
+            for(int ox=-reach;inside&&ox<=reach;ox+=8)for(int oz=-reach;inside&&oz<=reach;oz+=8){
+                int y=generator.getBaseHeight(x+ox,z+oz,net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG,level,random);
+                inside=source.getNoiseBiome((x+ox)>>2,y>>2,(z+oz)>>2,random.sampler()).is(target);
+            }
+            if(inside)return new BlockPos(x,96,z);
+        }
+        throw new IllegalStateException("No interior found for biome: "+biome.id());
+    }
     private static void forest(GameTestHelper h){
-        var level=level(h);var at=NativeWorlds.locateBiome(level,CloudseaBiome.ANCIENT_BEECH.id());int logs=0,leaves=0,covered=0,eligible=0,water=0,luminous=0;var seen=new java.util.HashMap<String,Integer>();
+        var level=level(h);var at=interior(level,CloudseaBiome.ANCIENT_BEECH,32);int logs=0,leaves=0,covered=0,eligible=0,water=0,luminous=0;var seen=new java.util.HashMap<String,Integer>();
         for(int x=at.getX()-16;x<at.getX()+16;x++)for(int z=at.getZ()-16;z<at.getZ()+16;z++){
             boolean plant=false;
             int gy=level.getChunkSource().getGenerator().getBaseHeight(x,z,net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG,level,level.getChunkSource().randomState());
@@ -77,7 +96,7 @@ public final class CloudseaGameTests {
     }
     private static void logFamilies(GameTestHelper h){
         var level=h.getLevel();var leaves=new java.util.ArrayList<BlockPos>();int i=0;
-        h.assertTrue(CloudseaBlocks.TRUNKS.size()==32,"Missing named log families");
+        h.assertTrue(CloudseaBlocks.TRUNKS.size()==CloudseaBiome.values().length,"Missing named log families");
         for(var b:CloudseaBiome.values()){
             var trunk=CloudseaBlocks.TRUNKS.get(b).get();var state=trunk.defaultBlockState();
             h.assertTrue(trunk instanceof net.minecraft.world.level.block.RotatedPillarBlock&&state.is(net.minecraft.tags.BlockTags.LOGS),"Log lacks native pillar or leaves support: "+b);
