@@ -16,6 +16,16 @@
 ./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:gate_*"
 ./gradlew runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=gate_views" -PldTestHeadless -PldTestWindow=1280x720
 ```
+## 抽签：一天一抽改按维度时钟
+
+2026-11-05：分支 `fix/omikuji-day`，基于 main `7b84a14`。原来用游戏总刻数除 24000 算天：睡觉和 `/time set` 只拨维度时钟、不动总刻数，所以睡醒还是抽不到，睡过之后换天的时刻也和日出错开。现在按玩家所在维度的时钟算，刻数 0 是日出，日出换天；下界这类没有时钟的维度跟主世界。每个时钟分开记（附件 `omikuji_days`，旧的 `omikuji_day` 不再读取，老玩家最多多抽一次），来回换维度不能多抽。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | `FoxShrineGoodsTest` 通过（未跑全部单元测试） |
+| 世界测试 | `logos_dimension:omikuji_*` **3/3**：同一天点不出第二支、日出前最后一刻仍是同一天、日出后能再抽；晚上抽过，睡醒时间点之后能再抽且总刻数没动；主世界与远行大陆各抽一次后来回传送都不能再抽。三项在旧代码上都失败 |
+| 实际客户端 | `omikuji_clockless`、`fox_interior_views` **2/2 场景、4/4 检查**：下界没有时钟，主世界过一天后下界也换天；实际点签箱第二次不再给签，系签解霉运不变 |
+| 未测 | 真实睡进床里（测试直接把时钟拨到原版睡醒用的时间点）、联机多玩家、完整的世界测试与单元测试 |
 
 ## 石中剑：去掉一人一把的限制
 
