@@ -142,6 +142,21 @@ class YumiTest {
             assertTrue(elbow(clips.get("uchiokoshi"), 0.3f) > 15, view);
         }
     }
+    @Test void theDrawForearmFollowsTheArrowAtFullDraw() throws Exception {
+        // 第三人称会：右上臂向后伸，右前臂折回来差不多与箭同线（靶在躯干的 -X 一侧），手肘不再高抬到头顶。
+        var kai = clips("tp").get("kai");
+        var r = new Vector3f(); var f = new Vector3f();
+        kai.sample("RightArm", CombatClip.Channel.ROTATION, 0f, r);
+        kai.sample("RightForeArm", CombatClip.Channel.ROTATION, 0f, f);
+        float radians = (float) Math.PI / 180;
+        var upper = new Matrix3f().rotateZ(r.z * radians).rotateY(r.y * radians).rotateX(r.x * radians);
+        var fore = new Matrix3f(upper).rotateZ(f.z * radians).rotateY(f.y * radians).rotateX(f.x * radians);
+        var upperDown = upper.transform(new Vector3f(0, -1, 0));
+        var foreDown = fore.transform(new Vector3f(0, -1, 0));
+        assertTrue(foreDown.x < -Math.cos(Math.toRadians(25)), "前臂朝靶 " + foreDown);
+        assertTrue(upperDown.x > 0.6, "上臂朝身后 " + upperDown);
+        assertTrue(Math.abs(upperDown.y) < 0.4, "手肘与肩差不多高 " + upperDown);
+    }
     /** 左肘弯了多少度：前臂的旋转把沿前臂向下的方向转开的角度（前臂自转不算）。 */
     private static double elbow(CombatClip clip, float t) {
         var r = new Vector3f();

@@ -21,6 +21,7 @@
 | `walk`、`jump`、`attacked`、`ladder_*`、`swim_stand`、`swing_hand` | 借用森林精灵文件里已换算好的车万女仆动画（[CREDITS.md](../CREDITS.md) 登记），骨架相同 |
 | `hold_mainhand:bow`、`use_mainhand:bow`、`greet`、`refuse` | 借用森林精灵自绘的持弓、拉弓、行礼、拒绝 |
 | `katana_draw` … `katana_sheathe` | 神狐打刀的十个动作（拔刀、待机、四段斩、格挡、弹刀、突刺、收刀），与玩家共用同一份编排，由 `tools/uchigatana_moves.py` 烘焙到神狐骨架（刀按 1.6 倍），写在模型目录 `Animation/katana/` |
+| `yumi_ready` … `yumi_hanare` | 和弓的射法（取弓、执弓、打起し、引分け、会、离れ），与玩家共用同一份编排，由 `tools/yumi_moves.py` 烘焙到神狐骨架（见 [YUMI.md](YUMI.md) 第 6.1 节） |
 | `pre_parallel3` | 佩刀：刀与鞘停在左腰（收刀动作的最后一帧）。打刀动作播放时由它接管 |
 | `death` | 维护者选定的「侧倒后面朝地面、尾巴先僵直后松垂」版本，1.55 秒，停在末帧。按全部零件生成，每套衣装的裙片、垂袖与飘带倒地时都不穿进地面；导入时去掉线性插值就能还原的中间帧（误差 < 0.001） |
 | `pre_parallel0` | 眨眼：每种眼睛零件自己的骨骼。眼球与瞳孔向下眼缘上方 0.4 处收拢，主要是上眼皮往下合；睫毛不缩放，上睫毛随上眼皮下移、下睫毛随下眼皮上移；睁开后高光左右抖一下。5.3 秒循环里一次单眨、一次连眨 |
@@ -59,7 +60,7 @@
 ## 5. 装备与防御
 
 - **打刀**：每只神狐都有一把，刀装随机（墨漆、朱绳、靛青、拭漆四套，即 `UchigatanaItem` 四件物品）。刀与鞘是模型里的 `Weapon` / `Sheath` 骨骼，由打刀动作驱动，手里的刀不再按物品画一遍。平时收起不显示；战斗、受伤与之后五秒的警戒期才连刀带鞘出现在左腰。穿神乐礼装（`outfit_kagura`）的神狐总是佩着刀。
-- **弓**：约四分之一的神狐还背着一张原版弓（无限箭），平时看不见，用的时候拿出来，刀回到腰间。
+- **弓**：约四分之一的神狐还背着一把随机配色的和弓（无限箭，见 [YUMI.md](YUMI.md) 第 6.1 节），平时看不见，用的时候拿出来，刀回到腰间。
 - **铁甲**：一整套，模型不画盔甲所以看不见，死亡不掉落。生命值 20。
 - **魔法减免**：同女巫，对原版魔法与间接魔法伤害减免 40%（`getDamageAfterMagicAbsorb`）。Logos 的奥秘伤害走的就是间接魔法；寒霜、雷霆、虚空也是，所以同样减免。
 - **格挡**：弹射物 80%、近战 50% 的几率用刀格开，不掉血（绕过无敌的伤害、魔法、火焰、爆炸不能格挡）。格开弹射物时架刀；格开近战时弹刀，紧接一记突刺反击。
@@ -68,7 +69,7 @@
 
 - **目标**：附近 20 格内的敌对怪物；不惹中立生物（末影人、僵尸猪灵等），不挑战 Boss 与监守者，不打森林精灵、同伴和玩家的 Logos 使魔。对玩家中立：玩家打了神狐，这只和附近的神狐一起反击。僵尸和灾厄村民也像打村民一样打神狐（`ElfFactions`）。
 - **打刀**（`FoxKatanaGoal`）：决定攻击后先拔刀；目标在 3.5–10 格、看得见时一个箭步冲过去（水平速度按距离给，最快约 0.7 格/刻），够得着就连砍。出招、连段、接触时刻全由与玩家共用的招式状态机（`MoveRunner` + `combat/movesets/uchigatana.json`）决定，客户端的 `combat` 控制器播放对应的 `katana_*` 动作。每刀砍身前 75° 扇形 3 格内的目标与敌人。战斗结束、警戒期过后播收刀动作。
-- **弓**（`FoxBowGoal`）：背弓的神狐在目标是苦力怕、走路到不了（在天上、隔着水或悬崖）或远于 16 格时换弓，保持 6–12 格拉满再放；目标重新走得到又不远时收弓拔刀。没有弓的神狐不去追苦力怕。苦力怕像躲猫一样躲神狐（6 格内逃开）。
+- **弓**（`FoxBowGoal`）：背弓的神狐在目标是苦力怕、走路到不了（在天上、隔着水或悬崖）或远于 16 格时换弓，保持 6–12 格，按弓道的射法拉满再放；目标重新走得到又不远时收弓拔刀。没有弓的神狐不去追苦力怕。苦力怕像躲猫一样躲神狐（6 格内逃开）。
 - **狐火缠绕**（`FoxFireWrapGoal`）：遇上生命值超过 50 的敌人时，在安全的间隙（离目标 4 格以上、一秒内没挨打）停一下，用自己的魔力（200 点，每秒恢复 2 点）放 Logos 术式「狐火缠绕」（100 魔力，`LogosMagicBridge.FOX_FIRE_WRAP`）：60 秒内命中附加 3 点奥秘伤害并点燃 1 秒，挥刀（生物的挥砍以命中计）放出 120° 的横扫游脉，再加 5 点奥秘伤害。缠绕结束时这一仗还没打完，就在下一个安全间隙再缠一次。用弓时一样，命中的箭也带着狐火。
   - 外观：不用 Logos 按奥秘元素画的缠绕，改成 Logos 的物品表面火焰（`/alchemy aura fire`）把色相转半圈，成为幽蓝的鬼火，画在拔出的刀身和手里的弓上（`DivineFoxRenderer`）。横扫游脉的特效还没做，暂时是 Logos 默认的样子，以后回来换。
 - **逃跑**（`FoxFleeGoal`）：生命不超过三成时背离打伤自己的敌人跑开，直到回到六成、拉开 20 格或跑满 10 秒；逃跑时不出刀不放箭，仍会格挡。脱离战斗五秒后每两秒回一点生命。
@@ -110,5 +111,5 @@ python tools/divine_fox_assets.py [--source <fox_model/divine_fox 目录>] [--vo
 战斗与聚落居民（`FoxCombatViews`、`FoxResidentsView`）：佩刀与收刀、拔刀与连招、刀身与弓上的狐火（`npc_divine_fox_katana`）；真实 AI 对 80 血的尸壳（`npc_divine_fox_fight`）；格挡几率、魔法减免、逃跑（`npc_divine_fox_defense`）；背弓射苦力怕（`npc_divine_fox_bow`）；聚落居民数与补回（`fox_sanctuary_residents`，要生成聚落，耗时几分钟）：
 
 ```text
-./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=npc_divine_fox_katana,npc_divine_fox_fight,npc_divine_fox_defense,npc_divine_fox_bow" -PldTestHeadless -PldTestWindow=1280x720
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=npc_divine_fox_katana,npc_divine_fox_fight,npc_divine_fox_defense,npc_divine_fox_bow,npc_divine_fox_yumi" -PldTestHeadless -PldTestWindow=1280x720
 ```

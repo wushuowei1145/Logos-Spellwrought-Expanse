@@ -11,11 +11,17 @@
 - `Animation/ambient/divine_fox_ambient.animation.json`：常驻叠加层 `pre_parallel0` 眨眼、`pre_parallel1` 耳朵抖动、
   `pre_parallel2` 尾巴轻摆（create_ambient_loops.py）；
 - `Animation/katana/divine_fox_katana.animation.json`：打刀动作在神狐骨架上的烘焙（本模组 tools/uchigatana_moves.py 写出），
-  动画名加 `katana_` 前缀并入，例如 `katana_slash_1`。
+  动画名加 `katana_` 前缀并入，例如 `katana_slash_1`；
+- `Animation/yumi/divine_fox_yumi.animation.json`：和弓的射法在神狐骨架上的烘焙（本模组 tools/yumi_moves.py 写出），
+  动画名加 `yumi_` 前缀并入，例如 `yumi_kai`。
 
 打刀：四套刀装的网格（`combat/weapons/fox_uchigatana_*.json`）按神狐的 1.6 倍挂到新加的 `Weapon` / `Sheath` 骨骼上
 （父骨骼 `UpBody`、枢轴在原点，与烘焙用的骨架一致），每套刀装一组刀身 `katana_<配色>_blade`、一组刀鞘 `katana_<配色>_saya`，
 贴图并到总贴图底部。平时由常驻叠加层 `pre_parallel3`（佩刀）把刀与鞘停在左腰的佩刀位置，打刀动作播放时由它接管。
+
+和弓：弓的骨骼按神狐的 2.3 倍挂到新加的 `Yumi` 骨骼下（父骨骼 `UpBody`、枢轴在原点；动作文件里的 `Weapon` 轨道改名成 `Yumi`，
+所以拉弓时腰间的刀不动）。四套配色共用弓的骨骼，方块放在每根骨骼下的 `yumi_<配色>_<骨骼>` 子骨骼里，只显示手里那把的配色；
+箭的方块直接挂在 `BowArrow` 上。贴图并到总贴图底部。
 
 移动类动作借用本模组森林精灵动画文件里已经按 2 倍制作换算好的车万女仆（TLM）动画（CC BY-NC-SA 4.0，CREDITS.md 登记），
 两者骨架相同，只保留神狐模型里有的骨骼。
@@ -65,6 +71,14 @@ KATANAS = ["ink", "vermilion", "indigo", "wood"]
 KATANA_SCALE = 1.6
 KATANA_PREFIX = "katana_"
 CARRY = "pre_parallel3"
+# 和弓：四套配色（与 YumiItem 同名）、神狐挂弓的倍数（tools/yumi_moves.py 的 FOX_SCALE）
+YUMIS = ["bamboo", "vermilion", "indigo", "chestnut"]
+YUMI_SCALE = 2.3
+YUMI_PREFIX = "yumi_"
+YUMI_BONE = "Yumi"
+# 执弓不带下半身与转身：拿着弓走路时腿交给行走动作。
+YUMI_UPPER_ONLY = {"idle", "ready"}
+YUMI_LOWER = {"Root", "AllBody", "RightLeg", "RightLowerLeg", "RightFoot", "LeftLeg", "LeftLowerLeg", "LeftFoot"}
 FACES = ["north", "east", "south", "west", "up", "down"]
 
 
@@ -74,7 +88,7 @@ def read(path):
 
 def write(path, content, indent=2):
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(content, ensure_ascii=False, indent=indent) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(content, ensure_ascii=False, indent=indent) + "\n", encoding="utf-8", newline="\n")
 
 
 def bones_of(geo):
@@ -117,12 +131,17 @@ def animations(source, bones):
     death = read(source / "Animation/side_lying_trial/divine_fox_death.animation.json")["animations"]["death"]
     layers = read(source / "Animation/ambient/divine_fox_ambient.animation.json")["animations"]
     katana = read(source / "Animation/katana/divine_fox_katana.animation.json")["animations"]
+    yumi = read(source / "Animation/yumi/divine_fox_yumi.animation.json")["animations"]
     out = {"idle": only(exported["idle"], bones)}
     for name in BORROWED + ELF_ACTIONS:
         out[name] = only(elf[name], bones)
     for name, anim in katana.items():
         out[KATANA_PREFIX + name] = only(anim, bones)
     out[CARRY] = carry(katana["sheathe"])
+    for name, anim in yumi.items():
+        tracks = {YUMI_BONE if n == "Weapon" else n: c for n, c in anim["bones"].items()
+                  if name not in YUMI_UPPER_ONLY or n not in YUMI_LOWER}
+        out[YUMI_PREFIX + name] = prune(only({**anim, "bones": tracks}, bones))
     death = prune(only(death, bones))
     # 倒下后停止眨眼、高光抖动与抖耳：叠加层用到的每个骨骼通道，死亡动画没有的都补一个静止帧
     rest = {"rotation": [0, 0, 0], "position": [0, 0, 0], "scale": [1, 1, 1]}
@@ -151,6 +170,28 @@ def carry(sheathe):
     return {"loop": True, "animation_length": 1.0, "bones": out}
 
 
+def bedrock_cube(c, s, u0, v0, shift=(0, 0, 0)):
+    """网格是 Blockbench 坐标，按 bbtool.export_geo 的规则换成 Bedrock：x 取反、绕 x/y 的转角取反。s 是缩放，(u0, v0) 是贴图在总贴图里的位置，shift 是缩放前的平移。"""
+    a = [(c["start"][i] + shift[i]) * s for i in range(3)]
+    b = [(c["end"][i] + shift[i]) * s for i in range(3)]
+    size = [b[i] - a[i] for i in range(3)]
+    cube = {"origin": [round(-(a[0] + size[0]), 5), round(a[1], 5), round(a[2], 5)], "size": [round(v, 5) for v in size]}
+    r = c.get("rotation") or [0, 0, 0]
+    if any(abs(v) > 1e-6 for v in r):
+        pv = [(c["pivot"][i] + shift[i]) * s for i in range(3)]
+        cube["pivot"] = [round(-pv[0], 5), round(pv[1], 5), round(pv[2], 5)]
+        cube["rotation"] = [round(-r[0], 5), round(-r[1], 5), round(r[2], 5)]
+    uv = {}
+    for f in FACES:
+        if f not in c["uv"]:
+            continue
+        u1, v1, u2, v2 = c["uv"][f]
+        u1, u2, v1, v2 = u1 + u0, u2 + u0, v1 + v0, v2 + v0
+        uv[f] = {"uv": [u2, v2], "uv_size": [u1 - u2, v1 - v2]} if f in ("up", "down") else {"uv": [u1, v1], "uv_size": [u2 - u1, v2 - v1]}
+    cube["uv"] = uv
+    return cube
+
+
 def katana_geometry(geo, atlas):
     """把四套刀装挂进模型：Weapon / Sheath 骨骼（UpBody 下、枢轴在原点），每套一组刀身、一组刀鞘，贴图并到总贴图底部。"""
     desc = geo["minecraft:geometry"][0]["description"]
@@ -168,31 +209,46 @@ def katana_geometry(geo, atlas):
         out.paste(rig, (x0, height))
         mesh = read(ASSETS / f"combat/weapons/fox_uchigatana_{variant}.json")
         for part, parent, group in (("weapon", "Weapon", "blade"), ("sheath", "Sheath", "saya")):
-            cubes = []
-            for c in mesh["cubes"]:
-                if c["part"] != part:
-                    continue
-                # 网格是 Blockbench 坐标（刀尖 +Y、刃 +X），按 bbtool.export_geo 的规则换成 Bedrock：x 取反、绕 x/y 的转角取反
-                a = [v * s for v in c["start"]]
-                b = [v * s for v in c["end"]]
-                size = [b[i] - a[i] for i in range(3)]
-                cube = {"origin": [round(-(a[0] + size[0]), 5), round(a[1], 5), round(a[2], 5)], "size": [round(v, 5) for v in size]}
-                r = c.get("rotation") or [0, 0, 0]
-                if any(abs(v) > 1e-6 for v in r):
-                    pv = [v * s for v in c["pivot"]]
-                    cube["pivot"] = [round(-pv[0], 5), round(pv[1], 5), round(pv[2], 5)]
-                    cube["rotation"] = [round(-r[0], 5), round(-r[1], 5), round(r[2], 5)]
-                uv = {}
-                for f in FACES:
-                    if f not in c["uv"]:
-                        continue
-                    u1, v1, u2, v2 = c["uv"][f]
-                    u1, u2, v1, v2 = u1 + x0, u2 + x0, v1 + height, v2 + height
-                    uv[f] = {"uv": [u2, v2], "uv_size": [u1 - u2, v1 - v2]} if f in ("up", "down") else {"uv": [u1, v1], "uv_size": [u2 - u1, v2 - v1]}
-                cube["uv"] = uv
-                cubes.append(cube)
+            # 刀尖 +Y、刃 +X
+            cubes = [bedrock_cube(c, s, x0, height) for c in mesh["cubes"] if c["part"] == part]
             bones.append({"name": f"katana_{variant}_{group}", "parent": parent, "pivot": [0, 0, 0], "cubes": cubes})
         x0 += rig.width
+    desc["texture_height"] = height + band
+    return out
+
+
+def yumi_geometry(geo, atlas):
+    """把和弓挂进模型：Yumi 骨骼（UpBody 下、枢轴在原点）下是弓的骨骼，四套配色的方块各在子骨骼里，箭挂在 BowArrow 上；贴图并到总贴图底部。"""
+    desc = geo["minecraft:geometry"][0]["description"]
+    width, height = desc["texture_width"], desc["texture_height"]
+    rigs = [Image.open(ASSETS / f"textures/item/fox_yumi_{v}_rig.png").convert("RGBA") for v in YUMIS]
+    arrow_tex = Image.open(ASSETS / "textures/entity/projectiles/yumi_arrow.png").convert("RGBA")
+    band = max(r.height for r in [*rigs, arrow_tex])
+    assert sum(r.width for r in [*rigs, arrow_tex]) <= width, "和弓贴图并排放不下"
+    out = Image.new("RGBA", (width, height + band))
+    out.paste(atlas, (0, 0))
+    bones = geo["minecraft:geometry"][0]["bones"]
+    bones.append({"name": YUMI_BONE, "parent": "UpBody", "pivot": [0, 0, 0]})
+    s = YUMI_SCALE
+    mesh = read(ASSETS / f"combat/weapons/fox_yumi_{YUMIS[0]}.json")
+    pivots = {b["name"]: [round(-b["pivot"][0] * s, 5), round(b["pivot"][1] * s, 5), round(b["pivot"][2] * s, 5)] for b in mesh["bones"]}
+    rig_bones = {}
+    for b in mesh["bones"]:
+        rig_bones[b["name"]] = {"name": b["name"], "parent": YUMI_BONE if b["parent"] == "Weapon" else b["parent"], "pivot": pivots[b["name"]]}
+        bones.append(rig_bones[b["name"]])
+    x0 = 0
+    for finish, rig in zip(YUMIS, rigs):
+        out.paste(rig, (x0, height))
+        cubes = read(ASSETS / f"combat/weapons/fox_yumi_{finish}.json")["cubes"]
+        for name, pivot in pivots.items():
+            own = [bedrock_cube(c, s, x0, height) for c in cubes if c["bone"] == name]
+            if own:
+                bones.append({"name": f"yumi_{finish}_{name}", "parent": name, "pivot": pivot, "cubes": own})
+        x0 += rig.width
+    out.paste(arrow_tex, (x0, height))
+    # 箭的网格原点在箭筈：平移到搭箭点（BowArrow 的枢轴）。
+    nock = mesh["attachments"][0]["origin"]
+    rig_bones["BowArrow"]["cubes"] = [bedrock_cube(c, s, x0, height, nock) for c in read(ASSETS / "combat/weapons/yumi_arrow.json")["cubes"]]
     desc["texture_height"] = height + band
     return out
 
@@ -280,7 +336,7 @@ def main():
     source = Path(args.source)
     geo = read(source / "build/exports/divine_fox.geo.json")
     parts = read(source / "build/parts.json")
-    atlas = katana_geometry(geo, Image.open(source / "build/exports/divine_fox.png").convert("RGBA"))
+    atlas = yumi_geometry(geo, katana_geometry(geo, Image.open(source / "build/exports/divine_fox.png").convert("RGBA")))
     bones = bones_of(geo)
     write(GECKO / "models/entity/divine_fox.geo.json", geo, indent=None)
     atlas.save(ASSETS / "textures/entity/divine_fox.png")

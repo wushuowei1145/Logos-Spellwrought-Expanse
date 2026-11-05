@@ -26,6 +26,8 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.zombie.Husk;
+import dev.logos.dimension.combat.Moveset;
+import dev.logos.dimension.item.YumiItem;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -38,7 +40,7 @@ import net.minecraft.world.phys.Vec3;
  * 神狐战斗的实际客户端检查（docs/NPC_RACE_DIVINE_FOX.md 第 5 节）：
  * 佩刀与收刀、拔刀与连招动作、刀身狐火（{@code npc_divine_fox_katana}）；真实 AI 对一只 80 血的尸壳：
  * 发现、缠狐火、突进、砍倒（{@code npc_divine_fox_fight}）；格挡几率、魔法减免、重伤逃跑（{@code npc_divine_fox_defense}）；
- * 背弓的神狐射苦力怕、苦力怕躲神狐（{@code npc_divine_fox_bow}）。
+ * 背弓的神狐射苦力怕、苦力怕躲神狐（{@code npc_divine_fox_bow}）；四套和弓配色的射法与俯仰（{@code npc_divine_fox_yumi}）。
  */
 public abstract class FoxCombatViews implements UIScenario {
     static final int FLOOR = 99;
@@ -190,15 +192,16 @@ public abstract class FoxCombatViews implements UIScenario {
                     .screenshot("divine_fox_fox_fire_close")
                     .server("右边的神狐换弓拉弦：刀回到腰间，弓上也是狐火", ctx -> {
                         DivineFox fox = serverFoxes(ctx.server().overworld()).get(1);
-                        fox.giveBow(new ItemStack(Items.BOW));
+                        fox.giveBow(new ItemStack(YumiItem.VERMILION.get()));
                         fox.equipBow();
-                        fox.startUsingItem(net.minecraft.world.InteractionHand.MAIN_HAND);
                         camera(ctx.player(), new Vec3(3.2, FLOOR + 1.8, 2.6), new Vec3(1.4, FLOOR + 1.2, .4));
                     })
+                    .ticks(14)
+                    .server("拉弓", ctx -> serverFoxes(ctx.server().overworld()).get(1).yumiInput(Moveset.Input.USE_PRESS))
                     .ticks(25)
-                    .check("拉弓：手里是弓，刀没有招式、佩在腰间", ctx -> {
+                    .check("拉弓：手里是和弓，放着弓道的会，刀佩在腰间", ctx -> {
                         DivineFox fox = foxes().get(1);
-                        return fox.isUsingItem() && fox.getMainHandItem().getItem() instanceof BowItem && fox.npcCombatMove() == null && fox.katanaShown();
+                        return fox.holdsYumi() && playing(fox, "yumi_kai") && fox.katanaShown();
                     })
                     .screenshot("divine_fox_bow_fire")
                     .server("战斗结束", ctx -> {
@@ -351,20 +354,74 @@ public abstract class FoxCombatViews implements UIScenario {
 
     // ---------------------------------------------------------------- 弓与苦力怕
 
+    // ---------------------------------------------------------------- 和弓
+
+    @LDLRegisterClient(name = "npc_divine_fox_yumi", group = "npc_preview", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class Yumi extends FoxCombatViews {
+        private static void pitch(ServerLevel level, float degrees) {
+            for (DivineFox fox : serverFoxes(level)) fox.setXRot(degrees);
+        }
+
+        @Override
+        public void define(ScenarioBuilder s) {
+            begin(s).server("四只神狐各拿一套和弓配色", ctx -> {
+                        var level = ctx.server().overworld();
+                        arena(level);
+                        var finishes = List.of(YumiItem.BAMBOO, YumiItem.VERMILION, YumiItem.INDIGO, YumiItem.CHESTNUT);
+                        for (int i = 0; i < 4; i++) {
+                            // 朝向 0（+Z）：拉弓时身体转向 -X，胸口朝着 -X 一侧的镜头，靶在画面右边。
+                            DivineFox fox = fox(level, 0.5, -6 + i * 5, "outfit_miko", false);
+                            fox.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(finishes.get(i).get()));
+                        }
+                        camera(ctx.player(), new Vec3(-13, FLOOR + 2.2, 1.5), new Vec3(.5, FLOOR + 2.0, 1.5));
+                    })
+                    .ticks(4)
+                    .check("四只都拿着和弓，手里不再按物品画", ctx -> foxes().size() == 4 && foxes().stream().allMatch(DivineFox::holdsYumi))
+                    .ticks(14)
+                    .screenshot("divine_fox_yumi_idle")
+                    .check("执弓动作", ctx -> foxes().stream().allMatch(f -> playing(f, "yumi_idle")))
+                    .server("拉弓", ctx -> serverFoxes(ctx.server().overworld()).forEach(f -> f.yumiInput(Moveset.Input.USE_PRESS)))
+                    .ticks(5)
+                    .screenshot("divine_fox_yumi_uchiokoshi")
+                    .ticks(13)
+                    .screenshot("divine_fox_yumi_daisan")
+                    .ticks(14)
+                    .check("拉到会", ctx -> foxes().stream().allMatch(f -> playing(f, "yumi_kai")))
+                    .screenshot("divine_fox_yumi_kai")
+                    .server("近景", ctx -> camera(ctx.player(), new Vec3(-5.2, FLOOR + 2.1, -4.5), new Vec3(.5, FLOOR + 2.1, -5.2)))
+                    .ticks(5)
+                    .screenshot("divine_fox_yumi_kai_close")
+                    .server("抬头", ctx -> pitch(ctx.server().overworld(), -35))
+                    .ticks(5)
+                    .screenshot("divine_fox_yumi_kai_up")
+                    .server("低头", ctx -> pitch(ctx.server().overworld(), 25))
+                    .ticks(5)
+                    .screenshot("divine_fox_yumi_kai_down")
+                    .server("放箭", ctx -> {
+                        pitch(ctx.server().overworld(), 0);
+                        serverFoxes(ctx.server().overworld()).forEach(f -> f.yumiInput(Moveset.Input.USE_RELEASE));
+                    })
+                    .ticks(10)
+                    .check("离れ与残心", ctx -> foxes().stream().allMatch(f -> playing(f, "yumi_hanare")))
+                    .screenshot("divine_fox_yumi_zanshin")
+                    .teardown("恢复界面", ctx -> Minecraft.getInstance().options.hideGui = false);
+        }
+    }
+
     @LDLRegisterClient(name = "npc_divine_fox_bow", group = "npc_preview", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
     public static class Bow extends FoxCombatViews {
         private static Creeper creeper;
         private static double startGap, closest;
-        private static boolean drew, targeted, bowInHand;
+        private static boolean drew, targeted, bowInHand, yumiArrow;
 
         @Override
         public void define(ScenarioBuilder s) {
             begin(s).server("背弓的神狐与一只苦力怕", ctx -> {
                         var level = ctx.server().overworld();
                         arena(level);
-                        drew = targeted = bowInHand = false;
+                        drew = targeted = bowInHand = yumiArrow = false;
                         DivineFox fox = fox(level, .5, 8.5, "outfit_miko", true);
-                        fox.giveBow(new ItemStack(Items.BOW));
+                        fox.giveBow(new ItemStack(YumiItem.INDIGO.get()));
                         fox.setYRot(180);
                         creeper = EntityType.CREEPER.create(level, EntitySpawnReason.COMMAND);
                         creeper.snapTo(.5, FLOOR + 1, -1.5, 0, 0);
@@ -380,6 +437,7 @@ public abstract class FoxCombatViews implements UIScenario {
                     .server("停止观察", ctx -> watch(null))
                     .checkServer("拉弓时刀收在腰间（露着）、手里是弓", ctx -> bowInHand)
                     .checkServer("盯上了苦力怕", ctx -> targeted)
+                    .checkServer("射出的是和弓的箭（标记过、飞得快）", ctx -> yumiArrow)
                     .checkServer("苦力怕一直没走近神狐（像躲猫一样）", ctx -> {
                         System.out.println("[fox] creeper start " + startGap + " closest " + closest);
                         return closest >= 3;
@@ -391,9 +449,13 @@ public abstract class FoxCombatViews implements UIScenario {
             var foxes = level.getEntitiesOfClass(DivineFox.class, AREA.inflate(40));
             if (foxes.isEmpty()) return;
             DivineFox fox = foxes.getFirst();
-            boolean drawing = fox.isUsingItem() && fox.getUseItem().getItem() instanceof BowItem && fox.getTicksUsingItem() > 5;
+            boolean drawing = "kai".equals(fox.yumiMove());
             drew |= drawing;
-            bowInHand |= drawing && fox.katanaMove() == null && fox.katanaShown();
+            bowInHand |= drawing && fox.holdsYumi() && fox.katanaShown();
+            // 和弓的箭：标记过、飞得快
+            for (var arrow : level.getEntitiesOfClass(net.minecraft.world.entity.projectile.arrow.AbstractArrow.class, AREA.inflate(40),
+                    a -> a.getOwner() == fox && a.getDeltaMovement().length() > 3))
+                yumiArrow |= arrow.getData(dev.logos.dimension.item.NatureAttachments.YUMI_ARROW);
             targeted |= fox.getTarget() == creeper;
             if (creeper.isAlive()) closest = Math.min(closest, fox.distanceTo(creeper));
         }

@@ -32,6 +32,7 @@ import net.minecraft.world.phys.Vec3;
 public class YumiView implements UIScenario {
     private boolean previousHideGui;
     private int target, skeleton, arrows, overhead, side;
+    private final int[] compare = new int[3];
     private float health;
     private boolean phase(String... moves) {
         var p = LongswordClient.pose(Minecraft.getInstance().player.getUUID());
@@ -46,13 +47,16 @@ public class YumiView implements UIScenario {
     private static void release() {
         var mc = Minecraft.getInstance(); mc.options.keyUse.setDown(false); mc.gameMode.releaseUsingItem(mc.player);
     }
-    /** 第三人称画出的箭与视线在水平面上的夹角余弦；箭不在弦上时为 -2。 */
+    /** 第三人称画出的箭与视线的夹角余弦（含俯仰）；箭不在弦上时为 -2。 */
     private static double aim() {
         var player = Minecraft.getInstance().player;
         var d = YumiClient.arrowDirection(player.getId());
         if (d == null) return -2;
-        var look = Vec3.directionFromRotation(0, player.getYHeadRot());
-        return (d.x * look.x + d.z * look.z) / Math.max(1e-6, Math.hypot(d.x, d.z));
+        var look = Vec3.directionFromRotation(player.getXRot(), player.getYHeadRot());
+        return d.x * look.x + d.y * look.y + d.z * look.z;
+    }
+    private static void pitch(float degrees) {
+        var p = Minecraft.getInstance().player; p.setXRot(degrees); p.xRotO = degrees;
     }
     private static void face(float yaw) {
         var p = Minecraft.getInstance().player;
@@ -129,6 +133,14 @@ public class YumiView implements UIScenario {
                 .check("转动视线后箭仍指着视线", ctx -> aim() > 0.97)
                 .step("转回木桩", ctx -> face(0)).ticks(4)
                 .check("转回后箭指着木桩", ctx -> aim() > 0.97)
+                // 抬头、低头：双臂和弓跟着俯仰，箭指着视线。
+                .step("抬头 40°", ctx -> pitch(-40)).ticks(3)
+                .check("抬头时箭指着视线", ctx -> aim() > 0.97);
+        view(s, () -> side, "kai_side_up")
+                .step("低头 30°", ctx -> pitch(30)).ticks(3)
+                .check("低头时箭指着视线", ctx -> aim() > 0.97);
+        view(s, () -> side, "kai_side_down")
+                .step("回到平视", ctx -> pitch(0)).ticks(2)
                 .server("记录木桩生命", ctx -> health = golem(ctx.server()).getHealth())
                 .step("放箭", ctx -> release()).waitUntil("離れ", ctx -> phase("hanare")).ticks(3).screenshot("hanare_back")
                 .step("正面看残心", ctx -> camera(CameraType.THIRD_PERSON_FRONT)).ticks(6).screenshot("zanshin")
@@ -150,7 +162,10 @@ public class YumiView implements UIScenario {
                 .waitUntil("左手惯用生效", ctx -> Minecraft.getInstance().player.getMainArm() == HumanoidArm.LEFT)
                 .step("背后看", ctx -> camera(CameraType.THIRD_PERSON_BACK))
                 .step("左手惯用拉弓", ctx -> press()).waitUntil("会", ctx -> phase("kai")).ticks(6)
-                .check("左手惯用：箭指着视线", ctx -> aim() > 0.97);
+                .check("左手惯用：箭指着视线", ctx -> aim() > 0.97)
+                .step("左手惯用抬头 30°", ctx -> pitch(-30)).ticks(3)
+                .check("左手惯用抬头时箭指着视线", ctx -> aim() > 0.97)
+                .step("左手惯用回到平视", ctx -> pitch(0)).ticks(2);
         view(s, () -> overhead, "kai_top_left_handed")
                 .step("放箭", ctx -> release()).waitUntil("回到执弓", ctx -> phase("idle"))
                 .step("改回右手惯用", ctx -> hand(HumanoidArm.RIGHT))
@@ -174,15 +189,44 @@ public class YumiView implements UIScenario {
                         .noneMatch(a -> a.getData(NatureAttachments.YUMI_ARROW)))
                 .server("移除骷髅", ctx -> {
                     var e = ctx.server().overworld().getEntity(skeleton); if (e != null) e.discard();
-                    for (int id : new int[]{overhead, side}) { var stand = ctx.server().overworld().getEntity(id); if (stand != null) stand.discard(); }
                     ctx.server().overworld().getEntitiesOfClass(AbstractArrow.class, new AABB(-10,95,-10,10,110,22)).forEach(Entity::discard);
                 })
+                // 对照：原版弓、和弓、左手惯用的和弓，手臂都举着拉弓；大小、朝向、握的位置要和原版弓一样。
+                // 还是半夜（白天骷髅会着火），夜视照亮；玩家让开，免得挡在骷髅后面。
+                .server("放三只正面的骷髅", ctx -> {
+                    ctx.player().addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.NIGHT_VISION, 600, 0, false, false));
+                    ctx.player().teleportTo(7, 100, -6);
+                    compareSkeletons(ctx.server(), 90);
+                }).ticks(5);
+        view(s, () -> side, "skeleton_compare_front")
+                .server("换成侧面的骷髅", ctx -> compareSkeletons(ctx.server(), 0)).ticks(5);
+        view(s, () -> side, "skeleton_compare_side")
                 .runCommand("time set day")
+                .server("移除对照的骷髅与镜头", ctx -> {
+                    for (int id : compare) { var e = ctx.server().overworld().getEntity(id); if (e != null) e.discard(); }
+                    for (int id : new int[]{overhead, side}) { var stand = ctx.server().overworld().getEntity(id); if (stand != null) stand.discard(); }
+                })
                 .teardown("恢复输入", ctx -> {
                     var mc=Minecraft.getInstance(); mc.options.keyUse.setDown(false);
                     mc.setCameraEntity(mc.player); hand(HumanoidArm.RIGHT);
                     mc.options.hideGui=previousHideGui; camera(CameraType.FIRST_PERSON);
                 });
+    }
+    /** 三只不动、举着手臂拉弓的骷髅，朝向 yaw（新生成的才会连身体一起朝过去）。 */
+    private void compareSkeletons(MinecraftServer server, float yaw) {
+        var level = server.overworld();
+        var bows = java.util.List.of(new ItemStack(Items.BOW), new ItemStack(YumiItem.VERMILION.get()), new ItemStack(YumiItem.BAMBOO.get()));
+        for (int i = 0; i < 3; i++) {
+            var old = level.getEntity(compare[i]);
+            if (compare[i] != 0 && old != null) old.discard();
+            var mob = EntityType.SKELETON.create(level, EntitySpawnReason.COMMAND);
+            mob.snapTo(-1.2, 100, 0.2 + 1.3 * i, yaw, 0);
+            mob.setYHeadRot(yaw); mob.setYBodyRot(yaw);
+            mob.setNoAi(true); mob.setAggressive(true); mob.setLeftHanded(i == 2);
+            mob.setItemSlot(EquipmentSlot.MAINHAND, bows.get(i));
+            level.addFreshEntity(mob);
+            compare[i] = mob.getId();
+        }
     }
     private java.util.List<AbstractArrow> skeletonArrows(MinecraftServer server) {
         return server.overworld().getEntitiesOfClass(AbstractArrow.class, new AABB(-10,95,-10,10,110,22),

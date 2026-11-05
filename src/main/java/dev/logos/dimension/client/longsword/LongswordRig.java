@@ -49,6 +49,10 @@ public final class LongswordRig {
     private final Identifier glow;
     private final Vector3f weaponPivot;
     private final float weaponScale;
+    /** 拉弓按视线俯仰时，上半身最多后仰或前倾的角度（度），其余由双臂转。 */
+    private static final float MAX_LEAN = 25;
+    private static final java.util.Set<String> BELOW_WAIST = java.util.Set.of(CombatBones.ROOT, CombatBones.ALL_BODY, CombatBones.DOWN_BODY,
+            CombatBones.RIGHT_LEG, CombatBones.RIGHT_LOWER_LEG, CombatBones.RIGHT_FOOT, CombatBones.LEFT_LEG, CombatBones.LEFT_LOWER_LEG, CombatBones.LEFT_FOOT);
 
     public static void clear() { MODELS.clear(); CLIPS.clear(); }
     /** 取不到资源时为 null。 */
@@ -195,6 +199,25 @@ public final class LongswordRig {
         for (var bone : List.of(CombatBones.RIGHT_ARM, CombatBones.RIGHT_FORE_ARM, CombatBones.RIGHT_HAND, CombatBones.WEAPON))
             bones.put(bone, new Matrix4f(turn).mul(bones.get(bone)));
         return new Sample(Map.copyOf(bones), sample.bodyRotation, new Matrix4f(turn).mul(sample.weapon), sample.turn,
+                sample.rightLeg, sample.leftLeg);
+    }
+
+    /**
+     * 侧身拉弓时按视线俯仰（度，向上为正）：上半身绕腰后仰一部分（原版身体跟着仰，见 {@link Sample#bodyRotation}），
+     * 双臂连同弓再绕两肩中点转其余的，整个“T”字一起动，箭始终顺着视线，右手也不离开弦。靶在骨架的 -X 一侧。
+     */
+    public Sample aimDraw(Sample sample, float degrees) {
+        if (degrees == 0) return sample;
+        float lean = Math.clamp(degrees * .5f, -MAX_LEAN, MAX_LEAN), rest = degrees - lean, radians = (float) Math.PI / 180;
+        var waist = skeleton.bone(CombatBones.UP_BODY).pivot();
+        var shoulders = skeleton.bone(CombatBones.ARM).pivot();
+        // 绕 +Z 转正角时 -X 一侧往下，所以取反。
+        var turn = new Matrix4f().translation(waist).rotateZ(-lean * radians).translate(-waist.x, -waist.y, -waist.z)
+                .translate(shoulders).rotateZ(-rest * radians).translate(-shoulders.x, -shoulders.y, -shoulders.z);
+        var bones = new HashMap<>(sample.bones);
+        for (var entry : sample.bones.entrySet())
+            if (!BELOW_WAIST.contains(entry.getKey())) bones.put(entry.getKey(), new Matrix4f(turn).mul(entry.getValue()));
+        return new Sample(Map.copyOf(bones), new Vector3f(sample.bodyRotation).add(0, 0, -lean), new Matrix4f(turn).mul(sample.weapon), sample.turn,
                 sample.rightLeg, sample.leftLeg);
     }
 
