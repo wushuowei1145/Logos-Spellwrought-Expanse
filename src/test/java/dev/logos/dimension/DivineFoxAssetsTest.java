@@ -185,6 +185,51 @@ class DivineFoxAssetsTest {
         assertEquals(carry.get("Weapon"), carry.get("Sheath"), "佩刀时刀在鞘里，两者同一变换");
     }
 
+    /**
+     * 和弓：弓的骨骼挂在 UpBody 下的 Yumi（不是刀的 Weapon）；四套配色各有一组方块，名字和 DivineFox 隐藏用的一致；
+     * 招式的动作都在（加 yumi_ 前缀），时长与招式文件一致，驱动 Yumi 而不是 Weapon；执弓不带下半身，走路时腿交给行走动作。
+     */
+    @Test
+    void yumiRigMatchesTheMoveset() throws Exception {
+        Map<String, String> parent = new java.util.HashMap<>();
+        for (JsonElement b : read("models/entity/divine_fox.geo.json").getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject()
+                .getAsJsonArray("bones")) {
+            JsonObject o = b.getAsJsonObject();
+            parent.put(o.get("name").getAsString(), o.has("parent") ? o.get("parent").getAsString() : null);
+        }
+        assertEquals("UpBody", parent.get(dev.logos.dimension.npc.DivineFox.YUMI_BONE));
+        assertEquals(dev.logos.dimension.npc.DivineFox.YUMI_BONE, parent.get("BowGrip"));
+        assertEquals(dev.logos.dimension.npc.DivineFox.YUMI_BONE, parent.get("BowArrow"));
+        Set<String> groups = new java.util.HashSet<>();
+        for (String name : parent.keySet()) if (name.startsWith("yumi_")) groups.add(name);
+        Set<String> expected = new java.util.HashSet<>();
+        for (String v : dev.logos.dimension.npc.DivineFox.YUMIS)
+            for (String bone : dev.logos.dimension.npc.DivineFox.YUMI_MESH_BONES) {
+                expected.add("yumi_" + v + "_" + bone);
+                assertEquals(bone, parent.get("yumi_" + v + "_" + bone));
+            }
+        assertEquals(expected, groups);
+        JsonObject moves;
+        try (var in = DivineFoxAssetsTest.class.getResourceAsStream("/data/logos_dimension/combat/movesets/yumi.json")) {
+            moves = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject().getAsJsonObject("moves");
+        }
+        JsonObject anims = animations();
+        for (var m : moves.entrySet()) {
+            JsonObject move = m.getValue().getAsJsonObject();
+            String clip = "yumi_" + (move.has("clip") ? move.get("clip").getAsString() : m.getKey());
+            assertTrue(anims.has(clip), clip);
+            if (move.has("length")) assertEquals(move.get("length").getAsDouble(), anims.getAsJsonObject(clip).get("animation_length").getAsDouble(), 1e-4, clip);
+            JsonObject bones = anims.getAsJsonObject(clip).getAsJsonObject("bones");
+            assertTrue(bones.has("Yumi"), clip);
+            assertFalse(bones.has("Weapon"), clip + " 不能动腰间的刀");
+        }
+        for (String upperOnly : new String[]{"yumi_idle", "yumi_ready"}) {
+            JsonObject bones = anims.getAsJsonObject(upperOnly).getAsJsonObject("bones");
+            for (String lower : new String[]{"Root", "AllBody", "RightLeg", "LeftLeg"}) assertFalse(bones.has(lower), upperOnly + " " + lower);
+        }
+        assertTrue(anims.getAsJsonObject("yumi_kai").getAsJsonObject("bones").has("Root"));
+    }
+
     /** 狐纹只有一成神狐有：零件表写了 chance 0.1，随机外观大约十只里一只。 */
     @Test
     void markingsAppearOnAboutOneFoxInTen() {

@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import dev.logos.dimension.combat.*;
 import dev.logos.dimension.item.YumiItem;
 import java.util.*;
+import org.joml.Matrix3f;
 import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -88,7 +89,7 @@ class YumiTest {
         for (var finish : new String[]{"bamboo", "vermilion", "indigo", "chestnut"}) {
             var weapon = LongswordMotionTest.combat("weapons/fox_yumi_" + finish);
             assertEquals("logos_dimension:textures/item/fox_yumi_" + finish + "_rig.png", weapon.get("texture").getAsString());
-            assertEquals(1.25, weapon.get("scale").getAsDouble(), 1e-9);
+            assertEquals(1.625, weapon.get("scale").getAsDouble(), 1e-9);
             assertNotNull(YumiTest.class.getResource("/assets/logos_dimension/textures/item/fox_yumi_" + finish + "_rig.png"));
             assertNotNull(YumiTest.class.getResource("/assets/logos_dimension/textures/item/fox_yumi_" + finish + ".png"));
             // 骨骼都挂在 Weapon 之下，每个方块都绑在一根存在的骨骼上。
@@ -130,6 +131,39 @@ class YumiTest {
         var turn = new Vector3f();
         kai.sample(CombatBones.ROOT, CombatClip.Channel.ROTATION, 0.5f, turn);
         assertEquals(-90, turn.y, 0.5);
+    }
+    @Test void theBowArmIsStraightAtFullDrawAndThroughZanshin() throws Exception {
+        for (var view : new String[]{"fp", "tp"}) {
+            var clips = clips(view);
+            assertTrue(elbow(clips.get("kai"), 0f) < 2, view);
+            assertTrue(elbow(clips.get("kai"), 0.8f) < 2, view);
+            assertTrue(elbow(clips.get("hanare"), 0.5f) < 2, view);
+            // 打起し举弓时手臂是弯的：确认上面量的确实是弯曲。
+            assertTrue(elbow(clips.get("uchiokoshi"), 0.3f) > 15, view);
+        }
+    }
+    @Test void theDrawForearmFollowsTheArrowAtFullDraw() throws Exception {
+        // 第三人称会：右上臂向后伸，右前臂折回来差不多与箭同线（靶在躯干的 -X 一侧），手肘不再高抬到头顶。
+        var kai = clips("tp").get("kai");
+        var r = new Vector3f(); var f = new Vector3f();
+        kai.sample("RightArm", CombatClip.Channel.ROTATION, 0f, r);
+        kai.sample("RightForeArm", CombatClip.Channel.ROTATION, 0f, f);
+        float radians = (float) Math.PI / 180;
+        var upper = new Matrix3f().rotateZ(r.z * radians).rotateY(r.y * radians).rotateX(r.x * radians);
+        var fore = new Matrix3f(upper).rotateZ(f.z * radians).rotateY(f.y * radians).rotateX(f.x * radians);
+        var upperDown = upper.transform(new Vector3f(0, -1, 0));
+        var foreDown = fore.transform(new Vector3f(0, -1, 0));
+        assertTrue(foreDown.x < -Math.cos(Math.toRadians(25)), "前臂朝靶 " + foreDown);
+        assertTrue(upperDown.x > 0.6, "上臂朝身后 " + upperDown);
+        assertTrue(Math.abs(upperDown.y) < 0.4, "手肘与肩差不多高 " + upperDown);
+    }
+    /** 左肘弯了多少度：前臂的旋转把沿前臂向下的方向转开的角度（前臂自转不算）。 */
+    private static double elbow(CombatClip clip, float t) {
+        var r = new Vector3f();
+        clip.sample("LeftForeArm", CombatClip.Channel.ROTATION, t, r);
+        float radians = (float) Math.PI / 180;
+        var down = new Matrix3f().rotateZ(r.z * radians).rotateY(r.y * radians).rotateX(r.x * radians).transform(new Vector3f(0, -1, 0));
+        return Math.toDegrees(Math.acos(Math.min(1, -down.y)));
     }
     private static Vector3f scale(CombatClip clip, String bone, float t) {
         var out = new Vector3f(1);

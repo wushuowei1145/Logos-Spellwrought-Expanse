@@ -23,8 +23,8 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 ASSETS = ROOT / 'src/main/resources/assets/logos_dimension'
-# 骨架的武器缩放乘上它：第三人称 0.8 × 1.25 = 1，弓高 32 像素，与玩家等高。
-SCALE = 1.25
+# 骨架的武器缩放乘上它：第三人称 0.8 × 1.625 = 1.3，弓高 41.6 像素，约玩家身高的 1.3 倍（真实的和弓约 2.2 米）。
+SCALE = 1.625
 # 弦上的搭箭点（交付的 attachment_points.json 的 nock_rest），箭筈在这里。
 NOCK = [0.0, 0.85, 3.08965625]
 
@@ -214,8 +214,10 @@ def item_model(name, weapon):
             x, y, z = cube['rotation']
             element['rotation'] = {'origin': [round(cube['pivot'][i] + offset[i], 4) for i in range(3)], 'x': x, 'y': y, 'z': z}
         elements.append(element)
-    # 原版持物把模型的 +Y 对着手臂前方：手臂平举（骷髅拉弓）时弓竖直、弦朝自己。和弓比原版弓大一倍。
-    hand = {'rotation': [0, 90, 0], 'translation': [0, 2.5, 1.5], 'scale': [0.75, 0.75, 0.75]}
+    # 骷髅等生物手里和原版弓一样大、一样拿：朝向由原版弓的持物变换换算（item/bow.json 的 [-80, 260, -40]），
+    # 上弭朝上略向外倾、弓背朝前、弦朝自己，握把在拳心（显示坐标 z = 0 是手臂末端）。Y 缩放让弓弭到弓弭与原版相同（16.5 像素），
+    # X、Z 留大一些，弓身不至于细成一条线，弓的深度也与原版相近。
+    hand = {'rotation': [5.1, -0.9, 10], 'translation': [-0.9, -1.82, 0.6], 'scale': [1.5, 0.515, 0.9]}
     return {'textures': {'0': f'logos_dimension:item/{name}_rig', 'particle': f'logos_dimension:item/{name}'},
             'gui_light': 'front', 'display': {
                 'thirdperson_righthand': hand, 'thirdperson_lefthand': hand,

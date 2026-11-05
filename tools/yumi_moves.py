@@ -13,6 +13,7 @@
 - 上下两段弦：从搭箭点指向弯过之后的两弭，沿长度方向伸缩。
 - 箭（BowArrow）：箭筈在搭箭点，箭杆搭在握把上方的箭台；arrow 为 0 时缩成 0（还没取箭或已射出）。
 整个人的转身用 turn（度）：拉弓时侧身 -90°，靶在左手一侧。
+左手握弓的手臂在会与残心时完全伸直：straight 给出握点的高度和前后（躯干坐标），左右按该骨架的臂长算出（straight_grip）。
 """
 import json
 import math
@@ -82,7 +83,22 @@ def add_bow(sk, weapon):
     sk.bow_bones = [b['name'] for b in weapon['bones']]
 
 
+def straight_grip(sk, y, z):
+    """左臂完全伸直时的握点（编排坐标）：高度 y、前后 z 给定，朝靶的一侧（-X）伸到手臂全长，肘部不弯。"""
+    S = sk.pivot('LeftArm')
+    reach = (np.linalg.norm(sk.pivot('LeftForeArm') - S) + np.linalg.norm(sk.pivot('LeftHand') - sk.pivot('LeftForeArm'))
+             + abs(sk.hand_grip[1]))
+    dy, dz = sk.center[1] + y * sk.arm - S[1], sk.center[2] + z * sk.arm - S[2]
+    x = S[0] - math.sqrt(reach * reach - dy * dy - dz * dz)
+    return ((x - sk.center[0]) / sk.arm, y, z)
+
+
 class YumiBaker(Baker):
+    def sword_key(self, clip, key):
+        if key.get('straight') is not None:
+            key = dict(key, grip=straight_grip(self.sk, *key['straight']))
+        return super().sword_key(clip, key)
+
     def scalar(self, clip, t, field, default):
         return float(np.atleast_1d(hermite(channel(clip, field, default), t))[0])
 
@@ -156,6 +172,11 @@ def bow(up, aim):
     return dict(blade=tuple(y), edge=tuple(np.cross(y, z)))
 
 
+def reach_out(y, z):
+    """关键帧字段：左臂伸直握弓（见 straight_grip）。grip 只是占位，烘焙时按骨架换掉。"""
+    return dict(grip=(-1.3, y, z), straight=(y, z))
+
+
 def spun(up, aim, degrees):
     """弓绕自身竖轴（上弭方向）转 degrees：返弦（放箭后弓在掌中翻转）。"""
     y = unit(up)
@@ -165,9 +186,9 @@ def spun(up, aim, degrees):
     return bow(up, turned)
 
 
-# 弓道的“执弓”：左手握弓垂在左腰，上弭略向前；右手放在右腰。
+# 弓道的“执弓”：左手握弓垂在左腰，上弭略向前；右手放在右腰。下弭离地一点点（弓比人高，手不能再低）。
 HOLD_R = (0.42, -0.86, -0.05)
-IDLE = dict(grip=(-0.44, -0.82, -0.16), **bow((0.04, 0.96, -0.3), (1, 0, 0)), rmode='free', rhand=HOLD_R,
+IDLE = dict(grip=(-0.44, -0.76, -0.16), **bow((0.04, 0.96, -0.3), (1, 0, 0)), rmode='free', rhand=HOLD_R,
             lmode='sword', string=0.0, arrow=0.0, turn=0.0)
 # 侧身对靶时的站姿：足踏み，两脚沿靶的方向分开。
 FEET = dict(rfoot=(0.55, 0, 0.0, 0), lfoot=(-0.55, 0, 0.0, 0), hips=(0, -0.04, 0))
@@ -180,9 +201,12 @@ UCHIOKOSHI = dict(YUGAMAE, grip=(-0.4, 0.92, -0.4), **bow((0.1, 1, 0.08), AIM))
 # 大三：左手推向靶的斜上方，右手拉到额前上方。
 DAISAN = dict(UCHIOKOSHI, grip=(-0.8, 0.62, -0.38), **bow((0.08, 1, 0.04), AIM), rmode='free', rhand=(0.12, 0.74, -0.36),
               rhand_rot=(90, 0, 0), rpole=(0.5, 0.4, 1.0), rlift=0.0)
-# 会：左臂伸直推弓，箭在口高，右手在右颊后，右肘高抬在后。
-KAI = dict(DAISAN, grip=(-1.0, 0.16, -0.36), **bow((0.05, 1, 0.02), AIM), rhand=(0.28, 0.2, -0.33),
-           rpole=(0.4, 0.5, 1.0), lpole=(-0.2, -0.8, 0.4))
+# 会：左臂完全伸直推弓，略高于肩，箭在口高、贴着脸前过，右手在右颊旁。右上臂从肩向后伸，手肘在身后、与肩差不多高，
+# 右前臂折回来，差不多与箭在一条线上（肘朝身后的 rpole）。
+# 握点比肩靠前（-Z）才能让箭从脸前过，所以左臂朝内收约 19°，从靶的方向看不是正对着肩。
+KAI_ARM = (0.06, -0.34)
+KAI = dict(DAISAN, **reach_out(*KAI_ARM), **bow((0.05, 1, 0.02), AIM), rhand=(0.28, 0.2, -0.33),
+           rpole=(1.0, 0.1, -0.25), lpole=(-0.2, -0.8, 0.4))
 # 残心：放箭后双臂一字展开，弓在掌中翻转（返弦）。
 ZANSHIN_R = (1.0, 0.2, -0.08)
 
@@ -191,6 +215,11 @@ ZANSHIN_R = (1.0, 0.2, -0.08)
 # 和弓的第一人称把整个身体压低 4 像素、左移 3.5 像素，左肩落在眼睛正下方。
 FP_CENTER, FP_ARM = np.array([0.0, 27.0, -3.5]), 12.5
 FP_ROOT = np.array([-3.5, -4.0, 0.5])
+
+
+def fp_arm(x, y):
+    """第一人称左臂伸直：握点在镜头坐标里的左右 x、高低 y（像素），深度按臂长算出。身体转了 -90°。"""
+    return reach_out(round((y - FP_ROOT[1] - FP_CENTER[1]) / FP_ARM, 4), round((FP_ROOT[0] - x - FP_CENTER[2]) / FP_ARM, 4))
 
 
 def fpv(x, y, z, turn=-90.0):
@@ -204,21 +233,21 @@ YUGAMAE['fp'] = dict(grip=fpv(-1.0, 20.5, -12), rhide=0.0)
 # 第一人称不把弓举过头顶：举到左上方、手臂伸远，前臂离镜头远，不挡住准星一带。
 UCHIOKOSHI['fp'] = dict(grip=fpv(-6.5, 32.5, -12.5), rhide=1.0)
 DAISAN['fp'] = dict(grip=fpv(-4.5, 31.0, -12.5), rhand=fpv(3.0, 30.0, 0.8), rhide=1.0)
-KAI['fp'] = dict(grip=fpv(-1.2, 26.4, -14.0), rhand=fpv(3.6, 26.6, 0.8), rhide=1.0)
-FP_ZANSHIN = dict(grip=fpv(-1.5, 26.0, -14.2), rhand=fpv(9.0, 27.0, 2.0), rhide=1.0)
+KAI['fp'] = dict(**fp_arm(-1.35, 26.05), rhand=fpv(3.6, 26.6, 0.8), rhide=1.0)
+FP_ZANSHIN = dict(**fp_arm(-1.7, 25.6), rhand=fpv(9.0, 27.0, 2.0), rhide=1.0)
 
 
 def clips():
     out = []
     out.append(dict(name='idle', length=2.4, loop='loop', keys=[
         k(0.0, IDLE),
-        k(1.2, IDLE, grip=(-0.44, -0.8, -0.18), hips=(0, -0.012, 0),
+        k(1.2, IDLE, grip=(-0.44, -0.74, -0.18), hips=(0, -0.012, 0),
           fp=dict(IDLE['fp'], grip=fpv(-5.5, 19.8, -12, 0))),
         k(2.4, IDLE),
     ]))
     # 取弓：从身侧把弓提到执弓的位置。
     out.append(dict(name='ready', length=0.5, loop='once', keys=[
-        k(0.0, IDLE, grip=(-0.42, -0.95, 0.05), **bow((0, 1, 0.1), (1, 0, 0))),
+        k(0.0, IDLE, grip=(-0.42, -0.74, 0.05), **bow((0.02, 0.97, -0.22), (1, 0, 0))),
         k(0.5, IDLE),
     ]))
     # 搭箭、打起し：转身侧对靶、两脚分开，弓提到身前取箭搭弦，再双手举过头顶。松开右键时倒放回执弓（lower）。
@@ -234,11 +263,10 @@ def clips():
         k(0.26, DAISAN, blend=0.16),
         k(0.6, KAI, ease='hold'),
     ]))
-    # 会：拉满后的持满，极轻的伸合（左手再推、右手再拉一点）。
+    # 会：拉满后的持满，极轻的伸合（左臂已经伸到头，只有右手再拉一点）。
     out.append(dict(name='kai', length=1.6, loop='loop', keys=[
         k(0.0, KAI),
-        k(0.8, KAI, grip=(-1.01, 0.165, -0.36), rhand=(0.3, 0.2, -0.33),
-          fp=dict(grip=fpv(-1.2, 26.45, -14.2), rhand=fpv(3.6, 26.6, 1.0), rhide=1.0)),
+        k(0.8, KAI, rhand=(0.3, 0.2, -0.33), fp=dict(KAI['fp'], rhand=fpv(3.6, 26.6, 1.0))),
         k(1.6, KAI),
     ]))
     # 離れ：右手向后一字甩开，弦回弹、弓身颤动，弓在左掌中翻转（返弦）；残心停住，再倒弓回执弓。
@@ -249,10 +277,10 @@ def clips():
         k(0.06, shiver=-0.22),
         *spin,
         k(0.1, shiver=0.1),
-        k(0.13, grip=(-1.04, 0.12, -0.36), **spun((0.05, 1, 0.02), AIM, 200), rhand=ZANSHIN_R, rpole=(0.6, -0.4, 0.6), shiver=-0.05,
+        k(0.13, **reach_out(0.03, KAI_ARM[1]), **spun((0.05, 1, 0.02), AIM, 200), rhand=ZANSHIN_R, rpole=(0.6, -0.4, 0.6), shiver=-0.05,
           fp=FP_ZANSHIN),
         k(0.2, shiver=0.0),
-        k(0.75, grip=(-1.04, 0.1, -0.36), **spun((0.05, 1, 0.02), AIM, 200), rhand=ZANSHIN_R, ease='hold', fp=FP_ZANSHIN),
+        k(0.75, **reach_out(0.01, KAI_ARM[1]), **spun((0.05, 1, 0.02), AIM, 200), rhand=ZANSHIN_R, ease='hold', fp=FP_ZANSHIN),
         # 弓倒し：双手放下、弓转回，身体转回正面。
         k(1.0, grip=(-0.6, -0.5, -0.34), rhand=(0.5, -0.6, -0.1), **spun((0.05, 1, -0.1), AIM, 100), turn=-60.0,
           rlift=1.0, fp=dict(grip=fpv(-3.5, 18.5, -12, -60), rhand=fpv(7, 13, -2, -60), rhide=0.0)),
@@ -266,16 +294,17 @@ def clips():
 # ---------------------------------------------------------------- 骨架
 
 
-WEAPON_SCALE = 1.25
-FP_SCALE = 0.58 * WEAPON_SCALE
-FOX_SCALE = 2.0
+# 弓与身高的比例和玩家差不多：神狐连耳朵高 54，2.3 倍时弓高 73.6，约身高的 1.36 倍。
+FOX_SCALE = 2.3
 
 
 def skeletons(art, weapon):
+    # 武器网格的 scale 乘在骨架的武器缩放上（第三人称 0.8、第一人称 0.58），与 LongswordRig 相同。
+    tp_scale, fp_scale = 0.8 * weapon['scale'], 0.58 * weapon['scale']
     player = player_skeleton(ROOT / 'src/main/resources/assets/logos_dimension/combat/skeletons/player_tp.json',
-                             weapon_scale=1.0, carry=((0, 0, 0), np.eye(3)))
+                             weapon_scale=tp_scale, carry=((0, 0, 0), np.eye(3)))
     fp = player_skeleton(ROOT / 'src/main/resources/assets/logos_dimension/combat/skeletons/player_fp.json',
-                         weapon_scale=FP_SCALE, carry=((0, 0, 0), np.eye(3)))
+                         weapon_scale=fp_scale, carry=((0, 0, 0), np.eye(3)))
     # 第一人称：身体不靠右（转身后左臂本来就伸在视线前方），弓在画面中偏右。
     fp.root = (tuple(FP_ROOT), (0, 0, 0))
     # 第一人称的搭箭点完全跟着右手：箭从右颊下方斜着射向弓，看得见。
@@ -286,9 +315,9 @@ def skeletons(art, weapon):
     fox.body = ((-3.4, 24.0, -2.6), (3.4, 32.5, 2.6))
     player.tag, fp.tag, fox.tag = 'player', 'fp', 'fox'
     # 箭台高度（弓网格单位）：左拳沿弓身方向的半宽之上一点。
-    player.arrow_rest = 1.5 / 1.0 + 0.2
-    fp.arrow_rest = 1.15 / FP_SCALE + 0.2
-    fox.arrow_rest = 1.0
+    player.arrow_rest = 1.5 / tp_scale + 0.2
+    fp.arrow_rest = 1.15 / fp_scale + 0.2
+    fox.arrow_rest = 1.8 / FOX_SCALE + 0.1
     for sk in (player, fp, fox):
         add_bow(sk, weapon)
     return player, fp, fox
@@ -482,10 +511,13 @@ def main():
         data = bedrock(all_clips, {c['name']: baked[(who, c['name'])] for c in all_clips}, sk, bones)
         text = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
         (ASSETS / f'combat/animations/yumi_{view}.animation.json').write_text(text, encoding='utf-8')
-    # 神狐的动作只做预览与留档（神狐接入战斗时再放进它的动画文件）。
-    fox_bones = [b for b in fox.order if b not in ('Sheath',)]
+    # 神狐的动作写进模型目录，由 tools/divine_fox_assets.py 并入神狐的动画文件（与打刀相同）。
+    fox_bones = ['Root', 'AllBody', 'UpBody', 'UpperBody', 'Head', 'RightArm', 'RightForeArm', 'RightHand', 'LeftArm', 'LeftForeArm', 'LeftHand',
+                 'RightLeg', 'RightLowerLeg', 'RightFoot', 'LeftLeg', 'LeftLowerLeg', 'LeftFoot', 'Weapon', *fox.bow_bones]
     data = bedrock(all_clips, {c['name']: baked[('fox', c['name'])] for c in all_clips}, fox, fox_bones)
-    (out / 'yumi_fox.animation.json').write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding='utf-8')
+    fox_out = art / 'MinecraftLogosMod/fox_model/divine_fox/Animation/yumi'
+    fox_out.mkdir(parents=True, exist_ok=True)
+    (fox_out / 'divine_fox_yumi.animation.json').write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
 
     cams = {'player': [Camera(-35, 8, 4.6, (0, 22, -2), (250, 300)), Camera(60, 6, 4.6, (0, 22, -2), (250, 300))],
             'fox': [Camera(-35, 8, 2.5, (0, 36, -3), (250, 300)), Camera(60, 6, 2.5, (0, 36, -3), (250, 300))]}
