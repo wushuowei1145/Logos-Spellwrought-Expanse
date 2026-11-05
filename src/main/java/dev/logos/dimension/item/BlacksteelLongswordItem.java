@@ -3,6 +3,7 @@ package dev.logos.dimension.item;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.combat.CombatWeapon;
 import dev.logos.dimension.longsword.LongswordCombat;
+import dev.logos.dimension.longsword.ManaGuard;
 import dev.logos.dimension.longsword.SwordCasting;
 import dev.logos.item.WandItem;
 import java.util.List;
@@ -33,7 +34,8 @@ import net.neoforged.neoforge.event.ItemAttributeModifierEvent;
 
 /**
  * 黑钢长剑：长剑的三段连斩，同时是一根 Logos 法杖（{@link WandItem}）：潜行右键挂 6 张术式载页，R 打开术式轮盘，
- * 蓄力速度按 Logos 第 3 档法杖。右键竖剑格挡（原版格挡组件，0.3 秒举剑前摇，减伤与击退走原版流程，不损耗耐久）；
+ * 蓄力速度按 Logos 第 3 档法杖。右键竖剑格挡（原版格挡组件，0.3 秒举剑前摇，减伤与击退走原版流程）：这是一面魔力护盾，
+ * 挡下的东西扣持剑者的魔力而不是耐久，正面的法术也挡，虚空一律穿透（见 {@link ManaGuard}）；
  * 格挡中左键开始施法蓄力，蓄满后松开右键施放（见 {@link SwordCasting}）。
  * 用它施放的术式里，魔力缠绕及其事件引发的符文花费 −30%、伤害 +30%（Logos 的 {@code wrap_cost}、{@code wrap_power} 属性）。
  * <p>
@@ -49,15 +51,18 @@ public final class BlacksteelLongswordItem extends WandItem implements CombatWea
     private static final double WRAP_COST = -0.3, WRAP_POWER = 0.3;
     private static final Identifier WRAP_COST_ATTRIBUTE = Identifier.fromNamespaceAndPath("logos", "wrap_cost");
     private static final Identifier WRAP_POWER_ATTRIBUTE = Identifier.fromNamespaceAndPath("logos", "wrap_power");
+    /** 原版盾牌掉耐久的公式（伤害不到 3 不掉，否则 1 + 伤害取整）：{@link ManaGuard} 按它扣魔力，剑本身不掉耐久。 */
+    private static final BlocksAttacks.ItemDamageFunction WEAR = new BlocksAttacks.ItemDamageFunction(3, 1, 1);
     private final CombatWeapon weapon;
 
     public BlacksteelLongswordItem(Properties p, CombatWeapon weapon) {
         super(p.sword(ToolMaterial.DIAMOND, DAMAGE, SPEED)
                 .delayedComponent(DataComponents.BLOCKS_ATTACKS, context -> new BlocksAttacks(0.3f, 1,
                         List.of(new BlocksAttacks.DamageReduction(90, Optional.empty(), 0, 1)),
-                        new BlocksAttacks.ItemDamageFunction(0, 0, 0),
-                        Optional.of(context.getOrThrow(DamageTypeTags.BYPASSES_SHIELD)),
-                        Optional.of(SoundEvents.SHIELD_BLOCK), Optional.of(SoundEvents.SHIELD_BREAK)))
+                        WEAR, Optional.of(context.getOrThrow(DamageTypeTags.BYPASSES_SHIELD)),
+                        // 和 Logos 的炼成体一样：挡下时是紫水晶的敲击声，被斧头破防时是紫水晶簇碎裂声。
+                        Optional.of(BuiltInRegistries.SOUND_EVENT.wrapAsHolder(SoundEvents.AMETHYST_BLOCK_HIT)),
+                        Optional.of(BuiltInRegistries.SOUND_EVENT.wrapAsHolder(SoundEvents.AMETHYST_CLUSTER_BREAK))))
                 .component(DataComponents.LORE, new ItemLore(List.of(
                         Component.translatable("tooltip.logos_dimension.longsword.combo"),
                         Component.translatable("tooltip.logos_dimension.blacksteel_longsword.guard"),

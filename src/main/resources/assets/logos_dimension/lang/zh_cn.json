@@ -432,7 +432,7 @@
   "item.logos_dimension.blacksteel_longsword": "黑钢长剑",
   "tooltip.logos_dimension.longsword.combo": "左键：三段连斩（可按住）",
   "tooltip.logos_dimension.longsword.charge": "右键保持竖剑蓄力，松开举剑下劈",
-  "tooltip.logos_dimension.blacksteel_longsword.guard": "右键：竖剑格挡（不损耗耐久）",
+  "tooltip.logos_dimension.blacksteel_longsword.guard": "右键：竖剑格挡，魔力护盾挡下正面的攻击与法术，扣魔力而不是耐久；虚空穿透",
   "tooltip.logos_dimension.blacksteel_longsword.wrap": "用它施放的魔力缠绕及其引发的术式：消耗 −30%，伤害 +30%",
   "tooltip.logos_dimension.blacksteel_longsword.cast": "格挡时左键蓄力，蓄满后松开右键施放",
   "item.logos_dimension.fox_uchigatana_ink": "神狐打刀·墨漆米白柄",

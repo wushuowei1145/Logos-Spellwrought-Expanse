@@ -43,6 +43,7 @@ public final class LongswordGameTests {
                 Map.entry("longsword_reach",h->obstruction(h,true)),
                 Map.entry("longsword_cone",LongswordGameTests::cone),
                 Map.entry("longsword_guard",LongswordGameTests::guard),
+                Map.entry("longsword_mana_guard",LongswordGameTests::manaGuard),
                 Map.entry("longsword_cast",LongswordGameTests::cast),
                 Map.entry("longsword_cast_beam",LongswordGameTests::castBeam));
         tests.forEach((name,test)->FUNCTIONS.register(name,()->test)); FUNCTIONS.register(bus);
@@ -114,20 +115,79 @@ public final class LongswordGameTests {
         return sword;
     }
     private static void mana(ServerPlayer p){var m=dev.logos.runtime.PlayerMagic.of(p);m.maxMana=m.mana=1000;m.trace=false;}
-    /** 黑钢长剑格挡：0.3 秒举剑前摇之后挡住正面的一击，不掉血也不损耗耐久；没挂载页时左键开不起蓄力，仍在格挡；松开放下剑。 */
+    private static double manaOf(ServerPlayer p){return dev.logos.runtime.PlayerMagic.of(p).mana;}
+    /** 黑钢长剑格挡：0.3 秒举剑前摇之后挡住正面的一击，不掉血也不损耗耐久，改扣原版盾牌该掉的耐久那么多魔力（6 伤害 → 7）；没挂载页时左键开不起蓄力，仍在格挡；松开放下剑。 */
     private static void guard(GameTestHelper h) {
-        var f=Fixture.create(h);f.at(30,f::use);
+        var f=Fixture.create(h);mana(f.p);f.at(30,f::use);
         f.at(34,()->h.assertTrue(SwordCasting.GUARD_RAISE.equals(LongswordCombat.move(f.p)) && !f.p.isBlocking(),"举剑前摇里就挡住了"));
         f.at(40,()->{
             h.assertTrue(f.p.isBlocking(),"前摇之后没有格挡");
             float health=f.p.getHealth();
             f.p.hurtServer(h.getLevel(),f.p.damageSources().mobAttack(f.target),6);
             h.assertTrue(f.p.getHealth()==health && f.p.getMainHandItem().getDamageValue()==0,"格挡没有挡住或损耗了耐久：生命="+f.p.getHealth()+" 耐久消耗="+f.p.getMainHandItem().getDamageValue());
+            h.assertTrue(Math.abs(manaOf(f.p)-993)<1e-9,"格挡 6 点伤害应扣 7 魔力，剩 "+manaOf(f.p));
             f.attack();
         });
         f.at(42,()->{h.assertTrue(SwordCasting.GUARD.equals(LongswordCombat.move(f.p)),"没挂载页时左键离开了格挡："+LongswordCombat.move(f.p));f.p.releaseUsingItem();});
         f.at(44,()->h.assertTrue("guard_lower".equals(LongswordCombat.move(f.p)),"松开右键没有放下剑："+LongswordCombat.move(f.p)));
         f.at(70,()->{f.idle();f.succeed();});
+    }
+    /** 站在持剑者正前方 {@code ahead} 格、面朝他的另一名玩家，用来朝他施法。 */
+    private static ServerPlayer facing(Fixture f,double ahead) {
+        var cookie=CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(),"sword-foe"),false);
+        var foe=new ServerPlayer(f.h.getLevel().getServer(),f.h.getLevel(),cookie.gameProfile(),cookie.clientInformation());
+        var connection=new Connection(PacketFlow.SERVERBOUND); new EmbeddedChannel(connection);
+        f.h.getLevel().getServer().getPlayerList().placeNewPlayer(connection,foe,cookie);
+        foe.setNoGravity(true);var at=f.origin.add(ahead,0,0);foe.snapTo(at.x,at.y,at.z,90,0);foe.setYHeadRot(90);mana(foe);
+        return foe;
+    }
+    private static void castAt(GameTestHelper h,ServerPlayer caster,String src) {
+        var inst=dev.logos.runtime.Casting.cast(caster,dev.logos.runtime.Casting.compile(src),null,null);
+        h.assertTrue(inst!=null && !inst.dead,"施法失败："+src);
+    }
+    /**
+     * 魔力格挡：魔法伤害照样挡、扣魔力（4 → 5）；虚空伤害穿透；魔力不够时挡不住，也不扣。正前方敌人的魔弹停在剑前，
+     * 付炼成体的拦截费 0.5 加命中伤害折成的魔力（5 → 6）；虚空魔弹穿过打中；不许作用于玩家的术式穿过不扣魔力。
+     */
+    private static void manaGuard(GameTestHelper h) {
+        var f=Fixture.create(h);mana(f.p);
+        // 魔力每刻回复 0.3，关掉它才量得出每次格挡扣了多少。
+        f.p.getAttribute(dev.logos.runtime.SpellModifiers.MANA_REGENERATION).addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                LogosDimension.id("test_no_regeneration"),-1,net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+        // 被挡下的术式结束后剩下的魔力会变成游离魔力，飘到持剑者身上被吸收；每刻清掉。
+        h.onEachTick(()->h.getLevel().getEntitiesOfClass(dev.logos.runtime.FreeManaEntity.class,new net.minecraft.world.phys.AABB(f.origin,f.origin).inflate(16)).forEach(Entity::discard));
+        var foe=new ServerPlayer[1];var health=new float[1];
+        f.at(30,f::use);
+        f.at(40,()->{
+            h.assertTrue(f.p.isBlocking(),"前摇之后没有格挡");
+            float before=f.p.getHealth();
+            f.p.hurtServer(h.getLevel(),f.p.damageSources().indirectMagic(f.target,f.target),4);
+            h.assertTrue(f.p.getHealth()==before && Math.abs(manaOf(f.p)-995)<1e-9,"魔法伤害没有挡住或没扣 5 魔力：生命="+f.p.getHealth()+" 魔力="+manaOf(f.p));
+            f.p.invulnerableTime=0;
+            dev.logos.runtime.Effects.damage(f.target,f.p,4,dev.logos.lang.Element.VOID);
+            h.assertTrue(f.p.getHealth()<before && Math.abs(manaOf(f.p)-995)<1e-9,"虚空伤害被挡住了：生命="+f.p.getHealth()+" 魔力="+manaOf(f.p));
+            f.p.setHealth(f.p.getMaxHealth());f.p.invulnerableTime=0;
+            dev.logos.runtime.PlayerMagic.of(f.p).mana=3;
+            f.p.hurtServer(h.getLevel(),f.p.damageSources().mobAttack(f.target),6);
+            h.assertTrue(f.p.getHealth()<f.p.getMaxHealth() && manaOf(f.p)==3,"魔力不够仍然挡住了或扣了魔力：生命="+f.p.getHealth()+" 魔力="+manaOf(f.p));
+            f.p.setHealth(f.p.getMaxHealth());f.p.invulnerableTime=0;mana(f.p);
+            // 傀儡挪到身后，不挡在敌人和持剑者之间。
+            f.target.setPos(f.origin.add(-3,0,0));foe[0]=facing(f,6);health[0]=f.p.getHealth();
+            castAt(h,foe[0],"(spell :players true :mana 30 (projectile :speed 1 (on-hit (damage target 5))))");
+        });
+        f.at(52,()->{
+            h.assertTrue(f.p.getHealth()==health[0],"正面的魔弹没有挡住：生命="+f.p.getHealth());
+            h.assertTrue(Math.abs(manaOf(f.p)-993.5)<1e-9,"挡下魔弹应扣 0.5 + 6 魔力，剩 "+manaOf(f.p));
+            castAt(h,foe[0],"(spell :players true :mana 30 (projectile :speed 1 (on-hit (damage target 5 void))))");
+        });
+        f.at(64,()->{
+            h.assertTrue(f.p.getHealth()<health[0] && Math.abs(manaOf(f.p)-993.5)<1e-9,"虚空魔弹没有穿透：生命="+f.p.getHealth()+" 魔力="+manaOf(f.p));
+            castAt(h,foe[0],"(spell :mana 30 (projectile :speed 1 (on-hit (damage target 5))))");
+        });
+        f.at(76,()->{
+            h.assertTrue(Math.abs(manaOf(f.p)-993.5)<1e-9,"打不着玩家的术式也扣了魔力，剩 "+manaOf(f.p));
+            h.getLevel().getServer().getPlayerList().remove(foe[0]);f.succeed();
+        });
     }
     /**
      * 黑钢长剑施法：格挡中左键开始 Logos 蓄力（剑尖前指，不再格挡），蓄满后松开右键施放并向前一送；
