@@ -44,6 +44,13 @@ final class SanctuaryLayout {
     /** 入口石阶底部（核心外一格）的设计坐标与相对高度。 */
     final int entranceU, entranceV, entranceY;
     final int tileMinY;
+    /** 神社境内的设计坐标范围 [u0, v0, u1, v1] 与平台相对高度；旧数据里没有时范围为空。 */
+    final int shrineU, shrineY;
+    private final int shrineU0, shrineV0, shrineU1, shrineV1;
+    /** 神社与旅馆片区翻转轴的两倍；0 表示没有翻转。 */
+    final int flipAxis, ryokanFlipAxis;
+    /** 街尾空地的范围 [u0, v0, u1, v1]（开发预览用）。 */
+    final int[] endBox = new int[4];
     final List<Tile> tiles = new ArrayList<>();
     final List<Lot> lots = new ArrayList<>();
     final Map<String, List<String>> variants = new HashMap<>();
@@ -96,6 +103,18 @@ final class SanctuaryLayout {
         entranceV = entrance.get("v").getAsInt();
         entranceY = entrance.get("y").getAsInt();
         tileMinY = json.get("tile_min_y").getAsInt();
+        JsonObject shrine = json.getAsJsonObject("shrine");
+        JsonArray box = shrine.getAsJsonArray("box");
+        shrineU0 = box.get(0).getAsInt();
+        shrineV0 = box.get(1).getAsInt();
+        shrineU1 = box.get(2).getAsInt();
+        shrineV1 = box.get(3).getAsInt();
+        shrineU = shrine.get("u").getAsInt();
+        shrineY = shrine.get("y").getAsInt();
+        flipAxis = shrine.get("flip_axis").getAsInt();
+        ryokanFlipAxis = shrine.get("ryokan_flip_axis").getAsInt();
+        JsonArray end = shrine.getAsJsonArray("end_box");
+        for (int i = 0; i < 4; i++) endBox[i] = end.get(i).getAsInt();
         for (JsonElement e : json.getAsJsonArray("tiles")) {
             JsonObject t = e.getAsJsonObject();
             tiles.add(new Tile(t.get("template").getAsString(), t.get("u").getAsInt(), t.get("v").getAsInt()));
@@ -110,6 +129,10 @@ final class SanctuaryLayout {
             variants.put(e.getKey(), names);
         }
         if (heights.length != size * size || ground.length != size * size) throw new IllegalStateException("神狐聚落高度图尺寸不符");
+    }
+
+    boolean inShrine(int u, int v) {
+        return u >= shrineU0 && u <= shrineU1 && v >= shrineV0 && v <= shrineV1;
     }
 
     boolean inside(int u, int v) {

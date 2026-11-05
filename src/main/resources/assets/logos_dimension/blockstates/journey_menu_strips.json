@@ -1,0 +1,49 @@
+{
+  "variants": {
+    "facing=north,paper=0": {
+      "model": "logos_dimension:block/journey_menu_strips_0"
+    },
+    "facing=east,paper=0": {
+      "model": "logos_dimension:block/journey_menu_strips_0",
+      "y": 90
+    },
+    "facing=south,paper=0": {
+      "model": "logos_dimension:block/journey_menu_strips_0",
+      "y": 180
+    },
+    "facing=west,paper=0": {
+      "model": "logos_dimension:block/journey_menu_strips_0",
+      "y": 270
+    },
+    "facing=north,paper=1": {
+      "model": "logos_dimension:block/journey_menu_strips_1"
+    },
+    "facing=east,paper=1": {
+      "model": "logos_dimension:block/journey_menu_strips_1",
+      "y": 90
+    },
+    "facing=south,paper=1": {
+      "model": "logos_dimension:block/journey_menu_strips_1",
+      "y": 180
+    },
+    "facing=west,paper=1": {
+      "model": "logos_dimension:block/journey_menu_strips_1",
+      "y": 270
+    },
+    "facing=north,paper=2": {
+      "model": "logos_dimension:block/journey_menu_strips_2"
+    },
+    "facing=east,paper=2": {
+      "model": "logos_dimension:block/journey_menu_strips_2",
+      "y": 90
+    },
+    "facing=south,paper=2": {
+      "model": "logos_dimension:block/journey_menu_strips_2",
+      "y": 180
+    },
+    "facing=west,paper=2": {
+      "model": "logos_dimension:block/journey_menu_strips_2",
+      "y": 270
+    }
+  }
+}

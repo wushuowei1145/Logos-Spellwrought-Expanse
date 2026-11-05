@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=north,tied=0": {
+      "model": "logos_dimension:block/journey_omikuji_rack_0"
+    },
+    "facing=east,tied=0": {
+      "model": "logos_dimension:block/journey_omikuji_rack_0",
+      "y": 90
+    },
+    "facing=south,tied=0": {
+      "model": "logos_dimension:block/journey_omikuji_rack_0",
+      "y": 180
+    },
+    "facing=west,tied=0": {
+      "model": "logos_dimension:block/journey_omikuji_rack_0",
+      "y": 270
+    },
+    "facing=north,tied=1": {
+      "model": "logos_dimension:block/journey_omikuji_rack_1"
+    },
+    "facing=east,tied=1": {
+      "model": "logos_dimension:block/journey_omikuji_rack_1",
+      "y": 90
+    },
+    "facing=south,tied=1": {
+      "model": "logos_dimension:block/journey_omikuji_rack_1",
+      "y": 180
+    },
+    "facing=west,tied=1": {
+      "model": "logos_dimension:block/journey_omikuji_rack_1",
+      "y": 270
+    },
+    "facing=north,tied=2": {
+      "model": "logos_dimension:block/journey_omikuji_rack_2"
+    },
+    "facing=east,tied=2": {
+      "model": "logos_dimension:block/journey_omikuji_rack_2",
+      "y": 90
+    },
+    "facing=south,tied=2": {
+      "model": "logos_dimension:block/journey_omikuji_rack_2",
+      "y": 180
+    },
+    "facing=west,tied=2": {
+      "model": "logos_dimension:block/journey_omikuji_rack_2",
+      "y": 270
+    },
+    "facing=north,tied=3": {
+      "model": "logos_dimension:block/journey_omikuji_rack_3"
+    },
+    "facing=east,tied=3": {
+      "model": "logos_dimension:block/journey_omikuji_rack_3",
+      "y": 90
+    },
+    "facing=south,tied=3": {
+      "model": "logos_dimension:block/journey_omikuji_rack_3",
+      "y": 180
+    },
+    "facing=west,tied=3": {
+      "model": "logos_dimension:block/journey_omikuji_rack_3",
+      "y": 270
+    }
+  }
+}

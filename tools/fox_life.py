@@ -132,7 +132,7 @@ def tea_garden(s, u0, v0, u1, v1, rnd):
 
 def end_plot(s, kind, box, rnd):
     """街尾空地：'tea' 茶庭、'pagoda' 五重塔、'bamboo' 竹林小径。"""
-    {'tea': tea_garden, 'pagoda': pagoda_garden, 'bamboo': bamboo_grove}[kind](s, *box, rnd)
+    {'tea': tea_garden, 'pagoda': pagoda_garden, 'bamboo': bamboo_grove, 'lotus': lotus_pond, 'ashiyu': foot_bath}[kind](s, *box, rnd)
 
 
 def _ground(s, u0, v0, u1, v1, rnd, mix=(('moss_block', 0.45), ('grass_block', 0.35), ('gravel', 0.2))):
@@ -208,23 +208,108 @@ def bamboo_grove(s, u0, v0, u1, v1, rnd):
                 for k in range(h):
                     leaves = 'large' if k >= h - 2 else 'small' if k == h - 3 else 'none'
                     c.set(u, 1 + k, v, B('bamboo', age=1, leaves=leaves, stage=0))
-    c.set(mid_u, 1, mid_v - 2, L('journey_shrine_hokora', facing='south'))
+    c.set(mid_u, 1, mid_v - 2, L('journey_shrine_hokora', facing='south', active=False))
     for du in (-2, 2):
         c.set(mid_u + du, 1, mid_v - 2, stone_lantern())
     fl.bench(c, mid_u - 1, 1, mid_v + 2, 'south', length=3)
+
+
+def lotus_pond(s, u0, v0, u1, v1, rnd):
+    """莲池：占满地块的一大片岩岸池，满是浮叶；一座拱桥通到湖心小岛，岛上四柱亭；岸边垂樱与石灯。"""
+    c = s.c
+    _ground(s, u0, v0, u1, v1, rnd)
+    w, d = u1 - u0, v1 - v0
+    cu, cv = u0 + w / 2, v0 + d / 2
+    pool = fl.rock_pool(c, cu, cv, w * 0.34, d * 0.32, depth=2, seed=601)
+    inside = set(pool)
+    for (u, v) in pool:
+        if rnd.random() < 0.22 and c.get(u, 1, v) in (None, AIR):
+            c.set(u, 1, v, B('lily_pad'))
+    # 湖心岛
+    iu, iv = int(cu), int(cv) + 3
+    for du in range(-3, 4):
+        for dv in range(-3, 4):
+            if du * du + dv * dv <= 11:
+                c.set(iu + du, 0, iv + dv, B('moss_block'))
+                c.set(iu + du, -1, iv + dv, B('stone'))
+                c.set(iu + du, 1, iv + dv, AIR)
+    for du in (-1, 1):
+        for dv in (-1, 1):
+            c.box(iu + du, 1, iv + dv, iu + du, 3, iv + dv, POST)
+    hip_roof(c, iu - 1, iu + 1, iv - 1, iv + 1, 4, eave=1)
+    c.box(iu - 1, 4, iv - 1, iu + 1, 4, iv + 1, DARK_PLANKS)
+    c.set(iu, 3, iv, paper_lantern(True))
+    # 北岸到岛的拱桥：桥面从岛北沿伸到北岸
+    north = [p for p in pool if iu - 1 <= p[0] <= iu + 2 and p[1] < iv - 3]
+    if north:
+        fl.arched_bridge(c, iu, min(p[1] for p in north) - 1, 1, length=iv - 3 - min(p[1] for p in north) + 2, axis='z')
+    fl.cherry_tree(c, u0 + 3, 1, v0 + 3, height=6, radius=3, seed=602)
+    fl.cherry_tree(c, u1 - 3, 1, v1 - 3, height=7, radius=3, seed=603)
+    fl.pine(c, u1 - 3, 1, v0 + 3, seed=604)
+    for (u, v) in ((u0 + 2, v1 - 2), (u1 - 2, v0 + d // 2)):
+        c.set(u, 1, v, tall_lantern('lower'))
+        c.set(u, 2, v, tall_lantern('upper'))
+
+
+def foot_bath(s, u0, v0, u1, v1, rnd):
+    """足汤：瓦顶长亭下一条浅浅的热水槽（地热石垫底，冒蒸汽），两边长凳可以坐着泡脚；旁边一间小汤屋与水井。"""
+    c = s.c
+    _ground(s, u0, v0, u1, v1, rnd, mix=(('gravel', 0.5), ('moss_block', 0.3), ('coarse_dirt', 0.2)))
+    w, d = u1 - u0, v1 - v0
+    cu = u0 + w // 2
+    z0, z1 = v0 + 3, v0 + 17
+    # 水槽
+    for u in (cu - 1, cu, cu + 1):
+        for v in range(z0, z1 + 1):
+            c.set(u, 0, v, B('water', level=0))
+            c.set(u, -1, v, L('journey_hot_spring_stone'))
+    # 长凳：水槽两侧朝里的木台阶
+    for v in range(z0, z1 + 1):
+        c.set(cu - 2, 1, v, B('spruce_stairs', facing='west', half='bottom', shape='straight', waterlogged=False))
+        c.set(cu + 2, 1, v, B('spruce_stairs', facing='east', half='bottom', shape='straight', waterlogged=False))
+        c.set(cu - 2, 0, v, B('spruce_planks'))
+        c.set(cu + 2, 0, v, B('spruce_planks'))
+    # 长亭
+    for v in range(z0, z1 + 1, 4):
+        for u in (cu - 3, cu + 3):
+            c.box(u, 1, v, u, 3, v, POST)
+        c.set(cu, 3, v, paper_lantern(True))
+    c.box(cu - 3, 4, z0, cu + 3, 4, z1, DARK_PLANKS)
+    gable_roof(c, cu - 3, cu + 3, z0, z1, 4, ridge_axis='z', eave=1)
+    # 小汤屋
+    bu0, bv0 = u0 + 2, z1 + 3
+    wa_building(c, bu0, bv0, bu0 + 8, bv0 + 6, 0, floors=1, floor_h=4, roof='gable', ridge_axis='x', eave=1, tatami=False, bays=3)
+    door(c, bu0 + 4, 1, bv0, 'north')
+    c.set(bu0 + 3, 3, bv0, noren('north', 'indigo'))
+    c.set(bu0 + 5, 3, bv0, noren('north', 'red'))
+    for u in range(bu0 + 2, bu0 + 7):
+        for v in range(bv0 + 2, bv0 + 5):
+            c.set(u, 0, v, B('water', level=0))
+            c.set(u, -1, v, L('journey_hot_spring_stone'))
+    fl.cherry_tree(c, u1 - 3, 1, v1 - 4, height=6, radius=3, seed=611)
+    fl.pine(c, u1 - 3, 1, z1 + 4, seed=612)
+    c.set(u0 + 2, 1, v0 + 1, tall_lantern('lower'))
+    c.set(u0 + 2, 2, v0 + 1, tall_lantern('upper'))
 
 
 def greenery(s, area, rnd, lawn=2):
     """在空草坪上留出 5×5 的园景地块：网格加抖动，每处要求周围一圈都是空草坪。
     地块里放什么（樱、松、花坛、竹丛、灌木与石灯、水井或只有草）由聚落生成时现场挑，见 GARDEN_VARIANTS。"""
     u0, v0, u1, v1 = area
-    for gu in range(u0, u1, 7):
-        for gv in range(v0, v1, 7):
-            u, v = gu + rnd.randint(0, 3), gv + rnd.randint(0, 3)
+    for gu in range(u0, u1, 6):
+        for gv in range(v0, v1, 6):
+            u, v = gu + rnd.randint(0, 2), gv + rnd.randint(0, 2)
             ok = all(0 <= u + du < 176 and 0 <= v + dv < 176 and s.g[v + dv, u + du] == lawn and _free(s, u + du, v + dv)
                      for du in range(-2, 3) for dv in range(-2, 3))
+            # 树冠会伸出地块两格：离房子与屋台至少两格，树冠范围内也不能有已经放好的东西（模板后放，树叶会盖掉它们）；
+            # 两处园景之间只要隔开一格，树冠挨着不要紧
             box = (u - 2, v - 2, u + 2, v + 2)
-            if not ok or any(box[0] <= o[2] + 1 and o[0] - 1 <= box[2] and box[1] <= o[3] + 1 and o[1] - 1 <= box[3] for o in s.boxes):
+            if not ok or any(box[0] <= o[2] + m and o[0] - m <= box[2] and box[1] <= o[3] + m and o[1] - m <= box[3]
+                             for o, m in ((o, 1 if lot['kind'] == 'garden' else 2) for o, lot in zip(s.boxes, s.lots))):
+                continue
+            y0 = s.H(u, v)
+            if any(s.c.get(u + du, y0 + k, v + dv) not in (None, AIR)
+                   for du in range(-3, 5) for dv in range(-3, 5) for k in range(1, 11)):
                 continue
             s.lot('garden', u - 2, v - 2, 5, 5, 0, y=s.H(u, v), ground=None)
     # 重复的名字是权重：樱与松多一些

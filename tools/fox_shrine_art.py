@@ -359,11 +359,189 @@ def lacquer_wood():
     save(planks, 'journey_lacquer_planks')
 
 
+# ==================== 抽签 ====================
+INK = (44, 34, 30)
+#: 看着像手写日文、其实谁也读不出来的笔画，每个 3×3
+GLYPHS = [
+    [(0, 0), (1, 0), (2, 0), (1, 1), (0, 2), (2, 2)],
+    [(1, 0), (0, 1), (1, 1), (2, 1), (1, 2)],
+    [(0, 0), (2, 0), (1, 1), (0, 2), (1, 2)],
+    [(2, 0), (1, 0), (1, 1), (0, 2), (2, 2)],
+    [(0, 0), (0, 1), (1, 1), (2, 1), (2, 2)],
+    [(1, 0), (2, 1), (0, 1), (1, 2)],
+    [(0, 0), (1, 0), (2, 1), (1, 2), (0, 2)],
+]
+
+
+def scribble(t, x0, y0, x1, y1, rnd, ink=INK):
+    """在 [x0, x1) × [y0, y1) 里一列列写鬼画符：每个字 3×3，字距一格。"""
+    y = y0
+    while y + 3 <= y1:
+        for (gx, gy) in rnd.choice(GLYPHS):
+            if x0 + gx < x1:
+                px(t, x0 + gx, y + gy, ink)
+        y += 4
+
+
+def omikuji_textures():
+    rnd = random.Random(301)
+    paper = canvas()
+    fill_noise(paper, [(226, 224, 214), (236, 234, 226), (244, 242, 234), (250, 248, 242)], 302, grain=0.2)
+    save(paper, 'journey_omikuji_paper')
+    rope = canvas()
+    fill_noise(rope, STRAW, 303, grain=0.5)
+    save(rope, 'journey_omikuji_rope')
+    label = canvas()
+    fill_noise(label, [(236, 232, 218), (244, 240, 226), (250, 246, 234), (255, 252, 242)], 304, grain=0.2)
+    scribble(label, 6, 1, 9, 15, rnd)
+    save(label, 'journey_omikuji_label')
+    # 物品：折好的白签纸，中间一道红纸封
+    e = canvas()
+    for y in range(1, 15):
+        for x in range(5, 11):
+            px(e, x, y, (244, 242, 232) if (x + y) % 5 else (232, 228, 214))
+    for y in range(1, 15):
+        px(e, 5, y, (206, 200, 186))
+    scribble(e, 7, 2, 10, 7, rnd)
+    for x in range(5, 11):
+        for y in (8, 9):
+            px(e, x, y, RED_CLOTH[2])
+    scribble(e, 7, 10, 10, 14, rnd)
+    e.save(A / 'textures/item/journey_omikuji.png')
+    item('journey_omikuji', generated_tex=f'{NS}:item/journey_omikuji')
+
+
+def omikuji_box():
+    """签箱：木台上一只朱漆八角筒，正面贴一张写着鬼画符的纸，顶上探出一根竹签。"""
+    tex = {'wood': 'minecraft:block/spruce_planks', 'lacquer': f'{NS}:block/journey_lacquer_planks',
+           'label': f'{NS}:block/journey_omikuji_label', 'stick': 'minecraft:block/birch_planks',
+           'dark': 'minecraft:block/stripped_dark_oak_log', 'particle': f'{NS}:block/journey_lacquer_planks'}
+    els = [
+        el((3, 0, 3), (13, 2, 13), 'wood'),
+        el((5, 2, 4.5), (11, 12, 11.5), 'lacquer'),
+        el((4.5, 2, 5), (11.5, 12, 11), 'lacquer'),
+        el((4.8, 12, 4.8), (11.2, 12.6, 11.2), 'dark'),
+        el((6.2, 4, 4.3), (9.8, 11, 4.5), 'label', skip=('up', 'down', 'west', 'east'), uv={'north': [5, 1, 10, 15], 'south': [5, 1, 10, 15]}),
+        el((7.4, 12.6, 7.4), (8.6, 15.5, 8.6), 'stick'),
+    ]
+    model('journey_omikuji_box', tex, els)
+    write(A / 'blockstates/journey_omikuji_box.json', {'variants': facing_states('journey_omikuji_box')})
+    item('journey_omikuji_box')
+
+
+def omikuji_rack():
+    """结签架：两根细柱、两道草绳；tied 0–3 档，绳上的白签越来越多。"""
+    tex = {'post': 'minecraft:block/stripped_dark_oak_log', 'rope': f'{NS}:block/journey_omikuji_rope',
+           'paper': f'{NS}:block/journey_omikuji_paper', 'particle': 'minecraft:block/stripped_dark_oak_log'}
+    base = [
+        el((0.5, 0, 7), (2.5, 15, 9), 'post'),
+        el((13.5, 0, 7), (15.5, 15, 9), 'post'),
+        el((0, 15, 6.5), (16, 16, 9.5), 'post'),
+        el((2.5, 11.5, 7.7), (13.5, 12.1, 8.3), 'rope'),
+        el((2.5, 6, 7.7), (13.5, 6.6, 8.3), 'rope'),
+    ]
+    slots = [(3.5, 9.4), (6.5, 3.9), (9.5, 9.4), (11, 3.9), (5, 9.4), (3.5, 3.9), (11.5, 9.4), (8, 3.9), (7.5, 9.4), (5.5, 3.9)]
+    counts = {0: 0, 1: 3, 2: 6, 3: 10}
+    variants = {}
+    for tied, n in counts.items():
+        strips = [el((x, y, 7.5), (x + 1.2, y + 2.8, 8.5), 'paper') for (x, y) in slots[:n]]
+        name = f'journey_omikuji_rack_{tied}'
+        model(name, tex, base + strips)
+        variants.update(facing_states(name, extra=f',tied={tied}'))
+    write(A / 'blockstates/journey_omikuji_rack.json', {'variants': variants})
+    item('journey_omikuji_rack', parent=f'{NS}:block/journey_omikuji_rack_2')
+
+
+def brush_glyph(d, x, y, size, rnd, ink):
+    """一个鬼画符：两到五笔，横、竖、撇、捺、钩、点随手搭在一起，像手写的日文但读不出来。"""
+    def pt(u, v):
+        return (x + u * size + rnd.uniform(-0.8, 0.8), y + v * size + rnd.uniform(-0.8, 0.8))
+    strokes = [
+        lambda: [pt(0.05, rnd.uniform(0.15, 0.85)), pt(0.5, rnd.uniform(0.1, 0.8)), pt(0.95, rnd.uniform(0.15, 0.85))],   # 横
+        lambda: [pt(rnd.uniform(0.3, 0.7), 0.0), pt(rnd.uniform(0.35, 0.65), 0.5), pt(rnd.uniform(0.3, 0.7), 1.0)],       # 竖
+        lambda: [pt(0.75, 0.05), pt(0.55, 0.4), pt(0.1, 0.9)],                                                            # 撇
+        lambda: [pt(0.2, 0.1), pt(0.5, 0.55), pt(0.95, 0.9)],                                                             # 捺
+        lambda: [pt(0.5, 0.0), pt(0.55, 0.7), pt(0.35, 0.95), pt(0.15, 0.75)],                                            # 钩
+        lambda: [pt(0.15, 0.2), pt(0.8, 0.25), pt(0.7, 0.75), pt(0.25, 0.8), pt(0.35, 0.45)],                             # 绕一圈
+    ]
+    for _ in range(rnd.randint(2, 4)):
+        line = rnd.choice(strokes)()
+        d.line(line, fill=ink, width=rnd.choice((1, 1, 1, 2)), joint='curve')
+    if rnd.random() < 0.3:
+        dot = pt(rnd.uniform(0.6, 0.95), rnd.uniform(0.0, 0.3))
+        d.ellipse([dot[0] - 1, dot[1] - 1, dot[0] + 1, dot[1] + 1], fill=ink)
+
+
+def brush_strips(color, ink, rnd):
+    """64×64 的纸条贴图：比方块别的贴图细四倍，笔画才像毛笔字。三列对应模型的三张纸条，每列写一两行。"""
+    from PIL import Image, ImageDraw
+    t = Image.new('RGBA', (64, 64), color + (255,))
+    for _ in range(900):
+        x, y = rnd.randrange(64), rnd.randrange(64)
+        k = rnd.randint(-7, 7)
+        t.putpixel((x, y), tuple(max(0, min(255, c + k)) for c in color) + (255,))
+    d = ImageDraw.Draw(t)
+    for x0 in (4, 24, 44):
+        y = 12
+        size = rnd.choice((10, 11, 12))
+        while y + size <= 62:
+            brush_glyph(d, x0 + 2 + rnd.uniform(-0.6, 0.6), y, size, rnd, ink)
+            y += size + rnd.randint(2, 4)
+    return t
+
+
+def menu_strips():
+    """菜单条：细木条下垂三张纸条，写满鬼画符；白、米黄、浅红三种纸。"""
+    papers = [(242, 236, 218), (238, 212, 136), (222, 104, 84)]
+    variants = {}
+    for i, color in enumerate(papers):
+        ink = (38, 28, 26) if i < 2 else (250, 240, 226)
+        t = brush_strips(color, ink, random.Random(311 + i))
+        save(t, f'journey_menu_strips_{i}')
+        tex = {'paper': f'{NS}:block/journey_menu_strips_{i}', 'bar': 'minecraft:block/stripped_dark_oak_log',
+               'particle': f'{NS}:block/journey_menu_strips_{i}'}
+        lengths = [(1, 5, 5), (6, 10, 3), (11, 15, 6)] if i != 1 else [(1, 5, 4), (6, 10, 6), (11, 15, 3)]
+        els = [el((0, 14.5, 7.4), (16, 16, 8.6), 'bar')]
+        for (a, b, bottom) in lengths:
+            els.append(el((a, bottom, 7.8), (b, 14.5, 8.2), 'paper', skip=('up', 'down'),
+                          uv={'north': [a, 16 - 14.5 + 1, b, 16 - bottom + 1 if 16 - bottom + 1 <= 16 else 16],
+                              'south': [a, 16 - 14.5 + 1, b, 16 - bottom + 1 if 16 - bottom + 1 <= 16 else 16]}))
+        name = f'journey_menu_strips_{i}'
+        model(name, tex, els)
+        variants.update(facing_states(name, extra=f',paper={i}'))
+    write(A / 'blockstates/journey_menu_strips.json', {'variants': variants})
+    item('journey_menu_strips', parent=f'{NS}:block/journey_menu_strips_0')
+
+
+FORTUNES = {
+    'daikichi': ('Great Blessing', '大吉', 'The fox smiles on every road you take today.', '诸事皆宜，狐仙今日与你同行。'),
+    'chukichi': ('Middle Blessing', '中吉', 'Good winds; keep walking and they will find you.', '好风将至，走下去自会遇见。'),
+    'kichi': ('Blessing', '吉', 'A quiet day that ends better than it began.', '平平淡淡的一天，收尾比开头更好。'),
+    'shokichi': ('Small Blessing', '小吉', 'Small luck, for those who notice small things.', '小小的好运，留给留心小事的人。'),
+    'suekichi': ('Future Blessing', '末吉', 'Not today. But the road turns ahead.', '今日未至，前路自有转弯。'),
+    'kyo': ('Misfortune', '凶', 'Tie this paper to the rack and leave it behind.', '把这张签系在结签架上，留在这里吧。'),
+    'daikyo': ('Great Misfortune', '大凶', 'Even the foxes look away. Tie it up, quickly.', '连狐仙都别过了脸，快去系上吧。'),
+}
+
+
+def tags():
+    p = ROOT / 'src/main/resources/data/minecraft/tags/block/mineable/axe.json'
+    data = json.loads(p.read_text(encoding='utf-8'))
+    for n in ('journey_omikuji_box', 'journey_omikuji_rack'):
+        k = f'{NS}:{n}'
+        if k not in data['values']:
+            data['values'].append(k)
+    p.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+
 def lang():
     names = {
         'journey_ema_rack': ('Ema Rack', '绘马挂'),
         'journey_offering_box': ('Offering Box', '赛钱箱'),
         'journey_suzu_rope': ('Bell Rope', '鈴緒'),
+        'journey_omikuji_box': ('Omikuji Box', '签箱'),
+        'journey_omikuji_rack': ('Omikuji Tying Rack', '结签架'),
+        'journey_menu_strips': ('Menu Strips', '菜单条'),
     }
     for code, idx in (('en_us', 0), ('zh_cn', 1)):
         p = A / f'lang/{code}.json'
@@ -371,7 +549,12 @@ def lang():
         for k, pair in names.items():
             data[f'block.{NS}.{k}'] = pair[idx]
             data[f'item.{NS}.{k}'] = pair[idx]
-        data[f'item.{NS}.journey_ema'] = ('Ema (rename on an anvil to write a wish)', '绘马（在铁砧上改名写下愿望）')[idx]
+        data[f'item.{NS}.journey_omikuji'] = ('Omikuji', '签纸')[idx]
+        data[f'block.{NS}.journey_omikuji_box.today'] = ('You already drew a fortune today', '今天已经抽过签了')[idx]
+        data[f'block.{NS}.journey_offering_box.blessed'] = ('%s offered: blessed for about %s min', '奉上 %s，得到约 %s 分钟的保佑')[idx]
+        for k, row in FORTUNES.items():
+            data[f'fortune.{NS}.{k}'] = row[idx]
+            data[f'fortune.{NS}.{k}.verse'] = row[2 + idx]
         p.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 
 
@@ -382,8 +565,13 @@ def main():
     paper_lantern()
     shoji()
     lacquer_wood()
+    omikuji_textures()
+    omikuji_box()
+    omikuji_rack()
+    menu_strips()
+    tags()
     lang()
-    loot(['journey_offering_box', 'journey_suzu_rope'])
+    loot(['journey_offering_box', 'journey_suzu_rope', 'journey_omikuji_box', 'journey_omikuji_rack', 'journey_menu_strips'])
     print('shrine art done')
 
 

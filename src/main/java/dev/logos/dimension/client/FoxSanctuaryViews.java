@@ -36,21 +36,24 @@ public class FoxSanctuaryViews implements UIScenario {
         o.tags("fox_dev").defaultTimeoutMs(400000).scenarioTimeoutMs(900000);
     }
 
-    /** 各方案的神社参道 u（主街东端 + 6），与 tools/fox_sanctuary.py 的 PLANS 对应。 */
-    private static final int[] SHRINE_U = {132, 126, 128};
-
     private static int su(SanctuaryGroundsPiece g) {
-        return SHRINE_U[g.plan()];
+        return g.shrineU();
     }
 
-    /** 神社与旅馆片区的设计点：方案 b 把两者以主街为轴南北翻过去（翻转轴两倍为 176，连续坐标 v → 177 - v）。 */
+    /** 神社片区的设计点：有的方案把它以主街为轴南北翻过去。 */
     private static Vec3 sp(SanctuaryGroundsPiece g, double u, double dy, double v) {
-        return g.designPoint(u, dy, g.plan() == 1 ? 177 - v : v);
+        return g.designPoint(u, dy, g.shrineV(v));
     }
 
-    /** 露天风吕岩岸池中间一格（terrace 格局的岩岸池在西边）。 */
-    private static Vec3 bath(SanctuaryGroundsPiece g, double dy) {
-        return sp(g, g.plan() == 2 ? 116.5 : 122.5, dy, 155.5);
+    /** 旅馆片区的设计点。 */
+    private static Vec3 rp(SanctuaryGroundsPiece g, double u, double dy, double v) {
+        return g.designPoint(u, dy, g.ryokanV(v));
+    }
+
+    /** 露天风吕岩岸池中间一格：带木桶汤的格局岩岸池在西边，所以两处都试。 */
+    private static Vec3 bath(ServerLevel level, SanctuaryGroundsPiece g, double dy) {
+        Vec3 east = rp(g, 122.5, dy, 155.5);
+        return HotSpringStoneBlock.heatedFrom(level, BlockPos.containing(rp(g, 122.5, -0.5, 155.5))) ? east : rp(g, 116.5, dy, 155.5);
     }
 
     private static Vec3[] look(Vec3 from, Vec3 to) {
@@ -159,17 +162,37 @@ public class FoxSanctuaryViews implements UIScenario {
         shot(s, "shrine_front", g -> look(sp(g, 151.5, 19.6, 50), sp(g, 151.5, 18, 38)));
         shot(s, "shrine_back", g -> look(sp(g, 150, 24, -6), sp(g, 148, 12, 18)));
         shot(s, "chozuya", g -> look(sp(g, su(g) - 1, 21, 43), sp(g, su(g) - 1, 17, 38)));
-        // 温泉旅馆（方案 b 在主街北侧）
-        shot(s, "ryokan_gate", g -> look(sp(g, 122.5, 2.6, 94), sp(g, 122.5, 4, 112)));
-        shot(s, "ryokan_court", g -> look(sp(g, 124, 15, 128), sp(g, 118, 0, 135)));
-        shot(s, "onsen", g -> look(sp(g, 140, 6, 157), sp(g, 124, 0, 150)));
-        shot(s, "onsen_bath", g -> look(sp(g, 122.5, 2.6, 149.5), sp(g, 122.5, 0, 156)));
-        shot(s, "ryokan_west_yard", g -> look(sp(g, 100, 24, 136), sp(g, 100, 0, 152)));
-        shot(s, "ryokan_east_yard", g -> look(sp(g, 145, 24, 136), sp(g, 145, 0, 152)));
+        // 手水舍与拝殿之间的抽签处；绘马挂背朝神社、正面朝路
+        shot(s, "omikuji", g -> look(sp(g, (su(g) + 4 + 144) / 2 + 0.5, 19.6, 44), sp(g, (su(g) + 4 + 144) / 2 + 0.5, 18, 35)));
+        shot(s, "ema_racks", g -> look(sp(g, 143.5, 19, 48), sp(g, 143.5, 18, 43)));
+        // 境内的石龛激活、发光；境内外判定
+        s.server("hokora", ctx -> {
+            var level = ctx.server().getLevel(LogosDimension.CLOUDSEA);
+            BlockPos tree = BlockPos.containing(sp(grounds, 159.5, 17, 36.5));
+            var state = level.getBlockState(tree);
+            boolean inside = dev.logos.dimension.fox.FoxSanctuaryStructure.inShrine(level, BlockPos.containing(sp(grounds, 150.5, 18, 42.5)));
+            boolean outside = dev.logos.dimension.fox.FoxSanctuaryStructure.inShrine(level, BlockPos.containing(grounds.designPoint(60.5, 1, 88.5)));
+            System.out.println("[fox] hokora " + state + " light=" + state.getLightEmission() + " inShrine precinct=" + inside + " street=" + outside);
+            if (!state.is(dev.logos.dimension.cloudsea.FoxWildsBlocks.SHRINE_HOKORA.get()) || !state.getValue(dev.logos.dimension.cloudsea.ShrineHokoraBlock.ACTIVE)) {
+                throw new IllegalStateException("神木下的石龛没有激活：" + state);
+            }
+            if (!inside || outside) throw new IllegalStateException("神社境内判定不对");
+        });
+        // 温泉旅馆（有的方案在主街北侧）
+        shot(s, "ryokan_gate", g -> look(rp(g, 122.5, 2.6, 94), rp(g, 122.5, 4, 112)));
+        shot(s, "ryokan_court", g -> look(rp(g, 124, 15, 128), rp(g, 118, 0, 135)));
+        shot(s, "onsen", g -> look(rp(g, 140, 6, 157), rp(g, 124, 0, 150)));
+        shot(s, "onsen_bath", g -> look(rp(g, 122.5, 2.6, 149.5), rp(g, 122.5, 0, 156)));
+        shot(s, "ryokan_west_yard", g -> look(rp(g, 100, 24, 136), rp(g, 100, 0, 152)));
+        shot(s, "ryokan_east_yard", g -> look(rp(g, 145, 24, 136), rp(g, 145, 0, 152)));
+        // 两翼的房间：一层第一间，从门内往里看
+        shot(s, "wing_west", g -> look(rp(g, 102.5, 2.7, 113.5), rp(g, 95.5, 1.5, 114.5)));
+        shot(s, "wing_east", g -> look(rp(g, 142.5, 2.7, 113.5), rp(g, 149.5, 1.5, 114.5)));
+        shot(s, "main_room", g -> look(rp(g, 113.5, 7.6, 117.5), rp(g, 117.5, 6.5, 123.5)));
         // 露天风吕池底是含水石半砖、下面才是地热石：放一头受伤的牛进池子，三秒后应当在回血
         s.server("hot spring", ctx -> {
             var level = ctx.server().getLevel(LogosDimension.CLOUDSEA);
-            Vec3 p = bath(grounds, -0.5);
+            Vec3 p = bath(level, grounds, -0.5);
             BlockPos slab = BlockPos.containing(p);
             if (!HotSpringStoneBlock.heatedFrom(level, slab)) {
                 throw new IllegalStateException("露天风吕池底找不到地热石：" + level.getBlockState(slab) + " / " + level.getBlockState(slab.below()));
@@ -185,34 +208,42 @@ public class FoxSanctuaryViews implements UIScenario {
             soaker.discard();
             if (!regen) throw new IllegalStateException("泡在露天风吕里的牛没有得到生命恢复");
         }).server("hot spring winter", ctx -> {
-            // 冬天：主街水渠会结冰，露天风吕（地热石）不结冰
+            // 冬天：田边灌溉沟（普通的水）会结冰；露天风吕（地热石）与主街水渠（含水石阶）不结冰
             var level = ctx.server().getLevel(LogosDimension.CLOUDSEA);
-            BlockPos bath = BlockPos.containing(bath(grounds, 0));
-            BlockPos ditch = null;
-            for (int u = 40; u <= 60 && ditch == null; u++) for (int v = 70; v <= 100 && ditch == null; v++) {
-                BlockPos p = BlockPos.containing(grounds.designPoint(u + 0.5, 0, v + 0.5));
-                if (level.getBlockState(p).is(net.minecraft.world.level.block.Blocks.WATER) && !HotSpringStoneBlock.heatedFrom(level, p)) ditch = p;
+            BlockPos bath = BlockPos.containing(bath(level, grounds, 0));
+            BlockPos ditch = null, channel = null;
+            for (int y = -8; y <= 0 && ditch == null; y++) {
+                BlockPos p = BlockPos.containing(grounds.designPoint(16.5, y, 130.5));
+                if (level.getBlockState(p).is(net.minecraft.world.level.block.Blocks.WATER)) ditch = p;
             }
-            if (ditch == null) throw new IllegalStateException("没找到主街水渠");
+            for (int v = 70; v <= 100 && channel == null; v++) {
+                BlockPos p = BlockPos.containing(grounds.designPoint(45.5, 0, v + 0.5));
+                if (level.getBlockState(p).is(net.minecraft.world.level.block.Blocks.STONE_STAIRS)) channel = p;
+            }
+            if (ditch == null || channel == null) throw new IllegalStateException("没找到灌溉沟或主街水渠：" + ditch + " " + channel);
             JourneySeasons.CONTEXT.set(3);
             try {
                 boolean bathFreezes = level.getBiome(bath).value().shouldFreeze(level, bath, false);
                 boolean ditchFreezes = level.getBiome(ditch).value().shouldFreeze(level, ditch, false);
-                System.out.println("[fox] winter: bath freezes=" + bathFreezes + " ditch freezes=" + ditchFreezes);
-                if (bathFreezes || !ditchFreezes) throw new IllegalStateException("冬天应当只有水渠结冰、温泉不结冰");
+                boolean channelFreezes = level.getBiome(channel).value().shouldFreeze(level, channel, false);
+                System.out.println("[fox] winter: bath freezes=" + bathFreezes + " channel freezes=" + channelFreezes + " ditch freezes=" + ditchFreezes);
+                if (bathFreezes || channelFreezes || !ditchFreezes) throw new IllegalStateException("冬天应当只有灌溉沟结冰，温泉与主街水渠不结冰");
             } finally {
                 JourneySeasons.CONTEXT.remove();
             }
         });
-        shot(s, "nodate", g -> look(sp(g, 136, 3.5, 99), sp(g, 146, 1, 106)));
-        shot(s, "ryokan_stairs", g -> look(sp(g, 111.5, 2.8, 121.5), sp(g, 107.5, 4, 116)));
-        // 街尾空地：茶庭 / 五重塔 / 竹林小径
-        shot(s, "end_plot", g -> switch (g.plan()) {
-            case 1 -> look(g.designPoint(105.5, 16, 103), g.designPoint(105.5, 10, 127));
-            case 2 -> look(g.designPoint(147, 7, 63), g.designPoint(147, 1, 84));
-            default -> look(g.designPoint(136, 6, 92), g.designPoint(148, 0, 82));
+        shot(s, "nodate", g -> look(rp(g, 136, 3.5, 99), rp(g, 146, 1, 106)));
+        shot(s, "ryokan_stairs", g -> look(rp(g, 111.5, 2.8, 121.5), rp(g, 107.5, 4, 116)));
+        // 街尾空地：从地块北边斜着往下看
+        shot(s, "end_plot", g -> {
+            int[] b = g.endBox();
+            double cu = (b[0] + b[2]) / 2.0, cv = (b[1] + b[3]) / 2.0;
+            return look(g.designPoint(cu, 18, b[1] - 8), g.designPoint(cu, 3, cv));
         });
-        shot(s, "court_bridge", g -> look(sp(g, 121, 7, 140), sp(g, 113.5, 1, 132)));
+        shot(s, "court_bridge", g -> look(rp(g, 121, 7, 140), rp(g, 113.5, 1, 132)));
+        // 田地的切面砌成石垣：西缘与东缘
+        shot(s, "field_west", g -> look(g.designPoint(28, 0, 135), g.designPoint(15, -2, 135)));
+        shot(s, "field_east", g -> look(g.designPoint(78, 0, 135), g.designPoint(91, -2, 135)));
         shot(s, "lantern_posts", g -> look(g.designPoint(47, 3, 92), g.designPoint(42, 5, 87)));
         shot(s, "fields", g -> look(g.designPoint(40, 6, 106), g.designPoint(55, -4, 138)));
         shot(s, "houses", g -> look(g.designPoint(60, 6, 72), g.designPoint(62, 2, 40)));

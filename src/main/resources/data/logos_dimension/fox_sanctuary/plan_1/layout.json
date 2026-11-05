@@ -8,6 +8,24 @@
     "y": -14
   },
   "tile_min_y": -16,
+  "shrine": {
+    "box": [
+      122,
+      131,
+      160,
+      162
+    ],
+    "u": 126,
+    "y": 16,
+    "flip_axis": 177,
+    "ryokan_flip_axis": 176,
+    "end_box": [
+      94,
+      110,
+      117,
+      140
+    ]
+  },
   "tiles": [
     {
       "template": "plan_1/core_0_0",
@@ -380,9 +398,9 @@
     },
     {
       "kind": "garden",
-      "u": 18,
+      "u": 16,
       "y": -2,
-      "v": 66,
+      "v": 72,
       "turns": 0
     },
     {
@@ -394,275 +412,135 @@
     },
     {
       "kind": "garden",
-      "u": 48,
-      "y": 0,
-      "v": 31,
+      "u": 16,
+      "y": -2,
+      "v": 101,
       "turns": 0
     },
     {
       "kind": "garden",
-      "u": 48,
+      "u": 47,
       "y": -2,
-      "v": 67,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 54,
-      "y": -2,
-      "v": 75,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 83,
-      "y": -2,
-      "v": 69,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 88,
-      "y": -2,
-      "v": 75,
+      "v": 66,
       "turns": 0
     },
     {
       "kind": "garden",
       "u": 89,
       "y": -2,
-      "v": 151,
+      "v": 142,
       "turns": 0
     },
     {
       "kind": "garden",
       "u": 96,
       "y": -2,
-      "v": 76,
+      "v": 144,
       "turns": 0
     },
     {
       "kind": "garden",
-      "u": 97,
+      "u": 102,
       "y": -2,
+      "v": 142,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 108,
+      "y": 3,
       "v": 143,
       "turns": 0
     },
     {
       "kind": "garden",
-      "u": 95,
+      "u": 107,
+      "y": 3,
+      "v": 149,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 112,
       "y": -2,
-      "v": 152,
+      "v": 100,
       "turns": 0
     },
     {
       "kind": "garden",
-      "u": 104,
-      "y": 0,
-      "v": 143,
+      "u": 113,
+      "y": 9,
+      "v": 149,
       "turns": 0
     },
     {
       "kind": "garden",
-      "u": 101,
+      "u": 131,
       "y": -2,
-      "v": 152,
+      "v": 78,
       "turns": 0
     },
     {
       "kind": "garden",
-      "u": 109,
+      "u": 138,
       "y": -2,
-      "v": 76,
+      "v": 78,
       "turns": 0
     },
     {
       "kind": "garden",
-      "u": 110,
+      "u": 137,
       "y": -2,
-      "v": 96,
+      "v": 88,
       "turns": 0
     },
     {
       "kind": "garden",
-      "u": 109,
+      "u": 138,
+      "y": -2,
+      "v": 94,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 138,
       "y": -2,
       "v": 102,
       "turns": 0
     },
     {
       "kind": "garden",
-      "u": 111,
-      "y": 6,
-      "v": 139,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 111,
-      "y": 6,
-      "v": 151,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 116,
-      "y": -2,
-      "v": 103,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 123,
-      "y": -2,
-      "v": 76,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 130,
-      "y": -2,
-      "v": 74,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 132,
-      "y": -2,
-      "v": 89,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 130,
-      "y": -2,
-      "v": 96,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 139,
-      "y": -2,
-      "v": 80,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 136,
-      "y": -2,
-      "v": 95,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 137,
-      "y": -2,
-      "v": 103,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 137,
-      "y": 14,
-      "v": 122,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 145,
-      "y": -2,
-      "v": 80,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 145,
-      "y": -2,
-      "v": 89,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
       "u": 144,
       "y": -2,
-      "v": 96,
+      "v": 77,
       "turns": 0
     },
     {
       "kind": "garden",
-      "u": 146,
-      "y": -2,
-      "v": 103,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 150,
+      "u": 149,
       "y": 1,
-      "v": 18,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 151,
-      "y": 0,
-      "v": 27,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 150,
-      "y": 0,
-      "v": 33,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 152,
-      "y": -2,
-      "v": 48,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 152,
-      "y": -2,
-      "v": 55,
+      "v": 22,
       "turns": 0
     },
     {
       "kind": "garden",
       "u": 150,
       "y": -2,
-      "v": 62,
+      "v": 82,
+      "turns": 0
+    },
+    {
+      "kind": "garden",
+      "u": 148,
+      "y": -2,
+      "v": 89,
       "turns": 0
     },
     {
       "kind": "garden",
       "u": 150,
       "y": -2,
-      "v": 68,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 151,
-      "y": -2,
-      "v": 81,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 151,
-      "y": -2,
-      "v": 90,
-      "turns": 0
-    },
-    {
-      "kind": "garden",
-      "u": 151,
-      "y": -2,
-      "v": 97,
+      "v": 101,
       "turns": 0
     }
   ],
@@ -670,6 +548,8 @@
     "shop": [
       "shop_cloth",
       "shop_general",
+      "shop_izakaya_long",
+      "shop_izakaya_u",
       "shop_noodle",
       "shop_sake",
       "shop_sweets",
@@ -692,7 +572,9 @@
     "house": [
       "house_a",
       "house_b",
-      "house_c"
+      "house_c",
+      "house_d",
+      "house_e"
     ],
     "garden": [
       "garden_bamboo",

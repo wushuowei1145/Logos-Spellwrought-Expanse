@@ -139,7 +139,15 @@ def blob(cx, cz, rx, rz, seed, wobble=0.22):
     return f
 
 
-def rock_pool(c, cx, cz, rx, rz, depth=2, seed=1, hot=False, lilies=True):
+#: 温泉池底铺的含水半砖；靠岸一圈换同料的台阶当坐沿
+POOL_FLOORS = {
+    'stone': (('stone_slab', 'andesite_slab'), 'stone_stairs'),
+    'brick': (('stone_brick_slab', 'mossy_stone_brick_slab', 'stone_brick_slab'), 'stone_brick_stairs'),
+    'cobble': (('cobblestone_slab', 'mossy_cobblestone_slab', 'andesite_slab'), 'cobblestone_stairs'),
+}
+
+
+def rock_pool(c, cx, cz, rx, rz, depth=2, seed=1, hot=False, lilies=True, floor='stone'):
     """岩石围合的不规则池：池底碎石（温泉为温泉石），岸边一两层高低错落的苔石，浮叶与蕨。返回池内格子。"""
     rnd = random.Random(seed)
     f = blob(cx, cz, rx, rz, seed)
@@ -154,8 +162,13 @@ def rock_pool(c, cx, cz, rx, rz, depth=2, seed=1, hot=False, lilies=True):
                 c.set(x, -depth, z, L('journey_hot_spring_stone') if hot else B('gravel'))
                 if hot and depth >= 2:
                     # 地热石上铺一层含水石半砖，站在池底时头露出水面；地热石照样加热上面整段水柱
-                    slab = 'andesite_slab' if rnd.random() < 0.25 else 'stone_slab'
-                    c.set(x, 1 - depth, z, B(slab, type='bottom', waterlogged=True))
+                    slabs, stairs = POOL_FLOORS[floor]
+                    if d > 0.72:
+                        # 靠岸一圈是台阶：高的一半朝岸，可以坐着泡
+                        out = ('east' if x > cx else 'west') if abs(x - cx) / rx > abs(z - cz) / rz else ('south' if z > cz else 'north')
+                        c.set(x, 1 - depth, z, B(stairs, facing=out, half='bottom', shape='straight', waterlogged=True))
+                    else:
+                        c.set(x, 1 - depth, z, B(rnd.choice(slabs), type='bottom', waterlogged=True))
                 c.set(x, 1, z, AIR)
                 if lilies and not hot and d > 0.55 and rnd.random() < 0.12:
                     c.set(x, 1, z, B('lily_pad'))
@@ -253,12 +266,20 @@ def bench(c, x, y, z, facing, length=3, axis='x'):
 
 
 # ==================== 温泉旅馆 ====================
-def ryokan(variant='grand'):
-    """此花亭式的温泉旅馆：临街门与前庭，本馆，木廊围合的中庭，两翼客房与食堂，后部内汤与露天风吕。
+#: 旅馆格局：本馆层数、中庭（pond 岩岸池 / karesansui 枯山水 / cherry 草地大樱）、客房翼在西还是东、
+#: 另一翼（hall 食堂 / baths 带私汤的客房 / guest 也是客房）、露天风吕有没有木桶汤与四柱亭、内汤一池还是两池
+RYOKAN_LAYOUTS = {
+    'grand': dict(floors=3, court='pond', guest_west=True, other='hall', tub=False, azumaya=False, twin=False),
+    'garden': dict(floors=2, court='karesansui', guest_west=True, other='baths', tub=False, azumaya=True, twin=True),
+    'terrace': dict(floors=3, court='cherry', guest_west=False, other='hall', tub=True, azumaya=False, twin=False),
+    'onsen': dict(floors=3, court='karesansui', guest_west=False, other='baths', tub=True, azumaya=False, twin=True),
+    'lodge': dict(floors=2, court='pond', guest_west=True, other='guest', tub=False, azumaya=True, twin=False),
+}
 
-    variant：'grand' 三层本馆、中庭岩岸池与拱桥、一座岩岸露天风吕；
-    'garden' 两层本馆、中庭枯山水、露天风吕上架一座四柱亭；
-    'terrace' 三层本馆、中庭草地中央一株大樱、两翼客房与食堂对调、露天风吕分成岩岸池与木桶汤两处。"""
+
+def ryokan(variant='grand'):
+    """此花亭式的温泉旅馆：临街门与前庭，本馆，木廊围合的中庭，两翼客房，后部内汤与露天风吕。格局见 RYOKAN_LAYOUTS。"""
+    plan = RYOKAN_LAYOUTS[variant]
     c = Canvas()
     W, D = RYOKAN_W - 1, RYOKAN_D - 1
     c.box(0, 0, 0, W, 0, D, B('moss_block'))
@@ -287,7 +308,7 @@ def ryokan(variant='grand'):
 
     # ---- 本馆：三层，二三层朱栏外廊 ----
     mx0, mz0, mx1, mz1 = 12, 12, 44, 24
-    levels, ridge = wa_building(c, mx0, mz0, mx1, mz1, 0, floors=2 if variant == 'garden' else 3, floor_h=4, roof='hip', eave=2, bays=4)
+    levels, ridge = wa_building(c, mx0, mz0, mx1, mz1, 0, floors=plan['floors'], floor_h=4, roof='hip', eave=2, bays=4)
     # 玄关：正中深檐门廊、暖帘、门灯、长凳
     for x in range(26, 31):
         c.clear(x, 1, mz0, x, 3, mz0)
@@ -328,20 +349,26 @@ def ryokan(variant='grand'):
         for x in range(mx0 + 2, mx1 - 1, 4):
             c.set(x, y + 3, mz0 - 2, paper_lantern(True))
         for x in range(mx0 + 6, mx1 - 1, 8):
-            c.box(x, y, mz0 + 1, x, y + 2, mz1 - 1, B('spruce_planks'))
+            # 隔板一直砌到天花板；每间南头铺半砖嵌两张床
+            c.box(x, y, mz0 + 1, x, y + 3, mz1 - 1, B('spruce_planks'))
             door(c, x, y, mz0 + 6, 'east')
             low_table(c, x + 3, y, mz0 + 6)
             cushion(c, x + 2, y, mz0 + 6)
             cushion(c, x + 4, y, mz0 + 6)
             c.set(x + 2, y, mz0 + 2, B('flower_pot'))
+            c.set(x + 4, y + 3, mz0 + 4, paper_lantern(True))
+            if x + 7 <= mx1 - 1:
+                bed(c, x + 2, y, mz1 - 2, 'south')
+                bed(c, x + 5, y, mz1 - 2, 'south')
+                zashiki(c, x + 1, mz1 - 3, x + 7, mz1 - 1, y)
     door(c, 28, 1, mz1, 'south')
 
     # ---- 中庭：碎石地与苔，岩岸池、竹筧瀑口、木拱桥、踏步石、松与樱、竹丛与石灯 ----
     cz0, cz1 = 25, 38
     rnd = random.Random(41)
-    if variant == 'garden':
+    if plan['court'] == 'karesansui':
         court_karesansui(c, cz0, cz1, rnd)
-    elif variant == 'terrace':
+    elif plan['court'] == 'cherry':
         court_cherry(c, cz0, cz1, rnd)
     else:
         for x in range(12, 45):
@@ -379,15 +406,20 @@ def ryokan(variant='grand'):
             if c.get(x, 1, z) is None and c.get(x, 0, z) in (B('moss_block'), B('gravel'), B('coarse_dirt')):
                 c.set(x, 1, z, B(rnd.choice(('fern', 'short_grass', 'moss_carpet', 'oxeye_daisy'))))
 
-    # ---- 两翼：客房（二层）与食堂（一层），terrace 方案两边对调 ----
-    guest_x, hall_x = (0, 47) if variant != 'terrace' else (47, 0)
+    # ---- 两翼：一翼二层客房，另一翼是食堂、带私汤的客房或也是客房 ----
+    guest_x, other_x = (0, 47) if plan['guest_west'] else (47, 0)
     wa_building(c, guest_x, 10, guest_x + 9, 40, 0, floors=2, floor_h=4, roof='hip', eave=1, bays=3)
-    wa_building(c, hall_x, 10, hall_x + 9, 40, 0, floors=1, floor_h=5, roof='hip', eave=1, bays=3)
-    for z in range(13, 38, 3):
-        low_table(c, hall_x + 4, 1, z)
-        low_table(c, hall_x + 5, 1, z)
-        cushion(c, hall_x + 3, 1, z)
-        cushion(c, hall_x + 6, 1, z)
+    guest_wing(c, guest_x, floors=2)
+    if plan['other'] == 'hall':
+        wa_building(c, other_x, 10, other_x + 9, 40, 0, floors=1, floor_h=5, roof='hip', eave=1, bays=3)
+        for z in range(13, 38, 3):
+            low_table(c, other_x + 4, 1, z)
+            low_table(c, other_x + 5, 1, z)
+            cushion(c, other_x + 3, 1, z)
+            cushion(c, other_x + 6, 1, z)
+    else:
+        wa_building(c, other_x, 10, other_x + 9, 40, 0, floors=1, floor_h=4, roof='hip', eave=1, bays=3)
+        guest_wing(c, other_x, floors=1, baths=plan['other'] == 'baths')
     for z in range(13, 40, 6):
         door(c, 9, 1, z, 'east')
         door(c, 47, 1, z, 'west')
@@ -414,7 +446,10 @@ def ryokan(variant='grand'):
     wa_building(c, bx0, bz0, bx1, bz1, 0, floors=1, floor_h=5, roof='gable', ridge_axis='x', eave=1, tatami=False, bays=4)
     c.box(bx0 + 1, 0, bz0 + 1, bx1 - 1, 0, bz1 - 1, B('smooth_stone'))
     c.clear(bx0 + 1, 1, bz0 + 1, bx1 - 1, 1, bz1 - 1)
+    # 内汤：一个大池，或两门之间留走道分成东西两池
     for x in range(bx0 + 4, bx1 - 3):
+        if plan['twin'] and 26 <= x <= 30:
+            continue
         for z in range(bz0 + 2, bz1 - 1):
             c.set(x, 0, z, B('water', level=0))
             c.set(x, -1, z, L('journey_hot_spring_stone'))
@@ -440,13 +475,14 @@ def ryokan(variant='grand'):
     for x in (15, 23, 33, 41):
         c.box(x, 1, rz0 + 2, x, 3, rz0 + 2, POST)
         c.set(x + 1, 3, rz0 + 1, paper_lantern(True))
-    if variant == 'terrace':
+    floor_style = {'grand': 'stone', 'garden': 'brick', 'terrace': 'cobble', 'onsen': 'brick', 'lodge': 'cobble'}[variant]
+    if plan['tub']:
         # 西边一处岩岸池，东边一座抬高的木桶汤
-        pool = rock_pool(c, 22, 54, 8.0, 4.0, depth=2, seed=55, hot=True, lilies=False)
+        pool = rock_pool(c, 22, 54, 8.0, 4.0, depth=2, seed=55, hot=True, lilies=False, floor=floor_style)
         steps = range(19, 26)
         onsen_tub(c, 31, rz0 + 3, 40, rz0 + 10)
     else:
-        pool = rock_pool(c, 28, 54, 11.5, 4.2, depth=2, seed=55, hot=True, lilies=False)
+        pool = rock_pool(c, 28, 54, 11.5, 4.2, depth=2, seed=55, hot=True, lilies=False, floor=floor_style)
         steps = range(25, 32)
     # 平台一侧的入水石阶
     for x in steps:
@@ -458,13 +494,13 @@ def ryokan(variant='grand'):
         if (x, z) in pool:
             c.set(x, 0, z, B('mossy_cobblestone'))
             c.set(x, 1, z, B('moss_carpet'))
-    if variant != 'terrace':
+    if not plan['tub']:
         # 东岸叠石，竹筧注水
         for (x, z, h) in ((40, 52, 3), (41, 53, 2), (40, 54, 2), (41, 51, 1)):
             for k in range(h):
                 c.set(x, 1 + k, z, rock(rnd))
         c.set(39, 3, 52, L('journey_bamboo_spout', facing='west', waterlogged=False))
-    if variant == 'garden':
+    if plan['azumaya']:
         azumaya(c, 32, 51, 38, 57)
     # 两侧竹垣与石柱灯，平台两端一丛竹林
     for x in (12, 44):
@@ -481,6 +517,80 @@ def ryokan(variant='grand'):
     pine(c, 14, 1, D - 2, seed=22)
     ryokan_yards(c, W, D)
     return c
+
+
+def guest_wing(c, x0, floors=2, baths=False):
+    """一翼客房：隔板分成五间，门开向中庭那面。进门一列土间，往里铺榻榻米半砖，床嵌在半砖里，
+    矮桌、柜子、盆栽与纸灯笼；baths 时每间带一小池私汤（池底温泉地热石）。
+    两层时南头一间是楼梯间：上到二层靠中庭一侧的走廊，走廊边四间同样格局。"""
+    west = x0 == 0
+    # i：0 为靠中庭的门墙，1 为门内一列，8 为最里一列
+    X = (lambda i: x0 + 9 - i) if west else (lambda i: x0 + i)
+    far, near = ('west', 'east') if west else ('east', 'west')
+    rooms = [(11, 15), (17, 21), (23, 27), (29, 33), (35, 39)]
+    plank = B('spruce_planks')
+
+    def row(a, b, y0, y1, z):
+        c.box(min(X(a), X(b)), y0, z, max(X(a), X(b)), y1, z, plank)
+
+    def room(y, z0, i0, two_beds, bath=False):
+        """i0 是门内土间那一列；往里 i0+1..8 铺半砖。"""
+        zc = z0 + 2
+        for z in range(z0, z0 + 5):
+            c.set(X(i0), y - 1, z, B('smooth_stone') if y == 1 else FLOOR)
+        bed(c, X(7), y, z0 + 1, far)
+        if two_beds:
+            bed(c, X(7), y, z0 + 3, far)
+        kotatsu(c, X(i0 + 2), y, zc, axis='z')
+        c.set(X(8), y, zc, B('chest', facing=near, type='single', waterlogged=False))
+        c.set(X(i0 + 1), y, z0, B('barrel', facing='up', open=False))
+        c.set(X(i0 + 1), y + 1, z0, B(('potted_azalea_bush', 'potted_bamboo', 'potted_fern')[z0 % 3]))
+        c.set(X(i0 + 3), y + 3, zc, paper_lantern(True))
+        if bath:
+            # 私汤：门边一角下沉一格，水面低于半砖，地热石垫底
+            for i in (i0 + 1, i0 + 2):
+                for z in (z0 + 3, z0 + 4):
+                    c.set(X(i), y - 1, z, B('water', level=0))
+                    c.set(X(i), y - 2, z, L('journey_hot_spring_stone'))
+                    c.set(X(i), y, z, AIR)
+        for i in range(i0 + 1, 9):
+            for z in range(z0, z0 + 5):
+                if c.get(X(i), y, z) in (None, AIR) and not (bath and i in (i0 + 1, i0 + 2) and z >= z0 + 3):
+                    c.set(X(i), y, z, TATAMI_SLAB)
+
+    top = 4
+    for z in (16, 22, 28, 34):
+        row(1, 8, 1, top, z)
+    for n, (z0, _) in enumerate(rooms[:4] if floors == 2 else rooms):
+        room(1, z0, 1, two_beds=n % 2 == 0, bath=baths)
+    if floors == 1:
+        return
+    # 南头楼梯间：一跑向门墙方向上到二层
+    z = 38
+    for k in range(5):
+        i = 7 - k
+        c.clear(X(i), 1 + k, z, X(i), 4 + k, z)
+        c.set(X(i), 1 + k, z, B('spruce_stairs', facing=near, half='bottom', shape='straight', waterlogged=False))
+    for i in range(3, 9):
+        c.set(X(i), 1, 39, B('barrel', facing='up', open=False))
+    for i in (3, 6):
+        c.set(X(i), 1, 35, spruce_slab('bottom'))
+    c.set(X(4), 4, 36, paper_lantern(True))
+    # 二层：门墙内一列半走廊，走廊边隔出四间
+    for zz in range(11, 40):
+        c.set(X(1), 5, zz, FLOOR)
+        c.set(X(2), 5, zz, FLOOR)
+    for zz in range(11, 35):
+        row(2, 2, 6, 9, zz)
+    for zz in (16, 22, 28, 34):
+        row(3, 8, 6, 9, zz)
+    for n, (z0, _) in enumerate(rooms[:4]):
+        door(c, X(2), 6, z0 + 2, near)
+        room(6, z0, 3, two_beds=n % 2 == 1)
+    # 楼梯井的栏杆
+    fence_line(c, [(X(i), 37) for i in range(3, 9)] + [(X(i), 39) for i in range(3, 9)] + [(X(8), 38)], 6, wood='spruce')
+    for i in (3, 6):
+        c.set(X(i), 6, 35, spruce_slab('bottom'))
 
 
 def court_karesansui(c, cz0, cz1, rnd):
@@ -807,7 +917,7 @@ def haiden(c, x0, z0):
     c.set(cx, 5, z0 - 2, L('journey_suzu_rope', bottom=False))
     c.set(cx, 4, z0 - 2, L('journey_suzu_rope', bottom=True))
     c.set(cx, 3, z0 - 1, L('journey_offering_box', facing='north'))
-    c.set(cx, 3, z0 + 6, L('journey_shrine_hokora', facing='north'))
+    c.set(cx, 3, z0 + 6, L('journey_shrine_hokora', facing='north', active=True))
     c.set(cx, 3, z0 + 3, B('red_carpet'))
     return x1, z1
 
@@ -827,7 +937,7 @@ def honden(c, x0, z0):
             for y in range(3, 8):
                 c.set(x, y, z, LACQUER_LOG if corner or (x - x0) % 3 == 0 and z in (z0, z1) else PLASTER)
     c.clear(x0 + 1, 4, z0 + 1, x1 - 1, 7, z1 - 1)
-    c.set(x0 + 3, 4, z0 + 3, L('journey_shrine_hokora', facing='north'))
+    c.set(x0 + 3, 4, z0 + 3, L('journey_shrine_hokora', facing='north', active=True))
     c.set(x0 + 3, 4, z0, B('dark_oak_door', facing='north', half='lower', hinge='left', open=False, powered=False))
     c.set(x0 + 3, 5, z0, B('dark_oak_door', facing='north', half='upper', hinge='left', open=False, powered=False))
     c.box(x0, 8, z0, x1, 8, z1, LACQUER_PLANKS)
@@ -869,12 +979,38 @@ def chozuya(c, x0, z0):
 
 
 def ema_racks(c, x0, y, z0, count=3, rows=2, facing='north'):
-    """绘马挂拼成的大架子（默认 3 宽 2 高），朝北时左边在西；叠层多少交错，看起来挂得满满的。"""
-    assert facing == 'north'
+    """绘马挂拼成的大架子（默认 3 宽 2 高），东西向一排；朝北时左边在西，朝南时左边在东。叠层多少交错，看起来挂得满满的。"""
+    assert facing in ('north', 'south')
     for r in range(rows):
         for i in range(count):
+            west, east = i > 0, i < count - 1
+            left, right = (west, east) if facing == 'north' else (east, west)
             c.set(x0 + i, y + r, z0, L('journey_ema_rack', facing=facing, layers=(4, 3, 4, 2, 3, 4)[(i + r * 2) % 6],
-                                      left=i > 0, right=i < count - 1, up=r < rows - 1))
+                                      left=left, right=right, up=r < rows - 1))
+
+
+def omikuji_stand(c, u, y, v):
+    """抽签处：朝南的小棚，柜台上一只签箱与两摞备用签筒；棚边一排结签架，已经系了些白签。y 为地面层。"""
+    c.box(u - 2, y, v, u + 2, y, v + 2, B('spruce_planks'))
+    for du in (-2, 2):
+        for dv in (0, 2):
+            c.box(u + du, y + 1, v + dv, u + du, y + 3, v + dv, LACQUER_LOG)
+    for du in range(-3, 4):
+        c.set(u + du, y + 4, v - 1, tile_stairs('south'))
+        c.set(u + du, y + 4, v + 3, tile_stairs('north'))
+        for dv in range(0, 3):
+            c.set(u + du, y + 4, v + dv, LACQUER_PLANKS if abs(du) < 3 else tile_slab('bottom'))
+            c.set(u + du, y + 5, v + dv, tile_slab('bottom'))
+    for du in (-1, 0, 1):
+        c.set(u + du, y + 1, v + 2, B('spruce_slab', type='top', waterlogged=False))
+        c.set(u + du, y + 3, v + 2, noren('south', 'white'))
+    for du in (-1, 0, 1):
+        c.set(u + du, y + 1, v, B('barrel', facing='up', open=False))
+    c.set(u, y + 2, v + 2, L('journey_omikuji_box', facing='south'))
+    c.set(u + 1, y + 2, v + 2, B('flower_pot'))
+    c.set(u, y + 3, v + 1, paper_lantern(True))
+    for i, du in enumerate((-4, -3, 3, 4)):
+        c.set(u + du, y + 1, v + 4, L('journey_omikuji_rack', facing='south', tied=(3, 2, 3, 1)[i]))
 
 
 def fox_pair(c, x, y, z, axis='x', gap=4, facing_in=True):
