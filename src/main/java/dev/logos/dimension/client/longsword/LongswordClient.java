@@ -138,6 +138,14 @@ public final class LongswordClient {
                     frame = new Frame(p.variant(), sample, state.getMainHandItemState(), p, now,
                             SwordCastClient.tip(avatar.getMainHandItem()), glow, glow > 0 ? SwordCastClient.color(avatar) : 0);
                 }
+                if (frame != null && frame.sample().turn() != 0) {
+                    // 弓道侧身：原版身体（连同双腿和这层骨架）整个转过去，头保持原来的朝向，仍看准星。
+                    // 动作里的转身是 Blockbench 绕 +Y 的角；骨架这一层按 X、Y 都取反画进原版模型，绕 Y 的转向正好与原版身体朝向一致。
+                    // 左手惯用时整副骨架是镜像的，转向相反。
+                    float yaw = frame.sample().turn() * (state.mainArm == HumanoidArm.LEFT ? -1 : 1);
+                    state.bodyRot += yaw;
+                    state.yRot -= yaw;
+                }
                 state.setRenderData(FRAME, frame);
                 state.setRenderData(DawnvowBlade.GLOW, DawnvowClient.blade(avatar.getId(), state.partialTick));
             }

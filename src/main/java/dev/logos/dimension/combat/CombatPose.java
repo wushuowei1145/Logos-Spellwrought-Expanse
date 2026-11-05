@@ -30,6 +30,12 @@ public final class CombatPose {
 
     public Set<String> bones() { return joints.keySet(); }
     public Joint joint(String bone) { return joints.get(bone); }
+    /** 去掉某根骨骼的关节（它回到静止姿势）后的副本。 */
+    public CombatPose without(String bone) {
+        var out = copy(this);
+        out.joints.remove(bone);
+        return out;
+    }
     /** 骨骼的欧拉角（度）；没有时为零。 */
     public Vector3f rotation(String bone) { var j = joints.get(bone); return j == null ? new Vector3f() : new Vector3f(j.rotation); }
 

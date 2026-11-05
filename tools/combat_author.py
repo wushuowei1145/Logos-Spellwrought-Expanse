@@ -165,8 +165,11 @@ class Skeleton:
         W = {}
         for name in self.order:
             b = self.bones[name]
-            pos, R = pose.get(name, (np.zeros(3), self.rest(name)))
-            local = translate(b['pivot'] + pos) @ affine(R, np.zeros(3)) @ translate(-b['pivot'])
+            entry = pose.get(name, (np.zeros(3), self.rest(name)))
+            pos, R = entry[0], entry[1]
+            # 第三项是缩放（弓弦随拉弓伸长）；与 GeckoLib、CombatPose 相同，先缩放再旋转。
+            S = np.diag(list(entry[2]) + [1.0]) if len(entry) > 2 else np.eye(4)
+            local = translate(b['pivot'] + pos) @ affine(R, np.zeros(3)) @ S @ translate(-b['pivot'])
             W[name] = W[b['parent']] @ local if b['parent'] else local
         return W
 
@@ -273,7 +276,8 @@ def two_bone(S, W, a, b, pole, sign):
     bend = math.degrees(math.acos(max(-1, min(1, np.dot(u, f)))))
     return F, sign * bend, reach - (a + b)
 
-def rigid_arm(S, G, a, b, pref, target, previous, twist=120.0, previous_tau=None, up=(0, 1, 0), body=None, axial=False):
+def rigid_arm(S, G, a, b, pref, target, previous, twist=120.0, previous_tau=None, up=(0, 1, 0), body=None, axial=False,
+              lift_weight=1.0):
     """没有腕关节的手臂：手与前臂一体，只用肩（三向）和肘（弯曲加前臂自转）把拳心送到握点 G。
 
     b 是肘到拳心的长度（前臂加手）。到了握点后还剩手肘绕“肩—握点”连线的转角，逐个试，
@@ -281,6 +285,7 @@ def rigid_arm(S, G, a, b, pref, target, previous, twist=120.0, previous_tau=None
     pref 是偏好的手肘朝向，previous 是上一帧的手肘位置（保持连续，不翻面）；
     body 给出世界坐标点陷进躯干的深度，手臂穿进身体重罚。
     axial 为真时是转枪：杆在拳中绕前臂转，方块拳头看不出这个转动，只算杆偏离“垂直于前臂”的角度，前臂不自转。
+    lift_weight 是手肘抬过肩的扣分倍数（弓道拉满时右肘高抬在后，给 0）。
     返回 (上臂世界旋转, 弯曲角, 前臂自转角, 手肘位置, 刀在拳中的残差角, 够不着的长度)。"""
     dhat = unit(G - S)
     u1 = np.asarray(pref, float) - dhat * np.dot(pref, dhat)
@@ -316,7 +321,7 @@ def rigid_arm(S, G, a, b, pref, target, previous, twist=120.0, previous_tau=None
                 residual = math.acos(max(-1.0, min(1.0, float(np.dot(through, local)))))
             # 手肘偏离默认朝向（向下、略向后外）和抬过肩下方 1/4 上臂处都扣分，第三人称姿势才自然。
             lift = max(0.0, float(np.dot(elbow - S, up)) / a + 0.25)
-            cost = residual + ELBOW_PREF * (1 - math.cos(phi)) + 2.5 * lift + 6.0 * inside / a + (0.05 if tau else 0)
+            cost = residual + ELBOW_PREF * (1 - math.cos(phi)) + 2.5 * lift_weight * lift + 6.0 * inside / a + (0.05 if tau else 0)
             if previous is not None:
                 cost += 2.0 * np.linalg.norm(elbow - previous) / a
             if previous_tau is not None and tau != previous_tau:
@@ -416,7 +421,10 @@ class Baker:
             pose[name] = (np.zeros(3), np.eye(3))
         # 第一人称骨架整体靠右下摆放（与长剑第一人称相同），由 root 给出。
         root = getattr(sk, 'root', None)
-        pose['Root'] = (np.zeros(3), np.eye(3)) if root is None else (np.asarray(root[0], float), euler_matrix(root[1]))
+        # turn：整个人绕脚下竖轴转身（度，绕 +Y）。弓道侧身对靶时为 -90，靶在左手一侧。
+        # 玩家第三人称由客户端把原版身体整个转过去（头仍看准星），所以动作里的 Root 只带这一个转角。
+        turn = rot_y(float(np.atleast_1d(hermite(channel(clip, 'turn', 0.0), t))[0]))
+        pose['Root'] = (np.zeros(3), turn) if root is None else (np.asarray(root[0], float), euler_matrix(root[1]) @ turn)
         W = sk.world(pose)
         torso = W['UpBody']
         Rt = torso[:3, :3]
@@ -452,6 +460,10 @@ class Baker:
                 else:
                     y = ys[np.argmin(to_shoulder)]
                 return (weapon_world @ np.array([0, y * s, 0, 1]))[:3], weapon_world[:3, :3] @ GRIP.T
+            if mode == 'weapon':
+                # 手按武器网格坐标摆（rweapon / lweapon，网格单位）：搭箭、举弓时右手扣在弦上，跟着弓走。
+                local = np.asarray(hermite(channel(clip, side[0].lower() + 'weapon', (0, 0, 0)), t), float)
+                return (weapon_world @ np.append(local * s, 1))[:3], weapon_world[:3, :3] @ GRIP.T
             if mode == 'saya':
                 return (sheath_world @ np.array([0, 3.1 * s, 0, 1]))[:3], sheath_world[:3, :3] @ GRIP.T
             if mode == 'mune':
@@ -490,9 +502,10 @@ class Baker:
             pole = Rt @ unit(hermite(channel(clip, side[0].lower() + 'pole', ARM_POLE[side]), t))
             # 玩家模型没有手腕：手与前臂一体，拳心在前臂延长线上（握点偏移只取沿前臂的分量）。
             axial = bool(self.mode(clip, t, side[0].lower() + 'axial', False)[0])
+            lift = float(np.atleast_1d(hermite(channel(clip, side[0].lower() + 'lift', 1.0), t))[0])
             F, bend, tau, elbow, residual, over = rigid_arm(S, grip, a, b + abs(sk.hand_grip[1]), pole, Rh,
                                                             self.elbows.get(side), getattr(sk, 'twist', TWIST),
-                                                            self.taus.get(side), Rt[:, 1], body, axial)
+                                                            self.taus.get(side), Rt[:, 1], body, axial, lift)
             self.elbows[side] = elbow
             self.taus[side] = tau
             self.residuals.append((clip['name'], t, side, residual))
@@ -509,16 +522,17 @@ class Baker:
             # 没写脚步的动作沿用 stance（默认是静止站姿）。
             stance = clip.get('stance', {}).get(side[0].lower() + 'foot', (rest_foot[0] / H, 0, rest_foot[2] / H, 0))
             key = hermite(channel(clip, side[0].lower() + 'foot', stance), t)
-            target = np.array([key[0] * H, rest_foot[1] + key[1] * H, key[2] * H])
+            # 脚步写在转身前的朝向里，跟着 turn 一起转（turn 为 0 时不变）。
+            target = turn @ np.array([key[0] * H, rest_foot[1] + key[1] * H, key[2] * H])
             S = (W['DownBody'] @ np.append(sk.pivot(leg), 1))[:3]
             a = np.linalg.norm(sk.pivot(lower) - sk.pivot(leg))
             b = np.linalg.norm(rest_foot - sk.pivot(lower))
-            knee = rot_y(key[3]) @ np.array([0.15 * sign, 0, -1])
+            knee = turn @ rot_y(key[3]) @ np.array([0.15 * sign, 0, -1])
             F, bend, over = two_bone(S, target, a, b, knee, -1)
             Rparent = W['DownBody'][:3, :3]
             pose[leg] = (np.zeros(3), Rparent.T @ F)
             pose[lower] = (np.zeros(3), rot_x(bend))
-            pose[foot] = (np.zeros(3), (F @ rot_x(bend)).T @ rot_y(key[3]))
+            pose[foot] = (np.zeros(3), (F @ rot_x(bend)).T @ turn @ rot_y(key[3]))
         # 刀、鞘骨骼：父级 UpBody，记录网格原点相对枢轴的位移与旋转。
         for name, (o, R) in (('Weapon', (o_w, R_w)), ('Sheath', (o_s, R_s))):
             pose[name] = (o - sk.weapon_pivot, R)
@@ -547,9 +561,10 @@ class Baker:
             t = min(clip['length'], i / fps)
             pose = self.pose(clip, t, prev)
             eulers = {}
-            for name, (pos, R) in pose.items():
-                e = matrix_euler(R, None if prev is None else prev[name][1])
-                eulers[name] = (pos, e)
+            for name, entry in pose.items():
+                pos, R = entry[0], entry[1]
+                e = matrix_euler(R, None if prev is None or name not in prev else prev[name][1])
+                eulers[name] = (pos, e) if len(entry) < 3 else (pos, e, np.asarray(entry[2], float))
             frames.append((t, eulers))
             prev = eulers
         return frames
@@ -579,16 +594,20 @@ def bedrock(clips, baked, skeleton, bones, markers=True):
         tracks = {}
         for name in bones:
             rest = skeleton.bones[name]['rest']
-            rot, pos = {}, {}
+            rot, pos, scale = {}, {}, {}
             for t, eulers in frames:
-                p, e = eulers[name]
-                e = e - rest
+                entry = eulers[name]
+                p, e = entry[0], entry[1] - rest
                 key = f'{t:.4f}'.rstrip('0').rstrip('.') if t else '0.0'
                 rot[key] = [round(-e[0], 3), round(-e[1], 3), round(e[2], 3)]
                 pos[key] = [round(-p[0], 4), round(p[1], 4), round(p[2], 4)]
+                sc = entry[2] if len(entry) > 2 else (1.0, 1.0, 1.0)
+                scale[key] = [round(float(v), 4) for v in sc]
             track = {'rotation': compress(rot)}
             if any(any(abs(v) > 1e-4 for v in value) for value in pos.values()):
                 track['position'] = compress(pos)
+            if any(any(abs(v - 1) > 1e-4 for v in value) for value in scale.values()):
+                track['scale'] = compress(scale)
             tracks[name] = track
         anim['bones'] = tracks
         if markers and clip.get('markers'):
