@@ -163,6 +163,7 @@ public final class FoxWildsBlocks {
             "journey_shrine_hokora",
             ShrineHokoraBlock::new,
             p -> p.mapColor(MapColor.STONE).strength(2.0f).sound(SoundType.STONE).noOcclusion()
+                .lightLevel(state -> state.getValue(ShrineHokoraBlock.ACTIVE) ? ShrineHokoraBlock.ACTIVE_LIGHT : 0)
     );
     public static final DeferredBlock<NorenBlock> NOREN = register(
             "journey_noren",
@@ -196,6 +197,24 @@ public final class FoxWildsBlocks {
             SuzuRopeBlock::new,
             p -> p.mapColor(MapColor.COLOR_RED).strength(0.3f).sound(SoundType.WOOL).noOcclusion().noCollision()
     );
+    // 10. 抽签：签箱、结签架与签纸；居酒屋的菜单条
+    public static final DeferredBlock<OmikujiBoxBlock> OMIKUJI_BOX = register(
+            "journey_omikuji_box",
+            OmikujiBoxBlock::new,
+            p -> p.mapColor(MapColor.COLOR_RED).strength(1.5f).sound(SoundType.WOOD).noOcclusion()
+    );
+    public static final DeferredBlock<OmikujiRackBlock> OMIKUJI_RACK = register(
+            "journey_omikuji_rack",
+            OmikujiRackBlock::new,
+            p -> p.mapColor(MapColor.COLOR_BROWN).strength(1.0f).sound(SoundType.WOOD).noOcclusion()
+    );
+    public static final DeferredBlock<MenuStripsBlock> MENU_STRIPS = register(
+            "journey_menu_strips",
+            MenuStripsBlock::new,
+            p -> p.mapColor(MapColor.SAND).strength(0.3f).sound(SoundType.WOOL).noOcclusion().noCollision()
+    );
+    /** 签纸：从签箱抽出，名字就是签运；系到结签架上解霉运。 */
+    public static final DeferredItem<net.minecraft.world.item.Item> OMIKUJI = DimensionBlocks.ITEMS.registerSimpleItem("journey_omikuji", p -> p.stacksTo(16));
     /** 绘马：右键写下愿望，写好的挂到绘马挂上。 */
     public static final DeferredItem<EmaItem> EMA = DimensionBlocks.ITEMS.registerItem("journey_ema", EmaItem::new, p -> p.stacksTo(16));
 

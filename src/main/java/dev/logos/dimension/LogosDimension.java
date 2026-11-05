@@ -58,6 +58,9 @@ public final class LogosDimension {
                     out.accept(dev.logos.dimension.cloudsea.AquaticFlora.KELP_ITEM.get());
                     out.accept(dev.logos.dimension.cloudsea.FoxWildsBlocks.EMA_RACK.get());
                     out.accept(dev.logos.dimension.cloudsea.FoxWildsBlocks.EMA.get());
+                    out.accept(dev.logos.dimension.cloudsea.FoxWildsBlocks.OMIKUJI_BOX.get());
+                    out.accept(dev.logos.dimension.cloudsea.FoxWildsBlocks.OMIKUJI_RACK.get());
+                    out.accept(dev.logos.dimension.cloudsea.FoxWildsBlocks.MENU_STRIPS.get());
                 }).build());
         TABS.register("crucible", () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.logos_dimension"))
                 .icon(() -> DimensionBlocks.SALT_CRYSTAL.get().asItem().getDefaultInstance())
@@ -88,6 +91,7 @@ public final class LogosDimension {
         dev.logos.dimension.fox.FoxSanctuary.register(bus);
         dev.logos.dimension.cloudsea.AquaticFlora.register(bus);
         dev.logos.dimension.cloudsea.EmaItem.register(bus);
+        dev.logos.dimension.cloudsea.Omikuji.register(bus);
         dev.logos.dimension.economy.Economy.register(bus);
         dev.logos.dimension.paint.PaintSystem.register(bus);
         dev.logos.dimension.npc.NpcEntities.register(bus);

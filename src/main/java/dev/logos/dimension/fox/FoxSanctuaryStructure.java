@@ -160,6 +160,19 @@ public class FoxSanctuaryStructure extends Structure {
         return (siteSeed & 0xFFFFFF0000000000L) | (low >>> 24) | 1L;
     }
 
+    /** 这个位置在不在神狐聚落的神社境内（平台范围内、平台面及以上）。 */
+    public static boolean inShrine(net.minecraft.server.level.ServerLevel level, BlockPos pos) {
+        var structure = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE)
+            .getValue(dev.logos.dimension.LogosDimension.id("fox_sanctuary"));
+        if (structure == null) return false;
+        var start = level.structureManager().getStructureAt(pos, structure);
+        if (!start.isValid()) return false;
+        for (var piece : start.getPieces()) {
+            if (piece instanceof SanctuaryGroundsPiece grounds) return grounds.inShrine(pos);
+        }
+        return false;
+    }
+
     public static int spacing() {
         return SPACING;
     }

@@ -463,6 +463,37 @@ def door(c, x, y, z, facing, hinge='left'):
     c.set(x, y + 1, z, shoji_door(facing, 'upper', hinge))
 
 
+TATAMI_SLAB = L('journey_tatami_slab', type='bottom', waterlogged=False)
+_STEP = {'north': (0, -1), 'south': (0, 1), 'west': (-1, 0), 'east': (1, 0)}
+
+
+def bed(c, x, y, z, facing, color='white'):
+    """床尾在 (x, z)，床头朝 facing 多占一格。"""
+    dx, dz = _STEP[facing]
+    c.set(x, y, z, B(f'{color}_bed', facing=facing, part='foot', occupied=False))
+    c.set(x + dx, y, z + dz, B(f'{color}_bed', facing=facing, part='head', occupied=False))
+
+
+def zashiki(c, x0, z0, x1, z1, y):
+    """把还空着的格子铺成榻榻米半砖；床、矮桌这些先放好，半砖绕开它们，床就嵌在半砖里。"""
+    for x in range(x0, x1 + 1):
+        for z in range(z0, z1 + 1):
+            if c.get(x, y, z) in (None, AIR):
+                c.set(x, y, z, TATAMI_SLAB)
+
+
+def kotatsu(c, x, y, z, axis='x', color='red'):
+    """掘り炬燵式的矮桌：桌面与半砖同高，两侧坐垫低半格，铺榻榻米时这几格留空。"""
+    c.set(x, y, z, B('dark_oak_slab', type='top', waterlogged=False))
+    for s in (-1, 1):
+        cx, cz = (x + s, z) if axis == 'x' else (x, z + s)
+        c.set(cx, y, cz, B(f'{color}_carpet'))
+
+
+def menu_strips(c, x, y, z, facing, paper=0):
+    c.set(x, y, z, L('journey_menu_strips', facing=facing, paper=paper))
+
+
 def low_table(c, x, y, z):
     c.set(x, y, z, B('dark_oak_trapdoor', facing='north', half='top', open=False, powered=False, waterlogged=False))
 

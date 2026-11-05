@@ -67,6 +67,32 @@ public class SanctuaryGroundsPiece extends StructurePiece {
         this.centerZ = c[1];
     }
 
+    /** 世界坐标是否落在设计数据记下的神社境内：平台范围内、平台面及以上。 */
+    boolean inShrine(BlockPos pos) {
+        int[] l = frame.local(pos.getX(), pos.getZ());
+        return frame.layout.inShrine(l[0], l[1]) && pos.getY() >= frame.p + frame.layout.shrineY;
+    }
+
+    /** 神社参道的 u（开发预览用）。 */
+    public int shrineU() {
+        return frame.layout.shrineU;
+    }
+
+    /** 神社片区的设计点 v 换算到这套方案（开发预览用）：翻转过的片区 v 换成 axis + 1 - v。 */
+    public double shrineV(double v) {
+        return frame.layout.flipAxis != 0 ? frame.layout.flipAxis + 1 - v : v;
+    }
+
+    /** 旅馆片区的设计点 v 换算到这套方案（开发预览用）。 */
+    public double ryokanV(double v) {
+        return frame.layout.ryokanFlipAxis != 0 ? frame.layout.ryokanFlipAxis + 1 - v : v;
+    }
+
+    /** 街尾空地的范围（开发预览用）。 */
+    public int[] endBox() {
+        return frame.layout.endBox;
+    }
+
     /** 布局方案（开发预览用）。 */
     public int plan() {
         return frame.layout.plan;

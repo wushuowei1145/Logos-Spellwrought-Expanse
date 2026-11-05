@@ -330,7 +330,22 @@ def shrine_hokora():
     model('journey_shrine_hokora', {'stone': f'{NS}:block/journey_fox_statue_base', 'wood': f'{NS}:block/journey_shrine_hokora',
                                     'door': f'{NS}:block/journey_shrine_hokora_door', 'beam': 'minecraft:block/stripped_dark_oak_log',
                                     'roof': f'{NS}:block/journey_kawara_roof', 'particle': f'{NS}:block/journey_shrine_hokora'}, els)
-    write(A / 'blockstates/journey_shrine_hokora.json', {'variants': facing_states('journey_shrine_hokora')})
+    # 激活的石龛（神社境内）：门里透出灯火
+    lit = canvas()
+    fill_noise(lit, WOOD, 42, grain=0.3)
+    for x in range(4, 12):
+        for y in range(5, 14):
+            px(lit, x, y, RED_CLOTH[2] if (x in (4, 11) or y in (5, 13)) else (255, 214, 120) if (x + y) % 3 else (232, 150, 70))
+    for x in (7, 8):
+        for y in range(5, 14):
+            px(lit, x, y, RED_CLOTH[0])
+    save(lit, 'journey_shrine_hokora_door_lit')
+    model('journey_shrine_hokora_lit', {'stone': f'{NS}:block/journey_fox_statue_base', 'wood': f'{NS}:block/journey_shrine_hokora',
+                                        'door': f'{NS}:block/journey_shrine_hokora_door_lit', 'beam': 'minecraft:block/stripped_dark_oak_log',
+                                        'roof': f'{NS}:block/journey_kawara_roof', 'particle': f'{NS}:block/journey_shrine_hokora'}, els)
+    variants = facing_states('journey_shrine_hokora', extra=',active=false')
+    variants.update(facing_states('journey_shrine_hokora', 'journey_shrine_hokora_lit', extra=',active=true'))
+    write(A / 'blockstates/journey_shrine_hokora.json', {'variants': variants})
     item('journey_shrine_hokora')
 
 

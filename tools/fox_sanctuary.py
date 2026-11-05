@@ -58,7 +58,7 @@ class Plan:
     shrine_side: str = 'n'
     #: 住宅各排：(北端 v, 前后错落, 间距)；排距不小于 15（住宅进深 13）
     houses: tuple = ((52, 0, 2), (34, 2, 5), (18, 3, 9))
-    #: 西南台地种什么：'paddy' 旱田与水田，'tea' 茶园，'orchard' 果园
+    #: 西南台地种什么：'paddy' 旱田与水田，'rice' 全是水田，'tea' 茶园，'orchard' 果园
     fields: str = 'paddy'
     #: 街尾空地的范围 (u0, v0, u1, v1)
     end_box: tuple = (137, 69, 157, 99)
@@ -66,7 +66,7 @@ class Plan:
     greenery: tuple = (14, 14, 162, 112)
     #: 神社参道：'senbon' 千本鸟居直阶，'winding' 九十九折，'terraced' 三段石阶
     approach: str = 'senbon'
-    #: 街尾空地：'tea' 茶庭，'pagoda' 五重塔，'bamboo' 竹林小径
+    #: 街尾空地：'tea' 茶庭，'pagoda' 五重塔，'bamboo' 竹林小径，'lotus' 莲池与湖心亭，'ashiyu' 足汤
     end_plot: str = 'tea'
     #: 温泉旅馆格局（见 fox_landmarks.ryokan）
     ryokan: str = 'grand'
@@ -82,6 +82,15 @@ PLANS = [
     # 主街大弯；住宅只有两排，院子宽
     Plan('c', bend=(7.0, -1.0), street_end=122, houses=((54, 0, 7), (28, 3, 13)), fields='orchard',
          approach='terraced', end_plot='bamboo', ryokan='terrace'),
+    # 神社东南的千本鸟居配莲池；旅馆东北，两翼客房带私汤；满地水田
+    Plan('d', bend=(-4.0, 2.0), street_end=124, shrine_side='s', houses=((50, 0, 3), (34, 2, 5), (18, 3, 6)),
+         fields='rice', end_box=(94, 110, 117, 140), greenery=(14, 14, 162, 162), end_plot='lotus', ryokan='onsen'),
+    # 短街、九十九折在东北，街尾足汤；旅馆两翼都是客房；茶园
+    Plan('e', bend=(2.0, 4.0), street_end=120, houses=((54, 1, 2), (36, 2, 4), (20, 3, 7)), fields='tea',
+         approach='winding', end_box=(140, 69, 160, 99), end_plot='ashiyu', ryokan='lodge'),
+    # 大弯主街、神社东南三段石阶、五重塔；传统旅馆；果园
+    Plan('f', bend=(6.5, 2.0), street_end=126, shrine_side='s', houses=((54, 0, 4), (30, 2, 9)), fields='orchard',
+         end_box=(94, 112, 117, 140), greenery=(14, 14, 162, 162), approach='terraced', end_plot='pagoda', ryokan='grand'),
 ]
 PLAN = PLANS[0]
 #: 片区翻转用：非 None 时 street_v 返回以此为两倍轴的镜像（见 district）
@@ -304,11 +313,11 @@ def street(s):
                 st = B('stone_bricks') if (u + v) % 4 else B('mossy_stone_bricks')
             s.h[v, u] = 0
             c.set(u, 0, v, st)
-        # 北侧小水渠：低于路面的石砌浅沟
+        # 北侧小水渠：石砌浅沟，沟里是含水的石台阶（冬天含水方块不结冰，水渠一直有水）
         vw = int(math.floor(vc - 4))
         s.h[vw, u] = 0
         c.set(u, -1, vw, B('stone_bricks'))
-        c.set(u, 0, vw, B('water', level=0))
+        c.set(u, 0, vw, B('stone_stairs', facing='north', half='bottom', shape='straight', waterlogged=True))
     lots_north, lots_south = [], []
     # 北侧：入口到神社前，留出食摊广场与几条巷口
     # 旅馆在北侧的方案里，北侧商铺停在旅馆西墙外；南侧商铺停在旅馆或街尾神社广场前
@@ -435,10 +444,13 @@ def shrine(s):
     ch = Canvas()
     fl.chozuya(ch, 0, 0)
     s.put(ch, su - 3, 36, turns=1, y=16)
-    fl.ema_racks(c, hall_u + 6, 17, v_top - 2, count=3, facing='north')
-    # 拝殿东侧的神木老樱，树下小石龛
+    # 绘马挂挨着参道北沿，正面朝路、背朝神社
+    fl.ema_racks(c, hall_u - 9, 17, v_top - 3, count=3, facing='south')
+    # 手水舍与拝殿之间的抽签处
+    fl.omikuji_stand(c, (su + 4 + 144) // 2, 16, 33)
+    # 拝殿东侧的神木老樱，树下小石龛（境内的石龛都是激活的）
     fl.great_cherry(c, 160, 17, 31, seed=9)
-    c.set(159, 17, 36, L('journey_shrine_hokora', facing='west'))
+    c.set(159, 17, 36, L('journey_shrine_hokora', facing='west', active=True))
 
 
 def approach_senbon(s, su, vb, vt):
@@ -608,7 +620,7 @@ def fields(s):
         if v0 > v1:
             continue
         y = -step
-        paddy = step >= 4 and PLAN.fields == 'paddy'
+        paddy = (step >= 4 and PLAN.fields == 'paddy') or PLAN.fields == 'rice'
         for u in range(17, 90):
             for v in range(v0, v1 + 1):
                 edge = v == v1 or u in (17, 89) or (u - 17) % 18 == 0
@@ -675,10 +687,32 @@ def fruit_tree(c, u, y, v, rnd):
                     c.set(u + du, y + k, v + dv, B(leaf, distance=1, persistent=True, waterlogged=False))
 
 
+# ==================== 石垣 ====================
+def retaining_walls(s):
+    """削出来的切面不裸露：高处那一列的立面砌成石垣，顶上留一层原来的地表。
+    贴着田地、或是铺石的路基（参道垫高的路肩）落差 2 格起就砌，别处落差 4 格起（平缓的土坎不用）；
+    外缘的自然草坡（SOFT_TURF）会被自然地形抬高，不砌。"""
+    c = s.c
+    h = np.round(s.h).astype(int)
+    field = (s.u >= 14) & (s.u <= 92) & (s.v >= FIELD_V0 - 1)
+    for v in range(1, S - 1):
+        for u in range(1, S - 1):
+            if s.g[v, u] not in (TURF, LAWN, MOSS, STONE):
+                continue
+            top = h[v, u]
+            low = min(h[v - 1, u], h[v + 1, u], h[v, u - 1], h[v, u + 1])
+            if top - low < (2 if field[v, u] or s.g[v, u] == STONE else 4):
+                continue
+            for y in range(low + 1, top):
+                if c.get(u, y, v) is None:
+                    k = (u * 7 + v * 13 + y * 5) % 10
+                    c.set(u, y, v, B('mossy_cobblestone') if k < 3 else B('cobblestone') if k < 7 else B('andesite') if k < 9 else B('stone'))
+
+
 # ==================== 外缘植被 ====================
 def rim_planting(s):
-    """土埂上的樱与竹：从山路上看不到聚落，进了大鸟居才豁然开朗。"""
-    c = s.c
+    """土埂上的樱与竹：从山路上看不到聚落，进了大鸟居才豁然开朗。先画在一张草稿上，最后只并入空格子，树冠不会压住建筑和石龛。"""
+    c = Canvas()
     rnd = random.Random(11)
     for i in range(70):
         side = rnd.randint(0, 3)
@@ -702,6 +736,9 @@ def rim_planting(s):
                         c.set(u + du, y - 1, v + dv, B('podzol', snowy=False))
         else:
             fl.cherry_tree(c, u, y, v, height=rnd.randint(5, 7), radius=rnd.randint(3, 5), seed=i)
+    for k, st in c.cells.items():
+        if k not in s.c.cells:
+            s.c.cells[k] = st
 
 
 # ==================== 输出 ====================
@@ -748,6 +785,8 @@ def layout(s, tiles, path):
         'ground': base64.b64encode(s.g.astype(np.int8).tobytes()).decode(),
         'entrance': {'u': -1, 'v': ENTRANCE_V, 'y': -ENTRANCE_DROP},
         'tile_min_y': TILE_MIN_Y,
+        'shrine': {'box': list(s.shrine_box), 'u': SHRINE_U, 'y': 16, 'flip_axis': shrine_axis2() if PLAN.shrine_side == 's' else 0,
+                   'ryokan_flip_axis': ryokan_axis2() if PLAN.shrine_side == 's' else 0, 'end_box': list(PLAN.end_box)},
         'tiles': tiles,
         'lots': s.lots,
         'variants': s.variants,
@@ -848,6 +887,7 @@ def compose():
     life.lantern_strings(s, street_v, u1=STREET_U1 - 2)
     life.alley_props(s, street_v, rnd)
     life.end_plot(s, PLAN.end_plot, PLAN.end_box, rnd)
+    retaining_walls(s)  # 放在街尾空地之后：它平整地面时会切出新的立面
     life.greenery(s, PLAN.greenery, rnd)
     life.lawn_cover(s, rnd)
     return s

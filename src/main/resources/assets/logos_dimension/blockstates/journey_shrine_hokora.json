@@ -1,18 +1,33 @@
 {
   "variants": {
-    "facing=north": {
+    "facing=north,active=false": {
       "model": "logos_dimension:block/journey_shrine_hokora"
     },
-    "facing=east": {
+    "facing=east,active=false": {
       "model": "logos_dimension:block/journey_shrine_hokora",
       "y": 90
     },
-    "facing=south": {
+    "facing=south,active=false": {
       "model": "logos_dimension:block/journey_shrine_hokora",
       "y": 180
     },
-    "facing=west": {
+    "facing=west,active=false": {
       "model": "logos_dimension:block/journey_shrine_hokora",
+      "y": 270
+    },
+    "facing=north,active=true": {
+      "model": "logos_dimension:block/journey_shrine_hokora_lit"
+    },
+    "facing=east,active=true": {
+      "model": "logos_dimension:block/journey_shrine_hokora_lit",
+      "y": 90
+    },
+    "facing=south,active=true": {
+      "model": "logos_dimension:block/journey_shrine_hokora_lit",
+      "y": 180
+    },
+    "facing=west,active=true": {
+      "model": "logos_dimension:block/journey_shrine_hokora_lit",
       "y": 270
     }
   }
