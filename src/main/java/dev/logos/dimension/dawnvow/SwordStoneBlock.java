@@ -4,7 +4,6 @@ import com.mojang.serialization.MapCodec;
 import dev.logos.dimension.item.LongswordItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -80,17 +79,13 @@ public class SwordStoneBlock extends HorizontalDirectionalBlock implements Entit
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (held || !stack.is(LongswordItem.DAWNVOW.get())) return InteractionResult.TRY_WITH_EMPTY_HAND;
         if (level.isClientSide()) return InteractionResult.SUCCESS;
-        // 剑插回石中：保留这把剑本身（附魔、耐久、名字），插剑的人誓约解除，可以再去拔一次
+        // 剑插回石中：保留这把剑本身（附魔、耐久、名字）
         ItemStack sword = stack.copyWithCount(1);
         stack.consume(1, player);
         level.setBlock(pos, Dawnvow.STONE.get().defaultBlockState().setValue(FACING, state.getValue(FACING)), Block.UPDATE_ALL);
         if (level.getBlockEntity(pos) instanceof SwordStoneBlockEntity stone) stone.setSword(sword);
         level.playSound(null, pos, SoundEvents.ANVIL_LAND, SoundSource.BLOCKS, 0.5f, 1.6f);
         level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.BLOCKS, 1f, 0.8f);
-        if (player instanceof ServerPlayer server && DawnvowTrial.sworn(server)) {
-            DawnvowTrial.release(server);
-            server.sendOverlayMessage(Component.translatable("message.logos_dimension.dawnvow.returned"));
-        }
         return InteractionResult.SUCCESS;
     }
 

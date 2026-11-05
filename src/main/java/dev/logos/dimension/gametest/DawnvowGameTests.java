@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-/** 石中剑：插着剑时打不坏；破晓按住能拔出、其他时候拔不动；一人一誓；插回空石座解除誓约。 */
+/** 石中剑：插着剑时打不坏；破晓按住能拔出、其他时候拔不动；已有一把也能再拔；插回空石座保留那把剑。 */
 public final class DawnvowGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS = DeferredRegister.create(Registries.TEST_FUNCTION, LogosDimension.ID);
     private static final BlockPos STONE = new BlockPos(2, 1, 2);
@@ -46,7 +46,7 @@ public final class DawnvowGameTests {
             "dawnvow_unbreakable", DawnvowGameTests::unbreakable,
             "dawnvow_draw_at_dawn", DawnvowGameTests::drawAtDawn,
             "dawnvow_unmoved_at_noon", DawnvowGameTests::unmovedAtNoon,
-            "dawnvow_one_vow", DawnvowGameTests::oneVow,
+            "dawnvow_draw_again", DawnvowGameTests::drawAgain,
             "dawnvow_let_go", DawnvowGameTests::letGo,
             "dawnvow_return", DawnvowGameTests::giveBack);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
@@ -129,7 +129,6 @@ public final class DawnvowGameTests {
             try {
                 h.assertBlockPresent(Dawnvow.EMPTY_STONE.get(), STONE);
                 h.assertTrue(holds(p), "拔出的曦誓应当进背包");
-                h.assertTrue(DawnvowTrial.sworn(p), "拔出后应当立下誓约");
             } finally {
                 close(h, p);
             }
@@ -147,7 +146,6 @@ public final class DawnvowGameTests {
             try {
                 h.assertBlockPresent(Dawnvow.STONE.get(), STONE);
                 h.assertFalse(holds(p), "正午不应当拔得出来");
-                h.assertFalse(DawnvowTrial.sworn(p), "没拔出来不应当立誓");
             } finally {
                 close(h, p);
             }
@@ -155,16 +153,17 @@ public final class DawnvowGameTests {
         });
     }
 
-    private static void oneVow(GameTestHelper h) {
+    /** 拔过剑、背包里还带着一把的玩家照样能再拔一把：没有一人一把的限制。 */
+    private static void drawAgain(GameTestHelper h) {
         placeStone(h);
         time(h, 0);
         var p = player(h);
-        p.setData(Dawnvow.SWORN, true);
+        p.getInventory().setItem(5, new ItemStack(LongswordItem.DAWNVOW.get()));
         hold(h, p, 1, DawnvowTrial.PULL_TICKS + 8);
         h.runAfterDelay(DawnvowTrial.PULL_TICKS + 14, () -> {
             try {
-                h.assertBlockPresent(Dawnvow.STONE.get(), STONE);
-                h.assertFalse(holds(p), "已立过誓的玩家不应当再拔出一把");
+                h.assertBlockPresent(Dawnvow.EMPTY_STONE.get(), STONE);
+                h.assertTrue(p.getInventory().countItem(LongswordItem.DAWNVOW.get()) == 2, "背包里已有一把时应当还能再拔出一把");
             } finally {
                 close(h, p);
             }
@@ -194,7 +193,6 @@ public final class DawnvowGameTests {
     private static void giveBack(GameTestHelper h) {
         h.setBlock(STONE, Dawnvow.EMPTY_STONE.get().defaultBlockState());
         var p = player(h);
-        p.setData(Dawnvow.SWORN, true);
         ItemStack sword = new ItemStack(LongswordItem.DAWNVOW.get());
         sword.set(DataComponents.CUSTOM_NAME, Component.literal("晨星"));
         p.setItemInHand(InteractionHand.MAIN_HAND, sword);
@@ -204,7 +202,6 @@ public final class DawnvowGameTests {
                 new BlockHitResult(at.getCenter(), Direction.UP, at, false));
             h.assertBlockPresent(Dawnvow.STONE.get(), STONE);
             h.assertTrue(p.getMainHandItem().isEmpty(), "插回去的剑应当离手");
-            h.assertFalse(DawnvowTrial.sworn(p), "插回剑应当解除誓约");
             h.assertTrue(h.getLevel().getBlockEntity(at) instanceof SwordStoneBlockEntity stone && "晨星".equals(stone.sword().getHoverName().getString()),
                 "石座里应当是玩家插回的那把剑");
         } finally {
