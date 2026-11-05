@@ -254,7 +254,8 @@
      "default": true,
      "cubes": 5
     }
-   ]
+   ],
+   "chance": 0.1
   },
   "outfit": {
    "optional": true,

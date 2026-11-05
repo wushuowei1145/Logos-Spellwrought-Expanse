@@ -55,7 +55,7 @@ public final class DimensionClient {
 
     @SubscribeEvent static void entityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(dev.logos.dimension.npc.NpcEntities.FOREST_ELF.get(), ctx -> new NpcRenderer<>(ctx, "forest_elf"));
-        event.registerEntityRenderer(dev.logos.dimension.npc.NpcEntities.DIVINE_FOX.get(), ctx -> new NpcRenderer<>(ctx, "divine_fox"));
+        event.registerEntityRenderer(dev.logos.dimension.npc.NpcEntities.DIVINE_FOX.get(), DivineFoxRenderer::new);
     }
 
     @SubscribeEvent static void fluids(RegisterFluidModelsEvent event) {

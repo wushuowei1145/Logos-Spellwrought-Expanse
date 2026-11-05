@@ -79,8 +79,13 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
     public NpcRenderer(EntityRendererProvider.Context context, Identifier asset) {
         super(context, new DefaultedEntityGeoModel<>(asset));
         withScale(MODEL_SCALE);
-        withRenderLayer(new ItemInHandGeoLayer<>(context, this, RIGHT_HAND_BONE, LEFT_HAND_BONE));
+        withRenderLayer(handLayer(context));
         this.shadowRadius = 0.35f;
+    }
+
+    /** 手持物品的绘制层；角色可以换成自己的（例如神狐不画手里的刀，刀由模型骨骼画）。 */
+    protected ItemInHandGeoLayer<T, Void, R> handLayer(EntityRendererProvider.Context context) {
+        return new ItemInHandGeoLayer<>(context, this, RIGHT_HAND_BONE, LEFT_HAND_BONE);
     }
 
     /** 有可换零件的 NPC：把没选中的零件组（以及当前表情）交给渲染状态。 */
@@ -88,8 +93,11 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
     public void addRenderData(T animatable, Void relatedObject, R state, float partialTick) {
         super.addRenderData(animatable, relatedObject, state, partialTick);
         NpcAnimated npc = animatable instanceof NpcAnimated a ? a : null;
-        if (animatable instanceof NpcPartsHolder holder)
-            state.addGeckolibData(HIDDEN_PARTS, holder.npcRace().hiddenGroups(holder.npcAppearance(), npc == null ? null : npc.npcExpression()));
+        if (animatable instanceof NpcPartsHolder holder) {
+            Set<String> hidden = new HashSet<>(holder.npcRace().hiddenGroups(holder.npcAppearance(), npc == null ? null : npc.npcExpression()));
+            hidden.addAll(holder.npcHiddenExtras());
+            state.addGeckolibData(HIDDEN_PARTS, hidden);
+        }
         state.addGeckolibData(AIMING, npc != null && npc.npcAiming());
         state.addGeckolibData(ANIMATED_DEATH, animatedDeath(animatable));
     }

@@ -76,6 +76,47 @@ public class FoxSanctuaryViews implements UIScenario {
             .screenshot("fox_" + name);
     }
 
+    /** 找一处神狐聚落（测试世界关闭了结构生成，这里先用反射打开，让聚落像正常存档一样随区块生成）；找不到返回 null。 */
+    static net.minecraft.world.level.levelgen.structure.StructureStart locate(net.minecraft.server.MinecraftServer server) {
+        var level = server.getLevel(LogosDimension.CLOUDSEA);
+        var holder = level.registryAccess().lookupOrThrow(Registries.STRUCTURE)
+            .getOrThrow(ResourceKey.create(Registries.STRUCTURE, LogosDimension.id("fox_sanctuary")));
+        // 测试世界关闭了结构生成；这里只为预览把它打开，让聚落像正常存档一样随区块自然生成
+        try {
+            var options = server.getWorldGenSettings().options();
+            var field = net.minecraft.world.level.levelgen.WorldOptions.class.getDeclaredField("generateStructures");
+            field.setAccessible(true);
+            field.setBoolean(options, true);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
+        var gen = level.getChunkSource().getGenerator();
+        var cherry = ResourceKey.create(Registries.BIOME, LogosDimension.id("cloudsea_white_cherry"));
+        Structure structure = holder.value();
+        net.minecraft.world.level.levelgen.structure.StructureStart start = null;
+        java.util.Set<Long> tried = new java.util.HashSet<>();
+        int sp = dev.logos.dimension.fox.FoxSanctuaryStructure.spacing();
+        found:
+        for (int r = 2000; r <= 40000; r += 160) {
+            for (int a = 0; a < Math.max(1, r / 40); a++) {
+                double ang = a * Math.PI * 2 / Math.max(1, r / 40);
+                int x = (int) (Math.cos(ang) * r), z = (int) (Math.sin(ang) * r);
+                if (!gen.getBiomeSource().getNoiseBiome(x >> 2, 24, z >> 2, level.getChunkSource().randomState().sampler()).is(cherry)) continue;
+                for (int i = -2; i <= 2; i++) for (int j = -2; j <= 2; j++) {
+                    var cand = dev.logos.dimension.fox.FoxSanctuaryStructure.candidate(level.getSeed(), (x >> 4) + i * sp, (z >> 4) + j * sp);
+                    if (!tried.add(cand.pack())) continue;
+                    var s0 = level.getChunk(cand.x(), cand.z(), ChunkStatus.STRUCTURE_STARTS).getStartForStructure(structure);
+                    if (s0 != null && s0.isValid()) {
+                        start = s0;
+                        break found;
+                    }
+                }
+            }
+        }
+        System.out.println("[fox] candidates tried: " + tried.size());
+        return start;
+    }
+
     @Override public void define(ScenarioBuilder s) {
         s.setGameMode(GameType.SPECTATOR).runCommand("difficulty peaceful").runCommand("weather clear")
             .step("camera", ctx -> {
@@ -92,41 +133,7 @@ public class FoxSanctuaryViews implements UIScenario {
                 dev.logos.dimension.fox.FoxSanctuaryStructure.devPlan = forced == null ? -1 : Integer.parseInt(forced.trim());
                 String style = System.getProperty("logos.foxStyle", System.getenv("LOGOS_FOX_STYLE"));
                 dev.logos.dimension.fox.FoxSanctuaryStructure.devStyle = style == null ? -1 : Integer.parseInt(style.trim());
-                var holder = level.registryAccess().lookupOrThrow(Registries.STRUCTURE)
-                    .getOrThrow(ResourceKey.create(Registries.STRUCTURE, LogosDimension.id("fox_sanctuary")));
-                // 测试世界关闭了结构生成；这里只为预览把它打开，让聚落像正常存档一样随区块自然生成
-                try {
-                    var options = ctx.server().getWorldGenSettings().options();
-                    var field = net.minecraft.world.level.levelgen.WorldOptions.class.getDeclaredField("generateStructures");
-                    field.setAccessible(true);
-                    field.setBoolean(options, true);
-                } catch (ReflectiveOperationException e) {
-                    throw new IllegalStateException(e);
-                }
-                var gen = level.getChunkSource().getGenerator();
-                var cherry = ResourceKey.create(Registries.BIOME, LogosDimension.id("cloudsea_white_cherry"));
-                Structure structure = holder.value();
-                net.minecraft.world.level.levelgen.structure.StructureStart start = null;
-                java.util.Set<Long> tried = new java.util.HashSet<>();
-                int sp = dev.logos.dimension.fox.FoxSanctuaryStructure.spacing();
-                found:
-                for (int r = 2000; r <= 40000; r += 160) {
-                    for (int a = 0; a < Math.max(1, r / 40); a++) {
-                        double ang = a * Math.PI * 2 / Math.max(1, r / 40);
-                        int x = (int) (Math.cos(ang) * r), z = (int) (Math.sin(ang) * r);
-                        if (!gen.getBiomeSource().getNoiseBiome(x >> 2, 24, z >> 2, level.getChunkSource().randomState().sampler()).is(cherry)) continue;
-                        for (int i = -2; i <= 2; i++) for (int j = -2; j <= 2; j++) {
-                            var cand = dev.logos.dimension.fox.FoxSanctuaryStructure.candidate(level.getSeed(), (x >> 4) + i * sp, (z >> 4) + j * sp);
-                            if (!tried.add(cand.pack())) continue;
-                            var s0 = level.getChunk(cand.x(), cand.z(), ChunkStatus.STRUCTURE_STARTS).getStartForStructure(structure);
-                            if (s0 != null && s0.isValid()) {
-                                start = s0;
-                                break found;
-                            }
-                        }
-                    }
-                }
-                System.out.println("[fox] candidates tried: " + tried.size());
+                var start = locate(ctx.server());
                 if (start == null) throw new IllegalStateException("没找到神狐聚落");
                 grounds = (SanctuaryGroundsPiece) start.getPieces().getFirst();
                 System.out.println("[fox] sanctuary at " + start.getChunkPos() + " plan=" + grounds.plan() + " street y=" + grounds.streetLevel() + " trail=" + grounds.trailSize());

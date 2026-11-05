@@ -41,6 +41,7 @@ public final class NpcEntities {
     public static void register(IEventBus bus) {
         TYPES.register(bus);
         ElfSounds.register(bus);
+        FoxSounds.register(bus);
         bus.addListener(NpcEntities::attributes);
         bus.addListener(NpcEntities::creativeTab);
         NeoForge.EVENT_BUS.addListener(ElfFactions::onJoin);

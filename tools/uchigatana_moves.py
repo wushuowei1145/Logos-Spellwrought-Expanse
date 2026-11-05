@@ -299,6 +299,12 @@ def main():
                        bones + (['Root'] if view == 'fp' else []))
         text = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
         (assets / f'uchigatana_{view}.animation.json').write_text(text, encoding='utf-8')
+    # 神狐：同一套编排烘焙到神狐骨架（刀按 1.6 倍），写进模型目录的 Animation/katana/；
+    # tools/divine_fox_assets.py 给动画名加 katana_ 前缀并入神狐的动画文件，Weapon / Sheath 骨骼也由它并进模型。
+    fox_out = art / 'MinecraftLogosMod/fox_model/divine_fox/Animation/katana'
+    fox_out.mkdir(parents=True, exist_ok=True)
+    data = bedrock(all_clips, {c['name']: baked[('fox', c['name'])] for c in all_clips}, fox, bones)
+    (fox_out / 'divine_fox_katana.animation.json').write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
     cams = {'player': [Camera(-35, 8, 6.2, (0, 16, -2), (230, 270)), Camera(80, 6, 6.2, (0, 16, -2), (230, 270))],
             'fox': [Camera(-35, 8, 3.6, (0, 26, -3), (230, 270)), Camera(80, 6, 3.6, (0, 26, -3), (230, 270))]}
 

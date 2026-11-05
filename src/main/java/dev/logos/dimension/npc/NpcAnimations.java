@@ -35,11 +35,12 @@ import net.minecraft.world.item.component.ChargedProjectiles;
  *
  * <p>控制器（按注册顺序，后注册的覆盖先注册的同一骨骼）：
  * {@code pre_parallel_0..7}、{@code main}、{@code hold_offhand}、{@code hold_mainhand}、{@code swing}、
- * {@code use}、{@code misc}、{@code parallel_0..7}。
+ * {@code use}、{@code misc}、{@code combat}、{@code parallel_0..7}。
  *
  * <p>与 TLM 的差别：只播放动画文件里存在的动画名（主状态缺失时顺延到下一个成立的状态，
  * GeckoLib 遇到缺失的动画会每帧报错）；不含女仆专属的棋盘、椅子游戏、乞求、魔法、枪械与盔甲控制器；
- * {@code misc} 改为由 NPC 自己给出的剧情动作。
+ * {@code misc} 改为由 NPC 自己给出的剧情动作；另加 {@code combat}，播放服务端招式状态机给出的战斗动作
+ * （{@link NpcAnimated#npcCombatMove()}）。
  */
 public final class NpcAnimations {
     // ---- 主控制器的状态名（与 TLM 同名）
@@ -279,9 +280,30 @@ public final class NpcAnimations {
             if (name == null || !available(npc.npcAnimationAsset()).contains(name)) return PlayState.STOP;
             return test.setAndContinue(asFile(name));
         }));
+        // 每个实体各有一套控制器，记下上一次开始播放的招式（动画名 @ 开始刻）
+        String[] playing = {null};
+        controllers.add(new AnimationController<T>("combat", 1, test -> {
+            NpcAnimated.CombatMove move = npc.isDeadOrDying() ? null : npc.npcCombatMove();
+            if (move == null || !available(npc.npcAnimationAsset()).contains(move.animation())) {
+                playing[0] = null;
+                return PlayState.STOP;
+            }
+            // 换招（动画名或开始刻变了）时从头播放
+            String key = move.animation() + "@" + move.start();
+            if (!key.equals(playing[0])) {
+                test.controller().reset();
+                playing[0] = key;
+            }
+            test.controller().setAnimationSpeed(move.speed());
+            return test.setAndContinue(move.loop() ? raw(move.animation()) : hold(move.animation()));
+        }));
         for (int i = 0; i < PARALLEL_COUNT; i++) {
             controllers.add(parallel(npc, String.format("parallel_%d_controller", i), "parallel" + i));
         }
+    }
+
+    private static RawAnimation hold(String name) {
+        return HOLD.computeIfAbsent(name, n -> RawAnimation.begin().then(n, LoopType.HOLD_ON_LAST_FRAME));
     }
 
     private static <T extends LivingEntity & NpcAnimated> AnimationController<T> hold(T npc, String controller, boolean main) {

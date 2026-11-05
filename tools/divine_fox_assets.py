@@ -1,6 +1,6 @@
 """神狐的游戏资源：从仓库外的模型目录导入模型、贴图、零件表与动画，并画刷怪蛋。
 
-    python tools/divine_fox_assets.py [--source <fox_model/divine_fox 目录>]
+    python tools/divine_fox_assets.py [--source <fox_model/divine_fox 目录>] [--voices <ogg 目录>]
 
 模型目录（默认 ../fox_model/divine_fox，维护者的部件库）里已合并、导出好的文件：
 
@@ -9,17 +9,27 @@
 - `build/exports/divine_fox.animation.json` 里的 `idle`：素体自带的待机；
 - `Animation/side_lying_trial/divine_fox_death.animation.json`：侧倒后面朝地面的死亡动画（维护者选定的版本）；
 - `Animation/ambient/divine_fox_ambient.animation.json`：常驻叠加层 `pre_parallel0` 眨眼、`pre_parallel1` 耳朵抖动、
-  `pre_parallel2` 尾巴轻摆（create_ambient_loops.py）。
+  `pre_parallel2` 尾巴轻摆（create_ambient_loops.py）；
+- `Animation/katana/divine_fox_katana.animation.json`：打刀动作在神狐骨架上的烘焙（本模组 tools/uchigatana_moves.py 写出），
+  动画名加 `katana_` 前缀并入，例如 `katana_slash_1`。
+
+打刀：四套刀装的网格（`combat/weapons/fox_uchigatana_*.json`）按神狐的 1.6 倍挂到新加的 `Weapon` / `Sheath` 骨骼上
+（父骨骼 `UpBody`、枢轴在原点，与烘焙用的骨架一致），每套刀装一组刀身 `katana_<配色>_blade`、一组刀鞘 `katana_<配色>_saya`，
+贴图并到总贴图底部。平时由常驻叠加层 `pre_parallel3`（佩刀）把刀与鞘停在左腰的佩刀位置，打刀动作播放时由它接管。
 
 移动类动作借用本模组森林精灵动画文件里已经按 2 倍制作换算好的车万女仆（TLM）动画（CC BY-NC-SA 4.0，CREDITS.md 登记），
 两者骨架相同，只保留神狐模型里有的骨骼。
 
 死亡动画按 160 帧/秒逐帧烘焙，导入时去掉能由前后两帧线性插值还原（误差 < 0.001）的中间帧，动作不变、文件小得多。
 
+语音：维护者转好的 ogg（默认 `声音素材/神狐女/shenhu_female_ogg`），按文件名方括号里的标签归到各个事件，
+复制为 `sounds/entity/divine_fox/<事件>_<哈希>.ogg`，只改写 sounds.json 里 `entity.divine_fox.*` 这几项。
+
 叠加层在主状态之前播放，主状态动画用到同一骨骼时会盖过它（docs/NPC_ANIMATIONS.md）。死亡动画本身已经接管整条尾巴；
 这里再给眨眼与抖耳两层用到的骨骼通道补上静止帧，倒下后不再眨眼、抖耳。
 """
 import argparse
+import hashlib
 import json
 import shutil
 from pathlib import Path
@@ -30,10 +40,32 @@ ROOT = Path(__file__).resolve().parent.parent
 ASSETS = ROOT / "src/main/resources/assets/logos_dimension"
 GECKO = ASSETS / "geckolib"
 DEFAULT_SOURCE = ROOT.parent / "fox_model/divine_fox"
+DEFAULT_VOICES = ROOT.parent.parent / "声音素材" / "神狐女" / "shenhu_female_ogg"
+# 标签 → 事件（对标村民与森林精灵）。一个素材可以归到几个事件：疑惑与肯定当闲时，不满既是警觉也是拒绝。
+VOICE_LABELS = {
+    "ambient": ["疑惑", "肯定"],
+    "greet": ["高兴", "肯定", "接受"],
+    "yes": ["肯定"],
+    "no": ["不满"],
+    "alert": ["不满"],
+    "attack": ["发力"],
+    "cast": ["接受"],
+    "hurt": ["到攻击"],   # 素材里写作「到攻击」与「收到攻击」
+    "death": ["死亡"],
+}
 ELF_ANIMATION = GECKO / "animations/entity/forest_elf.animation.json"
 # 借用的 TLM 动画（森林精灵文件里已换算好）；登记在 CREDITS.md
-BORROWED = ["walk", "jump", "attacked", "ladder_up", "ladder_stillness", "ladder_down", "swim_stand", "swing_hand"]
+BORROWED = ["walk", "jump", "attacked", "ladder_up", "ladder_stillness", "ladder_down", "swim_stand", "swing_hand",
+            "hold_mainhand:bow", "use_mainhand:bow"]
+# 森林精灵自制的剧情动作（不是车万女仆的），同一套骨架，神狐打招呼与拒绝时借用
+ELF_ACTIONS = ["greet", "refuse"]
 LAYERS = ["pre_parallel0", "pre_parallel1", "pre_parallel2"]
+# 打刀：四套刀装（与 UchigatanaItem 同名）、神狐挂刀的倍数（tools/uchigatana_moves.py 的 fox_scale）
+KATANAS = ["ink", "vermilion", "indigo", "wood"]
+KATANA_SCALE = 1.6
+KATANA_PREFIX = "katana_"
+CARRY = "pre_parallel3"
+FACES = ["north", "east", "south", "west", "up", "down"]
 
 
 def read(path):
@@ -84,9 +116,13 @@ def animations(source, bones):
     elf = read(ELF_ANIMATION)["animations"]
     death = read(source / "Animation/side_lying_trial/divine_fox_death.animation.json")["animations"]["death"]
     layers = read(source / "Animation/ambient/divine_fox_ambient.animation.json")["animations"]
+    katana = read(source / "Animation/katana/divine_fox_katana.animation.json")["animations"]
     out = {"idle": only(exported["idle"], bones)}
-    for name in BORROWED:
+    for name in BORROWED + ELF_ACTIONS:
         out[name] = only(elf[name], bones)
+    for name, anim in katana.items():
+        out[KATANA_PREFIX + name] = only(anim, bones)
+    out[CARRY] = carry(katana["sheathe"])
     death = prune(only(death, bones))
     # 倒下后停止眨眼、高光抖动与抖耳：叠加层用到的每个骨骼通道，死亡动画没有的都补一个静止帧
     rest = {"rotation": [0, 0, 0], "position": [0, 0, 0], "scale": [1, 1, 1]}
@@ -100,6 +136,65 @@ def animations(source, bones):
         out[name] = only(layers[name], bones)
         assert out[name]["bones"].keys() == layers[name]["bones"].keys(), name
     return {"format_version": "1.8.0", "animations": out}
+
+
+def carry(sheathe):
+    """佩刀：收刀动作的最后一帧（刀入鞘、鞘在左腰），刀与鞘停在那里的常驻叠加层；角度化到 ±180°。"""
+    out = {}
+    for bone in ("Weapon", "Sheath"):
+        channels = {}
+        for ch, keys in sheathe["bones"][bone].items():
+            last = keys[max(keys, key=float)] if isinstance(keys, dict) else keys
+            value = [((v + 180) % 360) - 180 for v in last] if ch == "rotation" else last
+            channels[ch] = {"0.0": [round(v, 4) for v in value]}
+        out[bone] = channels
+    return {"loop": True, "animation_length": 1.0, "bones": out}
+
+
+def katana_geometry(geo, atlas):
+    """把四套刀装挂进模型：Weapon / Sheath 骨骼（UpBody 下、枢轴在原点），每套一组刀身、一组刀鞘，贴图并到总贴图底部。"""
+    desc = geo["minecraft:geometry"][0]["description"]
+    width, height = desc["texture_width"], desc["texture_height"]
+    rigs = [Image.open(ASSETS / f"textures/item/fox_uchigatana_{v}_rig.png").convert("RGBA") for v in KATANAS]
+    band = max(r.height for r in rigs)
+    assert sum(r.width for r in rigs) <= width, "刀装贴图并排放不下"
+    out = Image.new("RGBA", (width, height + band))
+    out.paste(atlas, (0, 0))
+    bones = geo["minecraft:geometry"][0]["bones"]
+    bones += [{"name": "Weapon", "parent": "UpBody", "pivot": [0, 0, 0]}, {"name": "Sheath", "parent": "UpBody", "pivot": [0, 0, 0]}]
+    s = KATANA_SCALE
+    x0 = 0
+    for variant, rig in zip(KATANAS, rigs):
+        out.paste(rig, (x0, height))
+        mesh = read(ASSETS / f"combat/weapons/fox_uchigatana_{variant}.json")
+        for part, parent, group in (("weapon", "Weapon", "blade"), ("sheath", "Sheath", "saya")):
+            cubes = []
+            for c in mesh["cubes"]:
+                if c["part"] != part:
+                    continue
+                # 网格是 Blockbench 坐标（刀尖 +Y、刃 +X），按 bbtool.export_geo 的规则换成 Bedrock：x 取反、绕 x/y 的转角取反
+                a = [v * s for v in c["start"]]
+                b = [v * s for v in c["end"]]
+                size = [b[i] - a[i] for i in range(3)]
+                cube = {"origin": [round(-(a[0] + size[0]), 5), round(a[1], 5), round(a[2], 5)], "size": [round(v, 5) for v in size]}
+                r = c.get("rotation") or [0, 0, 0]
+                if any(abs(v) > 1e-6 for v in r):
+                    pv = [v * s for v in c["pivot"]]
+                    cube["pivot"] = [round(-pv[0], 5), round(pv[1], 5), round(pv[2], 5)]
+                    cube["rotation"] = [round(-r[0], 5), round(-r[1], 5), round(r[2], 5)]
+                uv = {}
+                for f in FACES:
+                    if f not in c["uv"]:
+                        continue
+                    u1, v1, u2, v2 = c["uv"][f]
+                    u1, u2, v1, v2 = u1 + x0, u2 + x0, v1 + height, v2 + height
+                    uv[f] = {"uv": [u2, v2], "uv_size": [u1 - u2, v1 - v2]} if f in ("up", "down") else {"uv": [u1, v1], "uv_size": [u2 - u1, v2 - v1]}
+                cube["uv"] = uv
+                cubes.append(cube)
+            bones.append({"name": f"katana_{variant}_{group}", "parent": parent, "pivot": [0, 0, 0], "cubes": cubes})
+        x0 += rig.width
+    desc["texture_height"] = height + band
+    return out
 
 
 def spawn_egg():
@@ -139,18 +234,60 @@ def spawn_egg():
           {"model": {"type": "minecraft:model", "model": "logos_dimension:item/divine_fox_spawn_egg"}})
 
 
+def channels(path):
+    """ogg 的声道数（Vorbis 标识头第 11 字节）；立体声在游戏里不随距离衰减。"""
+    data = path.read_bytes()
+    i = data.find(b"vorbis")
+    return data[i + 11] if i >= 0 else 0
+
+
+def voices(folder):
+    files = sorted(Path(folder).glob("*.ogg"))
+    if not files:
+        print(f"语音：没有素材（{folder}），sounds.json 不变")
+        return
+    out = ASSETS / "sounds/entity/divine_fox"
+    if out.exists():
+        shutil.rmtree(out)
+    out.mkdir(parents=True)
+    events, used, stereo = {e: [] for e in VOICE_LABELS}, set(), []
+    for src in files:
+        hit = [e for e, labels in VOICE_LABELS.items() if any(l in src.stem for l in labels)]
+        if not hit:
+            continue
+        # 文件名用素材名的哈希，避免中文与符号；同一素材重跑得到同一个名字
+        name = f"{hit[0]}_{hashlib.sha1(src.name.encode('utf-8')).hexdigest()[:8]}"
+        shutil.copyfile(src, out / f"{name}.ogg")
+        used.add(src.name)
+        if channels(src) > 1:
+            stereo.append(src.name)
+        for e in hit:
+            events[e].append(f"logos_dimension:entity/divine_fox/{name}")
+    path = ASSETS / "sounds.json"
+    sounds = {k: v for k, v in read(path).items() if not k.startswith("entity.divine_fox.")}
+    for e, files_ in events.items():
+        assert files_, f"语音事件 {e} 没有素材"
+        sounds[f"entity.divine_fox.{e}"] = {"subtitle": f"subtitles.logos_dimension.divine_fox.{e}", "sounds": sorted(files_)}
+    write(path, sounds)
+    print(f"语音：{len(used)} 个文件，{len(events)} 个事件；未归类 {[f.name for f in files if f.name not in used]}；立体声 {stereo}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", default=str(DEFAULT_SOURCE))
-    source = Path(parser.parse_args().source)
+    parser.add_argument("--voices", default=str(DEFAULT_VOICES))
+    args = parser.parse_args()
+    source = Path(args.source)
     geo = read(source / "build/exports/divine_fox.geo.json")
     parts = read(source / "build/parts.json")
+    atlas = katana_geometry(geo, Image.open(source / "build/exports/divine_fox.png").convert("RGBA"))
     bones = bones_of(geo)
     write(GECKO / "models/entity/divine_fox.geo.json", geo, indent=None)
-    shutil.copyfile(source / "build/exports/divine_fox.png", ASSETS / "textures/entity/divine_fox.png")
+    atlas.save(ASSETS / "textures/entity/divine_fox.png")
     write(ROOT / "src/main/resources/data/logos_dimension/npc_races/divine_fox.json", parts, indent=1)
     write(GECKO / "animations/entity/divine_fox.animation.json", animations(source, bones), indent=1)
     spawn_egg()
+    voices(args.voices)
     print("bones", len(bones), "parts", sum(len(s["parts"]) for s in parts["slots"].values()))
 
 
