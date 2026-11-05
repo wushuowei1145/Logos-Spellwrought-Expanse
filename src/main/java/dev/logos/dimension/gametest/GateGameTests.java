@@ -106,6 +106,11 @@ public final class GateGameTests {
                 new StructurePlaceSettings().setRotation(rotation).setRotationPivot(pivot).setIgnoreEntities(true), level.getRandom(), 2);
     }
 
+    /** 测试结束时释放强制加载的区块，别占着服务器影响后面的测试。 */
+    private static void release(ServerLevel level, BlockPos pos) {
+        level.setChunkForced(pos.getX() >> 4, pos.getZ() >> 4, false);
+    }
+
     private static long portals(Level level, List<BlockPos> cells) {
         return cells.stream().filter(c -> level.getBlockState(c).is(Gate.GATE_PORTAL.get())).count();
     }
@@ -183,6 +188,7 @@ public final class GateGameTests {
             level.getBlockState(stone).useItemOn(gem, level, player, InteractionHand.MAIN_HAND, hit);
             check(h, gem.getCount() == 1, "已经满了不应再吃物品");
             level.getServer().getPlayerList().remove(player);
+            release(level, stone);
         });
     }
 
@@ -233,6 +239,7 @@ public final class GateGameTests {
             var drops = level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, new AABB(stone).inflate(3), e -> e.getItem().is(Gate.GATE_STONE.get().asItem()));
             check(h, !drops.isEmpty(), "启门石应当掉落");
             level.getServer().getPlayerList().remove(player);
+            release(level, stone);
         });
     }
 
@@ -258,6 +265,7 @@ public final class GateGameTests {
             check(h, level.getBlockState(cell).is(Gate.GATE_PORTAL.get()), "合拢后应开门");
             check(h, level.getBlockState(cell).getValue(GatePortalBlock.AXIS) == Direction.Axis.Z, "门面应沿 Z");
             check(h, GateShape.connected(level, cell).size() == 9, "应是 9 格");
+            release(level, stone);
         });
     }
 
@@ -301,6 +309,7 @@ public final class GateGameTests {
             var home = GateTravel.destination(cloudsea, back, arrival);
             check(h, home != null && home.newLevel() == level, "从远行大陆应回主世界");
             check(h, GateShape.connected(level, cell).contains(BlockPos.containing(home.position())), "应落回原来这扇门：" + home.position());
+            release(level, stone);
         });
     }
 
