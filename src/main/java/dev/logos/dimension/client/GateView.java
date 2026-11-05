@@ -8,6 +8,7 @@ import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.client.vfx.GateIgnition;
 import dev.logos.dimension.gate.Gate;
 import dev.logos.dimension.gate.GateStoneBlockEntity;
+import dev.logos.dimension.gate.GateStyle;
 import dev.logos.dimension.gate.GateTravel;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
@@ -41,7 +42,7 @@ public class GateView implements UIScenario {
 
     /** 平整一块草地，把大号门放在中间。 */
     private static void stage(ServerLevel level) {
-        for (int x = -40; x <= 60; x++) for (int z = -40; z <= 40; z++) {
+        for (int x = -40; x <= 130; x++) for (int z = -40; z <= 40; z++) {
             level.setBlock(new BlockPos(x, 98, z), Blocks.DIRT.defaultBlockState(), 2);
             level.setBlock(new BlockPos(x, 99, z), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
             for (int y = 100; y < 125; y++) level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), 2);
@@ -84,21 +85,36 @@ public class GateView implements UIScenario {
         at(s, "侧面", 12, 104, -12, 45, 0).screenshot("big_lit_angle");
         s.runCommand("time set 18000").ticks(20).screenshot("big_lit_angle_night");
         s.runCommand("time set 6000");
-        // 小号门两个朝向
-        s.server("生成小号门", ctx -> {
-            GateTravel.createSmallGate(ctx.server().overworld(), new BlockPos(40, 99, -15), Direction.Axis.X);
-            GateTravel.createSmallGate(ctx.server().overworld(), new BlockPos(40, 99, 15), Direction.Axis.Z);
+        // 每种样式：正面、斜面和背面，门面都沿 X；再各放一扇转到 Z 向的
+        GateStyle[] styles = GateStyle.values();
+        s.server("生成五种门", ctx -> {
+            for (GateStyle style : styles) {
+                int x = 30 + style.ordinal() * 16;
+                GateTravel.createGate(ctx.server().overworld(), new BlockPos(x, 99, -18), Direction.Axis.X, style);
+                GateTravel.createGate(ctx.server().overworld(), new BlockPos(x, 99, 18), Direction.Axis.Z, style);
+            }
         }).ticks(5);
-        at(s, "小号门正面", 40.5, 101, -27, 0, -4).ticks(20).screenshot("small_x_front");
-        at(s, "小号门斜面", 49, 102, -24, 40, 0).screenshot("small_x_angle");
-        at(s, "转向的小号门", 50, 102, 15.5, 90, 0).screenshot("small_z_front");
+        for (GateStyle style : styles) {
+            int x = 30 + style.ordinal() * 16;
+            String name = style.name().toLowerCase(java.util.Locale.ROOT);
+            at(s, name + " 正面", x + .5, 101.5, -34, 0, -6).ticks(20).screenshot(name + "_front");
+            at(s, name + " 斜面", x + 11, 103, -28, 40, 2).screenshot(name + "_angle");
+            at(s, name + " 背面", x + .5, 101.5, -2, 180, -6).screenshot(name + "_back");
+            at(s, name + " 转向", x + .5 + 15, 102, 18.5, 90, -4).screenshot(name + "_turned");
+        }
+        s.runCommand("time set 18000").ticks(20);
+        for (GateStyle style : styles) {
+            int x = 30 + style.ordinal() * 16;
+            at(s, style + " 夜里", x + 11, 103, -28, 40, 2).screenshot(style.name().toLowerCase(java.util.Locale.ROOT) + "_night");
+        }
+        s.runCommand("time set 6000");
         // 走世界生成那条路放一次大号门：结构、模板池都接上才放得出来
-        at(s, "去放结构的地方", 130.5, 102, -20, 0, -4).ticks(40)
-                .runCommand("place structure logos_dimension:journey_gate 130 99 0").ticks(10)
+        at(s, "去放结构的地方", 180.5, 102, -20, 0, -4).ticks(40)
+                .runCommand("place structure logos_dimension:journey_gate 180 99 0").ticks(10)
                 // 结构按地表高度放，不一定在 99 层
                 .server("找结构里的启门石", ctx -> {
                     var level = ctx.server().overworld();
-                    for (var p : BlockPos.betweenClosed(110, level.getMinY(), -20, 150, 140, 20)) if (level.getBlockState(p).is(Gate.GATE_STONE.get())) worldgenStone = p.immutable();
+                    for (var p : BlockPos.betweenClosed(160, level.getMinY(), -20, 200, 140, 20)) if (level.getBlockState(p).is(Gate.GATE_STONE.get())) worldgenStone = p.immutable();
                     if (worldgenStone != null) DimensionTravel.teleport(ctx.player(), level, worldgenStone.offset(0, 4, -20).getBottomCenter(), 0, -4);
                 }).ticks(30).screenshot("worldgen_gate")
                 .check("结构放出了启门石", ctx -> worldgenStone != null)
