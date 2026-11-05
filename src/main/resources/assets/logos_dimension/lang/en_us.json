@@ -432,7 +432,7 @@
   "item.logos_dimension.blacksteel_longsword": "Blacksteel Longsword",
   "tooltip.logos_dimension.longsword.combo": "Attack: three-cut combo (hold to chain)",
   "tooltip.logos_dimension.longsword.charge": "Hold Use to charge upright; release for an overhead cut",
-  "tooltip.logos_dimension.blacksteel_longsword.guard": "Use: hold the blade upright to block (no durability loss)",
+  "tooltip.logos_dimension.blacksteel_longsword.guard": "Use: hold the blade upright to block; a mana shield stops attacks and spells from the front, costing mana instead of durability; void passes through",
   "tooltip.logos_dimension.blacksteel_longsword.wrap": "Mana wraps cast with it, and what they set off: 30% cheaper, 30% more damage",
   "tooltip.logos_dimension.blacksteel_longsword.cast": "While blocking, Attack to charge; release Use once full to cast",
   "item.logos_dimension.fox_uchigatana_ink": "Fox Uchigatana (Ink, Ivory Grip)",

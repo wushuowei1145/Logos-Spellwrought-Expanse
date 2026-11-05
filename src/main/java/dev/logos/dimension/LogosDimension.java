@@ -71,6 +71,7 @@ public final class LogosDimension {
         dev.logos.dimension.item.NaturesForceItem.init();
         dev.logos.dimension.item.ElfSpearItem.init();
         dev.logos.dimension.item.LongswordItem.init();
+        dev.logos.dimension.longsword.ManaGuard.init();
         dev.logos.dimension.item.UchigatanaItem.init();
         dev.logos.dimension.item.OathSpearItem.init();
         dev.logos.dimension.item.YumiItem.init();

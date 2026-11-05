@@ -11,6 +11,23 @@
 | 回归 | `group:longsword` + `group:oath_spear` 5/5 场景通过；`group:uchigatana` 停在“突刺命中”（木桩已被打死），与群誓长枪一轮记下的已有问题相同 |
 | 编译依赖 | Logos 用仓库外 `build-latest-20261104/logos-main` 的 0.6.0 构建（main 需要 `CastPose`、`wrap_cost` 等） |
 | 未验证 | 足踏み的双腿张开：原版第三人称镜头总在视线上，侧身后只看得到侧面，没有截到正面；联机旁观者；光影包；专用服务器；神狐使用和弓（动作只有离线预览） |
+## 黑钢长剑：魔力格挡
+
+2026-11-05：分支 `feat/mana-guard`，基于 main `c3b83d3`。按维护者意见，黑钢长剑的竖剑格挡改成魔力格挡：
+
+- 原版攻击：原版盾牌该掉多少耐久就扣多少魔力（伤害不到 3 不扣，否则 1 + 伤害取整），剑不掉耐久；魔力不够就挡不住。
+- 魔法伤害（原版 `magic`、`indirect_magic`）也挡。
+- 正面飞来的敌方魔弹、光柱、游脉停在剑前：借用 Logos 炼成体拦截法术的逻辑，拦截费与炼成体相同，再加命中伤害折成的魔力，从持剑者的魔力里付。
+- 虚空属性一律穿透。
+- 格挡声换成紫水晶块敲击声，破防声换成紫水晶簇碎裂声（与 Logos 炼成体相同）。
+
+需要 Logos 的 `SpellWard`、`Constructs.addWards` 与 `Effects.dealing()`（MagicFoxDemon/MinecraftLogosMod#375，分支 `feat/spell-ward`）。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元与构建 | `./gradlew test build` 通过（按 Logos `feat/spell-ward` 编译） |
+| 世界测试 | `logos_dimension:longsword_*` **13/13**。`longsword_guard` 加查挡下 6 点伤害扣 7 魔力；新增 `longsword_mana_guard`：魔法伤害挡住并扣 5 魔力，虚空伤害穿透，魔力不够（3）时 6 点伤害挡不住也不扣，正前方敌人伤害 5 的魔弹停在剑前、扣 6.5 魔力，虚空魔弹穿过打中，不许作用于玩家的术式穿过不扣魔力 |
+| 未验证 | 实际客户端（新声音、法术停在剑前的样子）；光影包；联机；光柱、游脉、巨像炮顶在护盾上（只测了魔弹） |
 
 ## 群誓·狼牙长枪
 
