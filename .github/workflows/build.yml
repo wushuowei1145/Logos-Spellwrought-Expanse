@@ -1,0 +1,79 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      logos_ref:
+        description: 用于构建的 MinecraftLogosMod 分支、标签或提交（默认取 LOGOS_REF）
+
+permissions:
+  contents: read
+
+env:
+  # 本 Mod 编译所依赖的 Logos 提交；需要更新的 Logos 代码时改这一行。
+  LOGOS_REF: ba471315a4688cf95bc2ff147e88ed015707139f
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+
+      # build.gradle 编译时需要 Logos jar（-PlogosJar），而 Logos 没有发布版本，只能从源码构建。
+      - name: Check out Logos
+        uses: actions/checkout@v7
+        with:
+          repository: MagicFoxDemon/MinecraftLogosMod
+          ref: ${{ inputs.logos_ref || env.LOGOS_REF }}
+          path: .logos-src
+
+      - name: Resolve Logos commit
+        id: logos-sha
+        run: echo "sha=$(git -C .logos-src rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Logos jar
+        id: logos-jar
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/logos-jar
+          key: logos-jar-${{ steps.logos-sha.outputs.sha }}
+
+      - name: Build Logos jar
+        if: steps.logos-jar.outputs.cache-hit != 'true'
+        working-directory: .logos-src
+        # Logos 仓库里的 gradlew 没有可执行权限。
+        run: |
+          sh ./gradlew jar
+          mkdir -p ~/.cache/logos-jar
+          cp build/libs/logos-*.jar ~/.cache/logos-jar/logos.jar
+
+      - name: Test and build
+        run: ./gradlew test build "-PlogosJar=$HOME/.cache/logos-jar/logos.jar"
+
+      - name: Run GameTests
+        run: ./gradlew runGameTestServer "-PlogosJar=$HOME/.cache/logos-jar/logos.jar"
+
+      - name: Upload test reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports
+          path: |
+            build/reports/tests/
+            build/gametest-results.xml
+          if-no-files-found: ignore
+          retention-days: 7
