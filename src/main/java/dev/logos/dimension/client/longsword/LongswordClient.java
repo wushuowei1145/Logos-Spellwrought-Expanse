@@ -139,12 +139,15 @@ public final class LongswordClient {
                             SwordCastClient.tip(avatar.getMainHandItem()), glow, glow > 0 ? SwordCastClient.color(avatar) : 0);
                 }
                 if (frame != null && frame.sample().turn() != 0) {
+                    float turn = frame.sample().turn();
                     // 弓道侧身：原版身体（连同双腿和这层骨架）整个转过去，头保持原来的朝向，仍看准星。
-                    // 动作里的转身是 Blockbench 绕 +Y 的角；骨架这一层按 X、Y 都取反画进原版模型，绕 Y 的转向正好与原版身体朝向一致。
-                    // 左手惯用时整副骨架是镜像的，转向相反。
-                    float yaw = frame.sample().turn() * (state.mainArm == HumanoidArm.LEFT ? -1 : 1);
-                    state.bodyRot += yaw;
-                    state.yRot -= yaw;
+                    // 动作里的转身是 Blockbench 绕 +Y 的角（-90 = 靶在左手一侧）。骨架这一层按 X、Y 取反画进原版模型，
+                    // 原版又按 180 - bodyRot 转身体，所以原版身体朝向要加上 -turn；左手惯用时骨架只取反 Y，转向相反。
+                    float yaw = -turn * (state.mainArm == HumanoidArm.LEFT ? -1 : 1);
+                    // 原版身体停着时会落后视线至多 50°；转身随动作淡入，转满时身体以视线为准，箭始终指着准星。
+                    float settle = Math.min(1, Math.abs(turn) / 90);
+                    state.bodyRot += state.yRot * settle + yaw;
+                    state.yRot -= state.yRot * settle + yaw;
                 }
                 state.setRenderData(FRAME, frame);
                 state.setRenderData(DawnvowBlade.GLOW, DawnvowClient.blade(avatar.getId(), state.partialTick));
@@ -204,6 +207,7 @@ public final class LongswordClient {
             boolean shown = DawnvowSummon.visible(frame.move, frame.time);
             var rig = LongswordRig.get(frame.variant, false);
             rig.submit(frame.sample, pose, collector, light, state.skin, !state.isInvisible, shown);
+            dev.logos.dimension.client.YumiClient.reportArrow(state.id, pose.last().pose(), frame.sample);
             if (shown && frame.glow > 0) rig.submitGlow(frame.sample, pose, collector, false, frame.glow, frame.glowColor);
             if (frame.tip != null) SwordCastClient.reportThirdPerson(state.id, pose.last().pose(), LongswordRig.onWeapon(frame.sample, frame.tip));
             DawnvowSummon.submit(frame.move, frame.time, frame.sample, pose, collector, false);

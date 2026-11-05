@@ -10,6 +10,9 @@ import dev.logos.dimension.item.YumiItem;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import dev.logos.dimension.client.longsword.LongswordRig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.SpectralArrowRenderer;
@@ -27,6 +30,7 @@ import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.ComputeFovModifierEvent;
 import net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 
 /**
@@ -44,6 +48,8 @@ public final class YumiClient {
     private static List<Face> arrow;
     private static Identifier arrowTexture;
     private static float arrowLength;
+    /** 第三人称每帧画出的、搭在弦上的箭在世界里的指向（单位向量），按实体编号；箭不在弦上时没有。 */
+    private static final Map<Integer, Vector3f> AIM = new ConcurrentHashMap<>();
 
     @SubscribeEvent static void fov(ComputeFovModifierEvent event) {
         var player = event.getPlayer();
@@ -64,6 +70,16 @@ public final class YumiClient {
         event.registerEntityModifier(SpectralArrowRenderer.class,
                 (entity, state) -> state.setRenderData(YUMI_ARROW, entity.getData(NatureAttachments.YUMI_ARROW)));
     }
+
+    /** 第三人称画骨架时记下箭的指向：{@code pose} 是这层骨架的世界朝向（以镜头为原点），矢的网格箭头朝 -Z。 */
+    public static void reportArrow(int entityId, Matrix4fc pose, LongswordRig.Sample sample) {
+        var bone = sample.bones().get("BowArrow");
+        if (bone == null) return;
+        var direction = pose.transformDirection(bone.transformDirection(new Vector3f(0, 0, -1)));
+        if (direction.lengthSquared() < 1e-12f) AIM.remove(entityId); else AIM.put(entityId, direction.normalize());
+    }
+    /** 最近一次画出的箭的指向；UI 场景用它核对箭是否指着视线。 */
+    public static Vector3f arrowDirection(int entityId) { return AIM.get(entityId); }
 
     /** 和弓的箭画成矢并返回 true（调用方不再画原版箭）；不是和弓的箭或网格读不到时返回 false。 */
     public static boolean submitArrow(ArrowRenderState state, PoseStack pose, SubmitNodeCollector collector) {
