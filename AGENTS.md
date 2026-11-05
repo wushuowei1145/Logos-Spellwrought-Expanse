@@ -6,7 +6,7 @@
 - PR 默认以 main 为目标；只有明确说明的依赖审查才指向功能分支，依赖功能分支上的更新必须另行整合到 main，不能把功能分支内合并称为主分支已更新。
 - 美术素材使用代码绘制，不使用图像生成服务；代码注释与文档字符串使用中文。
 - NPC 模型按 [docs/NPC_MODELS.md](docs/NPC_MODELS.md)：车万女仆 GeckoLib 骨架命名、2 倍制作、entityCutout（不剔除背面）加原版实体光照，发光部件用 `ysmGlow` 前缀骨骼；制作做法见 [docs/NPC_MODELING_GUIDE.md](docs/NPC_MODELING_GUIDE.md)；普通 NPC 的随机外观按 [docs/NPC_APPEARANCE.md](docs/NPC_APPEARANCE.md)，幼年、伴侣与繁殖按 [docs/NPC_POPULATION.md](docs/NPC_POPULATION.md)，施法按 [docs/NPC_MAGIC.md](docs/NPC_MAGIC.md)；借用车万女仆的动画按 [CREDITS.md](CREDITS.md) 署名并登记。
-- 战斗动作（玩家与 NPC 共用的连招）按 [docs/COMBAT_SKELETON.md](docs/COMBAT_SKELETON.md)：TLM 骨骼名、Bedrock 动作文件、`dev.logos.dimension.combat` 运行时；其中第 1 节的兼容性规则优先于新功能，只接管本附属自己的武器与生物，失败时退回原版。
+- 战斗动作（玩家与 NPC 共用的连招）按 [docs/COMBAT_SKELETON.md](docs/COMBAT_SKELETON.md)：TLM 骨骼名、Bedrock 动作文件、`dev.logos.dimension.combat` 运行时；其中第 1 节的兼容性规则优先于新功能，只接管本附属自己的武器与生物，失败时退回原版。新增带动作的三维武器时按 [docs/COMBAT_WEAPON_WORKFLOW.md](docs/COMBAT_WEAPON_WORKFLOW.md) 的流程和清单做。
 - 提交与 PR 不添加 AI 作者、共同作者或贡献者署名，使用维护者已有的 Git 身份。
 - 复用现有 Logos 材料注册 ID，不复制注册污染碎片。
 - 特效按 [docs/VFX.md](docs/VFX.md) 做：复用 Logos 的法术特效时在服务端调用 `dev.logos.runtime.Vfx`；附属自己的特效直接用 Photon 写，已有贴图用 `logos:` 路径引用。构建需要 `-PlogosJar`。
