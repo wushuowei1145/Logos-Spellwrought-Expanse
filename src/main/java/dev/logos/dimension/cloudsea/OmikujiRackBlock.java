@@ -3,11 +3,12 @@ package dev.logos.dimension.cloudsea;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -22,7 +23,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-/** 结签架：两根细柱之间拉两道绳。把签纸系上去，绳上的白纸越来越多（0–3 档），身上的霉运也随之解掉。 */
+/** 结签架：两根细柱之间拉两道绳。把签纸系上去，绳上的白纸越来越多（0–3 档）；今天抽到的凶签系上去，今天的凶运也随之解掉。 */
 public class OmikujiRackBlock extends HorizontalDirectionalBlock {
     public static final MapCodec<OmikujiRackBlock> CODEC = simpleCodec(OmikujiRackBlock::new);
     public static final IntegerProperty TIED = IntegerProperty.create("tied", 0, 3);
@@ -57,10 +58,10 @@ public class OmikujiRackBlock extends HorizontalDirectionalBlock {
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (!stack.is(FoxWildsBlocks.OMIKUJI.get())) return InteractionResult.TRY_WITH_EMPTY_HAND;
-        if (!level.isClientSide()) {
+        if (player instanceof ServerPlayer server) {
+            if (Omikuji.tie(server, stack)) server.sendOverlayMessage(Component.translatable("block.logos_dimension.journey_omikuji_rack.cleansed"));
             stack.consume(1, player);
             level.setBlock(pos, state.setValue(TIED, Math.min(3, state.getValue(TIED) + 1)), Block.UPDATE_CLIENTS);
-            player.removeEffect(MobEffects.UNLUCK);
             level.playSound(null, pos, SoundEvents.BOOK_PAGE_TURN, SoundSource.BLOCKS, 0.8f, 0.9f);
         }
         return InteractionResult.SUCCESS;
