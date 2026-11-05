@@ -174,6 +174,8 @@ public final class EconomyGameTests {
             var server = h.getLevel().getServer();
             var market = FxMarketData.market(server);
             market.advance(Economy.clock(server));
+            // 测试顺序每次运行都不同，钱庄上次结到哪一天也不定；先结掉跨过的夜，否则下面两笔仓位白拿几十夜利息，余额对不上
+            Bank.update(server, market, Economy.clock(server));
             var account = Bank.of(server).account(p.getUUID());
             Purse.receive(p, Currency.IMPERIAL, 200_000);
             Bank.deposit(p, Currency.IMPERIAL, 0);

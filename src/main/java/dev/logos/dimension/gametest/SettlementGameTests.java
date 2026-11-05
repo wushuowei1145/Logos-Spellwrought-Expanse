@@ -53,10 +53,22 @@ public final class SettlementGameTests {
             start.placeInChunk(l,l.structureManager(),gen,RandomSource.create(8103),new BoundingBox(x*16,l.getMinY(),z*16,x*16+15,l.getMaxY(),z*16+15),chunk);
         }
     }
+    /** 离 from 最近、起点落在水面（或实地）的区块；判断方式与 JourneySettlementWaterMixin 相同，都看区块西北角。 */
+    private static BlockPos nearestStart(ServerLevel l,BlockPos from,boolean water){
+        var gen=l.getChunkSource().getGenerator();var random=l.getChunkSource().randomState();int cx=from.getX()>>4,cz=from.getZ()>>4;
+        for(int ring=0;ring<=64;ring++)for(int dx=-ring;dx<=ring;dx++)for(int dz=-ring;dz<=ring;dz+=Math.abs(dx)==ring||ring==0?1:2*ring){
+            int x=(cx+dx)<<4,z=(cz+dz)<<4;
+            int surface=gen.getBaseHeight(x,z,net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG,l,random),floor=gen.getBaseHeight(x,z,net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG,l,random);
+            if(surface>floor==water)return new BlockPos(x,from.getY(),z);
+        }
+        throw new IllegalStateException("No "+(water?"water":"dry")+" settlement start near "+from);
+    }
     private static void assembly(GameTestHelper h){
         var l=Objects.requireNonNull(h.getLevel().getServer().getLevel(LogosDimension.CLOUDSEA));
+        var land=nearestStart(l,NativeWorlds.locateBiome(l,CloudseaBiome.SUNLIT_GLADE.id()),false);var sea=nearestStart(l,new BlockPos(1536,80,1536),true);
         for(boolean town:new boolean[]{false,true})for(int seed=0;seed<4;seed++){
-            var start=assemble(l,town,new BlockPos(1536,80,1536),seed);long houses=homes(start),fields=wheatSeeds(start);
+            h.assertTrue(!assemble(l,town,sea,seed).isValid(),"Settlement started on a water surface at "+sea);
+            var start=assemble(l,town,land,seed);long houses=homes(start),fields=wheatSeeds(start);
             System.out.println("SETTLEMENT_ASSEMBLY town="+town+" seed="+seed+" homes="+houses+" fields="+fields+" pieces="+start.getPieces().size()+" bounds="+start.getBoundingBox());
             h.assertTrue(start.isValid()&&count(start,(town?"town":"hamlet")+"_road")==4,"Four streets failed native assembly");
             h.assertTrue(houses==(town?24:16),"Native collision rejected housing lots in fixed assembly samples");
