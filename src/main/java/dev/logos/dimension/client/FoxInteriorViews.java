@@ -147,7 +147,8 @@ public class FoxInteriorViews implements UIScenario {
                 throw new IllegalStateException("抽签不对");
             }
 
-            player.addEffect(new MobEffectInstance(MobEffects.UNLUCK, 2000));
+            // 上面抽到什么是随机的；这里直接换一支凶签，今天的凶签才解得掉霉运
+            paper = Omikuji.draw(player, Omikuji.Fortune.KYO, level.getRandom());
             BlockPos rackPos = row.offset(6, 0, 0);
             use(level, player, rackPos, paper);
             int tied = level.getBlockState(rackPos).getValue(OmikujiRackBlock.TIED);

@@ -61,7 +61,6 @@ public class OmikujiBoxBlock extends HorizontalDirectionalBlock {
         level.playSound(null, pos, SoundEvents.BAMBOO_WOOD_HIT, SoundSource.BLOCKS, 1.0f, 1.3f);
         level.playSound(null, pos, SoundEvents.BOOK_PAGE_TURN, SoundSource.BLOCKS, 0.8f, 1.1f);
         ItemStack paper = Omikuji.draw(server, level.getRandom());
-        server.sendOverlayMessage(paper.getHoverName());
         if (!server.getInventory().add(paper)) server.drop(paper, false);
         return InteractionResult.SUCCESS;
     }

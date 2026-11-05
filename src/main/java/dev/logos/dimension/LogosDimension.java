@@ -94,6 +94,7 @@ public final class LogosDimension {
         dev.logos.dimension.cloudsea.AquaticFlora.register(bus);
         dev.logos.dimension.cloudsea.EmaItem.register(bus);
         dev.logos.dimension.cloudsea.Omikuji.register(bus);
+        dev.logos.dimension.luck.Luck.register(bus);
         dev.logos.dimension.economy.Economy.register(bus);
         dev.logos.dimension.paint.PaintSystem.register(bus);
         dev.logos.dimension.npc.NpcEntities.register(bus);
