@@ -1,5 +1,22 @@
 # 首版验证记录
 
+## 远行之门：主世界与远行大陆之间的传送门
+
+做法见 [远行之门](docs/JOURNEY_GATE.md)。Logos 用 `build-latest-20261105/logos-spell-ward` 的 0.6.0 jar。
+
+| 项目 | 结果 |
+|---|---|
+| 单元测试 | 全部 **199/199** 通过（含语言文件覆盖） |
+| 世界测试 | `./gradlew runGameTestServer` 全部 **158/158**，其中新增 7 个 `gate_*`：大号门放正和转 90° 都判定出 57 格；小号门 21 格，四个楼梯各补一次；各种魔力物品的数值，被污染的碎片不收，别的物品照常使用；走 `ManaVessel` 灌满开门、门洞逐步填满、打掉门框连锁消失且魔力还在、修好后重开、挖走启门石门消失且掉落；玩家自搭门框缺一块开不了，合拢后 9 格；盔甲架真过门，另一侧小号门和传送票，再过一次到同一扇，回来落在原来的门；结构、结构集、模板池、群系标签 |
+| 实际客户端 | `gate_views` **1/1 场景、8/8 检查**：经服务端发包的点亮特效各阶段；楼梯和活板门补缝的近景；两个朝向的小号门；`place structure` 放出的大号门没有点亮；玩家真走进门到远行大陆再走回原来那扇；盔甲架过门后，远行大陆没有玩家也在走刻，传送票过期后停止。人工查看截图 |
+| 未验证 | 专用服务器；联机旁观者；光影包；真实地形上自然生成的大号门（`gate_views` 用 `place structure` 放在超平坦上，世界测试只查数据接线）；传送面和树叶、洞穴藤蔓在光影下的排序 |
+
+```text
+./gradlew test runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:gate_*"
+./gradlew runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=gate_views" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 石中剑：去掉一人一把的限制
 
 2026-11-05：分支 `fix/dawnvow-no-vow-limit`，基于 main `b108dac`。按维护者意见：“已立誓”的限制容易出问题，玩家可能永远拔不了下一把（剑丢了、毁了、掉进岩浆，就再也没有剑可以插回石座解除）。

@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
+    "logos_dimension:gate_stone",
     "logos_dimension:strata_stone",
     "logos_dimension:island_stone",
     "logos_dimension:charred_stone",

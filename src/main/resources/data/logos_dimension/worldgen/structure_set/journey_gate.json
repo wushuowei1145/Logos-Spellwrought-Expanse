@@ -1,0 +1,15 @@
+{
+  "structures": [
+    {
+      "structure": "logos_dimension:journey_gate",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 20261105,
+    "spacing": 48,
+    "separation": 16,
+    "spread_type": "linear"
+  }
+}
