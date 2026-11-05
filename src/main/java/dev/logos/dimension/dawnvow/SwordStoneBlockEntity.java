@@ -78,11 +78,6 @@ public class SwordStoneBlockEntity extends BlockEntity {
         if (fresh) {
             puller = player.getUUID();
             progress = 0;
-            if (!player.isCreative() && DawnvowTrial.sworn(player)) {
-                player.sendOverlayMessage(Component.translatable("message.logos_dimension.dawnvow.sworn"));
-                restUntil = now + 40;
-                return;
-            }
         } else {
             progress += (int) Math.min(now - lastTug, 6);
         }
@@ -117,7 +112,6 @@ public class SwordStoneBlockEntity extends BlockEntity {
         BlockState empty = Dawnvow.EMPTY_STONE.get().defaultBlockState().setValue(SwordStoneBlock.FACING, getBlockState().getValue(SwordStoneBlock.FACING));
         level.setBlock(pos, empty, Block.UPDATE_ALL);
         if (!player.getInventory().add(out)) player.drop(out, false);
-        if (!player.isCreative()) DawnvowTrial.swear(player);
         level.getServer().getPlayerList().broadcastSystemMessage(Component.translatable("message.logos_dimension.dawnvow.drawn", player.getDisplayName()), false);
         level.playSound(null, pos, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 1.2f, 1.4f);
         level.playSound(null, pos, SoundEvents.BELL_RESONATE, SoundSource.BLOCKS, 1f, 1.2f);

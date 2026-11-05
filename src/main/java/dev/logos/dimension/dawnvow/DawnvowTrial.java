@@ -1,17 +1,15 @@
 package dev.logos.dimension.dawnvow;
 
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 
 /**
- * 拔剑的规矩。传说里只有被选中的人拔得出石中剑；这里人人都能拔，但要选对时候、而且一人只拔一次：
+ * 拔剑的规矩。传说里只有被选中的人拔得出石中剑；这里人人都能拔，但要选对时候：
  *
  * <ul>
  *   <li><b>破晓</b>：只有日出前后（一天的 22500–1500 刻，约现实 2.5 分钟）剑才松动。那时斜照在剑上的光最亮，
  *       其他时候按住拔也只能让剑颤一下，然后提示“光太淡”。</li>
  *   <li><b>按住</b>：按住右键连续拔满 {@link #PULL_TICKS} 刻；松手超过半秒就要从头来。</li>
- *   <li><b>一人一誓</b>：每位玩家只能从石中拔出一次曦誓，多处山洞的剑留给别人。把曦誓插回任何空石座即解除誓约。</li>
  * </ul>
  *
  * 没有昼夜的维度（下界、末地）里永远等不到破晓，剑拔不出来。
@@ -45,18 +43,6 @@ public final class DawnvowTrial {
         if (since >= span) return 0;
         float k = since / span;
         return Mth.sin(k * Mth.PI);
-    }
-
-    public static boolean sworn(ServerPlayer player) {
-        return player.getData(Dawnvow.SWORN);
-    }
-
-    static void swear(ServerPlayer player) {
-        player.setData(Dawnvow.SWORN, true);
-    }
-
-    static void release(ServerPlayer player) {
-        player.setData(Dawnvow.SWORN, false);
     }
 
     private DawnvowTrial() {

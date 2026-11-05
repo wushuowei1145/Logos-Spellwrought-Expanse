@@ -1,6 +1,5 @@
 package dev.logos.dimension.dawnvow;
 
-import com.mojang.serialization.Codec;
 import dev.logos.dimension.DimensionBlocks;
 import dev.logos.dimension.LogosDimension;
 import net.minecraft.core.registries.Registries;
@@ -11,13 +10,10 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
-import java.util.function.Supplier;
 
 /**
  * 石中剑：曦誓插在山洞中央的石座里。
@@ -30,7 +26,6 @@ public final class Dawnvow {
     private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, LogosDimension.ID);
     private static final DeferredRegister<StructureType<?>> STRUCTURES = DeferredRegister.create(Registries.STRUCTURE_TYPE, LogosDimension.ID);
     private static final DeferredRegister<StructurePieceType> PIECES = DeferredRegister.create(Registries.STRUCTURE_PIECE, LogosDimension.ID);
-    private static final DeferredRegister<AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, LogosDimension.ID);
 
     /** 插着曦誓的石座：硬度 -1 与基岩相同，任何按硬度判断的破坏方式（爆炸、活塞、法术）都拿它没办法。 */
     public static final DeferredBlock<SwordStoneBlock> STONE = DimensionBlocks.BLOCKS.registerBlock("dawnvow_stone",
@@ -49,9 +44,6 @@ public final class Dawnvow {
     public static final DeferredHolder<StructurePieceType, StructurePieceType> GROTTO_PIECE =
         PIECES.register("dawnvow_grotto", () -> (StructurePieceType.ContextlessType) GrottoPiece::new);
 
-    /** 这位玩家已经从石中拔出过曦誓；死亡不清除，只有把剑插回石座才解除。 */
-    public static final Supplier<AttachmentType<Boolean>> SWORN = ATTACHMENTS.register("dawnvow_sworn",
-        () -> AttachmentType.builder(() -> false).serialize(Codec.BOOL.fieldOf("sworn"), sworn -> sworn).copyOnDeath().build());
 
     static {
         DimensionBlocks.ITEMS.registerSimpleBlockItem("dawnvow_stone", STONE);
@@ -62,7 +54,6 @@ public final class Dawnvow {
         BLOCK_ENTITIES.register(bus);
         STRUCTURES.register(bus);
         PIECES.register(bus);
-        ATTACHMENTS.register(bus);
     }
 
     private Dawnvow() {
