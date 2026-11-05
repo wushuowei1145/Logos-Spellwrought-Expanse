@@ -192,6 +192,220 @@ public class GateAssets {
         return state(name, "distance", "7", "persistent", "true", "waterlogged", "false");
     }
 
+    static Map<String, Object> mod(String name, String... props) { return state("logos_dimension:" + name, props); }
+    static Map<String, Object> mc(String name, String... props) { return state("minecraft:" + name, props); }
+    static void box(Template t, int x0, int y0, int z0, int x1, int y1, int z1, Map<String, Object> s) {
+        for (int x = x0; x <= x1; x++) for (int y = y0; y <= y1; y++) for (int z = z0; z <= z1; z++) t.put(x, y, z, s);
+    }
+    static Map<String, Object> stair(String block, String facing, String half) {
+        return mc(block, "facing", facing, "half", half, "shape", "straight", "waterlogged", "false");
+    }
+    static Map<String, Object> slab(String block, String type) { return mc(block, "type", type, "waterlogged", "false"); }
+    static Map<String, Object> postWall(String block) {
+        return mc(block, "east", "none", "north", "none", "south", "none", "west", "none", "up", "true", "waterlogged", "false");
+    }
+
+    /**
+     * 神狐的小鸟居：朱漆柱、半格厚的贯、额束，朱漆岛木上一道出挑的灰瓦笠木，形制同聚落里的鸟居（fox_landmarks.py）。
+     * 贯和岛木之间挂注连绳，参道铺石砖，两旁立石灯笼，地上落些樱花。开口 5×5，共 25 格。
+     */
+    static Template foxGate() {
+        Template t = new Template(11, 10, 5);
+        Random r = new Random(20261106);
+        box(t, 0, 1, 0, 10, 9, 4, AIR);
+        box(t, 0, 0, 0, 10, 0, 4, mc("grass_block", "snowy", "false"));
+        box(t, 4, 0, 0, 6, 0, 4, mc("stone_bricks"));
+        t.put(5, 0, 2, STONE);
+        var pillar = mod("journey_lacquer_log", "axis", "y");
+        for (int y = 0; y <= 7; y++) { t.put(2, y, 2, pillar); t.put(8, y, 2, pillar); }
+        var nuki = mod("journey_lacquer_slab", "type", "top", "waterlogged", "false");
+        for (int x = 1; x <= 9; x++) if (x != 2 && x != 8) t.put(x, 6, 2, nuki);
+        t.put(5, 7, 2, mod("journey_lacquer_fence", "north", "false", "south", "false", "east", "false", "west", "false", "waterlogged", "false"));
+        for (int x : new int[]{3, 4, 6, 7}) t.put(x, 7, 2, mod("journey_shimenawa", "facing", "north"));
+        box(t, 1, 8, 2, 9, 8, 2, mod("journey_lacquer_planks"));
+        box(t, 0, 9, 2, 10, 9, 2, mod("journey_kawara_slab", "type", "bottom", "waterlogged", "false"));
+        for (int x : new int[]{1, 9}) for (int z : new int[]{0, 4}) t.put(x, 1, z, mod("journey_stone_lantern"));
+        String[] facings = {"north", "east", "south", "west"};
+        for (int i = 0; i < 9; i++) {
+            int x = r.nextBoolean() ? r.nextInt(3) : 8 + r.nextInt(3), z = r.nextInt(5);
+            if (t.at(x, 1, z) == AIR) t.put(x, 1, z, mc("pink_petals", "facing", facings[r.nextInt(4)], "flower_amount", String.valueOf(1 + r.nextInt(4))));
+        }
+        return t;
+    }
+
+    /**
+     * 灵猫的英式门：红砖砌的小山墙，石砌尖拱，转角石块相间。山墙两端翘起一对猫耳，耳下两点暖黄的窗像猫眼。
+     * 前后是常春藤、修剪过的树篱和铁灯柱，鹅卵石小径穿过门洞。开口 29 格。
+     */
+    static Template catGate() {
+        Template t = new Template(11, 12, 5);
+        Random r = new Random(20261107);
+        box(t, 0, 1, 0, 10, 11, 4, AIR);
+        box(t, 0, 0, 0, 10, 0, 4, mc("grass_block", "snowy", "false"));
+        box(t, 3, 0, 0, 7, 0, 4, mc("cobblestone"));
+        t.put(5, 0, 2, STONE);
+        var brick = mc("bricks");
+        var stone = mc("stone_bricks");
+        for (int z = 1; z <= 3; z++) {
+            // 墙身，转角石块和红砖相间
+            box(t, 1, 1, z, 9, 8, z, brick);
+            for (int y = 1; y <= 8; y += 2) { t.put(1, y, z, stone); t.put(9, y, z, stone); }
+            // 门洞和拱
+            box(t, 2, 1, z, 2, 6, z, stone);
+            box(t, 8, 1, z, 8, 6, z, stone);
+            box(t, 3, 1, z, 7, 5, z, AIR);
+            box(t, 4, 6, z, 6, 6, z, AIR);
+            t.put(5, 7, z, AIR);
+            t.put(3, 6, z, stair("stone_brick_stairs", "west", "top"));
+            t.put(7, 6, z, stair("stone_brick_stairs", "east", "top"));
+            t.put(4, 7, z, stair("stone_brick_stairs", "west", "top"));
+            t.put(6, 7, z, stair("stone_brick_stairs", "east", "top"));
+            t.put(3, 7, z, stone);
+            t.put(7, 7, z, stone);
+            box(t, 4, 8, z, 6, 8, z, stone);
+            t.put(5, 8, z, mc("chiseled_stone_bricks"));
+            // 山墙和猫耳
+            box(t, 2, 9, z, 8, 9, z, brick);
+            box(t, 3, 10, z, 7, 10, z, brick);
+            t.put(1, 9, z, stair("stone_brick_stairs", "east", "bottom"));
+            t.put(9, 9, z, stair("stone_brick_stairs", "west", "bottom"));
+            t.put(2, 10, z, stair("stone_brick_stairs", "east", "bottom"));
+            t.put(8, 10, z, stair("stone_brick_stairs", "west", "bottom"));
+            t.put(3, 11, z, stair("stone_brick_stairs", "west", "bottom"));
+            t.put(7, 11, z, stair("stone_brick_stairs", "east", "bottom"));
+            box(t, 4, 11, z, 6, 11, z, slab("stone_brick_slab", "bottom"));
+        }
+        // 猫眼：前后两面各两点
+        for (int z : new int[]{1, 3}) { t.put(4, 10, z, mc("ochre_froglight", "axis", "y")); t.put(6, 10, z, mc("ochre_froglight", "axis", "y")); }
+        // 树篱、灯柱
+        var hedge = mc("spruce_leaves", "distance", "7", "persistent", "true", "waterlogged", "false");
+        for (int x : new int[]{1, 2, 8, 9}) for (int z : new int[]{0, 4}) t.put(x, 1, z, hedge);
+        for (int x : new int[]{0, 10}) for (int z : new int[]{0, 4}) {
+            t.put(x, 1, z, postWall("stone_brick_wall"));
+            t.put(x, 2, z, mc("iron_bars", "east", "false", "north", "false", "south", "false", "west", "false", "waterlogged", "false"));
+            t.put(x, 3, z, mc("lantern", "hanging", "false", "waterlogged", "false"));
+        }
+        // 常春藤爬在墙面上
+        for (int x : new int[]{1, 2, 8, 9}) for (int y = 2; y <= 8; y++) {
+            if (r.nextInt(5) < 2) t.put(x, y, 0, vine("south"));
+            if (r.nextInt(5) < 2) t.put(x, y, 4, vine("north"));
+        }
+        return t;
+    }
+    static Map<String, Object> vine(String side) {
+        return mc("vine", "up", "false", "north", String.valueOf(side.equals("north")), "south", String.valueOf(side.equals("south")), "east", "false", "west", "false");
+    }
+
+    /**
+     * 群狼的门：古罗马凯旋门。白石砌的宽圆拱，拱顶一块拱心石，两侧贴着白色壁柱，上面是铭文带、带线脚的檐口和一层阁楼。
+     * 斯巴达的部分在装饰上：深红战旗、青铜盾饰和青铜铭文带，阁楼上立两杆青铜长枪，四角是青铜灯。开口 43 格。
+     */
+    static Template wolfGate() {
+        Template t = new Template(13, 13, 5);
+        box(t, 0, 1, 0, 12, 12, 4, AIR);
+        box(t, 0, 0, 0, 12, 0, 4, mc("polished_diorite"));
+        box(t, 3, 0, 0, 9, 0, 4, mc("smooth_stone"));
+        t.put(6, 0, 2, STONE);
+        var wall = mc("calcite");
+        var marble = mc("smooth_quartz");
+        var bronze = mc("waxed_chiseled_copper");
+        for (int z = 1; z <= 3; z++) {
+            box(t, 1, 1, z, 11, 8, z, wall);
+            // 门洞两侧的石框和圆拱
+            box(t, 2, 1, z, 2, 6, z, marble);
+            box(t, 10, 1, z, 10, 6, z, marble);
+            box(t, 3, 1, z, 9, 5, z, AIR);
+            box(t, 4, 6, z, 8, 6, z, AIR);
+            box(t, 5, 7, z, 7, 7, z, AIR);
+            t.put(3, 6, z, stair("quartz_stairs", "west", "top"));
+            t.put(9, 6, z, stair("quartz_stairs", "east", "top"));
+            t.put(4, 7, z, stair("quartz_stairs", "west", "top"));
+            t.put(8, 7, z, stair("quartz_stairs", "east", "top"));
+            t.put(3, 7, z, marble);
+            t.put(9, 7, z, marble);
+            box(t, 4, 8, z, 8, 8, z, marble);
+            t.put(6, 8, z, mc("chiseled_quartz_block"));
+            // 铭文带
+            box(t, 1, 9, z, 11, 9, z, marble);
+            box(t, 2, 9, z, 10, 9, z, mc("waxed_cut_copper"));
+            // 檐口
+            box(t, 1, 10, z, 11, 10, z, marble);
+            t.put(0, 10, z, stair("quartz_stairs", "east", "top"));
+            t.put(12, 10, z, stair("quartz_stairs", "west", "top"));
+            // 阁楼
+            box(t, 2, 11, z, 10, 11, z, wall);
+            box(t, 2, 12, z, 10, 12, z, slab("smooth_quartz_slab", "bottom"));
+        }
+        // 檐口前后两沿向外收的线脚
+        box(t, 0, 10, 0, 12, 10, 0, stair("quartz_stairs", "south", "top"));
+        box(t, 0, 10, 4, 12, 10, 4, stair("quartz_stairs", "north", "top"));
+        // 盾饰：门洞两侧各一面，阁楼正中一面
+        for (int z : new int[]{1, 3}) { t.put(2, 8, z, bronze); t.put(10, 8, z, bronze); t.put(6, 11, z, bronze); }
+        // 白色壁柱，贴在墙面前后
+        for (int z : new int[]{0, 4}) for (int x : new int[]{1, 11}) {
+            t.put(x, 1, z, mc("chiseled_quartz_block"));
+            box(t, x, 2, z, x, 8, z, mc("quartz_pillar", "axis", "y"));
+            t.put(x, 9, z, mc("chiseled_quartz_block"));
+        }
+        // 深红战旗挂在门洞两侧
+        for (int x : new int[]{2, 10}) {
+            t.put(x, 7, 0, mc("red_wall_banner", "facing", "north"));
+            t.put(x, 7, 4, mc("red_wall_banner", "facing", "south"));
+        }
+        // 阁楼上的长枪
+        for (int x : new int[]{3, 9}) t.put(x, 12, 2, mc("waxed_lightning_rod", "facing", "up", "powered", "false", "waterlogged", "false"));
+        // 四角的青铜灯
+        for (int x : new int[]{0, 12}) for (int z : new int[]{0, 4}) {
+            t.put(x, 1, z, mc("chiseled_quartz_block"));
+            t.put(x, 2, z, mc("waxed_copper_bulb", "lit", "true", "powered", "false"));
+        }
+        return t;
+    }
+
+    /**
+     * 人类帝国的门：中世纪城门楼。两座带垛口的灰石塔向前后凸出，夹着一段城墙和圆拱门洞，塔上开箭窗；
+     * 石块里掺一些长苔和开裂的，像用了很久。帝国蓝的战旗挂在塔身，塔脚插火把，土路穿过门洞。开口 23 格。
+     */
+    static Template humanGate() {
+        Template t = new Template(11, 12, 7);
+        Random r = new Random(20261108);
+        box(t, 0, 1, 0, 10, 11, 6, AIR);
+        box(t, 0, 0, 0, 10, 0, 6, mc("grass_block", "snowy", "false"));
+        box(t, 3, 0, 0, 7, 0, 6, mc("dirt_path"));
+        t.put(5, 0, 3, STONE);
+        // 两座塔
+        for (int x : new int[]{0, 1, 2, 8, 9, 10}) for (int z = 1; z <= 5; z++) for (int y = 1; y <= 9; y++) t.put(x, y, z, worn(r));
+        // 塔顶的垛口
+        for (int x : new int[]{0, 2, 8, 10}) for (int z : new int[]{1, 3, 5}) t.put(x, 10, z, worn(r));
+        // 中间的城墙和门洞
+        for (int z = 2; z <= 4; z++) {
+            for (int x = 3; x <= 7; x++) for (int y = 6; y <= 7; y++) t.put(x, y, z, worn(r));
+            t.put(3, 5, z, stair("stone_brick_stairs", "west", "top"));
+            t.put(7, 5, z, stair("stone_brick_stairs", "east", "top"));
+            t.put(5, 6, z, mc("chiseled_stone_bricks"));
+            for (int x = 3; x <= 7; x++) t.put(x, 8, z, slab("stone_brick_slab", "bottom"));
+        }
+        // 城墙的垛口：只立在前后两沿，中间是走道
+        for (int x : new int[]{3, 5, 7}) for (int z : new int[]{2, 4}) t.put(x, 8, z, worn(r));
+        // 箭窗
+        var bars = mc("iron_bars", "east", "false", "north", "false", "south", "false", "west", "false", "waterlogged", "false");
+        for (int x : new int[]{1, 9}) for (int z : new int[]{1, 5}) t.put(x, 7, z, bars);
+        // 战旗和火把
+        for (int x : new int[]{1, 9}) {
+            t.put(x, 5, 0, mc("blue_wall_banner", "facing", "north"));
+            t.put(x, 5, 6, mc("blue_wall_banner", "facing", "south"));
+        }
+        for (int x : new int[]{2, 8}) {
+            t.put(x, 3, 0, mc("wall_torch", "facing", "north"));
+            t.put(x, 3, 6, mc("wall_torch", "facing", "south"));
+        }
+        return t;
+    }
+    static Map<String, Object> worn(Random r) {
+        int k = r.nextInt(100);
+        return mc(k < 12 ? "mossy_stone_bricks" : k < 22 ? "cracked_stone_bricks" : "stone_bricks");
+    }
+
     /** 模板开口自检：从启门石上方在门面内泛洪，必须正好是期望的格数。 */
     static void checkOpening(Template t, int sx, int sy, int sz, int expect) {
         Set<List<Integer>> seen = new HashSet<>();
@@ -388,6 +602,12 @@ public class GateAssets {
         Template small = smallGate();
         checkOpening(small, 4, 1, 2, 21);
         small.save(res.resolve("data/logos_dimension/structure/gate/small_gate.nbt"));
+        for (var gate : List.of(Map.entry("fox_gate", Map.entry(foxGate(), 25)), Map.entry("cat_gate", Map.entry(catGate(), 29)),
+                Map.entry("wolf_gate", Map.entry(wolfGate(), 43)), Map.entry("human_gate", Map.entry(humanGate(), 23)))) {
+            Template t = gate.getValue().getKey();
+            checkOpening(t, t.sx / 2, 1, t.sz / 2, gate.getValue().getValue());
+            t.save(res.resolve("data/logos_dimension/structure/gate/" + gate.getKey() + ".nbt"));
+        }
         Path tex = res.resolve("assets/logos_dimension/textures/block");
         for (int c = 0; c <= 4; c++) stoneTexture(tex.resolve("gate_stone_" + c + ".png"), c);
         portalTexture(tex.resolve("gate_portal.png"));

@@ -7,9 +7,12 @@ import dev.logos.dimension.gate.Gate;
 import dev.logos.dimension.gate.GatePortalBlock;
 import dev.logos.dimension.gate.GateShape;
 import dev.logos.dimension.gate.GateStoneBlockEntity;
+import dev.logos.dimension.gate.GateStyle;
 import dev.logos.dimension.gate.GateTravel;
 import dev.logos.runtime.ManaInfusion;
 import io.netty.channel.embedded.EmbeddedChannel;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +34,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -62,6 +66,7 @@ public final class GateGameTests {
         var tests = new LinkedHashMap<String, Consumer<GateGameTestsTest>>();
         tests.put("gate_big_opening", t -> bigOpening(t.h));
         tests.put("gate_small_opening_edges", t -> smallOpeningEdges(t.h));
+        tests.put("gate_style_pick", t -> stylePick(t.h));
         tests.put("gate_mana_items", t -> manaItems(t.h));
         tests.put("gate_ignite_collapse_relight", t -> igniteCollapseRelight(t.h));
         tests.put("gate_player_frame", t -> playerFrame(t.h));
@@ -131,26 +136,44 @@ public final class GateGameTests {
         h.succeed();
     }
 
-    /** 小号门当场点亮 21 格；四个楼梯的空缺各由一格传送面补，不多不少。两个朝向都查。 */
+    /** 每种样式、两个朝向都当场点亮，格数对；门框上的每个半格都由一格传送面补，不多不少。 */
     private static void smallOpeningEdges(GameTestHelper h) {
         ServerLevel level = h.getLevel();
         check(h, GateTravel.linked(Level.OVERWORLD) && GateTravel.linked(LogosDimension.CLOUDSEA) && !GateTravel.linked(Level.NETHER), "门只连主世界和远行大陆");
-        for (Direction.Axis axis : List.of(Direction.Axis.X, Direction.Axis.Z)) {
-            BlockPos near = new BlockPos(31000, 0, axis == Direction.Axis.X ? 31000 : 31400);
-            BlockPos cell = GateTravel.createSmallGate(level, near, axis);
-            check(h, cell != null, "小号门应当生成");
+        for (GateStyle style : GateStyle.values()) for (Direction.Axis axis : List.of(Direction.Axis.X, Direction.Axis.Z)) {
+            String name = style + " " + axis;
+            BlockPos near = new BlockPos(31000 + style.ordinal() * 300, 0, axis == Direction.Axis.X ? 31000 : 31400);
+            BlockPos cell = GateTravel.createGate(level, near, axis, style);
+            check(h, cell != null, name + " 应当生成");
             var cells = GateShape.connected(level, cell);
-            check(h, cells.size() == 21, axis + " 小号门应是 21 格：" + cells.size());
-            check(h, level.getBlockState(cell).getValue(GatePortalBlock.AXIS) == axis, "小号门朝向应跟来时的门相同");
-            check(h, level.getBlockState(cell.below()).is(Gate.GATE_STONE.get()), "门洞正下方应是启门石");
-            check(h, level.getBlockEntity(cell.below()) instanceof GateStoneBlockEntity s && s.mana() == GateStoneBlockEntity.MAX_MANA, "小号门的启门石应当是满的");
-            int stairs = 0;
+            check(h, cells.size() == style.cells(), name + " 应是 " + style.cells() + " 格：" + cells.size());
+            check(h, level.getBlockState(cell).getValue(GatePortalBlock.AXIS) == axis, name + " 朝向应跟来时的门相同");
+            check(h, level.getBlockState(cell.below()).is(Gate.GATE_STONE.get()), name + " 门洞正下方应是启门石");
+            check(h, level.getBlockEntity(cell.below()) instanceof GateStoneBlockEntity s && s.mana() == GateStoneBlockEntity.MAX_MANA, name + " 的启门石应当是满的");
+            var partials = new HashSet<BlockPos>();
+            int edges = 0;
             for (BlockPos c : cells) for (Direction d : GateShape.plane(axis)) {
                 BlockPos n = c.relative(d);
-                if (GateShape.partial(level.getBlockState(n)) && level.getBlockState(c).getValue(GatePortalBlock.edge(d))) stairs++;
+                if (!GateShape.partial(level.getBlockState(n))) continue;
+                partials.add(n);
+                if (level.getBlockState(c).getValue(GatePortalBlock.edge(d))) edges++;
             }
-            check(h, stairs == 4, axis + " 四个楼梯应各补一次，实际 " + stairs);
+            check(h, edges == partials.size(), name + " 有 " + partials.size() + " 个半格，补了 " + edges + " 次");
+            check(h, partials.size() >= 2, name + " 的门洞应当有收圆角或横梁的半格");
         }
+        h.succeed();
+    }
+
+    /** 主世界自动生成的一律是树门；远行大陆五种都会出现。 */
+    private static void stylePick(GameTestHelper h) {
+        ServerLevel overworld = h.getLevel(), cloudsea = overworld.getServer().getLevel(LogosDimension.CLOUDSEA);
+        var random = RandomSource.create(20261105);
+        var seen = EnumSet.noneOf(GateStyle.class);
+        for (int i = 0; i < 200; i++) {
+            check(h, GateStyle.at(overworld, random) == GateStyle.ELF, "主世界应当是树门");
+            seen.add(GateStyle.at(cloudsea, random));
+        }
+        check(h, seen.size() == GateStyle.values().length, "远行大陆应当五种都出现：" + seen);
         h.succeed();
     }
 
@@ -293,7 +316,7 @@ public final class GateGameTests {
             BlockPos exit = GateTravel.findExit(cloudsea, stone).orElse(null);
             check(h, exit != null, "远行大陆应有一扇门");
             var door = GateShape.connected(cloudsea, exit);
-            check(h, door.size() == 21, "另一侧应是小号门：" + door.size());
+            check(h, java.util.Arrays.stream(GateStyle.values()).anyMatch(s -> s.cells() == door.size()), "另一侧应是一扇小号门：" + door.size());
             BlockPos arrival = GateTravel.arrivalCell(cloudsea, exit);
             check(h, cloudsea.getBlockState(arrival.below()).is(Gate.GATE_STONE.get()), "到达位置应在门洞中央、启门石上方");
             check(h, cloudsea.getBlockState(arrival.below()).getValue(dev.logos.dimension.gate.GateStoneBlock.CHARGE) == 4, "另一侧的启门石应当是满的");
