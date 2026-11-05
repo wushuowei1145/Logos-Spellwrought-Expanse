@@ -39,11 +39,11 @@ jobs:
         with:
           repository: MagicFoxDemon/MinecraftLogosMod
           ref: ${{ inputs.logos_ref || env.LOGOS_REF }}
-          path: .logos-src
+          path: logos-src
 
       - name: Resolve Logos commit
         id: logos-sha
-        run: echo "sha=$(git -C .logos-src rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+        run: echo "sha=$(git -C logos-src rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Restore Logos jar
         id: logos-jar
@@ -54,7 +54,7 @@ jobs:
 
       - name: Build Logos jar
         if: steps.logos-jar.outputs.cache-hit != 'true'
-        working-directory: .logos-src
+        working-directory: logos-src
         # Logos 仓库里的 gradlew 没有可执行权限。
         run: |
           sh ./gradlew jar
