@@ -22,7 +22,10 @@
 | 层级 | 结果 |
 | --- | --- |
 | 单元 | `./gradlew --offline test`：201/201 通过 |
+| 世界 | 合并 main `4d88702` 后 `./gradlew --offline runGameTestServer` 跑了两次：第一次 164/165，`elven_living_world_tree` 等光照超时（6002 刻）；代码不变的第二次 165/165 |
 | 实际客户端 | 上面四个场景，加 `npc_divine_fox_katana`、`npc_divine_fox_fight`、`npc_divine_fox_defense`、`npc_divine_fox_bow`、`npc_divine_fox_yumi`、`npc_forest_elf_guard`：10/10，检查 41/41 |
+
+CI 上 `bddf0a7` 也有一次偶发失败：`gate_crossing` 超时（20002 刻，只花了 2.27 秒）；main 上这个测试通过时用了 1380 和 5820 刻，都是约 2 秒。两个偶发失败的测试都没有被这次改动碰到：测试服务器全速空转，按刻算的等待时限可能两秒就用完，等不到区块升级、光照这类要花真实时间的结果。
 
 这些都是读数，没有逐帧看画面。维护者截图那样的悬空布置，旧代码在探针里只复现了不放箭和动作重播，没有复现换手；那里实际地形能否走到对面没有确认。没有测光影、联机。
 
