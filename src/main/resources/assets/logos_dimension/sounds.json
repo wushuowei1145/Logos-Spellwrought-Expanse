@@ -104,5 +104,79 @@
       "logos_dimension:entity/forest_elf/female_greet_dbb1d2b8",
       "logos_dimension:entity/forest_elf/female_greet_f75950ce"
     ]
+  },
+  "entity.divine_fox.ambient": {
+    "subtitle": "subtitles.logos_dimension.divine_fox.ambient",
+    "sounds": [
+      "logos_dimension:entity/divine_fox/ambient_3932ff57",
+      "logos_dimension:entity/divine_fox/ambient_61be58f2",
+      "logos_dimension:entity/divine_fox/ambient_a1a56158",
+      "logos_dimension:entity/divine_fox/ambient_a4c70523",
+      "logos_dimension:entity/divine_fox/ambient_dd6771a5",
+      "logos_dimension:entity/divine_fox/ambient_f86dade8"
+    ]
+  },
+  "entity.divine_fox.greet": {
+    "subtitle": "subtitles.logos_dimension.divine_fox.greet",
+    "sounds": [
+      "logos_dimension:entity/divine_fox/ambient_a1a56158",
+      "logos_dimension:entity/divine_fox/ambient_dd6771a5",
+      "logos_dimension:entity/divine_fox/greet_4de40832",
+      "logos_dimension:entity/divine_fox/greet_80220117"
+    ]
+  },
+  "entity.divine_fox.yes": {
+    "subtitle": "subtitles.logos_dimension.divine_fox.yes",
+    "sounds": [
+      "logos_dimension:entity/divine_fox/ambient_a1a56158",
+      "logos_dimension:entity/divine_fox/ambient_dd6771a5"
+    ]
+  },
+  "entity.divine_fox.no": {
+    "subtitle": "subtitles.logos_dimension.divine_fox.no",
+    "sounds": [
+      "logos_dimension:entity/divine_fox/no_2d1551b7",
+      "logos_dimension:entity/divine_fox/no_45181379",
+      "logos_dimension:entity/divine_fox/no_5e2bba5b"
+    ]
+  },
+  "entity.divine_fox.alert": {
+    "subtitle": "subtitles.logos_dimension.divine_fox.alert",
+    "sounds": [
+      "logos_dimension:entity/divine_fox/no_2d1551b7",
+      "logos_dimension:entity/divine_fox/no_45181379",
+      "logos_dimension:entity/divine_fox/no_5e2bba5b"
+    ]
+  },
+  "entity.divine_fox.attack": {
+    "subtitle": "subtitles.logos_dimension.divine_fox.attack",
+    "sounds": [
+      "logos_dimension:entity/divine_fox/attack_302c03dc",
+      "logos_dimension:entity/divine_fox/attack_868cbfff"
+    ]
+  },
+  "entity.divine_fox.cast": {
+    "subtitle": "subtitles.logos_dimension.divine_fox.cast",
+    "sounds": [
+      "logos_dimension:entity/divine_fox/greet_4de40832"
+    ]
+  },
+  "entity.divine_fox.hurt": {
+    "subtitle": "subtitles.logos_dimension.divine_fox.hurt",
+    "sounds": [
+      "logos_dimension:entity/divine_fox/hurt_32386cfe",
+      "logos_dimension:entity/divine_fox/hurt_4419b3a4",
+      "logos_dimension:entity/divine_fox/hurt_a611ee41",
+      "logos_dimension:entity/divine_fox/hurt_b9a3a03c",
+      "logos_dimension:entity/divine_fox/hurt_f2978038"
+    ]
+  },
+  "entity.divine_fox.death": {
+    "subtitle": "subtitles.logos_dimension.divine_fox.death",
+    "sounds": [
+      "logos_dimension:entity/divine_fox/death_2a21e0f5",
+      "logos_dimension:entity/divine_fox/death_5e0ece4a",
+      "logos_dimension:entity/divine_fox/death_808fd280"
+    ]
   }
 }

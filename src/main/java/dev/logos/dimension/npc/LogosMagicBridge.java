@@ -22,6 +22,11 @@ public final class LogosMagicBridge {
     public static final String NPC_HEAL = "npc-heal";
     /** Logos 示例「生息之环」：治疗施法者周围 16 格内的非玩家生物各 6 点，不分敌我。 */
     public static final String NPC_GROUP_HEAL = "npc-group-heal";
+    /**
+     * 神狐的「狐火缠绕」（维护者给的术式，不是 Logos 示例）：60 秒魔力缠绕，命中附加 3 点奥秘伤害并点燃 1 秒，
+     * 挥刀（生物的挥砍以命中计）放出 120° 的横扫游脉。外观由附属自己画成幽蓝的狐火（DivineFoxRenderer）。
+     */
+    public static final String FOX_FIRE_WRAP = "fox-fire-wrap";
 
     /** 与 Logos {@code dev.logos.lang.Examples} 里的同名示例逐字一致；上游同步时核对（docs/UPSTREAM_SYNC.md）。 */
     private static final Map<String, String> FALLBACK = Map.of(
@@ -36,10 +41,19 @@ public final class LogosMagicBridge {
                     ; 100 魔力包含选择器的 2 点和最多 10 个目标的治疗费用（每个 9 点）
                     (spell :name "生息之环" :mana 100
                       (heal (entities :at (pos-of caster) :radius 16 :filter (kind living)) 6))
+                    """,
+            FOX_FIRE_WRAP, """
+                    ; 狐火缠绕：神狐遇上强敌时给自己的手缠上狐火；横扫游脉的特效以后再补
+                    (spell :name "狐火缠绕" :mana 100 :trigger cast :players true
+                      (imbue :life 60 :every 60
+                        (on-hit (damage target 3 arcane) (ignite target 1))
+                        (on-swing
+                          (vein :motion sweep :spread 120
+                            :ccw (on-hit (damage target 5 arcane))))))
                     """);
 
     private static volatile boolean resolved;
-    private static Method compile, castAs, masterOf;
+    private static Method compile, castAs, masterOf, wrapOf;
     private static Map<?, ?> examples;
     private static final Map<String, Object> SPELLS = new ConcurrentHashMap<>();
     private static final Map<String, Boolean> BROKEN = new ConcurrentHashMap<>();
@@ -59,6 +73,11 @@ public final class LogosMagicBridge {
             examples = (Map<?, ?>) Class.forName("dev.logos.lang.Examples").getField("ALL").get(null);
         } catch (ReflectiveOperationException error) {
             examples = Map.of();
+        }
+        try {
+            wrapOf = Class.forName("dev.logos.runtime.ManaWrap").getMethod("of", LivingEntity.class);
+        } catch (ReflectiveOperationException error) {
+            LogUtils.getLogger().info("NPC 施法：当前 Logos 没有 ManaWrap.of，NPC 看不出自己身上的魔力缠绕");
         }
         try {
             masterOf = Class.forName("dev.logos.runtime.Familiars").getMethod("masterOf", Entity.class);
@@ -119,6 +138,17 @@ public final class LogosMagicBridge {
             BROKEN.put(id + (forPlayers ? "+players" : ""), true);
             SPELLS.remove(id + (forPlayers ? "+players" : ""));
             LogUtils.getLogger().warn("NPC 施法：施放 {} 失败，这项法术停用", id, error);
+            return false;
+        }
+    }
+
+    /** 这个生物的主手此刻是否缠着魔力缠绕（任何元素、法术或普通缠绕都算）；Logos 没有这个接口时为 false。客户端也能用。 */
+    public static boolean wrapped(LivingEntity entity) {
+        resolve();
+        if (wrapOf == null) return false;
+        try {
+            return wrapOf.invoke(null, entity) != null;
+        } catch (ReflectiveOperationException | RuntimeException error) {
             return false;
         }
     }

@@ -31,6 +31,9 @@ public final class FoxSanctuary {
         PIECES.register("fox_sanctuary_grounds", () -> (StructurePieceType.ContextlessType) SanctuaryGroundsPiece::new);
     public static final DeferredHolder<StructurePieceType, StructurePieceType> TEMPLATE =
         PIECES.register("fox_sanctuary_template", () -> (StructurePieceType.StructureTemplateType) SanctuaryTemplatePiece::new);
+    /** 聚落的神狐居民（街上的落脚点）。 */
+    public static final DeferredHolder<StructurePieceType, StructurePieceType> RESIDENTS =
+        PIECES.register("fox_sanctuary_residents", () -> (StructurePieceType.ContextlessType) SanctuaryResidentsPiece::new);
 
     /** 放置模板时的小替换（暖帘与幟的颜色、花草作物、石砖风化、小杂物）。 */
     public static final DeferredHolder<StructureProcessorType<?>, StructureProcessorType<SanctuaryProcessor>> PROCESSOR =
@@ -45,6 +48,7 @@ public final class FoxSanctuary {
         PIECES.register(bus);
         PROCESSORS.register(bus);
         BLOCK_ENTITIES.register(bus);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(SanctuaryResidents::tick);
     }
 
     private FoxSanctuary() {

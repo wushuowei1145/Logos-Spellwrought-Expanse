@@ -31,8 +31,11 @@ public final class NpcParts {
 
     public record Part(String id, List<String> groups) {}
 
-    /** optional：是否允许选 {@link #NONE}；parts 的第一个是默认零件。 */
-    public record Slot(String name, boolean optional, List<Part> parts) {
+    /**
+     * optional：是否允许选 {@link #NONE}；parts 的第一个是默认零件。
+     * chance：随机外观时这个可选槽位戴上零件的几率（0–1，零件表不写为 1），其余时候为 {@link #NONE}。
+     */
+    public record Slot(String name, boolean optional, List<Part> parts, double chance) {
         public Part find(String id) {
             for (Part p : parts) if (p.id().equals(id)) return p;
             return null;
@@ -82,7 +85,7 @@ public final class NpcParts {
         /**
          * 每个槽位均匀随机抽一个零件（权重以后再加），按槽位顺序抽，跳过和已抽中零件互斥的；
          * 前面零件指定了本槽位的依赖时，直接使用指定零件。
-         * 可选槽位只有在没有可用零件时才是 {@link #NONE}：普通居民都穿戴整齐。
+         * 可选槽位只有在没有可用零件、或没抽中 {@link Slot#chance} 时才是 {@link #NONE}：普通居民都穿戴整齐。
          */
         public Map<String, String> random(RandomSource random) {
             Map<String, String> out = new LinkedHashMap<>();
@@ -90,6 +93,10 @@ public final class NpcParts {
                 String required = requiredPart(s, out);
                 if (required != null) {
                     out.put(s.name(), required);
+                    continue;
+                }
+                if (s.optional() && s.chance() < 1 && random.nextDouble() >= s.chance()) {
+                    out.put(s.name(), NONE);
                     continue;
                 }
                 List<Part> ok = new ArrayList<>();
@@ -157,7 +164,9 @@ public final class NpcParts {
                     if (po.has("default") && po.get("default").getAsBoolean()) parts.addFirst(part);
                     else parts.add(part);
                 }
-                slots.add(new Slot(e.getKey(), so.has("optional") && so.get("optional").getAsBoolean(), List.copyOf(parts)));
+                boolean optional = so.has("optional") && so.get("optional").getAsBoolean();
+                double chance = optional && so.has("chance") ? Math.clamp(so.get("chance").getAsDouble(), 0, 1) : 1;
+                slots.add(new Slot(e.getKey(), optional, List.copyOf(parts), chance));
             }
             List<Set<String>> conflicts = new ArrayList<>();
             if (root.has("conflicts")) {

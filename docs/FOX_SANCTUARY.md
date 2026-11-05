@@ -23,6 +23,9 @@
 6. **溪流**：自近山顶的泉眼沿路外侧下行，水面比路面低两格；两处从路下穿过换边，路面在那里就是石板桥。
 7. **路边**：鸟居、石灯笼与竹林的疏密随山路样式；山脚一对高石灯。
 8. **聚落**：核心分成 4×4 块模板；商铺、屋台、住宅、食摊与园景是可替换地块，每处从同类变体里随机挑一个；放置时再做一层小替换。
+9. **居民**（`SanctuaryResidentsPiece`，排在所有部件之后）：在核心区铺着小路、碎石或石板的格子（街道与广场）里，按聚落种子取彼此相隔 9 格以上的至多 20 个落脚点，区块生成到哪里就在哪里放一只[神狐](NPC_RACE_DIVINE_FOX.md)（结构居民，不消失，闲逛不离开落脚点 32 格）。
+
+居民数按处统计（维度存档 `logos_dimension:fox_sanctuary_residents`，以结构起点区分）：生成时放下的只数 − 死去或被清除的 + 补回的。有玩家在聚落里、居民不足 20 只时，每 2 分钟在离所有玩家 24 格以外、已加载的落脚点补回一只（`SanctuaryResidents`）。加居民之前生成的聚落没有居民部件，不会补人。
 
 每个区块只改自己范围内的方块，结果只取决于保存在结构里的规划数据与该列原地形，不会逐刻更新或回头改已生成的区块。
 
@@ -143,6 +146,7 @@ python tools/fox_sanctuary.py      # 设计数据、模板（含 fox_yatai.py �
 ./gradlew runClient -PlogosJar=... -PldTest=fox_sanctuary_views -PldTestHeadless -PldTestWindow=1280x720
 LOGOS_FOX_PLAN=1 LOGOS_FOX_STYLE=2 ./gradlew runClient ...   # 预览指定方案与山路样式
 ./gradlew runClient -PlogosJar=... -PldTest=fox_props_views -PldTestHeadless -PldTestWindow=1280x720
+./gradlew runClient -PlogosJar=... -PldTest=fox_sanctuary_residents -PldTestHeadless -PldTestWindow=1280x720   # 居民数与补回
 ```
 
 测试世界默认关闭结构生成；`fox_sanctuary_views` 只在开发场景里用反射把它打开，再像正常存档一样让聚落随区块自然生成。

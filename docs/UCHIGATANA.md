@@ -111,9 +111,11 @@ uv run --with numpy --with pillow python tools/uchigatana_moves.py "<Minecraft M
 - 试玩场景 `client/UchigatanaView`（`-PldTest=group:uchigatana`）：实际按键走完拔刀、四段连招、出刀中按右键立即格挡（服务端当刻 `isBlocking`）、刚架刀被击中弹刀（不掉血、不耗耐久）、按住左键接突刺并命中、超过 0.3 秒只格挡且照常耗耐久、切槽收刀转刀，第一与第三人称截图。
 - 物品模型：物品栏和展示框用平面图标；手持、掉落和魔力缠绕用立体模型，由刀网格的刀身部分平移 (8, 1, 8) 生成，缠绕特效贴在刀身上。
 - 玩家的手改为原版那样的一整块（长剑同样生效），不再是掌、四指、拇指拼成的拳头。
-- 还没做：弹开后禁用对方武器；神狐 NPC。
+- 还没做：弹开后禁用对方武器。
+
+神狐 NPC（2026-11-05，[NPC_RACE_DIVINE_FOX.md](NPC_RACE_DIVINE_FOX.md) 第 5、6 节）：同一份编排由 `tools/uchigatana_moves.py` 烘焙到神狐骨架，写在模型目录 `Animation/katana/`，`tools/divine_fox_assets.py` 加 `katana_` 前缀并入神狐的动画文件，四套刀装的网格按 1.6 倍挂到并进模型的 `Weapon` / `Sheath` 骨骼上。服务端用同一台招式状态机（`MoveRunner` + `uchigatana.json`）：AI 发送攻击、格挡输入，换招时把动作名与开始刻同步给客户端，由 `combat` 控制器播放。这样没有走第 8 节第 5 条的运行时姿势适配（NPC 渲染器里套 `CombatPose`），烘焙时已扣除神狐的静止外张角。
 
 ## 7. 下一步
 
 1. 试玩后调手感与动作。
-2. 神狐加招（4.2）与 NPC 接入（`Weapon` / `Sheath` 骨骼并进模型、导出神狐动画文件）。
+2. 神狐加招（4.2）。NPC 接入已做（第 6 节末）。

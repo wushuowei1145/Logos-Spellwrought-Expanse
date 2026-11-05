@@ -137,6 +137,8 @@ public class FoxSanctuaryStructure extends Structure {
                 builder.addPiece(new SanctuaryTemplatePiece(ctx.structureTemplateManager(), "logos_dimension:fox_sanctuary/" + template,
                     frame.world(lot.u(), p + lot.y(), lot.v()), frame.mirror, lotRotation(frame, lot.quarterTurns()), pieceSeed(seed, lot.u(), lot.v())));
             }
+            // 居民排在最后：地面与房屋都放好以后才落脚
+            builder.addPiece(new SanctuaryResidentsPiece(new BlockPos(cx, p, cz).asLong(), SanctuaryResidents.spots(frame), box));
         }));
     }
 

@@ -146,8 +146,73 @@ class DivineFoxAssetsTest {
     void hasEveryStateAndLayer() throws Exception {
         Set<String> names = animations().keySet();
         for (String n : new String[] {"idle", "walk", "jump", "attacked", "ladder_up", "ladder_stillness", "ladder_down", "swim_stand",
-                "swing_hand", "death", "pre_parallel0", "pre_parallel1", "pre_parallel2"})
+                "swing_hand", "death", "pre_parallel0", "pre_parallel1", "pre_parallel2", "pre_parallel3",
+                "hold_mainhand:bow", "use_mainhand:bow", "greet", "refuse"})
             assertTrue(names.contains(n), n);
+    }
+
+    /**
+     * 打刀：四套刀装各有刀身、刀鞘两组，挂在 UpBody 下的 Weapon / Sheath；每个招式的动作都在（加 katana_ 前缀），
+     * 时长与招式文件一致（服务端状态机按招式文件计时，客户端按动作文件播放）；佩刀层把刀与鞘停在同一处。
+     */
+    @Test
+    void katanaRigMatchesTheMoveset() throws Exception {
+        Map<String, String> parent = new java.util.HashMap<>();
+        for (JsonElement b : read("models/entity/divine_fox.geo.json").getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject()
+                .getAsJsonArray("bones")) {
+            JsonObject o = b.getAsJsonObject();
+            parent.put(o.get("name").getAsString(), o.has("parent") ? o.get("parent").getAsString() : null);
+        }
+        assertEquals("UpBody", parent.get("Weapon"));
+        assertEquals("UpBody", parent.get("Sheath"));
+        for (String v : dev.logos.dimension.npc.DivineFox.KATANAS) {
+            assertEquals("Weapon", parent.get("katana_" + v + "_blade"), v);
+            assertEquals("Sheath", parent.get("katana_" + v + "_saya"), v);
+        }
+        JsonObject moves;
+        try (var in = DivineFoxAssetsTest.class.getResourceAsStream("/data/logos_dimension/combat/movesets/uchigatana.json")) {
+            moves = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject().getAsJsonObject("moves");
+        }
+        JsonObject anims = animations();
+        for (var m : moves.entrySet()) {
+            JsonObject move = m.getValue().getAsJsonObject();
+            String clip = "katana_" + (move.has("clip") ? move.get("clip").getAsString() : m.getKey());
+            assertTrue(anims.has(clip), clip);
+            assertEquals(move.get("length").getAsDouble(), anims.getAsJsonObject(clip).get("animation_length").getAsDouble(), 1e-4, clip);
+        }
+        JsonObject carry = anims.getAsJsonObject("pre_parallel3").getAsJsonObject("bones");
+        assertEquals(Set.of("Weapon", "Sheath"), carry.keySet());
+        assertEquals(carry.get("Weapon"), carry.get("Sheath"), "佩刀时刀在鞘里，两者同一变换");
+    }
+
+    /** 狐纹只有一成神狐有：零件表写了 chance 0.1，随机外观大约十只里一只。 */
+    @Test
+    void markingsAppearOnAboutOneFoxInTen() {
+        assertEquals(.1, FOX.slot("markings").chance(), 1e-9);
+        RandomSource random = RandomSource.create(11);
+        int marked = 0, n = 4000;
+        for (int i = 0; i < n; i++) if (!NpcParts.NONE.equals(FOX.random(random).get("markings"))) marked++;
+        assertEquals(.1, marked / (double) n, .02);
+        assertEquals(1, FOX.slot("outfit").chance(), 1e-9, "其他槽位不受影响");
+    }
+
+    /** 语音：九个事件都有素材，文件都在。 */
+    @Test
+    void voiceEventsHaveSounds() throws Exception {
+        JsonObject sounds;
+        try (var in = DivineFoxAssetsTest.class.getResourceAsStream("/assets/logos_dimension/sounds.json")) {
+            sounds = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
+        }
+        for (String e : new String[] {"ambient", "greet", "yes", "no", "alert", "attack", "cast", "hurt", "death"}) {
+            var list = sounds.getAsJsonObject("entity.divine_fox." + e).getAsJsonArray("sounds");
+            assertFalse(list.isEmpty(), e);
+            for (JsonElement s : list) {
+                String path = "/assets/logos_dimension/sounds/" + s.getAsString().substring("logos_dimension:".length()) + ".ogg";
+                try (var in = DivineFoxAssetsTest.class.getResourceAsStream(path)) {
+                    assertNotNull(in, path);
+                }
+            }
+        }
     }
 
     @Test

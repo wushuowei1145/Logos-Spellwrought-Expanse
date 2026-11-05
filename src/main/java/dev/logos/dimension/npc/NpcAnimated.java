@@ -42,4 +42,16 @@ public interface NpcAnimated extends GeoEntity {
     default String npcExpression() {
         return null;
     }
+
+    /**
+     * 正在播放的战斗动作（例如打刀的 {@code katana_slash_1}）：服务端招式状态机换招时更新，
+     * {@code start} 是换招的游戏刻，换招即从头播放；{@code speed} 是播放速度。没有时返回 null。
+     * 由 {@code combat} 控制器播放，盖过手持、挥手与剧情动作的同一骨骼。
+     */
+    default CombatMove npcCombatMove() {
+        return null;
+    }
+
+    /** 一段战斗动作：动画名、开始的游戏刻、播放速度、是否循环（循环的一直播，其余播完停在末帧）。 */
+    record CombatMove(String animation, long start, float speed, boolean loop) {}
 }
