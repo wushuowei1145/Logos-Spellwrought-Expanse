@@ -16,6 +16,8 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.concurrent.CompletableFuture;
+
 /** 抽签的客户端场景。 */
 public abstract class OmikujiViews implements UIScenario {
     @Override
@@ -95,6 +97,27 @@ public abstract class OmikujiViews implements UIScenario {
                 .ticks(5)
                 .screenshot("omikuji_all_icons")
                 .teardownServer("clear", ctx -> ctx.player().removeAllEffects());
+        }
+    }
+
+    /** 同样的截图，切成中文看：测试客户端默认是英文，中文的提示框宽度和字形要实际看一眼。 */
+    @LDLRegisterClient(name = "omikuji_fortune_views_zh", group = "fox_dev", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class FortunesChinese extends Fortunes {
+        private CompletableFuture<Void> reload = CompletableFuture.completedFuture(null);
+
+        private void language(String code) {
+            var mc = Minecraft.getInstance();
+            mc.getLanguageManager().setSelected(code);
+            mc.options.languageCode = code;
+            reload = mc.reloadResourcePacks();
+        }
+
+        @Override
+        public void define(ScenarioBuilder s) {
+            s.step("switch to Chinese", ctx -> language("zh_cn"))
+                .waitUntil("resources reloaded", ctx -> reload.isDone());
+            super.define(s);
+            s.teardown("back to English", ctx -> language("en_us"));
         }
     }
 }

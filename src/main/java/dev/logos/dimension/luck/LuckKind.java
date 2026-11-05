@@ -39,4 +39,9 @@ public enum LuckKind implements StringRepresentable {
     public String labelKey() {
         return "luck.logos_dimension." + id;
     }
+
+    /** 这一项在这个等级（正吉负凶）下的第 i 句说明。 */
+    public String lineKey(int level, int i) {
+        return labelKey() + "." + (level < 0 ? "minus" : "plus") + Math.abs(level) + "." + i;
+    }
 }

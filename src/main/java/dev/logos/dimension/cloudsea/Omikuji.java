@@ -49,6 +49,9 @@ public final class Omikuji {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Slip>> SLIP = COMPONENTS.registerComponentType(
         "omikuji_slip", b -> b.persistent(Slip.CODEC).networkSynchronized(Slip.STREAM_CODEC));
 
+    /** 每种签运的签文、每个签项每一档的说明都各有这么多句，抽到时随机挑。 */
+    public static final int LINES = 8;
+
     public record Slip(boolean good, Identifier clock, long day) {
         static final Codec<Slip> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.BOOL.fieldOf("good").forGetter(Slip::good),
@@ -86,6 +89,11 @@ public final class Omikuji {
 
         public String key() {
             return "fortune.logos_dimension." + id;
+        }
+
+        /** 第 i 句签文。第 0 句沿用老签纸上的键，老存档的签纸才不会显示成键名。 */
+        public String verseKey(int i) {
+            return key() + ".verse" + (i == 0 ? "" : "." + i);
         }
     }
 
@@ -141,13 +149,14 @@ public final class Omikuji {
         ItemStack paper = new ItemStack(FoxWildsBlocks.OMIKUJI.get());
         paper.set(DataComponents.ITEM_NAME, Component.translatable(fortune.key()));
         paper.set(SLIP.get(), new Slip(fortune.good, clockId, day));
+        Component verse = Component.translatable(fortune.verseKey(random.nextInt(LINES)));
         List<Component> lore = new ArrayList<>();
-        lore.add(Component.translatable(fortune.key() + ".verse"));
+        lore.add(verse);
         levels.forEach((kind, level) -> lore.add(Component.translatable("fortune.logos_dimension.aspect",
-            Component.translatable(kind.labelKey()), Component.translatable(verdict(level)))));
+            Component.translatable(kind.labelKey()), Component.translatable(verdict(level)),
+            Component.translatable(kind.lineKey(level, random.nextInt(LINES))))));
         paper.set(DataComponents.LORE, new ItemLore(lore));
-        player.sendOverlayMessage(Component.translatable("fortune.logos_dimension.drawn",
-            Component.translatable(fortune.key()), Component.translatable(fortune.key() + ".verse")));
+        player.sendOverlayMessage(Component.translatable("fortune.logos_dimension.drawn", Component.translatable(fortune.key()), verse));
         return paper;
     }
 

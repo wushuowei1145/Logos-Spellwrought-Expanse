@@ -60,8 +60,18 @@ class FoxShrineGoodsTest {
             try (var in = getClass().getResourceAsStream("/assets/logos_dimension/lang/" + locale + ".json")) {
                 lang = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
             }
+            for (Omikuji.Fortune fortune : Omikuji.Fortune.values()) {
+                for (int i = 0; i < Omikuji.LINES; i++) {
+                    assertTrue(lang.contains("\"" + fortune.verseKey(i) + "\""), locale + " 缺 " + fortune.verseKey(i));
+                }
+            }
             for (LuckKind kind : LuckKind.values()) {
                 assertTrue(lang.contains("\"" + kind.labelKey() + "\""), locale + " 缺 " + kind.labelKey());
+                for (int level : kind.hasBad ? new int[] {2, 1, -1, -2} : new int[] {2, 1}) {
+                    for (int i = 0; i < Omikuji.LINES; i++) {
+                        assertTrue(lang.contains("\"" + kind.lineKey(level, i) + "\""), locale + " 缺 " + kind.lineKey(level, i));
+                    }
+                }
                 for (String side : kind.hasBad ? new String[] {"luck", "misfortune"} : new String[] {"luck"}) {
                     String id = kind.id + "_" + side;
                     assertTrue(lang.contains("\"effect.logos_dimension." + id + "\""), locale + " 缺 " + id);
