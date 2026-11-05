@@ -32,7 +32,7 @@ public final class BerryGameTests {
         tests.forEach((name,test)->FUNCTIONS.register(name,()->test));FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event)->{
             var env=event.registerEnvironment(LogosDimension.id("berries"),new TestEnvironmentDefinition.AllOf());
-            for(String name:tests.keySet())event.registerTest(LogosDimension.id(name),new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION,LogosDimension.id(name)),new TestData<>(env,Identifier.withDefaultNamespace("empty"),400,0,true,Rotation.NONE,false,1,1,false,16)));
+            for(String name:tests.keySet())event.registerTest(LogosDimension.id(name),new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION,LogosDimension.id(name)),new TestData<>(env,Identifier.withDefaultNamespace("empty"),6000,0,true,Rotation.NONE,false,1,1,false,16)));
         });
     }
     private static ServerPlayer player(GameTestHelper h){
@@ -40,6 +40,7 @@ public final class BerryGameTests {
         var p=new ServerPlayer(h.getLevel().getServer(),h.getLevel(),cookie.gameProfile(),cookie.clientInformation());
         var connection=new Connection(PacketFlow.SERVERBOUND);new EmbeddedChannel(connection);h.getLevel().getServer().getPlayerList().placeNewPlayer(connection,p,cookie);p.connection.markClientLoaded();p.setGameMode(GameType.SURVIVAL);return p;
     }
+    /** 测试服务器是加速跑的，400 刻不到一秒，光照线程可能还没传播完。超时上限要放宽，不能按真实时间估。 */
     private static void growth(GameTestHelper h){
         var l=h.getLevel();var pos=h.absolutePos(new BlockPos(5,4,5));var block=(JourneyBerryBushBlock)CloudseaBlocks.BRAMBLE.get();
         for(int x=-2;x<=2;x++)for(int z=-2;z<=2;z++)for(int y=0;y<=3;y++)l.setBlockAndUpdate(pos.offset(x,y,z),Blocks.STONE.defaultBlockState());

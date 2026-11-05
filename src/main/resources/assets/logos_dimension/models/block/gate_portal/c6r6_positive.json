@@ -1,0 +1,20 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "logos_dimension:block/gate_portal",
+    "portal": "logos_dimension:block/gate_portal"
+  },
+  "render_type": "neoforge:translucent",
+  "elements": [
+    {
+      "from": [16, 0, 8],
+      "to": [32, 16, 8],
+      "shade": false,
+      "light_emission": 15,
+      "faces": {
+        "north": { "texture": "#portal", "uv": [0, 2, 2, 4] },
+        "south": { "texture": "#portal", "uv": [14, 2, 16, 4] }
+      }
+    }
+  ]
+}
