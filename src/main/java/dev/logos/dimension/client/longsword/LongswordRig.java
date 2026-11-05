@@ -28,13 +28,23 @@ public final class LongswordRig {
     private static final Map<String, Map<String, CombatClip>> CLIPS = new HashMap<>();
     /** 网格分层：剑与剑鞘、宽臂皮肤、细臂皮肤，渲染时只提交一种手臂。 */
     private enum Layer { WEAPON, WIDE, SLIM }
-    private record Quad(String bone, Layer layer, Vector3f[] points, Vector3f normal, float[] uv) {}
-    /** weapon 为剑网格原点的矩阵（剑骨骼 × 枢轴 × 视角缩放），魔力缠绕表面按它定位。 */
-    public record Sample(Map<String, Matrix4f> bones, Vector3f bodyRotation, Matrix4f weapon) {}
+    /** material 是武器层的贴图序号：0 为武器网格自己的贴图，之后依次是各附件（和弓的箭）的贴图。 */
+    private record Quad(String bone, Layer layer, int material, Vector3f[] points, Vector3f normal, float[] uv) {}
+    /**
+     * weapon 为剑网格原点的矩阵（剑骨骼 × 枢轴 × 视角缩放），魔力缠绕表面按它定位。
+     * turn 是第三人称整个人的转身角（度，Blockbench 绕 +Y，即动作里 Root 的 Y 旋转）：骨架里已去掉这一转，
+     * 由客户端把原版身体整个转过去（头仍看准星）；第一人称为 0（转身留在骨架里）。
+     * rightLeg、leftLeg 是双腿的欧拉角（度），原版腿只取张开的角度。
+     */
+    public record Sample(Map<String, Matrix4f> bones, Vector3f bodyRotation, Matrix4f weapon, float turn,
+                         Vector3f rightLeg, Vector3f leftLeg) {}
     private final CombatSkeleton skeleton;
     private final Map<String, CombatClip> clips;
     private final List<Quad> quads = new ArrayList<>();
     private final Identifier texture;
+    /** 武器层的各贴图：武器网格自己的，接着是各附件的。 */
+    private final List<Identifier> materials = new ArrayList<>();
+    private final boolean firstPerson;
     /** 剑身发光层的贴图（武器网格的 {@code glow}，只有发光的像素不透明）；没有时为 null。 */
     private final Identifier glow;
     private final Vector3f weaponPivot;
@@ -65,9 +75,26 @@ public final class LongswordRig {
         });
     }
     private LongswordRig(String name, String animations, String view, boolean sheathed) {
+        firstPerson = view.equals("fp");
         var skeletonJson = read("combat/skeletons/player_" + view + ".json");
-        skeleton = CombatSkeleton.fromJson(skeletonJson);
-        if (!skeleton.missingRequired().isEmpty()) throw new IllegalStateException("玩家骨架缺少 " + skeleton.missingRequired());
+        var weapon = read("combat/weapons/" + name + ".json");
+        // 骨架给出视角的武器缩放，武器网格可再乘一个自己的 scale（打刀比长剑长）。
+        weaponScale = skeletonJson.get("weapon_scale").getAsFloat() * (weapon.has("scale") ? weapon.get("scale").getAsFloat() : 1);
+        var base = CombatSkeleton.fromJson(skeletonJson);
+        if (!base.missingRequired().isEmpty()) throw new IllegalStateException("玩家骨架缺少 " + base.missingRequired());
+        weaponPivot = base.bone(CombatBones.WEAPON).pivot();
+        // 武器自己的骨骼（和弓的分节弓身、弦、箭）挂在 Weapon 下：枢轴是武器网格坐标，按武器缩放放进骨架。
+        Set<String> own = new HashSet<>();
+        if (weapon.has("bones")) {
+            List<CombatSkeleton.Bone> bones = new ArrayList<>(base.bones());
+            for (var value : weapon.getAsJsonArray("bones")) {
+                var b = value.getAsJsonObject();
+                var pivot = vector(b.getAsJsonArray("pivot")).mul(weaponScale).add(weaponPivot);
+                bones.add(new CombatSkeleton.Bone(b.get("name").getAsString(), b.get("parent").getAsString(), pivot));
+                own.add(b.get("name").getAsString());
+            }
+            skeleton = new CombatSkeleton(bones);
+        } else skeleton = base;
         var shared = clips(animations, view);
         // 武器自己的动作（曦誓的拔剑、收剑）叠在共用动作上，同名的以武器自己的为准。
         if (!name.equals(animations) && Minecraft.getInstance().getResourceManager()
@@ -77,31 +104,50 @@ public final class LongswordRig {
             shared = Map.copyOf(merged);
         }
         clips = shared;
-        weaponPivot = skeleton.bone(CombatBones.WEAPON).pivot();
-        var weapon = read("combat/weapons/" + name + ".json");
-        // 骨架给出视角的武器缩放，武器网格可再乘一个自己的 scale（打刀比长剑长）。
-        weaponScale = skeletonJson.get("weapon_scale").getAsFloat() * (weapon.has("scale") ? weapon.get("scale").getAsFloat() : 1);
         for (var value : skeletonJson.getAsJsonArray("skin")) {
             cube(value.getAsJsonObject(), Layer.WIDE, new Matrix4f());
             cube(value.getAsJsonObject(), Layer.SLIM, new Matrix4f());
         }
         texture = Identifier.parse(weapon.get("texture").getAsString());
+        materials.add(texture);
         glow = weapon.has("glow") ? Identifier.parse(weapon.get("glow").getAsString()) : null;
-        var size = weapon.getAsJsonArray("texture_size");
-        float width = size.get(0).getAsFloat(), height = size.get(1).getAsFloat();
         for (var value : weapon.getAsJsonArray("cubes")) {
             var cube = value.getAsJsonObject();
             boolean sheath = cube.get("part").getAsString().equals("sheath");
             // 第一人称只画剑，剑鞘只在第三人称挂在腰侧；不挂剑鞘的武器（曦誓）都不画。
             if (sheath && (view.equals("fp") || !sheathed)) continue;
             var bone = skeleton.bone(sheath ? CombatBones.SHEATH : CombatBones.WEAPON);
+            // 网格都以 Weapon（或 Sheath）枢轴为原点；方块写了武器自己的骨骼时跟着那根骨骼动。
+            String owner = cube.has("bone") && own.contains(cube.get("bone").getAsString()) ? cube.get("bone").getAsString() : bone.name();
             var origin = new Matrix4f().translation(bone.pivot()).scale(weaponScale);
-            cube.addProperty("bone", bone.name());
-            cube(cube, Layer.WEAPON, origin);
-            for (int i = quads.size() - 6; i < quads.size(); i++) {
-                var uv = quads.get(i).uv;
-                uv[0] /= width; uv[1] /= height; uv[2] /= width; uv[3] /= height;
+            cube.addProperty("bone", owner);
+            cube(cube, Layer.WEAPON, 0, origin);
+        }
+        normalize(0, weapon.getAsJsonArray("texture_size"));
+        // 附件：另一份网格（自己的贴图）挂在武器的某根骨骼上，origin 是它的原点在武器网格里的位置。
+        if (weapon.has("attachments")) for (var value : weapon.getAsJsonArray("attachments")) {
+            var attachment = value.getAsJsonObject();
+            var mesh = read("combat/weapons/" + attachment.get("mesh").getAsString() + ".json");
+            String bone = attachment.get("bone").getAsString();
+            if (!skeleton.has(bone)) throw new IllegalStateException("附件挂的骨骼不存在：" + bone);
+            int material = materials.size();
+            materials.add(Identifier.parse(mesh.get("texture").getAsString()));
+            var origin = new Matrix4f().translation(weaponPivot).scale(weaponScale)
+                    .translate(attachment.has("origin") ? vector(attachment.getAsJsonArray("origin")) : new Vector3f());
+            for (var c : mesh.getAsJsonArray("cubes")) {
+                var cube = c.getAsJsonObject().deepCopy();
+                cube.addProperty("bone", bone);
+                cube(cube, Layer.WEAPON, material, origin);
             }
+            normalize(material, mesh.getAsJsonArray("texture_size"));
+        }
+    }
+    /** 把某一贴图的方块 UV 从像素换成 0–1。 */
+    private void normalize(int material, JsonArray size) {
+        float width = size.get(0).getAsFloat(), height = size.get(1).getAsFloat();
+        for (var quad : quads) if (quad.layer == Layer.WEAPON && quad.material == material) {
+            var uv = quad.uv;
+            uv[0] /= width; uv[1] /= height; uv[2] /= width; uv[3] /= height;
         }
     }
     private static Vector3f vector(JsonArray a) { return new Vector3f(a.get(0).getAsFloat(), a.get(1).getAsFloat(), a.get(2).getAsFloat()); }
@@ -123,11 +169,17 @@ public final class LongswordRig {
         var animation = clips.get(clip);
         return animation == null ? null : CombatPose.sample(animation, seconds);
     }
-    /** 把姿势套到玩家参考骨架上。 */
+    /** 把姿势套到玩家参考骨架上。第三人称时动作里 Root 的转身从骨架里拿掉，交给客户端转原版身体（见 {@link Sample#turn}）。 */
     public Sample sample(CombatPose pose) {
+        float turn = 0;
+        if (!firstPerson && pose.joint(CombatBones.ROOT) != null) {
+            turn = pose.rotation(CombatBones.ROOT).y;
+            pose = pose.without(CombatBones.ROOT);
+        }
         var bones = pose.matrices(skeleton);
         var weapon = new Matrix4f(bones.get(CombatBones.WEAPON)).translate(weaponPivot).scale(weaponScale);
-        return new Sample(bones, pose.rotation(CombatBones.UP_BODY), weapon);
+        return new Sample(bones, pose.rotation(CombatBones.UP_BODY), weapon, turn,
+                pose.rotation(CombatBones.RIGHT_LEG), pose.rotation(CombatBones.LEFT_LEG));
     }
     /**
      * 右臂（连同剑）绕右肩按 {@code degrees} 抬起或压下，转轴是肩部骨骼 {@code Arm} 的 X 轴：第三人称施法时剑尖跟着视线俯仰。
@@ -142,7 +194,8 @@ public final class LongswordRig {
         var bones = new HashMap<>(sample.bones);
         for (var bone : List.of(CombatBones.RIGHT_ARM, CombatBones.RIGHT_FORE_ARM, CombatBones.RIGHT_HAND, CombatBones.WEAPON))
             bones.put(bone, new Matrix4f(turn).mul(bones.get(bone)));
-        return new Sample(Map.copyOf(bones), sample.bodyRotation, new Matrix4f(turn).mul(sample.weapon));
+        return new Sample(Map.copyOf(bones), sample.bodyRotation, new Matrix4f(turn).mul(sample.weapon), sample.turn,
+                sample.rightLeg, sample.leftLeg);
     }
 
     /** 武器网格坐标（像素，原点在握柄）里的一点在这一帧骨架空间的位置。 */
@@ -178,7 +231,8 @@ public final class LongswordRig {
         });
     }
 
-    private void cube(JsonObject cube, Layer layer, Matrix4f origin) {
+    private void cube(JsonObject cube, Layer layer, Matrix4f origin) { cube(cube, layer, 0, origin); }
+    private void cube(JsonObject cube, Layer layer, int material, Matrix4f origin) {
         var from = vector(cube.getAsJsonArray("start")); var to = vector(cube.getAsJsonArray("end"));
         if (layer == Layer.SLIM) {
             // 细臂皮肤手臂宽 3 像素：按中心收窄到 3/4，刀柄仍穿过手心。
@@ -204,7 +258,7 @@ public final class LongswordRig {
                 var uv = cube.getAsJsonObject("uv").getAsJsonArray(names[face]);
                 textureUv = new float[]{uv.get(0).getAsFloat(), uv.get(1).getAsFloat(), uv.get(2).getAsFloat(), uv.get(3).getAsFloat()};
             }
-            quads.add(new Quad(bone, layer, points, normal, textureUv));
+            quads.add(new Quad(bone, layer, material, points, normal, textureUv));
         }
     }
     /**
@@ -233,19 +287,22 @@ public final class LongswordRig {
     }
     /** {@code weapon} 为 false 时只画手臂（曦誓拔剑凝成之前、收剑散去之后）。 */
     public void submit(Sample sample, PoseStack pose, SubmitNodeCollector collector, int light, PlayerSkin skin, boolean arms, boolean weapon) {
-        if (weapon) submitMaterial(sample, pose, collector, light, texture, Layer.WEAPON);
+        if (weapon) for (int m = 0; m < materials.size(); m++) submitMaterial(sample, pose, collector, light, materials.get(m), Layer.WEAPON, m);
         if (arms) submitMaterial(sample, pose, collector, light, skin.body().texturePath(),
-                skin.model() == PlayerModelType.SLIM ? Layer.SLIM : Layer.WIDE);
+                skin.model() == PlayerModelType.SLIM ? Layer.SLIM : Layer.WIDE, 0);
     }
-    private void submitMaterial(Sample sample, PoseStack pose, SubmitNodeCollector collector, int light, Identifier texture, Layer layer) {
+    private void submitMaterial(Sample sample, PoseStack pose, SubmitNodeCollector collector, int light, Identifier texture, Layer layer, int material) {
         // 提交前冻结顶点，延迟渲染回调不读取玩家或可变骨骼状态。
         List<Quad> transformed = new ArrayList<>();
-        for (var quad : quads) if (quad.layer == layer) {
+        for (var quad : quads) if (quad.layer == layer && quad.material == material) {
             var matrix = sample.bones.get(quad.bone);
+            // 缩成 0 的骨骼（还没搭上或已射出的箭、第一人称藏起的右臂）不画。
+            if (Math.abs(matrix.determinant3x3()) < 1e-9f) continue;
             var points = new Vector3f[4];
             for (int i = 0; i < 4; i++) points[i] = matrix.transformPosition(new Vector3f(quad.points[i]));
-            transformed.add(new Quad(quad.bone, layer, points, matrix.transformDirection(new Vector3f(quad.normal)).normalize(), quad.uv));
+            transformed.add(new Quad(quad.bone, layer, material, points, matrix.transformDirection(new Vector3f(quad.normal)).normalize(), quad.uv));
         }
+        if (transformed.isEmpty()) return;
         collector.order(-1).submitCustomGeometry(pose, RenderTypes.entityCutout(texture), (p, buffer) -> {
             for (var quad : transformed) for (int i = 0; i < 4; i++) {
                 var point = quad.points[i]; var uv = quad.uv; var n = quad.normal;

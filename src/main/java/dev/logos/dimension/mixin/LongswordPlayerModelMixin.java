@@ -37,5 +37,12 @@ public abstract class LongswordPlayerModelMixin {
         model.body.setRotation(rotation.x,rotation.y,rotation.z);
         var neck=pose.neckOffset();
         model.head.x+=neck.x;model.head.y+=neck.y;model.head.z+=neck.z;
+        // 双腿只取动作里张开的角度（弓道的足踏み）；走动时按步速淡掉，原版的迈步不受影响。左手惯用时左右互换、方向取反。
+        boolean left=avatar.mainArm==net.minecraft.world.entity.HumanoidArm.LEFT;
+        var right=left?frame.sample().leftLeg():frame.sample().rightLeg();
+        var other=left?frame.sample().rightLeg():frame.sample().leftLeg();
+        float still=1-Math.min(1,state.walkAnimationSpeed*2),radians=(float)Math.PI/180,mirror=left?-1:1;
+        model.rightLeg.zRot+=right.z*radians*mirror*still;
+        model.leftLeg.zRot+=other.z*radians*mirror*still;
     }
 }

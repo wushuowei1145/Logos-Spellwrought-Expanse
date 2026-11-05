@@ -1,0 +1,76 @@
+{
+  "start": "ready",
+  "moves": {
+    "ready": {
+      "length": 0.5,
+      "next": "idle"
+    },
+    "idle": {
+      "length": 2.4,
+      "playback": "loop",
+      "blend_in": 0.15,
+      "on": [
+        {
+          "input": "use_press",
+          "to": "uchiokoshi"
+        }
+      ]
+    },
+    "uchiokoshi": {
+      "length": 0.45,
+      "blend_in": 0.08,
+      "next": "hikiwake",
+      "on": [
+        {
+          "input": "use_release",
+          "to": "lower"
+        }
+      ]
+    },
+    "lower": {
+      "clip": "uchiokoshi",
+      "playback": "reverse",
+      "next": "idle",
+      "on": [
+        {
+          "input": "use_press",
+          "to": "uchiokoshi"
+        }
+      ]
+    },
+    "hikiwake": {
+      "length": 0.6,
+      "next": "kai",
+      "on": [
+        {
+          "input": "use_release",
+          "to": "hanare"
+        }
+      ]
+    },
+    "kai": {
+      "length": 1.6,
+      "playback": "loop",
+      "on": [
+        {
+          "input": "use_release",
+          "to": "hanare"
+        }
+      ]
+    },
+    "hanare": {
+      "length": 1.4,
+      "blend_in": 0.03,
+      "next": "idle",
+      "on": [
+        {
+          "input": "use_press",
+          "to": "uchiokoshi",
+          "window": [
+            0.75
+          ]
+        }
+      ]
+    }
+  }
+}
