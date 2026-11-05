@@ -201,11 +201,12 @@ UCHIOKOSHI = dict(YUGAMAE, grip=(-0.4, 0.92, -0.4), **bow((0.1, 1, 0.08), AIM))
 # 大三：左手推向靶的斜上方，右手拉到额前上方。
 DAISAN = dict(UCHIOKOSHI, grip=(-0.8, 0.62, -0.38), **bow((0.08, 1, 0.04), AIM), rmode='free', rhand=(0.12, 0.74, -0.36),
               rhand_rot=(90, 0, 0), rpole=(0.5, 0.4, 1.0), rlift=0.0)
-# 会：左臂完全伸直推弓，略高于肩，箭在口高、贴着脸前过，右手在右颊后，右肘高抬在后。
+# 会：左臂完全伸直推弓，略高于肩，箭在口高、贴着脸前过，右手在右颊旁。右上臂从肩向后伸，手肘在身后、与肩差不多高，
+# 右前臂折回来，差不多与箭在一条线上（肘朝身后的 rpole）。
 # 握点比肩靠前（-Z）才能让箭从脸前过，所以左臂朝内收约 19°，从靶的方向看不是正对着肩。
 KAI_ARM = (0.06, -0.34)
 KAI = dict(DAISAN, **reach_out(*KAI_ARM), **bow((0.05, 1, 0.02), AIM), rhand=(0.28, 0.2, -0.33),
-           rpole=(0.4, 0.5, 1.0), lpole=(-0.2, -0.8, 0.4))
+           rpole=(1.0, 0.1, -0.25), lpole=(-0.2, -0.8, 0.4))
 # 残心：放箭后双臂一字展开，弓在掌中翻转（返弦）。
 ZANSHIN_R = (1.0, 0.2, -0.08)
 
@@ -510,10 +511,13 @@ def main():
         data = bedrock(all_clips, {c['name']: baked[(who, c['name'])] for c in all_clips}, sk, bones)
         text = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
         (ASSETS / f'combat/animations/yumi_{view}.animation.json').write_text(text, encoding='utf-8')
-    # 神狐的动作只做预览与留档（神狐接入战斗时再放进它的动画文件）。
-    fox_bones = [b for b in fox.order if b not in ('Sheath',)]
+    # 神狐的动作写进模型目录，由 tools/divine_fox_assets.py 并入神狐的动画文件（与打刀相同）。
+    fox_bones = ['Root', 'AllBody', 'UpBody', 'UpperBody', 'Head', 'RightArm', 'RightForeArm', 'RightHand', 'LeftArm', 'LeftForeArm', 'LeftHand',
+                 'RightLeg', 'RightLowerLeg', 'RightFoot', 'LeftLeg', 'LeftLowerLeg', 'LeftFoot', 'Weapon', *fox.bow_bones]
     data = bedrock(all_clips, {c['name']: baked[('fox', c['name'])] for c in all_clips}, fox, fox_bones)
-    (out / 'yumi_fox.animation.json').write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding='utf-8')
+    fox_out = art / 'MinecraftLogosMod/fox_model/divine_fox/Animation/yumi'
+    fox_out.mkdir(parents=True, exist_ok=True)
+    (fox_out / 'divine_fox_yumi.animation.json').write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
 
     cams = {'player': [Camera(-35, 8, 4.6, (0, 22, -2), (250, 300)), Camera(60, 6, 4.6, (0, 22, -2), (250, 300))],
             'fox': [Camera(-35, 8, 2.5, (0, 36, -3), (250, 300)), Camera(60, 6, 2.5, (0, 36, -3), (250, 300))]}

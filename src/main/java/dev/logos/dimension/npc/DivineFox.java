@@ -14,6 +14,7 @@ import dev.logos.dimension.combat.MoveRunner;
 import dev.logos.dimension.combat.Moveset;
 import dev.logos.dimension.combat.Movesets;
 import dev.logos.dimension.fox.SanctuaryResidents;
+import dev.logos.dimension.item.YumiItem;
 import dev.logos.dimension.item.UchigatanaItem;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -103,6 +104,15 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
     public static final List<String> KATANAS = List.of("ink", "vermilion", "indigo", "wood");
     /** 打刀动作在神狐动画文件里的前缀。 */
     public static final String KATANA_PREFIX = "katana_";
+    private static final Identifier YUMI_MOVESET = LogosDimension.id("yumi");
+    /** 和弓动作在神狐动画文件里的前缀；弓挂在这根骨骼下（不是刀的 {@code Weapon}，拉弓时刀留在腰间）。 */
+    public static final String YUMI_PREFIX = "yumi_", YUMI_BONE = "Yumi";
+    /** 四套和弓配色，顺序与模型里的 {@code yumi_<配色>_<骨骼>} 组一致（tools/divine_fox_assets.py 的 YUMIS）。 */
+    public static final List<String> YUMIS = List.of("bamboo", "vermilion", "indigo", "chestnut");
+    /** 弓上有方块的骨骼。 */
+    public static final List<String> YUMI_MESH_BONES = yumiMeshBones();
+    /** 拿着某一配色时要隐藏的方块组（其他三套）。 */
+    private static final Map<String, Set<String>> YUMI_HIDDEN = yumiHidden();
     /** 总是佩刀的外观。 */
     public static final String KAGURA = "outfit_kagura";
     /** 受击（约 0.46 秒）与死亡动画（1.55 秒）播完，在地上停约 1 秒后消失。 */
@@ -137,6 +147,8 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
     private ItemStack katana = ItemStack.EMPTY, bow = ItemStack.EMPTY;
     /** 打刀的招式状态机；刀收起时为空。 */
     private MoveRunner runner;
+    /** 状态机当前的动作前缀：打刀或和弓。 */
+    private String runnerPrefix = KATANA_PREFIX;
     private float mana = MAX_MANA;
     private int alertTicks, actionTicks, guardTicks, sinceHurt = 1000, regenTicks;
     /** 剧情指定的表情（优先），以及行为给出的短暂表情。 */
@@ -204,7 +216,7 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
         var random = level.getRandom();
         setAppearance(NpcParts.DIVINE_FOX.random(random));
         setKatana(random.nextInt(KATANAS.size()));
-        if (random.nextFloat() < BOW_CHANCE) bow = new ItemStack(Items.BOW);
+        if (random.nextFloat() < BOW_CHANCE) bow = new ItemStack(YumiItem.random(random));
         // 一套铁甲：模型不画盔甲，看不见；死亡不掉落
         setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
         setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.IRON_CHESTPLATE));
@@ -328,10 +340,49 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
             super.setItemSlot(EquipmentSlot.MAINHAND, katana);
             katana = ItemStack.EMPTY;
         }
+        runnerPrefix = KATANA_PREFIX;
         runner = new MoveRunner(set, this, level.getGameTime());
         // 状态机在构造时就报告了第一招（拔刀），那时 runner 还没赋值，这里补报一次
         moveStarted(runner);
         return true;
+    }
+
+    /** 手里是和弓：按弓道的射法（招式状态机驱动），其他弓走原版拉弓。 */
+    public boolean holdsYumi() {
+        return getMainHandItem().getItem() instanceof YumiItem;
+    }
+
+    private boolean yumiRunning() {
+        return runner != null && YUMI_PREFIX.equals(runnerPrefix);
+    }
+
+    /** 状态机跟着手里的东西走：拿上和弓就起和弓的招式，放下就停。 */
+    private void syncYumi() {
+        if (holdsYumi() == yumiRunning() || !(level() instanceof ServerLevel level)) return;
+        if (!holdsYumi()) {
+            dropRunner();
+            return;
+        }
+        Moveset set = Movesets.get(level.getServer(), YUMI_MOVESET);
+        if (set == null) return;
+        runnerPrefix = YUMI_PREFIX;
+        runner = new MoveRunner(set, this, level.getGameTime());
+        moveStarted(runner);
+    }
+
+    /** 向和弓的招式状态机发一个输入（拉弓、放箭）。 */
+    public boolean yumiInput(Moveset.Input input) {
+        return yumiRunning() && runner.input(input, level().getGameTime());
+    }
+
+    /** 当前和弓招式（没拿和弓时为 null）。 */
+    public String yumiMove() {
+        return yumiRunning() ? runner.move().name() : null;
+    }
+
+    /** 不放箭，直接回到执弓（目标跑了、贴到身边）。 */
+    public void yumiCancel() {
+        if (yumiRunning()) runner.force("idle", level().getGameTime());
     }
 
     /** 收刀：播收刀动作，播完刀回到腰间。 */
@@ -371,12 +422,12 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
 
     /** 向招式状态机发一个输入（攻击、格挡）；刀没拔出时不处理。 */
     public boolean katanaInput(Moveset.Input input) {
-        return runner != null && !runner.cleared() && runner.input(input, level().getGameTime());
+        return runner != null && !yumiRunning() && !runner.cleared() && runner.input(input, level().getGameTime());
     }
 
     /** 当前招式（没拔刀时为 null）。 */
     public Moveset.Move katanaMove() {
-        return runner == null || runner.cleared() ? null : runner.move();
+        return runner == null || yumiRunning() || runner.cleared() ? null : runner.move();
     }
 
     @Override
@@ -396,7 +447,7 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
             return;
         }
         Moveset.Move m = r.move();
-        entityData.set(MOVE, KATANA_PREFIX + m.clip() + "|" + (long) r.start() + "|" + (float) r.rate() + "|"
+        entityData.set(MOVE, runnerPrefix + m.clip() + "|" + (long) r.start() + "|" + (float) r.rate() + "|"
                 + (m.playback() == Moveset.Playback.LOOP));
     }
 
@@ -433,8 +484,11 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
         double dx = target.getX() - getX(), dy = target.getY(1 / 3.0) - arrow.getY(), dz = target.getZ() - getZ();
         double flat = Math.sqrt(dx * dx + dz * dz);
         if (level() instanceof ServerLevel level) {
-            // 神狐射得比骷髅准：散布只有骷髅（困难）的一半
-            Projectile.spawnProjectileUsingShoot(arrow, level, projectile, dx, dy + flat * .2, dz, 1.6f, 1);
+            // 神狐射得比骷髅准：散布只有骷髅（困难）的一半。和弓的箭飞得快，只需补上重力的下坠（每刻 0.05）
+            boolean yumi = weapon.getItem() instanceof YumiItem;
+            double time = flat / YumiItem.FULL_SPEED;
+            Projectile.spawnProjectileUsingShoot(arrow, level, projectile, dx, dy + (yumi ? .025 * time * time : flat * .2), dz,
+                    yumi ? YumiItem.FULL_SPEED : 1.6f, 1);
         }
         playSound(SoundEvents.SKELETON_SHOOT, 1, 1 / (getRandom().nextFloat() * .4f + .8f));
         if (getRandom().nextFloat() < .3f) playSound(FoxSounds.ATTACK.get(), 1, getVoicePitch());
@@ -513,6 +567,7 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
             if (bowMode) unequipBow();
             sheatheKatana();
         }
+        syncYumi();
         if (runner != null) {
             runner.tick(level().getGameTime());
             if (guardTicks > 0 && --guardTicks == 0) katanaInput(Moveset.Input.USE_RELEASE);
@@ -644,7 +699,30 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
             hidden.add("Weapon");
             hidden.add("Sheath");
         }
+        // 和弓只在拿在手上时画，只画手里那把的配色
+        if (getMainHandItem().getItem() instanceof YumiItem yumi && !isDeadOrDying()) hidden.addAll(YUMI_HIDDEN.getOrDefault(yumi.finish(), Set.of()));
+        else hidden.add(YUMI_BONE);
         return hidden;
+    }
+
+    private static List<String> yumiMeshBones() {
+        List<String> bones = new java.util.ArrayList<>(List.of("BowGrip", "BowStringUpper", "BowStringLower", "BowNock"));
+        for (int i = 1; i <= 10; i++) bones.add("BowUpper" + i);
+        for (int i = 1; i <= 7; i++) bones.add("BowLower" + i);
+        return List.copyOf(bones);
+    }
+
+    private static Map<String, Set<String>> yumiHidden() {
+        Map<String, Set<String>> out = new java.util.HashMap<>();
+        for (String shown : YUMIS) {
+            Set<String> hidden = new java.util.HashSet<>();
+            for (String other : YUMIS) {
+                if (other.equals(shown)) continue;
+                for (String bone : YUMI_MESH_BONES) hidden.add("yumi_" + other + "_" + bone);
+            }
+            out.put(shown, Set.copyOf(hidden));
+        }
+        return Map.copyOf(out);
     }
 
     /** 刀此刻是否露出来（客户端渲染用）。 */
@@ -782,6 +860,8 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
         // 存档时手上的刀或弓（战斗中退出）也算；旧存档没有刀时补一把
         if (getMainHandItem().getItem() instanceof UchigatanaItem) katana = ItemStack.EMPTY;
         if (getMainHandItem().getItem() instanceof BowItem) bow = ItemStack.EMPTY;
+        // 换成和弓之前的存档里背的是原版弓
+        if (bow.is(Items.BOW)) bow = new ItemStack(YumiItem.random(getRandom()));
         if (katana.isEmpty() && !(getMainHandItem().getItem() instanceof UchigatanaItem)) katana = new ItemStack(katanaItem(katanaVariant()));
         sanctuary = input.getLong("Sanctuary").orElse(null);
     }

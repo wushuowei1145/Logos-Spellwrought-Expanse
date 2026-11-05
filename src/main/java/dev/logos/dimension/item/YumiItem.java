@@ -4,6 +4,7 @@ import dev.logos.dimension.DimensionBlocks;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.combat.CombatWeapon;
 import dev.logos.dimension.longsword.LongswordCombat;
+import dev.logos.dimension.npc.DivineFox;
 import java.util.List;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -13,6 +14,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -29,7 +31,7 @@ import net.neoforged.neoforge.registries.DeferredItem;
  * 神狐和弓（四套配色）：玩家按弓道的射法拉弓。按住右键先搭箭、把弓举过头顶（打起し），再引分け拉到会；
  * 松开右键放箭，之后是返弦与残心。举弓时松手不放箭，弓倒放回原处。箭飞得快、伤害高，弹药、附魔与药水箭仍走原版弓的流程。
  * <p>
- * 只有玩家用这套动作；骷髅等生物拿着它时它就是一把原版弓（{@link BowItem}，原版远程 AI 与射箭）。
+ * 玩家和神狐用这套动作（神狐的见 {@code FoxBowGoal}）；骷髅等生物拿着它时它就是一把原版弓（{@link BowItem}，原版远程 AI 与射箭）。
  */
 public final class YumiItem extends BowItem implements CombatWeapon.Holder {
     private static final net.minecraft.resources.Identifier MOVESET = LogosDimension.id("yumi");
@@ -60,6 +62,17 @@ public final class YumiItem extends BowItem implements CombatWeapon.Holder {
         this.weapon = weapon;
     }
     public static void init() {}
+    /** 随机一把（神狐背的弓）。 */
+    public static YumiItem random(RandomSource random) {
+        return switch (random.nextInt(4)) {
+            case 1 -> VERMILION.get();
+            case 2 -> INDIGO.get();
+            case 3 -> CHESTNUT.get();
+            default -> BAMBOO.get();
+        };
+    }
+    /** 配色名（物品名 {@code fox_yumi_<配色>}）。 */
+    public String finish() { return weapon.mesh().substring("fox_yumi_".length()); }
     @Override public CombatWeapon combatWeapon() { return weapon; }
 
     /** 拉弓的力度 0–1：举弓的那几刻为 0，之后按原版弓的曲线在 {@link #DRAW_TICKS} 刻内拉满。 */
@@ -103,10 +116,10 @@ public final class YumiItem extends BowItem implements CombatWeapon.Holder {
         return true;
     }
 
-    /** 玩家射出的箭：基础伤害提高，并标记成和弓的箭（客户端画成长长的矢）。生物射的箭保持原版。 */
+    /** 玩家和神狐射出的箭：基础伤害提高，并标记成和弓的箭（客户端画成长长的矢）。其他生物射的箭保持原版。 */
     @Override
     public AbstractArrow customArrow(AbstractArrow arrow, ItemStack ammo, ItemStack weapon) {
-        if (arrow.getOwner() instanceof Player) {
+        if (arrow.getOwner() instanceof Player || arrow.getOwner() instanceof DivineFox) {
             arrow.setBaseDamage(BASE_DAMAGE);
             arrow.setData(NatureAttachments.YUMI_ARROW, true);
         }

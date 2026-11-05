@@ -134,6 +134,8 @@ public final class LongswordClient {
                     var rig = LongswordRig.get(p.variant(), false);
                     // 第三人称施法时剑尖跟着视线俯仰（第一人称的剑本来就跟着镜头）。
                     sample = rig.aim(sample, SwordCastClient.aim(p, now, state.xRot));
+                    // 侧身拉弓时双臂和弓跟着视线俯仰（第一人称的弓本来就跟着镜头）；随转身淡入淡出。
+                    if (sample.turn() != 0) sample = rig.aimDraw(sample, -state.xRot * Math.min(1, Math.abs(sample.turn()) / 90));
                     float glow = rig.glows() ? SwordCastClient.glow(avatar, p, now, state.partialTick) : 0;
                     frame = new Frame(p.variant(), sample, state.getMainHandItemState(), p, now,
                             SwordCastClient.tip(avatar.getMainHandItem()), glow, glow > 0 ? SwordCastClient.color(avatar) : 0);
