@@ -35,10 +35,6 @@ import org.jspecify.annotations.Nullable;
 public final class GateTravel {
     /** 另一侧找门的半径，同下界传送门回主世界。 */
     public static final int SEARCH_RADIUS = 128;
-    /** 小号门模板：门面朝向 X 轴，9×9×5，启门石在 (4,0,2)。 */
-    public static final Identifier SMALL_GATE = LogosDimension.id("gate/small_gate");
-    private static final BlockPos PIVOT = new BlockPos(4, 0, 2);
-    private static final int HALF_WIDTH = 4, HALF_DEPTH = 2, HEIGHT = 9;
     /** 找平地的范围（格）和最大高差。 */
     private static final int SPOT_RADIUS = 24, STEEP = 1;
     /** 地基最多往下垫几格。 */
@@ -89,25 +85,33 @@ public final class GateTravel {
         return row.get(row.size() / 2);
     }
 
-    /** 在目标附近放一扇点亮的小号门，门面和来时那扇同向。返回门洞里的一格；模板缺失时返回 null。 */
+    /** 在目标附近放一扇点亮的小号门，样式由 {@link GateStyle#at} 决定，门面和来时那扇同向。返回门洞里的一格；模板缺失时返回 null。 */
     public static @Nullable BlockPos createSmallGate(ServerLevel level, BlockPos near, Direction.Axis axis) {
-        StructureTemplate template = level.getStructureManager().get(SMALL_GATE).orElse(null);
+        return createGate(level, near, axis, GateStyle.at(level, level.getRandom()));
+    }
+
+    /** 放一扇指定样式的点亮的门。模板的启门石在地面中心，门的宽、高、进深都从模板读。 */
+    public static @Nullable BlockPos createGate(ServerLevel level, BlockPos near, Direction.Axis axis, GateStyle style) {
+        StructureTemplate template = level.getStructureManager().get(style.template()).orElse(null);
         if (template == null) return null;
-        BlockPos stone = findSpot(level, near, axis);
+        Vec3i size = template.getSize();
+        BlockPos pivot = new BlockPos(size.getX() / 2, 0, size.getZ() / 2);
+        // 模板的门面沿 X 轴；转到 Z 轴时，世界里 X 方向占的是模板的进深
+        int dx = axis == Direction.Axis.X ? size.getX() / 2 : size.getZ() / 2, dz = axis == Direction.Axis.X ? size.getZ() / 2 : size.getX() / 2;
+        BlockPos stone = findSpot(level, near, dx, dz, size.getY());
         StructurePlaceSettings settings = new StructurePlaceSettings()
                 .setRotation(axis == Direction.Axis.X ? Rotation.NONE : Rotation.CLOCKWISE_90)
-                .setRotationPivot(PIVOT).setIgnoreEntities(true);
-        BlockPos origin = stone.subtract(PIVOT);
+                .setRotationPivot(pivot).setIgnoreEntities(true);
+        BlockPos origin = stone.subtract(pivot);
         template.placeInWorld(level, origin, origin, settings, level.getRandom(), Block.UPDATE_CLIENTS);
-        foundation(level, stone, axis);
+        foundation(level, stone, dx, dz);
         if (!(level.getBlockEntity(stone) instanceof GateStoneBlockEntity gate) || !gate.igniteNow()) return null;
         return stone.above();
     }
 
     /** 启门石放哪：由近到远找一块不在水上、四角高差不超过一格的地面；实在没有（比如大海中央）就放在目标点的水面上。 */
-    private static BlockPos findSpot(ServerLevel level, BlockPos near, Direction.Axis axis) {
-        int dx = axis == Direction.Axis.X ? HALF_WIDTH : HALF_DEPTH, dz = axis == Direction.Axis.X ? HALF_DEPTH : HALF_WIDTH;
-        int ceiling = level.getMaxY() - HEIGHT - 1;
+    private static BlockPos findSpot(ServerLevel level, BlockPos near, int dx, int dz, int height) {
+        int ceiling = level.getMaxY() - height - 1;
         for (BlockPos.MutableBlockPos column : BlockPos.spiralAround(near, SPOT_RADIUS, Direction.EAST, Direction.SOUTH)) {
             // 隔一格看一次，避免大海上算太多列
             if ((column.getX() & 1) != 0 || (column.getZ() & 1) != 0) continue;
@@ -132,8 +136,7 @@ public final class GateTravel {
     }
 
     /** 门建在缓坡上时，把地面底下悬空的地方用泥土垫实。水面上的门不垫。 */
-    private static void foundation(ServerLevel level, BlockPos stone, Direction.Axis axis) {
-        int dx = axis == Direction.Axis.X ? HALF_WIDTH : HALF_DEPTH, dz = axis == Direction.Axis.X ? HALF_DEPTH : HALF_WIDTH;
+    private static void foundation(ServerLevel level, BlockPos stone, int dx, int dz) {
         for (int x = -dx; x <= dx; x++) for (int z = -dz; z <= dz; z++) {
             BlockPos.MutableBlockPos at = stone.offset(x, -1, z).mutable();
             for (int i = 0; i < FOUNDATION && level.getBlockState(at).canBeReplaced() && level.getFluidState(at).isEmpty(); i++, at.move(Direction.DOWN))
