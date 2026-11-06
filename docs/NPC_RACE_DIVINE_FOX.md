@@ -69,8 +69,11 @@
 
 - **目标**：附近 20 格内的敌对怪物；不惹中立生物（末影人、僵尸猪灵等），不挑战 Boss 与监守者，不打森林精灵、同伴和玩家的 Logos 使魔。对玩家中立：玩家打了神狐，这只和附近的神狐一起反击。僵尸和灾厄村民也像打村民一样打神狐（`ElfFactions`）。
 - **打刀**（`FoxKatanaGoal`）：决定攻击后先拔刀；目标在 3.5–10 格、看得见时一个箭步冲过去（水平速度按距离给，最快约 0.7 格/刻），够得着就连砍。出招、连段、接触时刻全由与玩家共用的招式状态机（`MoveRunner` + `combat/movesets/uchigatana.json`）决定，客户端的 `combat` 控制器播放对应的 `katana_*` 动作。每刀砍身前 75° 扇形 3 格内的目标与敌人。战斗结束、警戒期过后播收刀动作。
-- **弓**（`FoxBowGoal`）：背弓的神狐在目标是苦力怕、走路到不了（在天上、隔着水或悬崖）或远于 16 格时换弓，保持 6–12 格，按弓道的射法拉满再放；目标重新走得到又不远时收弓拔刀。没有弓的神狐不去追苦力怕。苦力怕像躲猫一样躲神狐（6 格内逃开）。
-- **狐火缠绕**（`FoxFireWrapGoal`）：遇上生命值超过 50 的敌人时，在安全的间隙（离目标 4 格以上、一秒内没挨打）停一下，用自己的魔力（200 点，每秒恢复 2 点）放 Logos 术式「狐火缠绕」（100 魔力，`LogosMagicBridge.FOX_FIRE_WRAP`）：60 秒内命中附加 3 点奥秘伤害并点燃 1 秒，挥刀（生物的挥砍以命中计）放出 120° 的横扫游脉，再加 5 点奥秘伤害。缠绕结束时这一仗还没打完，就在下一个安全间隙再缠一次。用弓时一样，命中的箭也带着狐火。
+- **弓**（`FoxBowGoal`）：背弓的神狐在目标是苦力怕、走路到不了（在天上、隔着水或悬崖）或远于 16 格时换弓，保持 6–12 格，按弓道的射法拉满再放；目标重新走得到又不远时收弓拔刀。没有弓的神狐不去追苦力怕。
+  - 换武器不来回：走不走得到每两秒查一次，只信站在地上时查到的结果（离地时原版不算路径）；换了武器至少拿 3 秒（`FoxBowGoal.SETTLE`，够放完一箭），走得到的目标贴到 6 格内时例外，立刻换刀。
+  - 太近：离目标不到 6 格时能退就退，退不开（悬崖边、小平台）就站着射。
+- **苦力怕怕神狐**（`ElfFactions`）：看到 12 格内的神狐就跑（`CREEPER_FEAR`，比原版躲猫的 6 格远，因为神狐 20 格内就放箭），优先级和速度与原版躲猫相同；不把神狐当目标，被箭射中也不会冲过来。它要炸的玩家如果站在神狐旁边，它会绕开、拉锯，但已经点燃的不会停。
+- **狐火缠绕**（`FoxFireWrapGoal`）：遇上生命值超过 50 的敌人时，在安全的间隙（离目标 4 格以上、一秒内没挨打）停一下，用自己的魔力（200 点，每秒恢复 2 点）放 Logos 术式「狐火缠绕」（100 魔力，`LogosMagicBridge.FOX_FIRE_WRAP`）：60 秒内命中附加 3 点奥秘伤害并点燃 1 秒，挥刀（生物的挥砍以命中计）放出 120° 的横扫游脉，再加 5 点奥秘伤害。缠绕结束时这一仗还没打完，就在下一个安全间隙再缠一次。用弓时一样，命中的箭也带着狐火；施法时弓留在手上，不拔刀。
   - 外观：不用 Logos 按奥秘元素画的缠绕，改成 Logos 的物品表面火焰（`/alchemy aura fire`）把色相转半圈，成为幽蓝的鬼火，画在拔出的刀身和手里的弓上（`DivineFoxRenderer`）。横扫游脉的特效还没做，暂时是 Logos 默认的样子，以后回来换。
 - **逃跑**（`FoxFleeGoal`）：生命不超过三成时背离打伤自己的敌人跑开，直到回到六成、拉开 20 格或跑满 10 秒；逃跑时不出刀不放箭，仍会格挡。脱离战斗五秒后每两秒回一点生命。
 
@@ -108,8 +111,8 @@ python tools/divine_fox_assets.py [--source <fox_model/divine_fox 目录>] [--vo
 ./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=npc_divine_fox_lineup,npc_divine_fox_back,npc_divine_fox_face,npc_divine_fox_death,npc_divine_fox_expressions,npc_divine_fox_short_outfits" -PldTestHeadless -PldTestWindow=1280x720
 ```
 
-战斗与聚落居民（`FoxCombatViews`、`FoxResidentsView`）：佩刀与收刀、拔刀与连招、刀身与弓上的狐火（`npc_divine_fox_katana`）；真实 AI 对 80 血的尸壳（`npc_divine_fox_fight`）；格挡几率、魔法减免、逃跑（`npc_divine_fox_defense`）；背弓射苦力怕（`npc_divine_fox_bow`）；聚落居民数与补回（`fox_sanctuary_residents`，要生成聚落，耗时几分钟）：
+战斗与聚落居民（`FoxCombatViews`、`FoxWeaponViews`、`FoxResidentsView`）：佩刀与收刀、拔刀与连招、刀身与弓上的狐火（`npc_divine_fox_katana`）；真实 AI 对 80 血的尸壳（`npc_divine_fox_fight`）；格挡几率、魔法减免、逃跑（`npc_divine_fox_defense`）；背弓射苦力怕（`npc_divine_fox_bow`）；台阶坡上不来回换武器（`npc_divine_fox_weapon_commit`）；退不开时贴近也放箭（`npc_divine_fox_close_shot`）；用弓时施法不拔刀（`npc_divine_fox_wrap_bow`）；苦力怕看到神狐就跑（`npc_divine_fox_creeper_fear`）；聚落居民数与补回（`fox_sanctuary_residents`，要生成聚落，耗时几分钟）：
 
 ```text
-./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=npc_divine_fox_katana,npc_divine_fox_fight,npc_divine_fox_defense,npc_divine_fox_bow,npc_divine_fox_yumi" -PldTestHeadless -PldTestWindow=1280x720
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=npc_divine_fox_katana,npc_divine_fox_fight,npc_divine_fox_defense,npc_divine_fox_bow,npc_divine_fox_yumi,npc_divine_fox_weapon_commit,npc_divine_fox_close_shot,npc_divine_fox_wrap_bow,npc_divine_fox_creeper_fear" -PldTestHeadless -PldTestWindow=1280x720
 ```

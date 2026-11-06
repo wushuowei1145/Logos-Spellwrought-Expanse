@@ -45,6 +45,7 @@ public final class NpcEntities {
         bus.addListener(NpcEntities::attributes);
         bus.addListener(NpcEntities::creativeTab);
         NeoForge.EVENT_BUS.addListener(ElfFactions::onJoin);
+        NeoForge.EVENT_BUS.addListener(ElfFactions::onChangeTarget);
     }
 
     private static void attributes(EntityAttributeCreationEvent event) {

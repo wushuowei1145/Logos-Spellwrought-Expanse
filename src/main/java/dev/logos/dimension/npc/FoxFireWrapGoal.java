@@ -59,8 +59,8 @@ public final class FoxFireWrapGoal extends Goal {
         }
         fox.firedUp();
         castTicks = CAST_TICKS;
-        // 用刀时架刀一下，狐火顺着刀身燃起
-        if (!fox.bowMode() && fox.drawKatana()) fox.katanaInput(Moveset.Input.USE_PRESS);
+        // 用刀时架刀一下，狐火顺着刀身燃起；手上是弓或还没拿武器的背弓神狐不动手上的东西，免得白白换一次手
+        if ((fox.katanaMove() != null || !fox.hasBow()) && fox.drawKatana()) fox.katanaInput(Moveset.Input.USE_PRESS);
     }
 
     @Override

@@ -29,7 +29,8 @@ public final class FoxKatanaGoal extends Goal {
     @Override
     public boolean canUse() {
         LivingEntity target = fox.getTarget();
-        return target != null && target.isAlive() && !fox.fleeing() && !fox.bowMode() && fox.canAttack(target);
+        // 要不要用弓由优先级更高的 FoxBowGoal 决定：它不运行时轮到这里，拔刀时弓自然收起
+        return target != null && target.isAlive() && !fox.fleeing() && fox.canAttack(target);
     }
 
     @Override

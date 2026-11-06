@@ -159,6 +159,8 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
     private boolean fleeing;
     /** 用弓：够不着、太远或是苦力怕（FoxBowGoal 设置）。 */
     private boolean bowMode;
+    /** 上次在刀和弓之间换手的游戏刻（FoxBowGoal 用它避免刚拿出来又换回去）。 */
+    private long weaponSwapTime = Long.MIN_VALUE / 2;
     /** 生成在哪处聚落（结构起点），用于每处最多 20 只的统计；不在聚落里为 null。 */
     private Long sanctuary;
 
@@ -336,10 +338,12 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
         if (set == null) return false;
         if (!(getMainHandItem().getItem() instanceof UchigatanaItem)) {
             if (katana.isEmpty()) return false;
+            if (getMainHandItem().getItem() instanceof BowItem) weaponSwapTime = level.getGameTime();
             stowHand();
             super.setItemSlot(EquipmentSlot.MAINHAND, katana);
             katana = ItemStack.EMPTY;
         }
+        bowMode = false;
         runnerPrefix = KATANA_PREFIX;
         runner = new MoveRunner(set, this, level.getGameTime());
         // 状态机在构造时就报告了第一招（拔刀），那时 runner 还没赋值，这里补报一次
@@ -380,9 +384,11 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
         return yumiRunning() ? runner.move().name() : null;
     }
 
-    /** 不放箭，直接回到执弓（目标跑了、贴到身边）。 */
+    /** 不放箭，直接回到执弓（目标跑了、要后退）。只在拉弓途中才切，已经是执弓时不重播动作。 */
     public void yumiCancel() {
-        if (yumiRunning()) runner.force("idle", level().getGameTime());
+        if (!yumiRunning()) return;
+        String name = runner.move().name();
+        if (name.equals("uchiokoshi") || name.equals("hikiwake") || name.equals("kai")) runner.force("idle", level().getGameTime());
     }
 
     /** 收刀：播收刀动作，播完刀回到腰间。 */
@@ -400,8 +406,13 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
 
     /** 拿弓：刀直接回到腰间。 */
     public boolean equipBow() {
-        if (getMainHandItem().getItem() instanceof BowItem) return true;
+        if (getMainHandItem().getItem() instanceof BowItem) {
+            // 读档后弓还在手上，弓模式要补上，否则格挡时会拔刀
+            bowMode = true;
+            return true;
+        }
         if (bow.isEmpty()) return false;
+        if (getMainHandItem().getItem() instanceof UchigatanaItem) weaponSwapTime = level().getGameTime();
         dropRunner();
         stowHand();
         super.setItemSlot(EquipmentSlot.MAINHAND, bow);
@@ -418,6 +429,11 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
 
     public boolean bowMode() {
         return bowMode;
+    }
+
+    /** 上次在刀和弓之间换手已经过了这么多刻（从腰间拿出第一件武器不算换手）。 */
+    public boolean weaponSettled(int ticks) {
+        return level().getGameTime() - weaponSwapTime >= ticks;
     }
 
     /** 向招式状态机发一个输入（攻击、格挡）；刀没拔出时不处理。 */
