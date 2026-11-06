@@ -1,0 +1,8 @@
+{
+  "parent": "logos_dimension:item/tarot/card_blank",
+  "textures": {
+    "artwork": "logos_dimension:item/tarot/major/03_empress",
+    "glow": "logos_dimension:item/tarot/major/03_empress_glow",
+    "labels": "logos_dimension:item/tarot/major/03_empress_labels"
+  }
+}

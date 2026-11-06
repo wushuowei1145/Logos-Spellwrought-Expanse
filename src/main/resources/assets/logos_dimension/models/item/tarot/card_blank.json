@@ -1,0 +1,874 @@
+{
+  "credit": "Mystical Cat Tarot / Logos",
+  "ambientocclusion": false,
+  "gui_light": "front",
+  "textures": {
+    "frame": "logos_dimension:item/tarot/frame",
+    "back": "logos_dimension:item/tarot/back",
+    "edge": "logos_dimension:item/tarot/edge",
+    "particle": "logos_dimension:item/tarot/back"
+  },
+  "display": {
+    "gui": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        90,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        2.5,
+        3
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [
+        90,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        2.5,
+        3
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        168,
+        -4
+      ],
+      "translation": [
+        1.6,
+        5.2,
+        1
+      ],
+      "scale": [
+        0.46,
+        0.46,
+        0.46
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        168,
+        -4
+      ],
+      "translation": [
+        1.6,
+        5.2,
+        1
+      ],
+      "scale": [
+        0.46,
+        0.46,
+        0.46
+      ]
+    },
+    "ground": {
+      "rotation": [
+        90,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        0.75,
+        0
+      ],
+      "scale": [
+        0.65,
+        0.65,
+        0.65
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.4,
+        1.4,
+        1.4
+      ]
+    }
+  },
+  "elements": [
+    {
+      "name": "card_stock_0",
+      "from": [
+        4.25,
+        1,
+        7.92
+      ],
+      "to": [
+        11.75,
+        1.125,
+        8.08
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            0.5,
+            15.857142857142858,
+            15.5,
+            16.0
+          ],
+          "texture": "#back",
+          "tintindex": -1
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1,
+          "rotation": 90
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1,
+          "rotation": 90
+        }
+      }
+    },
+    {
+      "name": "card_stock_1",
+      "from": [
+        4.125,
+        1.125,
+        7.92
+      ],
+      "to": [
+        11.875,
+        1.25,
+        8.08
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            0.25,
+            15.714285714285714,
+            15.75,
+            15.857142857142858
+          ],
+          "texture": "#back",
+          "tintindex": -1
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1,
+          "rotation": 90
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1,
+          "rotation": 90
+        }
+      }
+    },
+    {
+      "name": "card_stock_2",
+      "from": [
+        4,
+        1.25,
+        7.92
+      ],
+      "to": [
+        12,
+        14.75,
+        8.08
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            0,
+            0.2857142857142857,
+            16,
+            15.714285714285714
+          ],
+          "texture": "#back",
+          "tintindex": -1
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1,
+          "rotation": 90
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1,
+          "rotation": 90
+        }
+      }
+    },
+    {
+      "name": "card_stock_3",
+      "from": [
+        4.125,
+        14.75,
+        7.92
+      ],
+      "to": [
+        11.875,
+        14.875,
+        8.08
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            0.25,
+            0.14285714285714285,
+            15.75,
+            0.2857142857142857
+          ],
+          "texture": "#back",
+          "tintindex": -1
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1,
+          "rotation": 90
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1,
+          "rotation": 90
+        }
+      }
+    },
+    {
+      "name": "card_stock_4",
+      "from": [
+        4.25,
+        14.875,
+        7.92
+      ],
+      "to": [
+        11.75,
+        15,
+        8.08
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            0.5,
+            0.0,
+            15.5,
+            0.14285714285714285
+          ],
+          "texture": "#back",
+          "tintindex": -1
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1,
+          "rotation": 90
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#edge",
+          "tintindex": -1,
+          "rotation": 90
+        }
+      }
+    },
+    {
+      "name": "front_frame",
+      "from": [
+        4,
+        1,
+        7.9
+      ],
+      "to": [
+        12,
+        15,
+        7.9
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#frame",
+          "tintindex": -1
+        }
+      }
+    },
+    {
+      "name": "replaceable_artwork_112x192",
+      "from": [
+        4.5,
+        2,
+        7.915
+      ],
+      "to": [
+        11.5,
+        14,
+        7.915
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#artwork",
+          "tintindex": -1
+        }
+      }
+    },
+    {
+      "name": "artwork_glow",
+      "from": [
+        4.5,
+        2,
+        7.905
+      ],
+      "to": [
+        11.5,
+        14,
+        7.905
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#glow",
+          "tintindex": -1
+        }
+      },
+      "light_emission": 15
+    },
+    {
+      "name": "replaceable_rank_and_title",
+      "from": [
+        4,
+        1,
+        7.89
+      ],
+      "to": [
+        12,
+        15,
+        7.89
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#labels",
+          "tintindex": -1
+        }
+      }
+    },
+    {
+      "name": "raised_foil_rim_0",
+      "from": [
+        4.0625,
+        1.375,
+        7.875
+      ],
+      "to": [
+        4.125,
+        14.625,
+        7.899
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "south": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "east": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "west": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "up": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "down": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        }
+      }
+    },
+    {
+      "name": "raised_foil_rim_1",
+      "from": [
+        11.875,
+        1.375,
+        7.875
+      ],
+      "to": [
+        11.9375,
+        14.625,
+        7.899
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "south": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "east": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "west": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "up": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "down": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        }
+      }
+    },
+    {
+      "name": "raised_foil_rim_2",
+      "from": [
+        4.375,
+        14.8125,
+        7.875
+      ],
+      "to": [
+        11.625,
+        14.875,
+        7.899
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "south": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "east": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "west": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "up": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "down": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        }
+      }
+    },
+    {
+      "name": "raised_foil_rim_3",
+      "from": [
+        4.375,
+        1.125,
+        7.875
+      ],
+      "to": [
+        11.625,
+        1.1875,
+        7.899
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "south": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "east": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "west": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "up": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        },
+        "down": {
+          "uv": [
+            3,
+            1,
+            4,
+            15
+          ],
+          "texture": "#edge",
+          "tintindex": -1
+        }
+      }
+    }
+  ]
+}

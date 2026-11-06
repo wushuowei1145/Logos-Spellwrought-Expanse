@@ -1,0 +1,8 @@
+{
+  "parent": "logos_dimension:item/tarot/card_blank",
+  "textures": {
+    "artwork": "logos_dimension:item/tarot/major/12_hanged_man",
+    "glow": "logos_dimension:item/tarot/major/12_hanged_man_glow",
+    "labels": "logos_dimension:item/tarot/major/12_hanged_man_labels"
+  }
+}
