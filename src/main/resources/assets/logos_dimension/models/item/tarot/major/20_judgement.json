@@ -1,0 +1,8 @@
+{
+  "parent": "logos_dimension:item/tarot/card_blank",
+  "textures": {
+    "artwork": "logos_dimension:item/tarot/major/20_judgement",
+    "glow": "logos_dimension:item/tarot/major/20_judgement_glow",
+    "labels": "logos_dimension:item/tarot/major/20_judgement_labels"
+  }
+}
