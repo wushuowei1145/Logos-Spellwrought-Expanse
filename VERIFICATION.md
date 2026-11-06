@@ -1,5 +1,16 @@
 # 首版验证记录
 
+## 黑钢长剑：施法时手臂伸直
+
+2026-11-07：分支 `fix/blacksteel-straight-arm`，基于 main `7864d25`。按维护者意见，第三人称的施法前指改成手臂完全伸直、剑顺着手臂的延长线，由 `tools/blacksteel_cast_moves.py` 重新烘焙。`cast_aim` 蓄力和持续光柱共用，所以两者都变；`cast_thrust` 的手臂已经伸直，改靠转身和前倾把肩送出去。第一人称动作文件逐字节不变，视线俯仰跟随的代码没动。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元与构建 | `./gradlew test build` 通过；`LongswordMotionTest` 新增一项：`cast_aim` 手肘弯曲小于 2°，剑与手臂夹角小于 1°，手臂水平朝前 |
+| 世界测试 | `logos_dimension:longsword_*` **13/13** |
+| 实际客户端 | `blacksteel_cast` **1/1 场景、2/2 检查**；截图看过斜侧平视与低头、施放、背后与光柱 |
+| 未验证 | 光影包、联机 |
+
 ## 神狐：不在刀和弓之间来回换，苦力怕怕神狐
 
 2026-11-05：分支 `fix/fox-weapon-dither`，基于 main `8fe3fb9`。说明见 [神狐](docs/NPC_RACE_DIVINE_FOX.md) 第 6 节。维护者试玩时发现：约 6 格时背弓的神狐在刀和弓之间快速切换、打不出伤害；苦力怕也不怕神狐。

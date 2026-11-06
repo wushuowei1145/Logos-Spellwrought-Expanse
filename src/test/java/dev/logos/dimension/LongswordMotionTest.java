@@ -80,6 +80,22 @@ class LongswordMotionTest {
             }
         }
     }
+    /** 黑钢长剑第三人称的施法前指：手臂从肩到拳伸直，水平朝前，剑顺着手臂的延长线。 */
+    @Test void blacksteelHoldKeepsTheArmStraightAndInLineWithTheBlade() throws Exception {
+        var skeleton=CombatSkeleton.fromJson(combat("skeletons/player_tp"));
+        var clip=CombatClip.parseFile(combat("animations/blacksteel_longsword_tp.animation"),new ArrayList<>()).get("cast_aim");
+        var bones=CombatPose.sample(clip,0).matrices(skeleton);
+        var shoulder=bones.get(CombatBones.RIGHT_ARM).transformPosition(new Vector3f(skeleton.bone(CombatBones.RIGHT_ARM).pivot()));
+        var elbow=bones.get(CombatBones.RIGHT_FORE_ARM).transformPosition(new Vector3f(skeleton.bone(CombatBones.RIGHT_FORE_ARM).pivot()));
+        var hand=bones.get(CombatBones.RIGHT_HAND).transformPosition(new Vector3f(skeleton.bone(CombatBones.RIGHT_HAND).pivot()));
+        var upper=new Vector3f(elbow).sub(shoulder).normalize(); var fore=new Vector3f(hand).sub(elbow).normalize();
+        assertTrue(Math.toDegrees(upper.angle(fore))<2,"手肘弯了："+Math.toDegrees(upper.angle(fore)));
+        var arm=new Vector3f(hand).sub(shoulder).normalize();
+        var blade=bones.get(CombatBones.WEAPON).transformDirection(new Vector3f(0,1,0)).normalize();
+        assertTrue(Math.toDegrees(arm.angle(blade))<1,"剑不在手臂的延长线上："+Math.toDegrees(arm.angle(blade)));
+        assertEquals(0,arm.y,.02f,"手臂不是水平的");
+        assertTrue(arm.z<-.9f,"手臂没有朝前："+arm);
+    }
     @Test void weaponOriginKeepsTheOldItemSurfaceTransform() throws Exception {
         // 魔力缠绕旧算法：剑骨骼 × 平移 (0,1,0) × 视角缩放；新算法取骨架里的剑枢轴与 weapon_scale。
         for (var view : new String[]{"fp","tp"}) {
