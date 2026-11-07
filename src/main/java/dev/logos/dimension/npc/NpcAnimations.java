@@ -212,9 +212,15 @@ public final class NpcAnimations {
     public static Set<String> available(Identifier asset) {
         var cache = GeckoLibResources.getBakedAnimations();
         if (cache == null) return Set.of();
-        BakedAnimations anims = cache.cache().get(asset.withPrefix("entity/"));
+        BakedAnimations anims = cache.cache().get(CACHE_KEYS.computeIfAbsent(asset, id -> id.withPrefix("entity/")));
         return anims == null ? Set.of() : anims.animations().keySet();
     }
+
+    /**
+     * 每只 NPC 每帧要问十几次（每个控制器一次），而 {@code withPrefix} 每次都新建对象并逐字符校验路径。
+     * 资源名就那么几个，算一次就够了。
+     */
+    private static final Map<Identifier, Identifier> CACHE_KEYS = new ConcurrentHashMap<>();
 
     // ---------------------------------------------------------------- 控制器
 
