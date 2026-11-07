@@ -3,6 +3,6 @@
   "package": "dev.logos.dimension.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": ["AttackStrengthAccess", "JourneyTemperatureMixin", "HotSpringFreezeMixin", "JourneySettlementWaterMixin", "MinecraftServerAccess", "NatureArrowMixin", "NatureSkeletonMixin", "NatureBowGoalMixin", "MobGoalsAccess", "ElfSpearAttackMixin", "AncientEmbraceBlockMixin", "SpearShieldPacketMixin", "SpearShieldSwingMixin", "SpearShieldDurabilityMixin"],
-  "client": ["NatureArrowRendererMixin", "YumiArrowRendererMixin", "LongswordPlayerModelMixin", "LongswordHeldItemMixin", "LongswordHandsMixin"],
+  "client": ["NatureArrowRendererMixin", "YumiArrowRendererMixin", "LongswordPlayerModelMixin", "LongswordHeldItemMixin", "LongswordHandsMixin", "CameraShotMixin"],
   "injectors": {"defaultRequire": 1}
 }
