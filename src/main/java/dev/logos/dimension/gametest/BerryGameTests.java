@@ -40,17 +40,20 @@ public final class BerryGameTests {
         var p=new ServerPlayer(h.getLevel().getServer(),h.getLevel(),cookie.gameProfile(),cookie.clientInformation());
         var connection=new Connection(PacketFlow.SERVERBOUND);new EmbeddedChannel(connection);h.getLevel().getServer().getPlayerList().placeNewPlayer(connection,p,cookie);p.connection.markClientLoaded();p.setGameMode(GameType.SURVIVAL);return p;
     }
-    /** 测试服务器是加速跑的，400 刻不到一秒，光照线程可能还没传播完。超时上限要放宽，不能按真实时间估。 */
+    /**
+     * 光照在后台线程池里异步传播，测试服务器又不限速跑刻：时限按刻算的话，CI 忙时 400 刻不到 0.1 秒、6000 刻也只有一秒多，
+     * 光照任务排在别的测试生成区块的任务后面还没轮到就超时了。两处等光照都用 {@link RealTimeWait#paced} 给真实时间的下限。
+     */
     private static void growth(GameTestHelper h){
         var l=h.getLevel();var pos=h.absolutePos(new BlockPos(5,4,5));var block=(JourneyBerryBushBlock)CloudseaBlocks.BRAMBLE.get();
         for(int x=-2;x<=2;x++)for(int z=-2;z<=2;z++)for(int y=0;y<=3;y++)l.setBlockAndUpdate(pos.offset(x,y,z),Blocks.STONE.defaultBlockState());
         l.setBlockAndUpdate(pos.below(),Blocks.DIRT.defaultBlockState());l.removeBlock(pos.above(),false);l.setBlockAndUpdate(pos,block.defaultBlockState());
-        h.startSequence().thenWaitUntil(()->h.assertTrue(l.getRawBrightness(pos.above(),0)<9,"Waiting for dark fixture light propagation"))
+        h.startSequence().thenWaitUntil(RealTimeWait.paced(()->h.assertTrue(l.getRawBrightness(pos.above(),0)<9,"Waiting for dark fixture light propagation")))
         .thenExecute(()->{
         for(int i=0;i<32;i++)l.tickChunk(l.getChunkAt(pos),4096);
         h.assertTrue(l.getBlockState(pos).getValue(SweetBerryBushBlock.AGE)==0,"Bush grows without native light requirement");
         l.setBlockAndUpdate(pos.above().east(),Blocks.GLOWSTONE.defaultBlockState());
-        }).thenWaitUntil(()->h.assertTrue(l.getRawBrightness(pos.above(),0)>=9,"Waiting for glowstone light propagation"))
+        }).thenWaitUntil(RealTimeWait.paced(()->h.assertTrue(l.getRawBrightness(pos.above(),0)>=9,"Waiting for glowstone light propagation")))
         .thenExecute(()->{
         for(int i=0;i<96&&l.getBlockState(pos).getValue(SweetBerryBushBlock.AGE)<3;i++)l.tickChunk(l.getChunkAt(pos),4096);
         h.assertTrue(l.getBlockState(pos).getValue(SweetBerryBushBlock.AGE)==3,"Native random tick growth never matures berries");
