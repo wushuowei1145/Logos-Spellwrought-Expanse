@@ -43,6 +43,8 @@ public abstract class ScreenEffectViews implements UIScenario {
     private static final int GROUND = 100;
     private static final Vec3 FEET = new Vec3(.5, GROUND + 1, .5);
     private static final BlockPos TARGET = new BlockPos(0, GROUND + 1, 4);
+    /** 截图时的光源：在房子、柱子和铁傀儡后面，它们都背光，成剪影。 */
+    private static final Vec3 LIGHT = new Vec3(1.5, GROUND + 4, 24.5);
     private static final float START_PITCH = 8;
 
     @Override public void configure(ScenarioOptions o) {
@@ -104,11 +106,13 @@ public abstract class ScreenEffectViews implements UIScenario {
         });
     }
 
-    /** 停在白底黑、黑底白两拍上各截一张，再放开，画面要完全恢复。 */
+    /** 默认的四个阶段各停一拍截一张，再看旧的白底黑，最后放开，画面要完全恢复。 */
     protected void stills(ScenarioBuilder s, String prefix) {
         s.screenshot(prefix + "_normal");
-        s.step("停在白底黑", ctx -> ScreenEffectRenderer.hold(ScreenFlash.Frame.WHITE, TARGET.getCenter())).ticks(3).screenshot(prefix + "_white");
-        s.step("停在黑底白", ctx -> ScreenEffectRenderer.hold(ScreenFlash.Frame.BLACK, TARGET.getCenter())).ticks(3).screenshot(prefix + "_black");
+        for (ScreenFlash.Frame frame : new ScreenFlash.Frame[] {ScreenFlash.Frame.GLOW, ScreenFlash.Frame.SILHOUETTE, ScreenFlash.Frame.ENGULF, ScreenFlash.Frame.SWAP, ScreenFlash.Frame.WHITE}) {
+            String name = frame.name().toLowerCase(java.util.Locale.ROOT);
+            s.step("停在 " + name, ctx -> ScreenEffectRenderer.hold(frame, LIGHT)).ticks(3).screenshot(prefix + "_" + name);
+        }
         s.step("放开", ctx -> ScreenEffectRenderer.hold(null, Vec3.ZERO)).ticks(3).screenshot(prefix + "_restored");
     }
 
@@ -131,7 +135,7 @@ public abstract class ScreenEffectViews implements UIScenario {
         }
     }
 
-    /** 真放一次：先白后黑各一拍，合计约 1/12 秒，放完回到原画；隐藏闪烁的选项和两次之间的间隔都要生效。 */
+    /** 真放一次：发光、剪影、吞没、翻转依次出现，合计约 0.2 秒，放完回到原画；隐藏闪烁的选项和两次之间的间隔都要生效。 */
     @LDLRegisterClient(name = "screen_fx_timing", group = "screen_fx", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
     public static class Timing extends ScreenEffectViews {
         /** 每个渲染帧的时间和当时放的那一拍。 */
@@ -161,18 +165,19 @@ public abstract class ScreenEffectViews implements UIScenario {
             }
         }
 
+        private static final List<ScreenFlash.Frame> STAGES = List.of(ScreenFlash.Frame.GLOW, ScreenFlash.Frame.SILHOUETTE, ScreenFlash.Frame.ENGULF, ScreenFlash.Frame.SWAP);
         private final Frames log = new Frames();
 
         @Override public void define(ScenarioBuilder s) {
             arrive(s, "6000");
             s.step("开始记录", ctx -> NeoForge.EVENT_BUS.register(log));
-            s.server("闪一次", ctx -> ScreenEffects.flash(ctx.player(), ScreenFlash.at(CameraPoint.world(TARGET.getCenter()))));
+            s.server("闪一次", ctx -> ScreenEffects.flash(ctx.player(), ScreenFlash.at(CameraPoint.world(LIGHT))));
             s.ticks(20);
             s.step("检查这一次", ctx -> {
                 NeoForge.EVENT_BUS.unregister(log);
                 LOG.info("[screen fx] sequence {} over {} ms across {} frames", log.sequence(), log.millis(), log.frames.size());
-                ctx.check("先白后黑", log.sequence().equals(List.of(ScreenFlash.Frame.WHITE, ScreenFlash.Frame.BLACK)));
-                ctx.check("两拍约 1/12 秒", log.millis() > 30 && log.millis() < 200);
+                ctx.check("四个阶段依次出现", log.sequence().equals(STAGES));
+                ctx.check("五拍约 0.2 秒", log.millis() > 120 && log.millis() < 400);
                 ctx.check("放完回到原画", ScreenEffectRenderer.currentFrame() == null);
             });
             s.step("打开隐藏闪烁的选项", ctx -> {
@@ -194,7 +199,7 @@ public abstract class ScreenEffectViews implements UIScenario {
                 ScreenEffectRenderer.play(ScreenFlash.at(CameraPoint.world(TARGET.getCenter())));
             }).ticks(5).step("检查间隔", ctx -> {
                 NeoForge.EVENT_BUS.unregister(log);
-                ctx.check("短时间内只闪一次", log.sequence().equals(List.of(ScreenFlash.Frame.WHITE, ScreenFlash.Frame.BLACK)));
+                ctx.check("短时间内只闪一次", log.sequence().equals(STAGES));
             });
             cleanup(s);
         }

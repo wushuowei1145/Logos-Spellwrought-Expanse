@@ -33,7 +33,7 @@ public final class DimensionCommands {
             return 1;
         }));
         root.then(realm);
-        root.then(Commands.literal("flash").executes(c -> flash(c.getSource().getPlayerOrException(), "wb"))
+        root.then(Commands.literal("flash").executes(c -> flash(c.getSource().getPlayerOrException(), null))
                 .then(Commands.argument("frames", StringArgumentType.word()).executes(c -> flash(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "frames")))));
         root.then(Commands.literal("island").executes(c -> island(c.getSource().getPlayerOrException(), 0, 0))
                 .then(Commands.argument("grid_x", IntegerArgumentType.integer(-1000, 1000))
@@ -115,13 +115,12 @@ public final class DimensionCommands {
         dev.logos.runtime.SurfaceAura.set(stack, style, hue);
         return 1;
     }
-    /** 试黑白闪：在准星指的地方闪一次。{@code frames} 一个字母一拍，w 白底黑，b 黑底白，其余是原画。 */
-    private static int flash(net.minecraft.server.level.ServerPlayer player, String frames) {
+    /** 试黑白闪：在准星指的地方闪一次。不给 {@code frames} 时放默认的四个阶段；给的话一个字母一拍，见 {@link ScreenFlash.Frame}。 */
+    private static int flash(net.minecraft.server.level.ServerPlayer player, @org.jspecify.annotations.Nullable String frames) {
         Vec3 eye = player.getEyePosition();
         Vec3 at = CameraShots.reach(player.level(), eye, eye.add(player.getLookAngle().scale(48)));
-        var list = new java.util.ArrayList<ScreenFlash.Frame>();
-        for (char frame : frames.toCharArray()) list.add(frame == 'w' ? ScreenFlash.Frame.WHITE : frame == 'b' ? ScreenFlash.Frame.BLACK : ScreenFlash.Frame.NORMAL);
-        ScreenEffects.flash(player, new ScreenFlash(CameraPoint.world(at), list));
+        ScreenFlash flash = ScreenFlash.at(CameraPoint.world(at));
+        ScreenEffects.flash(player, frames == null ? flash : new ScreenFlash(flash.center(), ScreenFlash.parse(frames)));
         return 1;
     }
 
