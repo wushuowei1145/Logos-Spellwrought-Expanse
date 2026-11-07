@@ -72,11 +72,11 @@ CameraShots.play(player, CameraShot.of(from, lookAt).cinema().letterbox());
 
 ## 泛光（`GlowBloom`）
 
-只让发光的东西泛光，不碰画面其他部分。特效把发光的几何交给 `GlowBloom`，世界和手画完之后，把它们画到一张空白的小图上，模糊，再加回屏幕。
+只让发光的东西泛光，不碰画面其他部分。特效把发光的几何交给 `GlowBloom`，世界和手画完之后，把它们画到一张空白的小图上，模糊，再加回屏幕。目前只有[消散](DISSOLVE.md)在用。
 
 ```java
 GlowBloom.sprite(x, y, z, size, argb);          // 一个朝向镜头的小方块，坐标相对镜头
-GlowBloom.quads(data, size, firstPerson);       // 一批四边形，格式见方法说明
+GlowBloom.quads(data, size, firstPerson);       // 一批四边形，格式见方法说明，比如 Dissolve.Glow
 ```
 
 光影包的阴影通道里不要交，那时的姿势是太阳的。
@@ -86,6 +86,8 @@ GlowBloom.quads(data, size, firstPerson);       // 一批四边形，格式见�
 - **遮挡**：小图比屏幕小，没法直接用深度测试，由着色器和留下的深度比较：挡在前面的方块和手会挡住光，玻璃和水不会。第一人称手上的东西永远在最前面。深度只在这一帧有东西发光时才留。
 - **开销**：这一帧没有东西交，就一个通道都不跑。模糊是 6 张逐级减半的小图，每张几次采样。
 - **强度**：`config/logos_dimension-client.toml` 的 `bloom`，默认 1，0 关闭。
+
+场景 `dissolve_bloom`：同一次消散在白天和夜里，关和开各拍一张。
 
 ## 限制
 

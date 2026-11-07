@@ -28,6 +28,20 @@
 ./gradlew --offline runGameTestServer "-PlogosJar=/absolute/path/logos-0.6.0.jar" "-PdimensionTests=logos_dimension:gate_crossing"
 ```
 
+## 消散和泛光
+
+2026-11-07：分支 `feat/dissolve`，基于 main `dff12855`，Logos 用 `builds/world-style-2026-11-07` 的 `logos-0.6.0-spell-ward.jar`。说明见 [消散](docs/DISSOLVE.md) 和 [全屏后期的泛光一节](docs/SCREEN_EFFECTS.md)。这部分最初写在 Logos 的工作树里（未提交），在那边用同样的场景调好效果和看过截图，再按维护者要求搬到附属；没有改 Logos。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元与构建 | `./gradlew test build` 通过；新增 `DissolveShapeTest` 4 项 |
+| 世界测试 | 全部 **176/176**。新增 4 项 `dissolve_*`：实体放完才拿走且站住不动，方块立刻离开世界，手上的东西放完才清（人和另一只手不受影响），真的执行 `/alchemy dissolve blocks`（形状名不对、范围超过 4096 时什么都不动） |
+| 实际客户端 | 不装 Sodium 和 Iris、只装 Sodium 0.9.2、Sodium + Iris 1.11.4 光影关闭：`group:dissolve,screen_fx,world_style` **14/14 场景、31/31 检查** |
+| 光影包 | Iris + photon v1.4、Iris + Complementary Reimagined r5.9.3：**13/14 场景、30/31 检查**，日志确认光影包已加载。没过的是 `world_style_fabulous` 的“高画质透明开着”：开光影时这个选项本来开不了，[WORLD_STYLES.md](docs/WORLD_STYLES.md) 写明这个场景只在不开光影时跑 |
+| 泛光自查 | `dissolve_bloom` 确认全部消散结束后通道不再跑。看过关开泛光的对比截图：白天、夜里、方块、第一人称手上的物品 |
+| 耗时 | Logos 工作树里量的，代码相同，1280×720，这台机器。泛光 GPU 约 0.3–0.4 毫秒一帧（photon 下，前后 glFinish）。CPU 增加：原版 8 块每像素四格的方块约 2.3 毫秒，5 个村民约 3.5 毫秒；photon 下 16 块约 5.5 毫秒，5 个村民约 10 毫秒（这之后才把阴影通道切粗一档，没有重量） |
+| 未验证 | 没有进游戏手动玩过这一版（搬过来之前的版本维护者试玩过，觉得效果不错，细分和泛光是之后加的）；专用服务器（世界测试是服务端环境，但不是真实联机）；其他光影包；和最新 Logos 一起跑；黑白闪和消散同时出现时的画面（代码顺序是泛光在前） |
+
 ## 被弹反的僵直
 
 2026-11-07：分支 `feat/parry-stagger`，基于 main `0c745061`，Logos 用 `ba47131`（`feat/spell-ward`）。下表是合入 #193 之前跑的；合入 main `738208be` 后复跑单元 **220/220**（多出的是 #193 的测试）、世界 `longsword_*` **18/18**、`group:parried` **4/4**，其余回归没有重跑。说明见 [COMBAT_SKELETON.md](docs/COMBAT_SKELETON.md) 第 5 节「被弹反」。打刀弹刀、神狐格开近战时，亲手近战的攻击方进入僵直：玩家 0.5 秒（`parried`），NPC 0.8 秒（`parried_npc`，写在招式文件里，用同一把武器的 NPC 都一样）。这段时间不能出招、不能格挡，这一刀作废。曦誓、黑钢长剑、打刀、长枪两段动作都有，神狐目前接的是打刀；和弓、原版和其他模组的生物没有反应。

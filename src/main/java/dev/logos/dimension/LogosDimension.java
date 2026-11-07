@@ -91,6 +91,7 @@ public final class LogosDimension {
         dev.logos.dimension.dawnvow.DawnvowCharge.register(bus);
         dev.logos.dimension.camera.CameraShots.register(bus);
         dev.logos.dimension.screenfx.ScreenEffects.register(bus);
+        dev.logos.dimension.dissolve.Dissolving.register(bus);
         dev.logos.dimension.worldstyle.StyleRealms.register(bus);
         dev.logos.dimension.camera.CameraTestBlock.init();
         DimensionBlocks.BLOCKS.register(bus); DimensionBlocks.ITEMS.register(bus);
@@ -131,6 +132,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.RailgunGameTests.register(bus);
         dev.logos.dimension.gametest.GateGameTests.register(bus);
         dev.logos.dimension.gametest.CameraShotGameTests.register(bus);
+        dev.logos.dimension.gametest.DissolveGameTests.register(bus);
         bus.addListener(DimensionSpawns::register);
         bus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
                 event.registrar("1").playToClient(dev.logos.dimension.net.HauntPayload.TYPE, dev.logos.dimension.net.HauntPayload.CODEC));
