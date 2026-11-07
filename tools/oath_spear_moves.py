@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from combat_author import Baker, bedrock, euler_matrix, marker_list, player_skeleton, unit
+from combat_author import Baker, bedrock, euler_matrix, marker_list, npc_parried, player_skeleton, unit
 from combat_render import Camera, mannequin_quads, render, sheet, weapon_quads
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -233,6 +233,22 @@ def clips():
         k(1.15, IDLE),
     ]
     out.append(dict(name='slam', length=1.15, loop='once', markers={'contact': 0.72, 'cancel': 0.92}, keys=slam))
+
+    # 被弹反：枪头被猛地磕向上方，前手脱开甩到身后，身子后仰、胸口敞开；顶住一下露出破绽，再压回待机。
+    parried_peak = dict(grip=(0.58, -0.10, 0.10), blade=(0.22, 0.90, 0.36), edge=(1, 0, 0), rpos=-2.0, up=(13, -32, 0), chest=(4, -8, 0),
+                        lhand=(-0.66, -0.50, 0.14),
+                        fp=dict(grip=(0.44, -0.06, -0.36), blade=(0.16, 0.92, -0.34), up=(6, -14, 0), chest=(0, 0, 0)))
+    out.append(dict(name='parried', length=0.5, loop='once', keys=[
+        k(0.0, grip=(0.34, -0.40, -0.30), blade=(0.14, 0.62, -0.77), edge=(1, 0, 0), rpos=GRIPS[0], up=(0, -22, 0),
+          lmode='free', lhand=(-0.30, -0.44, -0.50)),
+        k(0.07, parried_peak, ease='hold'),
+        k(0.32, parried_peak, grip=(0.56, -0.18, 0.12), blade=(0.2, 0.86, 0.46), up=(10, -30, 0), ease='hold',
+          fp=dict(parried_peak['fp'], grip=(0.42, -0.14, -0.36))),
+        # 前手在动作结束前回到枪杆（握法切换从这一帧开始过渡）。
+        k(0.36, lmode='slide', lhand=IDLE['lhand'], blend=0.14),
+        k(0.5, IDLE),
+    ]))
+    out.append(npc_parried(out[-1]))
 
     for clip in out:
         clip.setdefault('stance', {'rfoot': IDLE['rfoot'], 'lfoot': IDLE['lfoot']})

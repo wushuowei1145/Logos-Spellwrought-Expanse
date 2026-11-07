@@ -578,6 +578,17 @@ ELBOW_PREF = 1.4
 PRIMARY = 0.65
 SECONDARY = -1.1
 
+# ---------------------------------------------------------------- 编排
+
+NPC_PARRIED_LENGTH = 0.8
+
+
+def npc_parried(parried, hold_from=0.07):
+    """由玩家的 parried 编排得到 NPC 的 parried_npc：磕飞和收回不变，只拉长中间顶住不动的破绽。hold_from 是磕飞到顶的时刻。"""
+    extra = NPC_PARRIED_LENGTH - parried['length']
+    keys = [dict(key, t=key['t'] + extra) if key['t'] > hold_from else dict(key) for key in parried['keys']]
+    return {**parried, 'name': 'parried_npc', 'length': NPC_PARRIED_LENGTH, 'keys': keys}
+
 # ---------------------------------------------------------------- 导出
 
 

@@ -69,6 +69,8 @@
       "length": 1.15, "contact": 0.72, "cone": 80, "damage": 1.6, "knockback": false, "full_strength": true,
       "effect": "slam", "next": "idle"
     },
+    "parried": {"length": 0.5, "reset_combo": true, "blend_in": 0.03, "next": "idle"},
+    "parried_npc": {"length": 0.8, "reset_combo": true, "blend_in": 0.03, "next": "idle"},
     "sheathe": {"length": 1.45, "blend_in": 0.1, "next": "$clear"}
   }
 }

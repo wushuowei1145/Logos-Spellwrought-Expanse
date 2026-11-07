@@ -13,6 +13,10 @@ import java.util.*;
 public record Moveset(String start, String sheathe, double comboMemory, Map<String, Move> moves) {
     /** 特殊去向：结束整套招式，交回原版。 */
     public static final String CLEAR = "$clear";
+    /** 保留的招式名：玩家被弹反时强制进入（见 {@link Parry}）。招式文件里没有这个招式的武器不会被弹反僵直。 */
+    public static final String PARRIED = "parried";
+    /** 保留的招式名：NPC 被弹反时强制进入，比玩家的僵直长；没有时退回 {@link #PARRIED}（见 {@link Parry#staggerNpc}）。 */
+    public static final String PARRIED_NPC = "parried_npc";
     /** {@code BLOCK}：原版格挡成功挡下一次攻击（服务端给出）。 */
     public enum Input { ATTACK, USE_PRESS, USE_RELEASE, BLOCK }
     public enum Playback { ONCE, LOOP, REVERSE }

@@ -23,6 +23,8 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class CombatEffects {
     public static final String LAUNCH = "launch", FLURRY = "flurry", SLAM = "slam";
+    /** 招式是弹刀：转入它的那一下格挡不消耗耐久，近战的攻击方进入僵直（{@link Parry}）。没有接触，只由 {@code LongswordCombat} 读。 */
+    public static final String PARRY = "parry";
     /** 下砸时把自己挑起的浮空目标也算进来的距离（格，攻击距离之外再加）。 */
     private static final double SLAM_EXTRA_RANGE = 2;
 

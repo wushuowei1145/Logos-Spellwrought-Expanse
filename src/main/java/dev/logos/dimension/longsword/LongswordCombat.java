@@ -7,6 +7,7 @@ import dev.logos.dimension.combat.CombatWeapon;
 import dev.logos.dimension.combat.MoveRunner;
 import dev.logos.dimension.combat.Moveset;
 import dev.logos.dimension.combat.Movesets;
+import dev.logos.dimension.combat.Parry;
 import dev.logos.dimension.dawnvow.DawnvowCharge;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -144,11 +145,27 @@ public final class LongswordCombat {
         var state = active(player);
         if (state != null) state.runner.input(Moveset.Input.USE_RELEASE, player.level().getGameTime());
     }
-    /** 原版格挡成功：交给招式文件的 block 输入（打刀格挡开始 0.3 秒内转入弹刀）；弹刀不消耗耐久。 */
+    /** 原版格挡成功：交给招式文件的 block 输入（打刀格挡开始 0.3 秒内转入弹刀）；转入的招式是弹刀时不消耗耐久，近战的攻击方进入僵直。 */
     @SubscribeEvent static void blocked(LivingShieldBlockEvent event) {
         if (!event.getBlocked() || !(event.getEntity() instanceof ServerPlayer player)) return;
         var state = active(player);
-        if (state != null && state.runner.input(Moveset.Input.BLOCK, player.level().getGameTime())) event.setShieldDamage(0);
+        if (state != null && state.runner.input(Moveset.Input.BLOCK, player.level().getGameTime())
+                && CombatEffects.PARRY.equals(state.runner.move().effect())) {
+            event.setShieldDamage(0);
+            Parry.stagger(event.getDamageSource(), player);
+        }
+    }
+    /**
+     * 这名玩家的攻击被弹开：切到招式文件的 {@link Moveset#PARRIED}，这一下后面的目标不再结算，这段时间不能出招、不能格挡。
+     * 招式文件没有这个招式（和弓）或手上没有战斗武器时不动。
+     */
+    public static boolean parried(ServerPlayer player) {
+        var state = active(player);
+        if (state == null || state.runner.moveset().move(Moveset.PARRIED) == null) return false;
+        // 按住右键接突刺时原版还在格挡，不停下来就没有破绽。
+        if (player.isUsingItem()) player.stopUsingItem();
+        state.runner.force(Moveset.PARRIED, player.level().getGameTime());
+        return true;
     }
     @SubscribeEvent static void vanillaAttack(AttackEntityEvent event) {
         var weapon = CombatWeapon.of(event.getEntity().getMainHandItem());
@@ -280,6 +297,8 @@ public final class LongswordCombat {
             try { player.attack(target); } finally { CONTACT.remove(); CRIT.remove(); MOVE.remove(); TARGET.remove(); }
             if (target instanceof LivingEntity living && living.invulnerableTime >= 20 && living.getLastHurtByMob() == player)
                 state.lastHits.put(target.getUUID(), new long[]{living.getLastHurtByMobTimestamp(), now});
+            // 这一下被弹开（招式已经换成被弹反）：没有砍中，不触发挑飞之类的效果，后面的目标也不再结算。
+            if (state.runner.move() != move) break;
             DawnvowCharge.hit(player, target);
             CombatEffects.hit(player, target, move);
             first = false;
