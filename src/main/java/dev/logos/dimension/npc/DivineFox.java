@@ -114,6 +114,7 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
     public static final List<String> YUMI_MESH_BONES = yumiMeshBones();
     /** 拿着某一配色时要隐藏的方块组（其他三套）。 */
     private static final Map<String, Set<String>> YUMI_HIDDEN = yumiHidden();
+    private static final Set<String>[] HIDDEN_EXTRAS = hiddenExtras();
     /** 总是佩刀的外观。 */
     public static final String KAGURA = "outfit_kagura";
     /** 受击（约 0.46 秒）与死亡动画（1.55 秒）播完，在地上停约 1 秒后消失。 */
@@ -722,24 +723,45 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
 
     // ---------------------------------------------------------------- 外观里的刀
 
-    /** 只显示这只神狐的那套刀装；刀不露出时（平时，神乐礼装除外）整把连鞘都不画。 */
+    /**
+     * 只显示这只神狐的那套刀装；刀不露出时（平时，神乐礼装除外）整把连鞘都不画。
+     * 每帧都要问，组合又只有几十种，所以提前算好存着，不拼字符串。
+     */
     @Override
     public Set<String> npcHiddenExtras() {
-        Set<String> hidden = new java.util.HashSet<>();
         int v = katanaVariant();
-        for (int i = 0; i < KATANAS.size(); i++) {
-            if (i == v) continue;
-            hidden.add("katana_" + KATANAS.get(i) + "_blade");
-            hidden.add("katana_" + KATANAS.get(i) + "_saya");
+        // 和弓只在拿在手上时画，只画手里那把的配色：下标 0 是没拿弓，最后一个是不认识的配色（什么都不藏）
+        int yumi = 0;
+        if (getMainHandItem().getItem() instanceof YumiItem item && !isDeadOrDying()) {
+            int finish = YUMIS.indexOf(item.finish());
+            yumi = finish < 0 ? YUMIS.size() + 1 : finish + 1;
         }
-        if (!entityData.get(SHOWN)) {
-            hidden.add("Weapon");
-            hidden.add("Sheath");
+        return HIDDEN_EXTRAS[(v * 2 + (entityData.get(SHOWN) ? 1 : 0)) * (YUMIS.size() + 2) + yumi];
+    }
+
+    private static Set<String>[] hiddenExtras() {
+        @SuppressWarnings("unchecked")
+        Set<String>[] out = new Set[KATANAS.size() * 2 * (YUMIS.size() + 2)];
+        for (int v = 0; v < KATANAS.size(); v++) {
+            for (int shown = 0; shown < 2; shown++) {
+                for (int yumi = 0; yumi < YUMIS.size() + 2; yumi++) {
+                    Set<String> hidden = new java.util.HashSet<>();
+                    for (int i = 0; i < KATANAS.size(); i++) {
+                        if (i == v) continue;
+                        hidden.add("katana_" + KATANAS.get(i) + "_blade");
+                        hidden.add("katana_" + KATANAS.get(i) + "_saya");
+                    }
+                    if (shown == 0) {
+                        hidden.add("Weapon");
+                        hidden.add("Sheath");
+                    }
+                    if (yumi == 0) hidden.add(YUMI_BONE);
+                    else if (yumi <= YUMIS.size()) hidden.addAll(YUMI_HIDDEN.get(YUMIS.get(yumi - 1)));
+                    out[(v * 2 + shown) * (YUMIS.size() + 2) + yumi] = Set.copyOf(hidden);
+                }
+            }
         }
-        // 和弓只在拿在手上时画，只画手里那把的配色
-        if (getMainHandItem().getItem() instanceof YumiItem yumi && !isDeadOrDying()) hidden.addAll(YUMI_HIDDEN.getOrDefault(yumi.finish(), Set.of()));
-        else hidden.add(YUMI_BONE);
-        return hidden;
+        return out;
     }
 
     private static List<String> yumiMeshBones() {

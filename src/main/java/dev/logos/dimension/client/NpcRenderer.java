@@ -1,6 +1,8 @@
 package dev.logos.dimension.client;
 
+import java.io.IOException;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import com.geckolib.animatable.GeoEntity;
@@ -16,13 +18,18 @@ import com.geckolib.renderer.base.BoneSnapshots;
 import com.geckolib.renderer.base.GeoRenderState;
 import com.geckolib.renderer.base.RenderPassInfo;
 import com.geckolib.renderer.layer.builtin.ItemInHandGeoLayer;
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.logging.LogUtils;
 
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.npc.NpcAnimated;
 import dev.logos.dimension.npc.NpcAnimations;
 import dev.logos.dimension.npc.NpcPartsHolder;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
@@ -32,6 +39,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 附属模组 NPC 的通用 GeckoLib 渲染器，即车万女仆 / YSM 的渲染风格（docs/NPC_MODELS.md 第 5 节）：
@@ -67,10 +75,10 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
     private static final DataTicket<Boolean> ANIMATED_DEATH = DataTicket.create("logos_dimension_npc_animated_death", Boolean.class);
     /** 本帧是否在瞄准（{@link NpcAnimated#npcAiming()}）。 */
     private static final DataTicket<Boolean> AIMING = DataTicket.create("logos_dimension_npc_aiming", Boolean.class);
-    /** 本帧要整组隐藏的零件组（外观里没选中的零件，见 {@link NpcPartsHolder}）。 */
-    @SuppressWarnings("unchecked")
-    private static final DataTicket<Set<String>> HIDDEN_PARTS =
-            DataTicket.create("logos_dimension_npc_hidden_parts", (Class<Set<String>>) (Class<?>) Set.class);
+    /** 本帧隐藏的骨骼，下标见 {@link NpcMesh#id}（外观里没选中的零件，见 {@link NpcPartsHolder}）。 */
+    private static final DataTicket<boolean[]> HIDDEN_BONES = DataTicket.create("logos_dimension_npc_hidden_bones", boolean[].class);
+
+    private NpcMesh mesh;
 
     public NpcRenderer(EntityRendererProvider.Context context, String asset) {
         this(context, LogosDimension.id(asset));
@@ -88,18 +96,79 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
         return new ItemInHandGeoLayer<>(context, this, RIGHT_HAND_BONE, LEFT_HAND_BONE);
     }
 
-    /** 有可换零件的 NPC：把没选中的零件组（以及当前表情）交给渲染状态。 */
+    /** 这个模型预先算好的网格；资源重载后模型换了就重建。 */
+    NpcMesh mesh(BakedGeoModel model) {
+        if (mesh == null || mesh.model != model) {
+            // 贴图只在这里读一次，用来判断哪些方块透明；读不到就退回不跳过背面，只是慢一点。
+            try (var texture = Minecraft.getInstance().getResourceManager().getResourceOrThrow(getGeoModel().getTextureResource(null)).open();
+                 var image = NativeImage.read(texture)) {
+                mesh = new NpcMesh(model, GLOW_PREFIX, image);
+            } catch (IOException | RuntimeException error) {
+                LogUtils.getLogger().warn("NPC 贴图读不到，不跳过背面", error);
+                mesh = new NpcMesh(model, GLOW_PREFIX, null);
+            }
+        }
+        return mesh;
+    }
+
+    /** 被实心方块完全挡住的不画，见 {@link NpcOcclusion}。 */
+    @Override
+    public boolean shouldRender(T entity, Frustum frustum, double cameraX, double cameraY, double cameraZ) {
+        return super.shouldRender(entity, frustum, cameraX, cameraY, cameraZ) && !NpcOcclusion.hidden(entity, cameraX, cameraY, cameraZ);
+    }
+
+    /** 不看渲染状态取网格：NPC 的模型资源是固定的，不随状态变。 */
+    NpcMesh defaultMesh() {
+        var geo = getGeoModel();
+        return mesh(geo.getBakedModel(geo.getModelResource(null)));
+    }
+
+    /** 有可换零件的 NPC：把这个外观（以及当前表情）要隐藏的骨骼交给渲染状态。外观不变时直接取缓存。 */
     @Override
     public void addRenderData(T animatable, Void relatedObject, R state, float partialTick) {
         super.addRenderData(animatable, relatedObject, state, partialTick);
         NpcAnimated npc = animatable instanceof NpcAnimated a ? a : null;
         if (animatable instanceof NpcPartsHolder holder) {
-            Set<String> hidden = new HashSet<>(holder.npcRace().hiddenGroups(holder.npcAppearance(), npc == null ? null : npc.npcExpression()));
-            hidden.addAll(holder.npcHiddenExtras());
-            state.addGeckolibData(HIDDEN_PARTS, hidden);
+            var key = new NpcMesh.LookKey(holder.npcAppearance(), npc == null ? null : npc.npcExpression(), holder.npcHiddenExtras());
+            var geo = getGeoModel();
+            state.addGeckolibData(HIDDEN_BONES, mesh(geo.getBakedModel(geo.getModelResource(state))).hidden(key, holder.npcRace()));
         }
         state.addGeckolibData(AIMING, npc != null && npc.npcAiming());
         state.addGeckolibData(ANIMATED_DEATH, animatedDeath(animatable));
+    }
+
+    /** 隐藏的骨骼不算动画：一只神狐身上大多数零件都是隐藏的，它们的叠加层动画白算。 */
+    @Override
+    public void applyAnimationControllers(RenderPassInfo<R> info, BoneSnapshots snapshots) {
+        boolean[] hidden = info.getOrDefaultGeckolibData(HIDDEN_BONES, null);
+        if (hidden == null) {
+            super.applyAnimationControllers(info, snapshots);
+            return;
+        }
+        NpcMesh mesh = mesh(info.model());
+        super.applyAnimationControllers(info, name -> {
+            int id = mesh.id(name);
+            return id >= 0 && hidden[id] ? Optional.empty() : snapshots.get(name);
+        });
+    }
+
+    /** 走预先算好的网格，不走 GeckoLib 逐方块的绘制（见 {@link NpcMesh}）。 */
+    @Override
+    public void submitRenderTasks(RenderPassInfo<R> info, OrderedSubmitNodeCollector tasks, @Nullable RenderType type) {
+        if (type == null || info.model().isMissingno()) {
+            super.submitRenderTasks(info, tasks, type);
+            return;
+        }
+        int light = info.packedLight(), overlay = info.packedOverlay(), color = info.renderColor();
+        boolean[] hidden = info.getOrDefaultGeckolibData(HIDDEN_BONES, null);
+        NpcMesh mesh = mesh(info.model());
+        tasks.submitCustomGeometry(info.poseStack(), type, (pose, vertices) -> {
+            PoseStack stack = info.poseStack();
+            stack.pushPose();
+            stack.last().set(pose);
+            info.renderPosed(() -> mesh.render(info, stack, hidden, vertices, light, overlay, color));
+            stack.popPose();
+        });
     }
 
     private static boolean animatedDeath(Mob mob) {
@@ -129,7 +198,7 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
     @Override
     public void adjustRenderPose(RenderPassInfo<R> info) {
         super.adjustRenderPose(info);
-        for (GeoBone bone : glowBones(info.model())) info.addPerBoneRender(bone, this::submitGlow);
+        for (GeoBone bone : mesh(info.model()).glowBones()) info.addPerBoneRender(bone, this::submitGlow);
     }
 
     /**
@@ -153,13 +222,16 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
             snapshots.ifPresent(BODY_BONE, body -> body.setRotY(body.getRotY() + state.yRot * Mth.DEG_TO_RAD));
             snapshots.ifPresent(ARMS_BONE, arms -> arms.setRotX(arms.getRotX() - state.xRot * Mth.DEG_TO_RAD));
         }
-        // 没选中的零件：整组连同子骨骼都不画
-        Set<String> hidden = info.getOrDefaultGeckolibData(HIDDEN_PARTS, Set.of());
-        for (String group : hidden) snapshots.ifPresent(group, s -> s.skipRender(true).skipChildrenRender(true));
+        NpcMesh mesh = mesh(info.model());
+        GeoBone[] glow = mesh.glowBones();
+        if (glow.length == 0) return;
+        boolean[] hidden = info.getOrDefaultGeckolibData(HIDDEN_BONES, null);
         Set<String> lit = new HashSet<>();
-        for (GeoBone bone : glowBones(info.model())) {
+        for (GeoBone bone : glow) {
+            // 在没选中的零件里的发光骨骼也不补画（补画不经过常规的子骨骼跳过）
+            if (hidden != null && hidden[mesh.id(bone.name())]) continue;
             BoneSnapshot snapshot = snapshots.get(bone);
-            if (snapshot == null || snapshot.isHidden() || insideHidden(bone, hidden)) continue;
+            if (snapshot == null || snapshot.isHidden()) continue;
             snapshot.skipRender(true);
             lit.add(bone.name());
         }
@@ -179,13 +251,4 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
         });
     }
 
-    /** 发光骨骼在被隐藏的零件组里时也不补画（补画不经过常规的子骨骼跳过）。 */
-    private static boolean insideHidden(GeoBone bone, Set<String> hidden) {
-        for (GeoBone b = bone; b != null; b = b.parent()) if (hidden.contains(b.name())) return true;
-        return false;
-    }
-
-    private static Iterable<GeoBone> glowBones(BakedGeoModel model) {
-        return model.boneLookup().get().values().stream().filter(b -> b.name().startsWith(GLOW_PREFIX)).toList();
-    }
 }
