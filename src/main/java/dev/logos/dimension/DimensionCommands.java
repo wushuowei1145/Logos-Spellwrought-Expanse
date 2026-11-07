@@ -2,8 +2,16 @@ package dev.logos.dimension;
 
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 
+import dev.logos.dimension.camera.CameraPoint;
+import dev.logos.dimension.camera.CameraShots;
+import dev.logos.dimension.screenfx.ScreenEffects;
+import dev.logos.dimension.screenfx.ScreenFlash;
 import dev.logos.dimension.world.AlchemicalLayout;
+import dev.logos.dimension.worldstyle.StyleRealmDemo;
+import dev.logos.dimension.worldstyle.StyleRealms;
+import dev.logos.dimension.worldstyle.WorldStyle;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
@@ -15,6 +23,18 @@ public final class DimensionCommands {
         var root = Commands.literal("alchemy").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS));
         root.then(Commands.literal("enter").executes(c -> DimensionTravel.enter(c.getSource().getPlayerOrException()) ? 1 : 0));
         root.then(Commands.literal("return").executes(c -> DimensionTravel.leave(c.getSource().getPlayerOrException()) ? 1 : 0));
+        var realm = Commands.literal("realm");
+        for (var style : WorldStyle.values()) realm.then(Commands.literal("demo").then(Commands.literal(style.getSerializedName()).executes(c -> {
+            StyleRealmDemo.build(c.getSource().getPlayerOrException(), style);
+            return 1;
+        })));
+        realm.then(Commands.literal("clear").executes(c -> {
+            StyleRealms.clear(c.getSource().getLevel());
+            return 1;
+        }));
+        root.then(realm);
+        root.then(Commands.literal("flash").executes(c -> flash(c.getSource().getPlayerOrException(), "wb"))
+                .then(Commands.argument("frames", StringArgumentType.word()).executes(c -> flash(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "frames")))));
         root.then(Commands.literal("island").executes(c -> island(c.getSource().getPlayerOrException(), 0, 0))
                 .then(Commands.argument("grid_x", IntegerArgumentType.integer(-1000, 1000))
                         .then(Commands.argument("grid_z", IntegerArgumentType.integer(-1000, 1000))
@@ -95,6 +115,16 @@ public final class DimensionCommands {
         dev.logos.runtime.SurfaceAura.set(stack, style, hue);
         return 1;
     }
+    /** 试黑白闪：在准星指的地方闪一次。{@code frames} 一个字母一拍，w 白底黑，b 黑底白，其余是原画。 */
+    private static int flash(net.minecraft.server.level.ServerPlayer player, String frames) {
+        Vec3 eye = player.getEyePosition();
+        Vec3 at = CameraShots.reach(player.level(), eye, eye.add(player.getLookAngle().scale(48)));
+        var list = new java.util.ArrayList<ScreenFlash.Frame>();
+        for (char frame : frames.toCharArray()) list.add(frame == 'w' ? ScreenFlash.Frame.WHITE : frame == 'b' ? ScreenFlash.Frame.BLACK : ScreenFlash.Frame.NORMAL);
+        ScreenEffects.flash(player, new ScreenFlash(CameraPoint.world(at), list));
+        return 1;
+    }
+
     private static int island(net.minecraft.server.level.ServerPlayer player, int gx, int gz) {
         if(gx!=0||gz!=0){player.sendSystemMessage(Component.literal("每个咒械原世界只有一座中心空岛。"));return 0;}
         if (!LogosDimension.isCrucible(player.level().dimension()) && !DimensionTravel.enter(player)) return 0;

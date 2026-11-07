@@ -10,15 +10,16 @@ import net.minecraft.network.codec.StreamCodec;
  * @param lockControl 镜头离开期间是否锁住玩家的按键和鼠标
  * @param hideHud 镜头离开期间是否隐藏界面
  * @param letterboxed 是否在画面上下加遮幅：跟着镜头的过渡从屏幕外滑入，回程时滑出
+ * @param cinematic 是否加电影蒙版（压饱和度、提对比、暗部偏冷、暗角）：跟着镜头的过渡淡入淡出
  */
-public record CameraShot(CameraPoint from, CameraPoint lookAt, int blendIn, int hold, int blendOut, boolean lockControl, boolean hideHud, boolean letterboxed) {
+public record CameraShot(CameraPoint from, CameraPoint lookAt, int blendIn, int hold, int blendOut, boolean lockControl, boolean hideHud, boolean letterboxed, boolean cinematic) {
     private static final int DEFAULT_BLEND = 24, DEFAULT_HOLD = 60;
     public static final StreamCodec<ByteBuf, CameraShot> CODEC = StreamCodec.of((b, s) -> {
         CameraPoint.CODEC.encode(b, s.from);
         CameraPoint.CODEC.encode(b, s.lookAt);
         b.writeInt(s.blendIn); b.writeInt(s.hold); b.writeInt(s.blendOut);
-        b.writeBoolean(s.lockControl); b.writeBoolean(s.hideHud); b.writeBoolean(s.letterboxed);
-    }, b -> new CameraShot(CameraPoint.CODEC.decode(b), CameraPoint.CODEC.decode(b), b.readInt(), b.readInt(), b.readInt(), b.readBoolean(), b.readBoolean(), b.readBoolean()));
+        b.writeBoolean(s.lockControl); b.writeBoolean(s.hideHud); b.writeBoolean(s.letterboxed); b.writeBoolean(s.cinematic);
+    }, b -> new CameraShot(CameraPoint.CODEC.decode(b), CameraPoint.CODEC.decode(b), b.readInt(), b.readInt(), b.readInt(), b.readBoolean(), b.readBoolean(), b.readBoolean(), b.readBoolean()));
 
     public CameraShot {
         blendIn = Math.max(0, blendIn);
@@ -26,27 +27,32 @@ public record CameraShot(CameraPoint from, CameraPoint lookAt, int blendIn, int 
         blendOut = Math.max(0, blendOut);
     }
 
-    /** 默认：过渡各 1.2 秒，停留 3 秒，锁操作，隐藏界面，没有遮幅。 */
+    /** 默认：过渡各 1.2 秒，停留 3 秒，锁操作，隐藏界面，没有遮幅和蒙版。 */
     public static CameraShot of(CameraPoint from, CameraPoint lookAt) {
-        return new CameraShot(from, lookAt, DEFAULT_BLEND, DEFAULT_HOLD, DEFAULT_BLEND, true, true, false);
+        return new CameraShot(from, lookAt, DEFAULT_BLEND, DEFAULT_HOLD, DEFAULT_BLEND, true, true, false, false);
     }
 
     public CameraShot timing(int blendIn, int hold, int blendOut) {
-        return new CameraShot(from, lookAt, blendIn, hold, blendOut, lockControl, hideHud, letterboxed);
+        return new CameraShot(from, lookAt, blendIn, hold, blendOut, lockControl, hideHud, letterboxed, cinematic);
     }
 
     /** 不锁操作：玩家可以一边看一边动，回程的终点跟着玩家走。 */
     public CameraShot keepControl() {
-        return new CameraShot(from, lookAt, blendIn, hold, blendOut, false, hideHud, letterboxed);
+        return new CameraShot(from, lookAt, blendIn, hold, blendOut, false, hideHud, letterboxed, cinematic);
     }
 
     public CameraShot keepHud() {
-        return new CameraShot(from, lookAt, blendIn, hold, blendOut, lockControl, false, letterboxed);
+        return new CameraShot(from, lookAt, blendIn, hold, blendOut, lockControl, false, letterboxed, cinematic);
     }
 
     /** 信箱模式：上下加遮幅。 */
     public CameraShot letterbox() {
-        return new CameraShot(from, lookAt, blendIn, hold, blendOut, lockControl, hideHud, true);
+        return new CameraShot(from, lookAt, blendIn, hold, blendOut, lockControl, hideHud, true, cinematic);
+    }
+
+    /** 电影蒙版。 */
+    public CameraShot cinema() {
+        return new CameraShot(from, lookAt, blendIn, hold, blendOut, lockControl, hideHud, letterboxed, true);
     }
 
     public int duration() {

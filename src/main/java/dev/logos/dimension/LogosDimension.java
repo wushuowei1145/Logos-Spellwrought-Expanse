@@ -89,6 +89,8 @@ public final class LogosDimension {
         dev.logos.dimension.dawnvow.Dawnvow.register(bus);
         dev.logos.dimension.dawnvow.DawnvowCharge.register(bus);
         dev.logos.dimension.camera.CameraShots.register(bus);
+        dev.logos.dimension.screenfx.ScreenEffects.register(bus);
+        dev.logos.dimension.worldstyle.StyleRealms.register(bus);
         dev.logos.dimension.camera.CameraTestBlock.init();
         DimensionBlocks.BLOCKS.register(bus); DimensionBlocks.ITEMS.register(bus);
         DimensionFluids.TYPES.register(bus); DimensionFluids.FLUIDS.register(bus);

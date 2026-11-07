@@ -64,6 +64,8 @@ public final class CameraDirector {
     private static float barsFrom;
     /** 停留时遮幅的量，也是回程的起点：带遮幅是 1，不带是 0；提前收尾时是当时的量。 */
     private static float barsPeak;
+    /** 电影蒙版的强度，走法和遮幅一样。 */
+    private static float grade, gradeFrom, gradePeak;
 
     private CameraDirector() {}
 
@@ -103,6 +105,8 @@ public final class CameraDirector {
         }
         barsFrom = bars;
         barsPeak = next.letterboxed() ? 1 : 0;
+        gradeFrom = grade;
+        gradePeak = next.cinematic() ? 1 : 0;
         shot = next;
         level = mc.level;
         ticks = 0;
@@ -127,6 +131,11 @@ public final class CameraDirector {
         return bars;
     }
 
+    /** 电影蒙版现在的强度：0 没有，1 完全显现。 */
+    public static float grade() {
+        return grade;
+    }
+
     /** 当前这段走到第几刻（不含帧内插值），没在播时是 -1。客户端场景按它截图。 */
     public static int age() {
         return shot == null ? -1 : ticks;
@@ -137,6 +146,7 @@ public final class CameraDirector {
         if (shot == null || ticks >= shot.returnsAt()) return;
         strength = weight;
         barsPeak = bars;
+        gradePeak = grade;
         carry = null;
         ticks = shot.returnsAt();
     }
@@ -153,7 +163,8 @@ public final class CameraDirector {
         float age = ticks + partialTick;
         float curve = shot.weight(age);
         weight = strength * curve;
-        bars = age < shot.returnsAt() ? Mth.lerp(curve, barsFrom, barsPeak) : barsPeak * curve;
+        bars = envelope(age, curve, barsFrom, barsPeak);
+        grade = envelope(age, curve, gradeFrom, gradePeak);
         if (carry != null && age >= shot.blendIn()) carry = null;
         lastFrom = shot.from().resolve(level, partialTick, lastFrom);
         lastLook = shot.lookAt().resolve(level, partialTick, lastLook);
@@ -161,6 +172,11 @@ public final class CameraDirector {
         Pose pose = Pose.blend(carry != null ? carry : player, target, weight);
         updateView(Minecraft.getInstance(), pose.pos.distanceTo(player.pos), age);
         return shown = pose;
+    }
+
+    /** 遮幅和蒙版的量：进场时从 {@code from} 走到 {@code peak}，回程时从 {@code peak} 走到 0，曲线和镜头是同一条。 */
+    private static float envelope(float age, float curve, float from, float peak) {
+        return age < shot.returnsAt() ? Mth.lerp(curve, from, peak) : peak * curve;
     }
 
     /** 站在 {@code from} 看 {@code look} 的位姿，叠上这一帧的镜头抖动（爆炸之类的震动在运镜时也看得到）。 */
@@ -210,6 +226,7 @@ public final class CameraDirector {
         strength = 1;
         weight = 0;
         bars = barsFrom = barsPeak = 0;
+        grade = gradeFrom = gradePeak = 0;
     }
 
     /** 放在最前面，在这一刻所有读按键的逻辑之前把按键清掉，和打开界面时一样。 */

@@ -19,7 +19,7 @@ CameraShots.play(player, CameraShot.of(
         .timing(20, 80, 20));
 ```
 
-默认过渡各 1.2 秒，停留 3 秒，锁操作，隐藏界面，没有遮幅。
+默认过渡各 1.2 秒，停留 3 秒，锁操作，隐藏界面，没有遮幅和蒙版。
 
 | 写法 | 作用 |
 |---|---|
@@ -27,12 +27,13 @@ CameraShots.play(player, CameraShot.of(
 | `keepControl()` | 不锁操作，玩家能边看边动，回程终点跟着玩家走 |
 | `keepHud()` | 镜头离开时不隐藏界面 |
 | `letterbox()` | 信箱模式：上下各加一条黑色遮幅，跟着进场滑入、跟着回程滑出；进场或回程为 0 时遮幅也是直接出现或消失 |
+| `cinema()` | 电影蒙版：压饱和度、提对比、暗部偏冷、暗角，跟着镜头的过渡淡入淡出，见 [SCREEN_EFFECTS.md](SCREEN_EFFECTS.md) |
 | `CameraShots.reach(level, from, to)` | 从 `from` 往 `to` 走，被方块挡住就停在前面 |
 | `CameraShots.above(entity, height)` | 实体头顶的机位，被上方的方块挡住就矮一些 |
 
 要让多个玩家一起看，就对每个玩家各调一次 `play`。上一段没播完又来一段时，新的一段从当时的画面接过去。玩家死亡时镜头提前往回走；退出世界或换维度时立刻结束。
 
-`CameraTestBlock` 是方块接运镜的最小样例：用镐挖掉就播一段，潜行时挖掉则带遮幅。
+`CameraTestBlock` 是方块接运镜的最小样例：用镐挖掉就播一段，潜行时挖掉则加上黑白闪、遮幅和蒙版。
 
 ## 限制
 
