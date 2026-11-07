@@ -68,6 +68,7 @@ public final class LogosDimension {
                 .displayItems((p, out) -> {
                     DimensionBlocks.PALETTE.forEach(b -> out.accept(b.get()));
                     out.accept(DimensionFluids.MERCURY_BUCKET.get()); out.accept(DimensionFluids.GLASS_BUCKET.get());
+                    out.accept(dev.logos.dimension.camera.CameraTestBlock.BLOCK.get());
                 }).build());
     }
     public LogosDimension(IEventBus bus) {
@@ -87,6 +88,8 @@ public final class LogosDimension {
         dev.logos.dimension.gate.Gate.register(bus);
         dev.logos.dimension.dawnvow.Dawnvow.register(bus);
         dev.logos.dimension.dawnvow.DawnvowCharge.register(bus);
+        dev.logos.dimension.camera.CameraShots.register(bus);
+        dev.logos.dimension.camera.CameraTestBlock.init();
         DimensionBlocks.BLOCKS.register(bus); DimensionBlocks.ITEMS.register(bus);
         DimensionFluids.TYPES.register(bus); DimensionFluids.FLUIDS.register(bus);
         DimensionParticles.register(bus);
@@ -124,6 +127,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.EconomyGameTests.register(bus);
         dev.logos.dimension.gametest.RailgunGameTests.register(bus);
         dev.logos.dimension.gametest.GateGameTests.register(bus);
+        dev.logos.dimension.gametest.CameraShotGameTests.register(bus);
         bus.addListener(DimensionSpawns::register);
         bus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
                 event.registrar("1").playToClient(dev.logos.dimension.net.HauntPayload.TYPE, dev.logos.dimension.net.HauntPayload.CODEC));
