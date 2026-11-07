@@ -48,17 +48,19 @@ class CameraShotTest {
 
     @Test void optionsKeepEverythingElse() {
         assertFalse(CameraShot.of(A, B).letterboxed());
-        CameraShot shot = CameraShot.of(A, B).letterbox().timing(1, 2, 3).keepControl().keepHud();
+        assertFalse(CameraShot.of(A, B).cinematic());
+        CameraShot shot = CameraShot.of(A, B).letterbox().cinema().timing(1, 2, 3).keepControl().keepHud();
         assertFalse(shot.lockControl());
         assertFalse(shot.hideHud());
         assertTrue(shot.letterboxed());
+        assertTrue(shot.cinematic());
         assertEquals(6, shot.duration());
         assertEquals(A, shot.from());
         assertEquals(B, shot.lookAt());
     }
 
     @Test void survivesTheWire() {
-        CameraShot shot = new CameraShot(new CameraPoint(42, new Vec3(.5, 3, -6)), B, 7, 8, 9, false, true, true);
+        CameraShot shot = new CameraShot(new CameraPoint(42, new Vec3(.5, 3, -6)), B, 7, 8, 9, false, true, true, true);
         var buffer = Unpooled.buffer();
         CameraShot.CODEC.encode(buffer, shot);
         assertEquals(shot, CameraShot.CODEC.decode(buffer));

@@ -1,6 +1,8 @@
 package dev.logos.dimension.camera;
 
 import dev.logos.dimension.DimensionBlocks;
+import dev.logos.dimension.screenfx.ScreenEffects;
+import dev.logos.dimension.screenfx.ScreenFlash;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.ItemTags;
@@ -16,7 +18,7 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 
 /**
  * 运镜系统的纯测试方块，也是方块接运镜的最小样例：只能用镐挖，挖掉后镜头升到玩家头顶看向它原来的位置，
- * 停三秒再回到玩家；潜行时挖掉则带信箱遮幅，用来试这个选项。贴图借原版结构方块的，不算正式内容，发布前可以连注册一起拿掉。
+ * 停三秒再回到玩家；潜行时挖掉则加上黑白闪、信箱遮幅和电影蒙版，用来试这些选项。贴图借原版结构方块的，不算正式内容，发布前可以连注册一起拿掉。
  */
 public final class CameraTestBlock extends Block {
     /** 爆炸炸不掉、活塞推不动：「只能用镐」就是字面意思。 */
@@ -48,7 +50,11 @@ public final class CameraTestBlock extends Block {
         if (!pickaxe(tool)) return false;
         if (player instanceof ServerPlayer server) {
             CameraShot shot = CameraShot.of(CameraPoint.world(CameraShots.above(server, HEIGHT)), CameraPoint.world(pos.getCenter())).timing(BLEND, HOLD, BLEND);
-            CameraShots.play(server, server.isShiftKeyDown() ? shot.letterbox() : shot);
+            if (server.isShiftKeyDown()) {
+                ScreenEffects.flash(server, ScreenFlash.at(CameraPoint.world(pos.getCenter())));
+                shot = shot.letterbox().cinema();
+            }
+            CameraShots.play(server, shot);
         }
         return super.onDestroyedByPlayer(state, level, pos, player, tool, willHarvest, fluid);
     }
