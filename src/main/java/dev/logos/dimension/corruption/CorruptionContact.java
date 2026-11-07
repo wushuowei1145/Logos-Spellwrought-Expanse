@@ -102,6 +102,6 @@ public final class CorruptionContact {
         if (from == null) return;
         LivingEntity dead = event.getEntity();
         int charge = Math.round(dead.getMaxHealth() * ServerConfig.CORRUPTION_CHARGE_PER_HEALTH.get().floatValue());
-        CorruptionNetworks.get(level).feed(BlockPos.containing(from), BlockPos.containing(dead.position().add(0, .5, 0)), charge);
+        CorruptionNetworks.get(level).feed(level, BlockPos.containing(from), BlockPos.containing(dead.position().add(0, .5, 0)), charge);
     }
 }

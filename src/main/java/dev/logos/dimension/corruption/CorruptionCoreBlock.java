@@ -1,6 +1,7 @@
 package dev.logos.dimension.corruption;
 
 import com.mojang.serialization.MapCodec;
+import dev.logos.dimension.ServerConfig;
 import dev.logos.dimension.camera.CameraPoint;
 import dev.logos.dimension.camera.CameraShot;
 import dev.logos.dimension.camera.CameraShots;
@@ -64,7 +65,8 @@ public class CorruptionCoreBlock extends Block {
             var network = CorruptionNetworks.get(server).ofCore(pos);
             Component text = network == null
                     ? Component.translatable("message.logos_dimension.corruption.core.dormant")
-                    : Component.translatable("message.logos_dimension.corruption.core.size", network.size(), network.charge());
+                    : Component.translatable("message.logos_dimension.corruption.core.size", network.size(), ServerConfig.CORRUPTION_MAX_BLOCKS.getAsInt(),
+                            CorruptionNetworks.get(server).satellites(network), network.charge(), network.reserve());
             player.sendOverlayMessage(text.copy().withStyle(ChatFormatting.DARK_PURPLE));
         }
         return InteractionResult.SUCCESS;
