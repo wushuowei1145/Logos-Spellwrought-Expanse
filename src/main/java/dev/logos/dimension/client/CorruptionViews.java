@@ -243,11 +243,12 @@ public abstract class CorruptionViews implements UIScenario {
                                 size, frames.size(), over33, over50, String.format("%.1f", avg), String.format("%.1f", worst / 1e6), mostGhosts, mostCells);
                         ctx.check("最慢的一帧在 100 毫秒以内：" + worst / 1_000_000 + " 毫秒", worst < 100_000_000L);
                         var level = Minecraft.getInstance().level;
-                        int back = 0;
-                        for (int x = -HALF; x <= HALF; x++) for (int z = -HALF; z <= HALF; z++) {
+                        // 只看核心周围 10 格：网络有上限时，满了的网络会在角上分出子核心，子核心不受拆母核心影响，还会接着长
+                        int back = 0, inner = HALF - 4;
+                        for (int x = -inner; x <= inner; x++) for (int z = -inner; z <= inner; z++) {
                             if (level.getBlockState(HEART.below().offset(x, 0, z)).is(Blocks.GRASS_BLOCK)) back++;
                         }
-                        ctx.check("污秽全部变回草方块：" + back, back == (2 * HALF + 1) * (2 * HALF + 1));
+                        ctx.check("污秽全部变回草方块：" + back, back == (2 * inner + 1) * (2 * inner + 1));
                     })
                     .screenshot("corruption_large_after")
                     .teardown("恢复", ctx -> net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(listener));
