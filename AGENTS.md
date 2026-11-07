@@ -13,6 +13,7 @@
 - 运镜（镜头暂时离开玩家再回来，方块、Boss 等共用）按 [docs/CAMERA_SHOTS.md](docs/CAMERA_SHOTS.md)：服务端调 `CameraShots.play`，不要用 `setCameraEntity` 做这件事。
 - 全屏后期（黑白闪、电影蒙版）按 [docs/SCREEN_EFFECTS.md](docs/SCREEN_EFFECTS.md)：服务端调 `ScreenEffects.flash`，不要占原版 `setPostEffect` 的槽。改了后期要在文档列的 Sodium、Iris 和两种光影包下各跑一遍。
 - 消散（模型逐渐消失、边缘发光）按 [docs/DISSOLVE.md](docs/DISSOLVE.md)：服务端调 `Dissolving`。让特效泛光用 `GlowBloom`，见 [docs/SCREEN_EFFECTS.md](docs/SCREEN_EFFECTS.md)，不要按亮度对整个画面取阈值。
+- 腐败（核心、脉络、污秽、网络）按 [docs/CORRUPTION.md](docs/CORRUPTION.md)：蔓延照搬原版幽匿催发体，改蔓延规则时对照原版 `SculkSpreader` 等类；玩法数值在 `ServerConfig` 的 `[corruption]` 一节。
 - 门后异画风按 [docs/WORLD_STYLES.md](docs/WORLD_STYLES.md)：服务端调 `StyleRealms.add`，只能换画风，不要用第二镜头显示别处。
 - 新增植被或树叶方块时加进 Logos 的 `logos:fragile_plants` 标签，否则衰退符文对它无效；见 [docs/LOGOS_TAGS.md](docs/LOGOS_TAGS.md)。
 - 不使用原版新版本硫磺方块，不添加原版主世界矿物生成。

@@ -69,10 +69,14 @@ public final class LogosDimension {
                     DimensionBlocks.PALETTE.forEach(b -> out.accept(b.get()));
                     out.accept(DimensionFluids.MERCURY_BUCKET.get()); out.accept(DimensionFluids.GLASS_BUCKET.get());
                     out.accept(dev.logos.dimension.camera.CameraTestBlock.BLOCK.get());
+                    out.accept(dev.logos.dimension.corruption.Corruption.CORE.get());
+                    out.accept(dev.logos.dimension.corruption.Corruption.BLOCK.get());
+                    out.accept(dev.logos.dimension.corruption.Corruption.VEIN.get());
                 }).build());
     }
     public LogosDimension(IEventBus bus, net.neoforged.fml.ModContainer container) {
         container.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, ClientConfig.SPEC);
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.SERVER, ServerConfig.SPEC);
         DimensionFluids.init();
         dev.logos.dimension.item.NaturesForceItem.init();
         dev.logos.dimension.item.ElfSpearItem.init();
@@ -94,6 +98,7 @@ public final class LogosDimension {
         dev.logos.dimension.dissolve.Dissolving.register(bus);
         dev.logos.dimension.worldstyle.StyleRealms.register(bus);
         dev.logos.dimension.camera.CameraTestBlock.init();
+        dev.logos.dimension.corruption.Corruption.init();
         DimensionBlocks.BLOCKS.register(bus); DimensionBlocks.ITEMS.register(bus);
         DimensionFluids.TYPES.register(bus); DimensionFluids.FLUIDS.register(bus);
         DimensionParticles.register(bus);
@@ -133,6 +138,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.GateGameTests.register(bus);
         dev.logos.dimension.gametest.CameraShotGameTests.register(bus);
         dev.logos.dimension.gametest.DissolveGameTests.register(bus);
+        dev.logos.dimension.gametest.CorruptionGameTests.register(bus);
         bus.addListener(DimensionSpawns::register);
         bus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) ->
                 event.registrar("1").playToClient(dev.logos.dimension.net.HauntPayload.TYPE, dev.logos.dimension.net.HauntPayload.CODEC));

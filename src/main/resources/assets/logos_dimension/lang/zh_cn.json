@@ -1146,5 +1146,15 @@
   "item.logos_dimension.tarot_18_moon": "塔罗牌 · 月亮",
   "item.logos_dimension.tarot_19_sun": "塔罗牌 · 太阳",
   "item.logos_dimension.tarot_20_judgement": "塔罗牌 · 审判",
-  "item.logos_dimension.tarot_21_world": "塔罗牌 · 世界"
+  "item.logos_dimension.tarot_21_world": "塔罗牌 · 世界",
+  "block.logos_dimension.corruption_core": "腐败核心",
+  "block.logos_dimension.corruption": "腐败污秽",
+  "block.logos_dimension.corruption_vein": "腐败脉络",
+  "item.logos_dimension.corruption_core": "腐败核心",
+  "item.logos_dimension.corruption": "腐败污秽",
+  "item.logos_dimension.corruption_vein": "腐败脉络",
+  "message.logos_dimension.corruption.core.size": "腐败网络：%s 格，蔓延中的电荷 %s",
+  "message.logos_dimension.corruption.core.dormant": "这颗核心不属于任何腐败网络",
+  "death.attack.logos_dimension.corruption": "%1$s 被腐败吞噬了",
+  "death.attack.logos_dimension.corruption.player": "%1$s 在躲避 %2$s 时被腐败吞噬了"
 }

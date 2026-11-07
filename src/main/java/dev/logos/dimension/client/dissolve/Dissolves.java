@@ -28,6 +28,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.util.ARGB;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -155,7 +156,7 @@ public final class Dissolves {
             default -> {
                 List<BlockState> states = new ArrayList<>(p.states().size());
                 for (int id : p.states()) states.add(Block.stateById(id));
-                blocks(level, p.positions(), states, p.shape(), p.ticks(), p.color());
+                blocks(level, p.positions(), states, p.shape(), p.ticks(), p.color(), p.target() == DissolvePayload.REPLACE);
             }
         }
     }
@@ -183,7 +184,7 @@ public final class Dissolves {
      * 已经（或马上）从世界移除的方块，算一个目标：球形或扫过穿过整组，噪波跨方块连续。
      * {@link DissolveShape.Kind#POINT} 是世界里的一点。
      */
-    private static void blocks(Level level, List<BlockPos> positions, List<BlockState> states, DissolveShape shape, int duration, int color) {
+    private static void blocks(Level level, List<BlockPos> positions, List<BlockState> states, DissolveShape shape, int duration, int color, boolean covering) {
         if (positions.isEmpty()) return;
         BlockPos first = positions.getFirst();
         int minX = first.getX(), minY = first.getY(), minZ = first.getZ(), maxX = minX, maxY = minY, maxZ = minZ;
@@ -205,7 +206,7 @@ public final class Dissolves {
             GhostBlock ghost = GhostBlock.of(level, positions.get(i), states.get(i), min, detail);
             if (ghost != null) ghosts.add(ghost);
         }
-        GROUPS.add(new BlockGroup(d, ghosts));
+        GROUPS.add(new BlockGroup(d, ghosts, covering));
     }
 
     private static long key(int owner, boolean left) { return (long) owner << 1 | (left ? 1 : 0); }
@@ -390,6 +391,16 @@ public final class Dissolves {
         }
     }
 
+    /** 罩在新方块外面的影子每面往外推多少格：够大才不会在远处和新方块的面抢深度（24 位深度在 60 格外的精度约 0.004 格），又小到看不出来。 */
+    private static final float OUTSET = 1 / 64f;
+
+    /** 六个邻格里方块光、天空光各自最亮的那个。 */
+    private static int outerLight(Level level, BlockPos pos) {
+        int light = 0;
+        for (Direction d : Direction.values()) light = LightCoordsUtil.max(light, LevelRenderer.getLightCoords(level, pos.relative(d)));
+        return light;
+    }
+
     private record GhostBlock(BlockPos pos, DissolveMesh mesh, float[] noise, Matrix4f toPattern, int[] tints) {
         static @Nullable GhostBlock of(Level level, BlockPos pos, BlockState state, BlockPos min, DissolveMesh.Detail detail) {
             Minecraft mc = Minecraft.getInstance();
@@ -418,7 +429,11 @@ public final class Dissolves {
         }
     }
 
-    private record BlockGroup(Dissolve dissolve, List<GhostBlock> ghosts) {
+    /**
+     * {@code covering}：原位已经换上了别的方块（{@link dev.logos.dimension.dissolve.Dissolving#replace}），影子要罩在它外面：
+     * 每面往外推 {@link #OUTSET} 格免得和它的面打架，光照取六个邻格里最亮的（实心方块里面的光是 0，会画成黑的）。
+     */
+    private record BlockGroup(Dissolve dissolve, List<GhostBlock> ghosts, boolean covering) {
         void submit(PoseStack pose, SubmitNodeCollector raw, SubmitNodeCollector out, CameraRenderState camera) {
             Level level = Minecraft.getInstance().level;
             float now = now();
@@ -427,10 +442,15 @@ public final class Dissolves {
             for (GhostBlock g : ghosts) {
                 pose.pushPose();
                 pose.translate(g.pos.getX() - camera.pos.x, g.pos.getY() - camera.pos.y, g.pos.getZ() - camera.pos.z);
+                if (covering) {
+                    pose.translate(.5f, .5f, .5f);
+                    pose.scale(1 + 2 * OUTSET, 1 + 2 * OUTSET, 1 + 2 * OUTSET);
+                    pose.translate(-.5f, -.5f, -.5f);
+                }
                 Dissolve.Glow glow = new Dissolve.Glow();
                 List<BakedQuad> left = dissolve.left(g.mesh, g.noise, pose.last(), g.toPattern, null, now, glow, particles, camera.pos, frame, ticks);
                 if (!left.isEmpty()) {
-                    raw.submitItem(pose, ItemDisplayContext.NONE, LevelRenderer.getLightCoords(level, g.pos), OverlayTexture.NO_OVERLAY, 0, g.tints, left,
+                    raw.submitItem(pose, ItemDisplayContext.NONE, covering ? outerLight(level, g.pos) : LevelRenderer.getLightCoords(level, g.pos), OverlayTexture.NO_OVERLAY, 0, g.tints, left,
                             ItemStackRenderState.FoilType.NONE);
                 }
                 if (particles) {
