@@ -19,6 +19,50 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 /** Development navigation for continent-sized regions, separate from the survival vortex entrance. */
 public final class DimensionCommands {
+    /** /alchemy dissolve：试消散，可以对实体、手上的东西、一片方块。会真的删掉东西。 */
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.minecraft.commands.CommandSourceStack> dissolve() {
+        return Commands.literal("dissolve")
+                .then(Commands.literal("entity").then(Commands.argument("targets", net.minecraft.commands.arguments.EntityArgument.entities()).then(dissolveShape((c, s, t) -> {
+                    for (var e : net.minecraft.commands.arguments.EntityArgument.getEntities(c, "targets")) dev.logos.dimension.dissolve.Dissolving.entity(e, s, t, dev.logos.dimension.dissolve.Dissolving.EMBER);
+                }))))
+                .then(Commands.literal("hand").then(dissolveShape((c, s, t) ->
+                        dev.logos.dimension.dissolve.Dissolving.held(c.getSource().getPlayerOrException(), net.minecraft.world.InteractionHand.MAIN_HAND, s, t, dev.logos.dimension.dissolve.Dissolving.EMBER))))
+                .then(Commands.literal("blocks").then(Commands.argument("from", net.minecraft.commands.arguments.coordinates.BlockPosArgument.blockPos()).then(Commands.argument("to", net.minecraft.commands.arguments.coordinates.BlockPosArgument.blockPos()).then(dissolveShape((c, s, t) -> {
+                    var from = net.minecraft.commands.arguments.coordinates.BlockPosArgument.getLoadedBlockPos(c, "from");
+                    var to = net.minecraft.commands.arguments.coordinates.BlockPosArgument.getLoadedBlockPos(c, "to");
+                    var all = new java.util.ArrayList<net.minecraft.core.BlockPos>();
+                    for (var p : net.minecraft.core.BlockPos.betweenClosed(from, to)) all.add(p.immutable());
+                    if (all.size() > 4096) {
+                        c.getSource().sendFailure(Component.literal("At most 4096 blocks"));
+                        return;
+                    }
+                    dev.logos.dimension.dissolve.Dissolving.blocks(c.getSource().getLevel(), all, s, t, dev.logos.dimension.dissolve.Dissolving.EMBER);
+                })))));
+    }
+
+    private interface DissolveAction {
+        void run(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> c, dev.logos.dimension.dissolve.DissolveShape shape, int ticks) throws com.mojang.brigadier.exceptions.CommandSyntaxException;
+    }
+
+    /** 每条消散命令结尾的形状名和可选的秒数，默认 3 秒。 */
+    private static com.mojang.brigadier.builder.RequiredArgumentBuilder<net.minecraft.commands.CommandSourceStack, String> dissolveShape(DissolveAction action) {
+        return Commands.argument("shape", StringArgumentType.word())
+                .suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(dev.logos.dimension.dissolve.DissolveShape.NAMES, b))
+                .executes(c -> startDissolve(c, action, 3))
+                .then(Commands.argument("seconds", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(.1, 60))
+                        .executes(c -> startDissolve(c, action, com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(c, "seconds"))));
+    }
+
+    private static int startDissolve(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> c, DissolveAction action, double seconds) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        var shape = dev.logos.dimension.dissolve.DissolveShape.parse(StringArgumentType.getString(c, "shape"));
+        if (shape == null) {
+            c.getSource().sendFailure(Component.literal("Shapes: " + String.join(", ", dev.logos.dimension.dissolve.DissolveShape.NAMES)));
+            return 0;
+        }
+        action.run(c, shape, (int) (seconds * 20));
+        return 1;
+    }
+
     public static void register(RegisterCommandsEvent event) {
         var root = Commands.literal("alchemy").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS));
         root.then(Commands.literal("enter").executes(c -> DimensionTravel.enter(c.getSource().getPlayerOrException()) ? 1 : 0));
@@ -35,6 +79,7 @@ public final class DimensionCommands {
         root.then(realm);
         root.then(Commands.literal("flash").executes(c -> flash(c.getSource().getPlayerOrException(), "wb"))
                 .then(Commands.argument("frames", StringArgumentType.word()).executes(c -> flash(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "frames")))));
+        root.then(dissolve());
         root.then(Commands.literal("island").executes(c -> island(c.getSource().getPlayerOrException(), 0, 0))
                 .then(Commands.argument("grid_x", IntegerArgumentType.integer(-1000, 1000))
                         .then(Commands.argument("grid_z", IntegerArgumentType.integer(-1000, 1000))
