@@ -4,7 +4,7 @@
 
 | 武器 | 设计文档 | 导入脚本 | 编排脚本 | 客户端场景 |
 |---|---|---|---|---|
-| 曦誓、黑钢长剑 | [LONGSWORDS.md](LONGSWORDS.md)、[DAWNVOW_CHARGE.md](DAWNVOW_CHARGE.md) | `import_longswords.py` | `dawnvow_moves.py`、`blacksteel_cast_moves.py`（其余动作是美术手做） | `group:longsword` |
+| 曦誓、黑钢长剑 | [LONGSWORDS.md](LONGSWORDS.md)、[DAWNVOW_CHARGE.md](DAWNVOW_CHARGE.md) | `import_longswords.py` | `longsword_moves.py`（被弹反）、`dawnvow_moves.py`、`blacksteel_cast_moves.py`（其余动作是美术手做） | `group:longsword` |
 | 神狐打刀 | [UCHIGATANA.md](UCHIGATANA.md) | `import_uchigatana.py` | `uchigatana_moves.py` | `group:uchigatana` |
 | 群誓·狼牙长枪 | [OATH_SPEAR.md](OATH_SPEAR.md) | `import_oath_spear.py` | `oath_spear_moves.py` | `group:oath_spear` |
 | 神狐和弓 | [YUMI.md](YUMI.md) | `import_yumi.py` | `yumi_moves.py` | `group:yumi` |
@@ -169,6 +169,7 @@
 [ ] 招式表和状态图
 [ ] import_<武器>.py：网格、贴图、图标、物品模型 = 网格 + (8, 1, 8)
 [ ] <武器>_moves.py：第三人称、第一人称（NPC 用时加 NPC 骨架）
+[ ] 近战武器：被弹反的 parried（玩家，约 0.5 秒）和 parried_npc（NPC，combat_author.npc_parried 拉长到约 0.8 秒），都没有转移，播完回待机，COMBAT_SKELETON 第 5 节
 [ ] 打印的够不着和偏角都看过；预览里查穿插、入地、脱手
 [ ] 改了 combat_author：打刀重新烘焙逐字节相同
 [ ] 物品（固定编号）、招式文件、语言、创造模式物品栏、标签

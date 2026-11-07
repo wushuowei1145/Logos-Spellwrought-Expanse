@@ -39,6 +39,8 @@
     },
     "charge_release": {"clip": "charge_release", "length": 1.05, "contact": 0.54, "blend_in": 0.05, "next": "idle"},
     "charge_cancel": {"clip": "charge_start", "playback": "reverse", "next": "idle"},
+    "parried": {"clip": "parried", "length": 0.5, "reset_combo": true, "blend_in": 0.03, "next": "idle"},
+    "parried_npc": {"clip": "parried_npc", "length": 0.8, "reset_combo": true, "blend_in": 0.03, "next": "idle"},
     "sheathe": {"clip": "sheathe", "length": 1.2, "blend_in": 0.1, "next": "$clear"}
   }
 }

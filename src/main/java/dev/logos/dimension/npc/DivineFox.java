@@ -11,6 +11,8 @@ import com.mojang.serialization.Codec;
 
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.combat.MoveRunner;
+import dev.logos.dimension.combat.Parry;
+import dev.logos.dimension.combat.StaggerGoal;
 import dev.logos.dimension.combat.Moveset;
 import dev.logos.dimension.combat.Movesets;
 import dev.logos.dimension.fox.SanctuaryResidents;
@@ -29,7 +31,6 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityEvent;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -84,7 +85,7 @@ import net.minecraft.world.phys.Vec3;
  * </ul>
  * 死亡时先播受击，再播侧倒后面朝地面的死亡动画。
  */
-public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHolder, RangedAttackMob, MoveRunner.Actor {
+public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHolder, RangedAttackMob, MoveRunner.Actor, Parry.Reactive {
     private static final EntityDataAccessor<String> APPEARANCE = SynchedEntityData.defineId(DivineFox.class, EntityDataSerializers.STRING);
     /** 当前显示的表情（零件表 {@code expressions} 里的 id，空为常态），见 {@link #npcExpression}。 */
     private static final EntityDataAccessor<String> EXPRESSION = SynchedEntityData.defineId(DivineFox.class, EntityDataSerializers.STRING);
@@ -187,6 +188,7 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
+        goalSelector.addGoal(0, new StaggerGoal<>(this));
         goalSelector.addGoal(1, new FoxFleeGoal(this));
         goalSelector.addGoal(2, new FoxFireWrapGoal(this));
         goalSelector.addGoal(3, new FoxBowGoal(this));
@@ -467,10 +469,26 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
                 + (m.playback() == Moveset.Playback.LOOP));
     }
 
+    /** 这一刀被弹开：进入 NPC 的僵直（招式文件的 {@code parried_npc}），这段时间不出招、不走动、挡不了。 */
+    @Override
+    public boolean parried(LivingEntity by) {
+        if (katanaMove() == null || !Parry.staggerNpc(runner, level().getGameTime())) return false;
+        guardTicks = 0;
+        StaggerGoal.interrupt(this, goalSelector);
+        return true;
+    }
+
+    /** 正在被弹反的僵直里。 */
+    @Override
+    public boolean staggered() {
+        return Parry.isStagger(katanaMove());
+    }
+
     /** 刀的接触时刻：砍到身前扇形里的敌人（同伴与玩家的使魔除外）。 */
     @Override
     public void contact(MoveRunner r) {
         if (!(level() instanceof ServerLevel level)) return;
+        Moveset.Move move = r.move();
         LivingEntity target = getTarget();
         double reach = 3.0;
         Vec3 eye = position().add(0, getBbHeight() * .5, 0);
@@ -485,6 +503,8 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
             // 75° 扇形；贴身（一格内）不论方向
             if (flat > 1 && (to.x * forward.x + to.z * forward.z) / flat < Math.cos(Math.toRadians(37.5))) continue;
             hit |= doHurtTarget(level, e);
+            // 这一刀被弹开（招式已经换成被弹反）：后面的目标不再结算。
+            if (r != runner || r.move() != move) break;
         }
         if (hit && target != null && !target.isAlive()) mood(TEASING, 60);
     }
@@ -627,9 +647,9 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
             alertTicks = ALERT_TICKS;
             Entity direct = source.getDirectEntity();
             boolean projectile = direct instanceof Projectile;
-            boolean melee = direct instanceof LivingEntity && direct == source.getEntity()
-                    && (source.is(DamageTypes.MOB_ATTACK) || source.is(DamageTypes.PLAYER_ATTACK) || source.is(DamageTypes.MOB_ATTACK_NO_AGGRO));
-            if (!source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) && (projectile || melee) && hasKatanaStack()
+            boolean melee = Parry.melee(source);
+            // 被弹反的僵直就是破绽：这段时间挡不了。
+            if (!source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) && (projectile || melee) && hasKatanaStack() && !staggered()
                     && getRandom().nextFloat() < (projectile ? BLOCK_PROJECTILE : BLOCK_MELEE)) {
                 block(level, source, melee);
                 return false;
@@ -657,6 +677,7 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
             // 弹刀，然后突刺反击
             runner.force("parry", now);
             katanaInput(Moveset.Input.ATTACK);
+            Parry.stagger(source, this);
         } else if (katanaMove() == null || !"guard".equals(katanaMove().name())) {
             runner.force("guard", now);
             guardTicks = 8;

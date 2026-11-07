@@ -129,16 +129,18 @@ CombatWeapon.register(6, "glaive", "glaive", GLAIVE_MOVESET).withCone(90);
 | `cone` | 这一招的命中锥形张角（度，0–180），代替武器注册时的张角；不写或 0 用武器的。 |
 | `knockback` | 为 `false` 时这一招不击退（连刺不把目标推出枪尖）。不写为 `true`。 |
 | `full_strength` | 为 `true` 时每一下都按蓄满的攻击结算，不吃原版攻击冷却（连刺自己就是节奏）。不写为 `false`。 |
-| `effect` | 武器自己的附加效果名，由 `CombatEffects` 解释：`launch`（挑飞）、`flurry`（连刺：打浮空目标伤害翻倍、延长浮空）、`slam`（下砸：砸落浮空目标、结算摔落）。不认识的名字没有效果。 |
+| `effect` | 武器自己的附加效果名，由 `CombatEffects` 解释：`launch`（挑飞）、`flurry`（连刺：打浮空目标伤害翻倍、延长浮空）、`slam`（下砸：砸落浮空目标、结算摔落）、`parry`（弹刀：由 `block` 转入时这次格挡不耗耐久，近战的攻击方僵直）。不认识的名字没有效果。 |
 | `on` | 转移列表，按顺序取第一条满足条件的。 |
 
 伤害仍走原版 `player.attack`：`damage` 与效果的倍数在 NeoForge 的 `LivingIncomingDamageEvent` 里只乘到这一招的目标上，击退在 `LivingKnockBackEvent` 里取消（浮空目标总是不击退）。
 
-转移字段：`input` 为 `attack`、`use_press`、`use_release`、`block`（原版格挡组件挡下一次攻击，由服务端在 `LivingShieldBlockEvent` 里给出；接受时这次格挡不耗耐久）；`to` 为目标招式或 `$clear`；`window` 为 `[起, 止]` 动作时间窗口（含端点，`止` 可省略表示到结束）；`queue` 为真时输入先记下（输入缓冲），到 `at`（取消点，动作时间）那一刻切换，没写 `at` 就等本招式播完；取消点已过才输入则立即切换；切换时刻不对齐游戏刻，连段节奏不漂移。`at` 不能早于本招式的 `contact`（多段命中看最后一段），否则缓冲的下一招会吞掉这一下命中；`combo` 为真时若连招记忆有效，改去记忆中那一段的 `combo_next`。
+转移字段：`input` 为 `attack`、`use_press`、`use_release`、`block`（原版格挡组件挡下一次攻击，由服务端在 `LivingShieldBlockEvent` 里给出）；`to` 为目标招式或 `$clear`；`window` 为 `[起, 止]` 动作时间窗口（含端点，`止` 可省略表示到结束）；`queue` 为真时输入先记下（输入缓冲），到 `at`（取消点，动作时间）那一刻切换，没写 `at` 就等本招式播完；取消点已过才输入则立即切换；切换时刻不对齐游戏刻，连段节奏不漂移。`at` 不能早于本招式的 `contact`（多段命中看最后一段），否则缓冲的下一招会吞掉这一下命中；`combo` 为真时若连招记忆有效，改去记忆中那一段的 `combo_next`。
 
 时间约定：招式里的时间都是**动作时间**，带 `attack_speed_base` 的招式按攻速缩放；`combo_memory` 与 `blend_in` 用游戏时间。没有缓冲输入时播完整段（包括收势）再进入 `next`。
 
 长剑现在的手感：出刀 0.1 秒后到收势之前的左键都会缓冲，在美术标注的收势起点（第一、二段 0.36 秒，第三段 0.37 秒）接下一段，后半段收势只在停手时播放；按住左键会一直连下去。进入每段攻击用 0.08 秒过渡，回到待机 0.12 秒。客户端单击只发一次攻击包，按住时每 3 刻补发一次。
+
+被弹反：招式名 `parried` 和 `parried_npc` 是保留的。转入带 `effect: parry` 的招式（打刀的弹刀）或神狐格开近战时，攻击方被强制切到自己招式文件里的僵直：玩家用 `parried`（约 0.5 秒），NPC 用 `parried_npc`（约 0.8 秒，没有时退回 `parried`）。两者都不写 `on`（这段时间不能出招、不能格挡），`reset_combo`，`next` 回待机。僵直长短跟着招式文件走，不写在生物上，用同一把武器的 NPC 都一样；某个 NPC 要不同的长度时，用 `extends` 继承武器的招式文件，只改 `parried_npc`。这一下没有砍中：后面的目标不再结算，缓冲的输入和挑飞之类的效果作废；按着右键时原版格挡也停掉。攻击方能走动，切走物品照常收剑（收剑比僵直长，也不能出招）。只有亲手的近战算数，弹射物和法术被挡下时攻击方没有反应。入口是 `combat/Parry`：玩家走 `LongswordCombat.parried`，只对招式文件里有 `parried` 的武器生效（和弓没有）；生物要实现 `Parry.Reactive`（目前只有神狐）。用招式状态机的 NPC 这样接入：`parried` 里调 `Parry.staggerNpc` 和 `StaggerGoal.interrupt`（当刻打断正在跑的移动类行为，不然追击行为还会多跑一下，可能正好触发突进），`staggered` 里调 `Parry.isStagger`，高优先级加一个 `StaggerGoal`（僵直时占住移动和视线）；受击时要不要格挡由 NPC 自己决定，神狐僵直时挡不了。动作要烘焙到这个 NPC 的骨架上。以后的 Boss 实现 `Reactive` 就能接上自己的动作。原版和其他模组的生物不实现这个接口，行为不变（第 1 节第 1 条）。
 
 兼容（第 1 节第 5 条）：招式文件缺失或格式错误时 `Movesets` 记一次日志，长剑不进入持剑动作，按原版物品处理（左键是原版攻击）；客户端在服务端回报持剑动作之前也不拦截左键。
 
@@ -198,6 +200,7 @@ CombatWeapon.register(6, "glaive", "glaive", GLAIVE_MOVESET).withCone(90);
 - `Moveset`：读取并校验招式文件（去向不存在、不循环却没有 `next` 等都报出原因）；`playbackSeconds` 是客户端与服务端共用的取样时间换算。
 - `MoveRunner`：一名角色身上的招式状态机，只依赖游戏刻和攻速，通过 `Actor` 回调换招与接触。
 - `Movesets`：按服务端资源管理器缓存招式，`/reload` 后重新读取。
+- `Parry`：弹刀成功后让近战的攻击方僵直（第 5 节「被弹反」）；`Parry.Reactive` 是生物接入的接口，`Parry.staggerNpc`、`Parry.isStagger` 和 `StaggerGoal` 是 NPC 共用的部分。
 - `CombatWeapon.Holder`：战斗武器物品。`allowsAttack` 在左键交给状态机前把关（返回 false 这次左键作废），`combatTick` 在每刻结算之后调用。施法剑（黑钢长剑，`longsword/SwordCasting`）借这两处接上 Logos 的蓄力：格挡中左键先试着开始蓄力，开得起来才转到蓄力招式；施放结果用 `LongswordCombat.force` 切到对应收势。
 
 客户端 `LongswordRig`（长剑、打刀、长枪与和弓共用）用它们取样并绘制武器、刀鞘、武器附件和分段手臂。迁移到本标准时，用迁移前的渲染算法对旧数据求了参考矩阵（`src/test/resources/combat/longsword_reference.json`），`LongswordMotionTest` 逐矩阵对照，保证动作外观没有变化。`MovesetTest` 逐刻检查长剑招式的出招、接触、输入缓冲与取消点、连招记忆、蓄力与取消、收剑；客户端的过渡混合在 `LongswordClient` 里按上一招在切换那一刻的姿势计算。

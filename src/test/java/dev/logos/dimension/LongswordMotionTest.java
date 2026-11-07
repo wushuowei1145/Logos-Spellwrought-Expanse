@@ -25,10 +25,10 @@ class LongswordMotionTest {
         assertEquals(List.of(), warnings);
         return clips;
     }
-    @Test void bothViewsHaveAllNineClipsAndRightEdgeRoot() throws Exception {
+    @Test void bothViewsHaveAllClipsAndRightEdgeRoot() throws Exception {
         for (var view : new String[]{"fp","tp"}) {
             var clips=clips(view);
-            assertEquals(Set.of("draw","idle","attack_1","attack_2","attack_3","charge_start","charge_hold","charge_release","sheathe"),clips.keySet());
+            assertEquals(Set.of("draw","idle","attack_1","attack_2","attack_3","charge_start","charge_hold","charge_release","parried","parried_npc","sheathe"),clips.keySet());
             assertEquals(CombatClip.Loop.LOOP,clips.get("idle").loop());
             assertEquals(.625,clips.get("attack_1").length(),1e-6);
             // 动作只引用标准骨骼名，不再出现美术工程里的 snake_case 名。

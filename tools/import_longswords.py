@@ -173,6 +173,9 @@ def main():
         write(ASSETS / f'models/item/{variant}.json', item)
         write(ASSETS / f'items/{variant}.json', dict(model=dict(type='minecraft:model', model=f'logos_dimension:item/{variant}')))
         shutil.copyfile(static / f'{variant}.png', ASSETS / f'textures/item/{variant}.png')
+    # 美术包没有被弹反动作，由编排脚本补回动作文件（需要 numpy）。
+    import longsword_moves
+    longsword_moves.write()
 
 
 if __name__ == '__main__':

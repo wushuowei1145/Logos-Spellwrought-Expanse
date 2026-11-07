@@ -2,7 +2,10 @@ package dev.logos.dimension.gametest;
 
 import com.mojang.authlib.GameProfile;
 import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.combat.Moveset;
+import dev.logos.dimension.combat.Parry;
 import dev.logos.dimension.item.LongswordItem;
+import dev.logos.dimension.item.UchigatanaItem;
 import dev.logos.dimension.longsword.*;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.util.*;
@@ -45,7 +48,12 @@ public final class LongswordGameTests {
                 Map.entry("longsword_guard",LongswordGameTests::guard),
                 Map.entry("longsword_mana_guard",LongswordGameTests::manaGuard),
                 Map.entry("longsword_cast",LongswordGameTests::cast),
-                Map.entry("longsword_cast_beam",LongswordGameTests::castBeam));
+                Map.entry("longsword_cast_beam",LongswordGameTests::castBeam),
+                Map.entry("longsword_parried",LongswordGameTests::parried),
+                Map.entry("longsword_parried_effect",LongswordGameTests::parriedEffect),
+                Map.entry("longsword_parried_fox",LongswordGameTests::parriedFox),
+                Map.entry("longsword_fox_parries",LongswordGameTests::foxParries),
+                Map.entry("longsword_parried_others",LongswordGameTests::parriedOthers));
         tests.forEach((name,test)->FUNCTIONS.register(name,()->test)); FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event)->{
             var env=event.registerEnvironment(LogosDimension.id("longsword"),new TestEnvironmentDefinition.AllOf());
@@ -131,6 +139,97 @@ public final class LongswordGameTests {
         f.at(42,()->{h.assertTrue(SwordCasting.GUARD.equals(LongswordCombat.move(f.p)),"没挂载页时左键离开了格挡："+LongswordCombat.move(f.p));f.p.releaseUsingItem();});
         f.at(44,()->h.assertTrue("guard_lower".equals(LongswordCombat.move(f.p)),"松开右键没有放下剑："+LongswordCombat.move(f.p)));
         f.at(70,()->{f.idle();f.succeed();});
+    }
+    /** 持打刀的另一名玩家站在持剑者正前方，刚架刀时挨这一刀：弹刀不掉血不耗耐久；攻击方僵直 0.5 秒，身后的木桩不再挨刀，这段时间左键作废，播完能接着出招。 */
+    private static void parried(GameTestHelper h) {
+        var f=Fixture.create(h,new ItemStack(UchigatanaItem.INK.get()));
+        var foe=new ServerPlayer[1];var health=new float[1];
+        f.at(1,()->{foe[0]=facing(f,1.6);foe[0].setItemInHand(InteractionHand.MAIN_HAND,new ItemStack(UchigatanaItem.INK.get()));foe[0].setGameMode(GameType.SURVIVAL);foe[0].connection.markClientLoaded();health[0]=foe[0].getHealth();});
+        f.at(30,f::attack);
+        f.at(31,()->foe[0].getMainHandItem().use(h.getLevel(),foe[0],InteractionHand.MAIN_HAND));
+        f.at(35,()->{
+            h.assertTrue(Moveset.PARRIED.equals(LongswordCombat.move(f.p)),"攻击方没有僵直："+LongswordCombat.move(f.p)+" 对方："+LongswordCombat.move(foe[0]));
+            h.assertTrue("parry".equals(LongswordCombat.move(foe[0])),"对方没有弹刀："+LongswordCombat.move(foe[0]));
+            h.assertTrue(foe[0].getHealth()==health[0] && foe[0].getMainHandItem().getDamageValue()==0,"弹刀掉了血或耗了耐久");
+            h.assertTrue(f.target.getHealth()==100,"被弹开的这一刀还砍到了后面的木桩");
+            f.attack();
+        });
+        f.at(40,()->{h.assertTrue(Moveset.PARRIED.equals(LongswordCombat.move(f.p)),"僵直提前结束或左键接上了："+LongswordCombat.move(f.p));f.attack();});
+        f.at(46,()->{f.idle();f.attack();});
+        f.at(48,()->{h.assertTrue("slash_1".equals(LongswordCombat.move(f.p)),"僵直之后没有从第一刀开始："+LongswordCombat.move(f.p));
+            h.getLevel().getServer().getPlayerList().remove(foe[0]);f.succeed();});
+    }
+    /** 上挑被弹开：挑飞不生效。 */
+    private static void parriedEffect(GameTestHelper h) {
+        var f=Fixture.create(h,new ItemStack(dev.logos.dimension.item.OathSpearItem.PACK_OATH.get()));
+        var foe=new ServerPlayer[1];
+        f.at(1,()->{foe[0]=facing(f,1.6);foe[0].setItemInHand(InteractionHand.MAIN_HAND,new ItemStack(UchigatanaItem.INK.get()));foe[0].setGameMode(GameType.SURVIVAL);foe[0].connection.markClientLoaded();});
+        f.at(30,()->LongswordCombat.force(f.p,"launch_4"));
+        f.at(36,()->foe[0].getMainHandItem().use(h.getLevel(),foe[0],InteractionHand.MAIN_HAND));
+        f.at(39,()->{
+            h.assertTrue(Moveset.PARRIED.equals(LongswordCombat.move(f.p)),"长枪没有僵直："+LongswordCombat.move(f.p));
+            h.assertTrue(!dev.logos.dimension.combat.Airborne.is(foe[0]),"被弹开的上挑还是把人挑飞了");
+            h.getLevel().getServer().getPlayerList().remove(foe[0]);f.succeed();
+        });
+    }
+    /** 面朝 -X 站在持剑者身前、不走 AI（招式状态机照常跑）的神狐。 */
+    private static dev.logos.dimension.npc.DivineFox fox(Fixture f,double ahead) {
+        var fox=dev.logos.dimension.npc.NpcEntities.DIVINE_FOX.get().create(f.h.getLevel(),EntitySpawnReason.COMMAND);
+        fox.setNoAi(true);fox.setNoGravity(true);var at=f.origin.add(ahead,0,0);fox.snapTo(at.x,at.y,at.z,90,0);fox.setYHeadRot(90);fox.setYBodyRot(90);
+        f.h.getLevel().addFreshEntity(fox);fox.setKatana(1);fox.drawKatana();fox.setTarget(f.p);
+        return fox;
+    }
+    /**
+     * 神狐的一刀打在刚架刀的玩家身上：神狐僵直，这段时间挡不了（平时近战一半被格开）。
+     * 无头服务器里没有玩家的区块不 tick 实体，神狐自己不会出刀，所以直接给玩家这一下；招式播完回到待机由实际客户端场景 {@code group:parried} 检查。
+     */
+    private static void parriedFox(GameTestHelper h) {
+        var f=Fixture.create(h,new ItemStack(UchigatanaItem.INK.get()));
+        var fox=fox(f,1.6);var health=new float[1];
+        f.at(30,f::use);
+        f.at(31,()->{
+            health[0]=f.p.getHealth();
+            f.p.hurtServer(h.getLevel(),f.p.damageSources().mobAttack(fox),6);
+            h.assertTrue("parry".equals(LongswordCombat.move(f.p)) && f.p.getHealth()==health[0],"玩家没有弹刀："+LongswordCombat.move(f.p));
+            h.assertTrue(fox.staggered(),"神狐没有僵直："+(fox.katanaMove()==null?null:fox.katanaMove().name()));
+            h.assertTrue(Moveset.PARRIED_NPC.equals(fox.katanaMove().name()),"NPC 该用自己的僵直："+fox.katanaMove().name());
+            fox.getAttribute(Attributes.MAX_HEALTH).setBaseValue(100);fox.setHealth(100);
+            for(int i=0;i<24;i++){
+                float before=fox.getHealth();fox.invulnerableTime=0;
+                fox.hurtServer(h.getLevel(),f.p.damageSources().playerAttack(f.p),1);
+                h.assertTrue(fox.getHealth()<before,"僵直里的神狐还是格开了第 "+i+" 下");
+            }
+            fox.discard();f.succeed();
+        });
+    }
+    /** 神狐格开玩家的近战：玩家僵直；箭被挡下时射手不受影响。 */
+    private static void foxParries(GameTestHelper h) {
+        var f=Fixture.create(h,new ItemStack(UchigatanaItem.INK.get()));
+        var fox=fox(f,1.6);
+        f.at(30,()->{
+            f.idle();fox.setTarget(null);
+            fox.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1000);fox.setHealth(1000);
+            var arrow=EntityType.ARROW.create(h.getLevel(),EntitySpawnReason.COMMAND);
+            for(int i=0;i<30;i++){fox.invulnerableTime=0;fox.hurtServer(h.getLevel(),f.p.damageSources().arrow(arrow,f.p),.01f);}
+            f.idle();
+            for(int i=0;i<64 && !Moveset.PARRIED.equals(LongswordCombat.move(f.p));i++){fox.invulnerableTime=0;fox.hurtServer(h.getLevel(),f.p.damageSources().playerAttack(f.p),.01f);}
+            h.assertTrue(Moveset.PARRIED.equals(LongswordCombat.move(f.p)),"神狐格开之后玩家没有僵直："+LongswordCombat.move(f.p));
+            h.assertTrue("parry".equals(fox.katanaMove().name()),"神狐没有弹刀："+fox.katanaMove().name());
+            f.attack();
+        });
+        f.at(34,()->h.assertTrue(Moveset.PARRIED.equals(LongswordCombat.move(f.p)),"僵直里左键接上了"));
+        f.at(42,()->{f.idle();fox.discard();f.succeed();});
+    }
+    /** 不会反应的攻击方不受影响：原版生物、拿和弓的玩家；箭也不算近战。 */
+    private static void parriedOthers(GameTestHelper h) {
+        var f=Fixture.create(h,new ItemStack(dev.logos.dimension.item.YumiItem.BAMBOO.get()));
+        f.at(30,()->{
+            h.assertTrue(!LongswordCombat.parried(f.p),"和弓不该有被弹反的僵直");
+            h.assertTrue(!Parry.stagger(f.p.damageSources().mobAttack(f.target),f.p),"原版生物不该有反应");
+            h.assertTrue(!Parry.melee(f.p.damageSources().arrow(EntityType.ARROW.create(h.getLevel(),EntitySpawnReason.COMMAND),f.p)),"箭不是近战");
+            h.assertTrue(Parry.melee(f.p.damageSources().playerAttack(f.p)),"玩家近战没有认出来");
+            f.succeed();
+        });
     }
     /** 站在持剑者正前方 {@code ahead} 格、面朝他的另一名玩家，用来朝他施法。 */
     private static ServerPlayer facing(Fixture f,double ahead) {

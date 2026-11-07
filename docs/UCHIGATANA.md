@@ -44,7 +44,7 @@ TLM 1.21 分支的 `maid.animation.json` 有 100 段动画，刀相关的只有�
 ```
 
 - **“马上”格挡**：每个攻击招式都带 `{"input": "use_press", "to": "guard", "window": [0]}`（不排队，立即切换），`guard` 的 `blend_in` 取 0.05 秒左右，画面上没有原版盾的举盾前摇。原版盾的延迟来自物品的 `blocks_attacks` 组件（`block_delay_seconds`）；打刀可以直接用这个组件并把延迟设为 0，伤害减免仍走原版流程（兼容性规则 2）。
-- **弹刀**：需要新增一种“被击中”输入，由服务端在格挡开始 0.3 秒内受击时触发，转入 `parry`；`parry` 里左键转 `riposte`。弹开、不耗耐久、禁用对方武器等效果以后做。
+- **弹刀**：需要新增一种“被击中”输入，由服务端在格挡开始 0.3 秒内受击时触发，转入 `parry`；`parry` 里左键转 `riposte`。弹刀不耗耐久；近战的攻击方被弹反，僵直约 0.5 秒（COMBAT_SKELETON.md 第 5 节「被弹反」）。
 - **标记**：每段攻击都标了 `contact`、`cancel` 和 `input_open`（第 4 节表格），按 COMBAT_SKELETON.md 第 6 节交付。
 
 ## 4. 动作清单
@@ -74,7 +74,6 @@ TLM 1.21 分支的 `maid.animation.json` 有 100 段动画，刀相关的只有�
 | `iai` | 居合斩：前冲中拔刀横斩，斩后刀停在身侧 | 中距离突进开场 |
 | `spin_slash` | 整身回转一周横斩 | 被围时清场；玩家只摆躯干，不做整身转 |
 | `rising` | 下段斩上，带一小跳 | 连段收尾 |
-| `parried` | 被弹开后仰、刀甩向外侧 | 玩家弹刀时 NPC 的硬直表现 |
 | `guard_hit` | 格挡受击、刀与身体被压退半步 | 格挡成功的反馈（玩家也用） |
 | `backstep` | 持刀后跳 | 拉开距离 |
 
@@ -111,6 +110,7 @@ uv run --with numpy --with pillow python tools/uchigatana_moves.py "<Minecraft M
 - 试玩场景 `client/UchigatanaView`（`-PldTest=group:uchigatana`）：实际按键走完拔刀、四段连招、出刀中按右键立即格挡（服务端当刻 `isBlocking`）、刚架刀被击中弹刀（不掉血、不耗耐久）、按住左键接突刺并命中、超过 0.3 秒只格挡且照常耗耐久、切槽收刀转刀，第一与第三人称截图。
 - 物品模型：物品栏和展示框用平面图标；手持、掉落和魔力缠绕用立体模型，由刀网格的刀身部分平移 (8, 1, 8) 生成，缠绕特效贴在刀身上。
 - 玩家的手改为原版那样的一整块（长剑同样生效），不再是掌、四指、拇指拼成的拳头。
+- 被弹反：玩家 `parried`（0.5 秒），NPC `parried_npc`（0.8 秒），共用编排：刀被磕向右后上方，左手脱开，身子后仰露出破绽，再收回待机。NPC 版只拉长顶住不动的那段（`combat_author.npc_parried`）。原版和其他模组的生物没有反应。
 - 还没做：弹开后禁用对方武器。
 
 神狐 NPC（2026-11-05，[NPC_RACE_DIVINE_FOX.md](NPC_RACE_DIVINE_FOX.md) 第 5、6 节）：同一份编排由 `tools/uchigatana_moves.py` 烘焙到神狐骨架，写在模型目录 `Animation/katana/`，`tools/divine_fox_assets.py` 加 `katana_` 前缀并入神狐的动画文件，四套刀装的网格按 1.6 倍挂到并进模型的 `Weapon` / `Sheath` 骨骼上。服务端用同一台招式状态机（`MoveRunner` + `uchigatana.json`）：AI 发送攻击、格挡输入，换招时把动作名与开始刻同步给客户端，由 `combat` 控制器播放。这样没有走第 8 节第 5 条的运行时姿势适配（NPC 渲染器里套 `CombatPose`），烘焙时已扣除神狐的静止外张角。

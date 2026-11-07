@@ -51,9 +51,11 @@
       ]
     },
     "parry": {
-      "length": 0.42, "blend_in": 0.03, "next": "guard",
+      "length": 0.42, "blend_in": 0.03, "next": "guard", "effect": "parry",
       "on": [{"input": "attack", "to": "riposte", "window": [0], "queue": true, "at": 0.12}]
     },
+    "parried": {"length": 0.5, "reset_combo": true, "blend_in": 0.03, "next": "idle"},
+    "parried_npc": {"length": 0.8, "reset_combo": true, "blend_in": 0.03, "next": "idle"},
     "riposte": {
       "length": 0.42, "contact": 0.09, "blend_in": 0.03, "next": "idle",
       "on": [{"input": "use_press", "to": "guard", "window": [0.24]}]
