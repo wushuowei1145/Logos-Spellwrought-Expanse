@@ -89,6 +89,9 @@ public final class SwordCastClient {
     /** 第一人称手部渲染开始（{@code ItemInHandRenderer.renderHandsWithItems} 开头）时的姿势：原版是世界轴向，光影包下是视图空间。 */
     public static void beginHands(Matrix4fc pose) { HAND_BASE.set(pose); }
 
+    /** 第一人称的姿势相对 {@link #beginHands} 的结果：不管有没有光影包，都在视图空间。 */
+    public static Matrix4f inView(Matrix4fc pose) { return new Matrix4f(HAND_BASE).invert().mul(pose); }
+
     /** 第三人称：{@code pose} 是相对镜头的世界空间、已经换到剑骨架空间的姿势，{@code tip} 是骨架空间里的剑尖。 */
     public static void reportThirdPerson(int entityId, Matrix4fc pose, Vector3f tip) {
         var mc = Minecraft.getInstance();
