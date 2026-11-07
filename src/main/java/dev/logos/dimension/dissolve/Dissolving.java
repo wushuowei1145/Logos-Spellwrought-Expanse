@@ -6,6 +6,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
@@ -68,9 +69,35 @@ public final class Dissolving {
         }
         if (kept.isEmpty()) return;
         // 先发影子，不然方块会在消散开始之前就先没了一下
-        PacketDistributor.sendToPlayersTrackingChunk(level, new ChunkPos(kept.getFirst().getX() >> 4, kept.getFirst().getZ() >> 4),
-                new DissolvePayload(DissolvePayload.BLOCKS, -1, kept, states, shape, ticks, color));
+        sendNear(level, kept.getFirst(), new DissolvePayload(DissolvePayload.BLOCKS, -1, kept, states, shape, ticks, color));
         for (BlockPos pos : kept) level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+    }
+
+    /**
+     * 这些方块消散成 {@code replacements} 里对应的方块：新方块立刻放好，旧方块的影子罩在它外面消散，看起来像一层皮剥落、露出底下的东西。
+     * 两个列表一样长；空气跳过。
+     */
+    public static void replace(ServerLevel level, List<BlockPos> positions, List<BlockState> replacements, DissolveShape shape, int ticks, int color) {
+        List<BlockPos> kept = new ArrayList<>();
+        List<Integer> states = new ArrayList<>();
+        List<BlockState> next = new ArrayList<>();
+        for (int i = 0; i < positions.size(); i++) {
+            BlockState state = level.getBlockState(positions.get(i));
+            if (state.isAir()) continue;
+            kept.add(positions.get(i).immutable());
+            states.add(Block.getId(state));
+            next.add(replacements.get(i));
+        }
+        if (kept.isEmpty()) return;
+        sendNear(level, kept.getFirst(), new DissolvePayload(DissolvePayload.REPLACE, -1, kept, states, shape, ticks, color));
+        for (int i = 0; i < kept.size(); i++) level.setBlock(kept.get(i), next.get(i), Block.UPDATE_ALL);
+    }
+
+    /** 发给看得到 {@code at} 所在区块、并且装了本附属的玩家（没有这个通道的连接收到会直接报错，比如测试里的假玩家）。 */
+    private static void sendNear(ServerLevel level, BlockPos at, DissolvePayload payload) {
+        for (ServerPlayer player : level.getChunkSource().chunkMap.getPlayers(new ChunkPos(at.getX() >> 4, at.getZ() >> 4), false)) {
+            if (player.connection.hasChannel(DissolvePayload.TYPE)) PacketDistributor.sendToPlayer(player, payload);
+        }
     }
 
     private static void after(MinecraftServer server, int ticks, Runnable run) {

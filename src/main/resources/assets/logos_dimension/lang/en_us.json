@@ -1146,5 +1146,15 @@
   "item.logos_dimension.tarot_18_moon": "Tarot: The Moon",
   "item.logos_dimension.tarot_19_sun": "Tarot: The Sun",
   "item.logos_dimension.tarot_20_judgement": "Tarot: Judgement",
-  "item.logos_dimension.tarot_21_world": "Tarot: The World"
+  "item.logos_dimension.tarot_21_world": "Tarot: The World",
+  "block.logos_dimension.corruption_core": "Corruption Core",
+  "block.logos_dimension.corruption": "Corrupted Filth",
+  "block.logos_dimension.corruption_vein": "Corruption Vein",
+  "item.logos_dimension.corruption_core": "Corruption Core",
+  "item.logos_dimension.corruption": "Corrupted Filth",
+  "item.logos_dimension.corruption_vein": "Corruption Vein",
+  "message.logos_dimension.corruption.core.size": "Corruption network: %s blocks, %s charge spreading",
+  "message.logos_dimension.corruption.core.dormant": "This core belongs to no corruption network",
+  "death.attack.logos_dimension.corruption": "%1$s was consumed by corruption",
+  "death.attack.logos_dimension.corruption.player": "%1$s was consumed by corruption while fighting %2$s"
 }

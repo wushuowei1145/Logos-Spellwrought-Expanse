@@ -10,7 +10,8 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 /** 服务端告诉客户端：有东西开始消散了（见 {@link Dissolving}）。方块连同它原来的状态一起发。 */
 public record DissolvePayload(int target, int entity, List<BlockPos> positions, List<Integer> states, DissolveShape shape, int ticks, int color) implements CustomPacketPayload {
-    public static final int ENTITY = 0, RIGHT = 1, LEFT = 2, BLOCKS = 3;
+    /** {@code REPLACE}：方块已经换成了别的，消散的影子罩在新方块外面。 */
+    public static final int ENTITY = 0, RIGHT = 1, LEFT = 2, BLOCKS = 3, REPLACE = 4;
 
     public static final Type<DissolvePayload> TYPE = new Type<>(LogosDimension.id("dissolve"));
     public static final StreamCodec<RegistryFriendlyByteBuf, DissolvePayload> CODEC = StreamCodec.composite(

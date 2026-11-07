@@ -6,7 +6,12 @@
 Dissolving.entity(entity, DissolveShape.noise(), 60, Dissolving.EMBER);      // 生物、掉落物：连同盔甲和手持物，结束后消失（玩家不会）
 Dissolving.held(holder, InteractionHand.MAIN_HAND, DissolveShape.parse("hilt"), 60, Dissolving.EMBER); // 只消散手上的东西，结束后清空这只手
 Dissolving.blocks(level, positions, DissolveShape.sphere(.5f, .5f, .5f), 60, Dissolving.EMBER);        // 一组方块：立刻从世界移除，消散的是留下的影子
+Dissolving.replace(level, positions, replacements, DissolveShape.noise(), 24, color);                  // 一组方块换成别的方块：新方块立刻放好，旧方块的影子罩在外面剥落（腐败污秽变回原方块用的）
 ```
+
+方块消散只发给看得到那个区块、并且装了本附属的玩家（和 `CameraShots.play` 一样先看 `hasChannel`，没有这个通道的连接收到会报错）。
+
+`replace` 的影子每面往外推 1/64 格，免得和原位的新方块抢深度；光照取六个邻格里最亮的，因为实心方块里面的光是 0。
 
 试玩命令（需要管理员权限，这些命令真的会删东西）：
 
