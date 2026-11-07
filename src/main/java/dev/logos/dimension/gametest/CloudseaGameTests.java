@@ -89,10 +89,11 @@ public final class CloudseaGameTests {
         l.setBlockAndUpdate(a.below(),net.minecraft.world.level.block.Blocks.DIRT.defaultBlockState());l.setBlockAndUpdate(b.below(),net.minecraft.world.level.block.Blocks.DIRT.defaultBlockState());
         l.setBlockAndUpdate(a,CloudseaBlocks.STARDEW.get().defaultBlockState());l.setBlockAndUpdate(b,CloudseaBlocks.LUMEN_FERN.get().defaultBlockState());
         h.assertTrue(l.getBlockState(a).getLightEmission()==2&&l.getBlockState(b).getLightEmission()==3,"Plants lack subtle block light");
-        h.runAfterDelay(15,()->{
+        // 光照在后台线程池里异步传播，和同批测试生成区块的任务抢线程；测试服务器又不限速跑刻，固定等几刻不一定传播完，所以轮询到亮了为止
+        h.succeedWhen(RealTimeWait.paced(()->{
             h.assertTrue(l.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,a)>=2&&l.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,a.east())>=1,"Stardew does not illuminate nearby ground");
-            h.assertTrue(l.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,b)>=3&&l.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,b.east())>=2,"Fern does not illuminate nearby ground");h.succeed();
-        });
+            h.assertTrue(l.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,b)>=3&&l.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,b.east())>=2,"Fern does not illuminate nearby ground");
+        }));
     }
     private static void logFamilies(GameTestHelper h){
         var level=h.getLevel();var leaves=new java.util.ArrayList<BlockPos>();int i=0;

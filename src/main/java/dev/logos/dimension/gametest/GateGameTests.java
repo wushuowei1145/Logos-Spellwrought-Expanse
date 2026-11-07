@@ -297,6 +297,11 @@ public final class GateGameTests {
      *
      * <p>测试服务器是加速跑的，区块要花几秒才能升到走刻状态，这段时间传送票（300 刻）已经过期，所以这里只查传送票本身；
      * 实体到达后真的在走刻由 {@code GateView} 在实际客户端里检查（真实时间下玩家走一趟）。
+     *
+     * <p>盔甲架要等门所在的区块走刻后再放。强制加载让区块直接升到实体走刻，原版会跳过中间的「可访问」通知，
+     * 实体管理器一直把它当成不可见，直到周围 5×5 区块都生成完。放在不可见区块里的实体不走刻，
+     * 而且自动存档（按刻算，每 6000 刻一次）第一次会去读这个区块的实体存档，第二次就把它存盘卸载（{@code UNLOADED_TO_CHUNK}），
+     * 之后等多久都等不到它穿门。CI 上测试服务器每秒几千刻，生成这片区块的一两秒里正好跑过两次自动存档。
      */
     private static void crossing(GameTestHelper h) {
         ServerLevel level = h.getLevel();
@@ -307,11 +312,14 @@ public final class GateGameTests {
         placeTemplate(level, "gate/small_gate", stone, SMALL_PIVOT, Rotation.NONE);
         ((GateStoneBlockEntity) level.getBlockEntity(stone)).igniteNow();
         BlockPos cell = stone.above();
+        var chunk = net.minecraft.world.level.ChunkPos.containing(cell);
         ArmorStand stand = EntityType.ARMOR_STAND.create(level, EntitySpawnReason.COMMAND);
         stand.snapTo(cell.getX() + .5, cell.getY(), cell.getZ() + .5);
-        h.runAfterDelay(1, () -> level.addFreshEntity(stand));
-        h.succeedWhen(() -> {
-            check(h, stand.getRemovalReason() == net.minecraft.world.entity.Entity.RemovalReason.CHANGED_DIMENSION, "盔甲架应穿过门");
+        h.startSequence()
+                .thenWaitUntil(RealTimeWait.paced(() -> check(h, level.areEntitiesActuallyLoadedAndTicking(chunk), "门所在的区块应进入实体走刻状态")))
+                .thenExecute(() -> check(h, level.addFreshEntity(stand), "盔甲架应放进世界"))
+                .thenWaitUntil(RealTimeWait.paced(() -> {
+            check(h, stand.getRemovalReason() == net.minecraft.world.entity.Entity.RemovalReason.CHANGED_DIMENSION, "盔甲架应穿过门，现在的移除原因：" + stand.getRemovalReason());
             // 兴趣点要下一刻才登记，没查到就等下一刻
             BlockPos exit = GateTravel.findExit(cloudsea, stone).orElse(null);
             check(h, exit != null, "远行大陆应有一扇门");
@@ -333,7 +341,7 @@ public final class GateGameTests {
             check(h, home != null && home.newLevel() == level, "从远行大陆应回主世界");
             check(h, GateShape.connected(level, cell).contains(BlockPos.containing(home.position())), "应落回原来这扇门：" + home.position());
             release(level, stone);
-        });
+        })).thenSucceed();
     }
 
     /** 世界生成的数据都接上了：结构、结构集、模板池、群系标签。 */
