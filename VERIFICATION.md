@@ -2,7 +2,7 @@
 
 ## 被弹反的僵直
 
-2026-11-07：分支 `feat/parry-stagger`，基于 main `0c745061`，Logos 用 `ba47131`（`feat/spell-ward`）。说明见 [COMBAT_SKELETON.md](docs/COMBAT_SKELETON.md) 第 5 节「被弹反」。打刀弹刀、神狐格开近战时，亲手近战的攻击方进入僵直：玩家 0.5 秒（`parried`），NPC 0.8 秒（`parried_npc`，写在招式文件里，用同一把武器的 NPC 都一样）。这段时间不能出招、不能格挡，这一刀作废。曦誓、黑钢长剑、打刀、长枪两段动作都有，神狐目前接的是打刀；和弓、原版和其他模组的生物没有反应。
+2026-11-07：分支 `feat/parry-stagger`，基于 main `0c745061`，Logos 用 `ba47131`（`feat/spell-ward`）。下表是合入 #193 之前跑的；合入 main `738208be` 后复跑单元 **220/220**（多出的是 #193 的测试）、世界 `longsword_*` **18/18**、`group:parried` **4/4**，其余回归没有重跑。说明见 [COMBAT_SKELETON.md](docs/COMBAT_SKELETON.md) 第 5 节「被弹反」。打刀弹刀、神狐格开近战时，亲手近战的攻击方进入僵直：玩家 0.5 秒（`parried`），NPC 0.8 秒（`parried_npc`，写在招式文件里，用同一把武器的 NPC 都一样）。这段时间不能出招、不能格挡，这一刀作废。曦誓、黑钢长剑、打刀、长枪两段动作都有，神狐目前接的是打刀；和弓、原版和其他模组的生物没有反应。
 
 | 层级 | 结果 |
 | --- | --- |
