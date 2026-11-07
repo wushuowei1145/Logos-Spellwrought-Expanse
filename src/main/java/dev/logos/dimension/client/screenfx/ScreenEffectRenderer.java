@@ -15,7 +15,9 @@ import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.client.camera.CameraDirector;
 import dev.logos.dimension.screenfx.ScreenFlash;
 import dev.logos.dimension.screenfx.ScreenFlashPayload;
+import java.util.List;
 import java.util.OptionalInt;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -26,13 +28,15 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
+import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 
 /**
  * 本机的全屏后期：黑白闪和电影蒙版。一个自己的全屏通道，把主画面复制一份当输入，再写回主画面。
  * 不用原版的后期链，因为那边的参数在加载时就写死了，而这里每帧都在变；也不占原版那一个后期槽，
- * 附身看到的苦力怕视角可以同时存在。
+ * 附身看到的苦力怕视角可以同时存在。剪影和影子线要知道谁在光源前面、朝哪边，所以闪的时候在半透明之前留一份深度。
  */
 @EventBusSubscriber(modid = LogosDimension.ID, value = Dist.CLIENT)
 public final class ScreenEffectRenderer {
@@ -41,9 +45,11 @@ public final class ScreenEffectRenderer {
             .withVertexShader(LogosDimension.id("post/screen_effect"))
             .withFragmentShader(LogosDimension.id("post/screen_effect"))
             .withSampler("InSampler")
+            .withSampler("DepthSampler")
+            .withSampler("HandDepthSampler")
             .withUniform("ScreenEffect", UniformType.UNIFORM_BUFFER)
             .build();
-    private static final int UNIFORM_SIZE = new Std140SizeCalculator().putVec2().putFloat().putFloat().putFloat().putFloat().putFloat().get();
+    private static final int UNIFORM_SIZE = new Std140SizeCalculator().putMat4f().putVec4().putVec4().putVec4().putVec4().get();
     /** 闪完之后冲击缩放和色差再用几拍收回去，不会一下弹回原画。 */
     private static final int TAIL_FRAMES = 3;
     private static final float PUNCH = .05f, SPLIT = .006f;
@@ -61,6 +67,7 @@ public final class ScreenEffectRenderer {
     private static Vec3 center = Vec3.ZERO;
     /** 客户端场景用：停在某一拍上截图。 */
     private static ScreenFlash.@Nullable Frame heldFrame;
+    /** 颜色的副本，闪的时候还存一份半透明之前的深度。 */
     private static @Nullable RenderTarget copy;
     private static @Nullable MappableRingBuffer uniforms;
 
@@ -96,6 +103,23 @@ public final class ScreenEffectRenderer {
         center = at;
     }
 
+    /** 半透明之前留一份深度：玻璃和水不挡光，也不会变成剪影。 */
+    @SubscribeEvent static void beforeTranslucent(RenderLevelStageEvent.AfterOpaqueFeatures event) {
+        if (flash == null && heldFrame == null) return;
+        RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
+        target(main).copyDepthFrom(main);
+    }
+
+    private static RenderTarget target(RenderTarget main) {
+        if (copy == null || copy.useStencil != main.useStencil) {
+            if (copy != null) copy.destroyBuffers();
+            copy = new TextureTarget("logos_dimension screen effect", main.width, main.height, true, main.useStencil);
+        } else if (copy.width != main.width || copy.height != main.height) {
+            copy.resize(main.width, main.height);
+        }
+        return copy;
+    }
+
     /** 由 Mixin 在世界画完之后调用。 */
     public static void draw() {
         Minecraft mc = Minecraft.getInstance();
@@ -109,17 +133,16 @@ public final class ScreenEffectRenderer {
         float grade = CameraDirector.grade();
         if (frame == null && tail <= 0 && grade <= 0) return;
 
-        float mode = frame == ScreenFlash.Frame.WHITE ? 1 : frame == ScreenFlash.Frame.BLACK ? 2 : 0;
         float k = frame != null ? 1 : tail;
-        pass(mc, mode, PUNCH * k, SPLIT * k, grade);
+        pass(mc, frame == null ? Stage.NONE : Stage.of(frame, glowStrength()), PUNCH * k, SPLIT * k, grade);
     }
 
-    /** 闪的那两拍画面是纯黑白，界面也不画。排在最后，运镜的遮幅已经画进去了。 */
+    /** 闪的那几拍画面整个换掉了，界面也不画。排在最后，运镜的遮幅已经画进去了。 */
     @SubscribeEvent(priority = EventPriority.LOWEST) static void hud(RenderGuiEvent.Pre event) {
         step();
         stepped = true;
         ScreenFlash.Frame frame = currentFrame();
-        if (frame == ScreenFlash.Frame.WHITE || frame == ScreenFlash.Frame.BLACK) event.setCanceled(true);
+        if (frame != null && frame.replacesScreen()) event.setCanceled(true);
     }
 
     private static void step() {
@@ -145,36 +168,75 @@ public final class ScreenEffectRenderer {
         return (1 - t) * (1 - t);
     }
 
-    private static void pass(Minecraft mc, float mode, float punch, float split, float grade) {
+    /** 连着几拍发光时一拍比一拍亮：这是连续发光里的第几拍，按比例算。停住截图时算最亮。 */
+    private static float glowStrength() {
+        if (heldFrame != null || flash == null) return 1;
+        List<ScreenFlash.Frame> frames = flash.frames();
+        int start = shownFrame, end = shownFrame;
+        while (start > 0 && frames.get(start - 1) == ScreenFlash.Frame.GLOW) start--;
+        while (end + 1 < frames.size() && frames.get(end + 1) == ScreenFlash.Frame.GLOW) end++;
+        return (shownFrame - start + 1f) / (end - start + 1f);
+    }
+
+    /**
+     * 每一拍交给着色器的参数。抽象程度和光吞没的半径跟着阶段走：越往后线越长、轮廓越碎，光吞得越大。
+     *
+     * @param engulf 光吞没的半径，按画面高度
+     */
+    record Stage(float mode, float strength, float abstraction, float engulf) {
+        static final Stage NONE = new Stage(0, 0, 0, 0);
+
+        static Stage of(ScreenFlash.Frame frame, float glow) {
+            return switch (frame) {
+                case WHITE -> new Stage(1, 1, 0, 0);
+                case BLACK -> new Stage(2, 1, 0, 0);
+                case NORMAL -> NONE;
+                case GLOW -> new Stage(3, glow, 0, .02f + .08f * glow);
+                case SILHOUETTE -> new Stage(4, 1, .2f, .07f);
+                case ENGULF -> new Stage(5, 1, .55f, .2f);
+                case SWAP -> new Stage(6, 1, .9f, .34f);
+            };
+        }
+    }
+
+    private static void pass(Minecraft mc, Stage stage, float punch, float split, float grade) {
         RenderTarget main = mc.getMainRenderTarget();
-        if (copy == null) copy = new TextureTarget("logos_dimension screen effect", main.width, main.height, false);
-        else if (copy.width != main.width || copy.height != main.height) copy.resize(main.width, main.height);
+        RenderTarget target = target(main);
         if (uniforms == null) uniforms = new MappableRingBuffer(() -> "logos_dimension screen effect", GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_MAP_WRITE, UNIFORM_SIZE);
 
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
-        encoder.copyTextureToTexture(main.getColorTexture(), copy.getColorTexture(), 0, 0, 0, 0, 0, main.width, main.height);
+        encoder.copyTextureToTexture(main.getColorTexture(), target.getColorTexture(), 0, 0, 0, 0, 0, main.width, main.height);
 
-        Vec3 screen = onScreen(mc);
-        try (GpuBuffer.MappedView view = encoder.mapBuffer(uniforms.currentBuffer(), false, true)) {
-            Std140Builder.intoBuffer(view.data()).putVec2((float) screen.x, (float) screen.y)
-                    .putFloat(mode).putFloat((startedAt / 1_000_000 % 97) + shownFrame).putFloat(punch).putFloat(split).putFloat(grade);
+        Camera camera = mc.gameRenderer.getMainCamera();
+        Matrix4f inverse = new Matrix4f(WorldStyleRenderer.PROJECTION).mul(camera.getViewRotationMatrix(new Matrix4f())).invert();
+        Vec3 light = center.subtract(camera.position());
+        boolean zeroToOne = RenderSystem.getDevice().isZZeroToOne();
+        float lightDepth = 0;
+        Vec3 screen = new Vec3(.5, .5, 0);
+        var forward = camera.forwardVector();
+        // 光源在镜头身后时退回画面中央，也没有东西在它前面
+        if (light.dot(new Vec3(forward.x(), forward.y(), forward.z())) > 0) {
+            Vec3 ndc = mc.gameRenderer.projectPointToScreen(center);
+            screen = new Vec3(ndc.x * .5 + .5, ndc.y * .5 + .5, 0);
+            lightDepth = (float) (zeroToOne ? ndc.z : ndc.z * .5 + .5);
         }
+        float seed = (startedAt / 1_000_000 % 97) + shownFrame;
+        try (GpuBuffer.MappedView view = encoder.mapBuffer(uniforms.currentBuffer(), false, true)) {
+            Std140Builder.intoBuffer(view.data()).putMat4f(inverse)
+                    .putVec4((float) light.x, (float) light.y, (float) light.z, lightDepth)
+                    .putVec4(stage.mode(), seed, stage.strength(), stage.abstraction())
+                    .putVec4(punch, split, grade, stage.engulf())
+                    .putVec4((float) screen.x, (float) screen.y, zeroToOne ? 1 : 0, 0);
+        }
+        var nearest = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
         try (RenderPass pass = encoder.createRenderPass(() -> "logos_dimension screen effect", main.getColorTextureView(), OptionalInt.empty())) {
             pass.setPipeline(PIPELINE);
             pass.setUniform("ScreenEffect", uniforms.currentBuffer());
-            pass.bindTexture("InSampler", copy.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
+            pass.bindTexture("InSampler", target.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
+            pass.bindTexture("DepthSampler", target.getDepthTextureView(), nearest);
+            pass.bindTexture("HandDepthSampler", main.getDepthTextureView(), nearest);
             pass.draw(0, 3);
         }
         uniforms.rotate();
-    }
-
-    /** 冲击点在画面上的位置（0 到 1）。在镜头身后时退回画面中央。 */
-    private static Vec3 onScreen(Minecraft mc) {
-        var camera = mc.gameRenderer.getMainCamera();
-        Vec3 toPoint = center.subtract(camera.position());
-        var forward = camera.forwardVector();
-        if (toPoint.dot(new Vec3(forward.x(), forward.y(), forward.z())) <= 0) return new Vec3(.5, .5, 0);
-        Vec3 ndc = mc.gameRenderer.projectPointToScreen(center);
-        return new Vec3(ndc.x * .5 + .5, ndc.y * .5 + .5, 0);
     }
 }
