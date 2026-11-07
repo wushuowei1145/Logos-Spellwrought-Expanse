@@ -71,7 +71,8 @@ public final class LogosDimension {
                     out.accept(dev.logos.dimension.camera.CameraTestBlock.BLOCK.get());
                 }).build());
     }
-    public LogosDimension(IEventBus bus) {
+    public LogosDimension(IEventBus bus, net.neoforged.fml.ModContainer container) {
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, ClientConfig.SPEC);
         DimensionFluids.init();
         dev.logos.dimension.item.NaturesForceItem.init();
         dev.logos.dimension.item.ElfSpearItem.init();
