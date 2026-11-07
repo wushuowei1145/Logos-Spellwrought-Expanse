@@ -1,12 +1,16 @@
 package dev.logos.dimension.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import dev.logos.dimension.client.screenfx.GlowBloom;
 import dev.logos.dimension.client.screenfx.ScreenEffectRenderer;
 import dev.logos.dimension.client.screenfx.WorldStyleRenderer;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.Projection;
 import org.joml.Matrix4f;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -17,15 +21,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(GameRenderer.class)
 public abstract class ScreenEffectMixin {
+    @Shadow @Final private Projection hudProjection;
+
     /** 记下世界渲染真正用的投影矩阵，含视角晃动和受伤倾斜。 */
     @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setProjectionMatrix(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/ProjectionType;)V", ordinal = 0))
     private void screenEffectProjection(DeltaTracker deltaTracker, CallbackInfo ci, @Local(ordinal = 0) Matrix4f projection) {
         WorldStyleRenderer.PROJECTION.set(projection);
+        GlowBloom.begin();
     }
 
     @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/fog/FogRenderer;endFrame()V"))
     private void screenEffectDraw(DeltaTracker deltaTracker, boolean advanceGameTime, CallbackInfo ci) {
         if (!advanceGameTime) return;
+        // 泛光排在最前面：画风和黑白闪处理的是已经带泛光的画面
+        GlowBloom.draw(hudProjection.getMatrix(new Matrix4f()));
         WorldStyleRenderer.draw();
         ScreenEffectRenderer.draw();
     }
