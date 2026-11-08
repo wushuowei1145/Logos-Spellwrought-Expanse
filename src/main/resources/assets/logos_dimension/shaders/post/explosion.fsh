@@ -50,7 +50,7 @@ float hash3(vec3 p) {
     return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
 }
 
-float noise3(vec3 p) {
+float valueNoise3(vec3 p) {
     vec3 i = floor(p), f = fract(p);
     f = f * f * (3.0 - 2.0 * f);
     return mix(mix(mix(hash3(i), hash3(i + vec3(1, 0, 0)), f.x), mix(hash3(i + vec3(0, 1, 0)), hash3(i + vec3(1, 1, 0)), f.x), f.y),
@@ -60,7 +60,7 @@ float noise3(vec3 p) {
 float fbm(vec3 p) {
     float s = 0.0, a = 0.5;
     for (int i = 0; i < 4; i++) {
-        s += a * noise3(p);
+        s += a * valueNoise3(p);
         p = p * 2.03 + vec3(1.7, 9.2, 3.1);
         a *= 0.5;
     }
@@ -184,7 +184,7 @@ void main() {
                 vec3 inside = mix(vec3(0.88, 0.24, 0.05), vec3(1.0, 0.62, 0.22), smoothstep(0.3, 0.72, cloud));
                 inside *= 0.75 + 0.5 * cloud;
                 // 白球边缘带一点横向的毛刺；被地面挡住的部分不画。外面一圈很亮的日冕，再外面一层淡金的光晕
-                float rc = R * 0.26 * (1.0 + 0.08 * (noise3(vec3(q.y * 26.0, time * 2.5, 3.0)) - 0.5));
+                float rc = R * 0.26 * (1.0 + 0.08 * (valueNoise3(vec3(q.y * 26.0, time * 2.5, 3.0)) - 0.5));
                 float coreFront = b - sqrt(max(rc * rc - perp * perp, 0.0));
                 float core = smoothstep(rc + R * 0.015, rc - R * 0.005, perp) * step(coreFront, sceneDist);
                 float beyond = max(perp - rc, 0.0);
@@ -208,13 +208,13 @@ void main() {
                 for (int i = 0; i < 3; i++) {
                     float fi = float(i);
                     float pos = fract(time * 0.28 + fi / 3.0) * 1.9 - 0.15;
-                    float jag = (noise3(horiz * 3.0 + vec3(0.0, 0.0, fi * 7.0 + time * 0.6)) - 0.5) * 0.24
-                              + (noise3(horiz * 16.0 + vec3(0.0, 0.0, fi * 3.0 + time * 1.4)) - 0.5) * 0.1
-                              + (noise3(horiz * 45.0 + vec3(0.0, 0.0, fi * 5.0 + time * 3.0)) - 0.5) * 0.045;
+                    float jag = (valueNoise3(horiz * 3.0 + vec3(0.0, 0.0, fi * 7.0 + time * 0.6)) - 0.5) * 0.24
+                              + (valueNoise3(horiz * 16.0 + vec3(0.0, 0.0, fi * 3.0 + time * 1.4)) - 0.5) * 0.1
+                              + (valueNoise3(horiz * 45.0 + vec3(0.0, 0.0, fi * 5.0 + time * 3.0)) - 0.5) * 0.045;
                     float ds = theta + jag - pos;
                     float d = abs(ds);
                     float line = exp(-d / width) + 0.35 * exp(-d / (width * 3.5));
-                    float broken = smoothstep(0.2, 0.48, noise3(horiz * 5.0 + vec3(0.0, 0.0, fi * 11.0 + time * 0.4)));
+                    float broken = smoothstep(0.2, 0.48, valueNoise3(horiz * 5.0 + vec3(0.0, 0.0, fi * 11.0 + time * 0.4)));
                     float k = broken * smoothstep(-0.15, 0.1, pos) * (1.0 - smoothstep(1.35, 1.7, pos));
                     ripple += line * k;
                     shadow += smoothstep(width * 0.8, width * 2.0, ds) * (1.0 - smoothstep(width * 2.0, width * 6.0, ds)) * k;
