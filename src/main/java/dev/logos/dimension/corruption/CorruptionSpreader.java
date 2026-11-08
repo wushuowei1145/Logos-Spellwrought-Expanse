@@ -63,12 +63,6 @@ public final class CorruptionSpreader {
         }
     }
 
-    /** 合并网络时把小网络的光标接过来，装不下的丢掉（原版也是满 32 个就不收）。 */
-    public void takeOver(CorruptionSpreader other) {
-        other.cursors.forEach(this::addCursor);
-        other.cursors.clear();
-    }
-
     private void addCursor(Cursor cursor) {
         if (cursors.size() < MAX_CURSORS) cursors.add(cursor);
     }

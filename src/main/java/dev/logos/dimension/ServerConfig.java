@@ -45,6 +45,19 @@ public final class ServerConfig {
             .comment("Beyond about this many blocks from its core a network's charge dies out quickly (sculk catalysts use 24).")
             .defineInRange("growthRadius", 24, 4, 256);
 
+    public static final ModConfigSpec.IntValue CORRUPTION_MAX_BLOCKS = BUILDER
+            .comment("A network stops growing at this many veins and filth blocks; extra charge plants a satellite core instead.",
+                    "Breaking a core only clears its own network, so this also bounds how much one break dissolves.")
+            .defineInRange("maxBlocks", 600, 16, 100000);
+
+    public static final ModConfigSpec.IntValue CORRUPTION_MAX_SATELLITES = BUILDER
+            .comment("How many satellite cores one core can plant. Satellites plant their own, with no limit on generations.")
+            .defineInRange("maxSatellites", 3, 0, 64);
+
+    public static final ModConfigSpec.IntValue CORRUPTION_SATELLITE_SPACING = BUILDER
+            .comment("A satellite core is planted at least this many blocks from every other core.")
+            .defineInRange("satelliteSpacing", 16, 2, 256);
+
     static {
         BUILDER.pop();
     }

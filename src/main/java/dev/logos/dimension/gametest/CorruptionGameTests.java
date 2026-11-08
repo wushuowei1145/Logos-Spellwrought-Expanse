@@ -63,7 +63,9 @@ public final class CorruptionGameTests {
         tests.put("corruption_hurts_the_living_not_the_undead", CorruptionGameTests::contact);
         tests.put("corruption_drains_player_mana", CorruptionGameTests::mana);
         tests.put("corruption_kill_feeds_the_network", CorruptionGameTests::feeds);
-        tests.put("corruption_smaller_network_merges", CorruptionGameTests::merge);
+        tests.put("corruption_touching_networks_stay_apart", CorruptionGameTests::apart);
+        tests.put("corruption_full_network_splits", CorruptionGameTests::splits);
+        tests.put("corruption_full_lone_network_banks_charge", CorruptionGameTests::banks);
         tests.put("corruption_core_break_fades_outward", CorruptionGameTests::fade);
         tests.put("corruption_player_breaks_core", CorruptionGameTests::playerBreak);
         tests.put("corruption_large_network_restores", CorruptionGameTests::large);
@@ -312,27 +314,130 @@ public final class CorruptionGameTests {
                 .thenSucceed();
     }
 
-    /** 两个网络挨上：小的那个连核心一起没了，方块全归大的。 */
-    private static void merge(GameTestHelper h) {
-        BlockPos bigCore = new BlockPos(1, 2, 1), smallCore = new BlockPos(12, 2, 1);
-        h.setBlock(bigCore, Corruption.CORE.get());
-        h.setBlock(smallCore, Corruption.CORE.get());
+    /** 两个网络挨上：不合并，两个核心都在，各自的方块还是各自的。 */
+    private static void apart(GameTestHelper h) {
+        BlockPos leftCore = new BlockPos(1, 2, 1), rightCore = new BlockPos(12, 2, 1);
+        h.setBlock(leftCore, Corruption.CORE.get());
+        h.setBlock(rightCore, Corruption.CORE.get());
         for (int x = 2; x <= 9; x++) h.setBlock(new BlockPos(x, 2, 1), Corruption.BLOCK.get());
         h.setBlock(new BlockPos(11, 2, 1), Corruption.BLOCK.get());
-        var big = data(h).ofCore(h.absolutePos(bigCore));
-        check(h, big != null && big.size() == 8, "大网络应当是 8 格");
-        check(h, data(h).ofCore(h.absolutePos(smallCore)).size() == 1, "小网络应当是 1 格");
-        // 补上中间这一格，两个网络就挨上了
+        var left = data(h).ofCore(h.absolutePos(leftCore));
+        var right = data(h).ofCore(h.absolutePos(rightCore));
+        // 补上中间这一格，两个网络就挨上了（它跟着先找到的邻居，也就是左边）
         h.setBlock(new BlockPos(10, 2, 1), Corruption.BLOCK.get());
-        h.succeedWhen(() -> {
-            check(h, data(h).ofCore(h.absolutePos(smallCore)) == null, "小网络应当并掉");
-            h.assertBlockNotPresent(Corruption.CORE.get(), smallCore);
-            check(h, data(h).ofCore(h.absolutePos(bigCore)) == big, "大网络还在");
-            // 两个核心的初始电荷会在地面上长出脉络，所以只要求至少有放下的这 10 格
-            check(h, big.size() >= 10, "大网络应当至少有 10 格，实际 " + big.size());
-            for (int x = 2; x <= 11; x++) check(h, data(h).at(h.absolutePos(new BlockPos(x, 2, 1))) == big, "第 " + x + " 格应当归大网络");
-            check(h, data(h).at(h.absolutePos(new BlockPos(11, 2, 1))) == big, "小网络的方块应当归大的");
+        h.runAfterDelay(20, () -> {
+            h.assertBlockPresent(Corruption.CORE.get(), leftCore);
+            h.assertBlockPresent(Corruption.CORE.get(), rightCore);
+            check(h, data(h).ofCore(h.absolutePos(leftCore)) == left && data(h).ofCore(h.absolutePos(rightCore)) == right, "两个网络都还在");
+            for (int x = 2; x <= 10; x++) check(h, data(h).at(h.absolutePos(new BlockPos(x, 2, 1))) == left, "第 " + x + " 格应当还归左边");
+            check(h, data(h).at(h.absolutePos(new BlockPos(11, 2, 1))) == right, "第 11 格应当还归右边");
+            h.succeed();
         });
+    }
+
+    /** 强制加载这片地跨过的区块（测试框架只替测试结构所在的区块保持加载），返回它们，测试结束时放开。 */
+    private static List<ChunkPos> forceArea(GameTestHelper h, BlockPos from, BlockPos to) {
+        BlockPos a = h.absolutePos(from), b = h.absolutePos(to);
+        List<ChunkPos> chunks = new ArrayList<>();
+        for (int cx = Math.min(a.getX(), b.getX()) >> 4; cx <= Math.max(a.getX(), b.getX()) >> 4; cx++) {
+            for (int cz = Math.min(a.getZ(), b.getZ()) >> 4; cz <= Math.max(a.getZ(), b.getZ()) >> 4; cz++) {
+                chunks.add(new ChunkPos(cx, cz));
+                h.getLevel().setChunkForced(cx, cz, true);
+            }
+        }
+        return chunks;
+    }
+
+    private static void release(GameTestHelper h, List<ChunkPos> chunks) {
+        for (ChunkPos c : chunks) h.getLevel().setChunkForced(c.x(), c.z(), false);
+    }
+
+    /**
+     * 一块 {@code size}×{@code size} 的污秽地（记着原来是泥土）、中间上方一个核心，由近到远放，全归这个核心。
+     * {@code veins} 时污秽上再全铺脉络。返回核心的相对位置。
+     */
+    private static BlockPos filthField(GameTestHelper h, int size, boolean veins) {
+        int r = size / 2;
+        BlockPos below = new BlockPos(r, 0, r), core = below.above();
+        clear(h, new BlockPos(0, 1, 0), new BlockPos(size - 1, 4, size - 1));
+        h.setBlock(core, Corruption.CORE.get());
+        List<BlockPos> floor = new ArrayList<>();
+        for (int x = 0; x < size; x++) for (int z = 0; z < size; z++) floor.add(new BlockPos(x, 0, z));
+        floor.sort(Comparator.comparingInt(p -> p.distManhattan(below)));
+        for (BlockPos p : floor) {
+            h.setBlock(p, Corruption.BLOCK.get());
+            data(h).remember(h.absolutePos(p), Blocks.DIRT.defaultBlockState());
+        }
+        if (veins) {
+            var vein = Corruption.VEIN.get().defaultBlockState().setValue(MultifaceBlock.getFaceProperty(Direction.DOWN), true);
+            for (BlockPos p : floor) if (!p.equals(below)) h.setBlock(p.above(), vein);
+        }
+        return core;
+    }
+
+    /**
+     * 网络满了（25×25 = 625 格，上限 600）：杀生的电荷每来一次就种一个子核心，一共 3 个，彼此和母核心都隔开至少 16 格，
+     * 记着母核心是谁；第 4 次种满了，电荷交给最近的子核心。拆掉母核心后，子核心还在，变成独立的。
+     */
+    private static void splits(GameTestHelper h) {
+        var chunks = forceArea(h, new BlockPos(0, 0, 0), new BlockPos(24, 0, 24));
+        BlockPos core = filthField(h, 25, false);
+        var data = data(h);
+        var root = data.ofCore(h.absolutePos(core));
+        check(h, root.size() == 625, "母网络应当有 625 格，实际 " + root.size());
+        BlockPos killer = h.absolutePos(new BlockPos(12, 0, 13));
+        List<BlockPos> cores = new ArrayList<>(List.of(h.absolutePos(core)));
+        for (int i = 1; i <= 3; i++) {
+            check(h, data.feed(h.getLevel(), killer, killer.above(), 40), "第 " + i + " 次杀生应当记到网络上");
+            check(h, data.satellites(root) == i, "第 " + i + " 次杀生后应当有 " + i + " 个子核心，实际 " + data.satellites(root));
+        }
+        List<CorruptionNetworks.Network> children = new ArrayList<>();
+        for (BlockPos p : BlockPos.betweenClosed(h.absolutePos(new BlockPos(0, 1, 0)), h.absolutePos(new BlockPos(24, 1, 24)))) {
+            var n = data.ofCore(p);
+            if (n != null && n != root) {
+                children.add(n);
+                cores.add(p.immutable());
+            }
+        }
+        check(h, children.size() == 3, "地上应当有 3 个子核心，实际 " + children.size());
+        for (var child : children) {
+            check(h, child.parent() == root.id(), "子核心应当记着母核心");
+            check(h, child.charge() > 0, "子核心应当接到电荷");
+        }
+        for (int i = 0; i < cores.size(); i++) for (int j = i + 1; j < cores.size(); j++) {
+            check(h, cores.get(i).distSqr(cores.get(j)) >= 16 * 16, "核心之间应当至少隔 16 格：" + cores.get(i) + " 和 " + cores.get(j));
+        }
+        int before = 0;
+        for (var child : children) before += child.charge();
+        data.feed(h.getLevel(), killer, killer.above(), 40);
+        int after = 0;
+        for (var child : children) after += child.charge();
+        check(h, data.satellites(root) == 3, "子核心种满 3 个就不再种");
+        check(h, after >= before + 40, "种满后杀生的电荷应当交给子核心：之前 " + before + "，之后 " + after);
+        check(h, root.reserve() == 0, "同族还有没满的网络，电荷不进储备");
+        h.getLevel().destroyBlock(h.absolutePos(core), false);
+        for (int i = 1; i < cores.size(); i++) {
+            var child = data.ofCore(cores.get(i));
+            check(h, child != null && child.parent() == 0, "母核心拆掉后子核心应当变成独立的");
+            check(h, h.getLevel().getBlockState(cores.get(i)).is(Corruption.CORE.get()), "子核心应当还在");
+        }
+        release(h, chunks);
+        h.succeed();
+    }
+
+    /** 满了但没地方种子核心（20×20 的污秽上铺满脉络，799 格，离核心最远也不到 16 格），又没有同族：杀生的电荷存进储备。 */
+    private static void banks(GameTestHelper h) {
+        var chunks = forceArea(h, new BlockPos(0, 0, 0), new BlockPos(19, 0, 19));
+        BlockPos core = filthField(h, 20, true);
+        var data = data(h);
+        var root = data.ofCore(h.absolutePos(core));
+        check(h, root.size() >= 600, "网络应当是满的，实际 " + root.size());
+        BlockPos killer = h.absolutePos(new BlockPos(10, 0, 11));
+        data.feed(h.getLevel(), killer, killer.above(), 30);
+        check(h, data.satellites(root) == 0, "没有地方种子核心");
+        check(h, root.reserve() == 30, "电荷应当存进储备，实际 " + root.reserve());
+        release(h, chunks);
+        h.succeed();
     }
 
     /** 拆掉核心：不掉东西，近的先消散、远的后消散，最后全没了。 */

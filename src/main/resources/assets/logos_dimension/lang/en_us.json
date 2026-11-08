@@ -1153,7 +1153,7 @@
   "item.logos_dimension.corruption_core": "Corruption Core",
   "item.logos_dimension.corruption": "Corrupted Filth",
   "item.logos_dimension.corruption_vein": "Corruption Vein",
-  "message.logos_dimension.corruption.core.size": "Corruption network: %s blocks, %s charge spreading",
+  "message.logos_dimension.corruption.core.size": "Corruption network: %s/%s blocks, %s satellite cores, %s charge spreading, %s in reserve",
   "message.logos_dimension.corruption.core.dormant": "This core belongs to no corruption network",
   "death.attack.logos_dimension.corruption": "%1$s was consumed by corruption",
   "death.attack.logos_dimension.corruption.player": "%1$s was consumed by corruption while fighting %2$s"
