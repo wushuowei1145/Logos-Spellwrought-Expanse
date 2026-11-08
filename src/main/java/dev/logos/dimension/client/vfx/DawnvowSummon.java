@@ -63,14 +63,14 @@ public final class DawnvowSummon {
         float shade = draw
                 ? (float) (age < FORM ? .35 * Math.pow(age / FORM, 2) : 1 - (age - FORM) / FLASH)
                 : (float) (age < PLUNGE ? 0 : age < VANISH ? (age - PLUNGE) / (VANISH - PLUNGE) : Math.max(0, 1 - (age - VANISH) / .12));
-        if (shade > .005f) out.submitCustomGeometry(pose, DawnvowAura.LASER, (q, buf) -> {
+        if (shade > .005f) out.submitCustomGeometry(pose, DawnvowAura.LASER.world(), (q, buf) -> {
             for (int k = 0; k < 3; k++) {
                 Vec3 across = new Vec3(Math.cos(k * Math.PI / 3), 0, Math.sin(k * Math.PI / 3));
                 shape(q, buf, across, 5.5f, .55f * shade, DawnvowAura.GOLD);
                 shape(q, buf, across, 1.6f, .9f * shade, DawnvowAura.HOT);
             }
         });
-        out.submitCustomGeometry(pose, DawnvowAura.DOT, (q, buf) -> {
+        out.submitCustomGeometry(pose, DawnvowAura.DOT.world(), (q, buf) -> {
             for (int i = 0; i < MOTES; i++) {
                 Vec3 target = target(i);
                 Vec3 at;

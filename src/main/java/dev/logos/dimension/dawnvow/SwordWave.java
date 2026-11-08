@@ -41,8 +41,8 @@ import org.jspecify.annotations.Nullable;
  *       一格高的坎迈上去，两格以上的墙劈开；剑气所在高度往上 {@link #GRAND_HEIGHT} 格、左右各 {@link #GRAND_HALF_WIDTH} 格内
  *       硬度不超过 {@link #SOFT} 的方块被削掉（不掉落），脚下的地面不动。正前方是劈不开的方块（更硬、带方块实体、受保护）时就停在那里。
  *       生命值不超过 {@link #KILL_BELOW} 的生物直接击杀，不超过 {@link #STOP_ABOVE} 的受 {@link #PIERCE_DAMAGE} 点伤害、
- *       剑气穿过；碰到生命值更高的生物、劈不开的方块或走满 {@link #GRAND_RANGE} 格时十字爆闪，随后金色光柱冲起，
- *       半径 {@link #BURST_RADIUS} 格内的生物受 {@link #BURST_DAMAGE} 点伤害。</li>
+ *       剑气穿过；碰到生命值更高的生物、劈不开的方块或走满 {@link #GRAND_RANGE} 格时扎进地面，蓄一团光、一阵几何黑白闪
+ *       （{@link DawnvowBurst}），随后金色光柱冲起，半径 {@link #BURST_RADIUS} 格内的生物受 {@link #BURST_DAMAGE} 点伤害。</li>
  * </ul>
  * 都不伤挥剑的人、同乘的和自己的宠物。
  */
@@ -58,8 +58,8 @@ public final class SwordWave {
     public static final double PATH_STEP = 0.5, GRAND_DROP = 8;
     /** 每刻最多放多少个方块碎裂的粒子和声音。 */
     private static final int BREAK_EFFECTS = 24;
-    /** 十字爆闪之后几刻光柱冲起、结算范围伤害。 */
-    public static final int PILLAR_DELAY = 4;
+    /** 剑气到头之后几刻光柱冲起、结算范围伤害：中间是地上那团光和几何黑白闪，见 {@link DawnvowBurst}。 */
+    public static final int PILLAR_DELAY = DawnvowBurst.PILLAR;
     /** 光柱缩放：缩放 1 时柱半径 1.6 格，这里撑到 {@link #BURST_RADIUS}。 */
     public static final float PILLAR_SCALE = (float) (BURST_RADIUS / 1.6);
     /** 直接击杀用的伤害：护甲与保护附魔最多减到两成的两成，仍远超击杀线。 */
@@ -309,7 +309,11 @@ public final class SwordWave {
 
         @Override public boolean step() {
             if (after >= 0) {
-                if (++after < PILLAR_DELAY) return false;
+                ++after;
+                // 跟着客户端的画面：光团鼓起时一声低鸣，黑色爆发时被吸进去，黑白闪时一声脆响
+                if (after == (int) DawnvowBurst.BLACK) sound(SoundEvents.BEACON_DEACTIVATE, 4, .5f);
+                if (after == (int) DawnvowBurst.CONTRAST) sound(SoundEvents.TRIDENT_THUNDER.value(), 3, 1.4f);
+                if (after < PILLAR_DELAY) return false;
                 pillar();
                 return true;
             }
@@ -320,7 +324,8 @@ public final class SwordWave {
             if (head >= length) {
                 burst = point(length);
                 lastBurst = burst;
-                level.playSound(null, burst.x, burst.y, burst.z, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 4, .7f);
+                sound(SoundEvents.BEACON_ACTIVATE, 4, .6f);
+                sound(SoundEvents.WARDEN_SONIC_CHARGE, 4, 1.1f);
                 after = 0;
             }
             return false;
@@ -372,9 +377,14 @@ public final class SwordWave {
             }
         }
 
+        private void sound(net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
+            level.playSound(null, burst.x, burst.y, burst.z, sound, SoundSource.PLAYERS, volume, pitch);
+        }
+
         private void pillar() {
             PillarBurst.play(level, burst, PILLAR_SCALE);
-            level.playSound(null, burst.x, burst.y, burst.z, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 5, .8f);
+            sound(SoundEvents.GENERIC_EXPLODE.value(), 4, .7f);
+            sound(SoundEvents.LIGHTNING_BOLT_THUNDER, 5, .8f);
             AABB box = new AABB(burst, burst).inflate(BURST_RADIUS);
             for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, box, e -> mayHit(player, e))) {
                 if (e.getBoundingBox().getCenter().distanceToSqr(burst) > BURST_RADIUS * BURST_RADIUS) continue;

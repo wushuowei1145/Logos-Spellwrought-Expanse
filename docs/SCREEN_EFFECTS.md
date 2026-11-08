@@ -1,6 +1,6 @@
 # 全屏后期（Screen Effects）
 
-世界画完之后、界面之前的一个全屏通道，目前有两种效果：动漫式的黑白闪（冲击帧）和电影蒙版。只影响收到效果的那个玩家的画面。门后异画风见 [WORLD_STYLES.md](WORLD_STYLES.md)，同一处还有特效的泛光，见下文「泛光」，以及在后期里画的特效，见下文「后期里画的特效」。爆裂魔法自己的全屏通道（变暗、红热、转蓝、十字闪、白热的球体）排在这些之前，见 [EXPLOSION_MAGIC.md](EXPLOSION_MAGIC.md)；超电磁炮发射时的压暗（`RailgunScreen`）又排在爆裂魔法之前，见 [RAILGUN.md](RAILGUN.md)。处决特写的平涂画面（`ExecutionRenderer`）排在画风之后、黑白闪之前，见 [EXECUTION_SHOTS.md](EXECUTION_SHOTS.md)。
+世界画完之后、界面之前的一个全屏通道，目前有两种效果：动漫式的黑白闪（冲击帧）和电影蒙版。只影响收到效果的那个玩家的画面。门后异画风见 [WORLD_STYLES.md](WORLD_STYLES.md)，同一处还有特效的泛光，见下文「泛光」，以及在后期里画的特效，见下文「后期里画的特效」。爆裂魔法自己的全屏通道（变暗、红热、转蓝、十字闪、白热的球体）排在这些之前，见 [EXPLOSION_MAGIC.md](EXPLOSION_MAGIC.md)；曦誓的全屏通道（大型蓄力时周围变暗、光柱冲起之前的几何黑白闪）紧跟在它后面，见 [DAWNVOW_CHARGE.md](DAWNVOW_CHARGE.md)；超电磁炮发射时的压暗（`RailgunScreen`）又排在爆裂魔法之前，见 [RAILGUN.md](RAILGUN.md)。处决特写的平涂画面（`ExecutionRenderer`）排在画风之后、黑白闪之前，见 [EXECUTION_SHOTS.md](EXECUTION_SHOTS.md)。
 
 ## 怎么用
 
@@ -91,7 +91,7 @@ GlowBloom.quads(data, size, firstPerson);       // 一批四边形，格式见�
 
 ## 后期里画的特效（`PostVfx`）
 
-有的特效要在画面调完色之后才画：爆裂魔法吟唱时周围变暗，施法者身上和天上的法阵却要格外亮；在世界里画的话，它们会跟着一起暗下去。`PostVfx` 收这些发光的几何，世界和手都画完、爆裂魔法的全屏通道跑完之后，在泛光之前把它们画上去。
+有的特效要在画面调完色之后才画：爆裂魔法吟唱时周围变暗，施法者身上和天上的法阵却要格外亮；曦誓大型蓄力时也一样，四周升起的光点要在暗处发亮。在世界里画的话，它们会跟着一起暗下去。`PostVfx` 收这些发光的几何，世界和手都画完、爆裂魔法和曦誓的全屏通道跑完之后，在泛光之前把它们画上去。`PostVfx.collecting()` 说这一帧收不收：不收时照旧在世界里画（曦誓的 `PostLayer` 就是这样切换的）。
 
 ```java
 // 在 SubmitCustomGeometryEvent 里，和 VfxParts 平常的用法一样先 translate(-camera)
