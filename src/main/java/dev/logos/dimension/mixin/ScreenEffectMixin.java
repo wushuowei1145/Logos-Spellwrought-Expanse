@@ -28,17 +28,26 @@ public abstract class ScreenEffectMixin {
     private void screenEffectProjection(DeltaTracker deltaTracker, CallbackInfo ci, @Local(ordinal = 0) Matrix4f projection) {
         WorldStyleRenderer.PROJECTION.set(projection);
         GlowBloom.begin();
-        dev.logos.dimension.client.screenfx.PostVfx.begin(dev.logos.dimension.client.explosion.ExplosionClient.active());
+        dev.logos.dimension.client.screenfx.PostVfx.begin(dev.logos.dimension.client.explosion.ExplosionClient.active()
+                || dev.logos.dimension.client.vfx.DawnvowScreen.active());
+        dev.logos.dimension.client.vfx.DawnvowScreen.beginFrame();
     }
 
     @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/fog/FogRenderer;endFrame()V"))
     private void screenEffectDraw(DeltaTracker deltaTracker, boolean advanceGameTime, CallbackInfo ci) {
         if (!advanceGameTime) return;
-        // 爆裂魔法的调色和球体最先画，在后期里画的特效紧跟其后，不会被调暗
-        dev.logos.dimension.client.explosion.ExplosionScreen.draw();
+        // 爆裂魔法、曦誓的调色和全屏特效最先画，在后期里画的特效紧跟其后，不会被调暗
+        // 超电磁炮发射时的压暗也在泛光之前，射线的光是后加的
+        dev.logos.dimension.client.vfx.RailgunScreen.draw();
+        Matrix4f viewProjection = dev.logos.dimension.client.screenfx.PostVfx.viewProjection();
+        dev.logos.dimension.client.explosion.ExplosionScreen.draw(viewProjection);
+        dev.logos.dimension.client.vfx.DawnvowScreen.draw(viewProjection);
+        dev.logos.dimension.client.screenfx.PostVfx.draw(viewProjection);
         // 泛光排在前面：画风和黑白闪处理的是已经带泛光的画面
         GlowBloom.draw(hudProjection.getMatrix(new Matrix4f()));
         WorldStyleRenderer.draw();
+        // 处决特写把整个画面换成平涂的颜色，黑白闪和蒙版还能叠在它上面
+        dev.logos.dimension.client.execution.ExecutionRenderer.draw();
         ScreenEffectRenderer.draw();
     }
 }

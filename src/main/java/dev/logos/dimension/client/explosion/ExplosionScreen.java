@@ -66,13 +66,10 @@ public final class ExplosionScreen {
         return passes;
     }
 
-    /** 由 Mixin 在世界画完之后调用：先画这一个全屏通道，再画 {@link PostVfx} 收到的特效。 */
-    public static void draw() {
+    /** 由 Mixin 在世界画完之后调用，排在 {@link PostVfx} 收到的特效之前。{@code viewProjection} 见 {@link PostVfx#viewProjection()}。 */
+    public static void draw(Matrix4f viewProjection) {
         Minecraft mc = Minecraft.getInstance();
-        Camera camera = mc.gameRenderer.getMainCamera();
-        Matrix4f viewProjection = new Matrix4f(WorldStyleRenderer.PROJECTION).mul(camera.getViewRotationMatrix(new Matrix4f()));
-        if (mc.level != null && ExplosionClient.active()) pass(mc, camera, viewProjection);
-        PostVfx.draw(viewProjection);
+        if (mc.level != null && ExplosionClient.active()) pass(mc, mc.gameRenderer.getMainCamera(), viewProjection);
     }
 
     private static void pass(Minecraft mc, Camera camera, Matrix4f viewProjection) {

@@ -44,7 +44,7 @@ public final class DawnvowBlade {
         float reach = TIP + (EXTEND * g + (full ? EXTEND_FULL : 0)) * breathe;
         pose.pushPose();
         pose.mulPose(sample.weapon());
-        out.submitCustomGeometry(pose, DawnvowAura.LASER, (p, buf) -> {
+        out.submitCustomGeometry(pose, DawnvowAura.LASER.world(), (p, buf) -> {
             for (int k = 0; k < 3; k++) {
                 double a = k * Math.PI / 3 + time * .02;
                 Vec3 across = new Vec3(Math.cos(a), 0, Math.sin(a));

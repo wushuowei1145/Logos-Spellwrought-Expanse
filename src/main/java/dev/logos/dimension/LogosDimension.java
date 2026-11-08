@@ -104,6 +104,7 @@ public final class LogosDimension {
         dev.logos.dimension.explosion.ExplosionMagic.register(bus);
         dev.logos.dimension.camera.CameraShots.register(bus);
         dev.logos.dimension.screenfx.ScreenEffects.register(bus);
+        dev.logos.dimension.execution.ExecutionShots.register(bus);
         dev.logos.dimension.dissolve.Dissolving.register(bus);
         dev.logos.dimension.worldstyle.StyleRealms.register(bus);
         dev.logos.dimension.camera.CameraTestBlock.init();

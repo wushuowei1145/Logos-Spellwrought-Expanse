@@ -179,6 +179,15 @@ public final class PostVfx {
         @Override public VertexConsumer setLineWidth(float width) { return this; }
     };
 
+    /** 这一帧在收后期里画的特效：世界正在画，并且有人要了半透明之前的深度。这时交上来的几何才会被画出来。 */
+    public static boolean collecting() { return open && wanted; }
+
+    /** 世界渲染用的投影（含视角晃动）乘镜头朝向：全屏通道还原位置、后期里的特效投到屏幕上都用它。 */
+    public static Matrix4f viewProjection() {
+        var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+        return new Matrix4f(WorldStyleRenderer.PROJECTION).mul(camera.getViewRotationMatrix(new Matrix4f()));
+    }
+
     /** 通道一共跑了多少次（客户端场景看有没有在画）。 */
     public static long passes() { return passes; }
 

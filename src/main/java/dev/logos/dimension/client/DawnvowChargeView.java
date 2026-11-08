@@ -6,7 +6,12 @@ import com.lowdragmc.lowdraglib2.uitest.*;
 import dev.logos.dimension.DimensionTravel;
 import dev.logos.dimension.client.longsword.LongswordClient;
 import dev.logos.dimension.client.vfx.DawnvowClient;
+import dev.logos.dimension.client.vfx.DawnvowScreen;
 import dev.logos.dimension.client.vfx.DawnvowShake;
+import dev.logos.dimension.dawnvow.DawnvowBurst;
+import dev.logos.dimension.dawnvow.DawnvowCharge;
+import dev.logos.dimension.dawnvow.DawnvowPayload;
+import dev.logos.dimension.dawnvow.SwordWave;
 import dev.logos.dimension.item.LongswordItem;
 import dev.logos.runtime.PlayerMagic;
 import java.util.Arrays;
@@ -27,9 +32,10 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 曦誓蓄力彩蛋的实际客户端：黄昏的石台上按住右键 15 秒，依次拍普通蓄力、7 秒起的大型蓄力（四周升起的光点、身上的光）、
- * 12 秒的剑身金光、蓄满的金色流火（侧面、正面与第一人称），松手后从背后拍巨型剑气、十字爆闪与光柱；
- * 服务端检查剑气对三种血量的生物；最后再蓄一下普通蓄力斩，拍贴地剑气。
+ * 曦誓蓄力彩蛋的实际客户端：黄昏的石台上按住右键 15 秒，依次拍普通蓄力、7 秒起的大型蓄力（四周升起的光点、身上的光，
+ * 后期把周围调暗、身边照亮）、12 秒的剑身金光、蓄满的金色流火（侧面、正面与第一人称），松手后拍巨型剑气、扎进地面和光柱；
+ * 服务端检查剑气对三种血量的生物；再蓄一下普通蓄力斩，拍贴地剑气。最后只在本机重放一道巨型剑气，
+ * 停住曦誓特效的时钟，按 {@link DawnvowBurst} 的时间轴一刻一刻拍光柱冲起之前的那串画面。
  */
 @LDLRegisterClient(name = "dawnvow_charge", group = "dawnvow_charge", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
 public class DawnvowChargeView implements UIScenario {
@@ -37,6 +43,22 @@ public class DawnvowChargeView implements UIScenario {
     private final int[] targets = new int[3];
     private long started;
     private boolean previousHideGui;
+    private double arrive;
+    private long passes;
+
+    /** 重放时停在时间轴的哪一刻（从剑气到头算起）拍哪一张。 */
+    private record Phase(String name, float age) {}
+
+    private static float beat(int index) {
+        return DawnvowBurst.CONTRAST + (index + .5f) * DawnvowBurst.BEAT;
+    }
+
+    private static final Phase[] PHASES = {
+            new Phase("burst_lens", 2), new Phase("burst_swell", 8), new Phase("burst_dome", 13),
+            new Phase("burst_black_out", 14.6f), new Phase("burst_black", 16), new Phase("burst_contract", 18.6f),
+            new Phase("burst_contract_late", 19.6f),
+            new Phase("burst_invert", beat(0)), new Phase("burst_stars_white", beat(2)), new Phase("burst_stars_white_2", beat(3)),
+            new Phase("burst_stars_black", beat(4)), new Phase("burst_expand", 27.5f), new Phase("burst_white", 31.5f)};
 
     @Override public void configure(ScenarioOptions o) {
         o.tags("dawnvow_charge").defaultTimeoutMs(120000).scenarioTimeoutMs(600000);
@@ -171,6 +193,10 @@ public class DawnvowChargeView implements UIScenario {
         own(s, "第一人称", CameraType.FIRST_PERSON);
         // 隐藏界面时原版不画第一人称的手
         s.step("显示手", ctx -> Minecraft.getInstance().options.hideGui = false).ticks(4).screenshot("full_first_person")
+                .check("调暗时分层留到了画面（剑上的火焰不跟着暗）", ctx -> DawnvowScreen.lastLayers() > 0)
+                // 抬头看天：火焰背后是远处的天空，这时火焰最容易跟着暗下去
+                .step("抬头", ctx -> Minecraft.getInstance().player.setXRot(-35)).ticks(3).screenshot("full_first_person_sky")
+                .step("低头回来", ctx -> Minecraft.getInstance().player.setXRot(0))
                 .step("隐藏界面", ctx -> Minecraft.getInstance().options.hideGui = true);
         own(s, "背后", CameraType.THIRD_PERSON_BACK);
         s.ticks(4).screenshot("full_back");
@@ -184,10 +210,20 @@ public class DawnvowChargeView implements UIScenario {
                 .waitUntil("巨型剑气", ctx -> DawnvowClient.waves() > 0).ticks(1).screenshot("release")
                 .ticks(3).screenshot("wave")
                 .ticks(3).screenshot("wave_late")
-                .waitUntil("爆发时镜头抖动", ctx -> DawnvowShake.strength() > .05)
-                .ticks(2).screenshot("cross_flash");
+                .waitUntil("剑气扎进地面时镜头抖动", ctx -> DawnvowShake.strength() > .05)
+                .step("记下剑气到头的时刻", ctx -> {
+                    var mc = Minecraft.getInstance();
+                    arrive = DawnvowClient.arrival(mc.player.getId());
+                    passes = DawnvowScreen.passes();
+                })
+                .ticks(2).screenshot("landing")
+                .check("后期在画", ctx -> DawnvowScreen.passes() > passes);
         side(s, "光柱远景", new Vec3(-10, 112, 30), new Vec3(30, 106, 0));
-        s.ticks(3).screenshot("pillar_wide")
+        // 远景机位离落点约 67 格，震动按距离减到三成多
+        s.waitUntil("光柱冲起", ctx -> Minecraft.getInstance().level.getGameTime() >= arrive + SwordWave.PILLAR_DELAY + 1)
+                .check("光柱冲起时镜头一震", ctx -> DawnvowShake.strength() > .2)
+                .check("几何黑白闪六拍都放到了", ctx -> DawnvowScreen.beatsShown() == DawnvowBurst.BEATS.length)
+                .ticks(2).screenshot("pillar_wide")
                 .server("记下生命", ctx -> {
                     for (int id : targets) {
                         var e = ctx.server().overworld().getEntity(id);
@@ -225,8 +261,26 @@ public class DawnvowChargeView implements UIScenario {
                 .ticks(6).screenshot("small_wave_later");
         side(s, "剑气侧面", new Vec3(8, 102.5, 7), new Vec3(10, 100, .5));
         s.ticks(1).screenshot("small_wave_side");
+        // 只在本机重放一道巨型剑气（服务端不知道，没有伤害和光柱），停住时钟按时间轴拍光柱冲起之前的那串画面
+        own(s, "背后 重放", CameraType.THIRD_PERSON_BACK);
+        s.waitUntil("上一道剑气画完", ctx -> DawnvowClient.waves() == 0)
+                .step("重放巨型剑气", ctx -> {
+                    var mc = Minecraft.getInstance();
+                    long t = mc.level.getGameTime();
+                    float[] path = new float[49];
+                    Arrays.fill(path, 100f);
+                    DawnvowClient.receive(new DawnvowPayload(DawnvowPayload.RELEASE, mc.player.getId(), t, new Vec3(2.5, 100, .5), new Vec3(1, 0, 0), path));
+                    arrive = t + 24 / DawnvowCharge.GRAND_SPEED;
+                    passes = DawnvowScreen.passes();
+                });
+        for (Phase phase : PHASES) {
+            s.step("停在第 " + phase.age() + " 刻", ctx -> DawnvowClient.pin(arrive + phase.age())).ticks(3).screenshot(phase.name());
+        }
+        s.check("重放时后期在画", ctx -> DawnvowScreen.passes() > passes)
+                .step("放开时钟", ctx -> DawnvowClient.pin(-1));
         s.teardown("恢复", ctx -> {
             var mc = Minecraft.getInstance();
+            DawnvowClient.pin(-1);
             mc.options.keyUse.setDown(false);
             mc.setCameraEntity(mc.player);
             mc.options.hideGui = previousHideGui;

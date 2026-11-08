@@ -9,6 +9,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.logos.client.VfxParts;
 import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.client.dissolve.Dissolves;
+import dev.logos.dimension.client.screenfx.GlowBloom;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -200,6 +202,88 @@ final class RailgunDraw {
         double r = (inner + (outer - inner) * v) * ruffle;
         return c.add(rr.scale(Math.cos(angle) * r)).add(uu.scale(Math.sin(angle) * r)).subtract(dir.scale(sweep * v * v));
     }
+
+    // ---- 泛光 ------------------------------------------------------------------------------------
+
+    /**
+     * 交给附属泛光（{@link GlowBloom}）的四边形，坐标相对镜头、世界坐标轴。泛光的小图不采样贴图，只按顶点颜色插值，
+     * 四个角同色的四边形模糊之后还是一块方的亮斑（大一点的 {@code GlowBloom.sprite} 就是这样）。所以这里交的都是
+     * 软边的形状：带子中线最亮、两边透明，光团是中心亮、边缘透明的一圈扇形。交的比画出来的窄，模糊之后自己会晕开。
+     */
+    static final class Glow {
+        private float[] data = new float[16 * 64];
+        private int size;
+        private Vec3 cam = Vec3.ZERO, right = new Vec3(1, 0, 0), up = new Vec3(0, 1, 0);
+
+        Glow begin(VfxParts.View view) {
+            this.cam = view.cam();
+            this.right = view.right();
+            this.up = view.up();
+            size = 0;
+            return this;
+        }
+
+        private void vertex(Vec3 p, float colour) {
+            if (size + 4 > data.length) data = java.util.Arrays.copyOf(data, data.length * 2);
+            data[size++] = (float) (p.x - cam.x);
+            data[size++] = (float) (p.y - cam.y);
+            data[size++] = (float) (p.z - cam.z);
+            data[size++] = colour;
+        }
+
+        /** 朝向镜头的一条带子，半宽 {@code width}：中线最亮，往两边淡到透明（两片四边形）。 */
+        void band(Vec3 a, Vec3 b, float width, int argb) {
+            Vec3 axis = b.subtract(a);
+            if (axis.lengthSqr() < 1e-8 || argb >>> 24 == 0) return;
+            Vec3 side = perpendicular(axis.normalize(), cam.subtract(a.add(b).scale(.5)));
+            float wa = RailgunDraw.width(a, cam, width), wb = RailgunDraw.width(b, cam, width);
+            float c = Float.intBitsToFloat(argb), edge = Float.intBitsToFloat(argb & 0xFFFFFF);
+            for (int s = -1; s <= 1; s += 2) {
+                vertex(a, c);
+                vertex(a.add(side.scale(wa * s)), edge);
+                vertex(b.add(side.scale(wb * s)), edge);
+                vertex(b, c);
+            }
+        }
+
+        /** 一串折线，每段一条带子。 */
+        void ribbon(Vec3[] pts, float width, int argb) {
+            for (int i = 1; i < pts.length; i++) band(pts[i - 1], pts[i], width, argb);
+        }
+
+        /** 垂直于 {@code n} 的一圈。 */
+        void ring(Vec3 c, Vec3 n, float radius, float width, int segments, int argb) {
+            Vec3 rr = perpendicular(n, new Vec3(0, 1, 0)), uu = n.cross(rr), prev = null;
+            for (int i = 0; i <= segments; i++) {
+                double a = i * Math.PI * 2 / segments;
+                Vec3 p = c.add(rr.scale(Math.cos(a) * radius)).add(uu.scale(Math.sin(a) * radius));
+                if (prev != null) band(prev, p, width, argb);
+                prev = p;
+            }
+        }
+
+        /** 朝向镜头的一团光，半径 {@code radius}：中心最亮，到边缘透明（十二片扇形，每片是一个退化的四边形）。 */
+        void disc(Vec3 at, float radius, int argb) {
+            if (radius <= 0 || argb >>> 24 == 0) return;
+            float c = Float.intBitsToFloat(argb), edge = Float.intBitsToFloat(argb & 0xFFFFFF);
+            int n = 12;
+            for (int i = 0; i < n; i++) {
+                double a0 = i * Math.PI * 2 / n, a1 = (i + 1) * Math.PI * 2 / n;
+                vertex(at, c);
+                vertex(at.add(right.scale(Math.cos(a0) * radius)).add(up.scale(Math.sin(a0) * radius)), edge);
+                vertex(at.add(right.scale(Math.cos(a1) * radius)).add(up.scale(Math.sin(a1) * radius)), edge);
+                vertex(at, c);
+            }
+        }
+
+        /** 交出去；光影包的阴影通道里不交，那时的姿势是太阳的。 */
+        void flush() {
+            if (size > 0 && !Dissolves.shadowPass()) GlowBloom.quads(data, size, false);
+            size = 0;
+        }
+    }
+
+    static final Glow GLOW_OUT = new Glow();
 
     // ---- 数学 ------------------------------------------------------------------------------------
 
