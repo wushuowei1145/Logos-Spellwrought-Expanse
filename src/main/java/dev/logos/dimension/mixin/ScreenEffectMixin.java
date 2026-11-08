@@ -41,6 +41,8 @@ public abstract class ScreenEffectMixin {
         // 泛光排在前面：画风和黑白闪处理的是已经带泛光的画面
         GlowBloom.draw(hudProjection.getMatrix(new Matrix4f()));
         WorldStyleRenderer.draw();
+        // 处决特写把整个画面换成平涂的颜色，黑白闪和蒙版还能叠在它上面
+        dev.logos.dimension.client.execution.ExecutionRenderer.draw();
         ScreenEffectRenderer.draw();
     }
 }

@@ -50,6 +50,7 @@ CameraShots.play(player, CameraShot.of(
 - 镜头离头部超过 0.6 格时临时切到第三人称，手、身体、屏幕效果和各处 `isFirstPerson()` 判断都会按镜头在外面处理；回到这个距离内就切回去并交还控制。玩家的视角设置在结束时恢复。
 - 遮幅在 `RenderGuiEvent.Pre` 里画，先于所有界面层：隐藏界面（包括 F1）时它照样在，`keepHud()` 时物品栏压在它上面。新的一段打断旧的时，遮幅从当时的位置接着走。
 - 锁操作和打开界面时一样：每刻开头 `KeyMapping.releaseAll()`，结束时 `setAll()` 并恢复切换式的潜行疾跑。滚轮和鼠标转向不走按键映射，单独拦。
+- 客户端还可以 `CameraDirector.play(shot, rig)`：停留期间的机位、视线和画面倾斜由 `rig` 逐帧给（可以硬切、抖动），进出的过渡和遮幅仍按 `shot` 走。[处决特写](EXECUTION_SHOTS.md)就是这样切镜的。
 
 ## 测试
 

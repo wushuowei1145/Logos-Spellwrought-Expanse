@@ -79,6 +79,7 @@ public final class DimensionCommands {
         root.then(realm);
         root.then(Commands.literal("flash").executes(c -> flash(c.getSource().getPlayerOrException(), null))
                 .then(Commands.argument("frames", StringArgumentType.word()).executes(c -> flash(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "frames")))));
+        root.then(execution());
         root.then(dissolve());
         // 试爆裂魔法：不吟唱，直接在准星指的地方放一次（半径和是否破坏地形照服务端配置）
         root.then(Commands.literal("explosion").executes(c -> {
@@ -173,6 +174,42 @@ public final class DimensionCommands {
         Vec3 at = CameraShots.reach(player.level(), eye, eye.add(player.getLookAngle().scale(48)));
         ScreenFlash flash = ScreenFlash.at(CameraPoint.world(at));
         ScreenEffects.flash(player, frames == null ? flash : new ScreenFlash(flash.center(), ScreenFlash.parse(frames)));
+        return 1;
+    }
+
+    /**
+     * /alchemy execution [目标] [刀数] [beats|every|steady] [black]：试处决特写，自己看。不给目标时处决自己。
+     * {@code beats}（默认）只在节拍上对调，{@code every} 每刀都对调（第一版），{@code steady} 不对调；
+     * {@code black} 换成黑底白身。只是画面，不扣血。
+     */
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.minecraft.commands.CommandSourceStack> execution() {
+        var slashes = Commands.argument("slashes", IntegerArgumentType.integer(dev.logos.dimension.execution.ExecutionShot.MIN_SLASHES, dev.logos.dimension.execution.ExecutionShot.MAX_SLASHES))
+                .executes(c -> execution(c, IntegerArgumentType.getInteger(c, "slashes"), false, dev.logos.dimension.execution.ExecutionShot.Swaps.BEATS))
+                .then(Commands.literal("black").executes(c -> execution(c, IntegerArgumentType.getInteger(c, "slashes"), true, dev.logos.dimension.execution.ExecutionShot.Swaps.BEATS)));
+        for (var style : dev.logos.dimension.execution.ExecutionShot.Swaps.values()) {
+            String name = style == dev.logos.dimension.execution.ExecutionShot.Swaps.NONE ? "steady" : style.name().toLowerCase(java.util.Locale.ROOT);
+            slashes.then(Commands.literal(name)
+                    .executes(c -> execution(c, IntegerArgumentType.getInteger(c, "slashes"), false, style))
+                    .then(Commands.literal("black").executes(c -> execution(c, IntegerArgumentType.getInteger(c, "slashes"), true, style))));
+        }
+        return Commands.literal("execution")
+                .executes(c -> execution(c, dev.logos.dimension.execution.ExecutionShot.DEFAULT_SLASHES, false, dev.logos.dimension.execution.ExecutionShot.Swaps.BEATS))
+                .then(Commands.argument("target", net.minecraft.commands.arguments.EntityArgument.entity())
+                        .executes(c -> execution(c, dev.logos.dimension.execution.ExecutionShot.DEFAULT_SLASHES, false, dev.logos.dimension.execution.ExecutionShot.Swaps.BEATS))
+                        .then(slashes));
+    }
+
+    private static int execution(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> c, int slashes, boolean black, dev.logos.dimension.execution.ExecutionShot.Swaps swaps) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        var viewer = c.getSource().getPlayerOrException();
+        var entity = c.getNodes().stream().anyMatch(n -> n.getNode().getName().equals("target"))
+                ? net.minecraft.commands.arguments.EntityArgument.getEntity(c, "target") : viewer;
+        if (!(entity instanceof net.minecraft.world.entity.LivingEntity target)) {
+            c.getSource().sendFailure(Component.literal("只能处决生物。"));
+            return 0;
+        }
+        var shot = dev.logos.dimension.execution.ExecutionShot.of(viewer.getRandom().nextInt()).slashes(slashes).swaps(swaps);
+        if (black) shot = shot.onBlack();
+        dev.logos.dimension.execution.ExecutionShots.play(viewer, target, shot);
         return 1;
     }
 
