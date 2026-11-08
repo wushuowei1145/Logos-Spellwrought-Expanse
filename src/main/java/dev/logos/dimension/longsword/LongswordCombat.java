@@ -46,7 +46,7 @@ import net.neoforged.neoforge.network.registration.NetworkRegistry;
  * 不给就是 {@link CombatWeapon#DEFAULT_CONE} 度；长度是原版攻击距离
  * （{@code entity_interaction_range}，被属性修饰时跟着变）。锥形里看得见的生物都挨一刀（原版攻击，护甲、附魔、
  * 受击冷却照常）；准星正对着的那个暴击（经 NeoForge 的暴击事件，原版的 1.5 倍、粒子与音效）。这一刀不再另触发原版横扫。
- * 本附属以后的近战武器都走这里。
+ * 凌霄按维护者要求改用菱形棱柱判定，并保留原版暴击条件；其他武器继续使用上面的锥形规则。
  */
 @EventBusSubscriber(modid = LogosDimension.ID)
 public final class LongswordCombat {
@@ -268,7 +268,7 @@ public final class LongswordCombat {
         var move = state.runner.move();
         var holder = state.stack.getItem() instanceof CombatWeapon.Holder h ? h : null;
         if (holder != null && !holder.swing(player, move)) { player.resetAttackStrengthTicker(); return; }
-        var targets = targets(player, cone(player, move));
+        var targets = state.weapon.diamondHitbox() ? dev.logos.dimension.combat.DiamondHitbox.targets(player) : targets(player, cone(player, move));
         CombatEffects.contact(player, move, targets);
         if (targets.isEmpty()) {
             player.resetAttackStrengthTicker();
@@ -295,7 +295,8 @@ public final class LongswordCombat {
                     && living.getLastHurtByMob() == player && living.getLastHurtByMobTimestamp() == last[0]) living.invulnerableTime = 0;
             CONTACT.set(true);
             MOVE.set(move); TARGET.set(target);
-            if (first) CRIT.set(target);
+            // 凌霄沿用原版铁剑暴击条件，不额外强制暴击。
+            if (first && !state.weapon.diamondHitbox()) CRIT.set(target);
             try { if (holder == null || !holder.strike(player, target, move)) player.attack(target); }
             finally { CONTACT.remove(); CRIT.remove(); MOVE.remove(); TARGET.remove(); }
             if (target instanceof LivingEntity living && living.invulnerableTime >= 20 && living.getLastHurtByMob() == player)

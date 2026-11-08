@@ -14,7 +14,7 @@ import net.minecraft.world.phys.Vec3;
 /** 复用单独安装的 Logos API；反射集中在边界并缓存，避免将主模组打进附属包。 */
 public final class LogosNatureBridge {
     private static final Method MAGIC_OF, ALERT, DAMAGE, TRAIL, TRAIL_END;
-    private static final Field MANA;
+    private static final Field MANA, MAX_MANA;
     private static final Constructor<?> INSTANCE;
     private static final Object LIFE, FORWARD, PLAIN, SPELL;
     static {
@@ -23,6 +23,7 @@ public final class LogosNatureBridge {
             MAGIC_OF = magic.getMethod("of", Player.class);
             ALERT = magic.getMethod("alert", ServerPlayer.class, Component.class);
             MANA = magic.getField("mana");
+            MAX_MANA = magic.getField("maxMana");
             var element = Class.forName("dev.logos.lang.Element");
             LIFE = element.getField("LIFE").get(null);
             var motion = Class.forName("dev.logos.lang.Motion");
@@ -49,9 +50,29 @@ public final class LogosNatureBridge {
         catch (ReflectiveOperationException error) { throw failure(error); }
     }
 
+    public static double maxMana(Player player) {
+        try { return MAX_MANA.getDouble(MAGIC_OF.invoke(null, player)); }
+        catch (ReflectiveOperationException error) { throw failure(error); }
+    }
+
     public static void mana(Player player, double amount) {
         try { MANA.setDouble(MAGIC_OF.invoke(null, player), amount); }
         catch (ReflectiveOperationException error) { throw failure(error); }
+    }
+
+    /** Logos 每刻给玩家的自然回复入口；旧版 Logos 没有时为 null，按 0 算。 */
+    private static final Method REGENERATION = optional("dev.logos.runtime.SpellModifiers", "regenerationPerTick", ServerPlayer.class);
+
+    /** Logos 这一刻给玩家的自然回复（魔力/刻）。御剑按“消耗 + 回复”扣，面板才是实打实地每秒少十点。 */
+    public static double regenerationPerTick(ServerPlayer player) {
+        if (REGENERATION == null) return 0;
+        try { return ((Number) REGENERATION.invoke(null, player)).doubleValue(); }
+        catch (ReflectiveOperationException error) { throw failure(error); }
+    }
+
+    private static Method optional(String type, String name, Class<?>... parameters) {
+        try { return Class.forName(type).getMethod(name, parameters); }
+        catch (ReflectiveOperationException missing) { return null; }
     }
 
     public static boolean pay(ServerPlayer player, int cost) {
