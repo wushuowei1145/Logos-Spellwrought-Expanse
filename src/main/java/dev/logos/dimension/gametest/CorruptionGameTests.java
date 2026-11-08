@@ -6,6 +6,7 @@ import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.corruption.Corruption;
 import dev.logos.dimension.corruption.CorruptionCoreBlock;
 import dev.logos.dimension.corruption.CorruptionNetworks;
+import dev.logos.dimension.corruption.mob.CorruptionMobs;
 import dev.logos.runtime.PlayerMagic;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.animal.pig.Pig;
@@ -71,6 +73,11 @@ public final class CorruptionGameTests {
         tests.put("corruption_player_breaks_core", CorruptionGameTests::playerBreak);
         tests.put("corruption_large_network_restores", CorruptionGameTests::large);
         tests.put("corruption_core_grows_with_network", CorruptionGameTests::grows);
+        tests.put("corruption_spawns_derivatives_on_corruption", CorruptionGameTests::spawnList);
+        tests.put("corruption_derivative_hit_carries_corruption", CorruptionGameTests::derivativeHit);
+        tests.put("corruption_derivatives_at_home_on_corruption", CorruptionGameTests::derivativesAtHome);
+        tests.put("corruption_full_core_grows_derivatives", CorruptionGameTests::reserveSpawn);
+        tests.put("corruption_elves_and_foxes_hunt_derivatives", CorruptionGameTests::hunted);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -200,13 +207,124 @@ public final class CorruptionGameTests {
     }
 
     /**
+     * 刷怪：脚下是污秽或脉络的地方，怪物的候选全换成四种衍生物；草地上不变。衍生物的自然生成只在腐败上，不看亮度。
+     * 测试服务器是普通难度。
+     */
+    private static void spawnList(GameTestHelper h) {
+        clear(h, new BlockPos(0, 1, 0), new BlockPos(6, 4, 2));
+        h.setBlock(new BlockPos(1, 0, 1), Corruption.BLOCK.get());
+        h.setBlock(new BlockPos(3, 0, 1), Blocks.GRASS_BLOCK);
+        h.setBlock(new BlockPos(5, 0, 1), Blocks.STONE);
+        h.setBlock(new BlockPos(5, 1, 1), Corruption.VEIN.get().defaultBlockState().setValue(MultifaceBlock.getFaceProperty(Direction.DOWN), true));
+        var level = h.getLevel();
+        BlockPos onFilth = h.absolutePos(new BlockPos(1, 1, 1)), onGrass = h.absolutePos(new BlockPos(3, 1, 1)), inVein = h.absolutePos(new BlockPos(5, 1, 1));
+        check(h, level.getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL, "测试服务器应当不是和平模式");
+        check(h, CorruptionMobs.onCorruption(level, onFilth) && CorruptionMobs.onCorruption(level, inVein), "污秽上、脉络里都算在腐败上");
+        check(h, !CorruptionMobs.onCorruption(level, onGrass), "草地上不算");
+        var vanilla = net.minecraft.util.random.WeightedList.of(new net.minecraft.world.level.biome.MobSpawnSettings.SpawnerData(EntityType.ZOMBIE, 1, 1));
+        var there = net.neoforged.neoforge.event.EventHooks.getPotentialSpawns(level, net.minecraft.world.entity.MobCategory.MONSTER, onFilth, vanilla);
+        check(h, !there.unwrap().isEmpty() && there.unwrap().stream().allMatch(w -> CorruptionMobs.isCorrupted(w.value().type().create(level, EntitySpawnReason.NATURAL))),
+                "腐败上的怪物候选应当全是衍生物：" + there.unwrap());
+        check(h, there.unwrap().size() == 4, "四种衍生物都在候选里");
+        var grass = net.neoforged.neoforge.event.EventHooks.getPotentialSpawns(level, net.minecraft.world.entity.MobCategory.MONSTER, onGrass, vanilla);
+        check(h, grass.unwrap().size() == 1 && grass.unwrap().getFirst().value().type() == EntityType.ZOMBIE, "草地上的候选不变");
+        var animals = net.minecraft.util.random.WeightedList.of(new net.minecraft.world.level.biome.MobSpawnSettings.SpawnerData(EntityType.PIG, 1, 1));
+        var creatures = net.neoforged.neoforge.event.EventHooks.getPotentialSpawns(level, net.minecraft.world.entity.MobCategory.CREATURE, onFilth, animals);
+        check(h, creatures.unwrap().size() == 1, "别的类不换");
+        var random = level.getRandom();
+        check(h, net.minecraft.world.entity.SpawnPlacements.checkSpawnRules(CorruptionMobs.FILTH_ZOMBIE.get(), level, EntitySpawnReason.NATURAL, onFilth, random),
+                "污秽上能自然生成，不看亮度");
+        check(h, !net.minecraft.world.entity.SpawnPlacements.checkSpawnRules(CorruptionMobs.FILTH_ZOMBIE.get(), level, EntitySpawnReason.NATURAL, onGrass, random),
+                "草地上不能自然生成");
+        h.succeed();
+    }
+
+    /** 污秽僵尸打猪：除了原本的一下，还要再挨一次腐败伤害。 */
+    private static void derivativeHit(GameTestHelper h) {
+        floor(h, 0, 4, Blocks.STONE);
+        var level = h.getLevel();
+        var zombie = h.spawnWithNoFreeWill(CorruptionMobs.FILTH_ZOMBIE.get(), new BlockPos(1, 1, 1));
+        Pig pig = h.spawnWithNoFreeWill(EntityType.PIG, new BlockPos(2, 1, 1));
+        float before = pig.getHealth();
+        float base = (float) zombie.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        check(h, zombie.doHurtTarget(level, pig), "僵尸应当打中猪");
+        float lost = before - pig.getHealth();
+        check(h, lost >= base + 2.9f || !pig.isAlive(), "应当掉原本的 " + base + " 再加腐败的 3，实际掉了 " + lost);
+        check(h, pig.getLastDamageSource() != null && pig.getLastDamageSource().is(Corruption.DAMAGE), "最后一下应当是腐败伤害");
+        h.succeed();
+    }
+
+    /** 衍生物站在污秽上不受伤；僵尸和骷髅在腐败上看到的亮度是 0（原版靠它判断要不要在阳光下燃烧），在石头上照常。 */
+    private static void derivativesAtHome(GameTestHelper h) {
+        floor(h, 0, 6, Corruption.BLOCK.get());
+        h.setBlock(new BlockPos(5, 0, 5), Blocks.STONE);
+        BlockPos[] spots = {new BlockPos(1, 1, 1), new BlockPos(3, 1, 1), new BlockPos(1, 1, 3), new BlockPos(3, 1, 3)};
+        List<net.minecraft.world.entity.Mob> mobs = new ArrayList<>();
+        h.startSequence()
+                .thenWaitUntil(entitiesTicking(h, spots))
+                .thenExecute(() -> {
+                    mobs.add(h.spawnWithNoFreeWill(CorruptionMobs.FILTH_ZOMBIE.get(), spots[0]));
+                    mobs.add(h.spawnWithNoFreeWill(CorruptionMobs.FILTH_SKELETON.get(), spots[1]));
+                    mobs.add(h.spawnWithNoFreeWill(CorruptionMobs.FILTH_SILVERFISH.get(), spots[2]));
+                    mobs.add(h.spawnWithNoFreeWill(CorruptionMobs.FILTH_SLIME.get(), spots[3]));
+                    for (var mob : mobs) check(h, CorruptionMobs.isCorrupted(mob), mob.getType() + " 应当算被腐败的");
+                    check(h, mobs.get(0).getLightLevelDependentMagicValue() == 0 && mobs.get(1).getLightLevelDependentMagicValue() == 0, "在腐败上亮度应当是 0");
+                    var off = h.spawnWithNoFreeWill(CorruptionMobs.FILTH_ZOMBIE.get(), new BlockPos(5, 1, 5));
+                    check(h, !CorruptionMobs.onCorruption(h.getLevel(), off.blockPosition()), "石头上不算在腐败上");
+                    off.discard();
+                })
+                .thenExecuteAfter(30, () -> {
+                    for (var mob : mobs) {
+                        check(h, mob.tickCount > 20, mob.getType() + " 应当在走刻");
+                        check(h, mob.getHealth() == mob.getMaxHealth(), mob.getType() + " 站在腐败上不应当受伤");
+                    }
+                    unforce(h, spots);
+                })
+                .thenSucceed();
+    }
+
+    /** 满了的核心用储备在附近生一只衍生物，储备扣掉一份。 */
+    private static void reserveSpawn(GameTestHelper h) {
+        var chunks = forceArea(h, new BlockPos(0, 0, 0), new BlockPos(19, 0, 19));
+        BlockPos core = filthField(h, 20, true);
+        var data = data(h);
+        var network = data.ofCore(h.absolutePos(core));
+        BlockPos killer = h.absolutePos(new BlockPos(10, 0, 11));
+        data.feed(h.getLevel(), killer, killer.above(), 45);
+        check(h, network.reserve() == 45, "电荷应当存进储备，实际 " + network.reserve());
+        check(h, data.spawnFromReserve(h.getLevel(), network), "储备够应当生一只");
+        check(h, network.reserve() == 25, "储备应当扣掉 20，剩 " + network.reserve());
+        var around = new net.minecraft.world.phys.AABB(h.absolutePos(core)).inflate(17);
+        var born = h.getLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, around, CorruptionMobs::isCorrupted);
+        check(h, born.size() == 1, "核心附近应当多了一只衍生物，实际 " + born.size());
+        check(h, CorruptionMobs.onCorruption(h.getLevel(), born.getFirst().blockPosition()), "生在腐败上");
+        born.getFirst().discard();
+        release(h, chunks);
+        h.succeed();
+    }
+
+    /** 森林精灵和神狐把被腐败的生物当敌人，包括不算亡灵的蠹虫和史莱姆。 */
+    private static void hunted(GameTestHelper h) {
+        var level = h.getLevel();
+        for (var type : List.<EntityType<? extends net.minecraft.world.entity.Mob>>of(CorruptionMobs.FILTH_ZOMBIE.get(), CorruptionMobs.FILTH_SKELETON.get(),
+                CorruptionMobs.FILTH_SILVERFISH.get(), CorruptionMobs.FILTH_SLIME.get())) {
+            var mob = type.create(level, EntitySpawnReason.NATURAL);
+            check(h, dev.logos.dimension.npc.ForestElf.isFoe(mob), "森林精灵应当打 " + type);
+            check(h, dev.logos.dimension.npc.DivineFox.isFoe(mob), "神狐应当打 " + type);
+        }
+        h.succeed();
+    }
+
+    /**
      * 核心随网络长大：0 级碰撞箱只有半格；网络到 100、300、600 块（上限的 1/6、1/2、满）时方块状态的阶段变成 1、2、3，
      * 碰撞箱变成整格，亮度跟着变亮。污秽由近到远一批批放，每批等服务端同步（每秒一次）。
      */
     private static void grows(GameTestHelper h) {
         var chunks = forceArea(h, new BlockPos(0, 0, 0), new BlockPos(24, 0, 24));
         BlockPos below = new BlockPos(12, 0, 12), core = below.above();
-        clear(h, new BlockPos(0, 1, 0), new BlockPos(24, 4, 24));
+        clear(h, new BlockPos(-1, 1, -1), new BlockPos(25, 4, 25));
+        // 地面先铺黑曜石：转化不了，核心的初始电荷就长不出这里放的以外的方块，网络大小只由测试决定
+        for (BlockPos p : BlockPos.betweenClosed(new BlockPos(-1, 0, -1), new BlockPos(25, 0, 25))) h.setBlock(p, Blocks.OBSIDIAN);
         h.setBlock(core, Corruption.CORE.get());
         List<BlockPos> floor = new ArrayList<>();
         for (int x = 0; x < 25; x++) for (int z = 0; z < 25; z++) floor.add(new BlockPos(x, 0, z));

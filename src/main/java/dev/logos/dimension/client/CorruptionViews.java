@@ -357,4 +357,84 @@ public abstract class CorruptionViews implements UIScenario {
                     });
         }
     }
+
+    /**
+     * 污秽衍生物：原版僵尸（戴头盔免得烧起来）和四种衍生物站在污秽上并排，白天、夜里各拍一张，看腐败的样子。
+     * 再在 40 格外铺一片 40×40 的污秽，正午、普通难度，等原版刷怪在上面刷出衍生物，并且没有别的怪。
+     */
+    @LDLRegisterClient(name = "corruption_derivatives", group = "corruption", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class Derivatives extends CorruptionViews {
+        private static final int FIELD_Z0 = 40, FIELD_Z1 = 79, FIELD_X = 20;
+
+        private static void place(ServerLevel level, net.minecraft.world.entity.EntityType<? extends net.minecraft.world.entity.Mob> type, double x, double z, float yaw) {
+            var mob = type.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+            mob.snapTo(x, GROUND + 1, z, yaw, 0);
+            mob.setNoAi(true);
+            mob.setPersistenceRequired();
+            mob.setYHeadRot(yaw);
+            mob.setYBodyRot(yaw);
+            if (mob instanceof net.minecraft.world.entity.monster.Slime slime) slime.setSize(2, true);
+            if (type == net.minecraft.world.entity.EntityType.ZOMBIE) {
+                mob.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(Items.LEATHER_HELMET));
+            }
+            level.addFreshEntity(mob);
+        }
+
+        private static net.minecraft.world.phys.AABB field() {
+            return new net.minecraft.world.phys.AABB(-FIELD_X, GROUND, FIELD_Z0, FIELD_X, GROUND + 6, FIELD_Z1 + 1);
+        }
+
+        @Override public void define(ScenarioBuilder s) {
+            s.setGameMode(GameType.CREATIVE).runCommand("time set 6000").runCommand("weather clear").runCommand("difficulty normal")
+                    .step("设置视口", ctx -> {
+                        var mc = Minecraft.getInstance();
+                        mc.options.hideGui = true;
+                        mc.options.setCameraType(CameraType.FIRST_PERSON);
+                        mc.options.fov().set(70);
+                        var w = mc.getWindow(); w.setWindowed(1280, 720); w.setWidth(1280); w.setHeight(720);
+                        mc.getMainRenderTarget().resize(1280, 720); mc.gameRenderer.resize(1280, 720); mc.resizeGui();
+                    })
+                    .server("搭场地、摆怪", ctx -> {
+                        ServerLevel level = ctx.server().overworld();
+                        for (var mob : level.getEntitiesOfClass(net.minecraft.world.entity.Mob.class, new net.minecraft.world.phys.AABB(-40, GROUND - 4, -20, 40, GROUND + 20, 90))) mob.discard();
+                        for (int x = -FIELD_X - 4; x <= FIELD_X + 4; x++) for (int z = -8; z <= FIELD_Z1 + 4; z++) {
+                            boolean filth = Math.abs(x) <= 6 && z >= 1 && z <= 5 || Math.abs(x) <= FIELD_X && z >= FIELD_Z0 && z <= FIELD_Z1;
+                            level.setBlockAndUpdate(new BlockPos(x, GROUND, z), (filth ? Corruption.BLOCK.get() : Blocks.GRASS_BLOCK).defaultBlockState());
+                            for (int y = 1; y <= 3; y++) level.setBlockAndUpdate(new BlockPos(x, GROUND - y, z), Blocks.DIRT.defaultBlockState());
+                            for (int y = 1; y <= 10; y++) level.setBlockAndUpdate(new BlockPos(x, GROUND + y, z), Blocks.AIR.defaultBlockState());
+                        }
+                        place(level, net.minecraft.world.entity.EntityType.ZOMBIE, -4.5, 3.5, 180);
+                        place(level, dev.logos.dimension.corruption.mob.CorruptionMobs.FILTH_ZOMBIE.get(), -2, 3.5, 180);
+                        place(level, dev.logos.dimension.corruption.mob.CorruptionMobs.FILTH_SKELETON.get(), .5, 3.5, 180);
+                        place(level, dev.logos.dimension.corruption.mob.CorruptionMobs.FILTH_SILVERFISH.get(), 2.5, 2.5, 180);
+                        place(level, dev.logos.dimension.corruption.mob.CorruptionMobs.FILTH_SLIME.get(), 4.5, 3.5, 180);
+                        DimensionTravel.teleport(ctx.player(), level, new Vec3(.5, GROUND + 1, -2.5), 0, 12);
+                    })
+                    .ticks(40)
+                    .screenshot("corruption_derivatives_day")
+                    .runCommand("time set 14000").ticks(10)
+                    .screenshot("corruption_derivatives_night")
+                    .runCommand("time set 6000")
+                    .server("站高一点看着那片污秽，清掉夜里在草地上刷的原版怪", ctx -> {
+                        ServerLevel level = ctx.server().overworld();
+                        for (var mob : level.getEntitiesOfClass(net.minecraft.world.entity.Mob.class, new net.minecraft.world.phys.AABB(-60, GROUND - 4, -60, 60, GROUND + 30, 140),
+                                m -> m instanceof net.minecraft.world.entity.monster.Enemy && !dev.logos.dimension.corruption.mob.CorruptionMobs.isCorrupted(m))) mob.discard();
+                        DimensionTravel.teleport(ctx.player(), level, new Vec3(.5, GROUND + 9, 14.5), 0, 22);
+                    })
+                    .waitUntil("污秽上自然刷出衍生物", ctx -> {
+                        var level = ctx.server().overworld();
+                        return level.getEntitiesOfClass(net.minecraft.world.entity.Mob.class, field(),
+                                dev.logos.dimension.corruption.mob.CorruptionMobs::isCorrupted).size() >= 3;
+                    })
+                    .server("走到污秽边上看", ctx -> DimensionTravel.teleport(ctx.player(), ctx.server().overworld(), new Vec3(.5, GROUND + 4, FIELD_Z0 - 6.5), 0, 15))
+                    .ticks(30)
+                    .screenshot("corruption_derivatives_spawned")
+                    .checkServer("污秽上只有衍生物", ctx -> ctx.server().overworld().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, field(),
+                            m -> m instanceof net.minecraft.world.entity.monster.Enemy && !dev.logos.dimension.corruption.mob.CorruptionMobs.isCorrupted(m)).isEmpty())
+                    .checkServer("正午站在污秽上的衍生物没有烧起来", ctx -> ctx.server().overworld().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, field(),
+                            m -> dev.logos.dimension.corruption.mob.CorruptionMobs.isCorrupted(m)
+                                    && dev.logos.dimension.corruption.mob.CorruptionMobs.onCorruption(m.level(), m.blockPosition()) && m.isOnFire()).isEmpty())
+                    .teardown("恢复", ctx -> Minecraft.getInstance().options.hideGui = false);
+        }
+    }
 }

@@ -143,7 +143,8 @@ public class ForestElf extends PathfinderMob implements NpcAnimated, NpcPartsHol
     /** 主动攻击的对象：亡灵和灾厄村民（含劫掠队成员），玩家的 Logos 使魔除外。 */
     public static boolean isFoe(LivingEntity e) {
         var type = e.typeHolder();
-        boolean hostile = type.is(EntityTypeTags.UNDEAD) || type.is(EntityTypeTags.ILLAGER) || type.is(EntityTypeTags.RAIDERS);
+        boolean hostile = type.is(EntityTypeTags.UNDEAD) || type.is(EntityTypeTags.ILLAGER) || type.is(EntityTypeTags.RAIDERS)
+                || dev.logos.dimension.corruption.mob.CorruptionMobs.isCorrupted(e);
         return hostile && !(e instanceof ForestElf) && LogosMagicBridge.masterOf(e) == null;
     }
 

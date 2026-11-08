@@ -207,6 +207,7 @@ public class DivineFox extends PathfinderMob implements NpcAnimated, NpcPartsHol
      * 不打森林精灵、同伴和玩家的 Logos 使魔。苦力怕只有背弓的神狐会去射（见 registerGoals）。
      */
     public static boolean isFoe(LivingEntity e) {
+        if (dev.logos.dimension.corruption.mob.CorruptionMobs.isCorrupted(e)) return LogosMagicBridge.masterOf(e) == null;
         return e instanceof Enemy && !(e instanceof NeutralMob) && !(e instanceof DivineFox) && !(e instanceof ForestElf)
                 && !(e instanceof Warden) && !(e instanceof WitherBoss) && !(e instanceof EnderDragon) && LogosMagicBridge.masterOf(e) == null;
     }
