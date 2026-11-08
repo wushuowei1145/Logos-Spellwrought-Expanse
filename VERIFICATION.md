@@ -2,7 +2,7 @@
 
 ## 凌霄接手：规范检查、仙侠四式、剑尖朝向、提速、持续扣魔力
 
-2026-11-08：分支 `feat/lingxiao-sword-flight`（PR #212，接手同伴的 `cbf33eb`），工作树 `worktrees/lingxiao`，基于 main `2822f04`。Logos jar 用 `builds/explosion-staff-v2-2026-11-08/logos-0.6.0-spell-ward.jar`。改了什么、为什么改，见 [LINGXIAO.md](docs/LINGXIAO.md) 第 1 节。离线预览在仓库外的 `art/lingxiao/anim_v01`（四机位总览、慢放 GIF、第一人称透视预览），游戏截图在 `art/lingxiao/ingame_v02`。
+2026-11-08：分支 `feat/lingxiao-sword-flight`（PR #212，接手同伴的 `cbf33eb`），工作树 `worktrees/lingxiao`，基于 main `2822f04`。Logos jar 用 `builds/explosion-staff-v2-2026-11-08/logos-0.6.0-spell-ward.jar`。改了什么、为什么改，见 [LINGXIAO.md](docs/LINGXIAO.md) 第 1 节。离线预览在仓库外的 `art/lingxiao/anim_v01`（四机位总览、慢放 GIF、第一人称透视预览），游戏截图在 `art/lingxiao/ingame_v02`。维护者用试玩包 `builds/lingxiao-2026-11-08` 试玩后认可。推送前合入 main `9b0eb1e`（#213–#215），只有本文件顶部冲突，两边都保留；合并后重跑：单元 **274/274**、`test build` 成功，`lingxiao_*` 11/11、`longsword_*` 19/19，`group:lingxiao,group:longsword` 5/5 场景、46/46 检查。
 
 | 层级 | 结果 |
 | --- | --- |
@@ -11,7 +11,7 @@
 | 实际客户端 | `group:lingxiao` **1/1 场景、11/11 检查**：四式连招第一、第三人称各一遍，每式定住时截图；起飞交接前载具不画剑、交接后画剑；侧飞剑尖转向和前进转回（数值）；第一人称低头看见脚下的剑；每秒实际少十点；下剑、归鞘。`group:longsword` 4/4 场景、37/37 检查（共用渲染层有改动） |
 | 截图人工看过 | 第一人称四式挥到头时剑都在画面里；第三人称正面看得到每式定住的架势和凌霄亮相；侧飞时剑尖指向飞行方向、骑手侧身；第一人称低头看见脚下剑尖朝前；动作栏显示 `☿ … 189/200 御剑中 · 每秒 -10` |
 | 场景的坑 | 正面机位夹在人和靶子之间，第三人称那一遍先移走靶子；靶子被前一遍打死时清理步骤要判空。下剑后照常下落，截图里人因摔落受伤变红，属正常 |
-| 未验证 | 维护者试玩手感（连招节奏、飞行速度 0.7 格/刻、俯仰 25°、剑放大 1.8 倍都是先定的数值）；独立多人服务器（其他玩家看到的剑尖朝向只在单人客户端里看过）；Sodium、Iris 和光影包 |
+| 未验证 | 独立多人服务器（其他玩家看到的剑尖朝向只在单人客户端里看过）；Sodium、Iris 和光影包 |
 
 ## 凌霄仙剑与御剑飞行
 
