@@ -1,5 +1,8 @@
 {
   "variants": {
-    "": { "model": "logos_dimension:block/corruption_core" }
+    "stage=0": { "model": "logos_dimension:block/corruption_core" },
+    "stage=1": { "model": "logos_dimension:block/corruption_core" },
+    "stage=2": { "model": "logos_dimension:block/corruption_core" },
+    "stage=3": { "model": "logos_dimension:block/corruption_core" }
   }
 }

@@ -50,7 +50,7 @@ public final class CorruptionNetworks extends SavedData {
     static final int WAVE_DELAY = 12, FADE_TICKS = 24;
     /** 储备最多存多少电荷（以后用来生产污秽衍生物）。 */
     static final int RESERVE_CAP = 10_000;
-    private static final int AUDIT_TICKS = 100;
+    private static final int AUDIT_TICKS = 100, STAGE_TICKS = 20;
 
     private static final Codec<LongOpenHashSet> LONG_SET = Codec.LONG_STREAM.xmap(s -> new LongOpenHashSet(s.toArray()), set -> Arrays.stream(set.toLongArray()));
 
@@ -371,12 +371,30 @@ public final class CorruptionNetworks extends SavedData {
                 setDirty();
             }
             if ((now + n.id) % AUDIT_TICKS == 0) audit(level, n);
+            if ((now + n.id) % STAGE_TICKS == 0) syncStage(level, n);
         }
         if (!fades.isEmpty()) {
             long t0 = System.nanoTime();
             fades.removeIf(f -> f.step(level, now));
             worstFadeNanos = Math.max(worstFadeNanos, System.nanoTime() - t0);
             setDirty();
+        }
+    }
+
+    /** 网络大小对应的成长阶段：上限的 1/6、1/2 各升一级，满了是长出眼珠的最后一级（默认 100、300、600 块）。 */
+    public static int stageFor(int size) {
+        int max = ServerConfig.CORRUPTION_MAX_BLOCKS.getAsInt();
+        return size >= max ? 3 : size >= max / 2 ? 2 : size >= max / 6 ? 1 : 0;
+    }
+
+    /** 阶段变了才改方块（改方块状态会同步给客户端、改亮度和碰撞箱）。 */
+    private void syncStage(ServerLevel level, Network n) {
+        int stage = stageFor(n.members.size());
+        if (stage == n.stage || !level.isLoaded(n.core)) return;
+        n.stage = stage;
+        BlockState state = level.getBlockState(n.core);
+        if (state.is(Corruption.CORE.get()) && state.getValue(CorruptionCoreBlock.STAGE) != stage) {
+            level.setBlock(n.core, state.setValue(CorruptionCoreBlock.STAGE, stage), Block.UPDATE_CLIENTS);
         }
     }
 
@@ -448,6 +466,8 @@ public final class CorruptionNetworks extends SavedData {
         int reserve;
         /** 这次开服以来靠杀生得到的电荷，只给测试和排查看，不存档。 */
         int fed;
+        /** 上次同步到方块上的成长阶段，不存档（读档后重新算一次）。 */
+        int stage = -1;
 
         Network(int id, BlockPos core, LongOpenHashSet members, List<CorruptionSpreader.Cursor> cursors, long idleAt, Long2ObjectOpenHashMap<BlockState> originals,
                 int parent, int reserve) {
