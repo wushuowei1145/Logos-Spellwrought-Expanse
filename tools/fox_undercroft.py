@@ -51,6 +51,14 @@ ENTRY_V = 72
 LANE_W, LANE_E = 46, 130
 #: 每套方案最多备几条路线
 ROUTES_PER_PLAN = 5
+#: 首领战开始时可以整块拆掉的三组东西，按范围标记（不存逐格清单），写进 undercroft.json：
+#: 杀生石连同注连绳、纸垂与裂缝里的狐火——以圆台圆心为心、半径 7 的圆柱，石台顶面以上；
+#: 它脚下的两级石台——同一个圆柱，地面以上两层；九个封印杭底座连同杭与两盏狐火——每根杭周围 3×3、地面以上三层。
+STONE_ZONE = (7, FLOOR_Y + 3, FLOOR_Y + 16)
+ALTAR_ZONE = (7, FLOOR_Y + 1, FLOOR_Y + 2)
+PEDESTAL_ZONE = (1, FLOOR_Y + 1, FLOOR_Y + 3)
+#: 生成时记下这三组各放了哪些格子，用来核对范围没漏也没多
+_PLACED = {}
 
 WATER = B('water', level=0)
 DARK_BOTTOM = (B('blackstone'), B('deepslate'), B('blackstone'), B('polished_blackstone'))
@@ -804,6 +812,7 @@ def arena(c, rnd):
                 c.set(u, y, v, WATER)
                 c.set(u, y - 1, v, DARK_BOTTOM[_h(u, v, 2) % 4])
     # 封印杭：三格见方的黑石台，杭立正中，两角各一盏狐火
+    before = set(c.cells)
     for i, (su, sv) in enumerate(seals):
         for du in (-1, 0, 1):
             for dv in (-1, 0, 1):
@@ -815,7 +824,9 @@ def arena(c, rnd):
         tu, tv = round(math.cos(a)), round(math.sin(a))
         for s in (-1, 1):
             c.set(su + s * tu, y + 2, sv + s * tv, B('soul_lantern', hanging=False, waterlogged=False))
+    _PLACED['pedestals'] = set(c.cells) - before
     # 正中的石台：两级
+    before = set(c.cells)
     for u in range(CU - 7, CU + 8):
         for v in range(ARENA_CV - 7, ARENA_CV + 8):
             d = math.hypot(u - CU, v - ARENA_CV)
@@ -827,7 +838,10 @@ def arena(c, rnd):
                 c.set(u, y + 2, v, B('polished_blackstone'))
             elif d <= 4.8:
                 c.set(u, y + 2, v, B('polished_blackstone_slab', type='bottom', waterlogged=False))
+    _PLACED['altar'] = set(c.cells) - before
+    before = set(c.cells)
     sessho_seki(c, CU, y + 3, ARENA_CV)
+    _PLACED['stone'] = set(c.cells) - before
     # 圆台边上一圈高石灯笼（楼门那头的参道口空着）
     for k in range(12):
         a = math.radians(15 + 30 * k)
@@ -946,7 +960,35 @@ def vault_canvas():
     rnd = random.Random(1145)
     hall(c, rnd)
     arena(c, rnd)
+    check_removable(c)
     return c
+
+
+def in_zone(group, u, y, v):
+    """(u, y, v) 在不在某一组可拆范围里。"""
+    if group == 'pedestals':
+        half, y0, y1 = PEDESTAL_ZONE
+        return y0 <= y <= y1 and any(abs(u - su) <= half and abs(v - sv) <= half for (su, sv) in seal_positions())
+    r, y0, y1 = STONE_ZONE if group == 'stone' else ALTAR_ZONE
+    return y0 <= y <= y1 and (u - CU) ** 2 + (v - ARENA_CV) ** 2 <= r * r
+
+
+def check_removable(c):
+    """核对三组可拆范围：每组放下的格子都在自己的范围里，范围里也没有别的东西（拆的时候不会误伤）。"""
+    for group, placed in _PLACED.items():
+        outside = [k for k in placed if not in_zone(group, *k)]
+        assert not outside, f'{group} 有 {len(outside)} 格在可拆范围外：{outside[:5]}'
+        extra = [k for k, st in c.cells.items() if in_zone(group, *k) and k not in placed and st != AIR]
+        assert not extra, f'{group} 的可拆范围里混进了别的方块：{[(k, c.cells[k]["Name"]) for k in extra[:5]]}'
+
+
+def removable():
+    """写进 undercroft.json 的三组可拆范围。"""
+    return {
+        'stone': {'center': [CU, ARENA_CV], 'radius': STONE_ZONE[0], 'y': list(STONE_ZONE[1:])},
+        'altar': {'center': [CU, ARENA_CV], 'radius': ALTAR_ZONE[0], 'y': list(ALTAR_ZONE[1:])},
+        'pedestals': {'half': PEDESTAL_ZONE[0], 'y': list(PEDESTAL_ZONE[1:])},
+    }
 
 
 def carve_boxes():

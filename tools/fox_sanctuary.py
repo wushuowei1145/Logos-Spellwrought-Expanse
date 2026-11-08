@@ -838,6 +838,7 @@ def write_undercroft():
         'arena': list(fu.ARENA) + [fu.FLOOR_Y, fu.ARENA_TOP],
         'center': [fu.CU, fu.FLOOR_Y + 3, fu.ARENA_CV],
         'seals': [[u, fu.FLOOR_Y + 2, v] for (u, v) in fu.seal_positions()],
+        'removable': fu.removable(),
     })
     print('undercroft: tiles', len(tiles), 'cells', len(c.cells))
 
