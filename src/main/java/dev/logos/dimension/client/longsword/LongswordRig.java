@@ -28,8 +28,13 @@ public final class LongswordRig {
     private static final Map<String, Map<String, CombatClip>> CLIPS = new HashMap<>();
     /** 网格分层：剑与剑鞘、宽臂皮肤、细臂皮肤，渲染时只提交一种手臂。 */
     private enum Layer { WEAPON, WIDE, SLIM }
-    /** material 是武器层的贴图序号：0 为武器网格自己的贴图，之后依次是各附件（和弓的箭）的贴图。 */
-    private record Quad(String bone, Layer layer, int material, Vector3f[] points, Vector3f normal, float[] uv) {}
+    /**
+     * material 是武器层的贴图序号：0 为武器网格自己的贴图，之后依次是各附件（和弓的箭）的贴图。
+     * fades 是武器网格里标了 {@code fade} 的方块（流火的刀身）：魔力耗尽时只有它们散去。
+     */
+    private record Quad(String bone, Layer layer, int material, Vector3f[] points, Vector3f normal, float[] uv, boolean fades) {
+        Quad(String bone, Layer layer, int material, Vector3f[] points, Vector3f normal, float[] uv) { this(bone, layer, material, points, normal, uv, false); }
+    }
     /**
      * weapon 为剑网格原点的矩阵（剑骨骼 × 枢轴 × 视角缩放），魔力缠绕表面按它定位。
      * turn 是第三人称整个人的转身角（度，Blockbench 绕 +Y，即动作里 Root 的 Y 旋转）：骨架里已去掉这一转，
@@ -49,6 +54,11 @@ public final class LongswordRig {
     private final Identifier glow;
     private final Vector3f weaponPivot;
     private final float weaponScale;
+    /** 武器网格的不透明度（{@code alpha}，流火的晶刃略透明）；1 时按不透明裁切画。 */
+    private final float alpha;
+    private final int textureWidth, textureHeight;
+    /** 凝聚与消散切好的片（只切武器网格自己的方块），第一次用到时切。 */
+    private dev.logos.dimension.client.dissolve.WeaponDissolve.Cells cells;
     /** 拉弓按视线俯仰时，上半身最多后仰或前倾的角度（度），其余由双臂转。 */
     private static final float MAX_LEAN = 25;
     private static final java.util.Set<String> BELOW_WAIST = java.util.Set.of(CombatBones.ROOT, CombatBones.ALL_BODY, CombatBones.DOWN_BODY,
@@ -115,6 +125,9 @@ public final class LongswordRig {
         texture = Identifier.parse(weapon.get("texture").getAsString());
         materials.add(texture);
         glow = weapon.has("glow") ? Identifier.parse(weapon.get("glow").getAsString()) : null;
+        alpha = weapon.has("alpha") ? weapon.get("alpha").getAsFloat() : 1;
+        textureWidth = weapon.getAsJsonArray("texture_size").get(0).getAsInt();
+        textureHeight = weapon.getAsJsonArray("texture_size").get(1).getAsInt();
         for (var value : weapon.getAsJsonArray("cubes")) {
             var cube = value.getAsJsonObject();
             boolean sheath = cube.get("part").getAsString().equals("sheath");
@@ -281,7 +294,7 @@ public final class LongswordRig {
                 var uv = cube.getAsJsonObject("uv").getAsJsonArray(names[face]);
                 textureUv = new float[]{uv.get(0).getAsFloat(), uv.get(1).getAsFloat(), uv.get(2).getAsFloat(), uv.get(3).getAsFloat()};
             }
-            quads.add(new Quad(bone, layer, material, points, normal, textureUv));
+            quads.add(new Quad(bone, layer, material, points, normal, textureUv, cube.has("fade") && cube.get("fade").getAsBoolean()));
         }
     }
     /**
@@ -310,27 +323,58 @@ public final class LongswordRig {
     }
     /** {@code weapon} 为 false 时只画手臂（曦誓拔剑凝成之前、收剑散去之后）。 */
     public void submit(Sample sample, PoseStack pose, SubmitNodeCollector collector, int light, PlayerSkin skin, boolean arms, boolean weapon) {
-        if (weapon) for (int m = 0; m < materials.size(); m++) submitMaterial(sample, pose, collector, light, materials.get(m), Layer.WEAPON, m);
-        if (arms) submitMaterial(sample, pose, collector, light, skin.body().texturePath(),
-                skin.model() == PlayerModelType.SLIM ? Layer.SLIM : Layer.WIDE, 0);
+        submit(sample, pose, collector, light, skin, arms, weapon, false);
     }
-    private void submitMaterial(Sample sample, PoseStack pose, SubmitNodeCollector collector, int light, Identifier texture, Layer layer, int material) {
+    /** {@code hideFading} 为真时武器网格里标了 {@code fade} 的方块不画（流火只剩刀柄）。 */
+    public void submit(Sample sample, PoseStack pose, SubmitNodeCollector collector, int light, PlayerSkin skin, boolean arms, boolean weapon, boolean hideFading) {
+        if (weapon) for (int m = 0; m < materials.size(); m++) submitMaterial(sample, pose, collector, light, materials.get(m), Layer.WEAPON, m, hideFading);
+        if (arms) submitMaterial(sample, pose, collector, light, skin.body().texturePath(),
+                skin.model() == PlayerModelType.SLIM ? Layer.SLIM : Layer.WIDE, 0, false);
+    }
+
+    /** 武器网格自己的贴图该用的画法：不透明时裁切，略透明（{@code alpha} 小于 1）时半透明。 */
+    private net.minecraft.client.renderer.rendertype.RenderType weaponType(Identifier texture, int material) {
+        return material == 0 && alpha < 1 ? RenderTypes.entityTranslucent(texture) : RenderTypes.entityCutout(texture);
+    }
+
+    /**
+     * 武器网格凝聚或消散到 {@code progress}（0–1）时的样子，代替 {@link #submit} 里的武器层（手臂另画）。
+     * {@code appear} 为真时从柄往尖长出；{@code bladeOnly} 时只有标了 {@code fade} 的方块参与，其余照常画。
+     * 边缘按 {@code color} 发光，粒子按颜色是否带 {@code Dissolving.PETALS} 放火星或樱花瓣；{@code key} 区分放粒子的人和视角。
+     */
+    public void submitDissolving(Sample sample, PoseStack pose, SubmitNodeCollector collector, int light, float progress, boolean appear,
+                                 boolean bladeOnly, int color, Object key) {
+        if (cells == null) {
+            List<Vector3f[]> faces = new ArrayList<>();
+            List<float[]> uvs = new ArrayList<>();
+            List<Boolean> fading = new ArrayList<>();
+            for (var quad : quads) if (quad.layer == Layer.WEAPON && quad.material == 0 && quad.bone.equals(CombatBones.WEAPON)) {
+                faces.add(quad.points); uvs.add(quad.uv); fading.add(quad.fades);
+            }
+            cells = dev.logos.dimension.client.dissolve.WeaponDissolve.cut(faces, uvs, fading, textureWidth, textureHeight, new Vector3f(0, 1, 0));
+        }
+        dev.logos.dimension.client.dissolve.WeaponDissolve.submit(key, cells, sample.bones.get(CombatBones.WEAPON), pose, collector,
+                weaponType(texture, 0), light, Math.round(alpha * 255), progress, appear, bladeOnly, color, firstPerson);
+    }
+    private void submitMaterial(Sample sample, PoseStack pose, SubmitNodeCollector collector, int light, Identifier texture, Layer layer, int material, boolean hideFading) {
         // 提交前冻结顶点，延迟渲染回调不读取玩家或可变骨骼状态。
         List<Quad> transformed = new ArrayList<>();
-        for (var quad : quads) if (quad.layer == layer && quad.material == material) {
+        for (var quad : quads) if (quad.layer == layer && quad.material == material && !(hideFading && quad.fades)) {
             var matrix = sample.bones.get(quad.bone);
             // 缩成 0 的骨骼（还没搭上或已射出的箭、第一人称藏起的右臂）不画。
             if (Math.abs(matrix.determinant3x3()) < 1e-9f) continue;
             var points = new Vector3f[4];
             for (int i = 0; i < 4; i++) points[i] = matrix.transformPosition(new Vector3f(quad.points[i]));
-            transformed.add(new Quad(quad.bone, layer, material, points, matrix.transformDirection(new Vector3f(quad.normal)).normalize(), quad.uv));
+            transformed.add(new Quad(quad.bone, layer, material, points, matrix.transformDirection(new Vector3f(quad.normal)).normalize(), quad.uv, quad.fades));
         }
         if (transformed.isEmpty()) return;
-        collector.order(-1).submitCustomGeometry(pose, RenderTypes.entityCutout(texture), (p, buffer) -> {
+        var type = layer == Layer.WEAPON ? weaponType(texture, material) : RenderTypes.entityCutout(texture);
+        int a = layer == Layer.WEAPON && material == 0 ? Math.round(alpha * 255) : 255;
+        collector.order(-1).submitCustomGeometry(pose, type, (p, buffer) -> {
             for (var quad : transformed) for (int i = 0; i < 4; i++) {
                 var point = quad.points[i]; var uv = quad.uv; var n = quad.normal;
                 float u = i == 0 || i == 3 ? uv[2] : uv[0], v = i < 2 ? uv[3] : uv[1];
-                buffer.addVertex(p, point.x, point.y, point.z).setColor(255,255,255,255).setUv(u,v)
+                buffer.addVertex(p, point.x, point.y, point.z).setColor(255,255,255,a).setUv(u,v)
                         .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(p,n.x,n.y,n.z);
             }
         });

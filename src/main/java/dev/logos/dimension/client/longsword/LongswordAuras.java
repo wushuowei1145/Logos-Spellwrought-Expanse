@@ -18,9 +18,14 @@ public final class LongswordAuras {
     private LongswordAuras() {}
 
     public static void firstPerson(LivingEntity holder, LongswordRig.Sample sample, PoseStack pose, SubmitNodeCollector collector) {
+        firstPerson(holder, sample, pose, collector, false);
+    }
+    /** {@code pinkFire}：流火的刀身燃着淡粉狐火（见 {@link RyukaClient#pinkFire}）。 */
+    public static void firstPerson(LivingEntity holder, LongswordRig.Sample sample, PoseStack pose, SubmitNodeCollector collector, boolean pinkFire) {
         var context=holder.getMainArm()==net.minecraft.world.entity.HumanoidArm.LEFT
                 ? ItemDisplayContext.FIRST_PERSON_LEFT_HAND : ItemDisplayContext.FIRST_PERSON_RIGHT_HAND;
         Minecraft.getInstance().getItemModelResolver().updateForLiving(FIRST_PERSON,holder.getMainHandItem(),context,holder);
+        if (pinkFire) RyukaClient.pinkFire(FIRST_PERSON);
         submit(FIRST_PERSON,sample,pose,collector);
     }
     public static void submit(ItemStackRenderState item, LongswordRig.Sample sample, PoseStack pose, SubmitNodeCollector collector) {

@@ -51,6 +51,7 @@ public final class LogosDimension {
                     out.accept(dev.logos.dimension.item.YumiItem.VERMILION.get());
                     out.accept(dev.logos.dimension.item.YumiItem.INDIGO.get());
                     out.accept(dev.logos.dimension.item.YumiItem.CHESTNUT.get());
+                    out.accept(dev.logos.dimension.item.RyukaItem.ITEM.get());
                     out.accept(dev.logos.dimension.paint.PaintSystem.BRUSH.get());
                     out.accept(dev.logos.dimension.paint.PaintSystem.PALETTE_ITEM.get());
                     out.accept(dev.logos.dimension.cloudsea.AquaticFlora.SEAGRASS_ITEM.get());
@@ -85,6 +86,8 @@ public final class LogosDimension {
         dev.logos.dimension.item.UchigatanaItem.init();
         dev.logos.dimension.item.OathSpearItem.init();
         dev.logos.dimension.item.YumiItem.init();
+        dev.logos.dimension.item.RyukaItem.init();
+        dev.logos.dimension.ryuka.Ryuka.register(bus);
         dev.logos.dimension.item.AncientEmbraceItem.register(bus);
         dev.logos.dimension.item.NatureAttachments.TYPES.register(bus);
         dev.logos.dimension.instance.CauldronBinding.register(bus);

@@ -266,6 +266,8 @@ public final class LongswordCombat {
 
     private static void contact(ServerPlayer player, State state) {
         var move = state.runner.move();
+        var holder = state.stack.getItem() instanceof CombatWeapon.Holder h ? h : null;
+        if (holder != null && !holder.swing(player, move)) { player.resetAttackStrengthTicker(); return; }
         var targets = targets(player, cone(player, move));
         CombatEffects.contact(player, move, targets);
         if (targets.isEmpty()) {
@@ -294,7 +296,8 @@ public final class LongswordCombat {
             CONTACT.set(true);
             MOVE.set(move); TARGET.set(target);
             if (first) CRIT.set(target);
-            try { player.attack(target); } finally { CONTACT.remove(); CRIT.remove(); MOVE.remove(); TARGET.remove(); }
+            try { if (holder == null || !holder.strike(player, target, move)) player.attack(target); }
+            finally { CONTACT.remove(); CRIT.remove(); MOVE.remove(); TARGET.remove(); }
             if (target instanceof LivingEntity living && living.invulnerableTime >= 20 && living.getLastHurtByMob() == player)
                 state.lastHits.put(target.getUUID(), new long[]{living.getLastHurtByMobTimestamp(), now});
             // 这一下被弹开（招式已经换成被弹反）：没有砍中，不触发挑飞之类的效果，后面的目标也不再结算。

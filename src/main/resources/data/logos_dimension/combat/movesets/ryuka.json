@@ -1,0 +1,73 @@
+{
+  "start": "manifest",
+  "sheathe": "dissipate",
+  "combo_memory": 1.2,
+  "moves": {
+    "manifest": {"length": 0.9, "next": "idle"},
+    "idle": {
+      "length": 2.4, "playback": "loop", "blend_in": 0.1,
+      "on": [
+        {"input": "attack", "to": "slash_1", "combo": true},
+        {"input": "use_press", "to": "guard"}
+      ]
+    },
+    "slash_1": {
+      "length": 0.34, "contact": 0.1, "blend_in": 0.04,
+      "combo_next": "slash_2", "next": "idle",
+      "on": [
+        {"input": "use_press", "to": "guard"},
+        {"input": "attack", "to": "slash_2", "window": [0.05], "queue": true, "at": 0.22}
+      ]
+    },
+    "slash_2": {
+      "length": 0.34, "contact": 0.1, "blend_in": 0.04,
+      "combo_next": "slash_3", "next": "idle",
+      "on": [
+        {"input": "use_press", "to": "guard"},
+        {"input": "attack", "to": "slash_3", "window": [0.05], "queue": true, "at": 0.22}
+      ]
+    },
+    "slash_3": {
+      "length": 0.38, "contact": 0.12, "blend_in": 0.04,
+      "combo_next": "slash_4", "next": "idle",
+      "on": [
+        {"input": "use_press", "to": "guard"},
+        {"input": "attack", "to": "slash_4", "window": [0.05], "queue": true, "at": 0.26}
+      ]
+    },
+    "slash_4": {
+      "length": 0.5, "contact": 0.16, "cone": 180, "blend_in": 0.04,
+      "combo_next": "slash_5", "next": "idle",
+      "on": [
+        {"input": "use_press", "to": "guard"},
+        {"input": "attack", "to": "slash_5", "window": [0.06], "queue": true, "at": 0.36}
+      ]
+    },
+    "slash_5": {
+      "length": 0.62, "contact": 0.2, "effect": "sakura_wave", "blend_in": 0.04,
+      "combo_next": "slash_1", "next": "idle",
+      "on": [
+        {"input": "use_press", "to": "guard"},
+        {"input": "attack", "to": "slash_1", "window": [0.08], "queue": true, "at": 0.44}
+      ]
+    },
+    "guard": {
+      "length": 1.6, "playback": "loop", "reset_combo": true, "blend_in": 0.05,
+      "on": [
+        {"input": "block", "to": "parry", "window": [0, 0.5]},
+        {"input": "use_release", "to": "idle"}
+      ]
+    },
+    "parry": {
+      "length": 0.36, "blend_in": 0.03, "next": "guard", "effect": "parry",
+      "on": [{"input": "attack", "to": "riposte", "window": [0], "queue": true, "at": 0.1}]
+    },
+    "riposte": {
+      "length": 0.3, "contact": 0.06, "blend_in": 0.03, "next": "idle",
+      "on": [{"input": "use_press", "to": "guard", "window": [0.2]}]
+    },
+    "parried": {"length": 0.5, "reset_combo": true, "blend_in": 0.03, "next": "idle"},
+    "parried_npc": {"length": 0.8, "reset_combo": true, "blend_in": 0.03, "next": "idle"},
+    "dissipate": {"length": 0.6, "blend_in": 0.06, "next": "$clear"}
+  }
+}
