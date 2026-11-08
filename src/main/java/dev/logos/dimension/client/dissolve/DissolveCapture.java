@@ -94,7 +94,7 @@ final class DissolveCapture implements VertexConsumer {
                         v[a] + s1 * ex + t0 * fx, v[a + 1] + s1 * ey + t0 * fy, v[a + 2] + s1 * ez + t0 * fz,
                         v[a] + s1 * ex + t1 * fx, v[a + 1] + s1 * ey + t1 * fy, v[a + 2] + s1 * ez + t1 * fz,
                         v[a] + s0 * ex + t1 * fx, v[a + 1] + s0 * ey + t1 * fy, v[a + 2] + s0 * ez + t1 * fz,
-                        nx, ny, nz, heat, dissolve.color);
+                        nx, ny, nz, heat, dissolve.color, dissolve.petals);
                 if (particles) {
                     p.set(cx, cy, cz);
                     n.set(nx, ny, nz);

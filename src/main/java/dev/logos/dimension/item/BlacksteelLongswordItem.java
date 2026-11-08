@@ -89,6 +89,7 @@ public final class BlacksteelLongswordItem extends WandItem implements CombatWea
 
     @Override public boolean allowsAttack(ServerPlayer player, String move) { return SwordCasting.allowsAttack(player, move); }
     @Override public void combatTick(ServerPlayer player, String move) { SwordCasting.tick(player, move); }
+    @Override public boolean manaGuard(ServerPlayer player, String move) { return SwordCasting.guarding(move); }
 
     @Override protected String usage() { return Component.translatable("tooltip.logos_dimension.blacksteel_longsword.cast").getString(); }
 

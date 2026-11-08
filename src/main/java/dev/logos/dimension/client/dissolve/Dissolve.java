@@ -36,6 +36,8 @@ final class Dissolve {
     final DissolveShape shape;
     final float start;
     final int ticks, color;
+    /** 放樱花瓣而不是火星（颜色带 {@link dev.logos.dimension.dissolve.Dissolving#PETALS}）。 */
+    final boolean petals;
     private final Vector3f min = new Vector3f(Float.MAX_VALUE), max = new Vector3f(-Float.MAX_VALUE);
     private float originX, originY, originZ, reach = 1, from, span = 1;
     private boolean dirty = true;
@@ -50,7 +52,8 @@ final class Dissolve {
         this.shape = shape;
         this.start = start;
         this.ticks = ticks;
-        this.color = color;
+        this.color = color & 0xFFFFFF;
+        this.petals = (color & dev.logos.dimension.dissolve.Dissolving.PETALS) != 0;
     }
 
     float progress(float now) { return (now - start) / ticks; }
@@ -130,6 +133,9 @@ final class Dissolve {
     /** 最近画到过发光条没有（看不见的目标不放粒子）。 */
     boolean visible(int tick) { return sampled > 0 && tick - seen <= 2; }
 
+    /** 动作武器的消散：好几刻没再画到发光条，可以丢掉了。 */
+    boolean stale(int tick) { return tick - seen > 10 && tick - start > 10; }
+
     /**
      * {@code mesh} 还留下的格子，发光条记进 {@code glow}。{@code pose} 是格子的姿势，{@code toPattern} 把模型空间换到图案空间，
      * {@code toWorld} 把姿势之后的空间换到相对镜头的世界坐标轴（已经是的话为 null）；{@code noise} 用模型自己的，或者按方块位置算的。
@@ -151,7 +157,7 @@ final class Dissolve {
             float heat = 1 - (v - threshold) / WIDTH;
             pose.pose().transformPosition(cells[i * 6], cells[i * 6 + 1], cells[i * 6 + 2], p);
             pose.transformNormal(cells[i * 6 + 3], cells[i * 6 + 4], cells[i * 6 + 5], n);
-            glow.quad(pose, quad, n, heat, color);
+            glow.quad(pose, quad, n, heat, color, petals);
             if (particles) {
                 if (toWorld != null) {
                     toWorld.transformPosition(p);
@@ -166,26 +172,28 @@ final class Dissolve {
     /** 一次提交里发光的面，以加法叠在它们贴着的格子上。 */
     static final class Glow {
         private static final float GROW = 1.15f, LIFT = .004f;
+        /** 发光条最热处的颜色：火偏金，花瓣偏白。 */
+        private static final int HOT = 0xFFD9A0, HOT_PETAL = 0xFFF4FA;
 
         private float[] data = new float[8 * 4 * 32];
         private int size;
 
         boolean empty() { return size == 0; }
 
-        void quad(PoseStack.Pose pose, BakedQuad q, Vector3f normal, float heat, int color) {
+        void quad(PoseStack.Pose pose, BakedQuad q, Vector3f normal, float heat, int color, boolean petals) {
             Vector3f a = pose.pose().transformPosition(q.position0(), new Vector3f()), b = pose.pose().transformPosition(q.position1(), new Vector3f());
             Vector3f c = pose.pose().transformPosition(q.position2(), new Vector3f()), d = pose.pose().transformPosition(q.position3(), new Vector3f());
-            corners(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z, d.x, d.y, d.z, normal.x, normal.y, normal.z, heat, color);
+            corners(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z, d.x, d.y, d.z, normal.x, normal.y, normal.z, heat, color, petals);
         }
 
         /** 从中心稍微放大，让发光条连成一片，再抬离表面一点。 */
         void corners(float ax, float ay, float az, float bx, float by, float bz, float cx, float cy, float cz, float dx, float dy, float dz,
-                float nx, float ny, float nz, float heat, int color) {
+                float nx, float ny, float nz, float heat, int color, boolean petals) {
             float mx = (ax + bx + cx + dx) / 4, my = (ay + by + cy + dy) / 4, mz = (az + bz + cz + dz) / 4;
             // 背对镜头的面在模型上不画（剔除了），透过洞看过去它的光会悬在半空
             if (mx * nx + my * ny + mz * nz > 0) return;
             if (size + 16 > data.length) data = Arrays.copyOf(data, data.length * 2);
-            int argb = VfxParts.argb(.15f + .6f * heat * heat, VfxParts.lerpColor(color, 0xFFD9A0, heat * heat * heat));
+            int argb = VfxParts.argb(.15f + .6f * heat * heat, VfxParts.lerpColor(color, petals ? HOT_PETAL : HOT, heat * heat * heat));
             float[][] v = {{ax, ay, az}, {bx, by, bz}, {cx, cy, cz}, {dx, dy, dz}};
             for (float[] p : v) {
                 data[size++] = mx + (p[0] - mx) * GROW + nx * LIFT;

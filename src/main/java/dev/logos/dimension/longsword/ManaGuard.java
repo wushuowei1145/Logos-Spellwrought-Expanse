@@ -2,7 +2,6 @@ package dev.logos.dimension.longsword;
 
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.combat.CombatWeapon;
-import dev.logos.item.WandItem;
 import dev.logos.lang.Element;
 import dev.logos.runtime.ConstructObj;
 import dev.logos.runtime.Constructs;
@@ -41,7 +40,9 @@ import org.jspecify.annotations.Nullable;
  *     自己的、友方的、不许作用于玩家的术式照常穿过。</li>
  * <li>虚空属性一律穿透：不比魔力和伤害谁大，虚空的法术体与虚空伤害都不挡。</li>
  * </ul>
- * 只有竖剑格挡的招式（过了举剑前摇）挡得住，见 {@link SwordCasting#guarding}。
+ * 哪些武器、哪些招式里是魔力护盾由武器自己说（{@link CombatWeapon.Holder#manaGuard}）：黑钢长剑只有竖剑格挡的招式
+ * （过了举剑前摇，见 {@link SwordCasting#guarding}），流火只要在格挡就是。付完魔力后交给武器的 {@link CombatWeapon.Holder#manaGuarded}
+ * （流火在那里结算斧头、监守者的破盾）。
  */
 @EventBusSubscriber(modid = LogosDimension.ID)
 public final class ManaGuard {
@@ -55,12 +56,12 @@ public final class ManaGuard {
         Constructs.addWards(ManaGuard::near);
     }
 
-    /** 正竖剑格挡（过了举剑前摇）的施法剑持有者，其剑的格挡组件；不在格挡时为 null。 */
+    /** 正用魔力护盾格挡的持剑者（黑钢长剑过了举剑前摇、流火随时），其剑的格挡组件；不在格挡时为 null。 */
     static @Nullable BlocksAttacks guard(ServerPlayer player) {
         ItemStack stack = player.getItemBlockingWith();
-        if (stack == null || !(stack.getItem() instanceof WandItem) || !(stack.getItem() instanceof CombatWeapon.Holder)) return null;
+        if (stack == null || !(stack.getItem() instanceof CombatWeapon.Holder holder)) return null;
         String move = LongswordCombat.move(player);
-        return move != null && SwordCasting.guarding(move) ? stack.get(DataComponents.BLOCKS_ATTACKS) : null;
+        return move != null && holder.manaGuard(player, move) ? stack.get(DataComponents.BLOCKS_ATTACKS) : null;
     }
 
     /** 从持剑者的魔力里扣 {@code mana}；不够时一点不扣，返回 false。 */
@@ -110,8 +111,11 @@ public final class ManaGuard {
         }
     }
 
-    /** 魔法伤害也挡，虚空一律穿透（在只认竖剑格挡的 {@link SwordCasting} 之后）。 */
-    @SubscribeEvent
+    /**
+     * 魔法伤害也挡，虚空一律穿透。最先结算：后面打刀的弹刀判定（流火弹得开魔法）、流火的无形之刃（挡不住流火）都看它的结果；
+     * 黑钢长剑只认竖剑格挡，{@link #guard} 本身就查了，和 {@link SwordCasting} 的先后无关。
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     static void magic(LivingShieldBlockEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player) || guard(player) == null) return;
         if (Effects.dealing() == Element.VOID) {
@@ -132,6 +136,10 @@ public final class ManaGuard {
         if (guard == null) return;
         int wear = event.shieldDamage() >= 0 ? event.shieldDamage() : guard.itemDamage().apply(event.getBlockedDamage());
         event.setShieldDamage(0);
-        if (!pay(player, wear)) event.setBlocked(false);
+        if (!pay(player, wear)) {
+            event.setBlocked(false);
+            return;
+        }
+        if (player.getItemBlockingWith().getItem() instanceof CombatWeapon.Holder holder) holder.manaGuarded(player, event);
     }
 }

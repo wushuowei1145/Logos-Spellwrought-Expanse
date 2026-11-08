@@ -58,7 +58,7 @@ NPC 模型**不需要**添加这两根骨骼：运行时自己算出它们的位
 | 路径（`assets/logos_dimension/combat/` 下） | 内容 |
 |---|---|
 | `skeletons/player_tp.json`、`player_fp.json` | 玩家参考骨架：`bones`（名称、父级、枢轴，Blockbench 空间）、`weapon_scale`（该视角的武器缩放）、`skin`（按原版皮肤取 UV 的手臂分段：上臂、前臂、手；手是一整块，截面与前臂相同，和原版手臂一样没有手指和手腕）。细臂皮肤（Alex 一类）按 3 像素宽的排布取 UV，分段在宽度方向按中心收窄到 3/4；按宽臂取会采到空白列，原版加载皮肤时把这些空白变成黑色。第一人称的手臂枢轴与第三人称不同，所以分两份。 |
-| `weapons/<武器>.json` | 武器网格：`texture`、`texture_size`、`cubes`（`part` 为 `weapon` 或 `sheath`），可选 `scale`（乘在骨架的 `weapon_scale` 上，默认 1；打刀、和弓为 1.25，第三人称正好 1 倍）。坐标相对握柄原点、按原始美术尺寸（缩放 1），长剑的网格等于物品模型像素坐标减去 (8, 1, 8)。可选 `bones`：`[{name, parent, pivot}]`，网格坐标的枢轴，最终挂在 `Weapon` 下，运行时按武器缩放放进骨架；方块的 `bone` 写了这些骨骼之一时跟着它动，否则跟 `Weapon` / `Sheath`。可选 `attachments`：`[{mesh, bone, origin}]`，另一份网格（自己的贴图，例如和弓的箭 `yumi_arrow`）挂在某根骨骼上，`origin` 是它的原点在武器网格里的位置。 |
+| `weapons/<武器>.json` | 武器网格：`texture`、`texture_size`、`cubes`（`part` 为 `weapon` 或 `sheath`），可选 `scale`（乘在骨架的 `weapon_scale` 上，默认 1；打刀、和弓为 1.25，第三人称正好 1 倍）。坐标相对握柄原点、按原始美术尺寸（缩放 1），长剑的网格等于物品模型像素坐标减去 (8, 1, 8)。可选 `bones`：`[{name, parent, pivot}]`，网格坐标的枢轴，最终挂在 `Weapon` 下，运行时按武器缩放放进骨架；方块的 `bone` 写了这些骨骼之一时跟着它动，否则跟 `Weapon` / `Sheath`。可选 `attachments`：`[{mesh, bone, origin}]`，另一份网格（自己的贴图，例如和弓的箭 `yumi_arrow`）挂在某根骨骼上，`origin` 是它的原点在武器网格里的位置。可选 `alpha`（0–1，默认 1）：小于 1 时武器网格按半透明画（流火的晶刃 0.88）。方块可标 `"fade": true`：这部分能单独隐去或消散（流火魔力耗尽时只散刀身）。 |
 | `animations/<类别>_<视角>.animation.json` | Bedrock 动作。 |
 
 两把长剑的数据由 `tools/import_longswords.py` 从仓库外的审定美术工程生成：曦誓工程提供玩家骨架和动作，两把剑各自提供网格。手改美术工程后重跑脚本，不要手改生成的 JSON。神狐打刀的网格与贴图由 `tools/import_uchigatana.py` 导入，动作由 `tools/uchigatana_moves.py` 按编排烘焙（[UCHIGATANA.md](UCHIGATANA.md) 第 5 节）。群誓·狼牙长枪同理：`tools/import_oath_spear.py` 与 `tools/oath_spear_moves.py`（[OATH_SPEAR.md](OATH_SPEAR.md)）。神狐和弓：`tools/import_yumi.py` 与 `tools/yumi_moves.py`（[YUMI.md](YUMI.md)）。
@@ -201,7 +201,7 @@ CombatWeapon.register(6, "glaive", "glaive", GLAIVE_MOVESET).withCone(90);
 - `MoveRunner`：一名角色身上的招式状态机，只依赖游戏刻和攻速，通过 `Actor` 回调换招与接触。
 - `Movesets`：按服务端资源管理器缓存招式，`/reload` 后重新读取。
 - `Parry`：弹刀成功后让近战的攻击方僵直（第 5 节「被弹反」）；`Parry.Reactive` 是生物接入的接口，`Parry.staggerNpc`、`Parry.isStagger` 和 `StaggerGoal` 是 NPC 共用的部分。
-- `CombatWeapon.Holder`：战斗武器物品。`allowsAttack` 在左键交给状态机前把关（返回 false 这次左键作废），`combatTick` 在每刻结算之后调用。施法剑（黑钢长剑，`longsword/SwordCasting`）借这两处接上 Logos 的蓄力：格挡中左键先试着开始蓄力，开得起来才转到蓄力招式；施放结果用 `LongswordCombat.force` 切到对应收势。
+- `CombatWeapon.Holder`：战斗武器物品。`allowsAttack` 在左键交给状态机前把关（返回 false 这次左键作废），`combatTick` 在每刻结算之后调用。施法剑（黑钢长剑，`longsword/SwordCasting`）借这两处接上 Logos 的蓄力：格挡中左键先试着开始蓄力，开得起来才转到蓄力招式；施放结果用 `LongswordCombat.force` 切到对应收势。`swing` 在每一刀接触、结算目标之前调用，返回 false 时这一刀落空（流火魔力不够）；`strike` 返回 true 时这一下由武器自己结算伤害，不走原版 `player.attack`（流火只打奥秘伤害）。两者默认不改变原来的行为。`manaGuard` 说当前招式里的格挡是不是魔力护盾（`longsword/ManaGuard`：挡下的扣魔力不扣耐久，魔法与法术体也挡，虚空穿透；黑钢长剑只在竖剑格挡里是，流火一直是），`manaGuarded` 在护盾付完一击的魔力后调用（流火在这里结算斧头、监守者的破盾）；默认不是护盾。
 
 客户端 `LongswordRig`（长剑、打刀、长枪与和弓共用）用它们取样并绘制武器、刀鞘、武器附件和分段手臂。迁移到本标准时，用迁移前的渲染算法对旧数据求了参考矩阵（`src/test/resources/combat/longsword_reference.json`），`LongswordMotionTest` 逐矩阵对照，保证动作外观没有变化。`MovesetTest` 逐刻检查长剑招式的出招、接触、输入缓冲与取消点、连招记忆、蓄力与取消、收剑；客户端的过渡混合在 `LongswordClient` 里按上一招在切换那一刻的姿势计算。
 

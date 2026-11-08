@@ -47,6 +47,7 @@ public final class LongswordGameTests {
                 Map.entry("longsword_cone",LongswordGameTests::cone),
                 Map.entry("longsword_guard",LongswordGameTests::guard),
                 Map.entry("longsword_mana_guard",LongswordGameTests::manaGuard),
+                Map.entry("longsword_ryuka_guard",LongswordGameTests::ryukaGuard),
                 Map.entry("longsword_cast",LongswordGameTests::cast),
                 Map.entry("longsword_cast_beam",LongswordGameTests::castBeam),
                 Map.entry("longsword_parried",LongswordGameTests::parried),
@@ -286,6 +287,54 @@ public final class LongswordGameTests {
         f.at(76,()->{
             h.assertTrue(Math.abs(manaOf(f.p)-993.5)<1e-9,"打不着玩家的术式也扣了魔力，剩 "+manaOf(f.p));
             h.getLevel().getServer().getPlayerList().remove(foe[0]);f.succeed();
+        });
+    }
+    /**
+     * 流火的魔力护盾：拿斧头的木桩一刚架刀就砍来 → 弹刀，不扣魔力也不破防；过了弹刀窗口再砍 → 照样挡下，扣 6 伤害的 7 点
+     * 加破盾 5 秒 × 4 = 20 点，不破防；魔法伤害照样挡（4 → 5）；虚空穿透；魔力只够挡不够顶住斧头时 → 挡下这一击，但破防 5 秒。
+     */
+    private static void ryukaGuard(GameTestHelper h) {
+        var f=Fixture.create(h,new ItemStack(dev.logos.dimension.item.RyukaItem.ITEM.get()));mana(f.p);
+        f.p.getAttribute(dev.logos.runtime.SpellModifiers.MANA_REGENERATION).addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                LogosDimension.id("test_no_regeneration"),-1,net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+        var axe=new ItemStack(net.minecraft.world.item.Items.IRON_AXE);
+        f.at(30,()->{f.idle();f.use();});
+        f.at(32,()->{
+            h.assertTrue(f.p.isBlocking() && "guard".equals(LongswordCombat.move(f.p)),"右键没有立即格挡："+LongswordCombat.move(f.p));
+            f.target.setItemInHand(InteractionHand.MAIN_HAND,axe.copy());
+            h.assertTrue(f.target.getSecondsToDisableBlocking()==5,"拿斧头的木桩不破盾");
+            float health=f.p.getHealth();double before=manaOf(f.p);
+            f.p.hurtServer(h.getLevel(),f.p.damageSources().mobAttack(f.target),6);
+            h.assertTrue("parry".equals(LongswordCombat.move(f.p)),"架刀之初挨斧头没有弹刀："+LongswordCombat.move(f.p));
+            h.assertTrue(f.p.getHealth()==health && manaOf(f.p)==before,"弹刀应挡下且不花魔力：生命="+f.p.getHealth()+" 魔力 "+before+" → "+manaOf(f.p));
+            h.assertTrue(f.p.isUsingItem() && !f.p.getCooldowns().isOnCooldown(f.p.getMainHandItem()),"弹开斧头却破防了");
+        });
+        f.at(60,()->{
+            h.assertTrue(f.p.isBlocking() && "guard".equals(LongswordCombat.move(f.p)),"弹刀后没有回到格挡："+LongswordCombat.move(f.p));
+            float health=f.p.getHealth();double before=manaOf(f.p);f.p.invulnerableTime=0;
+            f.p.hurtServer(h.getLevel(),f.p.damageSources().mobAttack(f.target),6);
+            h.assertTrue("guard".equals(LongswordCombat.move(f.p)),"过了 0.5 秒仍然弹刀");
+            h.assertTrue(f.p.getHealth()==health && Math.abs(before-manaOf(f.p)-27)<1e-9,"硬挡斧头应挡下并扣 7 + 20 魔力：生命="+f.p.getHealth()+" 扣了 "+(before-manaOf(f.p)));
+            h.assertTrue(f.p.isUsingItem() && !f.p.getCooldowns().isOnCooldown(f.p.getMainHandItem()),"魔力够却破防了");
+            // 魔法：木桩空手，不算破盾
+            f.target.setItemInHand(InteractionHand.MAIN_HAND,ItemStack.EMPTY);
+            before=manaOf(f.p);f.p.invulnerableTime=0;
+            f.p.hurtServer(h.getLevel(),f.p.damageSources().indirectMagic(f.target,f.target),4);
+            h.assertTrue(f.p.getHealth()==health && Math.abs(before-manaOf(f.p)-5)<1e-9,"魔法伤害没有挡住或没扣 5 魔力：生命="+f.p.getHealth()+" 扣了 "+(before-manaOf(f.p)));
+            before=manaOf(f.p);f.p.invulnerableTime=0;
+            dev.logos.runtime.Effects.damage(f.target,f.p,4,dev.logos.lang.Element.VOID);
+            h.assertTrue(f.p.getHealth()<health && manaOf(f.p)==before,"虚空伤害被挡住了：生命="+f.p.getHealth());
+            f.p.setHealth(f.p.getMaxHealth());health=f.p.getHealth();
+            // 魔力只够这一下的 7 点，顶不住斧头的 20 点：挡下，但破防
+            f.target.setItemInHand(InteractionHand.MAIN_HAND,axe.copy());
+            dev.logos.runtime.PlayerMagic.of(f.p).mana=8;f.p.invulnerableTime=0;
+            f.p.hurtServer(h.getLevel(),f.p.damageSources().mobAttack(f.target),6);
+            h.assertTrue(f.p.getHealth()==health && Math.abs(manaOf(f.p)-1)<1e-9,"魔力不够顶住斧头时这一击也该挡下、只扣 7：生命="+f.p.getHealth()+" 魔力="+manaOf(f.p));
+            h.assertTrue(!f.p.isUsingItem() && f.p.getCooldowns().isOnCooldown(f.p.getMainHandItem()),"魔力不够却没有破防");
+        });
+        f.at(80,()->{
+            h.assertTrue(!f.p.isBlocking() && f.p.getCooldowns().isOnCooldown(f.p.getMainHandItem()),"破防没有持续");
+            f.succeed();
         });
     }
     /**

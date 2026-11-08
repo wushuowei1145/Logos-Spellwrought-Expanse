@@ -56,7 +56,7 @@ public final class LongswordClient {
             if (old != null && !(old.move().equals(p.move()) && old.started() == p.started())) PREVIOUS.put(p.player(), old);
         });
     }
-    @SubscribeEvent static void logout(ClientPlayerNetworkEvent.LoggingOut event) { STATES.clear(); PREVIOUS.clear(); repeat = 0; }
+    @SubscribeEvent static void logout(ClientPlayerNetworkEvent.LoggingOut event) { STATES.clear(); PREVIOUS.clear(); repeat = 0; RyukaClient.clear(); }
     @SubscribeEvent static void reload(AddClientReloadListenersEvent event) {
         event.addListener(LogosDimension.id("longsword_rigs"),
                 (net.minecraft.server.packs.resources.ResourceManagerReloadListener) manager -> LongswordRig.clear());
@@ -129,19 +129,22 @@ public final class LongswordClient {
                 var level = Minecraft.getInstance().level;
                 double now = level == null ? 0 : level.getGameTime() + state.partialTick;
                 var sample = p == null || level == null || state.isSpectator ? null : sample(p, false, now);
+                if (RyukaClient.is(p)) RyukaClient.observe(avatar, now);
                 Frame frame = null;
                 if (sample != null) {
                     var rig = LongswordRig.get(p.variant(), false);
                     // 第三人称施法时剑尖跟着视线俯仰（第一人称的剑本来就跟着镜头）。
                     sample = rig.aim(sample, SwordCastClient.aim(p, now, state.xRot));
-                    // 侧身拉弓时双臂和弓跟着视线俯仰（第一人称的弓本来就跟着镜头）；随转身淡入淡出。
-                    if (sample.turn() != 0) sample = rig.aimDraw(sample, -state.xRot * Math.min(1, Math.abs(sample.turn()) / 90));
+                    // 侧身拉弓时双臂和弓跟着视线俯仰（第一人称的弓本来就跟着镜头）；随转身淡入淡出。流火的回旋斩只是转一圈，不俯仰。
+                    float sideways = net.minecraft.util.Mth.wrapDegrees(sample.turn());
+                    if (sideways != 0 && !RyukaClient.is(p)) sample = rig.aimDraw(sample, -state.xRot * Math.min(1, Math.abs(sideways) / 90));
                     float glow = rig.glows() ? SwordCastClient.glow(avatar, p, now, state.partialTick) : 0;
                     frame = new Frame(p.variant(), sample, state.getMainHandItemState(), p, now,
                             SwordCastClient.tip(avatar.getMainHandItem()), glow, glow > 0 ? SwordCastClient.color(avatar) : 0);
                 }
-                if (frame != null && frame.sample().turn() != 0) {
-                    float turn = frame.sample().turn();
+                // 转身按 ±180° 算：回旋斩转满一圈（360°）就是没转。
+                if (frame != null && net.minecraft.util.Mth.wrapDegrees(frame.sample().turn()) != 0) {
+                    float turn = net.minecraft.util.Mth.wrapDegrees(frame.sample().turn());
                     // 弓道侧身：原版身体（连同双腿和这层骨架）整个转过去，头保持原来的朝向，仍看准星。
                     // 动作里的转身是 Blockbench 绕 +Y 的角（-90 = 靶在左手一侧）。骨架这一层按 X、Y 取反画进原版模型，
                     // 原版又按 180 - bodyRot 转身体，所以原版身体朝向要加上 -turn；左手惯用时骨架只取反 Y，转向相反。
@@ -179,7 +182,14 @@ public final class LongswordClient {
         if (mc.player.getMainArm() == HumanoidArm.LEFT) pose.scale(-1,1,1);
         boolean shown = DawnvowSummon.visible(p, now);
         var rig = LongswordRig.get(p.variant(), true);
-        rig.submit(sample, pose,
+        boolean ryuka = RyukaClient.is(p);
+        if (ryuka) {
+            // 流火：手臂照常画，刀交给它自己（凝聚、散去、只剩刀柄）；刀身不完整时不加狐火
+            RyukaClient.observe(mc.player, now);
+            rig.submit(sample, pose, event.getSubmitNodeCollector(), event.getPackedLight(), mc.player.getSkin(), !mc.player.isInvisible(), false);
+            RyukaClient.submit(rig, p, mc.player.getId(), now, sample, pose, event.getSubmitNodeCollector(), event.getPackedLight(), true);
+            shown = RyukaClient.whole(rig, p, mc.player.getId(), now);
+        } else rig.submit(sample, pose,
                 event.getSubmitNodeCollector(), event.getPackedLight(), mc.player.getSkin(), !mc.player.isInvisible(), shown);
         if (rig.glows() && shown) {
             float glow = SwordCastClient.glow(mc.player, p, now, event.getPartialTick());
@@ -187,7 +197,7 @@ public final class LongswordClient {
         }
         var tip = SwordCastClient.tip(mc.player.getMainHandItem());
         if (tip != null) SwordCastClient.reportFirstPerson(mc.player.getId(), pose.last().pose(), LongswordRig.onWeapon(sample, tip));
-        if (shown) LongswordAuras.firstPerson(mc.player,sample,pose,event.getSubmitNodeCollector());
+        if (shown) LongswordAuras.firstPerson(mc.player,sample,pose,event.getSubmitNodeCollector(),ryuka);
         DawnvowSummon.submit(p, now, sample, pose, event.getSubmitNodeCollector(), true);
         if (shown) DawnvowBlade.submit(DawnvowClient.blade(mc.player.getId(), event.getPartialTick()), sample, pose, event.getSubmitNodeCollector(), true,
                 mc.player.tickCount + event.getPartialTick());
@@ -208,7 +218,13 @@ public final class LongswordClient {
             pose.scale(state.mainArm == HumanoidArm.LEFT ? 1/16f : -1/16f, -1/16f, 1/16f);
             boolean shown = DawnvowSummon.visible(frame.move, frame.time);
             var rig = LongswordRig.get(frame.variant, false);
-            rig.submit(frame.sample, pose, collector, light, state.skin, !state.isInvisible, shown);
+            boolean ryuka = RyukaClient.is(frame.move);
+            if (ryuka) {
+                rig.submit(frame.sample, pose, collector, light, state.skin, !state.isInvisible, false);
+                if (!state.isInvisible) RyukaClient.submit(rig, frame.move, state.id, frame.time, frame.sample, pose, collector, light, false);
+                shown = !state.isInvisible && RyukaClient.whole(rig, frame.move, state.id, frame.time);
+                if (shown) RyukaClient.pinkFire(frame.effects);
+            } else rig.submit(frame.sample, pose, collector, light, state.skin, !state.isInvisible, shown);
             dev.logos.dimension.client.YumiClient.reportArrow(state.id, pose.last().pose(), frame.sample);
             if (shown && frame.glow > 0) rig.submitGlow(frame.sample, pose, collector, false, frame.glow, frame.glowColor);
             if (frame.tip != null) SwordCastClient.reportThirdPerson(state.id, pose.last().pose(), LongswordRig.onWeapon(frame.sample, frame.tip));

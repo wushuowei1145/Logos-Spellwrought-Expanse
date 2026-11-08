@@ -25,6 +25,20 @@ public record CombatWeapon(int id, String mesh, String animations, Identifier mo
         default boolean allowsAttack(net.minecraft.server.level.ServerPlayer player, String move) { return true; }
         /** 招式状态机每刻结算之后调用。 */
         default void combatTick(net.minecraft.server.level.ServerPlayer player, String move) {}
+        /** 一刀接触、结算目标之前调用；返回 false 时这一刀落空，不打任何目标（流火魔力不够时）。 */
+        default boolean swing(net.minecraft.server.level.ServerPlayer player, Moveset.Move move) { return true; }
+        /**
+         * 自己结算这一刀对 {@code target} 的伤害时返回 true，这一下就不走原版 {@code player.attack}（流火只打魔法伤害）。
+         * 默认 false：伤害走原版近战流程。
+         */
+        default boolean strike(net.minecraft.server.level.ServerPlayer player, net.minecraft.world.entity.Entity target, Moveset.Move move) { return false; }
+        /**
+         * 正在招式 {@code move} 里格挡时，格挡是不是一面魔力护盾（{@code longsword.ManaGuard}）：挡下的扣魔力不扣耐久，
+         * 正面的魔法伤害与法术体也挡，虚空穿透。默认 false：原版格挡。黑钢长剑在竖剑格挡时是，流火一直是。
+         */
+        default boolean manaGuard(net.minecraft.server.level.ServerPlayer player, String move) { return false; }
+        /** 魔力护盾挡下一击、付完这一下的魔力之后调用（流火在这里结算破盾）。 */
+        default void manaGuarded(net.minecraft.server.level.ServerPlayer player, net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent event) {}
     }
 
     public static CombatWeapon register(int id, String mesh, String animations, Identifier moveset) {

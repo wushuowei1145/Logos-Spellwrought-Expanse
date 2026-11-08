@@ -35,6 +35,11 @@ public final class Dissolving {
 
     /** 参考图的红橙色。 */
     public static final int EMBER = 0xFF5A28;
+    /**
+     * 加在颜色上（{@code 颜色 | PETALS}）：飘走的不是火星，而是原版的樱花瓣，最亮处偏白而不是偏金。
+     * 只占颜色上面没用的那一位，网络包格式不变。
+     */
+    public static final int PETALS = 0x0100_0000;
 
     private record Due(long tick, Runnable run) {}
     private static final List<Due> DUE = new ArrayList<>();

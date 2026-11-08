@@ -76,6 +76,7 @@ public final class Dissolves {
 
     private static final Map<Integer, Dissolve> ENTITIES = new HashMap<>();
     private static final Map<Long, Dissolve> HELD = new HashMap<>();
+    private static final Map<Object, Dissolve> WEAPONS = new HashMap<>();
     private static final List<BlockGroup> GROUPS = new ArrayList<>();
     private static final Map<EntityRenderState, Dissolve> STATES = new IdentityHashMap<>();
     private static final List<Mote> MOTES = new ArrayList<>();
@@ -330,6 +331,8 @@ public final class Dissolves {
         ticks++;
         ENTITIES.values().removeIf(Dissolves::over);
         HELD.values().removeIf(Dissolves::over);
+        WEAPONS.values().removeIf(d -> d.stale(ticks));
+        for (Dissolve d : WEAPONS.values()) emitWeapon(d);
         GROUPS.removeIf(g -> g.dissolve.gone(ticks));
         for (Dissolve d : ENTITIES.values()) emit(d);
         for (Dissolve d : HELD.values()) emit(d);
@@ -340,9 +343,38 @@ public final class Dissolves {
 
     private static boolean over(Dissolve d) { return ticks > d.start + d.ticks + LINGER; }
 
+    private static void petal(float x, float y, float z, float nx, float ny, float nz) {
+        Level level = Minecraft.getInstance().level;
+        if (level != null) level.addParticle(net.minecraft.core.particles.ParticleTypes.CHERRY_LEAVES, x, y, z, nx * .02, ny * .02, nz * .02);
+    }
+
+    /**
+     * 动作武器（{@link WeaponDissolve}）这一边的消散：只用来记发光条、放粒子，阈值由画它的人直接给。
+     * 连着几刻没再画到就丢掉。{@code key} 区分是谁、哪一个视角。
+     */
+    static Dissolve weapon(Object key, DissolveShape shape, int color) {
+        return WEAPONS.computeIfAbsent(key, k -> new Dissolve(shape, ticks, 1, color));
+    }
+
+    /** 客户端刻数，给动作武器的消散记发光条用。 */
+    static int tick() { return ticks; }
+
+    /** 第几帧，同一帧里记的发光条算一批。 */
+    static long frame() { return frame; }
+
+    /** 动作武器的消散没有时长，只看最近画到发光条没有。 */
+    private static void emitWeapon(Dissolve d) {
+        if (d.visible(ticks)) spray(d);
+    }
+
     /** 从发光条上放粒子，和原版的两个发射器一样：贴在边缘的柔光（看上去着火主要靠它），和沿卷曲路线飘走的火星。 */
     private static void emit(Dissolve d) {
-        if (d.gone(ticks) || !d.visible(ticks) || MOTES.size() >= CAP) return;
+        if (d.gone(ticks) || !d.visible(ticks)) return;
+        spray(d);
+    }
+
+    private static void spray(Dissolve d) {
+        if (MOTES.size() >= CAP) return;
         // 按发光条有多少贴图像素算，也就是格子数的四分之一
         int halos = Math.min(4 + d.sampled / 12, 36), sparks = Math.min(1 + d.sampled / 40, 12);
         float[] s = d.samples;
@@ -350,6 +382,11 @@ public final class Dissolves {
         for (int i = 0; i < halos + sparks; i++) {
             int o = RANDOM.nextInt(d.sampled) * 6;
             boolean halo = i < halos;
+            if (!halo && d.petals) {
+                // 樱花瓣用原版的粒子：自己会打着旋落下，比火星慢，数量减半
+                if (i % 2 == 0) petal(s[o], s[o + 1], s[o + 2], s[o + 3], s[o + 4], s[o + 5]);
+                continue;
+            }
             // 自己手上的东西飘出来的粒子就在眼前，这个距离上必须又小又慢
             float near = Mth.clamp((float) camera.distanceTo(new Vec3(s[o], s[o + 1], s[o + 2])) / 4, .15f, 1);
             float speed = (halo ? .002f : .012f + RANDOM.nextFloat() * .035f) * near;
@@ -391,6 +428,7 @@ public final class Dissolves {
     public static void clear() {
         ENTITIES.clear();
         HELD.clear();
+        WEAPONS.clear();
         GROUPS.clear();
         STATES.clear();
         MOTES.clear();
