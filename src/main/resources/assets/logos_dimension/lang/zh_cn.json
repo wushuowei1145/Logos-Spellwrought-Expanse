@@ -1182,5 +1182,11 @@
   "message.logos_dimension.explosion.too_close": "你就站在爆炸范围里！",
   "message.logos_dimension.explosion.fizzled": "吟唱中断：已注入的 %1$s 魔力散为游离魔力",
   "death.attack.logos_dimension.explosion_magic": "%1$s 被爆裂魔法炸得灰飞烟灭",
-  "death.attack.logos_dimension.explosion_magic.player": "%1$s 被 %2$s 的爆裂魔法炸得灰飞烟灭"
+  "death.attack.logos_dimension.explosion_magic.player": "%1$s 被 %2$s 的爆裂魔法炸得灰飞烟灭",
+  "block.logos_dimension.journey_seal_stake": "封印杭",
+  "item.logos_dimension.journey_seal_stake": "封印杭",
+  "block.logos_dimension.journey_ofuda": "御札",
+  "item.logos_dimension.journey_ofuda": "御札",
+  "block.logos_dimension.journey_seal_stake.left": "一道封印断了，还剩 %s 道。",
+  "block.logos_dimension.journey_seal_stake.released": "最后一道封印断了。杀生石里，有什么东西动了一下……"
 }

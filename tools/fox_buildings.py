@@ -234,6 +234,97 @@ def goods_izakaya_long(c):
     c.set(3, 2, 7, B('flower_pot'))
 
 
+def goods_tofu(c):
+    """豆腐屋：西墙一排泡豆腐的水槽，柜台上几盘白豆腐；东边灶上炸油扬（神狐最爱的那一口），旁边一桶黄豆。"""
+    for z in (2, 3, 4):
+        c.set(1, 1, z, B('water_cauldron', level=3))
+    _counter(c, 2, 6, 5)
+    for x in (2, 4, 6):
+        c.set(x, 2, 5, B('smooth_quartz_slab', type='bottom', waterlogged=False))
+    c.set(7, 1, 2, B('smoker', facing='west', lit=True))
+    c.set(7, 1, 3, B('cauldron'))
+    c.set(7, 1, 4, B('barrel', facing='up', open=False))
+    c.set(1, 1, 9, B('composter', level=6))  # 豆渣
+
+
+def goods_pottery(c):
+    """陶器屋：西墙木台上一排彩绘陶罐，东边釉陶块堆成的货架；里头是窑与转盘，地上几块黏土。"""
+    for z in (2, 3, 4, 5):
+        c.set(1, 1, z, B('spruce_planks'))
+        c.set(1, 2, z, B('decorated_pot', facing='east', cracked=False, waterlogged=False))
+    for z, (lo, hi) in zip((2, 3, 4), (('white_glazed_terracotta', 'orange_glazed_terracotta'),
+                                        ('light_blue_glazed_terracotta', 'brown_terracotta'),
+                                        ('orange_terracotta', 'white_glazed_terracotta'))):
+        c.set(7, 1, z, B(lo, facing='west') if 'glazed' in lo else B(lo))
+        c.set(7, 2, z, B(hi, facing='west') if 'glazed' in hi else B(hi))
+        c.set(6, 1, z, B('flower_pot'))
+    _counter(c, 3, 5, 5)
+    c.set(4, 2, 5, B('decorated_pot', facing='north', cracked=False, waterlogged=False))
+    c.set(1, 1, 9, B('blast_furnace', facing='east', lit=True))
+    c.set(1, 2, 9, B('bricks'))
+    c.set(2, 1, 9, B('furnace', facing='north', lit=True))
+    c.set(3, 1, 9, B('clay'))
+    c.set(4, 1, 9, B('water_cauldron', level=2))
+    c.set(3, 1, 7, B('stonecutter', facing='north'))
+    c.set(3, 1, 8, STOOL)
+    c.set(5, 1, 8, B('decorated_pot', facing='north', cracked=True, waterlogged=False))
+
+
+def goods_apothecary(c):
+    """药屋：小上がり后头一整面百味箪笥（空的雕纹书架就像一格格抽屉），柜台上两只蒸馏台与几盆药草；
+    天花板下吊着晒干的根须，一株孢子花。"""
+    for x in range(1, 7):
+        for y in (1, 2):
+            c.set(x, y, 9, B('chiseled_bookshelf', facing='north', slot_0_occupied=False, slot_1_occupied=False,
+                             slot_2_occupied=False, slot_3_occupied=False, slot_4_occupied=False, slot_5_occupied=False))
+    _counter(c, 2, 6, 5)
+    c.set(2, 2, 5, B('brewing_stand', has_bottle_0=True, has_bottle_1=False, has_bottle_2=True))
+    c.set(4, 2, 5, B('potted_brown_mushroom'))
+    c.set(6, 2, 5, B('brewing_stand', has_bottle_0=False, has_bottle_1=True, has_bottle_2=False))
+    for (x, z) in ((2, 3), (4, 2), (5, 4), (3, 4)):
+        c.set(x, 4, z, B('hanging_roots', waterlogged=False))
+    c.set(4, 4, 7, B('spore_blossom'))
+    c.set(1, 1, 2, B('barrel', facing='up', open=False))
+    c.set(1, 1, 3, B('barrel', facing='east', open=False))
+    c.set(1, 1, 4, B('cauldron'))
+    c.set(7, 1, 2, B('grindstone', face='floor', facing='north'))
+    c.set(7, 1, 3, B('potted_red_mushroom'))
+
+
+def goods_smith(c):
+    """刀鍛冶：最里一座砖砌火床（营火、高炉、锻造台），铁砧与淬火水槽；西墙刀架上竖着几把刀，柜台上横放一把。"""
+    for x in (5, 6, 7):
+        c.set(x, 2, 9, B('bricks'))
+    c.set(5, 1, 9, B('campfire', facing='north', lit=True, signal_fire=False, waterlogged=False))
+    c.set(6, 1, 9, B('blast_furnace', facing='north', lit=True))
+    c.set(7, 1, 9, B('smithing_table'))
+    c.set(5, 1, 7, B('anvil', facing='west'))
+    c.set(7, 1, 7, B('water_cauldron', level=3))
+    c.set(2, 1, 8, B('grindstone', face='floor', facing='east'))
+    for z in (3, 4, 5, 6):
+        c.set(1, 1, z, B('spruce_slab', type='top', waterlogged=False))
+        c.set(1, 2, z, B('lightning_rod', facing='up', powered=False, waterlogged=False))
+    _counter(c, 3, 5, 5)
+    c.set(4, 2, 5, B('lightning_rod', facing='east', powered=False, waterlogged=False))
+    c.set(7, 1, 2, B('barrel', facing='up', open=False))
+
+
+def goods_lantern(c):
+    """提灯屋：天花板下挂满亮着的纸灯笼，柜台上立着几只；小上がり上是糊灯笼的工作台与一捆竹篾。"""
+    for x in (2, 4, 6):
+        for z in (2, 4):
+            c.set(x, 4, z, paper_lantern(True))
+    c.set(3, 4, 3, B('lantern', hanging=True, waterlogged=False))
+    c.set(5, 4, 3, B('soul_lantern', hanging=True, waterlogged=False))
+    _counter(c, 2, 6, 5)
+    for x in (2, 4, 6):
+        c.set(x, 2, 5, paper_lantern(False))
+    c.set(2, 1, 8, B('crafting_table'))
+    c.set(4, 1, 8, B('loom', facing='south'))
+    c.set(1, 1, 9, B('bamboo_block', axis='y'))
+    c.set(1, 2, 9, B('bamboo_block', axis='y'))
+
+
 def kura_style(c):
     """土藏造的店：腰墙换成深色石，格子封成白壁，整栋偏白，与木格子的町家错开。"""
     for k, st in list(c.cells.items()):
@@ -254,7 +345,14 @@ SHOP_VARIANTS = {
     'shop_cloth': lambda: kura_style(machiya(Canvas(), 'red', goods=goods_cloth)),
     'shop_izakaya_u': lambda: machiya(Canvas(), 'red', two_storey=False, goods=goods_izakaya_u, agari=False),
     'shop_izakaya_long': lambda: machiya(Canvas(), 'brown', goods=goods_izakaya_long, agari=False),
+    'shop_tofu': lambda: machiya(Canvas(), 'white', two_storey=False, goods=goods_tofu, bench=True),
+    'shop_pottery': lambda: kura_style(machiya(Canvas(), 'brown', goods=goods_pottery, agari=False)),
+    'shop_apothecary': lambda: machiya(Canvas(), 'indigo', goods=goods_apothecary),
+    'shop_smith': lambda: machiya(Canvas(), 'brown', two_storey=False, goods=goods_smith, lattice=False, agari=False),
+    'shop_lantern': lambda: machiya(Canvas(), 'red', goods=goods_lantern),
 }
+#: 居酒屋：结构里每处聚落至多随机 2–3 家（商铺与住宅地块合计），见 FoxSanctuaryStructure
+IZAKAYA = ('shop_izakaya_u', 'shop_izakaya_long', 'house_d')
 
 
 # ==================== 住宅、屋台、小屋 ====================

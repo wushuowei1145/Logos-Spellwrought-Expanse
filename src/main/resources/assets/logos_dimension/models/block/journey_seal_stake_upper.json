@@ -1,0 +1,284 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "wood": "logos_dimension:block/journey_seal_stake_side",
+    "top": "logos_dimension:block/journey_seal_stake_top",
+    "rope": "logos_dimension:block/journey_seal_stake_rope",
+    "base": "minecraft:block/polished_blackstone",
+    "band": "minecraft:block/polished_blackstone_bricks",
+    "ofuda": "logos_dimension:block/journey_ofuda_0",
+    "ofuda2": "logos_dimension:block/journey_ofuda_1",
+    "particle": "logos_dimension:block/journey_seal_stake_side"
+  },
+  "elements": [
+    {
+      "from": [
+        5,
+        0,
+        5
+      ],
+      "to": [
+        11,
+        9,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5,
+            7,
+            11,
+            16
+          ],
+          "texture": "#wood"
+        },
+        "south": {
+          "uv": [
+            5,
+            7,
+            11,
+            16
+          ],
+          "texture": "#wood"
+        },
+        "west": {
+          "uv": [
+            5,
+            7,
+            11,
+            16
+          ],
+          "texture": "#wood"
+        },
+        "east": {
+          "uv": [
+            5,
+            7,
+            11,
+            16
+          ],
+          "texture": "#wood"
+        },
+        "up": {
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ],
+          "texture": "#top"
+        },
+        "down": {
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ],
+          "texture": "#top"
+        }
+      }
+    },
+    {
+      "from": [
+        4.6,
+        5.5,
+        4.6
+      ],
+      "to": [
+        11.4,
+        7,
+        11.4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4.6,
+            9,
+            11.4,
+            10.5
+          ],
+          "texture": "#band"
+        },
+        "south": {
+          "uv": [
+            4.6,
+            9,
+            11.4,
+            10.5
+          ],
+          "texture": "#band"
+        },
+        "west": {
+          "uv": [
+            4.6,
+            9,
+            11.4,
+            10.5
+          ],
+          "texture": "#band"
+        },
+        "east": {
+          "uv": [
+            4.6,
+            9,
+            11.4,
+            10.5
+          ],
+          "texture": "#band"
+        },
+        "up": {
+          "uv": [
+            4.6,
+            4.6,
+            11.4,
+            11.4
+          ],
+          "texture": "#band"
+        },
+        "down": {
+          "uv": [
+            4.6,
+            4.6,
+            11.4,
+            11.4
+          ],
+          "texture": "#band"
+        }
+      }
+    },
+    {
+      "from": [
+        5.5,
+        9,
+        5.5
+      ],
+      "to": [
+        10.5,
+        10,
+        10.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5.5,
+            6,
+            10.5,
+            7
+          ],
+          "texture": "#top"
+        },
+        "south": {
+          "uv": [
+            5.5,
+            6,
+            10.5,
+            7
+          ],
+          "texture": "#top"
+        },
+        "west": {
+          "uv": [
+            5.5,
+            6,
+            10.5,
+            7
+          ],
+          "texture": "#top"
+        },
+        "east": {
+          "uv": [
+            5.5,
+            6,
+            10.5,
+            7
+          ],
+          "texture": "#top"
+        },
+        "up": {
+          "uv": [
+            5.5,
+            5.5,
+            10.5,
+            10.5
+          ],
+          "texture": "#top"
+        },
+        "down": {
+          "uv": [
+            5.5,
+            5.5,
+            10.5,
+            10.5
+          ],
+          "texture": "#top"
+        }
+      }
+    },
+    {
+      "from": [
+        4.85,
+        0.5,
+        6
+      ],
+      "to": [
+        5,
+        5.5,
+        10
+      ],
+      "faces": {
+        "west": {
+          "uv": [
+            4,
+            1,
+            12,
+            15
+          ],
+          "texture": "#ofuda2"
+        },
+        "east": {
+          "uv": [
+            4,
+            1,
+            12,
+            15
+          ],
+          "texture": "#ofuda2"
+        }
+      }
+    },
+    {
+      "from": [
+        11,
+        0.5,
+        6
+      ],
+      "to": [
+        11.15,
+        5.5,
+        10
+      ],
+      "faces": {
+        "west": {
+          "uv": [
+            4,
+            1,
+            12,
+            15
+          ],
+          "texture": "#ofuda"
+        },
+        "east": {
+          "uv": [
+            4,
+            1,
+            12,
+            15
+          ],
+          "texture": "#ofuda"
+        }
+      }
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

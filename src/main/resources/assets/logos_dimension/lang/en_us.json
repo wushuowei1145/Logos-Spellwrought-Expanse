@@ -1182,5 +1182,11 @@
   "message.logos_dimension.explosion.too_close": "You are standing inside the blast!",
   "message.logos_dimension.explosion.fizzled": "Chant broken: the %1$s mana poured in scatters as free mana",
   "death.attack.logos_dimension.explosion_magic": "%1$s was blown to dust by Explosion",
-  "death.attack.logos_dimension.explosion_magic.player": "%1$s was blown to dust by %2$s's Explosion"
+  "death.attack.logos_dimension.explosion_magic.player": "%1$s was blown to dust by %2$s's Explosion",
+  "block.logos_dimension.journey_seal_stake": "Sealing Stake",
+  "item.logos_dimension.journey_seal_stake": "Sealing Stake",
+  "block.logos_dimension.journey_ofuda": "Ofuda",
+  "item.logos_dimension.journey_ofuda": "Ofuda",
+  "block.logos_dimension.journey_seal_stake.left": "A seal breaks. %s remain.",
+  "block.logos_dimension.journey_seal_stake.released": "The last seal breaks. Something stirs inside the killing stone..."
 }
