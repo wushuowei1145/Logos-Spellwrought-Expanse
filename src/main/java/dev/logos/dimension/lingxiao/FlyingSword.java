@@ -4,11 +4,13 @@ import dev.logos.dimension.item.LingxiaoSwordItem;
 import dev.logos.dimension.item.LogosNatureBridge;
 import dev.logos.dimension.longsword.LongswordCombat;
 import java.util.UUID;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
@@ -76,12 +78,15 @@ public final class FlyingSword extends Entity {
                 || player.getMainHandItem() != held || player.getInventory().getSelectedSlot() != slot
                 || player.getLastClientInput().shift()) { stop(); return; }
         if (!player.hasInfiniteMaterials()) {
-            double remaining = FlightRules.drain(LogosNatureBridge.mana(player));
+            // Logos 的自然回复照常加回来，所以连回复一起扣：面板每秒实打实地少十点。
+            double remaining = FlightRules.drain(LogosNatureBridge.mana(player), LogosNatureBridge.regenerationPerTick(player));
             if (Double.isNaN(remaining)) {
                 player.sendOverlayMessage(Component.translatable("message.logos_dimension.lingxiao.no_mana"));
                 stop(); return;
             }
             LogosNatureBridge.mana(player, remaining);
+            // 拿着剑时 Logos 不显示魔力条（它只跟着法杖），御剑时自己每半秒报一次余量。
+            if (elapsed % 10 == 0) player.sendOverlayMessage(gauge(remaining, LogosNatureBridge.maxMana(player)));
         }
         Vec3 desired = FlightRules.movement(player.getLastClientInput(), player.getLookAngle(), player.getYRot());
         // 起飞时缓慢抬高一小段；之后松开方向键悬停，移动仍走原版方块碰撞。
@@ -92,7 +97,24 @@ public final class FlyingSword extends Entity {
         setDeltaMovement(velocity);
         move(MoverType.SELF, velocity);
         if (horizontalCollision || verticalCollision) setDeltaMovement(Vec3.ZERO);
-        setYRot(player.getYRot()); setXRot(0);
+        // 剑尖顺着飞行方向：偏航、俯仰都限速转过去，客户端按原版实体旋转同步插值后画剑（FlyingSwordRenderer）。
+        Vec3 moved = getDeltaMovement();
+        setYRot(Mth.approachDegrees(getYRot(), FlightRules.targetYaw(moved, player.getYRot(), getYRot()), FlightRules.TURN_RATE));
+        setXRot(Mth.approach(getXRot(), FlightRules.targetPitch(moved, getYRot()), FlightRules.PITCH_RATE));
         player.fallDistance = 0;
     }
+
+    /** 和 Logos 法杖魔力条同样的样子：☿ 十格条和数字，后面注明御剑的消耗。 */
+    private static Component gauge(double mana, double max) {
+        int filled = (int) Math.round(10 * mana / Math.max(1, max));
+        filled = Math.clamp(filled, 0, 10);
+        return Component.literal("☿ ").withStyle(ChatFormatting.AQUA)
+                .append(Component.literal("█".repeat(filled)).withStyle(ChatFormatting.BLUE))
+                .append(Component.literal("█".repeat(10 - filled)).withStyle(ChatFormatting.DARK_GRAY))
+                .append(Component.literal(" " + (int) mana + "/" + (int) max + "  ").withStyle(ChatFormatting.AQUA))
+                .append(Component.translatable("message.logos_dimension.lingxiao.cost", (int) FlightRules.MANA_PER_SECOND).withStyle(ChatFormatting.DARK_AQUA));
+    }
+
+    /** 剑比碰撞体长得多（放大后约两格半），视锥剔除按整把剑的范围算，不然剑尖还在画面里剑就消失了。 */
+    public net.minecraft.world.phys.AABB swordBounds() { return getBoundingBox().inflate(1.6, .3, 1.6); }
 }

@@ -48,6 +48,19 @@ public final class LongswordClient {
                         LongswordPayload move, double time, org.joml.Vector3f tip, float glow, int glowColor) {}
 
     public static LongswordPayload pose(UUID player) { return STATES.get(player); }
+    /**
+     * 武器是否已经离手交给别处画：当前动作带 {@code handoff} 标记（御剑起飞把剑抛到脚下）且还没播到那一刻时为 false，
+     * 其余情况（没有动作、动作没有这个标记、已过那一刻）为 true。
+     */
+    public static boolean handedOff(UUID player, double now) {
+        var p = STATES.get(player);
+        var rig = p == null ? null : LongswordRig.get(p.variant(), false);
+        if (rig == null) return true;
+        float[] marks = rig.markers(p.clip(), "handoff");
+        double length = rig.length(p.clip());
+        if (marks.length == 0 || length < 0) return true;
+        return Moveset.playbackSeconds(p.playback(), length, now - p.started(), p.speed(), p.offset()) >= marks[0];
+    }
     @SubscribeEvent static void packets(RegisterClientPayloadHandlersEvent event) {
         event.register(LongswordPayload.TYPE, (p, ctx) -> {
             if (p.cleared()) { STATES.remove(p.player()); PREVIOUS.remove(p.player()); return; }
@@ -130,8 +143,12 @@ public final class LongswordClient {
                 double now = level == null ? 0 : level.getGameTime() + state.partialTick;
                 var sample = p == null || level == null || state.isSpectator ? null : sample(p, false, now);
                 // 御剑站立，不能沿用原版乘船坐姿；只改本附属的临时载具。
-                if (avatar.getVehicle() instanceof dev.logos.dimension.lingxiao.FlyingSword) {
+                if (avatar.getVehicle() instanceof dev.logos.dimension.lingxiao.FlyingSword sword) {
                     state.isPassenger = false; state.isCrouching = false; state.walkAnimationSpeed = 0;
+                    // 脚踩着剑：身体转向剑尖的方向（侧飞时侧身），但离视线不超过 75°，头仍看准星。
+                    float view = state.bodyRot + state.yRot;
+                    float body = view + net.minecraft.util.Mth.clamp(net.minecraft.util.Mth.wrapDegrees(sword.getViewYRot(state.partialTick) - view), -75, 75);
+                    state.bodyRot = body; state.yRot = net.minecraft.util.Mth.wrapDegrees(view - body);
                 }
                 if (RyukaClient.is(p)) RyukaClient.observe(avatar, now);
                 Frame frame = null;

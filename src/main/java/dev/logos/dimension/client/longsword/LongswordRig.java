@@ -57,6 +57,9 @@ public final class LongswordRig {
     /** 武器网格的不透明度（{@code alpha}，流火的晶刃略透明）；1 时按不透明裁切画。 */
     private final float alpha;
     private final int textureWidth, textureHeight;
+    /** 武器自己的骨骼（剑穗、弓身各节）：父骨骼与枢轴（武器网格坐标），按声明顺序（父在子前）。 */
+    public record OwnBone(String parent, Vector3f pivot) {}
+    private final Map<String, OwnBone> ownBones = new LinkedHashMap<>();
     /** 凝聚与消散切好的片（只切武器网格自己的方块），第一次用到时切。 */
     private dev.logos.dimension.client.dissolve.WeaponDissolve.Cells cells;
     /** 拉弓按视线俯仰时，上半身最多后仰或前倾的角度（度），其余由双臂转。 */
@@ -93,8 +96,7 @@ public final class LongswordRig {
         var skeletonJson = read("combat/skeletons/player_" + view + ".json");
         var weapon = read("combat/weapons/" + name + ".json");
         // 骨架给出视角的武器缩放，武器网格可再乘一个自己的 scale（打刀比长剑长）。
-        weaponScale = skeletonJson.get("weapon_scale").getAsFloat() * (weapon.has("scale") ? weapon.get("scale").getAsFloat() : 1)
-                * (firstPerson && weapon.has("first_person_scale") ? weapon.get("first_person_scale").getAsFloat() : 1);
+        weaponScale = skeletonJson.get("weapon_scale").getAsFloat() * (weapon.has("scale") ? weapon.get("scale").getAsFloat() : 1);
         var base = CombatSkeleton.fromJson(skeletonJson);
         if (!base.missingRequired().isEmpty()) throw new IllegalStateException("玩家骨架缺少 " + base.missingRequired());
         weaponPivot = base.bone(CombatBones.WEAPON).pivot();
@@ -107,6 +109,7 @@ public final class LongswordRig {
                 var pivot = vector(b.getAsJsonArray("pivot")).mul(weaponScale).add(weaponPivot);
                 bones.add(new CombatSkeleton.Bone(b.get("name").getAsString(), b.get("parent").getAsString(), pivot));
                 own.add(b.get("name").getAsString());
+                ownBones.put(b.get("name").getAsString(), new OwnBone(b.get("parent").getAsString(), vector(b.getAsJsonArray("pivot"))));
             }
             skeleton = new CombatSkeleton(bones);
         } else skeleton = base;
@@ -238,6 +241,42 @@ public final class LongswordRig {
     /** 武器网格坐标（像素，原点在握柄）里的一点在这一帧骨架空间的位置。 */
     public static Vector3f onWeapon(Sample sample, Vector3f point) {
         return sample.weapon.transformPosition(new Vector3f(point));
+    }
+
+    /** 视角的武器缩放（骨架的 weapon_scale 乘武器网格的 scale）：武器网格一单位在骨架里的像素数。 */
+    public float weaponScale() { return weaponScale; }
+    /** 武器自己的骨骼（只读）。 */
+    public Map<String, OwnBone> ownBones() { return Collections.unmodifiableMap(ownBones); }
+
+    /**
+     * 不跟骨架、单独画武器网格（剑鞘除外）：御剑时脚下的剑由载具画。{@code mesh} 把武器网格坐标（像素，原点在握柄）
+     * 换到 {@code pose} 里；{@code own} 给出武器自己骨骼在网格坐标里的变换（剑穗飘动），没有的骨骼不动。
+     */
+    public void submitLoose(PoseStack pose, SubmitNodeCollector collector, int light, Matrix4f mesh, Map<String, Matrix4f> own) {
+        var toMesh = new Matrix4f().scale(1 / weaponScale).translate(-weaponPivot.x, -weaponPivot.y, -weaponPivot.z);
+        for (int m = 0; m < materials.size(); m++) {
+            List<Quad> transformed = new ArrayList<>();
+            for (var quad : quads) {
+                if (quad.layer != Layer.WEAPON || quad.material != m || quad.bone.equals(CombatBones.SHEATH)) continue;
+                var matrix = new Matrix4f(mesh);
+                var bone = own.get(quad.bone);
+                if (bone != null) matrix.mul(bone);
+                matrix.mul(toMesh);
+                var points = new Vector3f[4];
+                for (int i = 0; i < 4; i++) points[i] = matrix.transformPosition(new Vector3f(quad.points[i]));
+                transformed.add(new Quad(quad.bone, quad.layer, m, points, matrix.transformDirection(new Vector3f(quad.normal)).normalize(), quad.uv, quad.fades));
+            }
+            if (transformed.isEmpty()) continue;
+            int a = m == 0 ? Math.round(alpha * 255) : 255;
+            collector.submitCustomGeometry(pose, weaponType(materials.get(m), m), (p, buffer) -> {
+                for (var quad : transformed) for (int i = 0; i < 4; i++) {
+                    var point = quad.points[i]; var uv = quad.uv; var n = quad.normal;
+                    float u = i == 0 || i == 3 ? uv[2] : uv[0], v = i < 2 ? uv[3] : uv[1];
+                    buffer.addVertex(p, point.x, point.y, point.z).setColor(255, 255, 255, a).setUv(u, v)
+                            .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(p, n.x, n.y, n.z);
+                }
+            });
+        }
     }
 
     /** 武器有没有发光层。 */

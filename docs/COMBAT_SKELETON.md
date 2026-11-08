@@ -69,8 +69,6 @@ NPC 模型**不需要**添加这两根骨骼：运行时自己算出它们的位
 
 维护者于 2026-11-08 明确要求凌霄使用前方菱形判定。仅 `.withDiamondHitbox()` 登记的凌霄改用 `DiamondHitbox`，其他武器继续使用下方默认锥形；长度仍读取原版攻击距离，伤害仍调用原版 `player.attack`。该武器不强制最近目标暴击。详见 [LINGXIAO.md](LINGXIAO.md)。
 
-武器网格可选 `first_person_scale`，只在第一人称额外乘入 `weapon_scale × scale`，默认 1；凌霄为 0.725，使渲染比例与其第一人称烘焙一致，不修改其他武器或共用骨架。
-
 ### 命中锥形
 
 每把战斗武器的命中范围是准星前方的一个锥形：顶点在眼睛，朝视线方向。新增武器时在注册处给出张角；不给就用默认值。
@@ -163,6 +161,7 @@ CombatWeapon.register(6, "glaive", "glaive", GLAIVE_MOVESET).withCone(90);
 | `input_open` | 可选 | 开始接受下一次输入（缓冲）的时刻，用来避开同一次点击的重复输入。不标时默认 0.1 秒。 | 转移 `window` 的起点 |
 | `trail_start`、`trail_end` | 可选 | 刀光的开始与结束，一般包住 `contact` 前后挥得最快的一段。 | 刀光功能做好后使用 |
 | `tip_fx` | 可选 | 枪尖残影：刺到头的那一刻，客户端在枪尖放出一枚沿刺出方向冲出去的枪头光影（长枪连刺，[OATH_SPEAR.md](OATH_SPEAR.md) 第 4 节）。一般与 `contact` 同一时刻。 | 客户端直接读动作 |
+| `handoff` | 可选 | 武器离手交给别处画的时刻：凌霄起飞把剑抛到脚下，这一刻之后骨架里的剑缩成 0，由御剑载具自己画（剑尖顺着飞行方向，[LINGXIAO.md](LINGXIAO.md) 第 4 节）。客户端用 `LongswordClient.handedOff` 判断。 | 客户端直接读动作 |
 
 规则：
 

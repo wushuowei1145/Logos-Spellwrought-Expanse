@@ -30,12 +30,14 @@ public final class LingxiaoFlight {
         if (!(player.getMainHandItem().getItem() instanceof dev.logos.dimension.item.LingxiaoSwordItem)
                 || !player.isAlive() || player.isSpectator() || player.isPassenger() || player.isFallFlying()
                 || player.isShiftKeyDown() || !"idle".equals(LongswordCombat.move(player))) return false;
-        if (!player.hasInfiniteMaterials() && Double.isNaN(FlightRules.drain(LogosNatureBridge.mana(player)))) {
+        if (!player.hasInfiniteMaterials()
+                && Double.isNaN(FlightRules.drain(LogosNatureBridge.mana(player), LogosNatureBridge.regenerationPerTick(player)))) {
             player.sendOverlayMessage(Component.translatable("message.logos_dimension.lingxiao.no_mana")); return false;
         }
         var sword = TYPE.get().create(player.level(), net.minecraft.world.entity.EntitySpawnReason.TRIGGERED);
         if (sword == null) return false;
-        sword.bind(player); sword.setPos(player.position()); sword.setYRot(player.getYRot());
+        // 剑尖先按身体朝向：起飞动作把剑放到脚下时就是这个方向，接手时不会转一下；飞起来再顺着飞行方向转。
+        sword.bind(player); sword.setPos(player.position()); sword.setYRot(player.yBodyRot);
         // 碰撞体覆盖骑手的头顶，低矮空间不能起飞，也不能借剑钻进天花板。
         if (!player.level().noCollision(player, sword.getBoundingBox()) || !LongswordCombat.charge(player)) { sword.discard(); return false; }
         if (!player.level().addFreshEntity(sword) || !player.startRiding(sword, true, true)) {
