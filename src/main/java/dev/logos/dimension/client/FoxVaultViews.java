@@ -58,6 +58,24 @@ public class FoxVaultViews implements UIScenario {
         return v.designPoint(u, y, w);
     }
 
+    /** 屏幕中下方那行提示（动作栏）现在显示的是不是 expected。 */
+    private static void expectOverlay(net.minecraft.network.chat.Component expected) {
+        String shown = null;
+        try {
+            for (var f : net.minecraft.client.gui.Gui.class.getDeclaredFields()) {
+                if (f.getType() == net.minecraft.network.chat.Component.class && f.getName().toLowerCase().contains("overlay")) {
+                    f.setAccessible(true);
+                    var c = (net.minecraft.network.chat.Component) f.get(Minecraft.getInstance().gui);
+                    shown = c == null ? null : c.getString();
+                }
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
+        System.out.println("[fox] overlay: " + shown);
+        if (!expected.getString().equals(shown)) throw new IllegalStateException("提示不对：" + shown + "，应为 " + expected.getString());
+    }
+
     /** 通道中线第 k 个折点。 */
     private static double[] pt(SanctuaryVaultPiece v, int k) {
         int[] p = v.path();
@@ -146,13 +164,16 @@ public class FoxVaultViews implements UIScenario {
         shot(s, "seal_close", v -> look(d(v, 91.5, -54.5, 114.5), d(v, 88.5, -55, 118.5)));
         shot(s, "stone_close", v -> look(d(v, 88.5, -53.5, 121.5), d(v, 88.5, -50, 131.5)));
         shot(s, "pillars", v -> look(d(v, 62.5, -50, 112.5), d(v, 47.5, -45, 140.5)));
+        // 岩顶倒过来的那条街：参道、通往倒挂町屋的小路、倒立的街灯，一直通到南头倒挂的鸟居
+        shot(s, "ceiling_road", v -> look(d(v, 88.5, -50, 122.5), d(v, 88.5, -26, 152.5)));
+        shot(s, "ceiling_road_side", v -> look(d(v, 100.5, -48, 112.5), d(v, 76.5, -26, 128.5)));
         // 亮一点再看一遍全貌（不少玩家把亮度调到最高）
         s.step("bright", ctx -> Minecraft.getInstance().options.gamma().set(1.0));
         shot(s, "bright_hall", v -> look(d(v, 88.5, -27, 71.5), d(v, 88.5, -50, 95.5)));
         shot(s, "bright_arena", v -> look(d(v, 70.5, -40, 103.5), d(v, 88.5, -55, 131.5)));
         s.step("dim", ctx -> Minecraft.getInstance().options.gamma().set(0.5));
-        // 真的拆掉九根封印杭：每拆一根提示剩几道，拆完杀生石那边有动静
-        s.server("break seals", ctx -> {
+        // 先挖掉第一根封印杭脚下的底座：杭跟着塌掉，也要算断了一道（以前不算）
+        s.server("break pedestal", ctx -> {
             var level = ctx.server().getLevel(LogosDimension.CLOUDSEA);
             var player = ctx.player();
             player.setGameMode(GameType.SURVIVAL);
@@ -161,7 +182,21 @@ public class FoxVaultViews implements UIScenario {
             for (BlockPos p : seals) if (level.getBlockState(p).is(FoxWildsBlocks.SEAL_STAKE.get())) stakes++;
             System.out.println("[fox] seal stakes standing: " + stakes + " / " + seals.size() + " in arena=" + vault.inArena(seals.getFirst().above()));
             if (stakes != 9) throw new IllegalStateException("封印杭不是九根：" + stakes);
+            BlockPos first = seals.getFirst();
+            view(level, player, Vec3.atCenterOf(first).add(1.5, 0.5, 1.5), Vec3.atCenterOf(first));
+            player.gameMode.destroyBlock(first.below());
+            boolean gone = level.getBlockState(first).isAir() && level.getBlockState(first.above()).isAir();
+            System.out.println("[fox] pedestal under seal 0 broken: stake gone=" + gone + " below=" + level.getBlockState(first.below()).getBlock());
+            if (!gone) throw new IllegalStateException("挖掉底座后封印杭没有塌掉");
+        }).ticks(5);
+        s.step("seal message after pedestal", ctx -> expectOverlay(net.minecraft.network.chat.Component.translatable("block.logos_dimension.journey_seal_stake.left", 8)));
+        // 再把剩下八根直接拆掉：每拆一根提示剩几道，拆完杀生石那边有动静
+        s.server("break seals", ctx -> {
+            var level = ctx.server().getLevel(LogosDimension.CLOUDSEA);
+            var player = ctx.player();
+            var seals = vault.seals();
             for (BlockPos p : seals) {
+                if (level.getBlockState(p).isAir()) continue;
                 view(level, player, Vec3.atCenterOf(p).add(1.5, 0.5, 1.5), Vec3.atCenterOf(p));
                 player.gameMode.destroyBlock(p.above());
             }
@@ -170,7 +205,8 @@ public class FoxVaultViews implements UIScenario {
             System.out.println("[fox] seal stakes left after breaking: " + left + " stone at " + vault.sealStone());
             if (left != 0) throw new IllegalStateException("还有封印杭没拆掉：" + left);
             player.setGameMode(GameType.SPECTATOR);
-        });
+        }).ticks(5);
+        s.step("seal message after all", ctx -> expectOverlay(net.minecraft.network.chat.Component.translatable("block.logos_dimension.journey_seal_stake.released")));
         shot(s, "after_release", v -> look(d(v, 88.5, -53.5, 121.5), d(v, 88.5, -50, 131.5)));
         // 首领战开始时拆掉杀生石、石台与九个底座：三组都拆空，地上不留掉落物，露出圆台原本的地面
         s.server("clear center", ctx -> {

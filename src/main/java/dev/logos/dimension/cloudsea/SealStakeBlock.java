@@ -13,7 +13,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
@@ -96,18 +95,20 @@ public class SealStakeBlock extends Block {
         return super.updateShape(state, level, ticks, pos, direction, neighborPos, neighborState, random);
     }
 
+    /**
+     * 下半格不管怎么没的都算断了一道封印：直接挖它、挖上半格、挖掉脚下的底座让它塌掉、被命令或首领战清掉。
+     * 以前只在玩家直接挖杭时计数，挖底座让它塌掉的那根不算，玩家只能把杭插回去再挖一次。
+     */
     @Override
-    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        BlockPos lower = state.getValue(HALF) == DoubleBlockHalf.LOWER ? pos : pos.below();
-        if (level instanceof ServerLevel server) {
-            Vec3 c = Vec3.atBottomCenterOf(lower);
-            server.playSound(null, lower, SoundEvents.CHAIN_BREAK, SoundSource.BLOCKS, 1.2f, 0.55f);
-            server.playSound(null, lower, SoundEvents.SOUL_ESCAPE.value(), SoundSource.BLOCKS, 1.4f, 0.8f);
-            server.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, c.x, c.y + 1.2, c.z, 40, 0.25, 0.7, 0.25, 0.03);
-            server.sendParticles(ParticleTypes.SOUL, c.x, c.y + 1.4, c.z, 12, 0.3, 0.5, 0.3, 0.02);
-            broken(server, lower);
-        }
-        return super.playerWillDestroy(level, pos, state, player);
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
+        super.affectNeighborsAfterRemoval(state, level, pos, movedByPiston);
+        if (state.getValue(HALF) != DoubleBlockHalf.LOWER || level.getBlockState(pos).is(this)) return;
+        Vec3 c = Vec3.atBottomCenterOf(pos);
+        level.playSound(null, pos, SoundEvents.CHAIN_BREAK, SoundSource.BLOCKS, 1.2f, 0.55f);
+        level.playSound(null, pos, SoundEvents.SOUL_ESCAPE.value(), SoundSource.BLOCKS, 1.4f, 0.8f);
+        level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, c.x, c.y + 1.2, c.z, 40, 0.25, 0.7, 0.25, 0.03);
+        level.sendParticles(ParticleTypes.SOUL, c.x, c.y + 1.4, c.z, 12, 0.3, 0.5, 0.3, 0.02);
+        broken(level, pos);
     }
 
     /** 清点同一处封印之间里还剩几根封印杭，告诉在场的玩家；最后一根断掉时杀生石那边有动静。 */
