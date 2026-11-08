@@ -79,7 +79,11 @@ public class RailgunView implements UIScenario {
                 });
         for (int a : after) s.waitUntil(view + " 发射后第 " + a + " 刻", ctx -> Minecraft.getInstance().level.getGameTime() - fired >= a)
                 .screenshot(view + "_fire_" + a);
-        return s.waitUntil("特效结束 " + view, ctx -> RailgunClient.shots() == 0);
+        // 第一人称看自己开炮只有泛光；别的机位离得近，还会压暗一点
+        boolean own = view.equals("first");
+        return s.check("发射时跑过泛光、" + (own ? "没有" : "有") + "全屏调色 " + view, ctx -> dev.logos.dimension.client.screenfx.GlowBloom.passes() > 0
+                        && (dev.logos.dimension.client.vfx.RailgunScreen.passes() > 0) != own)
+                .waitUntil("特效结束 " + view, ctx -> RailgunClient.shots() == 0);
     }
 
     @Override public void define(ScenarioBuilder s) {
