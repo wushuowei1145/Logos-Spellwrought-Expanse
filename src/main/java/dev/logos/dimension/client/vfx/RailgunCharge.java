@@ -88,6 +88,14 @@ final class RailgunCharge {
         if (coinShown) layers.apply(0).submitCustomGeometry(pose, COIN, (p, buf) ->
                 VfxParts.quad(p, buf, coin, spin.scale(COIN_RADIUS), across.scale(COIN_RADIUS), 0xFFFFFFFF));
 
+        // 泛光：拳头的蓝光、越蓄越亮的硬币；第一人称不交，贴着镜头的泛光也会被丢掉
+        if (!g.own()) {
+            Glow glow = GLOW_OUT.begin(eye);
+            glow.sprite(g.fist(), .12f + .3f * charge, VfxParts.argb(.8f * charge * fade, GLOW_BLUE));
+            if (coinShown) glow.sprite(coin, .1f + .08f * charge, VfxParts.argb((.3f + .5f * charge) * fade, 0xDDF2FF));
+            glow.flush();
+        }
+
         layers.apply(2).submitCustomGeometry(pose, GLOW, (p, buf) -> {
             // 硬币翻到正面对着镜头时闪一下
             if (coinShown) {

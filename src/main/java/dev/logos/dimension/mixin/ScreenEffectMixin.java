@@ -35,6 +35,8 @@ public abstract class ScreenEffectMixin {
     private void screenEffectDraw(DeltaTracker deltaTracker, boolean advanceGameTime, CallbackInfo ci) {
         if (!advanceGameTime) return;
         // 爆裂魔法的调色和球体最先画，在后期里画的特效紧跟其后，不会被调暗
+        // 超电磁炮发射时的压暗也在泛光之前，射线的光是后加的
+        dev.logos.dimension.client.vfx.RailgunScreen.draw();
         dev.logos.dimension.client.explosion.ExplosionScreen.draw();
         // 泛光排在前面：画风和黑白闪处理的是已经带泛光的画面
         GlowBloom.draw(hudProjection.getMatrix(new Matrix4f()));

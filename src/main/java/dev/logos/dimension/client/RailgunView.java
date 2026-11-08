@@ -79,7 +79,9 @@ public class RailgunView implements UIScenario {
                 });
         for (int a : after) s.waitUntil(view + " 发射后第 " + a + " 刻", ctx -> Minecraft.getInstance().level.getGameTime() - fired >= a)
                 .screenshot(view + "_fire_" + a);
-        return s.waitUntil("特效结束 " + view, ctx -> RailgunClient.shots() == 0);
+        return s.check("发射时跑过全屏调色和泛光 " + view, ctx -> dev.logos.dimension.client.vfx.RailgunScreen.passes() > 0
+                        && dev.logos.dimension.client.screenfx.GlowBloom.passes() > 0)
+                .waitUntil("特效结束 " + view, ctx -> RailgunClient.shots() == 0);
     }
 
     @Override public void define(ScenarioBuilder s) {

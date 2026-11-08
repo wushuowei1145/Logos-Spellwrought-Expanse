@@ -79,6 +79,11 @@ final class RailgunShot {
 
     Vec3 muzzle() { return muzzle; }
 
+    Vec3 end() { return to; }
+
+    /** 发射时画面变暗的程度 0~1：一下压暗，亮线收细时慢慢回来（见 {@link RailgunScreen}）。 */
+    float dim(float t) { return VfxParts.smooth(0, 1.5f, t) * (1 - VfxParts.smooth(HOT, 26, t)); }
+
     int shooter() { return shooter; }
 
     boolean offhand() { return offhand; }
@@ -96,6 +101,7 @@ final class RailgunShot {
         Vec3 eye = view.cam();
         // 镜头离出口越近（第一人称自己开炮）越是 0：出口的装饰往前推、收小
         float near = (float) Math.min(1, Math.max(0, (eye.distanceTo(muzzle) - .8) / 3));
+        bloom(view, t, near);
         layers.apply(1).submitCustomGeometry(pose, AIR, (p, buf) -> air(p, buf, t, near));
         layers.apply(1).submitCustomGeometry(pose, SMOKE, (p, buf) -> dust(p, buf, view, t));
         layers.apply(2).submitCustomGeometry(pose, LINE, (p, buf) -> {
@@ -139,6 +145,39 @@ final class RailgunShot {
             band(p, buf, pa, pb, eye, (1.5f - 1.25f * k) * open, VfxParts.argb(.95f, VfxParts.lerpColor(CORE, EMBER, k)));
             band(p, buf, pa, pb, eye, .5f * open, VfxParts.argb(1 - k, WHITE));
         }
+    }
+
+    /** 交给泛光的：亮芯、出口和命中的闪光、出口冲击环的白边、螺旋电弧。射线收成余线以后就不交了。 */
+    private void bloom(VfxParts.View view, float t, float near) {
+        Glow g = GLOW_OUT.begin(view.cam());
+        if (t < AFTER) {
+            float reach = Math.min(1, t / SHOOT), tip = length * (1 - (1 - reach) * (1 - reach));
+            float k = VfxParts.smooth(HOT, AFTER, t);
+            int color = VfxParts.argb(.9f * (1 - .6f * k), VfxParts.lerpColor(0xFFD890, EMBER, k));
+            for (float a = 0; a < tip; a += 4) g.band(muzzle.add(axis.scale(a)), muzzle.add(axis.scale(Math.min(tip, a + 4))),
+                    (.55f - .4f * k) * Math.min(1, .35f + a / 4), color);
+        }
+        float flash = flash(t, 10);
+        if (flash > 0) {
+            Vec3 c = muzzleDressing(near, 1.4);
+            g.sprite(c, Math.min((1.2f + 1.6f * near) * flash, .3f * (float) view.cam().distanceTo(c)), VfxParts.argb(flash, 0xFFE0B0));
+        }
+        float hit = struck ? flash(t - SHOOT, 10) : 0;
+        if (hit > 0) g.sprite(impact(), 3 * hit, VfxParts.argb(hit, 0xFFD0A0));
+        if (t < RING_LIFE) {
+            float q = t / RING_LIFE;
+            g.ring(muzzleDressing(near, 1.6).subtract(axis.scale(.3 * near)), axis, .4f + 3.6f * easeOut(q), .08f, 48,
+                    VfxParts.argb((float) Math.pow(1 - q, 1.6) * .6f, SHOCK));
+        }
+        if (t < COIL_LIFE) {
+            float a = (float) Math.pow(1 - t / COIL_LIFE, 1.2) * (own ? .25f : .7f);
+            float reach = Math.min(1, t / SHOOT), coil = Math.min(length, 40) * (1 - (1 - reach) * (1 - reach));
+            int frame = (int) (t / 2);
+            for (int strand = 0; strand < 3; strand++)
+                g.ribbon(helix(strand, own ? Math.min(coil, 5) : 0, coil, 1f + .35f * t / COIL_LIFE, seed + frame * 97 + strand * 13), .04f,
+                        VfxParts.argb(a, ARC));
+        }
+        g.flush();
     }
 
     /** 出口两圈冲击环的白边：和 {@link #air} 里的环同心同大，亮而细。 */

@@ -122,6 +122,9 @@ public final class RailgunClient {
 
     public static int shots() { return SHOTS.size(); }
 
+    /** 这一刻还在画的几发（全屏调色用）。 */
+    static List<RailgunShot> liveShots() { return SHOTS; }
+
     // ---- 推进与绘制 ------------------------------------------------------------------------------
 
     @SubscribeEvent
