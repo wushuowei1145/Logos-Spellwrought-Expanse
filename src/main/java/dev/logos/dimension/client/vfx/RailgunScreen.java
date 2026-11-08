@@ -26,8 +26,9 @@ import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 import org.jspecify.annotations.Nullable;
 
 /**
- * 超电磁炮发射时的全屏调色：画面一下压暗、偏冷、四角更暗，只有射线在画面上经过的一条走廊保持原样，
- * 并被射线的暖光照亮一点。泛光（{@code GlowBloom}）在这之后才加上去，所以射线格外亮。
+ * 超电磁炮发射时的全屏调色：画面稍微压暗、偏冷一点、四角更暗一点，射线在画面上经过的一条走廊保持原样，
+ * 并被射线的暖光照亮一点。泛光（{@code GlowBloom}）在这之后才加上去，所以射线显得更亮。
+ * 只给第三人称的射手和附近的人：射手自己第一人称时不压暗，只有泛光。
  * <p>
  * 由 {@code ScreenEffectMixin} 在世界和手画完之后、爆裂魔法的通道之前调用。只读最终画面的颜色，
  * 不碰光影包的缓冲；附近没有刚发射的超电磁炮时一个通道都不跑。
@@ -42,14 +43,14 @@ public final class RailgunScreen {
             .withUniform("Railgun", UniformType.UNIFORM_BUFFER)
             .build();
     private static final int UNIFORM_SIZE = new Std140SizeCalculator().putVec4().putVec4().putVec4().get();
-    /** 离射线这么近时调色最重，这么远时没有。 */
-    private static final float NEAR = 24, FAR = 96;
+    /** 离射线这么近时调色最重，这么远时没有：只有附近的人看得到。 */
+    private static final float NEAR = 10, FAR = 32;
     /** 画面上保持原样的走廊：射线两侧约这么多格。 */
     private static final double CORRIDOR = 1.8;
     /** 走廊在画面上最宽多少（以画面高度为 1）：第一人称时出口贴着镜头，不然会亮掉半个画面。 */
     private static final float CORRIDOR_MAX = .1f;
     /** 射线的暖光（橙）和它照亮周围的强度。 */
-    private static final float WARM_R = 1, WARM_G = .58f, WARM_B = .28f, WARM = .45f;
+    private static final float WARM_R = 1, WARM_G = .58f, WARM_B = .28f, WARM = .25f;
     private static @Nullable RenderTarget copy;
     private static @Nullable MappableRingBuffer uniforms;
     private static long passes;
@@ -74,7 +75,11 @@ public final class RailgunScreen {
         float pt = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         RailgunShot best = null;
         float dim = 0;
+        var viewer = mc.getCameraEntity();
+        boolean firstPerson = mc.options.getCameraType().isFirstPerson();
         for (RailgunShot s : RailgunClient.liveShots()) {
+            // 第一人称看自己开炮：不压暗，只留泛光
+            if (firstPerson && viewer != null && viewer.getId() == s.shooter()) continue;
             float d = s.dim(s.age(mc.level, pt)) * (1 - VfxParts.smooth(NEAR, FAR, (float) distance(eye, s.muzzle(), s.end())));
             if (d > dim) {
                 dim = d;

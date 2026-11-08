@@ -206,16 +206,19 @@ final class RailgunDraw {
     // ---- 泛光 ------------------------------------------------------------------------------------
 
     /**
-     * 交给附属泛光（{@link GlowBloom}）的四边形，坐标相对镜头、世界坐标轴。泛光只认纯色的四边形，
-     * 所以这里交的比画出来的窄：一条亮芯、电弧本身、闪光的中心，模糊之后自己会晕开。
+     * 交给附属泛光（{@link GlowBloom}）的四边形，坐标相对镜头、世界坐标轴。泛光的小图不采样贴图，只按顶点颜色插值，
+     * 四个角同色的四边形模糊之后还是一块方的亮斑（大一点的 {@code GlowBloom.sprite} 就是这样）。所以这里交的都是
+     * 软边的形状：带子中线最亮、两边透明，光团是中心亮、边缘透明的一圈扇形。交的比画出来的窄，模糊之后自己会晕开。
      */
     static final class Glow {
         private float[] data = new float[16 * 64];
         private int size;
-        private Vec3 cam = Vec3.ZERO;
+        private Vec3 cam = Vec3.ZERO, right = new Vec3(1, 0, 0), up = new Vec3(0, 1, 0);
 
-        Glow begin(Vec3 cam) {
-            this.cam = cam;
+        Glow begin(VfxParts.View view) {
+            this.cam = view.cam();
+            this.right = view.right();
+            this.up = view.up();
             size = 0;
             return this;
         }
@@ -228,16 +231,19 @@ final class RailgunDraw {
             data[size++] = colour;
         }
 
-        /** 朝向镜头的一条带子，半宽 {@code width}。 */
+        /** 朝向镜头的一条带子，半宽 {@code width}：中线最亮，往两边淡到透明（两片四边形）。 */
         void band(Vec3 a, Vec3 b, float width, int argb) {
             Vec3 axis = b.subtract(a);
             if (axis.lengthSqr() < 1e-8 || argb >>> 24 == 0) return;
             Vec3 side = perpendicular(axis.normalize(), cam.subtract(a.add(b).scale(.5)));
-            float wa = RailgunDraw.width(a, cam, width), wb = RailgunDraw.width(b, cam, width), c = Float.intBitsToFloat(argb);
-            vertex(a.add(side.scale(wa)), c);
-            vertex(a.subtract(side.scale(wa)), c);
-            vertex(b.subtract(side.scale(wb)), c);
-            vertex(b.add(side.scale(wb)), c);
+            float wa = RailgunDraw.width(a, cam, width), wb = RailgunDraw.width(b, cam, width);
+            float c = Float.intBitsToFloat(argb), edge = Float.intBitsToFloat(argb & 0xFFFFFF);
+            for (int s = -1; s <= 1; s += 2) {
+                vertex(a, c);
+                vertex(a.add(side.scale(wa * s)), edge);
+                vertex(b.add(side.scale(wb * s)), edge);
+                vertex(b, c);
+            }
         }
 
         /** 一串折线，每段一条带子。 */
@@ -256,9 +262,18 @@ final class RailgunDraw {
             }
         }
 
-        /** 一个朝向镜头的方块。 */
-        void sprite(Vec3 at, float size, int argb) {
-            if (size > 0 && argb >>> 24 != 0) GlowBloom.sprite((float) (at.x - cam.x), (float) (at.y - cam.y), (float) (at.z - cam.z), size, argb);
+        /** 朝向镜头的一团光，半径 {@code radius}：中心最亮，到边缘透明（十二片扇形，每片是一个退化的四边形）。 */
+        void disc(Vec3 at, float radius, int argb) {
+            if (radius <= 0 || argb >>> 24 == 0) return;
+            float c = Float.intBitsToFloat(argb), edge = Float.intBitsToFloat(argb & 0xFFFFFF);
+            int n = 12;
+            for (int i = 0; i < n; i++) {
+                double a0 = i * Math.PI * 2 / n, a1 = (i + 1) * Math.PI * 2 / n;
+                vertex(at, c);
+                vertex(at.add(right.scale(Math.cos(a0) * radius)).add(up.scale(Math.sin(a0) * radius)), edge);
+                vertex(at.add(right.scale(Math.cos(a1) * radius)).add(up.scale(Math.sin(a1) * radius)), edge);
+                vertex(at, c);
+            }
         }
 
         /** 交出去；光影包的阴影通道里不交，那时的姿势是太阳的。 */

@@ -149,7 +149,7 @@ final class RailgunShot {
 
     /** 交给泛光的：亮芯、出口和命中的闪光、出口冲击环的白边、螺旋电弧。射线收成余线以后就不交了。 */
     private void bloom(VfxParts.View view, float t, float near) {
-        Glow g = GLOW_OUT.begin(view.cam());
+        Glow g = GLOW_OUT.begin(view);
         if (t < AFTER) {
             float reach = Math.min(1, t / SHOOT), tip = length * (1 - (1 - reach) * (1 - reach));
             float k = VfxParts.smooth(HOT, AFTER, t);
@@ -160,10 +160,10 @@ final class RailgunShot {
         float flash = flash(t, 10);
         if (flash > 0) {
             Vec3 c = muzzleDressing(near, 1.4);
-            g.sprite(c, Math.min((1.2f + 1.6f * near) * flash, .3f * (float) view.cam().distanceTo(c)), VfxParts.argb(flash, 0xFFE0B0));
+            g.disc(c, Math.min((1.7f + 2.2f * near) * flash, .4f * (float) view.cam().distanceTo(c)), VfxParts.argb(flash, 0xFFE0B0));
         }
         float hit = struck ? flash(t - SHOOT, 10) : 0;
-        if (hit > 0) g.sprite(impact(), 3 * hit, VfxParts.argb(hit, 0xFFD0A0));
+        if (hit > 0) g.disc(impact(), 4.2f * hit, VfxParts.argb(hit, 0xFFD0A0));
         if (t < RING_LIFE) {
             float q = t / RING_LIFE;
             g.ring(muzzleDressing(near, 1.6).subtract(axis.scale(.3 * near)), axis, .4f + 3.6f * easeOut(q), .08f, 48,

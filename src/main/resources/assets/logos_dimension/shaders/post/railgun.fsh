@@ -1,6 +1,6 @@
 #version 330
 
-// 超电磁炮发射时的调色（见 RailgunScreen）：压暗、偏冷、四角更暗；射线在画面上经过的走廊保持原样，
+// 超电磁炮发射时的调色（见 RailgunScreen）：稍微压暗、偏冷一点、四角更暗一点；射线在画面上经过的走廊保持原样，
 // 并被射线的暖光照亮一点。
 
 uniform sampler2D InSampler;   // 最终画面的副本
@@ -31,10 +31,11 @@ void main() {
     }
 
     float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-    vec3 cold = mix(c, vec3(l) * vec3(0.62, 0.74, 1.1), 0.55) * 0.4;
+    // 最重时暗约两成，颜色往冷灰偏三成
+    vec3 cold = mix(c, vec3(l) * vec3(0.62, 0.74, 1.1), 0.3) * 0.8;
     // 四角更暗：0 是画面中心，1 是角
     float corner = length(texCoord - 0.5) * 1.414;
-    cold *= 1.0 - 0.55 * smoothstep(0.45, 1.0, corner);
+    cold *= 1.0 - 0.25 * smoothstep(0.45, 1.0, corner);
 
     vec3 o = mix(c, cold, dim * (1.0 - lit));
     o += Warm.rgb * Warm.a * dim * glow * (0.25 + l);

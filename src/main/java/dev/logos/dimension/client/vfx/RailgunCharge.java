@@ -90,9 +90,9 @@ final class RailgunCharge {
 
         // 泛光：拳头的蓝光、越蓄越亮的硬币；第一人称不交，贴着镜头的泛光也会被丢掉
         if (!g.own()) {
-            Glow glow = GLOW_OUT.begin(eye);
-            glow.sprite(g.fist(), .12f + .3f * charge, VfxParts.argb(.8f * charge * fade, GLOW_BLUE));
-            if (coinShown) glow.sprite(coin, .1f + .08f * charge, VfxParts.argb((.3f + .5f * charge) * fade, 0xDDF2FF));
+            Glow glow = GLOW_OUT.begin(view);
+            glow.disc(g.fist(), .18f + .4f * charge, VfxParts.argb(.8f * charge * fade, GLOW_BLUE));
+            if (coinShown) glow.disc(coin, .14f + .1f * charge, VfxParts.argb((.3f + .5f * charge) * fade, 0xDDF2FF));
             glow.flush();
         }
 
