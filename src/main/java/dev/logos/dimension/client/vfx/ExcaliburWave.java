@@ -3,13 +3,13 @@ package dev.logos.dimension.client.vfx;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.logos.client.VfxParts;
+import dev.logos.dimension.dawnvow.DawnvowBurst;
 import dev.logos.dimension.dawnvow.DawnvowCharge;
 import dev.logos.dimension.dawnvow.SwordWave;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
@@ -17,20 +17,26 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * 蓄满后劈出的巨型金色剑气（客户端）：一面向前鼓起的金色弧形光墙，每刻 {@link DawnvowCharge#GRAND_SPEED} 格沿地面冲出去
- * （服务端定好的路线，贴着地形起伏），身后留下一条宽阔的光流，过一秒多淡去；剑气头四散金色火星。走到头时十字爆闪、
- * 镜头一震，随后 Logos 的金色光柱冲起（服务端放），再震一下。挥剑的一刻剑前一闪。
- * 光墙与光流用 Logos 物理射线的 {@code physical_ray/wind}（向前滚动），十字爆闪用 {@code arcane_ray/impact_cross}。
+ * （服务端定好的路线，贴着地形起伏），身后留下一条宽阔的光流，过一秒多淡去；剑气头四散金色火星。挥剑的一刻剑前一闪。
+ * 走到头时剑气扎进地面：落点一闪、四溅的火星；地上那团光、穹顶、几何黑白闪和白光是全屏后期（{@link DawnvowScreen}），
+ * 按 {@link DawnvowBurst} 的时间轴；光柱冲起时（服务端放 Logos 的金色光柱）镜头重重一震。
+ * 光墙与光流用 Logos 物理射线的 {@code physical_ray/wind}（向前滚动），火星用 {@code force/streak}。
  */
 final class ExcaliburWave {
-    private static final RenderType WIND_BODY = VfxParts.blend("physical_ray/wind"), WIND_GLOW = VfxParts.add("physical_ray/wind");
-    private static final RenderType CROSS = VfxParts.add("arcane_ray/impact_cross"), FLASH = VfxParts.add("fire_impact/flash");
+    private static final PostLayer WIND_BODY = PostLayer.blend("physical_ray/wind"), WIND_GLOW = PostLayer.add("physical_ray/wind");
+    private static final PostLayer FLASH = PostLayer.add("fire_impact/flash"), STREAK = PostLayer.add("force/streak");
     /** 光墙宽、高、向前鼓出多少。 */
     private static final float WIDTH = 10, HEIGHT = 9, BOW = 3.2f;
-    /** 光流在剑气头过去后多少刻淡完；十字爆闪持续的刻数。 */
-    private static final int WAKE = 30, CROSS_TICKS = 18;
+    /** 光流在剑气头过去后多少刻淡完。 */
+    private static final int WAKE = 30;
     private static final int COLS = 18, ROWS = 6;
+    /** 光柱冲起后，后期再用多少刻退回原样。 */
+    static final int AFTER = 8;
 
     private record Spark(Vec3 at, Vec3 vel, long born, int life, float size) {}
+
+    /** 剑气扎进地面后四溅的火星：相对爆点的起点、每刻的速度，到头后第几刻出现、活几刻、多宽、颜色。 */
+    private record Ember(Vec3 at, Vec3 vel, float born, float life, float width, int rgb) {}
 
     private final Vec3 from, dir, side, up = new Vec3(0, 1, 0);
     private final float[] path;
@@ -38,7 +44,8 @@ final class ExcaliburWave {
     private final long start;
     private final int entity;
     private final List<Spark> sparks = new ArrayList<>();
-    private boolean flashed, pillared;
+    private final List<Ember> embers = new ArrayList<>();
+    private boolean landed, blacked, pillared;
 
     ExcaliburWave(int entity, Vec3 from, Vec3 dir, float[] path, long start) {
         this.entity = entity;
@@ -48,6 +55,15 @@ final class ExcaliburWave {
         this.path = path.length == 0 ? new float[]{(float) from.y} : path;
         this.length = (this.path.length - 1) * SwordWave.PATH_STEP;
         this.start = start;
+        // 四溅的火星事先定好（按放出的那一刻取随机数）：哪一刻画出来都一样，客户端场景停住时钟截图也对得上
+        RandomSource r = RandomSource.create(start * 31 + entity);
+        for (int i = 0; i < 110; i++) {
+            double a = r.nextDouble() * Mth.TWO_PI, d = r.nextDouble() * 2.2, out = .12 + .5 * r.nextDouble();
+            embers.add(new Ember(new Vec3(Math.cos(a) * d, .2 + .6 * r.nextDouble(), Math.sin(a) * d),
+                    new Vec3(Math.cos(a) * out, .15 + .45 * r.nextDouble(), Math.sin(a) * out),
+                    (float) (r.nextDouble() * r.nextDouble() * DawnvowBurst.BLACK), 8 + r.nextInt(16), .05f + .07f * r.nextFloat(),
+                    r.nextBoolean() ? DawnvowAura.HOT : DawnvowAura.PALE));
+        }
     }
 
     /** 路线上离起点 {@code s} 处的地面点。 */
@@ -64,20 +80,32 @@ final class ExcaliburWave {
     }
 
     /** 到头的游戏刻（小数）。 */
-    private double arrive() {
+    double arrive() {
         return start + length / DawnvowCharge.GRAND_SPEED;
     }
 
+    /** 剑气停下的那一点（地面）：穹顶、光柱都在这里。 */
     Vec3 end() {
         return point(length);
+    }
+
+    /** 此刻剑气头所在的地面点。 */
+    Vec3 headAt(double now) {
+        return point(head(now));
+    }
+
+    /** 星星排布的种子：同一道剑气每次画出来都一样。 */
+    int seed() {
+        return (int) (start * 7 + entity * 13) & 0xFFFF;
     }
 
     /** 一个客户端刻；全部画完返回 false。 */
     boolean tick(Level level, long now) {
         RandomSource r = level.getRandom();
-        // 爆闪与光柱冲起时镜头各震一下，离得越近越重
-        if (!flashed && now >= arrive()) { flashed = true; DawnvowShake.at(end(), 1); }
-        if (!pillared && now >= arrive() + SwordWave.PILLAR_DELAY) { pillared = true; DawnvowShake.at(end(), .7f); }
+        // 扎进地面、黑色爆发时镜头各轻轻一震，光柱冲起时重重一震，离得越近越重
+        if (!landed && now >= arrive()) { landed = true; DawnvowShake.at(end(), .35f); }
+        if (!blacked && now >= arrive() + DawnvowBurst.BLACK) { blacked = true; DawnvowShake.at(end(), .3f); }
+        if (!pillared && now >= arrive() + SwordWave.PILLAR_DELAY) { pillared = true; DawnvowShake.at(end(), 1); }
         if (now <= arrive()) {
             Vec3 head = point(head(now));
             for (int i = 0; i < 10; i++) {
@@ -89,7 +117,7 @@ final class ExcaliburWave {
             }
         }
         for (Iterator<Spark> it = sparks.iterator(); it.hasNext(); ) if (now - it.next().born() > 30) it.remove();
-        return now < arrive() + Math.max(WAKE, CROSS_TICKS) + 4 || !sparks.isEmpty();
+        return now < arrive() + Math.max(WAKE, SwordWave.PILLAR_DELAY + AFTER) || !sparks.isEmpty();
     }
 
     void submit(PoseStack pose, SubmitNodeCollector out, VfxParts.View view, double now) {
@@ -97,20 +125,20 @@ final class ExcaliburWave {
         boolean travelling = now < arrive();
         // 挥剑一刻剑前的一闪
         float swing = (float) (now - start);
-        if (swing < 8) out.submitCustomGeometry(pose, FLASH, (p, buf) -> VfxParts.sprite(p, buf, view, from.add(0, 1.4, 0).add(dir.scale(.5)),
+        if (swing < 8) FLASH.submit(pose, out, (p, buf) -> VfxParts.sprite(p, buf, view, from.add(0, 1.4, 0).add(dir.scale(.5)),
                 3.5f * (.5f + .5f * VfxParts.smooth(0, 2, swing)), swing * .1f, VfxParts.argb(.85f * (1 - VfxParts.smooth(0, 8, swing)), DawnvowAura.HOT)));
         // 身后的光流
-        out.submitCustomGeometry(pose, WIND_GLOW, (p, buf) -> wake(p, buf, now, head, false));
-        out.submitCustomGeometry(pose, DawnvowAura.LASER, (p, buf) -> wake(p, buf, now, head, true));
+        WIND_GLOW.submit(pose, out, (p, buf) -> wake(p, buf, now, head, false));
+        DawnvowAura.LASER.submit(pose, out, (p, buf) -> wake(p, buf, now, head, true));
         if (travelling) {
             Vec3 at = point(head);
             float scroll = (float) now * .25f;
-            out.submitCustomGeometry(pose, WIND_BODY, (p, buf) -> wall(p, buf, at, scroll, .55f, DawnvowAura.GOLD));
-            out.submitCustomGeometry(pose, WIND_GLOW, (p, buf) -> wall(p, buf, at, scroll, .75f, DawnvowAura.PALE));
-            out.submitCustomGeometry(pose, DawnvowAura.GLOW, (p, buf) -> VfxParts.sprite(p, buf, view, at.add(0, HEIGHT * .45, 0).add(dir.scale(BOW * .6)),
+            WIND_BODY.submit(pose, out, (p, buf) -> wall(p, buf, at, scroll, .55f, DawnvowAura.GOLD));
+            WIND_GLOW.submit(pose, out, (p, buf) -> wall(p, buf, at, scroll, .75f, DawnvowAura.PALE));
+            DawnvowAura.GLOW.submit(pose, out, (p, buf) -> VfxParts.sprite(p, buf, view, at.add(0, HEIGHT * .45, 0).add(dir.scale(BOW * .6)),
                     7, 0, VfxParts.argb(.3f, DawnvowAura.PALE)));
         }
-        if (!sparks.isEmpty()) out.submitCustomGeometry(pose, DawnvowAura.DOT, (p, buf) -> {
+        if (!sparks.isEmpty()) DawnvowAura.DOT.submit(pose, out, (p, buf) -> {
             for (Spark s : sparks) {
                 double age = now - s.born();
                 if (age < 0 || age > s.life()) continue;
@@ -120,7 +148,30 @@ final class ExcaliburWave {
             }
         });
         double since = now - arrive();
-        if (since >= 0 && since < CROSS_TICKS) cross(pose, out, view, (float) since);
+        if (since >= 0 && since < DawnvowBurst.CONTRAST) landing(pose, out, view, (float) since);
+    }
+
+    /**
+     * 剑气扎进地面之后、黑白闪之前：落点一闪，火星从那团光里四溅、拖着短短的光痕。
+     * 地上那团光和穹顶由全屏后期画（{@link DawnvowScreen}），这里只画它四周的东西；黑白闪那几拍画面整个换掉，不画。
+     */
+    private void landing(PoseStack pose, SubmitNodeCollector out, VfxParts.View view, float age) {
+        Vec3 at = end();
+        if (age < 6) FLASH.submit(pose, out, (p, buf) -> VfxParts.sprite(p, buf, view, at.add(0, 1, 0), 9 * (.5f + .5f * VfxParts.smooth(0, 2, age)),
+                age * .05f, VfxParts.argb(.95f * (1 - VfxParts.smooth(0, 6, age)), DawnvowAura.HOT)));
+        float gone = 1 - VfxParts.smooth(DawnvowBurst.CONTRAST - 2, DawnvowBurst.CONTRAST, age);
+        STREAK.submit(pose, out, (p, buf) -> {
+            for (Ember e : embers) {
+                float t = age - e.born();
+                if (t < 0 || t > e.life()) continue;
+                float a = VfxParts.smooth(0, 1.5f, t) * (1 - VfxParts.smooth(e.life() * .55f, e.life(), t)) * gone;
+                VfxParts.streak(p, buf, view, emberAt(at, e, Math.max(0, t - 1.6f)), emberAt(at, e, t), e.width(), VfxParts.argb(.95f * a, e.rgb()));
+            }
+        });
+    }
+
+    private static Vec3 emberAt(Vec3 burst, Ember e, float t) {
+        return burst.add(e.at()).add(e.vel().scale(t)).add(0, -.018 * t * t, 0);
     }
 
     /**
@@ -196,17 +247,5 @@ final class ExcaliburWave {
         if (passed < 0) return 0;
         float near = VfxParts.smooth(0, 4, (float) s);
         return near * (1 - VfxParts.smooth(0, WAKE, (float) passed)) * (s > head - 1 ? .7f : 1);
-    }
-
-    /** 到头时的十字爆闪：四芒的光一下张到很大再淡去，中间一团白光。 */
-    private void cross(PoseStack pose, SubmitNodeCollector out, VfxParts.View view, float age) {
-        Vec3 at = end().add(0, HEIGHT * .45, 0);
-        float open = VfxParts.smooth(0, 3, age), fade = 1 - VfxParts.smooth(4, CROSS_TICKS, age);
-        out.submitCustomGeometry(pose, CROSS, (p, buf) -> {
-            VfxParts.sprite(p, buf, view, at, 30 * (.3f + .7f * open), 0, VfxParts.argb(fade, DawnvowAura.HOT));
-            VfxParts.sprite(p, buf, view, at, 22 * (.3f + .7f * open), 0, VfxParts.argb(.8f * fade, DawnvowAura.GOLD));
-        });
-        out.submitCustomGeometry(pose, FLASH, (p, buf) -> VfxParts.sprite(p, buf, view, at, 9 * (.5f + .5f * open), age * .05f,
-                VfxParts.argb(.9f * (1 - VfxParts.smooth(0, 10, age)), DawnvowAura.HOT)));
     }
 }

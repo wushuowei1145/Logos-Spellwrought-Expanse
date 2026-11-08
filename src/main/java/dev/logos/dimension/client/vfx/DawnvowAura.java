@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -31,9 +30,10 @@ import net.minecraft.world.phys.Vec3;
  * {@code force/streak}，{@code fire_impact/flash}，{@code lightning_beam/rays}。
  */
 final class DawnvowAura {
-    static final RenderType DOT = VfxParts.add("fire_beam/dot"), LASER = VfxParts.add("fire_beam/laser"), GLOW = VfxParts.add("fire_beam/glow");
-    private static final RenderType WISP = VfxParts.add("surface/trail"), STREAK = VfxParts.add("force/streak");
-    private static final RenderType FLASH = VfxParts.add("fire_impact/flash"), RAYS = VfxParts.add("lightning_beam/rays");
+    // 曦誓的后期把周围调暗时，这些层交给 PostVfx 在调暗之后画（PostLayer），四周的光点不会跟着暗下去
+    static final PostLayer DOT = PostLayer.add("fire_beam/dot"), LASER = PostLayer.add("fire_beam/laser"), GLOW = PostLayer.add("fire_beam/glow");
+    private static final PostLayer WISP = PostLayer.add("surface/trail"), STREAK = PostLayer.add("force/streak");
+    private static final PostLayer FLASH = PostLayer.add("fire_impact/flash"), RAYS = PostLayer.add("lightning_beam/rays");
     static final int GOLD = 0xFFC24A, PALE = 0xFFE7A6, HOT = 0xFFF8E2;
     /** 光点头上的颜色：比光痕亮、仍带金色。 */
     private static final int MOTE = 0xFFDB8C;
@@ -105,6 +105,18 @@ final class DawnvowAura {
         return (grow * .65f + more + full) * fading(now);
     }
 
+    /** 后期把周围调暗多少（0–1）：进入大型蓄力三秒内渐暗，蓄满后更暗，结束后跟着身上的光一起退（{@link DawnvowScreen}）。 */
+    float spotlight(double now) {
+        float grow = VfxParts.smooth(DawnvowCharge.GRAND_TICKS, DawnvowCharge.GRAND_TICKS + 60, (float) held(now));
+        float isFull = full >= 0 && now >= full ? 1 : 0;
+        return (.82f * grow + .18f * isFull) * fading(now);
+    }
+
+    /** 蓄力的人身边被照亮的半径（格）：越蓄越大。 */
+    float spotRadius(double now) {
+        return 6 + 5 * VfxParts.smooth(DawnvowCharge.GRAND_TICKS, DawnvowCharge.FULL_TICKS, (float) held(now));
+    }
+
     /** 一个客户端刻。返回 false 时这次蓄力的效果已经全部消失，可以丢掉。 */
     boolean tick(Level level, Entity body, long now) {
         RandomSource r = level.getRandom();
@@ -167,10 +179,10 @@ final class DawnvowAura {
         float s = strength(now), end = fading(now);
         Vec3 chest = feet.add(0, height * .55, 0);
         if (!motes.isEmpty()) {
-            out.submitCustomGeometry(pose, LASER, (p, buf) -> {
+            LASER.submit(pose, out, (p, buf) -> {
                 for (Mote m : motes) trail(p, buf, view, m, pt, .6f * end * VfxParts.fade(view.cam(), m.pos, .8, 3), GOLD);
             });
-            out.submitCustomGeometry(pose, DOT, (p, buf) -> {
+            DOT.submit(pose, out, (p, buf) -> {
                 for (Mote m : motes) {
                     Vec3 at = lerp(m, pt);
                     float tw = .75f + .25f * Mth.sin((float) now * .3f + m.phase * 6);
@@ -180,17 +192,17 @@ final class DawnvowAura {
         }
         if (s <= 0.002f && sparks.isEmpty() && inflow.isEmpty()) return;
         // 脚下的柔光
-        out.submitCustomGeometry(pose, GLOW, (p, buf) -> {
+        GLOW.submit(pose, out, (p, buf) -> {
             VfxParts.ground(p, buf, feet.add(0, .03, 0), 2.2f + .8f * s, 0, VfxParts.argb(.32f * s, GOLD));
             VfxParts.sprite(p, buf, view, chest, 1.4f * s, 0, VfxParts.argb(.12f * s * near, PALE));
         });
         // 两层缠着身体往上流的光
-        if (near > 0.01f) out.submitCustomGeometry(pose, WISP, (p, buf) -> {
+        if (near > 0.01f) WISP.submit(pose, out, (p, buf) -> {
             shell(p, buf, view, feet, .7f + .15f * s, height * 1.3f, (float) now * .035f, .34f * s * near);
             shell(p, buf, view, feet, .95f + .2f * s, height * 1.55f, (float) now * -.022f + .5f, .22f * s * near);
         });
         // 从脚边往上散开、闪烁的细光线
-        out.submitCustomGeometry(pose, STREAK, (p, buf) -> {
+        STREAK.submit(pose, out, (p, buf) -> {
             for (int i = 0; i < 8; i++) {
                 double a = i * Mth.TWO_PI / 8 + now * .012 + (i % 2) * .4;
                 float tilt = .25f + .15f * Mth.sin((float) now * .05f + i);
@@ -201,8 +213,8 @@ final class DawnvowAura {
                 VfxParts.streak(p, buf, view, base, base.add(out2.scale(len)), .22f, VfxParts.argb(.28f * s * flicker * (.4f + .6f * near), MOTE));
             }
         });
-        if (!sparks.isEmpty()) out.submitCustomGeometry(pose, LASER, (p, buf) -> { for (Mote m : sparks) trail(p, buf, view, m, pt, .9f * near * end, MOTE); });
-        if (!inflow.isEmpty()) out.submitCustomGeometry(pose, DOT, (p, buf) -> {
+        if (!sparks.isEmpty()) LASER.submit(pose, out, (p, buf) -> { for (Mote m : sparks) trail(p, buf, view, m, pt, .9f * near * end, MOTE); });
+        if (!inflow.isEmpty()) DOT.submit(pose, out, (p, buf) -> {
             for (Inflow f : inflow) {
                 double age = now - f.born();
                 if (age < 0 || age > INFLOW_TICKS) continue;
@@ -231,11 +243,11 @@ final class DawnvowAura {
     /** 蓄满的一刻：胸前爆闪与放射光芒，脚下一圈光向外扩开。 */
     private static void burst(PoseStack pose, SubmitNodeCollector out, VfxParts.View view, Vec3 feet, Vec3 chest, float age, float near) {
         float flash = 1 - VfxParts.smooth(0, 10, age), ring = VfxParts.smooth(0, 14, age);
-        out.submitCustomGeometry(pose, FLASH, (p, buf) -> VfxParts.sprite(p, buf, view, chest, 3.2f * (.4f + .6f * VfxParts.smooth(0, 3, age)), age * .05f,
+        FLASH.submit(pose, out, (p, buf) -> VfxParts.sprite(p, buf, view, chest, 3.2f * (.4f + .6f * VfxParts.smooth(0, 3, age)), age * .05f,
                 VfxParts.argb(.9f * flash * (.3f + .7f * near), HOT)));
-        out.submitCustomGeometry(pose, RAYS, (p, buf) -> VfxParts.sprite(p, buf, view, chest, 4.5f * (.6f + .4f * ring), -age * .03f,
+        RAYS.submit(pose, out, (p, buf) -> VfxParts.sprite(p, buf, view, chest, 4.5f * (.6f + .4f * ring), -age * .03f,
                 VfxParts.argb(.55f * (1 - VfxParts.smooth(4, 24, age)), PALE)));
-        out.submitCustomGeometry(pose, GLOW, (p, buf) -> VfxParts.ground(p, buf, feet.add(0, .05, 0), 1 + 8 * ring, 0,
+        GLOW.submit(pose, out, (p, buf) -> VfxParts.ground(p, buf, feet.add(0, .05, 0), 1 + 8 * ring, 0,
                 VfxParts.argb(.5f * (1 - ring), GOLD)));
     }
 
