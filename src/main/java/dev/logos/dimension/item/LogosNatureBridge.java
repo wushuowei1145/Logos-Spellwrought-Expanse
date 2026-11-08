@@ -31,8 +31,8 @@ public final class LogosNatureBridge {
             PLAIN = guise.getField("PLAIN").get(null);
             var spell = Class.forName("dev.logos.lang.Spell");
             // 只作为一次命中的伤害上下文，不注册或执行额外术式。
-            SPELL = spell.getConstructors()[0].newInstance("自然之力", "cast", true, false, 0d, 0d,
-                    java.util.List.of(), java.util.List.of(), "", null);
+            SPELL = LogosRecords.make(spell, java.util.Map.of("name", "自然之力", "trigger", "cast", "affectsPlayers", true, "immolate", false,
+                    "body", java.util.List.of(), "notes", java.util.List.of(), "source", "", "element", LIFE));
             var instance = Class.forName("dev.logos.runtime.SpellInstance");
             INSTANCE = instance.getConstructor(spell, LivingEntity.class, ServerLevel.class, double.class, double.class);
             DAMAGE = Class.forName("dev.logos.runtime.Effects").getMethod("damage", instance, LivingEntity.class, double.class, element);
