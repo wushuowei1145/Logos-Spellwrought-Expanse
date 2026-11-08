@@ -66,7 +66,12 @@ public final class Dissolves {
     private static final int LINGER = 40;
     private static final int CAP = 1500;
     /** 同时消散的方块超过这些就切粗一档。 */
-    private static final int FINE_BLOCKS = 16, TEXEL_BLOCKS = 64;
+    private static final int FINE_BLOCKS = 16, TEXEL_BLOCKS = 64, COARSE_BLOCKS = 160;
+    /**
+     * 方块影子一共最多多少格（每格一个面）。10 万格正好放得下 16 块最细的方块（单独一次消散最细的上限），
+     * 也就是 260 块粗档、1000 块最粗档。原版下 8 块最细的方块（约 5 万格）一帧约 2.3 毫秒，光影包的阴影通道还要再画一遍。
+     */
+    private static final int CELL_BUDGET = 100_000;
     private static final RenderType HALO = VfxParts.add("fire_impact/glow"), SPARK = VfxParts.add("fire_impact/ember");
 
     private static final Map<Integer, Dissolve> ENTITIES = new HashMap<>();
@@ -83,6 +88,17 @@ public final class Dissolves {
     public static int active() { return ENTITIES.size() + HELD.size() + GROUPS.size(); }
 
     public static int motes() { return MOTES.size(); }
+
+    /** 正在消散的方块影子有多少块，上一帧方块影子一共交出去多少格（客户端场景量开销用）。 */
+    public static int ghosts() {
+        int n = 0;
+        for (BlockGroup g : GROUPS) n += g.ghosts.size();
+        return n;
+    }
+
+    public static int cellsLastFrame() { return cellsLastFrame; }
+
+    private static int cells, cellsLastFrame;
 
     private static float now() {
         return ticks + Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
@@ -199,14 +215,51 @@ public final class Dissolves {
         Dissolve d = new Dissolve(shape, ticks, duration, color);
         d.include(0, 0, 0);
         d.include(maxX - minX + 1, maxY - minY + 1, maxZ - minZ + 1);
-        DissolveMesh.Detail detail = positions.size() <= FINE_BLOCKS ? DissolveMesh.Detail.FINE
-                : positions.size() <= TEXEL_BLOCKS ? DissolveMesh.Detail.TEXEL : DissolveMesh.Detail.COARSE;
+        // 精度按同时在消散的方块总数选，而不是这一组有几块：腐败消散波每刻按区块发很多小组，按组算的话每组都是最细的，
+        // 上千块一起散时一帧要交出上百万格，周围的客户端直接卡死
+        int alive = ghosts(), budget = CELL_BUDGET - liveCells();
+        DissolveMesh.Detail detail = detailFor(alive + positions.size());
         List<GhostBlock> ghosts = new ArrayList<>(positions.size());
         for (int i = 0; i < positions.size(); i++) {
-            GhostBlock ghost = GhostBlock.of(level, positions.get(i), states.get(i), min, detail);
-            if (ghost != null) ghosts.add(ghost);
+            GhostBlock ghost = null;
+            // 这一档放不下就再粗一档，最粗也放不下就不画影子，只冒一点火星
+            for (int k = detail.ordinal(); k < DissolveMesh.Detail.values().length && ghost == null; k++) {
+                GhostBlock g = GhostBlock.of(level, positions.get(i), states.get(i), min, DissolveMesh.Detail.values()[k]);
+                if (g == null) break;
+                if (g.mesh.quads.length <= budget) ghost = g;
+            }
+            if (ghost == null) {
+                puff(positions.get(i), color);
+                continue;
+            }
+            budget -= ghost.mesh.quads.length;
+            ghosts.add(ghost);
         }
-        GROUPS.add(new BlockGroup(d, ghosts, covering));
+        if (!ghosts.isEmpty()) GROUPS.add(new BlockGroup(d, ghosts, covering));
+    }
+
+    /** 同时有 {@code blocks} 块方块在消散时用多细的格子。 */
+    static DissolveMesh.Detail detailFor(int blocks) {
+        return blocks <= FINE_BLOCKS ? DissolveMesh.Detail.FINE : blocks <= TEXEL_BLOCKS ? DissolveMesh.Detail.TEXEL
+                : blocks <= COARSE_BLOCKS ? DissolveMesh.Detail.COARSE : DissolveMesh.Detail.CHUNKY;
+    }
+
+    /** 正在消散的方块影子一共有多少格。 */
+    private static int liveCells() {
+        int n = 0;
+        for (BlockGroup g : GROUPS) for (GhostBlock ghost : g.ghosts) n += ghost.mesh.quads.length;
+        return n;
+    }
+
+    /** 超出预算、没画影子的方块：在它中间冒两三颗火星，消散波看上去还是连着的。 */
+    private static void puff(BlockPos pos, int color) {
+        if (MOTES.size() >= CAP) return;
+        Vec3 at = pos.getCenter();
+        for (int i = 0; i < 3; i++) {
+            Vec3 v = new Vec3((RANDOM.nextFloat() - .5f) * .03f, .02f + RANDOM.nextFloat() * .03f, (RANDOM.nextFloat() - .5f) * .03f);
+            MOTES.add(new Mote(at.add((RANDOM.nextFloat() - .5f) * .8f, .3f, (RANDOM.nextFloat() - .5f) * .8f), v, i == 0, color,
+                    i == 0 ? 6 + RANDOM.nextInt(4) : 14 + RANDOM.nextInt(16), i == 0 ? .12f : .03f));
+        }
     }
 
     private static long key(int owner, boolean left) { return (long) owner << 1 | (left ? 1 : 0); }
@@ -256,6 +309,8 @@ public final class Dissolves {
     @SubscribeEvent
     static void onFrame(RenderFrameEvent.Pre event) {
         frame++;
+        cellsLastFrame = cells;
+        cells = 0;
         DissolveCapture.nextFrame();
     }
 
@@ -450,6 +505,7 @@ public final class Dissolves {
                 Dissolve.Glow glow = new Dissolve.Glow();
                 List<BakedQuad> left = dissolve.left(g.mesh, g.noise, pose.last(), g.toPattern, null, now, glow, particles, camera.pos, frame, ticks);
                 if (!left.isEmpty()) {
+                    cells += left.size();
                     raw.submitItem(pose, ItemDisplayContext.NONE, covering ? outerLight(level, g.pos) : LevelRenderer.getLightCoords(level, g.pos), OverlayTexture.NO_OVERLAY, 0, g.tints, left,
                             ItemStackRenderState.FoilType.NONE);
                 }

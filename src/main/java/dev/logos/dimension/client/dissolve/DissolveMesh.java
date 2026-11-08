@@ -31,14 +31,16 @@ final class DissolveMesh {
         noise = DissolveNoise.ranks(raw);
     }
 
-    /** 切多细。整块方块分别是 6144、1536、384 格。 */
+    /** 切多细。整块方块分别是 6144、1536、384、96 格。 */
     enum Detail {
         /** 每个贴图像素四格：单个东西和不多的方块用。 */
         FINE(.5f),
         /** 每个贴图像素一格。 */
         TEXEL(1),
         /** 每四个贴图像素一格，同时消散很多方块时用。 */
-        COARSE(2);
+        COARSE(2),
+        /** 每十六个贴图像素一格（整块 96 格），上百块方块一起消散时用。 */
+        CHUNKY(4);
 
         final float texels;
 
