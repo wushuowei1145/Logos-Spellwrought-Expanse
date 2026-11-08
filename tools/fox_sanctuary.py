@@ -24,6 +24,7 @@ import fox_buildings as fb  # noqa: E402
 import fox_landmarks as fl  # noqa: E402
 import fox_yatai as fy  # noqa: E402
 import fox_life as life  # noqa: E402
+import fox_undercroft as fu  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 D = ROOT / 'src/main/resources/data/logos_dimension'
@@ -118,6 +119,8 @@ class Site:
         self.g = np.full((S, S), LAWN, dtype=np.int8)
         self.c = Canvas()
         self.lots = []
+        #: 与 lots 一一对应：(kind, 占地 (u0, v0, u1, v1), turns, 地面高度)
+        self.lot_meta = []
         self.boxes = []
         self.variants = {}
         self.rnd = random.Random(20261102)
@@ -147,6 +150,7 @@ class Site:
         if ground is not None:
             self.flat(u0, v0, u0 + fw - 1, v0 + fd - 1, y, ground)
         self.lots.append({'kind': kind, 'u': ax + ox, 'y': y - 2, 'v': az + oz, 'turns': turns})
+        self.lot_meta.append((kind, box, turns, y))
         return y
 
     def put(self, building, u0, v0, turns=0, y=None):
@@ -764,9 +768,9 @@ def write_core(s, out, prefix):
 
 
 def write_variants():
-    """各方案共用的地块变体：商铺、住宅、食摊。"""
+    """各方案共用的地块变体：商铺、住宅、食摊；还有地下封印场地替换住宅用的封じの堂（不在随机表里）。"""
     for table, (w, d) in ((fb.SHOP_VARIANTS, (fb.SHOP_W, fb.SHOP_D)), (fb.HOUSE_VARIANTS, (13, 13)), (fb.STALL_VARIANTS, (5, 5)),
-                          (life.GARDEN_VARIANTS, (5, 5))):
+                          (life.GARDEN_VARIANTS, (5, 5)), ({'under_gate_house': fu.gate_house}, (13, 13))):
         for name, make in table.items():
             b = make()
             size = [w + 4, 24, d + 4]
@@ -778,7 +782,67 @@ def write_variants():
             write_structure(OUT / f'{name}.nbt', size, cells, data_version=DATA_VERSION)
 
 
-def layout(s, tiles, path):
+UNDER = OUT / 'undercroft'
+
+
+def _write_canvas(c, path):
+    """按画布的包围盒写一块模板，返回原点 (u, y, v)。"""
+    (x0, y0, z0), (x1, y1, z1) = c.bounds()
+    cells = {(x - x0, y - y0, z - z0): st for (x, y, z), st in c.cells.items()}
+    write_structure(path, [x1 - x0 + 1, y1 - y0 + 1, z1 - z0 + 1], cells, data_version=DATA_VERSION)
+    return x0, y0, z0
+
+
+def undercroft_routes(s, plan_index):
+    """这套方案里可以换成封じの堂的住宅与对应的路线模板：在能走通的住宅里自西向东均匀挑几栋。"""
+    found = []
+    for i, (kind, box, turns, y) in enumerate(s.lot_meta):
+        if kind != 'house':
+            continue
+        r = fu.route(box, turns, y)
+        if r is not None:
+            found.append((i, r))
+    found.sort(key=lambda e: (s.lot_meta[e[0]][1][0], s.lot_meta[e[0]][1][1]))
+    n = min(fu.ROUTES_PER_PLAN, len(found))
+    picks = [found[round(k * (len(found) - 1) / max(1, n - 1))] for k in range(n)] if n else []
+    out = []
+    for k, (i, (canvas, info)) in enumerate(picks):
+        name = f'undercroft/route_{plan_index}_{k}'
+        u, y, v = _write_canvas(canvas, OUT / f'{name}.nbt')
+        out.append(dict(lot=i, template=name, u=u, y=y, v=v, **info))
+    return out
+
+
+def write_undercroft():
+    """各方案共用的大鸟居之间与封印之间：切成 44×44 的分块模板；挖空范围、封印杭位置写进 undercroft.json。"""
+    c = fu.vault_canvas()
+    (x0, y0, z0), (x1, y1, z1) = c.bounds()
+    tiles = []
+    for tu in range(x0, x1 + 1, TILE):
+        for tv in range(z0, z1 + 1, TILE):
+            part = Canvas()
+            for (x, y, z), st in c.cells.items():
+                if tu <= x < tu + TILE and tv <= z < tv + TILE:
+                    part.set(x, y, z, st)
+            if not part.cells:
+                continue
+            name = f'undercroft/vault_{(tu - x0) // TILE}_{(tv - z0) // TILE}'
+            u, y, v = _write_canvas(part, OUT / f'{name}.nbt')
+            tiles.append({'template': name, 'u': u, 'y': y, 'v': v})
+    write_json(D / 'fox_sanctuary/undercroft.json', {
+        'boxes': fu.carve_boxes(),
+        'shell': fu.SHELL,
+        'tiles': tiles,
+        'gate_house': 'under_gate_house',
+        'hall': list(fu.HALL) + [fu.FLOOR_Y, fu.HALL_TOP],
+        'arena': list(fu.ARENA) + [fu.FLOOR_Y, fu.ARENA_TOP],
+        'center': [fu.CU, fu.FLOOR_Y + 3, fu.ARENA_CV],
+        'seals': [[u, fu.FLOOR_Y + 2, v] for (u, v) in fu.seal_positions()],
+    })
+    print('undercroft: tiles', len(tiles), 'cells', len(c.cells))
+
+
+def layout(s, tiles, path, routes=()):
     obj = {
         'size': S,
         'heights': base64.b64encode(np.round(s.h).astype(np.int8).tobytes()).decode(),
@@ -790,6 +854,8 @@ def layout(s, tiles, path):
         'tiles': tiles,
         'lots': s.lots,
         'variants': s.variants,
+        'izakaya': list(fb.IZAKAYA),
+        'undercroft': {'routes': list(routes)},
     }
     write_json(path, obj)
 
@@ -898,19 +964,23 @@ def main():
     import shutil
     for old in OUT.glob('*.nbt'):
         old.unlink()
-    for old in list(OUT.glob('plan_*')) + list((D / 'fox_sanctuary').glob('plan_*')):
-        shutil.rmtree(old)
+    for old in list(OUT.glob('plan_*')) + list((D / 'fox_sanctuary').glob('plan_*')) + [UNDER]:
+        if old.exists():
+            shutil.rmtree(old)
     sites = []
     for i, plan in enumerate(PLANS):
         PLAN = plan
         s = compose()
         sub = '' if i == 0 else f'plan_{i}/'
         tiles = write_core(s, OUT / sub, sub)
-        layout(s, tiles, D / 'fox_sanctuary' / sub / 'layout.json')
-        print(f'plan {i} {plan.name}: layout', int(s.h.min()), int(s.h.max()), 'cells', len(s.c.cells), 'lots', len(s.lots), 'tiles', len(tiles))
+        routes = undercroft_routes(s, i)
+        layout(s, tiles, D / 'fox_sanctuary' / sub / 'layout.json', routes)
+        print(f'plan {i} {plan.name}: layout', int(s.h.min()), int(s.h.max()), 'cells', len(s.c.cells), 'lots', len(s.lots), 'tiles', len(tiles),
+              'routes', [(r['lot'], r['exit'], r['length']) for r in routes])
         sites.append(s)
     write_json(D / 'fox_sanctuary/plans.json', {'count': len(PLANS)})
     write_variants()
+    write_undercroft()
     fy.write_templates(OUT, DATA_VERSION)
     worldgen()
     wild_features()

@@ -35,6 +35,8 @@ public class FoxSanctuaryStructure extends Structure {
     public static volatile int devPlan = -1;
     /** 开发预览用：≥ 0 时山路都用这种样式（见 SanctuaryTrail.plan）。 */
     public static volatile int devStyle = -1;
+    /** 开发预览用：1 时每处聚落都有地下封印场地，0 时都没有，-1 按概率。 */
+    public static volatile int devVault = -1;
     private static final RandomSpreadStructurePlacement PLACEMENT = new RandomSpreadStructurePlacement(SPACING, SEPARATION, RandomSpreadType.LINEAR, SALT);
     /** 两处聚落中心的最小间距：大于整个聚落的宽度。 */
     private static final double EXCLUSION = 300;
@@ -124,22 +126,71 @@ public class FoxSanctuaryStructure extends Structure {
         BoundingBox box = new BoundingBox(cx - REACH, low - 10, cz - REACH, cx + REACH, p + 48, cz + REACH);
 
         return Optional.of(new GenerationStub(new BlockPos(cx, p, cz), builder -> {
-            builder.addPiece(new SanctuaryGroundsPiece(frame, trail, box));
             SanctuaryLayout layout = frame.layout;
+            // 地下封印场地：约三分之一的聚落有，挑一栋走得通的住宅换成封じの堂
+            SanctuaryLayout.Route route = null;
+            boolean vault = devVault >= 0 ? devVault == 1 : ctx.random().nextInt(SanctuaryUndercroft.CHANCE) == 0;
+            if (vault && !layout.routes.isEmpty()) route = layout.routes.get(ctx.random().nextInt(layout.routes.size()));
+            SanctuaryUndercroft under = route != null ? SanctuaryUndercroft.get() : null;
+            builder.addPiece(new SanctuaryGroundsPiece(frame, trail, box));
+            // 岩洞紧跟在地形之后挖：洞里的模板都排在它后面
+            if (route != null) builder.addPiece(new SanctuaryVaultPiece(frame, under, route));
             for (SanctuaryLayout.Tile tile : layout.tiles) {
                 builder.addPiece(new SanctuaryTemplatePiece(ctx.structureTemplateManager(), "logos_dimension:fox_sanctuary/" + tile.template(),
                     frame.world(tile.u(), p + layout.tileMinY, tile.v()), frame.mirror, frame.rotation, pieceSeed(seed, tile.u(), tile.v())));
             }
-            for (SanctuaryLayout.Lot lot : layout.lots) {
-                List<String> options = layout.variants.get(lot.kind());
-                if (options == null || options.isEmpty()) continue;
-                String template = options.get(ctx.random().nextInt(options.size()));
-                builder.addPiece(new SanctuaryTemplatePiece(ctx.structureTemplateManager(), "logos_dimension:fox_sanctuary/" + template,
+            String[] chosen = pickVariants(layout, ctx.random(), route, under);
+            for (int i = 0; i < layout.lots.size(); i++) {
+                SanctuaryLayout.Lot lot = layout.lots.get(i);
+                if (chosen[i] == null) continue;
+                builder.addPiece(new SanctuaryTemplatePiece(ctx.structureTemplateManager(), "logos_dimension:fox_sanctuary/" + chosen[i],
                     frame.world(lot.u(), p + lot.y(), lot.v()), frame.mirror, lotRotation(frame, lot.quarterTurns()), pieceSeed(seed, lot.u(), lot.v())));
+            }
+            if (route != null) {
+                // 堂下的回旋石阶与通道排在住宅之后：井口那几格要盖过地块的地面
+                builder.addPiece(new SanctuaryTemplatePiece(ctx.structureTemplateManager(), "logos_dimension:fox_sanctuary/" + route.template(),
+                    frame.world(route.u(), p + route.y(), route.v()), frame.mirror, frame.rotation, pieceSeed(seed, route.u(), route.v())));
+                for (int i = 0; i < under.tiles.size(); i++) {
+                    SanctuaryLayout.Tile tile = under.tiles.get(i);
+                    builder.addPiece(new SanctuaryTemplatePiece(ctx.structureTemplateManager(), "logos_dimension:fox_sanctuary/" + tile.template(),
+                        frame.world(tile.u(), p + under.tileY.get(i), tile.v()), frame.mirror, frame.rotation, pieceSeed(seed, tile.u(), tile.v())));
+                }
             }
             // 居民排在最后：地面与房屋都放好以后才落脚
             builder.addPiece(new SanctuaryResidentsPiece(new BlockPos(cx, p, cz).asLong(), SanctuaryResidents.spots(frame), box));
         }));
+    }
+
+    /**
+     * 每块地挑一个变体。居酒屋（商铺两种、住宅里的大居酒屋）每处聚落至多随机 2–3 家，名额用完后再抽到就换成别的店；
+     * 按打乱的顺序挑，名额不会总被西头的店先占走。有地下封印场地时，路线选中的那块住宅换成封じの堂。
+     */
+    static String[] pickVariants(SanctuaryLayout layout, net.minecraft.util.RandomSource random, SanctuaryLayout.Route route, SanctuaryUndercroft under) {
+        int n = layout.lots.size();
+        String[] out = new String[n];
+        List<Integer> order = new ArrayList<>();
+        for (int i = 0; i < n; i++) order.add(i);
+        for (int i = n - 1; i > 0; i--) java.util.Collections.swap(order, i, random.nextInt(i + 1));
+        int izakayaLeft = 2 + random.nextInt(2);
+        for (int i : order) {
+            if (route != null && i == route.lot()) {
+                out[i] = under.gateHouse;
+                continue;
+            }
+            List<String> options = layout.variants.get(layout.lots.get(i).kind());
+            if (options == null || options.isEmpty()) continue;
+            String t = options.get(random.nextInt(options.size()));
+            if (layout.izakaya.contains(t)) {
+                if (izakayaLeft > 0) {
+                    izakayaLeft--;
+                } else {
+                    List<String> rest = options.stream().filter(o -> !layout.izakaya.contains(o)).toList();
+                    if (!rest.isEmpty()) t = rest.get(random.nextInt(rest.size()));
+                }
+            }
+            out[i] = t;
+        }
+        return out;
     }
 
     /** 地块模板先在设计坐标里顺时针转 turns 次，再套聚落整体的镜像与旋转；镜像会让局部旋转反向。 */
@@ -171,6 +222,19 @@ public class FoxSanctuaryStructure extends Structure {
             if (piece instanceof SanctuaryGroundsPiece grounds) return grounds.inShrine(pos);
         }
         return false;
+    }
+
+    /** pos 所在的聚落若有地下封印场地，返回它的岩洞部件；否则 null。 */
+    public static SanctuaryVaultPiece vaultAt(net.minecraft.server.level.ServerLevel level, BlockPos pos) {
+        var structure = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE)
+            .getValue(dev.logos.dimension.LogosDimension.id("fox_sanctuary"));
+        if (structure == null) return null;
+        var start = level.structureManager().getStructureAt(pos, structure);
+        if (!start.isValid()) return null;
+        for (var piece : start.getPieces()) {
+            if (piece instanceof SanctuaryVaultPiece vault) return vault;
+        }
+        return null;
     }
 
     public static int spacing() {

@@ -511,14 +511,19 @@
   ],
   "variants": {
     "shop": [
+      "shop_apothecary",
       "shop_cloth",
       "shop_general",
       "shop_izakaya_long",
       "shop_izakaya_u",
+      "shop_lantern",
       "shop_noodle",
+      "shop_pottery",
       "shop_sake",
+      "shop_smith",
       "shop_sweets",
-      "shop_tea"
+      "shop_tea",
+      "shop_tofu"
     ],
     "yatai": [
       "yatai_oden",
@@ -553,6 +558,192 @@
       "garden_cherry_a",
       "garden_cherry_b",
       "garden_pine"
+    ]
+  },
+  "izakaya": [
+    "shop_izakaya_u",
+    "shop_izakaya_long",
+    "house_d"
+  ],
+  "undercroft": {
+    "routes": [
+      {
+        "lot": 40,
+        "template": "undercroft/route_4_0",
+        "u": 20,
+        "y": -30,
+        "v": 24,
+        "shaft": [
+          24,
+          28
+        ],
+        "exit": "south",
+        "cw": true,
+        "path": [
+          [
+            24,
+            32
+          ],
+          [
+            24,
+            35
+          ],
+          [
+            24,
+            72
+          ],
+          [
+            51,
+            72
+          ]
+        ],
+        "length": 68,
+        "depth": 32
+      },
+      {
+        "lot": 35,
+        "template": "undercroft/route_4_1",
+        "u": 23,
+        "y": -30,
+        "v": 37,
+        "shaft": [
+          27,
+          41
+        ],
+        "exit": "south",
+        "cw": true,
+        "path": [
+          [
+            27,
+            45
+          ],
+          [
+            27,
+            48
+          ],
+          [
+            27,
+            72
+          ],
+          [
+            51,
+            72
+          ]
+        ],
+        "length": 52,
+        "depth": 31
+      },
+      {
+        "lot": 31,
+        "template": "undercroft/route_4_2",
+        "u": 44,
+        "y": -30,
+        "v": 55,
+        "shaft": [
+          56,
+          59
+        ],
+        "exit": "west",
+        "cw": false,
+        "path": [
+          [
+            52,
+            59
+          ],
+          [
+            49,
+            59
+          ],
+          [
+            46,
+            59
+          ],
+          [
+            46,
+            72
+          ],
+          [
+            51,
+            72
+          ]
+        ],
+        "length": 25,
+        "depth": 30
+      },
+      {
+        "lot": 43,
+        "template": "undercroft/route_4_3",
+        "u": 44,
+        "y": -30,
+        "v": 19,
+        "shaft": [
+          86,
+          23
+        ],
+        "exit": "west",
+        "cw": true,
+        "path": [
+          [
+            82,
+            23
+          ],
+          [
+            79,
+            23
+          ],
+          [
+            46,
+            23
+          ],
+          [
+            46,
+            72
+          ],
+          [
+            51,
+            72
+          ]
+        ],
+        "length": 91,
+        "depth": 33
+      },
+      {
+        "lot": 34,
+        "template": "undercroft/route_4_4",
+        "u": 101,
+        "y": -30,
+        "v": 57,
+        "shaft": [
+          105,
+          61
+        ],
+        "exit": "east",
+        "cw": true,
+        "path": [
+          [
+            109,
+            61
+          ],
+          [
+            112,
+            61
+          ],
+          [
+            130,
+            61
+          ],
+          [
+            130,
+            72
+          ],
+          [
+            125,
+            72
+          ]
+        ],
+        "length": 38,
+        "depth": 30
+      }
     ]
   }
 }

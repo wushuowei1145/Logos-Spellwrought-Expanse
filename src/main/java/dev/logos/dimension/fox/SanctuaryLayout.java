@@ -54,12 +54,20 @@ final class SanctuaryLayout {
     final List<Tile> tiles = new ArrayList<>();
     final List<Lot> lots = new ArrayList<>();
     final Map<String, List<String>> variants = new HashMap<>();
+    /** 居酒屋模板：每处聚落至多随机 2–3 家（商铺与住宅地块合计）。 */
+    final java.util.Set<String> izakaya = new java.util.HashSet<>();
+    /** 地下封印场地的路线：哪块住宅换成封じの堂，以及从堂下回旋石阶到大鸟居之间的那段通道模板。 */
+    final List<Route> routes = new ArrayList<>();
 
     record Tile(String template, int u, int v) {
     }
 
     /** 可替换的地块：模板按 quarterTurns 次顺时针旋转后放在 (u, y, v)。 */
     record Lot(String kind, int u, int y, int v, int quarterTurns) {
+    }
+
+    /** 一条地下路线：lot 为被换成封じの堂的住宅地块序号，模板原点在 (u, y, v)；井心、堂的地面高度与通道中线的折点供开发预览用。 */
+    record Route(int lot, String template, int u, int y, int v, int shaftU, int shaftV, int groundY, int[] path) {
     }
 
     /** 布局方案的数量（plans.json）。 */
@@ -84,7 +92,7 @@ final class SanctuaryLayout {
         return plans;
     }
 
-    private static JsonObject read(String resource) {
+    static JsonObject read(String resource) {
         try (InputStream in = SanctuaryLayout.class.getResourceAsStream(resource)) {
             if (in == null) throw new IllegalStateException("缺少 " + resource);
             return JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
@@ -127,6 +135,20 @@ final class SanctuaryLayout {
             List<String> names = new ArrayList<>();
             for (JsonElement n : (JsonArray) e.getValue()) names.add(n.getAsString());
             variants.put(e.getKey(), names);
+        }
+        if (json.has("izakaya")) for (JsonElement n : json.getAsJsonArray("izakaya")) izakaya.add(n.getAsString());
+        if (json.has("undercroft")) {
+            for (JsonElement e : json.getAsJsonObject("undercroft").getAsJsonArray("routes")) {
+                JsonObject r = e.getAsJsonObject();
+                JsonArray shaft = r.getAsJsonArray("shaft"), path = r.getAsJsonArray("path");
+                int[] pts = new int[path.size() * 2];
+                for (int i = 0; i < path.size(); i++) {
+                    pts[i * 2] = path.get(i).getAsJsonArray().get(0).getAsInt();
+                    pts[i * 2 + 1] = path.get(i).getAsJsonArray().get(1).getAsInt();
+                }
+                routes.add(new Route(r.get("lot").getAsInt(), r.get("template").getAsString(), r.get("u").getAsInt(), r.get("y").getAsInt(),
+                    r.get("v").getAsInt(), shaft.get(0).getAsInt(), shaft.get(1).getAsInt(), r.get("depth").getAsInt() + r.get("y").getAsInt(), pts));
+            }
         }
         if (heights.length != size * size || ground.length != size * size) throw new IllegalStateException("神狐聚落高度图尺寸不符");
     }

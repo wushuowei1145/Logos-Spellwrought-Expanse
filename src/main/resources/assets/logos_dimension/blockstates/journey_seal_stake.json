@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "half=lower": {
+      "model": "logos_dimension:block/journey_seal_stake_lower"
+    },
+    "half=upper": {
+      "model": "logos_dimension:block/journey_seal_stake_upper"
+    }
+  }
+}

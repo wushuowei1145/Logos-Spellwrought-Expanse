@@ -1170,5 +1170,11 @@
   "item.logos_dimension.filth_zombie_spawn_egg": "污秽僵尸刷怪蛋",
   "item.logos_dimension.filth_skeleton_spawn_egg": "污秽骷髅刷怪蛋",
   "item.logos_dimension.filth_silverfish_spawn_egg": "污秽蠹虫刷怪蛋",
-  "item.logos_dimension.filth_slime_spawn_egg": "污秽史莱姆刷怪蛋"
+  "item.logos_dimension.filth_slime_spawn_egg": "污秽史莱姆刷怪蛋",
+  "block.logos_dimension.journey_seal_stake": "封印杭",
+  "item.logos_dimension.journey_seal_stake": "封印杭",
+  "block.logos_dimension.journey_ofuda": "御札",
+  "item.logos_dimension.journey_ofuda": "御札",
+  "block.logos_dimension.journey_seal_stake.left": "一道封印断了，还剩 %s 道。",
+  "block.logos_dimension.journey_seal_stake.released": "最后一道封印断了。杀生石里，有什么东西动了一下……"
 }

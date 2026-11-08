@@ -45,6 +45,11 @@ public class FoxInteriorViews implements UIScenario {
         new Shot("house_b", 5.5, 6, 3.5, 2, 6.5, 8),
         new Shot("house_d", 6.5, 1, 2.5, 6.5, 2.6, 9),
         new Shot("house_e", 9.5, 1, 4.5, 7.5, 1.5, 8),
+        new Shot("shop_tofu", 5.5, 1, 2.5, 2, 1.6, 7),
+        new Shot("shop_pottery", 4.5, 1, 2.5, 1.5, 2, 7),
+        new Shot("shop_apothecary", 4.5, 1, 2.5, 3.5, 2, 9),
+        new Shot("shop_smith", 3.5, 1, 2.5, 6, 1.6, 9),
+        new Shot("shop_lantern", 4.5, 1, 2.5, 4.5, 3, 8),
     };
 
     @Override public void configure(ScenarioOptions o) {
@@ -100,7 +105,16 @@ public class FoxInteriorViews implements UIScenario {
                     level.setBlockAndUpdate(row.offset(11 + i, 3, 0), Blocks.DARK_OAK_PLANKS.defaultBlockState());
                     level.setBlockAndUpdate(row.offset(11 + i, 2, 0), FoxWildsBlocks.MENU_STRIPS.get().defaultBlockState()
                         .setValue(HorizontalDirectionalBlock.FACING, south).setValue(MenuStripsBlock.PAPER, i));
+                    // 御札三种，贴在石砖上
+                    level.setBlockAndUpdate(row.offset(11 + i, 0, -1), Blocks.STONE_BRICKS.defaultBlockState());
+                    level.setBlockAndUpdate(row.offset(11 + i, 0, 0), FoxWildsBlocks.OFUDA.get().defaultBlockState()
+                        .setValue(HorizontalDirectionalBlock.FACING, south).setValue(dev.logos.dimension.cloudsea.OfudaBlock.KIND, i));
                 }
+                // 封印杭（两格高）
+                var stake = FoxWildsBlocks.SEAL_STAKE.get().defaultBlockState();
+                level.setBlockAndUpdate(row.offset(-1, 0, 0), stake);
+                level.setBlockAndUpdate(row.offset(-1, 1, 0), stake.setValue(dev.logos.dimension.cloudsea.SealStakeBlock.HALF,
+                    net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER));
                 // 石龛只有激活时发光；赛钱箱的保佑随面额变长，大钱带上生命恢复与抗性；签运权重加起来对得上
                 int off = hokora.getLightEmission(), on = hokora.setValue(ShrineHokoraBlock.ACTIVE, true).getLightEmission();
                 var mon = OfferingBoxBlock.blessing(Currency.FOX, Currency.FOX.denominations.getFirst());

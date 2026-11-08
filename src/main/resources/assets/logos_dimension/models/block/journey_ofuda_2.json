@@ -1,0 +1,42 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "paper": "logos_dimension:block/journey_ofuda_2",
+    "particle": "logos_dimension:block/journey_ofuda_2"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        1,
+        15.7
+      ],
+      "to": [
+        12,
+        15,
+        15.9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            1,
+            12,
+            15
+          ],
+          "texture": "#paper"
+        },
+        "south": {
+          "uv": [
+            12,
+            1,
+            4,
+            15
+          ],
+          "texture": "#paper"
+        }
+      }
+    }
+  ],
+  "render_type": "minecraft:cutout"
+}

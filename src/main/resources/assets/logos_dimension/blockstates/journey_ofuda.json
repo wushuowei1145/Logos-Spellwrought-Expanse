@@ -1,0 +1,49 @@
+{
+  "variants": {
+    "facing=north,kind=0": {
+      "model": "logos_dimension:block/journey_ofuda_0"
+    },
+    "facing=east,kind=0": {
+      "model": "logos_dimension:block/journey_ofuda_0",
+      "y": 90
+    },
+    "facing=south,kind=0": {
+      "model": "logos_dimension:block/journey_ofuda_0",
+      "y": 180
+    },
+    "facing=west,kind=0": {
+      "model": "logos_dimension:block/journey_ofuda_0",
+      "y": 270
+    },
+    "facing=north,kind=1": {
+      "model": "logos_dimension:block/journey_ofuda_1"
+    },
+    "facing=east,kind=1": {
+      "model": "logos_dimension:block/journey_ofuda_1",
+      "y": 90
+    },
+    "facing=south,kind=1": {
+      "model": "logos_dimension:block/journey_ofuda_1",
+      "y": 180
+    },
+    "facing=west,kind=1": {
+      "model": "logos_dimension:block/journey_ofuda_1",
+      "y": 270
+    },
+    "facing=north,kind=2": {
+      "model": "logos_dimension:block/journey_ofuda_2"
+    },
+    "facing=east,kind=2": {
+      "model": "logos_dimension:block/journey_ofuda_2",
+      "y": 90
+    },
+    "facing=south,kind=2": {
+      "model": "logos_dimension:block/journey_ofuda_2",
+      "y": 180
+    },
+    "facing=west,kind=2": {
+      "model": "logos_dimension:block/journey_ofuda_2",
+      "y": 270
+    }
+  }
+}

@@ -1170,5 +1170,11 @@
   "item.logos_dimension.filth_zombie_spawn_egg": "Filth Zombie Spawn Egg",
   "item.logos_dimension.filth_skeleton_spawn_egg": "Filth Skeleton Spawn Egg",
   "item.logos_dimension.filth_silverfish_spawn_egg": "Filth Silverfish Spawn Egg",
-  "item.logos_dimension.filth_slime_spawn_egg": "Filth Slime Spawn Egg"
+  "item.logos_dimension.filth_slime_spawn_egg": "Filth Slime Spawn Egg",
+  "block.logos_dimension.journey_seal_stake": "Sealing Stake",
+  "item.logos_dimension.journey_seal_stake": "Sealing Stake",
+  "block.logos_dimension.journey_ofuda": "Ofuda",
+  "item.logos_dimension.journey_ofuda": "Ofuda",
+  "block.logos_dimension.journey_seal_stake.left": "A seal breaks. %s remain.",
+  "block.logos_dimension.journey_seal_stake.released": "The last seal breaks. Something stirs inside the killing stone..."
 }

@@ -213,6 +213,20 @@ public final class FoxWildsBlocks {
             MenuStripsBlock::new,
             p -> p.mapColor(MapColor.SAND).strength(0.3f).sound(SoundType.WOOL).noOcclusion().noCollision()
     );
+    // 11. 地下封印场地：封印杭（九根封着杀生石里的九尾狐）与贴在墙上的御札
+    public static final DeferredBlock<SealStakeBlock> SEAL_STAKE = register(
+            "journey_seal_stake",
+            SealStakeBlock::new,
+            p -> p.mapColor(MapColor.COLOR_BLACK).strength(3.0f, 1200.0f).sound(SoundType.WOOD).noOcclusion()
+                .pushReaction(net.minecraft.world.level.material.PushReaction.BLOCK)
+                .lightLevel(s -> s.getValue(SealStakeBlock.HALF) == DoubleBlockHalf.UPPER ? 7 : 0)
+    );
+    public static final DeferredBlock<OfudaBlock> OFUDA = register(
+            "journey_ofuda",
+            OfudaBlock::new,
+            p -> p.mapColor(MapColor.SNOW).strength(0.2f).sound(SoundType.WOOL).noOcclusion().noCollision()
+                .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY)
+    );
     /** 签纸：从签箱抽出，名字就是签运；系到结签架上解霉运。 */
     public static final DeferredItem<net.minecraft.world.item.Item> OMIKUJI = DimensionBlocks.ITEMS.registerSimpleItem("journey_omikuji", p -> p.stacksTo(16));
     /** 绘马：右键写下愿望，写好的挂到绘马挂上。 */

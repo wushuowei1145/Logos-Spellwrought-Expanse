@@ -31,6 +31,9 @@ public final class FoxSanctuary {
         PIECES.register("fox_sanctuary_grounds", () -> (StructurePieceType.ContextlessType) SanctuaryGroundsPiece::new);
     public static final DeferredHolder<StructurePieceType, StructurePieceType> TEMPLATE =
         PIECES.register("fox_sanctuary_template", () -> (StructurePieceType.StructureTemplateType) SanctuaryTemplatePiece::new);
+    /** 地下封印场地的岩洞（约三分之一的聚落有）。 */
+    public static final DeferredHolder<StructurePieceType, StructurePieceType> VAULT =
+        PIECES.register("fox_sanctuary_vault", () -> (StructurePieceType.ContextlessType) SanctuaryVaultPiece::new);
     /** 聚落的神狐居民（街上的落脚点）。 */
     public static final DeferredHolder<StructurePieceType, StructurePieceType> RESIDENTS =
         PIECES.register("fox_sanctuary_residents", () -> (StructurePieceType.ContextlessType) SanctuaryResidentsPiece::new);
