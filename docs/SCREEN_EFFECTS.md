@@ -1,6 +1,6 @@
 # 全屏后期（Screen Effects）
 
-世界画完之后、界面之前的一个全屏通道，目前有两种效果：动漫式的黑白闪（冲击帧）和电影蒙版。只影响收到效果的那个玩家的画面。门后异画风见 [WORLD_STYLES.md](WORLD_STYLES.md)，同一处还有特效的泛光，见下文「泛光」。
+世界画完之后、界面之前的一个全屏通道，目前有两种效果：动漫式的黑白闪（冲击帧）和电影蒙版。只影响收到效果的那个玩家的画面。门后异画风见 [WORLD_STYLES.md](WORLD_STYLES.md)，同一处还有特效的泛光，见下文「泛光」，以及在后期里画的特效，见下文「后期里画的特效」。爆裂魔法自己的全屏通道（变暗、红热、转蓝、十字闪、白热的球体）排在这些之前，见 [EXPLOSION_MAGIC.md](EXPLOSION_MAGIC.md)。
 
 ## 怎么用
 
@@ -88,6 +88,23 @@ GlowBloom.quads(data, size, firstPerson);       // 一批四边形，格式见�
 - **强度**：`config/logos_dimension-client.toml` 的 `bloom`，默认 1，0 关闭。
 
 场景 `dissolve_bloom`：同一次消散在白天和夜里，关和开各拍一张。
+
+## 后期里画的特效（`PostVfx`）
+
+有的特效要在画面调完色之后才画：爆裂魔法吟唱时周围变暗，施法者身上和天上的法阵却要格外亮；在世界里画的话，它们会跟着一起暗下去。`PostVfx` 收这些发光的几何，世界和手都画完、爆裂魔法的全屏通道跑完之后，在泛光之前把它们画上去。
+
+```java
+// 在 SubmitCustomGeometryEvent 里，和 VfxParts 平常的用法一样先 translate(-camera)
+VfxParts.sprite(pose, PostVfx.add(PostVfx.logos("heal/glow"), false), view, at, size, 0, argb);   // 加法发光
+VfxParts.flat(pose, PostVfx.blend(texture, false), center, x, z, r, turn, argb);                  // 半透明
+```
+
+- **投影**：按世界渲染同一个投影矩阵（含视角晃动）在显卡上投到屏幕，和半透明之前的深度做硬件深度测试，被方块挡住的不画；玻璃、水挡不住。
+- **手**：手挡在前面的不画。`front` 为 true 的一批画在手前面，用于第一人称杖头上的光。
+- **顺序**：先画半透明的批，再画加法的批，最后画在手前面的；同一类按这一帧第一次交上来的顺序。
+- **雾和光影包**：都不影响它们，几百格外的东西照样看得见；也因此不随光影包的光照变化。
+- **开销**：这一帧没人交东西就一个通道都不跑；每张贴图一批，一帧几千个四边形没有问题。
+- 半透明之前的深度由 `PostVfx` 留一份（`PostVfx.depth()`），爆裂魔法的全屏通道也拿它还原位置。
 
 ## 限制
 
