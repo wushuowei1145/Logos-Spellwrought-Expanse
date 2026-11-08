@@ -103,6 +103,7 @@ public final class LogosDimension {
         dev.logos.dimension.camera.CameraTestBlock.init();
         dev.logos.dimension.corruption.Corruption.init();
         dev.logos.dimension.corruption.Corruption.register(bus);
+        dev.logos.dimension.corruption.mob.CorruptionMobs.register(bus);
         DimensionBlocks.BLOCKS.register(bus); DimensionBlocks.ITEMS.register(bus);
         DimensionFluids.TYPES.register(bus); DimensionFluids.FLUIDS.register(bus);
         DimensionParticles.register(bus);
