@@ -254,4 +254,107 @@ public abstract class CorruptionViews implements UIScenario {
                     .teardown("恢复", ctx -> net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(listener));
         }
     }
+
+    /**
+     * 核心的四级造型并排摆着（白天、夜里各拍一张），再走近看 3 级：眼珠先盯着正面的玩家，玩家绕到侧面后，
+     * 身体把裂口转过来、眼珠还盯着他。阶段是直接改方块状态设的：网络没有长大，服务端第一次同步之后不会再改它。
+     */
+    @LDLRegisterClient(name = "corruption_core_stages", group = "corruption", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class CoreStages extends CorruptionViews {
+        private static final int[] XS = {-11, -4, 3, 11};
+        private static final int Z = 6;
+        private final List<Long> frames = new ArrayList<>();
+        private final Object listener = new Object() {
+            @net.neoforged.bus.api.SubscribeEvent
+            public void frame(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre event) {
+                frames.add(System.nanoTime());
+            }
+        };
+
+        private static BlockPos core(int stage) {
+            return new BlockPos(XS[stage], GROUND + 1, Z);
+        }
+
+        /** 3 级的眼珠在世界里朝哪（水平角，弧度），和它到玩家的方向差多少度。 */
+        private static double eyeMiss() {
+            var mc = Minecraft.getInstance();
+            if (!(mc.level.getBlockEntity(core(3)) instanceof dev.logos.dimension.corruption.CorruptionCoreBlockEntity be)) return 999;
+            double look = be.bodyYaw(1) + be.eyeYaw(1);
+            BlockPos c = core(3);
+            double want = Math.atan2(mc.player.getX() - (c.getX() + .5), mc.player.getZ() - (c.getZ() + .5));
+            return Math.abs(net.minecraft.util.Mth.wrapDegrees(Math.toDegrees(look - want)));
+        }
+
+        @Override public void define(ScenarioBuilder s) {
+            s.setGameMode(GameType.CREATIVE).runCommand("time set 6000").runCommand("weather clear").runCommand("difficulty peaceful")
+                    .step("设置视口", ctx -> {
+                        var mc = Minecraft.getInstance();
+                        mc.options.hideGui = true;
+                        mc.options.setCameraType(CameraType.FIRST_PERSON);
+                        mc.options.fov().set(70);
+                        var w = mc.getWindow(); w.setWindowed(1280, 720); w.setWidth(1280); w.setHeight(720);
+                        mc.getMainRenderTarget().resize(1280, 720); mc.gameRenderer.resize(1280, 720); mc.resizeGui();
+                    })
+                    .server("搭场地", ctx -> {
+                        ServerLevel level = ctx.server().overworld();
+                        for (int x = -20; x <= 20; x++) for (int z = -16; z <= 20; z++) {
+                            level.setBlockAndUpdate(new BlockPos(x, GROUND, z), Blocks.GRASS_BLOCK.defaultBlockState());
+                            for (int y = 1; y <= 3; y++) level.setBlockAndUpdate(new BlockPos(x, GROUND - y, z), Blocks.DIRT.defaultBlockState());
+                            for (int y = 1; y <= 12; y++) level.setBlockAndUpdate(new BlockPos(x, GROUND + y, z), Blocks.AIR.defaultBlockState());
+                        }
+                        for (int stage = 0; stage < 4; stage++) level.setBlockAndUpdate(core(stage), Corruption.CORE.get().defaultBlockState());
+                        DimensionTravel.teleport(ctx.player(), level, new Vec3(.5, GROUND + 3, -9.5), 0, 12);
+                    })
+                    // 等服务端第一次同步完（每个网络每 20 刻一次），再手动设阶段
+                    .ticks(45)
+                    .server("设阶段", ctx -> {
+                        ServerLevel level = ctx.server().overworld();
+                        for (int stage = 1; stage < 4; stage++) {
+                            level.setBlockAndUpdate(core(stage), Corruption.CORE.get().defaultBlockState()
+                                    .setValue(dev.logos.dimension.corruption.CorruptionCoreBlock.STAGE, stage));
+                        }
+                    })
+                    .waitUntil("客户端看到四级", ctx -> Minecraft.getInstance().level.getBlockState(core(3))
+                            .getValue(dev.logos.dimension.corruption.CorruptionCoreBlock.STAGE) == 3)
+                    // 身体每刻最多转 2 度，从随机的初始朝向转过来最多要 90 刻
+                    .ticks(100)
+                    .step("记下面数", ctx -> {
+                        for (int stage = 0; stage < 4; stage++) {
+                            int[] q = dev.logos.dimension.client.corruption.CorruptionCoreRenderer.quads(stage);
+                            com.mojang.logging.LogUtils.getLogger().info("[corruption] core stage {}: {} faces near, {} far", stage, q[0], q[1]);
+                        }
+                    })
+                    .screenshot("corruption_core_stages_day")
+                    .step("眼珠盯着正面的玩家", ctx -> ctx.check("眼珠朝向和玩家方向差 " + Math.round(eyeMiss()) + " 度", eyeMiss() < 12))
+                    .runCommand("time set 14000").ticks(10)
+                    .screenshot("corruption_core_stages_night")
+                    .runCommand("time set 6000")
+                    .server("走近 3 级", ctx -> DimensionTravel.teleport(ctx.player(), ctx.server().overworld(), new Vec3(XS[3] + .5, GROUND + 1, Z - 4.5), 0, 8))
+                    .step("开始量帧", ctx -> {
+                        frames.clear();
+                        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(listener);
+                    })
+                    .ticks(40)
+                    .step("记下帧间隔", ctx -> {
+                        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(listener);
+                        long worst = 0, total = 0;
+                        for (int i = 1; i < frames.size(); i++) {
+                            long gap = frames.get(i) - frames.get(i - 1);
+                            worst = Math.max(worst, gap);
+                            total += gap;
+                        }
+                        com.mojang.logging.LogUtils.getLogger().info("[corruption] stage 3 up close: {} frames, avg {} ms, worst {} ms", frames.size(),
+                                String.format("%.1f", frames.size() > 1 ? total / 1e6 / (frames.size() - 1) : 0), String.format("%.1f", worst / 1e6));
+                    })
+                    .screenshot("corruption_core_eye_front")
+                    .server("绕到侧面", ctx -> DimensionTravel.teleport(ctx.player(), ctx.server().overworld(), new Vec3(XS[3] + 5.5, GROUND + 1, Z + .5), 90, 8))
+                    .ticks(120)
+                    .screenshot("corruption_core_eye_side")
+                    .step("转过来还盯着", ctx -> ctx.check("眼珠朝向和玩家方向差 " + Math.round(eyeMiss()) + " 度", eyeMiss() < 12))
+                    .teardown("恢复", ctx -> {
+                        Minecraft.getInstance().options.hideGui = false;
+                        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(listener);
+                    });
+        }
+    }
 }
