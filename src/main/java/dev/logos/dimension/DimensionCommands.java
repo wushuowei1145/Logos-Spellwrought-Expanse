@@ -80,6 +80,13 @@ public final class DimensionCommands {
         root.then(Commands.literal("flash").executes(c -> flash(c.getSource().getPlayerOrException(), null))
                 .then(Commands.argument("frames", StringArgumentType.word()).executes(c -> flash(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "frames")))));
         root.then(dissolve());
+        // 试爆裂魔法：不吟唱，直接在准星指的地方放一次（半径和是否破坏地形照服务端配置）
+        root.then(Commands.literal("explosion").executes(c -> {
+            var player = c.getSource().getPlayerOrException();
+            var hit = player.pick(dev.logos.dimension.explosion.ExplosionMagic.RANGE, 0, true);
+            dev.logos.dimension.explosion.ExplosionMagic.fire(player.level(), hit.getLocation(), player);
+            return 1;
+        }));
         root.then(Commands.literal("island").executes(c -> island(c.getSource().getPlayerOrException(), 0, 0))
                 .then(Commands.argument("grid_x", IntegerArgumentType.integer(-1000, 1000))
                         .then(Commands.argument("grid_z", IntegerArgumentType.integer(-1000, 1000))

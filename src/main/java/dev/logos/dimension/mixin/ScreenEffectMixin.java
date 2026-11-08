@@ -28,12 +28,15 @@ public abstract class ScreenEffectMixin {
     private void screenEffectProjection(DeltaTracker deltaTracker, CallbackInfo ci, @Local(ordinal = 0) Matrix4f projection) {
         WorldStyleRenderer.PROJECTION.set(projection);
         GlowBloom.begin();
+        dev.logos.dimension.client.screenfx.PostVfx.begin(dev.logos.dimension.client.explosion.ExplosionClient.active());
     }
 
     @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/fog/FogRenderer;endFrame()V"))
     private void screenEffectDraw(DeltaTracker deltaTracker, boolean advanceGameTime, CallbackInfo ci) {
         if (!advanceGameTime) return;
-        // 泛光排在最前面：画风和黑白闪处理的是已经带泛光的画面
+        // 爆裂魔法的调色和球体最先画，在后期里画的特效紧跟其后，不会被调暗
+        dev.logos.dimension.client.explosion.ExplosionScreen.draw();
+        // 泛光排在前面：画风和黑白闪处理的是已经带泛光的画面
         GlowBloom.draw(hudProjection.getMatrix(new Matrix4f()));
         WorldStyleRenderer.draw();
         ScreenEffectRenderer.draw();

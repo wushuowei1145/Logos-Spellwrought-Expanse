@@ -72,6 +72,20 @@ public final class ServerConfig {
 
     static {
         BUILDER.pop();
+        BUILDER.comment("Explosion magic: what the explosion staff does once fully charged").push("explosion");
+    }
+
+    public static final ModConfigSpec.BooleanValue EXPLOSION_BREAKS_TERRAIN = BUILDER
+            .comment("Whether explosion magic breaks terrain. On: it leaves a crater as wide as the blast, down to bedrock at the centre.",
+                    "Off: everything inside the blast is still killed, but no block is touched.")
+            .define("breaksTerrain", true);
+
+    public static final ModConfigSpec.IntValue EXPLOSION_RADIUS = BUILDER
+            .comment("Blast radius in blocks. 64 is about fifty chunks across; the magic circles and the fire pillar scale with it.")
+            .defineInRange("radius", 64, 16, 128);
+
+    static {
+        BUILDER.pop();
     }
 
     public static final ModConfigSpec SPEC = BUILDER.build();

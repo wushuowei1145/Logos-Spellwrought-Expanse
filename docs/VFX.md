@@ -56,6 +56,7 @@ Logos 升级 Photon / LDLib2 时，同步改这里的 `photon_version`、`ldlib2
 - 两种画法都可以，跟 Logos 一样按层选：
   - 粒子类的层用 Photon，材质用 Photon 自带的（`TextureMaterial`、`CustomShaderMaterial`），不要返回自己构造的 `RenderType`，否则开光影时看不见。
   - 光柱、地面光环、冲击波这类成形的几何，用 Logos 公开的 `dev.logos.client.VfxParts` 画（形类魔法特效就是用它画的）。材质传字符串时读 `logos:textures/vfx/...`，用附属自己的贴图时传完整的 `Identifier`；几何每个顶点写全。绘制时经 `dev.logos.client.ShaderPackOverlay.collector(...)` 提交，并在 `SubmitCustomGeometryEvent` 里用 `EventPriority.LOWEST` 排在 Logos 之后（Logos 在这个事件里先 `begin()`）。
+  - 要在画面调色（变暗）之后仍然亮着、或要几百格外不受雾影响的发光层，交给 `client/screenfx/PostVfx`，在全屏后期里按世界的投影画，几何照样用 `VfxParts` 的方法生成。见 [SCREEN_EFFECTS.md](SCREEN_EFFECTS.md) 的「后期里画的特效」，用例是[爆裂魔法](EXPLOSION_MAGIC.md)。
 - Logos 已有的贴图和 shader 直接用 `logos:` 路径引用，例如 `logos:textures/vfx/fire/...`，不要复制一份。新素材放 `assets/logos_dimension/textures/vfx/`，仍然用代码绘制。
 - 风格对齐主模组仓库里的特效设计文档（`CHARGE_VFX.md`、`FIELD_VFX.md`、`RAY_VFX.md` 等）。
 - 自定义几何的要求不变：写全 UV、颜色、光照、法线和 overlay，并与 ShaderPackOverlay 共用收集器（见 AGENTS.md）。
