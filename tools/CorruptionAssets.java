@@ -32,6 +32,28 @@ public class CorruptionAssets {
         write(dir, "corruption_core_bottom", coreBottom(new Random(29)));
         mcmeta(dir, "corruption_core_side", 3);
         mcmeta(dir, "corruption_core_top", 3);
+        Path entity = root.resolve("assets/logos_dimension/textures/entity");
+        Files.createDirectories(entity);
+        write(entity, "corruption_core", corePalette());
+    }
+
+    /**
+     * 放在世界里的核心（体素肉瘤）用的调色板：第一行第 i 个像素是颜色 i，序号和 {@code client/corruption/CoreShape} 一致：
+     * 1–5 肉（深到浅），6–10 发光（暗到亮），11 眼白，12 虹膜，13 虹膜暗边，14 瞳孔。
+     */
+    static BufferedImage corePalette() {
+        BufferedImage img = new BufferedImage(S, S, BufferedImage.TYPE_INT_ARGB);
+        int[] row = new int[16];
+        for (int i = 0; i < 5; i++) {
+            row[1 + i] = FLESH[i];
+            row[6 + i] = GLOW[i];
+        }
+        row[11] = 0xE6DCC4;
+        row[12] = 0xD8323C;
+        row[13] = 0x7A1020;
+        row[14] = 0x0A0408;
+        for (int x = 1; x < 15; x++) for (int y = 0; y < S; y++) img.setRGB(x, y, argb(row[x]));
+        return img;
     }
 
     /** 第 f 帧的亮度 0..1：慢起快落，像心跳。 */

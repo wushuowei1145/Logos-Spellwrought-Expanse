@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.logging.LogUtils;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.corruption.Corruption;
+import dev.logos.dimension.corruption.CorruptionCoreBlock;
 import dev.logos.dimension.corruption.CorruptionNetworks;
 import dev.logos.runtime.PlayerMagic;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -69,6 +70,7 @@ public final class CorruptionGameTests {
         tests.put("corruption_core_break_fades_outward", CorruptionGameTests::fade);
         tests.put("corruption_player_breaks_core", CorruptionGameTests::playerBreak);
         tests.put("corruption_large_network_restores", CorruptionGameTests::large);
+        tests.put("corruption_core_grows_with_network", CorruptionGameTests::grows);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -195,6 +197,49 @@ public final class CorruptionGameTests {
 
     private static BlockState original(BlockPos p) {
         return ((p.getX() / 3 + p.getZ() / 3) % 2 == 0 ? Blocks.STONE : Blocks.DIRT).defaultBlockState();
+    }
+
+    /**
+     * 核心随网络长大：0 级碰撞箱只有半格；网络到 100、300、600 块（上限的 1/6、1/2、满）时方块状态的阶段变成 1、2、3，
+     * 碰撞箱变成整格，亮度跟着变亮。污秽由近到远一批批放，每批等服务端同步（每秒一次）。
+     */
+    private static void grows(GameTestHelper h) {
+        var chunks = forceArea(h, new BlockPos(0, 0, 0), new BlockPos(24, 0, 24));
+        BlockPos below = new BlockPos(12, 0, 12), core = below.above();
+        clear(h, new BlockPos(0, 1, 0), new BlockPos(24, 4, 24));
+        h.setBlock(core, Corruption.CORE.get());
+        List<BlockPos> floor = new ArrayList<>();
+        for (int x = 0; x < 25; x++) for (int z = 0; z < 25; z++) floor.add(new BlockPos(x, 0, z));
+        floor.sort(Comparator.comparingInt(p -> p.distManhattan(below)));
+        int[] placed = {0};
+        java.util.function.IntConsumer fill = upTo -> {
+            for (; placed[0] < upTo; placed[0]++) h.setBlock(floor.get(placed[0]), Corruption.BLOCK.get());
+        };
+        java.util.function.IntFunction<Runnable> stageIs = want -> () -> {
+            int stage = h.getBlockState(core).getValue(CorruptionCoreBlock.STAGE);
+            check(h, stage == want, "网络 " + data(h).ofCore(h.absolutePos(core)).size() + " 块时阶段应当是 " + want + "，实际 " + stage);
+        };
+        var level = h.getLevel();
+        h.startSequence()
+                .thenExecute(() -> {
+                    var shape = h.getBlockState(core).getShape(level, h.absolutePos(core));
+                    check(h, shape.max(Direction.Axis.Y) <= .5 + 1e-6, "0 级碰撞箱应当只有半格高");
+                })
+                .thenExecute(() -> fill.accept(99))
+                .thenExecuteAfter(25, stageIs.apply(0))
+                .thenExecute(() -> fill.accept(100))
+                .thenWaitUntil(stageIs.apply(1))
+                .thenExecute(() -> {
+                    var shape = h.getBlockState(core).getShape(level, h.absolutePos(core));
+                    check(h, shape.max(Direction.Axis.Y) >= 1 - 1e-6, "1 级以后碰撞箱应当是整格");
+                    check(h, h.getBlockState(core).getLightEmission() > Corruption.CORE.get().defaultBlockState().getLightEmission(), "长大以后应当更亮");
+                })
+                .thenExecute(() -> fill.accept(300))
+                .thenWaitUntil(stageIs.apply(2))
+                .thenExecute(() -> fill.accept(600))
+                .thenWaitUntil(stageIs.apply(3))
+                .thenExecute(() -> release(h, chunks))
+                .thenSucceed();
     }
 
     /** 站在腐败污秽上：猪掉血，戴头盔的僵尸（亡灵）不掉。 */

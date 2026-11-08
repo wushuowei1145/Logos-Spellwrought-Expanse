@@ -11,7 +11,11 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
  * 腐败：世界观里的反派，像幽匿一样蔓延、吞噬活物。腐败核心是一个网络的中心，腐败脉络和腐败污秽是它长出来的部分。
@@ -21,7 +25,8 @@ public final class Corruption {
     private Corruption() {}
 
     public static final DeferredBlock<CorruptionCoreBlock> CORE = DimensionBlocks.BLOCKS.registerBlock("corruption_core", CorruptionCoreBlock::new,
-            p -> p.mapColor(MapColor.COLOR_PURPLE).strength(4f, 1200f).sound(SoundType.SCULK_CATALYST).lightLevel(s -> 6).pushReaction(PushReaction.BLOCK));
+            p -> p.mapColor(MapColor.COLOR_PURPLE).strength(4f, 1200f).sound(SoundType.SCULK_CATALYST)
+                    .lightLevel(s -> 4 + 2 * s.getValue(CorruptionCoreBlock.STAGE)).noOcclusion().pushReaction(PushReaction.BLOCK));
     public static final DeferredBlock<CorruptionBlock> BLOCK = DimensionBlocks.BLOCKS.registerBlock("corruption", CorruptionBlock::new,
             p -> p.mapColor(MapColor.COLOR_PURPLE).strength(.6f).sound(SoundType.SCULK));
     public static final DeferredBlock<CorruptionVeinBlock> VEIN = DimensionBlocks.BLOCKS.registerBlock("corruption_vein", CorruptionVeinBlock::new,
@@ -31,6 +36,15 @@ public final class Corruption {
     public static final TagKey<Block> REPLACEABLE = TagKey.create(Registries.BLOCK, LogosDimension.id("corruption_replaceable"));
     /** 腐败造成的伤害：魔法，无视盔甲，不击退；死亡信息另写。 */
     public static final ResourceKey<DamageType> DAMAGE = ResourceKey.create(Registries.DAMAGE_TYPE, LogosDimension.id("corruption"));
+
+    private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, LogosDimension.ID);
+    /** 核心的方块实体：只为了让客户端画长大的肉瘤和眼珠，不存东西。 */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CorruptionCoreBlockEntity>> CORE_ENTITY =
+            BLOCK_ENTITIES.register("corruption_core", () -> new BlockEntityType<>(CorruptionCoreBlockEntity::new, CORE.get()));
+
+    public static void register(IEventBus bus) {
+        BLOCK_ENTITIES.register(bus);
+    }
 
     public static void init() {
         DimensionBlocks.ITEMS.registerSimpleBlockItem("corruption_core", CORE);
