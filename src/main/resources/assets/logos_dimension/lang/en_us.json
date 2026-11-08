@@ -1156,5 +1156,13 @@
   "message.logos_dimension.corruption.core.size": "Corruption network: %s/%s blocks, %s satellite cores, %s charge spreading, %s in reserve",
   "message.logos_dimension.corruption.core.dormant": "This core belongs to no corruption network",
   "death.attack.logos_dimension.corruption": "%1$s was consumed by corruption",
-  "death.attack.logos_dimension.corruption.player": "%1$s was consumed by corruption while fighting %2$s"
+  "death.attack.logos_dimension.corruption.player": "%1$s was consumed by corruption while fighting %2$s",
+  "entity.logos_dimension.filth_zombie": "Filth Zombie",
+  "entity.logos_dimension.filth_skeleton": "Filth Skeleton",
+  "entity.logos_dimension.filth_silverfish": "Filth Silverfish",
+  "entity.logos_dimension.filth_slime": "Filth Slime",
+  "item.logos_dimension.filth_zombie_spawn_egg": "Filth Zombie Spawn Egg",
+  "item.logos_dimension.filth_skeleton_spawn_egg": "Filth Skeleton Spawn Egg",
+  "item.logos_dimension.filth_silverfish_spawn_egg": "Filth Silverfish Spawn Egg",
+  "item.logos_dimension.filth_slime_spawn_egg": "Filth Slime Spawn Egg"
 }

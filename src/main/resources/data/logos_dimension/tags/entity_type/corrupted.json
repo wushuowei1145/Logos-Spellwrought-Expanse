@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "logos_dimension:filth_zombie",
+    "logos_dimension:filth_skeleton",
+    "logos_dimension:filth_silverfish",
+    "logos_dimension:filth_slime"
+  ]
+}

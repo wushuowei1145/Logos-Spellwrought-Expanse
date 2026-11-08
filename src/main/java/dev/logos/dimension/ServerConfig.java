@@ -58,6 +58,18 @@ public final class ServerConfig {
             .comment("A satellite core is planted at least this many blocks from every other core.")
             .defineInRange("satelliteSpacing", 16, 2, 256);
 
+    public static final ModConfigSpec.DoubleValue CORRUPTION_DERIVATIVE_DAMAGE = BUILDER
+            .comment("Extra corruption (magic) damage when a filth derivative hits something, on top of its normal attack; mana drains as with contact.")
+            .defineInRange("derivativeDamage", 3.0, 0.0, 1000.0);
+
+    public static final ModConfigSpec.IntValue CORRUPTION_RESERVE_SPAWN_COST = BUILDER
+            .comment("Reserve charge a full core spends to grow one filth derivative next to itself. 0 turns this off.")
+            .defineInRange("reserveSpawnCost", 20, 0, 10000);
+
+    public static final ModConfigSpec.IntValue CORRUPTION_RESERVE_SPAWN_SECONDS = BUILDER
+            .comment("How often a core with enough reserve tries to grow a derivative. It stops while 6 corrupted mobs are within 24 blocks.")
+            .defineInRange("reserveSpawnSeconds", 30, 1, 86400);
+
     static {
         BUILDER.pop();
     }

@@ -1156,5 +1156,13 @@
   "message.logos_dimension.corruption.core.size": "腐败网络：%s/%s 格，子核心 %s 个，蔓延中的电荷 %s，储备 %s",
   "message.logos_dimension.corruption.core.dormant": "这颗核心不属于任何腐败网络",
   "death.attack.logos_dimension.corruption": "%1$s 被腐败吞噬了",
-  "death.attack.logos_dimension.corruption.player": "%1$s 在躲避 %2$s 时被腐败吞噬了"
+  "death.attack.logos_dimension.corruption.player": "%1$s 在躲避 %2$s 时被腐败吞噬了",
+  "entity.logos_dimension.filth_zombie": "污秽僵尸",
+  "entity.logos_dimension.filth_skeleton": "污秽骷髅",
+  "entity.logos_dimension.filth_silverfish": "污秽蠹虫",
+  "entity.logos_dimension.filth_slime": "污秽史莱姆",
+  "item.logos_dimension.filth_zombie_spawn_egg": "污秽僵尸刷怪蛋",
+  "item.logos_dimension.filth_skeleton_spawn_egg": "污秽骷髅刷怪蛋",
+  "item.logos_dimension.filth_silverfish_spawn_egg": "污秽蠹虫刷怪蛋",
+  "item.logos_dimension.filth_slime_spawn_egg": "污秽史莱姆刷怪蛋"
 }

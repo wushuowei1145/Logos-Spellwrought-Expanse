@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.ServerConfig;
+import dev.logos.dimension.corruption.mob.CorruptionMobs;
 import dev.logos.dimension.dissolve.DissolveShape;
 import dev.logos.dimension.dissolve.Dissolving;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
@@ -23,6 +24,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -30,6 +35,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
+import net.minecraft.world.phys.AABB;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -372,6 +378,7 @@ public final class CorruptionNetworks extends SavedData {
             }
             if ((now + n.id) % AUDIT_TICKS == 0) audit(level, n);
             if ((now + n.id) % STAGE_TICKS == 0) syncStage(level, n);
+            if ((now + n.id) % (ServerConfig.CORRUPTION_RESERVE_SPAWN_SECONDS.getAsInt() * 20L) == 0) spawnFromReserve(level, n);
         }
         if (!fades.isEmpty()) {
             long t0 = System.nanoTime();
@@ -396,6 +403,39 @@ public final class CorruptionNetworks extends SavedData {
         if (state.is(Corruption.CORE.get()) && state.getValue(CorruptionCoreBlock.STAGE) != stage) {
             level.setBlock(n.core, state.setValue(CorruptionCoreBlock.STAGE, stage), Block.UPDATE_CLIENTS);
         }
+    }
+
+    /** 附近已经有这么多被腐败的生物时，核心不再用储备生衍生物。 */
+    private static final int CROWD = 6;
+    private static final double CROWD_RANGE = 24, SPAWN_RANGE = 16;
+
+    /**
+     * 用储备在核心附近生一只污秽衍生物：在核心 16 格内、名下的污秽或脉络上找一个站得下的地方。和平模式、核心所在区块不走刻、
+     * 储备不够、附近已经有 {@value #CROWD} 只被腐败的生物时不生。生了返回 true。
+     */
+    public boolean spawnFromReserve(ServerLevel level, Network n) {
+        int cost = ServerConfig.CORRUPTION_RESERVE_SPAWN_COST.getAsInt();
+        if (cost <= 0 || n.reserve < cost || level.getDifficulty() == Difficulty.PEACEFUL || !level.shouldTickBlocksAt(n.core)) return false;
+        AABB around = new AABB(n.core).inflate(CROWD_RANGE);
+        if (level.getEntitiesOfClass(Mob.class, around, CorruptionMobs::isCorrupted).size() >= CROWD) return false;
+        RandomSource random = level.getRandom();
+        long[] all = n.members.toLongArray();
+        for (int tries = 0; tries < 16 && all.length > 0; tries++) {
+            BlockPos at = BlockPos.of(all[random.nextInt(all.length)]);
+            BlockPos feet = level.getBlockState(at).is(Corruption.VEIN.get()) ? at : at.above();
+            if (feet.distSqr(n.core) > SPAWN_RANGE * SPAWN_RANGE || !level.isLoaded(feet)) continue;
+            EntityType<? extends Mob> type = CorruptionMobs.pick(random);
+            Mob mob = type.create(level, EntitySpawnReason.MOB_SUMMONED);
+            if (mob == null) return false;
+            mob.snapTo(feet.getX() + .5, feet.getY(), feet.getZ() + .5, random.nextFloat() * 360, 0);
+            if (!level.noCollision(mob) || !CorruptionMobs.onCorruption(level, feet)) continue;
+            mob.finalizeSpawn(level, level.getCurrentDifficultyAt(feet), EntitySpawnReason.MOB_SUMMONED, null);
+            level.addFreshEntity(mob);
+            n.reserve -= cost;
+            setDirty();
+            return true;
+        }
+        return false;
     }
 
     private static int idleTicks() {

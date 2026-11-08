@@ -35,6 +35,104 @@ public class CorruptionAssets {
         Path entity = root.resolve("assets/logos_dimension/textures/entity");
         Files.createDirectories(entity);
         write(entity, "corruption_core", corePalette());
+        write(entity, "corruption_overlay", overlay(new Random(0xF117)));
+        write(entity, "corruption_overlay_veins", overlayVeins(new Random(0xF118)));
+        Path item = root.resolve("assets/logos_dimension/textures/item");
+        Files.createDirectories(item);
+        // 刷怪蛋：深色的底，按原版那只怪大概的颜色，带腐败的斑点
+        write(item, "filth_zombie_spawn_egg", egg(new Random(31), 0x2E4A3A, 0x8A1F5A));
+        write(item, "filth_skeleton_spawn_egg", egg(new Random(32), 0x8E8694, 0x5A1640));
+        write(item, "filth_silverfish_spawn_egg", egg(new Random(33), 0x5E5866, 0xB4286E));
+        write(item, "filth_slime_spawn_egg", egg(new Random(34), 0x4A2A5A, 0xDE4C8E));
+    }
+
+    /**
+     * 被腐败的生物身上那层斑驳：64×64，透明底上一片片发黑的紫斑，边缘半透明。按生物自己的贴图坐标铺上去，
+     * 所以斑块落在皮肤的什么地方由它的贴图布局决定。
+     */
+    static BufferedImage overlay(Random r) {
+        int n = 64;
+        BufferedImage img = new BufferedImage(n, n, BufferedImage.TYPE_INT_ARGB);
+        double[][] blot = new double[n][n];
+        for (int k = 0; k < 4; k++) {
+            int cell = 4 << k % 3;
+            double[][] layer = noiseAt(r, n, cell);
+            for (int x = 0; x < n; x++) for (int y = 0; y < n; y++) blot[x][y] += layer[x][y] / 4;
+        }
+        for (int x = 0; x < n; x++) for (int y = 0; y < n; y++) {
+            double v = blot[x][y];
+            if (v < .46) continue;
+            int alpha = v > .54 ? 215 : 140;
+            int shade = v > .63 ? FLESH[0] : v > .56 ? FLESH[2] : FLESH[3];
+            img.setRGB(x, y, alpha << 24 | shade);
+        }
+        return img;
+    }
+
+    /** 发光的脉：64×64，透明（全黑）底上几条弯弯曲曲的粉红细线和几个脓疱，叠加画、全亮。 */
+    static BufferedImage overlayVeins(Random r) {
+        int n = 64;
+        BufferedImage img = new BufferedImage(n, n, BufferedImage.TYPE_INT_ARGB);
+        for (int k = 0; k < 24; k++) {
+            int x = r.nextInt(n), y = r.nextInt(n), dx = r.nextBoolean() ? 1 : -1, dy = 0;
+            int length = 8 + r.nextInt(13);
+            for (int i = 0; i < length; i++) {
+                int c = i % 6 == 0 ? GLOW[4] : GLOW[2 + r.nextInt(2)];
+                if (x >= 0 && y >= 0 && x < n && y < n) img.setRGB(x, y, argb(c));
+                if (r.nextInt(3) == 0) {
+                    int t = dx;
+                    dx = r.nextBoolean() ? dy : -dy;
+                    dy = r.nextBoolean() ? t : -t;
+                    if (dx == 0 && dy == 0) dx = 1;
+                }
+                x += dx;
+                y += dy;
+            }
+        }
+        for (int k = 0; k < 10; k++) img.setRGB(r.nextInt(n), r.nextInt(n), argb(GLOW[4]));
+        return img;
+    }
+
+    /** 能在边上接上的值噪声，任意边长。 */
+    static double[][] noiseAt(Random r, int n, int cell) {
+        int g = Math.max(1, n / cell);
+        double[][] grid = new double[g][g];
+        for (int i = 0; i < g; i++) for (int j = 0; j < g; j++) grid[i][j] = r.nextDouble();
+        double[][] out = new double[n][n];
+        for (int y = 0; y < n; y++) for (int x = 0; x < n; x++) {
+            double gx = (double) x / cell, gy = (double) y / cell;
+            int x0 = (int) gx, y0 = (int) gy;
+            double tx = smooth(gx - x0), ty = smooth(gy - y0);
+            double a = grid[x0 % g][y0 % g], b = grid[(x0 + 1) % g][y0 % g];
+            double c = grid[x0 % g][(y0 + 1) % g], d = grid[(x0 + 1) % g][(y0 + 1) % g];
+            out[x][y] = lerp(lerp(a, b, tx), lerp(c, d, tx), ty);
+        }
+        return out;
+    }
+
+    /** 16×16 的蛋：上窄下宽，深色描边，{@code base} 底色上点几块 {@code spot}。 */
+    static BufferedImage egg(Random r, int base, int spot) {
+        BufferedImage img = new BufferedImage(S, S, BufferedImage.TYPE_INT_ARGB);
+        boolean[][] in = new boolean[S][S];
+        for (int y = 1; y < 15; y++) {
+            double t = (y - 8.6) / 6.6;
+            double half = 5.4 * Math.sqrt(Math.max(0, 1 - t * t)) * (y < 8 ? .82 + .18 * y / 8.0 : 1);
+            for (int x = 0; x < S; x++) in[x][y] = Math.abs(x + .5 - 8) <= half;
+        }
+        int outline = mix(base, 0x000000, .55);
+        for (int x = 0; x < S; x++) for (int y = 0; y < S; y++) {
+            if (!in[x][y]) continue;
+            boolean edge = x == 0 || y == 0 || x == S - 1 || y == S - 1 || !in[x - 1][y] || !in[x + 1][y] || !in[x][y - 1] || !in[x][y + 1];
+            int c = edge ? outline : mix(base, 0xFFFFFF, x < 7 && y < 8 ? .12 : 0);
+            img.setRGB(x, y, argb(c));
+        }
+        for (int k = 0; k < 6; k++) {
+            int x = 4 + r.nextInt(8), y = 4 + r.nextInt(9);
+            if (!in[x][y] || !in[x - 1][y] || !in[x + 1][y]) continue;
+            img.setRGB(x, y, argb(spot));
+            if (r.nextBoolean() && in[x + 1][y + 1]) img.setRGB(x + 1, y, argb(spot));
+        }
+        return img;
     }
 
     /**
