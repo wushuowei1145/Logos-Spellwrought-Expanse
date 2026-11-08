@@ -41,6 +41,7 @@ public final class LogosDimension {
                     out.accept(dev.logos.dimension.item.LongswordItem.DAWNVOW.get());
                     out.accept(dev.logos.dimension.dawnvow.Dawnvow.STONE.get());
                     out.accept(dev.logos.dimension.dawnvow.Dawnvow.EMPTY_STONE.get());
+                    out.accept(dev.logos.dimension.explosion.ExplosionStaffItem.ITEM.get());
                     out.accept(dev.logos.dimension.item.LongswordItem.BLACKSTEEL.get());
                     out.accept(dev.logos.dimension.item.UchigatanaItem.INK.get());
                     out.accept(dev.logos.dimension.item.UchigatanaItem.VERMILION.get());
@@ -96,6 +97,8 @@ public final class LogosDimension {
         dev.logos.dimension.gate.Gate.register(bus);
         dev.logos.dimension.dawnvow.Dawnvow.register(bus);
         dev.logos.dimension.dawnvow.DawnvowCharge.register(bus);
+        dev.logos.dimension.explosion.ExplosionStaffItem.init();
+        dev.logos.dimension.explosion.ExplosionMagic.register(bus);
         dev.logos.dimension.camera.CameraShots.register(bus);
         dev.logos.dimension.screenfx.ScreenEffects.register(bus);
         dev.logos.dimension.dissolve.Dissolving.register(bus);
@@ -140,6 +143,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.ForestElfGameTests.register(bus);
         dev.logos.dimension.gametest.EconomyGameTests.register(bus);
         dev.logos.dimension.gametest.RailgunGameTests.register(bus);
+        dev.logos.dimension.gametest.ExplosionGameTests.register(bus);
         dev.logos.dimension.gametest.GateGameTests.register(bus);
         dev.logos.dimension.gametest.CameraShotGameTests.register(bus);
         dev.logos.dimension.gametest.DissolveGameTests.register(bus);
