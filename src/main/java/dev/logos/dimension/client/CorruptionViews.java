@@ -161,4 +161,97 @@ public abstract class CorruptionViews implements UIScenario {
                     });
         }
     }
+
+    /**
+     * 大网络拆核心时客户端的开销：29×29 的污秽地面（记着原来是草方块），上面全铺着脉络，一共约 1680 块。
+     * 玩家在边上看着，量消散期间每帧的间隔、同时有多少块影子、一帧交出去多少格。
+     */
+    @LDLRegisterClient(name = "corruption_large_fade", group = "corruption", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class LargeFade extends CorruptionViews {
+        private static final int HALF = 14;
+        private static final BlockPos HEART = new BlockPos(0, GROUND + 1, 0);
+        private final List<Long> frames = new ArrayList<>();
+        private int size, mostGhosts, mostCells;
+        private final Object listener = new Object() {
+            @net.neoforged.bus.api.SubscribeEvent
+            public void frame(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre event) {
+                frames.add(System.nanoTime());
+                mostGhosts = Math.max(mostGhosts, dev.logos.dimension.client.dissolve.Dissolves.ghosts());
+                mostCells = Math.max(mostCells, dev.logos.dimension.client.dissolve.Dissolves.cellsLastFrame());
+            }
+        };
+
+        private static void stage(ServerLevel level) {
+            for (int x = -HALF - 4; x <= HALF + 4; x++) for (int z = -HALF - 24; z <= HALF + 4; z++) {
+                level.setBlockAndUpdate(new BlockPos(x, GROUND, z), Blocks.GRASS_BLOCK.defaultBlockState());
+                for (int y = 1; y <= 3; y++) level.setBlockAndUpdate(new BlockPos(x, GROUND - y, z), Blocks.DIRT.defaultBlockState());
+                for (int y = 1; y <= 18; y++) level.setBlockAndUpdate(new BlockPos(x, GROUND + y, z), Blocks.AIR.defaultBlockState());
+            }
+            level.setBlockAndUpdate(HEART, Corruption.CORE.get().defaultBlockState());
+            var data = CorruptionNetworks.get(level);
+            BlockPos below = HEART.below();
+            List<BlockPos> floor = new ArrayList<>();
+            for (int x = -HALF; x <= HALF; x++) for (int z = -HALF; z <= HALF; z++) floor.add(below.offset(x, 0, z));
+            floor.sort(Comparator.comparingInt(p -> p.distManhattan(below)));
+            for (BlockPos p : floor) {
+                level.setBlockAndUpdate(p, Corruption.BLOCK.get().defaultBlockState());
+                data.remember(p, Blocks.GRASS_BLOCK.defaultBlockState());
+            }
+            var vein = Corruption.VEIN.get().defaultBlockState().setValue(MultifaceBlock.getFaceProperty(Direction.DOWN), true);
+            for (BlockPos p : floor) if (!p.equals(below)) level.setBlockAndUpdate(p.above(), vein);
+        }
+
+        @Override public void define(ScenarioBuilder s) {
+            s.setGameMode(GameType.CREATIVE).runCommand("time set 6000").runCommand("weather clear").runCommand("difficulty peaceful")
+                    .step("设置视口", ctx -> {
+                        var mc = Minecraft.getInstance();
+                        mc.options.hideGui = false;
+                        mc.options.setCameraType(CameraType.FIRST_PERSON);
+                        mc.options.fov().set(70);
+                        var w = mc.getWindow(); w.setWindowed(1280, 720); w.setWidth(1280); w.setHeight(720);
+                        mc.getMainRenderTarget().resize(1280, 720); mc.gameRenderer.resize(1280, 720); mc.resizeGui();
+                    })
+                    .server("搭场地", ctx -> {
+                        ServerLevel level = ctx.server().overworld();
+                        stage(level);
+                        size = CorruptionNetworks.get(level).ofCore(HEART).size();
+                        DimensionTravel.teleport(ctx.player(), level, new Vec3(.5, GROUND + 4, -HALF - 10.5), 0, 25);
+                    })
+                    .checkServer("网络有一千多块", ctx -> size > 1500)
+                    .waitUntil("到位", ctx -> Minecraft.getInstance().level.getBlockState(HEART).is(Corruption.CORE.get()))
+                    .ticks(20)
+                    .screenshot("corruption_large_before")
+                    .step("开始量", ctx -> net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(listener))
+                    .server("拆核心", ctx -> ctx.server().overworld().destroyBlock(HEART, false))
+                    .ticks(40).screenshot("corruption_large_wave_40")
+                    .ticks(30).screenshot("corruption_large_wave_70")
+                    .waitUntil("消散完", ctx -> dev.logos.dimension.client.dissolve.Dissolves.ghosts() == 0)
+                    .ticks(5)
+                    .step("看开销", ctx -> {
+                        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(listener);
+                        long worst = 0, total = 0;
+                        int over33 = 0, over50 = 0;
+                        for (int i = 1; i < frames.size(); i++) {
+                            long gap = frames.get(i) - frames.get(i - 1);
+                            worst = Math.max(worst, gap);
+                            total += gap;
+                            if (gap > 33_000_000L) over33++;
+                            if (gap > 50_000_000L) over50++;
+                        }
+                        double avg = frames.size() > 1 ? total / 1e6 / (frames.size() - 1) : 0;
+                        com.mojang.logging.LogUtils.getLogger().info("[corruption] large fade: {} blocks, {} frames ({} over 33 ms, {} over 50 ms), avg {} ms, worst {} ms, most ghosts {}, most cells/frame {}",
+                                size, frames.size(), over33, over50, String.format("%.1f", avg), String.format("%.1f", worst / 1e6), mostGhosts, mostCells);
+                        ctx.check("最慢的一帧在 100 毫秒以内：" + worst / 1_000_000 + " 毫秒", worst < 100_000_000L);
+                        var level = Minecraft.getInstance().level;
+                        // 只看核心周围 10 格：网络有上限时，满了的网络会在角上分出子核心，子核心不受拆母核心影响，还会接着长
+                        int back = 0, inner = HALF - 4;
+                        for (int x = -inner; x <= inner; x++) for (int z = -inner; z <= inner; z++) {
+                            if (level.getBlockState(HEART.below().offset(x, 0, z)).is(Blocks.GRASS_BLOCK)) back++;
+                        }
+                        ctx.check("污秽全部变回草方块：" + back, back == (2 * inner + 1) * (2 * inner + 1));
+                    })
+                    .screenshot("corruption_large_after")
+                    .teardown("恢复", ctx -> net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(listener));
+        }
+    }
 }
