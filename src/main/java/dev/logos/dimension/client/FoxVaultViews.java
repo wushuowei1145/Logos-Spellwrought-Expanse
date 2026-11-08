@@ -172,6 +172,26 @@ public class FoxVaultViews implements UIScenario {
             player.setGameMode(GameType.SPECTATOR);
         });
         shot(s, "after_release", v -> look(d(v, 88.5, -53.5, 121.5), d(v, 88.5, -50, 131.5)));
+        // 首领战开始时拆掉杀生石、石台与九个底座：三组都拆空，地上不留掉落物，露出圆台原本的地面
+        s.server("clear center", ctx -> {
+            var level = ctx.server().getLevel(LogosDimension.CLOUDSEA);
+            int stone = vault.clear(level, SanctuaryVaultPiece.Removable.STONE);
+            int altar = vault.clear(level, SanctuaryVaultPiece.Removable.ALTAR);
+            int pedestals = vault.clear(level, SanctuaryVaultPiece.Removable.PEDESTALS);
+            int left = 0;
+            for (var group : SanctuaryVaultPiece.Removable.values()) {
+                for (BlockPos p : vault.blocks(group)) if (!level.getBlockState(p).isAir()) left++;
+            }
+            var box = new net.minecraft.world.phys.AABB(vault.sealStone()).inflate(24, 8, 24);
+            int drops = level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, box).size();
+            BlockPos floor = vault.sealStone().below(3);
+            System.out.println("[fox] cleared stone=" + stone + " altar=" + altar + " pedestals=" + pedestals + " left=" + left
+                + " drops=" + drops + " floor under stone=" + level.getBlockState(floor).getBlock());
+            if (stone < 100 || altar < 50 || pedestals < 9 * 9 || left != 0 || drops != 0 || level.getBlockState(floor).isAir()) {
+                throw new IllegalStateException("中间没拆干净或掉了东西");
+            }
+        });
+        shot(s, "after_clear", v -> look(d(v, 88.5, -50, 112.5), d(v, 88.5, -57, 131.5)));
         s.teardown("restore HUD", ctx -> {
             Minecraft.getInstance().options.hideGui = false;
             Minecraft.getInstance().options.gamma().set(0.5);

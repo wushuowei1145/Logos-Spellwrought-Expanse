@@ -84,6 +84,14 @@ class SanctuaryUndercroftTest {
             double r = Math.hypot(u - under.center[0], v - under.center[2]);
             assertTrue(r > 8 && r < 18, "封印杭离杀生石的距离不对：" + r);
         }
+        // 首领战时可拆的三组：杀生石从石台顶面起，石台在它下面两层，底座盖住整根封印杭；都在封印之间里、离地面以上
+        int[] r = under.removable;
+        assertEquals(9, r.length);
+        assertEquals(under.center[1], r[1], "杀生石的可拆范围应当从石台顶面起");
+        assertEquals(r[1] - 1, r[5], "石台应当紧接在杀生石下面");
+        assertEquals(a[4] + 1, r[4], "石台从地面上一层起");
+        assertTrue(r[8] >= under.seals[1] + 1, "底座的可拆范围要盖住两格高的封印杭");
+        assertTrue(r[2] < a[5] && r[0] < 13, "杀生石的范围碰到岩顶或封印杭了");
         // 世界坐标换算可逆：任意镜像与旋转下，封印杭落回同一个设计格
         SanctuaryFrame frame = new SanctuaryFrame(2, 4000, -700, Mirror.FRONT_BACK, Rotation.COUNTERCLOCKWISE_90, 150, 100, 99);
         for (int i = 0; i < under.seals.length; i += 3) {

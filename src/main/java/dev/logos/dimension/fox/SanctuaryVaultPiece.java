@@ -37,6 +37,20 @@ public class SanctuaryVaultPiece extends StructurePiece {
     private final int[] arena, center;
     /** 开发预览用：井心 (u, v)、堂的地面高度（相对主街）与通道中线折点。 */
     private final int[] route;
+    /** 可拆的三组范围，见 {@link Removable}；每组 3 个数（杀生石与石台：半径、最低层、最高层；底座：半宽、最低层、最高层）。 */
+    private final int[] removable;
+    /** 先前试玩存档里的岩洞没有记这一项，按当时的设计补上。 */
+    private static final int[] REMOVABLE_V1 = {7, -55, -42, 7, -57, -56, 1, -57, -55};
+
+    /** 首领战开始时可以整块拆掉的三组东西。 */
+    public enum Removable {
+        /** 杀生石，连同半腰的注连绳、纸垂与裂缝里的灵魂土和狐火。 */
+        STONE,
+        /** 杀生石脚下的两级黑石台。 */
+        ALTAR,
+        /** 九个封印杭底座，连同还没拆的封印杭与两旁的狐火。 */
+        PEDESTALS
+    }
 
     SanctuaryVaultPiece(SanctuaryFrame frame, SanctuaryUndercroft data, SanctuaryLayout.Route route) {
         super(FoxSanctuary.VAULT.get(), 0, bounds(frame, data.boxes, data.shell));
@@ -52,6 +66,7 @@ public class SanctuaryVaultPiece extends StructurePiece {
         r[2] = route.groundY();
         System.arraycopy(route.path(), 0, r, 3, route.path().length);
         this.route = r;
+        this.removable = data.removable.clone();
     }
 
     public SanctuaryVaultPiece(CompoundTag tag) {
@@ -66,6 +81,7 @@ public class SanctuaryVaultPiece extends StructurePiece {
         this.arena = tag.getIntArray("Arena").orElse(new int[6]);
         this.center = tag.getIntArray("Center").orElse(new int[3]);
         this.route = tag.getIntArray("Route").orElse(new int[3]);
+        this.removable = tag.getIntArray("Removable").orElse(REMOVABLE_V1.clone());
     }
 
     @Override
@@ -84,6 +100,7 @@ public class SanctuaryVaultPiece extends StructurePiece {
         tag.putIntArray("Arena", arena);
         tag.putIntArray("Center", center);
         tag.putIntArray("Route", route);
+        tag.putIntArray("Removable", removable);
     }
 
     private static BoundingBox bounds(SanctuaryFrame frame, int[] boxes, int shell) {
@@ -176,6 +193,39 @@ public class SanctuaryVaultPiece extends StructurePiece {
     /** 杀生石脚下（石台顶面上一格）的世界坐标：以后九尾狐从这里出来。 */
     public BlockPos sealStone() {
         return frame.world(center[0], frame.p + center[1], center[2]);
+    }
+
+    /** 这一组占的全部世界坐标（含已经是空气的格子），自上而下排好：拆的时候先拆上面，灯笼与狐火不会掉成物品。 */
+    public List<BlockPos> blocks(Removable group) {
+        List<BlockPos> out = new ArrayList<>();
+        int k = group.ordinal() * 3, size = removable[k], y0 = removable[k + 1], y1 = removable[k + 2];
+        for (int y = y1; y >= y0; y--) {
+            if (group == Removable.PEDESTALS) {
+                for (int i = 0; i + 2 < seals.length; i += 3) {
+                    for (int du = -size; du <= size; du++) {
+                        for (int dv = -size; dv <= size; dv++) out.add(frame.world(seals[i] + du, frame.p + y, seals[i + 2] + dv));
+                    }
+                }
+            } else {
+                for (int du = -size; du <= size; du++) {
+                    for (int dv = -size; dv <= size; dv++) {
+                        if (du * du + dv * dv <= size * size) out.add(frame.world(center[0] + du, frame.p + y, center[2] + dv));
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    /** 把这一组拆成空气（不掉落任何东西），返回拆掉的方块数。下面露出的是圆台原本的地面。 */
+    public int clear(net.minecraft.server.level.ServerLevel level, Removable group) {
+        int n = 0;
+        for (BlockPos pos : blocks(group)) {
+            if (level.getBlockState(pos).isAir()) continue;
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
+            n++;
+        }
+        return n;
     }
 
     // ---------------------------------------------------------------- 开发预览

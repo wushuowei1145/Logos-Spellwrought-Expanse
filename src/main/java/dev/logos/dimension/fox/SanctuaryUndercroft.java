@@ -28,6 +28,8 @@ final class SanctuaryUndercroft {
     final int[] center = new int[3];
     /** 封印杭下半格的设计坐标，每 3 个一组。 */
     final int[] seals;
+    /** 首领战开始时可以整块拆掉的范围：杀生石半径、最低层、最高层；石台同上；封印杭底座半宽、最低层、最高层（y 相对主街）。 */
+    final int[] removable;
 
     private SanctuaryUndercroft(JsonObject json) {
         JsonArray b = json.getAsJsonArray("boxes");
@@ -52,6 +54,12 @@ final class SanctuaryUndercroft {
         for (int i = 0; i < s.size(); i++) {
             for (int k = 0; k < 3; k++) seals[i * 3 + k] = s.get(i).getAsJsonArray().get(k).getAsInt();
         }
+        JsonObject r = json.getAsJsonObject("removable");
+        JsonObject stone = r.getAsJsonObject("stone"), altar = r.getAsJsonObject("altar"), pedestals = r.getAsJsonObject("pedestals");
+        removable = new int[]{
+            stone.get("radius").getAsInt(), stone.getAsJsonArray("y").get(0).getAsInt(), stone.getAsJsonArray("y").get(1).getAsInt(),
+            altar.get("radius").getAsInt(), altar.getAsJsonArray("y").get(0).getAsInt(), altar.getAsJsonArray("y").get(1).getAsInt(),
+            pedestals.get("half").getAsInt(), pedestals.getAsJsonArray("y").get(0).getAsInt(), pedestals.getAsJsonArray("y").get(1).getAsInt()};
     }
 
     static synchronized SanctuaryUndercroft get() {
