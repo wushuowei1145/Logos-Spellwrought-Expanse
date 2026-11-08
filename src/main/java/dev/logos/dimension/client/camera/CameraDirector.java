@@ -66,8 +66,22 @@ public final class CameraDirector {
     private static float barsPeak;
     /** 电影蒙版的强度，走法和遮幅一样。 */
     private static float grade, gradeFrom, gradePeak;
+    /** 逐帧给机位的那一方（处决特写的切镜和抖动），普通的一段是 null。 */
+    private static @Nullable Rig rig;
+    /** 客户端场景用：停在这一刻上截图，null 时照常走。 */
+    private static @Nullable Float heldAge;
 
     private CameraDirector() {}
+
+    /**
+     * 逐帧给出机位的一方：返回这一帧站在哪、看哪、画面歪多少度。进出的过渡和遮幅仍按 {@link CameraShot} 走，
+     * 所以机位可以在停留期间硬切、抖动，进出照样平滑。返回 null 时用 {@link CameraShot} 自己的两个点。
+     */
+    public interface Rig {
+        @Nullable Aim aim(float age, float partialTick);
+    }
+
+    public record Aim(Vec3 from, Vec3 look, float roll) {}
 
     /** 镜头的位置和朝向。朝向的含义同 {@link Camera#setRotation}。 */
     public record Pose(Vec3 pos, float yaw, float pitch, float roll) {
@@ -94,6 +108,11 @@ public final class CameraDirector {
 
     /** 开始播一段。上一段还没放完时直接从它的画面接过来；玩家的视角设置仍按最早那段开始前的算。 */
     public static void play(CameraShot next) {
+        play(next, null);
+    }
+
+    /** 开始播一段，机位由 {@code withRig} 逐帧给。 */
+    public static void play(CameraShot next, @Nullable Rig withRig) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
         if (shot == null) {
@@ -108,6 +127,7 @@ public final class CameraDirector {
         gradeFrom = grade;
         gradePeak = next.cinematic() ? 1 : 0;
         shot = next;
+        rig = withRig;
         level = mc.level;
         ticks = 0;
         strength = 1;
@@ -141,6 +161,22 @@ public final class CameraDirector {
         return shot == null ? -1 : ticks;
     }
 
+    /** 这一帧镜头离玩家视角多远：0 是玩家视角，1 完全在机位上。 */
+    public static float weight() {
+        return shot == null ? 0 : weight;
+    }
+
+    /** 正在给机位的一方，普通的一段或没在播时是 null。 */
+    public static @Nullable Rig rig() {
+        return shot == null ? null : rig;
+    }
+
+    /** 客户端场景用：让镜头停在第 {@code age} 刻（可以有小数）上，传 null 放开，接着从那一刻往下走。 */
+    public static void hold(@Nullable Float age) {
+        if (age == null && heldAge != null && shot != null) ticks = (int) Math.floor(heldAge);
+        heldAge = age;
+    }
+
     /** 让镜头现在就开始往回走（玩家死了、镜头该提前结束时）。 */
     public static void returnNow() {
         if (shot == null || ticks >= shot.returnsAt()) return;
@@ -160,15 +196,23 @@ public final class CameraDirector {
     public static @Nullable Pose frame(Camera camera, float partialTick) {
         if (shot == null || level == null || eyes == null) return null;
         Pose player = userView.isFirstPerson() ? eyes : Pose.of(camera);
-        float age = ticks + partialTick;
+        float age = heldAge != null ? heldAge : ticks + partialTick;
         float curve = shot.weight(age);
         weight = strength * curve;
         bars = envelope(age, curve, barsFrom, barsPeak);
         grade = envelope(age, curve, gradeFrom, gradePeak);
         if (carry != null && age >= shot.blendIn()) carry = null;
-        lastFrom = shot.from().resolve(level, partialTick, lastFrom);
-        lastLook = shot.lookAt().resolve(level, partialTick, lastLook);
-        Pose target = lastFrom == null || lastLook == null ? player : aim(camera, partialTick, lastFrom, lastLook);
+        Aim rigged = rig == null ? null : rig.aim(age, partialTick);
+        float roll = 0;
+        if (rigged != null) {
+            lastFrom = rigged.from();
+            lastLook = rigged.look();
+            roll = rigged.roll();
+        } else {
+            lastFrom = shot.from().resolve(level, partialTick, lastFrom);
+            lastLook = shot.lookAt().resolve(level, partialTick, lastLook);
+        }
+        Pose target = lastFrom == null || lastLook == null ? player : aim(camera, partialTick, lastFrom, lastLook, roll);
         Pose pose = Pose.blend(carry != null ? carry : player, target, weight);
         updateView(Minecraft.getInstance(), pose.pos.distanceTo(player.pos), age);
         return shown = pose;
@@ -179,15 +223,15 @@ public final class CameraDirector {
         return age < shot.returnsAt() ? Mth.lerp(curve, from, peak) : peak * curve;
     }
 
-    /** 站在 {@code from} 看 {@code look} 的位姿，叠上这一帧的镜头抖动（爆炸之类的震动在运镜时也看得到）。 */
-    private static Pose aim(Camera camera, float partialTick, Vec3 from, Vec3 look) {
+    /** 站在 {@code from} 看 {@code look}、画面再歪 {@code roll} 度的位姿，叠上这一帧的镜头抖动（爆炸之类的震动在运镜时也看得到）。 */
+    private static Pose aim(Camera camera, float partialTick, Vec3 from, Vec3 look, float roll) {
         Vec3 d = look.subtract(from);
         double flat = Math.hypot(d.x, d.z);
         // 正对上下方时偏航没有定义，沿用玩家的朝向，画面的「上」就是玩家面朝的方向
         float yaw = flat < 1e-4 ? eyes.yaw : (float) -Math.toDegrees(Math.atan2(d.x, d.z));
         float pitch = d.lengthSqr() < 1e-8 ? eyes.pitch : Mth.clamp((float) -Math.toDegrees(Math.atan2(d.y, flat)), -MAX_PITCH, MAX_PITCH);
         var body = camera.entity();
-        return new Pose(from, yaw + eyes.yaw - body.getViewYRot(partialTick), pitch + eyes.pitch - body.getViewXRot(partialTick), eyes.roll);
+        return new Pose(from, yaw + eyes.yaw - body.getViewYRot(partialTick), pitch + eyes.pitch - body.getViewXRot(partialTick), eyes.roll + roll);
     }
 
     /**
@@ -219,6 +263,8 @@ public final class CameraDirector {
         if (locked) unlock(mc);
         mc.options.setCameraType(userView);
         shot = null;
+        rig = null;
+        heldAge = null;
         level = null;
         eyes = shown = carry = null;
         lastFrom = lastLook = null;
@@ -238,7 +284,7 @@ public final class CameraDirector {
             finish(mc);
             return;
         }
-        if (!mc.isPaused()) {
+        if (!mc.isPaused() && heldAge == null) {
             if (mc.player.isDeadOrDying()) returnNow();
             if (++ticks >= shot.duration()) {
                 finish(mc);
