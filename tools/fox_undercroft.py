@@ -881,7 +881,7 @@ def arena(c, rnd):
     # 岩顶倒挂的町屋街：东西两排，正面朝向圆台；还有一座倒挂的鸟居在南头
     makers = [m for k, m in sorted(fb.SHOP_VARIANTS.items()) if 'izakaya' not in k]
     for row, (ou, turns) in enumerate(((51, 1), (113, 3))):
-        for i, v in enumerate(range(102, 150, 11)):
+        for i, v in enumerate(INVERTED_ROWS):
             house = makers[(i * 3 + row * 5) % len(makers)]()
             before = set(c.cells)
             paste_inverted(c, house, ou, ARENA_TOP, v, turns)
@@ -896,6 +896,7 @@ def arena(c, rnd):
                 for yy in (bottom - 1, bottom - 2):
                     c.set(cu_, yy, cv_, B('chain', axis='y', waterlogged=False))
                 c.set(cu_, bottom - 3, cv_, B('soul_lantern', hanging=True, waterlogged=False))
+    ceiling_road(c)
     cave_glow(c, ARENA, ARENA_TOP, rnd, 170)
     t = Canvas()
     giant_torii(t, CU, 0, 0, post_h=14, half=7)
@@ -903,6 +904,38 @@ def arena(c, rnd):
         out = flip_y(st)
         if out is not None:
             c.set(x, ARENA_TOP - yy, 156 + z, out)
+
+
+#: 倒挂町屋东西两排各一栋的北端 v（每栋 9 宽、间隔 11），门在 v0+3..v0+5
+INVERTED_ROWS = tuple(range(102, 150, 11))
+
+
+def ceiling_road(c):
+    """岩顶上倒过来的那条街：正中一条 9 宽的石板参道从楼门那头一直通到南头倒挂的鸟居底下，两边圆石路缘；
+    每栋倒挂町屋门口有一条碎石小路接到参道上；路缘上隔 8 格一根倒立的石灯柱，柱头吊一盏纸灯笼（倒过来看就是立在路边的街灯）。
+    都贴在岩顶下第一层（与倒挂町屋的地面同一层），从下面看到的是这些方块的底面。"""
+    ry = ARENA_TOP
+    for v in range(ARENA[1], ARENA[3] + 1):
+        for u in range(CU - 4, CU + 5):
+            if abs(u - CU) == 4:
+                st = B('mossy_cobblestone') if _h(u, v, 41) % 3 == 0 else B('cobblestone')
+            elif abs(u - CU) == 3:
+                st = B('polished_andesite')
+            else:
+                st = B('stone_bricks') if (u + v) % 2 else B('polished_andesite')
+            if c.get(u, ry, v) is None:
+                c.set(u, ry, v, st)
+    for v0 in INVERTED_ROWS:
+        for v in range(v0 + 3, v0 + 6):
+            for u in list(range(64, CU - 4)) + list(range(CU + 5, 113)):
+                if c.get(u, ry, v) is None:
+                    c.set(u, ry, v, B('gravel') if _h(u, v, 43) % 5 else B('cobblestone'))
+    post = B('stone_brick_wall', up=True, north='none', south='none', east='none', west='none', waterlogged=False)
+    for v in range(ARENA[1] + 4, ARENA[3] - 5, 8):
+        for u in (CU - 4, CU + 4):
+            c.set(u, ry - 1, v, post)
+            c.set(u, ry - 2, v, post)
+            c.set(u, ry - 3, v, paper_lantern(True))
 
 
 def sessho_seki(c, cx, y0, cz):
