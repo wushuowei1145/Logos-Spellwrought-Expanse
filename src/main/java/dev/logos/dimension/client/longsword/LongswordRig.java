@@ -93,7 +93,8 @@ public final class LongswordRig {
         var skeletonJson = read("combat/skeletons/player_" + view + ".json");
         var weapon = read("combat/weapons/" + name + ".json");
         // 骨架给出视角的武器缩放，武器网格可再乘一个自己的 scale（打刀比长剑长）。
-        weaponScale = skeletonJson.get("weapon_scale").getAsFloat() * (weapon.has("scale") ? weapon.get("scale").getAsFloat() : 1);
+        weaponScale = skeletonJson.get("weapon_scale").getAsFloat() * (weapon.has("scale") ? weapon.get("scale").getAsFloat() : 1)
+                * (firstPerson && weapon.has("first_person_scale") ? weapon.get("first_person_scale").getAsFloat() : 1);
         var base = CombatSkeleton.fromJson(skeletonJson);
         if (!base.missingRequired().isEmpty()) throw new IllegalStateException("玩家骨架缺少 " + base.missingRequired());
         weaponPivot = base.bone(CombatBones.WEAPON).pivot();

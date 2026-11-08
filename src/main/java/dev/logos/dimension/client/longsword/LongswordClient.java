@@ -129,6 +129,10 @@ public final class LongswordClient {
                 var level = Minecraft.getInstance().level;
                 double now = level == null ? 0 : level.getGameTime() + state.partialTick;
                 var sample = p == null || level == null || state.isSpectator ? null : sample(p, false, now);
+                // 御剑站立，不能沿用原版乘船坐姿；只改本附属的临时载具。
+                if (avatar.getVehicle() instanceof dev.logos.dimension.lingxiao.FlyingSword) {
+                    state.isPassenger = false; state.isCrouching = false; state.walkAnimationSpeed = 0;
+                }
                 if (RyukaClient.is(p)) RyukaClient.observe(avatar, now);
                 Frame frame = null;
                 if (sample != null) {

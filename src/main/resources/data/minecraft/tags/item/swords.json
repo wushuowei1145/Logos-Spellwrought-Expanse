@@ -1,1 +1,8 @@
-{"replace":false,"values":["logos_dimension:dawnvow","logos_dimension:blacksteel_longsword"]}
+{
+  "replace": false,
+  "values": [
+    "logos_dimension:dawnvow",
+    "logos_dimension:blacksteel_longsword",
+    "logos_dimension:lingxiao_sword"
+  ]
+}

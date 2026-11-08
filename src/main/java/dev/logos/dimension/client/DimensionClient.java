@@ -56,6 +56,7 @@ public final class DimensionClient {
     @SubscribeEvent static void entityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(dev.logos.dimension.npc.NpcEntities.FOREST_ELF.get(), ctx -> new NpcRenderer<>(ctx, "forest_elf"));
         event.registerEntityRenderer(dev.logos.dimension.npc.NpcEntities.DIVINE_FOX.get(), DivineFoxRenderer::new);
+        event.registerEntityRenderer(dev.logos.dimension.lingxiao.LingxiaoFlight.TYPE.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
     }
 
     @SubscribeEvent static void fluids(RegisterFluidModelsEvent event) {

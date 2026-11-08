@@ -1188,5 +1188,11 @@
   "block.logos_dimension.journey_ofuda": "Ofuda",
   "item.logos_dimension.journey_ofuda": "Ofuda",
   "block.logos_dimension.journey_seal_stake.left": "A seal breaks. %s remain.",
-  "block.logos_dimension.journey_seal_stake.released": "The last seal breaks. Something stirs inside the killing stone..."
+  "block.logos_dimension.journey_seal_stake.released": "The last seal breaks. Something stirs inside the killing stone...",
+  "item.logos_dimension.lingxiao_sword": "Lingxiao",
+  "entity.logos_dimension.flying_lingxiao": "Flying Lingxiao",
+  "tooltip.logos_dimension.lingxiao.attack": "Attack: three-hit combo in a forward diamond",
+  "tooltip.logos_dimension.lingxiao.flight": "Use: sword flight, 10 mana per second",
+  "tooltip.logos_dimension.lingxiao.controls": "Move toward your view; jump to ascend; sneak to dismount",
+  "message.logos_dimension.lingxiao.no_mana": "Not enough mana to continue sword flight"
 }

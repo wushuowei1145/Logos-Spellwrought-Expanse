@@ -17,6 +17,8 @@ public record CombatWeapon(int id, String mesh, String animations, Identifier mo
     public static final double DEFAULT_CONE = 60;
     /** 给了自己张角的武器。 */
     private static final Map<Integer, Double> CONES = new ConcurrentHashMap<>();
+    /** 明确选择菱形判定的武器，其他武器继续使用原有锥形。 */
+    private static final java.util.Set<Integer> DIAMONDS = ConcurrentHashMap.newKeySet();
 
     /** 战斗武器物品。 */
     public interface Holder {
@@ -61,6 +63,8 @@ public record CombatWeapon(int id, String mesh, String animations, Identifier mo
     }
     /** 命中锥形的张角（度）。 */
     public double cone() { return CONES.getOrDefault(id, DEFAULT_CONE); }
+    public CombatWeapon withDiamondHitbox() { DIAMONDS.add(id); return this; }
+    public boolean diamondHitbox() { return DIAMONDS.contains(id); }
     /** 腰侧挂不挂剑鞘。 */
     public boolean sheathed() { return !SHEATHLESS.contains(id); }
     public static CombatWeapon of(ItemStack stack) { return stack.getItem() instanceof Holder holder ? holder.combatWeapon() : null; }

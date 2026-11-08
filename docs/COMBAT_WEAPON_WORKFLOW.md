@@ -9,6 +9,7 @@
 | 群誓·狼牙长枪 | [OATH_SPEAR.md](OATH_SPEAR.md) | `import_oath_spear.py` | `oath_spear_moves.py` | `group:oath_spear` |
 | 神狐和弓 | [YUMI.md](YUMI.md) | `import_yumi.py` | `yumi_moves.py` | `group:yumi` |
 | 流火 | [RYUKA.md](RYUKA.md) | `import_ryuka.py`（含换色） | `ryuka_moves.py`（`arc` 一刀快挥加定住） | `group:ryuka` |
+| 凌霄 | [LINGXIAO.md](LINGXIAO.md) | `import_lingxiao.py` | `lingxiao_moves.py` | `group:lingxiao` |
 
 ## 1. 几条原则
 

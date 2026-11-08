@@ -1188,5 +1188,11 @@
   "block.logos_dimension.journey_ofuda": "御札",
   "item.logos_dimension.journey_ofuda": "御札",
   "block.logos_dimension.journey_seal_stake.left": "一道封印断了，还剩 %s 道。",
-  "block.logos_dimension.journey_seal_stake.released": "最后一道封印断了。杀生石里，有什么东西动了一下……"
+  "block.logos_dimension.journey_seal_stake.released": "最后一道封印断了。杀生石里，有什么东西动了一下……",
+  "item.logos_dimension.lingxiao_sword": "凌霄",
+  "entity.logos_dimension.flying_lingxiao": "御剑·凌霄",
+  "tooltip.logos_dimension.lingxiao.attack": "左键：三段连斩，前方菱形判定",
+  "tooltip.logos_dimension.lingxiao.flight": "右键：御剑飞行，每秒消耗 10 魔力",
+  "tooltip.logos_dimension.lingxiao.controls": "方向键移动，朝向控制升降，空格上升，Shift 下剑",
+  "message.logos_dimension.lingxiao.no_mana": "魔力不足，御剑已结束"
 }
