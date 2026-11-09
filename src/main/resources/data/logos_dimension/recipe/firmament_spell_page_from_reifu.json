@@ -1,0 +1,12 @@
+{
+  "type": "logos:page_upgrade",
+  "category": "misc",
+  "group": "logos_dimension_firmament_reifu",
+  "ingredients": [
+    "logos_dimension:firmament_reifu",
+    "minecraft:white_dye"
+  ],
+  "result": {
+    "id": "logos:firmament_spell_page"
+  }
+}

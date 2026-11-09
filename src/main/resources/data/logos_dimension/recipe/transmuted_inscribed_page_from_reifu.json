@@ -1,0 +1,12 @@
+{
+  "type": "logos:page_upgrade",
+  "category": "misc",
+  "group": "logos_dimension_transmuted_reifu",
+  "ingredients": [
+    "logos_dimension:transmuted_inscribed_reifu",
+    "minecraft:white_dye"
+  ],
+  "result": {
+    "id": "logos:transmuted_inscribed_page"
+  }
+}

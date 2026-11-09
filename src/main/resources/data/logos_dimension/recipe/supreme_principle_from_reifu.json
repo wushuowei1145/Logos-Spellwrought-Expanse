@@ -1,0 +1,12 @@
+{
+  "type": "logos:page_upgrade",
+  "category": "misc",
+  "group": "logos_dimension_principle_reifu",
+  "ingredients": [
+    "logos_dimension:principle_inscribed_reifu",
+    "minecraft:white_dye"
+  ],
+  "result": {
+    "id": "logos:supreme_principle"
+  }
+}

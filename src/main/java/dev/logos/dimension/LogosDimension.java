@@ -64,6 +64,8 @@ public final class LogosDimension {
                     out.accept(dev.logos.dimension.cloudsea.FoxWildsBlocks.OMIKUJI_BOX.get());
                     out.accept(dev.logos.dimension.cloudsea.FoxWildsBlocks.OMIKUJI_RACK.get());
                     out.accept(dev.logos.dimension.cloudsea.FoxWildsBlocks.MENU_STRIPS.get());
+                    out.accept(dev.logos.dimension.reifu.Reifu.FUDA_DESK_ITEM.get());
+                    dev.logos.dimension.reifu.Reifu.REIFU.values().forEach(r -> out.accept(r.blank().get()));
                     out.accept(dev.logos.dimension.gate.Gate.GATE_STONE.get());
                 }).build());
         TABS.register("crucible", () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.logos_dimension"))
@@ -125,10 +127,12 @@ public final class LogosDimension {
         dev.logos.dimension.npc.NpcEntities.register(bus);
         dev.logos.dimension.shiraume.ShiraumeEntities.register(bus);
         dev.logos.dimension.foxfire.Foxfire.register(bus);
+        dev.logos.dimension.reifu.Reifu.register(bus);
         GENERATORS.register(bus); BIOME_SOURCES.register(bus); TABS.register(bus);
         DimensionGameTests.register(bus);
         dev.logos.dimension.gametest.CloudseaGameTests.register(bus);
         dev.logos.dimension.gametest.FoxfireGameTests.register(bus);
+        dev.logos.dimension.gametest.ReifuGameTests.register(bus);
         dev.logos.dimension.gametest.CauldronInstanceGameTests.register(bus);
         dev.logos.dimension.gametest.GrapeGameTests.register(bus);
         dev.logos.dimension.gametest.PlantSupportGameTests.register(bus);
