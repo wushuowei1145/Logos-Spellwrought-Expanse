@@ -10,8 +10,8 @@
 - `Animation/side_lying_trial/divine_fox_death.animation.json`：侧倒后面朝地面的死亡动画（维护者选定的版本）；
 - `Animation/ambient/divine_fox_ambient.animation.json`：常驻叠加层 `pre_parallel0` 眨眼、`pre_parallel1` 耳朵抖动、
   `pre_parallel2` 尾巴轻摆（create_ambient_loops.py）；
-- `Animation/katana/divine_fox_katana.animation.json`：打刀动作在神狐骨架上的烘焙（本模组 tools/uchigatana_moves.py 写出），
-  动画名加 `katana_` 前缀并入，例如 `katana_slash_1`；
+- `Animation/katana/divine_fox_katana_v2.animation.json`：打刀动作在神狐骨架上的烘焙（本模组 tools/uchigatana_moves.py 写出，
+  文件名是那里的 `FOX_KATANA`），动画名加 `katana_` 前缀并入，例如 `katana_slash_1`；
 - `Animation/yumi/divine_fox_yumi.animation.json`：和弓的射法在神狐骨架上的烘焙（本模组 tools/yumi_moves.py 写出），
   动画名加 `yumi_` 前缀并入，例如 `yumi_kai`。
 
@@ -70,6 +70,8 @@ LAYERS = ["pre_parallel0", "pre_parallel1", "pre_parallel2"]
 KATANAS = ["ink", "vermilion", "indigo", "wood"]
 KATANA_SCALE = 1.6
 KATANA_PREFIX = "katana_"
+# 模型目录 Animation/katana/ 下的烘焙文件（同 tools/uchigatana_moves.py 的 FOX_KATANA）
+KATANA_SOURCE = "divine_fox_katana_v2.animation.json"
 CARRY = "pre_parallel3"
 # 和弓：四套配色（与 YumiItem 同名）、神狐挂弓的倍数（tools/yumi_moves.py 的 FOX_SCALE）
 YUMIS = ["bamboo", "vermilion", "indigo", "chestnut"]
@@ -130,7 +132,7 @@ def animations(source, bones):
     elf = read(ELF_ANIMATION)["animations"]
     death = read(source / "Animation/side_lying_trial/divine_fox_death.animation.json")["animations"]["death"]
     layers = read(source / "Animation/ambient/divine_fox_ambient.animation.json")["animations"]
-    katana = read(source / "Animation/katana/divine_fox_katana.animation.json")["animations"]
+    katana = read(source / "Animation/katana" / KATANA_SOURCE)["animations"]
     yumi = read(source / "Animation/yumi/divine_fox_yumi.animation.json")["animations"]
     out = {"idle": only(exported["idle"], bones)}
     for name in BORROWED + ELF_ACTIONS:

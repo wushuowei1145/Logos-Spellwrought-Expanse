@@ -110,4 +110,42 @@ class UchigatanaTest {
         }
         assertEquals(1, new HashSet<>(counts).size());
     }
+
+    /** 刀身骨骼在相邻两个关键帧之间最快转多少（度/秒）；同 tools/combat_author.py 的 TURN_RATE（60 帧时一帧 75°）。 */
+    static final double MAX_WEAPON_TURN_RATE = 4500;
+
+    /**
+     * 刀不在相邻两个关键帧之间翻面：烘焙时刀向、刃向按分量插值，前后关键帧方向几乎相反时会在一帧里转过去
+     * （slash_1 曾一帧转 145°），GeckoLib 再按 Z·Y·X 欧拉角线性插值，刀和刀光就闪到别处。
+     * {@code prefix} 选出要查的动作（神狐的动作名带 {@code katana_}）。
+     */
+    static void assertWeaponNeverFlips(JsonObject animations, String prefix) {
+        int checked = 0;
+        for (var clip : animations.entrySet()) {
+            if (!clip.getKey().startsWith(prefix)) continue;
+            var bones = clip.getValue().getAsJsonObject().getAsJsonObject("bones");
+            if (!bones.has("Weapon")) continue;
+            var keys = bones.getAsJsonObject("Weapon").getAsJsonObject("rotation");
+            var times = keys.keySet().stream().sorted(Comparator.comparingDouble(Double::parseDouble)).toList();
+            for (int i = 1; i < times.size(); i++) {
+                double dt = Double.parseDouble(times.get(i)) - Double.parseDouble(times.get(i - 1));
+                double dot = Math.abs(rotation(keys.getAsJsonArray(times.get(i - 1))).dot(rotation(keys.getAsJsonArray(times.get(i)))));
+                double turn = Math.toDegrees(2 * Math.acos(Math.min(1, dot)));
+                assertTrue(turn / dt <= MAX_WEAPON_TURN_RATE,
+                        clip.getKey() + " 的刀在 " + times.get(i - 1) + "–" + times.get(i) + " 秒之间转了 " + Math.round(turn) + "°");
+                checked++;
+            }
+        }
+        assertTrue(checked > 0, "没有查到刀身骨骼的关键帧");
+    }
+
+    /** Bedrock 动画的旋转（度）换成 GeckoLib 的姿势：X、Y 取反，先绕 X、再绕 Y、最后绕 Z。 */
+    private static org.joml.Quaterniond rotation(com.google.gson.JsonArray e) {
+        return new org.joml.Quaterniond().rotateZ(Math.toRadians(e.get(2).getAsDouble()))
+                .rotateY(Math.toRadians(-e.get(1).getAsDouble())).rotateX(Math.toRadians(-e.get(0).getAsDouble()));
+    }
+
+    @Test void bladeNeverFlipsBetweenKeysInEitherView() throws Exception {
+        for (var view : new String[]{"fp", "tp"}) assertWeaponNeverFlips(animations(view), "");
+    }
 }

@@ -185,6 +185,12 @@ class DivineFoxAssetsTest {
         assertEquals(carry.get("Weapon"), carry.get("Sheath"), "佩刀时刀在鞘里，两者同一变换");
     }
 
+    /** 神狐的打刀动作和玩家的同源，刀同样不在相邻两个关键帧之间翻面（神狐刀光跟着刀身骨骼走，翻面就是一块平板）。 */
+    @Test
+    void katanaBladeNeverFlipsBetweenKeys() throws Exception {
+        UchigatanaTest.assertWeaponNeverFlips(animations(), "katana_");
+    }
+
     /**
      * 和弓：弓的骨骼挂在 UpBody 下的 Yumi（不是刀的 Weapon）；四套配色各有一组方块，名字和 DivineFox 隐藏用的一致；
      * 招式的动作都在（加 yumi_ 前缀），时长与招式文件一致，驱动 Yumi 而不是 Weapon；执弓不带下半身，走路时腿交给行走动作。

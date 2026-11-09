@@ -343,14 +343,24 @@ def rigid_arm(S, G, a, b, pref, target, previous, twist=120.0, previous_tau=None
 ARM_POLE = {'Right': (0.6, -0.8, 0.9), 'Left': (-0.6, -0.8, 0.9)}
 
 
+# 刀的翻面检查（Baker.sword / Baker.bake）。刀向、刃向在关键帧之间按分量插值再归一化：相邻两帧方向差得太多（过 90°）时，
+# 插值到中途两头几乎相消，向量缩得很短，归一化后刀在一帧里转过去（神狐打刀 slash_1 曾一帧转 145°）。
+# 插值向量短于 BLEND_FLOOR，或刀相对躯干转得比 TURN_RATE（度/秒，60 帧时一帧 75°）还快，就报出来；改法是在两帧之间补一帧中间姿势。
+BLEND_FLOOR = 0.3
+TURN_RATE = 4500.0
+
+
 class Baker:
-    def __init__(self, skeleton):
+    def __init__(self, skeleton, strict=False):
         self.sk = skeleton
         self.warnings = []
         # 刀在拳中的残差角（度），以及上一帧的手肘位置（保持手肘连续）。
         self.residuals = []
         self.elbows = {}
         self.taus = {}
+        # 刀翻面：(动作名, 时刻, 说明)；strict 为真时烘焙到有翻面的动作就报错。
+        self.flips = []
+        self.strict = strict
 
     def sheath(self, clip, t):
         """刀鞘网格变换（躯干坐标）：佩刀姿势绕鞘口旋转 saya 角度，再平移 saya_off。"""
@@ -403,6 +413,9 @@ class Baker:
         grip = hermite([(t0, v[0], e) for t0, v, e in converted], t, loop)
         blade = hermite([(t0, v[1], e) for t0, v, e in converted], t, loop)
         edge = hermite([(t0, v[2], e) for t0, v, e in converted], t, loop)
+        for label, v in (('刀向', blade), ('刃向', edge)):
+            if np.linalg.norm(v) < BLEND_FLOOR:
+                self.flips.append((clip['name'], t, f'{label}插值缩到 {np.linalg.norm(v):.2f}（前后关键帧方向几乎相反）'))
         R = frame(blade, edge)
         return grip - R @ np.array([0, self.shaft(clip, t, 'Right') * s, 0]), R
 
@@ -557,9 +570,19 @@ class Baker:
         self.elbows, self.taus = {}, {}
         n = max(1, round(clip['length'] * fps))
         prev = None
+        first_flip = len(self.flips)
+        weapon = None
         for i in range(n + 1):
             t = min(clip['length'], i / fps)
             pose = self.pose(clip, t, prev)
+            if 'Weapon' in pose:
+                # 刀相对躯干这一帧转了多少
+                Rw = pose['Weapon'][1]
+                if weapon is not None:
+                    turn = math.degrees(math.acos(max(-1.0, min(1.0, (np.trace(weapon.T @ Rw) - 1) / 2))))
+                    if turn * fps > TURN_RATE:
+                        self.flips.append((clip['name'], t, f'刀一帧转了 {turn:.0f}°'))
+                weapon = Rw
             eulers = {}
             for name, entry in pose.items():
                 pos, R = entry[0], entry[1]
@@ -567,6 +590,21 @@ class Baker:
                 eulers[name] = (pos, e) if len(entry) < 3 else (pos, e, np.asarray(entry[2], float))
             frames.append((t, eulers))
             prev = eulers
+        found = self.flips[first_flip:]
+        if found:
+            # 同一个说明连着的帧并成一段报。
+            spans = []
+            for name, t, note in found:
+                kind = note.split(' ')[0]
+                if spans and spans[-1][3] == kind and t - spans[-1][1] <= 1.5 / fps:
+                    spans[-1][1] = t
+                else:
+                    spans.append([t, t, note, kind])
+            text = '；'.join(f'{a:.3f}–{b:.3f}s {note}' for a, b, note, _ in spans)
+            message = f'{getattr(self.sk, "tag", "")} {clip["name"]} 刀翻面：{text}；在前后两个关键帧之间补一帧中间姿势'
+            if self.strict:
+                raise ValueError(message)
+            print(message)
         return frames
 
 
