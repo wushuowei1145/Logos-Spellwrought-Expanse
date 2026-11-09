@@ -1209,5 +1209,22 @@
   "death.attack.logos_dimension.shiraume_beast.player": "%1$s 被 %2$s 撕碎了",
   "death.attack.logos_dimension.foxfire": "%1$s 被 %2$s 的狐火吞没了",
   "death.attack.logos_dimension.foxfire.player": "%1$s 在躲避 %2$s 时被狐火吞没了",
-  "death.attack.logos_dimension.foxfire.item": "%1$s 被 %2$s 用 %3$s 燃起的狐火吞没了"
+  "death.attack.logos_dimension.foxfire.item": "%1$s 被 %2$s 用 %3$s 燃起的狐火吞没了",
+  "block.logos_dimension.fuda_desk": "符札书案",
+  "item.logos_dimension.basic_reifu": "和紙霊符",
+  "item.logos_dimension.basic_inscribed_reifu": "和紙霊符",
+  "item.logos_dimension.crystal_reifu": "藤紫霊符",
+  "item.logos_dimension.crystal_inscribed_reifu": "藤紫霊符",
+  "item.logos_dimension.echo_reifu": "木霊霊符",
+  "item.logos_dimension.echo_inscribed_reifu": "木霊霊符",
+  "item.logos_dimension.transmuted_reifu": "錬丹霊符",
+  "item.logos_dimension.transmuted_inscribed_reifu": "錬丹霊符",
+  "item.logos_dimension.chalk_reifu": "胡粉霊符",
+  "item.logos_dimension.chalk_inscribed_reifu": "胡粉霊符",
+  "item.logos_dimension.firmament_reifu": "天津霊符",
+  "item.logos_dimension.firmament_inscribed_reifu": "天津霊符",
+  "item.logos_dimension.sage_reifu": "仙朱霊符",
+  "item.logos_dimension.sage_inscribed_reifu": "仙朱霊符",
+  "item.logos_dimension.principle_reifu": "無相霊符",
+  "item.logos_dimension.principle_inscribed_reifu": "神勅霊符"
 }

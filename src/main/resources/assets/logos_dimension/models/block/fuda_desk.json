@@ -1,0 +1,266 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "logos_dimension:block/fuda_desk_wood",
+    "wood": "logos_dimension:block/fuda_desk_wood",
+    "paper": "logos_dimension:block/fuda_desk_paper",
+    "felt": "logos_dimension:block/fuda_desk_felt",
+    "bronze": "logos_dimension:block/fuda_desk_bronze",
+    "inkstone": "logos_dimension:block/fuda_desk_inkstone",
+    "ink": "logos_dimension:block/fuda_desk_ink",
+    "porcelain": "logos_dimension:block/fuda_desk_porcelain",
+    "bamboo": "logos_dimension:block/fuda_desk_bamboo"
+  },
+  "elements": [
+    {
+      "name": "top",
+      "from": [0, 11, 1.5],
+      "to": [16, 12.5, 14.5],
+      "faces": {
+        "north": {"texture": "#wood"},
+        "east": {"texture": "#wood"},
+        "south": {"texture": "#wood"},
+        "west": {"texture": "#wood"},
+        "up": {"texture": "#wood"},
+        "down": {"texture": "#wood"}
+      }
+    },
+    {
+      "name": "lip_left",
+      "from": [0, 12.5, 1.5],
+      "to": [0.8, 13.3, 14.5],
+      "faces": {
+        "north": {"texture": "#wood"},
+        "east": {"texture": "#wood"},
+        "south": {"texture": "#wood"},
+        "west": {"texture": "#wood"},
+        "up": {"texture": "#wood"},
+        "down": {"texture": "#wood"}
+      }
+    },
+    {
+      "name": "lip_right",
+      "from": [15.2, 12.5, 1.5],
+      "to": [16, 13.3, 14.5],
+      "faces": {
+        "north": {"texture": "#wood"},
+        "east": {"texture": "#wood"},
+        "south": {"texture": "#wood"},
+        "west": {"texture": "#wood"},
+        "up": {"texture": "#wood"},
+        "down": {"texture": "#wood"}
+      }
+    },
+    {
+      "name": "leg_left",
+      "from": [1.2, 1, 3],
+      "to": [2.7, 11, 13],
+      "faces": {
+        "north": {"texture": "#wood"},
+        "east": {"texture": "#wood"},
+        "south": {"texture": "#wood"},
+        "west": {"texture": "#wood"},
+        "up": {"texture": "#wood"},
+        "down": {"texture": "#wood"}
+      }
+    },
+    {
+      "name": "leg_right",
+      "from": [13.3, 1, 3],
+      "to": [14.8, 11, 13],
+      "faces": {
+        "north": {"texture": "#wood"},
+        "east": {"texture": "#wood"},
+        "south": {"texture": "#wood"},
+        "west": {"texture": "#wood"},
+        "up": {"texture": "#wood"},
+        "down": {"texture": "#wood"}
+      }
+    },
+    {
+      "name": "foot_left",
+      "from": [0.6, 0, 2],
+      "to": [3.3, 1, 14],
+      "faces": {
+        "north": {"texture": "#wood"},
+        "east": {"texture": "#wood"},
+        "south": {"texture": "#wood"},
+        "west": {"texture": "#wood"},
+        "up": {"texture": "#wood"},
+        "down": {"texture": "#wood", "cullface": "down"}
+      }
+    },
+    {
+      "name": "foot_right",
+      "from": [12.7, 0, 2],
+      "to": [15.4, 1, 14],
+      "faces": {
+        "north": {"texture": "#wood"},
+        "east": {"texture": "#wood"},
+        "south": {"texture": "#wood"},
+        "west": {"texture": "#wood"},
+        "up": {"texture": "#wood"},
+        "down": {"texture": "#wood", "cullface": "down"}
+      }
+    },
+    {
+      "name": "apron_back",
+      "from": [2.7, 9.5, 2.2],
+      "to": [13.3, 11, 3.2],
+      "faces": {
+        "north": {"texture": "#wood"},
+        "east": {"texture": "#wood"},
+        "south": {"texture": "#wood"},
+        "west": {"texture": "#wood"},
+        "up": {"texture": "#wood"},
+        "down": {"texture": "#wood"}
+      }
+    },
+    {
+      "name": "drawer",
+      "from": [2.7, 8.5, 12.8],
+      "to": [13.3, 11, 13.8],
+      "faces": {
+        "north": {"texture": "#wood"},
+        "east": {"texture": "#wood"},
+        "south": {"texture": "#wood"},
+        "west": {"texture": "#wood"},
+        "up": {"texture": "#wood"},
+        "down": {"texture": "#wood"}
+      }
+    },
+    {
+      "name": "drawer_pull",
+      "from": [7.2, 9.3, 13.8],
+      "to": [8.8, 10.1, 14.2],
+      "faces": {
+        "north": {"texture": "#bronze"},
+        "east": {"texture": "#bronze"},
+        "south": {"texture": "#bronze"},
+        "west": {"texture": "#bronze"},
+        "up": {"texture": "#bronze"},
+        "down": {"texture": "#bronze"}
+      }
+    },
+    {
+      "name": "paper_stack",
+      "from": [1.4, 12.5, 3],
+      "to": [4.6, 13.2, 10.5],
+      "faces": {
+        "north": {"texture": "#paper"},
+        "east": {"texture": "#paper"},
+        "south": {"texture": "#paper"},
+        "west": {"texture": "#paper"},
+        "up": {"texture": "#paper"},
+        "down": {"texture": "#paper"}
+      }
+    },
+    {
+      "name": "felt",
+      "from": [5, 12.5, 2.6],
+      "to": [11, 12.6, 13.4],
+      "faces": {
+        "north": {"texture": "#felt"},
+        "east": {"texture": "#felt"},
+        "south": {"texture": "#felt"},
+        "west": {"texture": "#felt"},
+        "up": {"texture": "#felt"},
+        "down": {"texture": "#felt"}
+      }
+    },
+    {
+      "name": "paperweight",
+      "from": [5.6, 12.6, 2.9],
+      "to": [10.4, 13.2, 3.8],
+      "faces": {
+        "north": {"texture": "#bronze"},
+        "east": {"texture": "#bronze"},
+        "south": {"texture": "#bronze"},
+        "west": {"texture": "#bronze"},
+        "up": {"texture": "#bronze"},
+        "down": {"texture": "#bronze"}
+      }
+    },
+    {
+      "name": "inkstone",
+      "from": [11.8, 12.5, 2.8],
+      "to": [14.8, 13.5, 8.6],
+      "faces": {
+        "north": {"texture": "#inkstone"},
+        "east": {"texture": "#inkstone"},
+        "south": {"texture": "#inkstone"},
+        "west": {"texture": "#inkstone"},
+        "up": {"texture": "#inkstone"},
+        "down": {"texture": "#inkstone"}
+      }
+    },
+    {
+      "name": "ink_pool",
+      "from": [12.3, 13.4, 3.3],
+      "to": [14.3, 13.52, 4.9],
+      "faces": {
+        "north": {"texture": "#ink"},
+        "east": {"texture": "#ink"},
+        "south": {"texture": "#ink"},
+        "west": {"texture": "#ink"},
+        "up": {"texture": "#ink"},
+        "down": {"texture": "#ink"}
+      }
+    },
+    {
+      "name": "ink_stick",
+      "from": [12.4, 13.5, 6.2],
+      "to": [14.2, 14.1, 7.1],
+      "faces": {
+        "north": {"texture": "#ink"},
+        "east": {"texture": "#ink"},
+        "south": {"texture": "#ink"},
+        "west": {"texture": "#ink"},
+        "up": {"texture": "#ink"},
+        "down": {"texture": "#ink"}
+      }
+    },
+    {
+      "name": "brush_rest",
+      "from": [12.2, 12.5, 10.4],
+      "to": [13.4, 13, 12.4],
+      "faces": {
+        "north": {"texture": "#porcelain"},
+        "east": {"texture": "#porcelain"},
+        "south": {"texture": "#porcelain"},
+        "west": {"texture": "#porcelain"},
+        "up": {"texture": "#porcelain"},
+        "down": {"texture": "#porcelain"}
+      }
+    },
+    {
+      "name": "brush_shaft",
+      "from": [10.2, 13, 11.05],
+      "to": [14.6, 13.6, 11.65],
+      "faces": {
+        "north": {"texture": "#bamboo"},
+        "east": {"texture": "#bamboo"},
+        "south": {"texture": "#bamboo"},
+        "west": {"texture": "#bamboo"},
+        "up": {"texture": "#bamboo"},
+        "down": {"texture": "#bamboo"}
+      }
+    },
+    {
+      "name": "brush_tip",
+      "from": [14.6, 13.05, 11.1],
+      "to": [15.6, 13.55, 11.6],
+      "faces": {
+        "north": {"texture": "#ink"},
+        "east": {"texture": "#ink"},
+        "south": {"texture": "#ink"},
+        "west": {"texture": "#ink"},
+        "up": {"texture": "#ink"},
+        "down": {"texture": "#ink"}
+      }
+    }
+  ],
+  "display": {
+    "gui": {"rotation": [30, 225, 0], "translation": [0, 1, 0], "scale": [0.625, 0.625, 0.625]}
+  }
+}

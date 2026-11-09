@@ -1,0 +1,12 @@
+{
+  "type": "logos:page_upgrade",
+  "category": "misc",
+  "group": "logos_dimension_chalk_reifu",
+  "ingredients": [
+    "logos:chalk_inscribed_page",
+    "minecraft:red_dye"
+  ],
+  "result": {
+    "id": "logos_dimension:chalk_inscribed_reifu"
+  }
+}
