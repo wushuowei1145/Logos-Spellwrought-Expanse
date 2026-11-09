@@ -1,0 +1,98 @@
+{
+  "life": 0.45,
+  "layers": [
+    {
+      "mask": "logos_dimension:textures/vfx/trail/slash_body.png",
+      "noise": "logos:textures/vfx/charge_aura/noise_smoke.png",
+      "span": [
+        0.05,
+        1.0
+      ],
+      "colors": [
+        "#FFE08E",
+        "#FFAE28",
+        "#B0601A"
+      ],
+      "intensity": 1.0,
+      "opacity": 0.55,
+      "noise_scale": 0.8,
+      "scroll": 1.0,
+      "distort": 0.06,
+      "detail": 0.5,
+      "erosion": 0.95,
+      "soft": 0.3,
+      "heat": 0.95,
+      "occlude": 0.68
+    },
+    {
+      "mask": "logos_dimension:textures/vfx/trail/slash_wisp.png",
+      "noise": "logos:textures/vfx/charge_aura/noise_01.png",
+      "span": [
+        0.12,
+        1.06
+      ],
+      "colors": [
+        "#FFFFFF",
+        "#FFE09A",
+        "#FFB430"
+      ],
+      "intensity": 1.35,
+      "opacity": 0.7,
+      "noise_scale": 0.6,
+      "scroll": 1.6,
+      "distort": 0.05,
+      "detail": 0.35,
+      "erosion": 0.85,
+      "soft": 0.25,
+      "heat": 1.2,
+      "occlude": 0.4
+    },
+    {
+      "mask": "logos_dimension:textures/vfx/trail/slash_edge.png",
+      "noise": "logos:textures/vfx/charge_aura/noise_07.png",
+      "span": [
+        0.55,
+        1.04
+      ],
+      "colors": [
+        "#FFFFFF",
+        "#FFF4D6",
+        "#FFC860"
+      ],
+      "intensity": 1.8,
+      "opacity": 1,
+      "noise_scale": 1.2,
+      "scroll": 1.5,
+      "distort": 0.03,
+      "detail": 0.25,
+      "erosion": 0.8,
+      "soft": 0.2,
+      "heat": 1.2,
+      "rim": 1.4,
+      "rim_width": 11,
+      "occlude": 0.15
+    }
+  ],
+  "sparks": {
+    "texture": "logos:textures/vfx/fire_impact/star.png",
+    "per_block": 3,
+    "life": 0.7,
+    "size": 0.06,
+    "colors": [
+      "#FFFFFF",
+      "#FFE7A6",
+      "#FFC24A",
+      "#B87A20"
+    ],
+    "gravity": -0.35,
+    "drag": 2.6,
+    "spread": 0.8,
+    "inherit": 0.12,
+    "spin": 2
+  },
+  "glow": {
+    "alpha": 0.45,
+    "color": "#FFC24A",
+    "width": 0.26
+  }
+}
