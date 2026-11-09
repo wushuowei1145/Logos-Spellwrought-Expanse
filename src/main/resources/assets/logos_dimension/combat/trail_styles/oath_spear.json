@@ -1,0 +1,120 @@
+{
+  "life": 0.36,
+  "layers": [
+    {
+      "mask": "logos_dimension:textures/vfx/trail/slash_body.png",
+      "noise": "logos:textures/vfx/charge_aura/noise_07.png",
+      "span": [
+        0.0,
+        1.0
+      ],
+      "colors": [
+        "#C8DAEE",
+        "#46668A",
+        "#14243A"
+      ],
+      "intensity": 1.0,
+      "opacity": 0.6,
+      "noise_scale": 0.8,
+      "scroll": 1.1,
+      "distort": 0.06,
+      "detail": 0.5,
+      "erosion": 0.95,
+      "soft": 0.3,
+      "heat": 0.6,
+      "occlude": 0.7
+    },
+    {
+      "mask": "logos_dimension:textures/vfx/trail/slash_shards.png",
+      "noise": "logos:textures/vfx/physical/trail_noise.png",
+      "span": [
+        0.45,
+        1.06
+      ],
+      "colors": [
+        "#EEF6FF",
+        "#7C98B6",
+        "#2A4260"
+      ],
+      "intensity": 1.15,
+      "opacity": 0.75,
+      "noise_scale": 0.6,
+      "scroll": 0.5,
+      "distort": 0.02,
+      "detail": 0.3,
+      "erosion": 0.7,
+      "soft": 0.15,
+      "heat": 0.9,
+      "occlude": 0.6
+    },
+    {
+      "mask": "logos_dimension:textures/vfx/trail/slash_streaks.png",
+      "noise": "logos:textures/vfx/physical/trail_noise.png",
+      "span": [
+        0.15,
+        1.04
+      ],
+      "colors": [
+        "#FFFFFF",
+        "#CFE5F7",
+        "#5F83A6"
+      ],
+      "intensity": 1.3,
+      "opacity": 0.55,
+      "noise_scale": 0.7,
+      "scroll": 2.4,
+      "distort": 0.04,
+      "detail": 0.3,
+      "erosion": 0.8,
+      "soft": 0.25,
+      "heat": 1.4,
+      "occlude": 0.3
+    },
+    {
+      "mask": "logos_dimension:textures/vfx/trail/slash_edge.png",
+      "noise": "logos:textures/vfx/charge_aura/noise_07.png",
+      "span": [
+        0.55,
+        1.04
+      ],
+      "colors": [
+        "#FFFFFF",
+        "#F2FBFF",
+        "#9FD8FF"
+      ],
+      "intensity": 1.7,
+      "opacity": 1,
+      "noise_scale": 1.2,
+      "scroll": 1.5,
+      "distort": 0.03,
+      "detail": 0.25,
+      "erosion": 0.8,
+      "soft": 0.2,
+      "heat": 1.2,
+      "rim": 1.4,
+      "rim_width": 11,
+      "occlude": 0.15
+    }
+  ],
+  "sparks": {
+    "texture": "logos:textures/vfx/physical/star.png",
+    "per_block": 3,
+    "life": 0.3,
+    "size": 0.05,
+    "colors": [
+      "#FFFFFF",
+      "#CFE8FA",
+      "#7F98B2"
+    ],
+    "gravity": 2,
+    "drag": 3,
+    "spread": 0.9,
+    "inherit": 0.15,
+    "spin": 4
+  },
+  "glow": {
+    "alpha": 0.3,
+    "color": "#BFE4FF",
+    "width": 0.15
+  }
+}
