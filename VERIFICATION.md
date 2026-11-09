@@ -2,7 +2,7 @@
 
 ## 刀光
 
-2026-11-09：分支 `feat/weapon-trails`，基于 main `bcae9d1d`（#219）。先做刀光核心（[docs/WEAPON_TRAILS.md](docs/WEAPON_TRAILS.md)），再按武器分头接入：长剑、长枪、凌霄、流火与白梅、神狐 NPC 的打刀各一个分支，合并回来。Logos jar 用 `builds/shiraume-boss-2026-11-09/logos-0.6.0-spell-ward.jar`。
+2026-11-09：分支 `feat/weapon-trails`，基于 main `bcae9d1d`（#219）。先做刀光核心（[docs/WEAPON_TRAILS.md](docs/WEAPON_TRAILS.md)），再按武器分头接入：长剑、长枪、凌霄、流火与白梅、神狐 NPC 的打刀各一个分支，合并回来；最后合进 main `4755289b`（#220 霊符），之后 Logos jar 要用 `builds/reifu-2026-11-09/logos-0.6.0-page-variants.jar`（#220 用到 Logos 的 writtenForm 钩子）。下面的结果是合进 main 之后重跑的。
 
 | 层级 | 结果 |
 | --- | --- |
