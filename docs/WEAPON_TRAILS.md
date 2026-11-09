@@ -17,9 +17,13 @@
 - 第三人称和 NPC 的刀光记在世界坐标里，在世界的自定义几何阶段画。人走开时，刀光留在原地慢慢散。
 - 第一人称的刀光记在手部渲染的坐标里，在画手时画，跟着镜头走。
 
-**渲染：**
-- 每种样式由几层带子组成，一层一条管线，着色器是 `shaders/core/weapon_trail.{vsh,fsh}`。
-- 每层是形状遮罩 × 流动噪声。刀光随年龄从尾部被噪声侵蚀，外缘有一道热亮的刃线，颜色按"热度"在三色之间取。
+**渲染：** 照 StylizedSlashesV2（UE5 素材包）刀光材质 `M_ComplexSlash_01` 的做法，在我们的“扫过的面”上重做。UE 的刀光是一个 270° 的环形网格，套三层材质：身子、刃线、各元素的高光。我们的带子横向就是年龄（头是刚扫过的地方），纵向从柄到刀尖外缘，对应 UE 网格的 U、V。
+- 每种样式由几层带子组成，一层一条管线，着色器是 `shaders/core/weapon_trail.{vsh,fsh}`，层的参数写成 #define。
+- **形状**：形状遮罩^对比度 × 强度，被扭曲噪声推开。遮罩画的是 UE 那种刀光：头部贴着外缘一大块最亮，往后拖成长短不一的条纹，越靠外缘拖得越长（`slash_streak`）；或一整块身子、尾端撕成豁口（`slash_blob`）；刃线是外缘一道往头部变粗的线，头部顺着刀身弯下一道钩（`slash_hook`）。
+- **越远越窄**：越老的点，从柄那一侧往外缘收掉越多（`narrow`），几何上真的裁掉，着色器里给软边。离刀越远，刀光越窄、只剩贴着外缘的一条。
+- **越远越透**：侵蚀 `smoothstep(e − f, e + f, 噪声)`，e 随年龄变大，噪声是沿刀光拉长的条纹，所以尾部被一条条吃掉。
+- **颜色**：两色按流动的颜色噪声插值（往尾部流），乘强度（可以大于 1，按 1 − exp(−c) 压回，过亮时变白），形状最浓处偏向白热的芯；另可乘一张往尾部流的不透明噪声，做出流动的亮斑（UE 高光层的做法）。
+- **往外飘**：刀光在散尽前顺着刀身往外飘出一点（`expand`），对应 UE 刀光网格随年龄放大。
 - 混合用预乘 alpha：`occlude` 为 0 是纯发光，为 1 是照常盖上去。带颜色的身子要取中间值，否则白天会被亮天空洗成白色。
 - 另有刀尖甩出的粒子，以及沿刀尖的一层柔光（`SoftGlow`）。
 - 开着光影包时，刀光经 `ShaderPackOverlay` 在合成后画；阴影通道里送来的点直接丢掉。
@@ -112,41 +116,53 @@ BoneTrails.feed(key, holder, poseStack.last().pose(), base, tip,
 
 样式文件是 `assets/<ns>/combat/trail_styles/<名字>.json`。每种伤害类型一种：`physical`、`fire`、`frost`、`lightning`、`void`、`arcane`、`life`，再加附属的 `foxfire`。武器可以有自己的样式，比如某把剑独有的光。
 
+一种样式一般三层，照 UE：**身子**（`slash_blob` 或 `slash_streak`，带颜色、盖住一些背景、尾部被条纹吃掉）、**高光**（`slash_streak` 或元素自己的形状：火舌 `slash_flame`、电弧 `slash_bolt`、冰晶 `slash_shards`、柔丝 `slash_wisp`，亮色、乘一张往尾部流的不透明噪声）、**刃线**（`slash_hook`，细而亮，带 `facing`）。
+
 ```json
 {
-  "life": 0.34,
+  "life": 0.38,
+  "expand": 0.22,
   "layers": [
-    {"mask": "logos_dimension:textures/vfx/trail/slash_body.png",
-     "noise": "logos:textures/vfx/charge_aura/noise_07.png",
-     "span": [0.08, 1.0], "colors": ["#FFFFFF", "#B4C6E2", "#4A6488"],
-     "occlude": 0.5, "intensity": 1.0, "opacity": 0.55,
-     "noise_scale": 0.9, "noise_stretch": 1, "scroll": 1.2, "distort": 0.06, "detail": 0.55,
-     "erosion": 0.96, "soft": 0.3, "heat": 1.2, "rim": 0, "rim_width": 14}
+    {"mask": "logos_dimension:textures/vfx/trail/slash_blob.png",
+     "detail_noise": "logos:textures/vfx/charge_aura/noise_smoke.png",
+     "span": [0, 1], "colors": ["#FF7A1A", "#8A1400", "#FFD27A"],
+     "occlude": 0.7, "color_strength": 1.3, "color_tile": [0.4, 1], "color_pan": 0.4,
+     "main_contrast": 1.6, "opacity": 0.85, "distort": 0.06,
+     "erosion": {"amount": 0.6, "start": 0.35, "pow": 1.6, "feather": 0.4, "tile": [0.3, 0.12]},
+     "narrow": 0.78, "narrow_pow": 1.3, "narrow_soft": 0.18,
+     "fade": {"in": 0.1, "out": 0.02, "tail": 0.25}},
+    {"mask": "logos_dimension:textures/vfx/trail/slash_flame.png",
+     "detail_noise": "logos:textures/vfx/charge_aura/noise_fire04.png",
+     "span": [0.1, 1.12], "colors": ["#FF4A08", "#FFB040", "#FFF2B0"], "occlude": 0.25, "color_strength": 4.5,
+     "opacity_noise": {"strength": 1.3, "contrast": 3, "tile": [0.6, 1], "pan": 0.8}},
+    {"mask": "logos_dimension:textures/vfx/trail/slash_hook.png",
+     "span": [0.15, 1.03], "colors": ["#FFF2B0", "#FF8A2A", "#FFFFFF"], "occlude": 0.25, "color_strength": 3.5,
+     "narrow": 0, "facing": 0.06}
   ],
-  "sparks": {"texture": "logos:textures/vfx/physical/star.png", "frames": 1, "per_block": 3, "life": 0.32,
-             "size": 0.05, "colors": ["#FFFFFF", "#8890A0"], "gravity": 2, "drag": 3, "spread": 1.0,
-             "inherit": 0.15, "spin": 4, "blend": "add"},
-  "glow": {"alpha": 0.3, "color": "#DCE4F5", "width": 0.16}
+  "sparks": {"texture": "logos:textures/vfx/fire_impact/ember.png", "per_block": 8, "life": 0.6, "size": 0.045,
+             "colors": ["#FFF2B0", "#FF4A00"], "gravity": -1.6, "blend": "blend"},
+  "glow": {"alpha": 0.5, "color": "#FF6A10", "width": 0.3}
 }
 ```
 
 **整体：**
 - `life`：一点从扫过到散尽的秒数。
+- `expand`：散尽前顺着刀身往外飘出多少格。
 
-**每一层：**
+**每一层**（没写的取默认值，见 `TrailStyle`）：
+- 贴图：`mask` 形状遮罩；`erosion_noise` 侵蚀噪声（默认沿刀光拉长的条纹 `noise_aniso`）；`detail_noise` 颜色与不透明噪声（默认 Logos 的云雾噪声）；`distort_noise` 扭曲噪声。
 - `span`：横跨刀身的位置，0 是 `blade.from`，1 是刀尖，大于 1 就伸出刀尖之外。
-- `colors`：三色，依次是最亮、过渡、将散。
-- `occlude`：0 发光，1 盖色。
-- `intensity`、`opacity`：亮度与不透明度。
-- `noise_scale`：噪声沿刀光的密度，单位是每格多少个噪声单元。
-- `noise_stretch`：噪声横跨刀身的密度。
-- `scroll`：噪声往尾部流动的速度。
-- `distort`：噪声把遮罩扭开多少。
-- `detail`：噪声在形状里占多少。
-- `erosion`：随年龄侵蚀的快慢。
-- `soft`：侵蚀边缘的软硬。
-- `heat`：多亮算"最亮"。
-- `rim`、`rim_width`：外缘刃线的强弱与粗细。
+- `colors`：`[颜色一, 颜色二, 白热芯]`，前两色按颜色噪声插值。
+- `color_strength`、`color_contrast`：颜色的强度（可大于 1）与对比度；`color_tile`（沿刀光每格、横跨）、`color_pan`（往尾部流的速度）。
+- `hot_from`、`hot_gain`：形状多浓开始偏向白热芯；`emissive_mask`：形状浓淡乘进亮度的比例。
+- `main_contrast`、`main_strength`：形状遮罩的对比度与强度。
+- `opacity`、`occlude`：不透明度；0 发光，1 盖色。
+- `distort`、`distort_tile`、`distort_pan`：扭曲的强弱、密度与流速。
+- `opacity_noise`：`{strength, contrast, tile, pan}`，乘一张往尾部流的不透明噪声做流动亮斑；`strength` 为 0 不用。
+- `erosion`：`{amount, start, pow, feather, contrast, strength, tile, pan}`。侵蚀从年龄 `start` 起，按 `pow` 变大到 `amount`；`feather` 是边缘软硬；`tile` 是噪声沿刀光每格的密度与横跨的密度（横跨取小值，条纹才是一长条）。
+- `narrow`、`narrow_pow`、`narrow_soft`：年龄 a 处从柄那一侧收掉 `narrow × a^narrow_pow`，软边宽 `narrow_soft`。刃线层取 0。
+- `fade`：`{in, out, tail}`，柄侧、外缘与尾端的淡出宽度。
+- `rim`、`rim_width`：外缘再加一道细亮线（可选）。
 - `facing`：沿刀尖路径再画一条朝向镜头的带子，单位是半宽多少格，0 不画。刀扫过的面被侧着看时会细成一条线，比如从背后看竖劈，或者直刺几乎扫不出面。这条带子按侧着的程度淡入，正对着看时不画。一般只给刃线层，取 0.06。
 
 **粒子：**
@@ -157,11 +173,11 @@ BoneTrails.feed(key, holder, poseStack.last().pose(), base, tip,
 - `blend`：`blend` 是照常盖色，白天看得出颜色；`add` 是发光。
 
 **贴图：**
-- 形状遮罩在 `textures/vfx/trail/`，由 `tools/trail_textures.py` 生成，有身子、刃线、速度线、火舌、电弧、冰晶、墨痕、柔丝。遮罩的坐标是横向从刀光头（左）到尾（右），纵向从刀尖外缘（上）到柄（下）。
-- 噪声和粒子贴图直接用 Logos 已有的 `logos:textures/vfx/...`，不复制。
+- 形状遮罩在 `textures/vfx/trail/`，由 `tools/trail_textures.py` 生成：条纹身子、实心身子、弯钩刃线、火舌、电弧、冰晶、墨痕、柔丝，以及旧的身子、刃线、速度线。遮罩的坐标是横向从刀光头（左）到尾（右），纵向从刀尖外缘（上）到柄（下）。形状参考了 StylizedSlashesV2 的刀光贴图，但都是自己生成的，没有拷它的图。
+- 侵蚀用的条纹噪声 `noise_aniso` 也在这里生成（可平铺）；其余噪声和粒子贴图直接用 Logos 已有的 `logos:textures/vfx/...`，不复制。
 - 新形状加到 `trail_textures.py` 里生成，不要手画后丢进来没有来源。
 
 ## 检查
 
 - 单元测试 `WeaponTrailsTest`：样式和设置文件读得通、引用的贴图与动作都在、出光时段不超出动作、每种伤害类型都有样式；扫过的面按段记点，帧间补点贴着圆弧。
-- 实际客户端 `group:weapon_trails`：打刀四段连招在第三人称背后、正面与第一人称截图；依次缠上七种元素各砍一刀，检查样式切换并截图。检查数值时可用 `WeaponTrails.ribbons()`、`WeaponTrails.sparks()`、`LongswordClient.trailStyle(entity, firstPerson)`。
+- 实际客户端 `group:weapon_trails`：打刀四段连招在第三人称背后、正面与第一人称截图；依次缠上七种元素各砍一刀，检查样式切换并截图；最后用俯视机位（隐身盔甲架）看物理、火焰、虚空的整道刀光形状。检查数值时可用 `WeaponTrails.ribbons()`、`WeaponTrails.sparks()`、`LongswordClient.trailStyle(entity, firstPerson)`。

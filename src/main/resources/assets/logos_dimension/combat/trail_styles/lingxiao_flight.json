@@ -1,52 +1,64 @@
 {
   "life": 0.7,
+  "expand": 0,
   "layers": [
     {
       "mask": "logos_dimension:textures/vfx/trail/slash_wisp.png",
-      "noise": "logos:textures/vfx/charge_aura/noise_07.png",
       "span": [
         -1.25,
         1.25
       ],
       "colors": [
         "#FFFFFF",
-        "#BFF2FF",
-        "#4FB8E0"
-      ],
-      "intensity": 1.3,
-      "opacity": 0.75,
-      "noise_scale": 0.35,
-      "noise_stretch": 0.8,
-      "scroll": 0.8,
-      "distort": 0.12,
-      "detail": 0.4,
-      "erosion": 0.9,
-      "soft": 0.3,
-      "heat": 1.2,
-      "occlude": 0.35
-    },
-    {
-      "mask": "logos_dimension:textures/vfx/trail/slash_streaks.png",
-      "noise": "logos:textures/vfx/charge_aura/noise_01.png",
-      "span": [
-        0.1,
-        0.9
-      ],
-      "colors": [
-        "#F2FDFF",
         "#8FDCF2",
-        "#2F7FA8"
+        "#FFFFFF"
       ],
-      "intensity": 1.0,
-      "opacity": 0.45,
-      "noise_scale": 0.3,
-      "scroll": 1.0,
-      "distort": 0.05,
-      "detail": 0.4,
-      "erosion": 1.0,
-      "soft": 0.3,
-      "heat": 1.1,
-      "occlude": 0.3
+      "occlude": 0.35,
+      "color_strength": 2.6,
+      "color_tile": [
+        0.55,
+        1
+      ],
+      "color_pan": 0.7,
+      "hot_from": 0.7,
+      "hot_gain": 2,
+      "emissive_mask": 0.6,
+      "main_contrast": 1.5,
+      "opacity": 1,
+      "detail_noise": "logos:textures/vfx/charge_aura/noise_07.png",
+      "opacity_noise": {
+        "strength": 1.0,
+        "contrast": 2,
+        "tile": [
+          0.6,
+          1
+        ],
+        "pan": 0.8
+      },
+      "distort": 0.08,
+      "distort_tile": [
+        0.4,
+        1
+      ],
+      "distort_pan": 0.35,
+      "erosion": {
+        "amount": 1.0,
+        "start": 0.2,
+        "pow": 1.4,
+        "feather": 0.3,
+        "tile": [
+          0.3,
+          0.2
+        ]
+      },
+      "narrow": 0,
+      "narrow_pow": 1.2,
+      "narrow_soft": 0.15,
+      "fade": {
+        "in": 0.15,
+        "out": 0.15,
+        "tail": 0.3
+      }
     }
   ]
 }

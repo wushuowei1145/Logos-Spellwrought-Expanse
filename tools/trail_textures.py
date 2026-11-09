@@ -1,8 +1,12 @@
 """生成刀光的形状遮罩（docs/WEAPON_TRAILS.md）。
 
-输出到 src/main/resources/assets/logos_dimension/textures/vfx/trail/，每张 256×128 灰度：
+输出到 src/main/resources/assets/logos_dimension/textures/vfx/trail/，遮罩每张 256×128 灰度：
 横向从刀光头（左，刚扫过）到尾（右，将散），纵向从刀尖外缘（上）到柄（下）。
-噪声不在这里做：直接用 Logos 已有的 textures/vfx 噪声图。
+
+形状参考 StylizedSlashesV2 刀光的做法（只看过，没有拷它的图）：头部贴着外缘一块最亮，往后拖成长短不一的条纹，
+越靠外缘的拖得越长，所以离刀越远刀光越窄、越碎（slash_streak）；外缘一道细线往头部变粗、在头部顺着刀身弯下来
+（slash_hook）；一整块实心的身子、尾端被撕成参差的豁口（slash_blob）。
+噪声大多直接用 Logos 已有的 textures/vfx 噪声图；侵蚀要用的沿刀光拉长的条纹噪声 Logos 没有，在这里生成（noise_aniso，可平铺）。
 
 运行：uv run --python 3.12 --with numpy --with pillow python tools/trail_textures.py
 """
@@ -64,8 +68,53 @@ def fbm2(shape, cells=(8, 4), octaves=5, seed=0):
     return out / total
 
 
+def periodic_noise(size, cells, octaves, seed, gain=.5):
+    """可平铺的二维值噪声（格点首尾相接）。cells = (横向格数, 纵向格数)，横向少、纵向多就是沿横向拉长的条纹。"""
+    r = np.random.default_rng(seed)
+    h, w = size
+    out = np.zeros(size)
+    amp, total = 1.0, 0.0
+    for o in range(octaves):
+        cx, cy = cells[0] * 2 ** o, cells[1] * 2 ** o
+        grid = r.random((cy, cx))
+        y = (np.arange(h) / h * cy)[:, None]
+        x = (np.arange(w) / w * cx)[None, :]
+        iy, ix = np.floor(y).astype(int), np.floor(x).astype(int)
+        fy, fx = y - iy, x - ix
+        fy, fx = fy * fy * (3 - 2 * fy), fx * fx * (3 - 2 * fx)
+        iy1, ix1 = (iy + 1) % cy, (ix + 1) % cx
+        a = grid[iy % cy, ix % cx] * (1 - fx) + grid[iy % cy, ix1] * fx
+        b = grid[iy1, ix % cx] * (1 - fx) + grid[iy1, ix1] * fx
+        out += amp * (a * (1 - fy) + b * fy)
+        total += amp
+        amp *= gain
+    return out / total
+
+
+def stretch(a, lo=2, hi=98):
+    """按百分位拉满 0–1。"""
+    p0, p1 = np.percentile(a, lo), np.percentile(a, hi)
+    return np.clip((a - p0) / (p1 - p0), 0, 1)
+
+
+def blur_rows(a, radius):
+    """纵向（行之间）模糊，让条纹有软边。"""
+    k = np.exp(-np.linspace(-2, 2, radius * 2 + 1) ** 2)
+    k /= k.sum()
+    pad = np.pad(a, ((radius, radius), (0, 0)), mode='edge')
+    return sum(k[i] * pad[i:i + a.shape[0]] for i in range(len(k)))
+
+
+def blur(a, radius):
+    k = np.exp(-np.linspace(-2, 2, radius * 2 + 1) ** 2)
+    k /= k.sum()
+    pad = np.pad(a, ((radius, radius), (radius, radius)), mode='edge')
+    rows = sum(k[i] * pad[i:i + a.shape[0], :] for i in range(len(k)))
+    return sum(k[i] * rows[:, i:i + a.shape[1]] for i in range(len(k)))
+
+
 def save(name, a):
-    a = np.clip(a, 0, 1)
+    a = np.clip(np.nan_to_num(a), 0, 1)
     img = Image.fromarray((a * 255).astype(np.uint8), 'L').convert('RGB')
     img.save(os.path.join(OUT, name + '.png'))
     print(name)
@@ -194,8 +243,58 @@ def wisp():
     return a * smooth(1, .3, u) ** .8 * smooth(0, .05, u + .02)
 
 
+def slash_streak():
+    """主体：头部贴着外缘一大块最亮，往后拖成一道道软边的长条纹；越靠外缘拖得越长越亮，越往柄越短越暗，
+    所以离刀越远越窄、越透。"""
+    y = v[:, :1]
+    longest = value_noise_1d(H, 5, 31)[:, None]
+    rows = blur_rows(rng.random((H, 1)), 3)
+    rows = (rows - rows.min()) / (rows.max() - rows.min())
+    length = np.clip((1 - y) ** .65 * (.5 + .55 * longest), .01, 1)
+    bright = np.clip((1 - y) ** 1.15 * (.3 + .85 * rows), 0, 1)
+    tail = smooth(length, length * .2, u) ** 1.2
+    start = smooth(0, .02 + .06 * y, u)          # 越靠柄的条纹起得越晚一点
+    streaks = bright * tail * start * smooth(.95, .55, y)
+    head = smooth(.26, .1, y) * smooth(.28, .1, u) * smooth(0, .015, u)
+    glow = smooth(.4, .0, y) * smooth(.3, .0, u) * .3        # 头部附近一层软光，条纹之间不至于全空
+    return np.clip(np.maximum(np.maximum(streaks, head), glow * start), 0, 1)
+
+
+def slash_hook():
+    """刃线：外缘一道线，尾端极细、往头部变粗；头部一道粗的弯钩顺着刀身往柄的方向弯下去、收成尖（刀刃的前缘）。"""
+    jag = (value_noise_1d(W, 4, 61)[None, :] - .5) * .012
+    thick = .012 + .1 * (1 - u) ** 3 + jag
+    line = smooth(thick, thick * .55, v) * smooth(.62, .25, u)
+    depth = .52
+    k = np.clip(v / depth, 0, 1)
+    left = .022 + .035 * k ** 2                   # 弯钩外沿：往下稍往后
+    width = .14 * (1 - k) ** 1.25 + .003          # 往下收成尖
+    hook = smooth(left - .006, left + .004, u) * smooth(left + width + .006, left + width - .004, u) * (v < depth)
+    return np.clip(blur(np.maximum(line, hook), 1) * 1.08, 0, 1)
+
+
+def slash_blob():
+    """实心的身子：上下边缘圆润起伏，尾端被撕成几个圆钝的豁口。"""
+    y = v[:, :1]
+    bumps = stretch(value_noise_1d(H, 3, 41))[:, None]
+    end = .92 - .4 * np.clip((bumps - .3) * 1.6, 0, 1) ** 1.5
+    top = .07 + .05 * (value_noise_1d(W, 3, 42)[None, :] - .5)
+    bottom = .93 + .05 * (value_noise_1d(W, 3, 43)[None, :] - .5)
+    a = smooth(end, end - .1, u) * smooth(0, .05, u) * smooth(top, top + .07, y) * smooth(bottom, bottom - .07, y)
+    return np.clip(blur(a, 4) * 1.08, 0, 1)
+
+
+def noise_aniso():
+    """沿刀光拉长的条纹噪声（可平铺，256×256）：侵蚀时一条条地被吃掉，而不是一块块。"""
+    a = periodic_noise((256, 256), (2, 22), 4, 51, .55)
+    b = periodic_noise((256, 256), (4, 56), 2, 52, .5)
+    return stretch(a * .8 + b * .2)
+
+
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
     for name, fn in [('slash_body', body), ('slash_edge', edge), ('slash_streaks', streaks), ('slash_flame', flame),
-                     ('slash_bolt', bolt), ('slash_shards', shards), ('slash_ink', ink), ('slash_wisp', wisp)]:
+                     ('slash_bolt', bolt), ('slash_shards', shards), ('slash_ink', ink), ('slash_wisp', wisp),
+                     ('slash_streak', slash_streak), ('slash_hook', slash_hook), ('slash_blob', slash_blob),
+                     ('noise_aniso', noise_aniso)]:
         save(name, fn())

@@ -202,7 +202,7 @@ public final class WeaponTrails {
         for (int i = 0; i < style.layers().size(); i++) {
             TrailStyle.Layer layer = style.layers().get(i);
             RenderType type = TrailMaterials.of(layer);
-            layered.apply(i).submitCustomGeometry(pose, type, (p, buf) -> points.build(p, buf, layer, now, life, origin, e.seed));
+            layered.apply(i).submitCustomGeometry(pose, type, (p, buf) -> points.build(p, buf, layer, now, life, style.expand(), origin, e.seed));
         }
     }
 

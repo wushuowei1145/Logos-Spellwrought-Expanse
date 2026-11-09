@@ -90,8 +90,9 @@ final class TrailRibbon {
     /**
      * 画一层。坐标先减去 {@code origin}（世界坐标时是镜头位置，手部坐标时是原点）。
      * 每一段按自己的淡出画（见 {@link #fade}），{@code seed} 让同一样式的两道刀光纹理不同。
+     * 越老的点柄那一侧收掉越多（{@link #inset}），离刀越远刀光越窄；{@code expand} 让刀光在散尽前顺着刀身往外飘出这么多格。
      */
-    void build(PoseStack.Pose pose, VertexConsumer buf, TrailStyle.Layer layer, double now, float life, Vec3 origin, int seed) {
+    void build(PoseStack.Pose pose, VertexConsumer buf, TrailStyle.Layer layer, double now, float life, float expand, Vec3 origin, int seed) {
         float fade = 0;
         for (int i = 1; i < points.size(); i++) {
             Point a = points.get(i - 1), b = points.get(i);
@@ -106,12 +107,29 @@ final class TrailRibbon {
             float sa = (float) Math.min(1, (now - a.time) / life), sb = (float) Math.min(1, (now - b.time) / life);
             if (sa >= 1 && sb >= 1) continue;
             int light = (seed + a.segment * 7919) & 0x7FFF;
-            corner(pose, buf, a, layer.inner(), origin, sa, 0, light, fade);
-            corner(pose, buf, a, layer.outer(), origin, sa, 1, light, fade);
-            corner(pose, buf, b, layer.outer(), origin, sb, 1, light, fade);
-            corner(pose, buf, b, layer.inner(), origin, sb, 0, light, fade);
-            if (layer.facing() > 0) facing(pose, buf, a, b, layer, origin, sa, sb, light, fade);
+            float va = inset(layer, sa), vb = inset(layer, sb), width = layer.outer() - layer.inner();
+            corner(pose, buf, a, layer.inner() + width * va, origin, sa, va, light, fade, expand);
+            corner(pose, buf, a, layer.outer(), origin, sa, 1, light, fade, expand);
+            corner(pose, buf, b, layer.outer(), origin, sb, 1, light, fade, expand);
+            corner(pose, buf, b, layer.inner() + width * vb, origin, sb, vb, light, fade, expand);
+            if (layer.facing() > 0) facing(pose, buf, a, b, layer, origin, sa, sb, light, fade, expand);
         }
+    }
+
+    /**
+     * 年龄 {@code age} 处柄那一侧收掉的比例（横跨这一层的 0–1）：着色器里收窄的软边从 narrow × age^pow 起，
+     * 几何上少裁一点，留出软边。
+     */
+    static float inset(TrailStyle.Layer layer, float age) {
+        return Math.clamp(layer.narrow() * (float) Math.pow(age, layer.narrowPow()) - .04f, 0, .97f);
+    }
+
+    /** 顺着刀身往外飘：这一点在年龄 {@code age} 时外移的量。 */
+    private static Vec3 drift(Point p, float age, float expand) {
+        if (expand == 0 || age <= 0) return Vec3.ZERO;
+        Vec3 blade = p.tip.subtract(p.base);
+        double len = blade.length();
+        return len < 1e-6 ? Vec3.ZERO : blade.scale(expand * age / len);
     }
 
     /**
@@ -119,8 +137,8 @@ final class TrailRibbon {
      * 正对镜头时淡成 0（那时扫过的面本身看得清）。镜头在 {@code origin}（减完以后就是原点）。
      */
     private static void facing(PoseStack.Pose pose, VertexConsumer buf, Point a, Point b, TrailStyle.Layer layer, Vec3 origin,
-                               float sa, float sb, int seed, float fade) {
-        Vec3 ta = a.tip.lerp(a.base, 1 - layer.outer()), tb = b.tip.lerp(b.base, 1 - layer.outer());
+                               float sa, float sb, int seed, float fade, float expand) {
+        Vec3 ta = a.base.lerp(a.tip, layer.outer()).add(drift(a, sa, expand)), tb = b.base.lerp(b.tip, layer.outer()).add(drift(b, sb, expand));
         Vec3 along = tb.subtract(ta);
         if (along.lengthSqr() < 1e-8) return;
         Vec3 mid = ta.add(tb).scale(.5).subtract(origin);
@@ -149,10 +167,11 @@ final class TrailRibbon {
     }
 
     private static void corner(PoseStack.Pose pose, VertexConsumer buf, Point p, float across, Vec3 origin, float age, float v,
-                               int seed, float fade) {
-        double x = p.base.x + (p.tip.x - p.base.x) * across - origin.x;
-        double y = p.base.y + (p.tip.y - p.base.y) * across - origin.y;
-        double z = p.base.z + (p.tip.z - p.base.z) * across - origin.z;
+                               int seed, float fade, float expand) {
+        Vec3 out = drift(p, age, expand);
+        double x = p.base.x + (p.tip.x - p.base.x) * across + out.x - origin.x;
+        double y = p.base.y + (p.tip.y - p.base.y) * across + out.y - origin.y;
+        double z = p.base.z + (p.tip.z - p.base.z) * across + out.z - origin.z;
         int arc = Math.floorMod(Math.round(p.arc * 64), 32768);
         int alpha = Math.round(Math.clamp(fade, 0, 1) * 255);
         buf.addVertex(pose, (float) x, (float) y, (float) z).setColor(255, 255, 255, alpha).setUv(age, v)

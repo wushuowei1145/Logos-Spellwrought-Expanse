@@ -54,12 +54,32 @@ class WeaponTrailsTest {
             assertTrue(style.life() > 0 && style.life() < 2, name + " 的 life 不合理");
             for (TrailStyle.Layer l : style.layers()) {
                 assertTexture(l.mask(), name);
-                assertTexture(l.noise(), name);
+                assertTexture(l.erosionNoise(), name);
+                assertTexture(l.detailNoise(), name);
+                assertTexture(l.distortNoise(), name);
                 assertTrue(l.inner() < l.outer(), name + " 的 span 要从内到外");
-                assertTrue(l.occlude() >= 0 && l.occlude() <= 1, name + " 的 occlude 要在 0–1");
+                float occlude = l.define("OCCLUDE");
+                assertTrue(occlude >= 0 && occlude <= 1, name + " 的 occlude 要在 0–1");
+                assertTrue(l.narrow() >= 0 && l.narrow() < 1, name + " 的 narrow 要在 0–1");
+                // 着色器用到的每个 #define 都要有值，少一个就编译不过
+                for (String define : SHADER_DEFINES) assertTrue(l.defines().containsKey(define), name + " 缺少 " + define);
             }
             if (style.sparks() != null) assertTexture(style.sparks().texture(), name);
         }
+    }
+
+    /** weapon_trail.fsh 里用到的 #define（颜色按分量）。 */
+    private static final List<String> SHADER_DEFINES = List.of("C1_R", "C1_G", "C1_B", "C2_R", "C2_G", "C2_B", "C3_R", "C3_G", "C3_B",
+            "COLOR_STRENGTH", "COLOR_CONTRAST", "COLOR_TILE_U", "COLOR_TILE_V", "COLOR_PAN", "HOT_FROM", "HOT_GAIN", "EMISSIVE_MASK",
+            "MAIN_CONTRAST", "MAIN_STRENGTH", "OPACITY", "OCCLUDE", "DISTORT", "DIST_TILE_U", "DIST_TILE_V", "DIST_PAN",
+            "OM_STRENGTH", "OM_CONTRAST", "OM_TILE_U", "OM_TILE_V", "OM_PAN", "EROSION", "ER_START", "ER_POW", "ER_FEATHER",
+            "ER_CONTRAST", "ER_STRENGTH", "ER_TILE_U", "ER_TILE_V", "ER_PAN", "NARROW", "NARROW_POW", "NARROW_SOFT",
+            "FADE_IN", "FADE_OUT", "FADE_TAIL", "RIM", "RIM_WIDTH");
+
+    @Test void shaderUsesExactlyTheDefinesStylesGive() throws IOException {
+        // 清单里的宏着色器都要用到（清单与 TrailStyle 给出的一致），免得改了一边忘了另一边
+        String fsh = Files.readString(ASSETS.resolve("shaders/core/weapon_trail.fsh"));
+        for (String define : SHADER_DEFINES) assertTrue(fsh.contains(define), "着色器没有用到 " + define);
     }
 
     @Test void everyDamageTypeHasAStyle() {

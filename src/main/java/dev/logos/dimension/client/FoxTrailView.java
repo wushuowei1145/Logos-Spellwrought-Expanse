@@ -207,6 +207,11 @@ public class FoxTrailView extends FoxCombatViews {
                 .waitUntil("收刀播完", ctx -> clientFox() != null && clientFox().npcCombatMove() == null)
                 .step("停止记录", ctx -> sampling = 0)
                 .check("收刀不出刀光", ctx -> quietPeak == 0 && WeaponTrails.ribbons() == 0)
+                // 同一次试玩里后面的场景还会用这片场地：神狐与靶子要带走，不然会站在别的场景的镜头前
+                .server("移除神狐与靶子", ctx -> {
+                    if (serverFox != null) serverFox.discard();
+                    if (target != null) target.discard();
+                })
                 .teardown("恢复", ctx -> {
                     attacking = false;
                     sampling = 0;
