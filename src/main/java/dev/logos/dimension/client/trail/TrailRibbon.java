@@ -27,7 +27,7 @@ final class TrailRibbon {
         if (!emit) { open = false; return; }
         Point last = last();
         if (last != null && time <= last.time) return;
-        if (!open) { segment++; open = true; points.add(new Point(time, base, tip, segment, 0)); return; }
+        if (!open || last == null) { segment++; open = true; points.add(new Point(time, base, tip, segment, 0)); return; }
         float arc = last.segment == segment ? last.arc + (float) last.tip.distanceTo(tip) : 0;
         points.add(new Point(time, base, tip, segment, arc));
     }
@@ -77,16 +77,32 @@ final class TrailRibbon {
         // 下一点还在同一段时留下最老的这一点做尾巴，让散去是渐隐而不是一截截消失
         if (drop > 0 && drop < points.size() && points.get(drop).segment == points.get(drop - 1).segment) drop--;
         if (drop > 0) points.subList(0, drop).clear();
+        // 送点的一方停了比 life 还久（被视锥剔除、F1 藏了手）：这一段已散尽，下次另起一段
+        if (points.isEmpty()) open = false;
+    }
+
+    /** 某一段的淡出：还在发光的那一段为 1；已断开的一段从它最后一点起，用 life 的六成淡完，避免最后几点悬在空中。 */
+    private float fade(int seg, double end, double now, float life) {
+        if (open && seg == segment) return 1;
+        return (float) Math.max(0, 1 - (now - end) / (life * .6));
     }
 
     /**
      * 画一层。坐标先减去 {@code origin}（世界坐标时是镜头位置，手部坐标时是原点）。
-     * {@code fade} 是整道刀光的淡出（刚断开时为 1），{@code seed} 让同一样式的两道刀光纹理不同。
+     * 每一段按自己的淡出画（见 {@link #fade}），{@code seed} 让同一样式的两道刀光纹理不同。
      */
-    void build(PoseStack.Pose pose, VertexConsumer buf, TrailStyle.Layer layer, double now, float life, Vec3 origin, int seed, float fade) {
+    void build(PoseStack.Pose pose, VertexConsumer buf, TrailStyle.Layer layer, double now, float life, Vec3 origin, int seed) {
+        float fade = 0;
         for (int i = 1; i < points.size(); i++) {
             Point a = points.get(i - 1), b = points.get(i);
             if (a.segment != b.segment) continue;
+            // 进入新的一段时，找到这一段最后一点的时刻算淡出
+            if (i == 1 || points.get(i - 2).segment != a.segment) {
+                int j = i;
+                while (j + 1 < points.size() && points.get(j + 1).segment == a.segment) j++;
+                fade = fade(a.segment, points.get(j).time, now, life);
+            }
+            if (fade <= 0) continue;
             float sa = (float) Math.min(1, (now - a.time) / life), sb = (float) Math.min(1, (now - b.time) / life);
             if (sa >= 1 && sb >= 1) continue;
             int light = (seed + a.segment * 7919) & 0x7FFF;

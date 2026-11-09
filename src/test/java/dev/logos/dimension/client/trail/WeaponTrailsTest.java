@@ -113,6 +113,19 @@ class WeaponTrailsTest {
         assertEquals(1, r.points().size(), "第一刀已散尽");
     }
 
+    @Test void resumingAfterTheTrailFadedStartsANewSwing() {
+        // 送点的一方停了比 life 还久（被剔除），点全散尽后又接着送：另起一段，不能空指针
+        TrailRibbon r = new TrailRibbon();
+        r.add(0, Vec3.ZERO, new Vec3(0, 1, 0), true);
+        r.add(.02, Vec3.ZERO, new Vec3(.2, 1, 0), true);
+        r.prune(1, .2f);
+        assertTrue(r.points().isEmpty());
+        assertFalse(r.emitting());
+        r.add(1.01, Vec3.ZERO, new Vec3(0, 0, 1), true);
+        assertEquals(1, r.points().size());
+        assertEquals(0, r.points().get(0).arc(), 1e-6);
+    }
+
     @Test void smoothingFollowsTheArc() {
         // 刀尖绕原点转、半径 1，每帧转 40°（低帧率的快速挥砍）：补出来的点应贴着圆，而不是落在弦上
         TrailRibbon r = new TrailRibbon();

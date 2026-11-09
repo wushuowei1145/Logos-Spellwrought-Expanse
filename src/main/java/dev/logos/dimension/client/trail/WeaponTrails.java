@@ -186,15 +186,11 @@ public final class WeaponTrails {
                              double now, Vec3 origin) {
         TrailStyle style = e.style;
         float life = style.life();
-        // 断开后整道刀光再用 life 的一半淡完，避免最后几点悬在空中
-        TrailRibbon.Point last = e.ribbon.last();
-        float fade = e.ribbon.emitting() || last == null ? 1 : (float) Math.max(0, 1 - (now - last.time()) / (life * .6));
-        if (fade <= 0) return;
         var points = e.ribbon;
         for (int i = 0; i < style.layers().size(); i++) {
             TrailStyle.Layer layer = style.layers().get(i);
             RenderType type = TrailMaterials.of(layer);
-            layered.apply(i).submitCustomGeometry(pose, type, (p, buf) -> points.build(p, buf, layer, now, life, origin, e.seed, fade));
+            layered.apply(i).submitCustomGeometry(pose, type, (p, buf) -> points.build(p, buf, layer, now, life, origin, e.seed));
         }
     }
 

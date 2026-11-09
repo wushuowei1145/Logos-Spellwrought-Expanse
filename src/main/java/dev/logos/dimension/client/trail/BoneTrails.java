@@ -22,6 +22,8 @@ import org.jspecify.annotations.Nullable;
 public final class BoneTrails {
     /** 帧间补点：刀尖每走这么多格补一个。 */
     private static final float STEP = .12f;
+    /** 两次送点隔了这么久（秒，比如被视锥剔除后又回来），先断开，不跨着空档连一条直的。 */
+    private static final double GAP = .25;
     private record Last(double time, Vec3 relative) {}
     private static final Map<Object, Last> LAST = new HashMap<>();
 
@@ -50,6 +52,9 @@ public final class BoneTrails {
             double dt = last == null ? 0 : now - last.time;
             on = dt > 1e-4 && dt < .25 && relative.distanceTo(last.relative) / dt >= speed;
         }
+        Last previous = LAST.get(key);
+        if (previous != null && now - previous.time > GAP)
+            WeaponTrails.feedSmoothed(key, WeaponTrails.Space.WORLD, now, worldBase, worldTip, false, resolved, STEP);
         LAST.put(key, new Last(now, relative));
         if (LAST.size() > 128) LAST.entrySet().removeIf(e -> now - e.getValue().time > 5);
         WeaponTrails.feedSmoothed(key, WeaponTrails.Space.WORLD, now, worldBase, worldTip, on, resolved, STEP);
