@@ -1,6 +1,9 @@
 package dev.logos.dimension.client.longsword;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.client.trail.BoneTrails;
+import dev.logos.dimension.client.trail.WeaponTrails;
 import dev.logos.dimension.combat.CombatWeapon;
 import dev.logos.dimension.item.LingxiaoSwordItem;
 import dev.logos.dimension.lingxiao.FlightRules;
@@ -13,6 +16,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import org.joml.Matrix4f;
@@ -22,6 +26,7 @@ import org.joml.Vector3f;
 /**
  * 御剑时脚下的剑：载具自己画，不跟骑手的骨架。剑尖朝同步来的偏航和俯仰（服务端让它顺着飞行方向转，见 {@link FlightRules}），
  * 剑面朝上，网格里的踏脚点落在两脚中间。骑手的起飞动作带 {@code handoff} 标记，播到那一刻之前剑还在手里，这里不画。
+ * 飞起来时剑格处横着拖出一道淡淡的剑气（{@code combat/trail_styles/lingxiao_flight.json}，见 docs/WEAPON_TRAILS.md）。
  */
 public final class FlyingSwordRenderer extends EntityRenderer<FlyingSword, FlyingSwordRenderer.State> {
     /** 剑放大的倍数和踏脚点在网格里的高度，与 tools/lingxiao_moves.py 的 FLIGHT_SCALE、FOOT_ON_BLADE 一致。 */
@@ -32,9 +37,21 @@ public final class FlyingSwordRenderer extends EntityRenderer<FlyingSword, Flyin
     private static final float MAX_SWING = 115;
     /** 网格坐标换到剑的局部坐标：剑尖 +Y 朝前（+Z），剑面法线 +Z 朝上（+Y），刃宽 X 落在 -X（列主序）。 */
     private static final Matrix4f LAY_FLAT = new Matrix4f(-1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1);
+    /**
+     * 御剑的剑气：剑格处横跨剑身的一段（网格单位，两侧各约一掌宽），剑往前飞时扫出一道平铺在剑后的带子。
+     * 剑尖朝着飞行方向，所以剑身自己的两端只会沿一条线走、扫不出面，要取横着的一段。
+     */
+    private static final Vector3f TRAIL_LEFT = new Vector3f(-2.6f, 2.3f, 0), TRAIL_RIGHT = new Vector3f(2.6f, 2.3f, 0);
+    private static final Identifier TRAIL_STYLE = LogosDimension.id("lingxiao_flight");
+    /** 飞得比这快（格/秒）才拖剑气，悬停、慢慢挪不拖。 */
+    private static final float TRAIL_SPEED = 4;
+    /** 隔了这么久（秒）没送剑气就先断开：帧率很低时两帧之间也可能有零点一秒多，不能取太小。 */
+    private static final double TRAIL_GAP = .25;
+    /** 上一次送剑气的时刻：剑被视锥剔除、隔了一阵才又画时，先断开旧的一道，免得一条直线连过去。 */
+    private final Map<Integer, Double> trailFed = new HashMap<>();
 
     public static final class State extends EntityRenderState {
-        int weapon = -1;
+        int entity = -1, weapon = -1;
         float yaw, pitch;
         boolean shown;
         final Vector3f velocity = new Vector3f();
@@ -51,6 +68,7 @@ public final class FlyingSwordRenderer extends EntityRenderer<FlyingSword, Flyin
 
     @Override public void extractRenderState(FlyingSword sword, State state, float partial) {
         super.extractRenderState(sword, state, partial);
+        state.entity = sword.getId();
         state.yaw = sword.getViewYRot(partial);
         state.pitch = sword.getViewXRot(partial);
         var rider = sword.getFirstPassenger();
@@ -70,8 +88,24 @@ public final class FlyingSwordRenderer extends EntityRenderer<FlyingSword, Flyin
             var mesh = new Matrix4f().translate(0, (float) FlightRules.SEAT_HEIGHT - HALF_THICKNESS * s, 0).rotate(rotation)
                     .mul(LAY_FLAT).scale(s).translate(0, -FOOT_ON_BLADE, 0);
             rig.submitLoose(pose, out, state.lightCoords, mesh, tassels(rig, state, rotation));
+            trail(state, new Matrix4f(pose.last().pose()).mul(mesh));
         }
         super.submit(state, pose, out, camera);
+    }
+
+    /** 送一次剑气：{@code toCamera} 把网格坐标换成相对镜头的世界坐标。 */
+    private void trail(State state, Matrix4f toCamera) {
+        var level = Minecraft.getInstance().level;
+        var sword = level == null ? null : level.getEntity(state.entity);
+        if (sword == null) return;
+        String key = "lingxiao_flight:" + state.entity;
+        double now = WeaponTrails.now();
+        Double last = trailFed.put(state.entity, now);
+        if (trailFed.size() > 16) trailFed.entrySet().removeIf(e -> now - e.getValue() > 5);
+        if (last != null && now - last > TRAIL_GAP)
+            BoneTrails.feed(key, sword, toCamera, TRAIL_LEFT, TRAIL_RIGHT, TRAIL_STYLE, true, false, 0);
+        boolean emit = state.velocity.length() * 20 > TRAIL_SPEED;
+        BoneTrails.feed(key, sword, toCamera, TRAIL_LEFT, TRAIL_RIGHT, TRAIL_STYLE, true, emit, 0);
     }
 
     /**
