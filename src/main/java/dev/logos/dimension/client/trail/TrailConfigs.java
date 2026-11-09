@@ -27,8 +27,16 @@ public final class TrailConfigs {
 
     private TrailConfigs() {}
 
-    /** 刀身在武器网格里的范围（沿 +Y），以及武器自己指定的样式（没有时为 null）。 */
-    public record Blade(float from, float to, @Nullable Identifier style) {}
+    /**
+     * 刀身在武器网格里的范围（沿 +Y），以及武器自己指定的样式（没有时为 null）。弯刀的刀尖不在 Y 轴上时，
+     * {@code tipX} 是刀尖的 X（网格单位），刀身按直线从 (0, from) 斜到 (tipX, to)；直刀为 0。
+     */
+    public record Blade(float from, float to, float tipX, @Nullable Identifier style) {
+        /** 刀身在网格里 {@code y} 高处的点（柄端取 from、刀尖取 to）。 */
+        public org.joml.Vector3f at(float y) {
+            return new org.joml.Vector3f(to == 0 ? 0 : tipX * y / to, y, 0);
+        }
+    }
 
     /**
      * 一招的刀光：{@code windows} 是出光的时段（招式里的秒，[开始, 结束]），为空时按刀尖速度自动出光；
@@ -72,7 +80,7 @@ public final class TrailConfigs {
     }
 
     private static Blade blade(JsonObject t) {
-        return new Blade(t.get("from").getAsFloat(), t.get("to").getAsFloat(),
+        return new Blade(t.get("from").getAsFloat(), t.get("to").getAsFloat(), t.has("tip_x") ? t.get("tip_x").getAsFloat() : 0,
                 t.has("style") ? Identifier.parse(t.get("style").getAsString()) : null);
     }
 

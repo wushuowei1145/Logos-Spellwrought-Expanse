@@ -84,7 +84,7 @@ final class RigTrails {
         int steps = start == now ? 1 : Math.min(MAX_STEPS, Math.max(1, (int) Math.ceil((now - start) / STEP)));
         Vector3f prevTip = last == null || start == now ? null : last.tip;
         double prevTime = start;
-        Vector3f bladeFrom = new Vector3f(0, blade.from(), 0), bladeTo = new Vector3f(0, blade.to(), 0);
+        Vector3f bladeFrom = blade.at(blade.from()), bladeTo = blade.at(blade.to());
         for (int i = 1; i <= steps; i++) {
             double t = start == now ? now : start + (now - start) * i / steps;
             // 第三人称骨架里的刀尖：量速度（两种视角一样的判断）

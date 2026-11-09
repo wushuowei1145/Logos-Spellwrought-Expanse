@@ -24,8 +24,6 @@ import org.jspecify.annotations.Nullable;
  * 而一刀只挥 0.1 秒左右，按开始刻推算会落在挥刀前的停顿里，扫出的面是零。
  */
 public final class ShiraumeTrails {
-    /** 流火向刀背（网格 −X）弯，刀尖不在 Y 轴上：tools/ryuka_moves.py 的 {@code TIP}（x −2.25，y 18）。 */
-    static final float TIP_X = -2.25f, TIP_Y = 18f;
     /** 播战斗动作的 GeckoLib 控制器名（{@link dev.logos.dimension.npc.NpcAnimations#registerControllers}）。 */
     private static final String COMBAT = "combat";
 
@@ -101,9 +99,9 @@ public final class ShiraumeTrails {
         TrailConfigs.Blade blade = set == null ? null : set.blade(RyukaItem.WEAPON.mesh());
         if (holder == null || blade == null) return;
         float k = RyukaOnBone.SCALE / 16;
-        // 刀身两端：柄端在 Y 轴上，刀尖顺着刀身的弧度偏向刀背
-        Vector3f base = new Vector3f(0, blade.from(), 0).add(offset).mul(k);
-        Vector3f tip = new Vector3f(TIP_X * blade.to() / TIP_Y, blade.to(), 0).add(offset).mul(k);
+        // 刀身两端：流火向刀背弯，刀尖偏向 −X（combat/trails/ryuka.json 的 tip_x，和玩家手里的一样）
+        Vector3f base = blade.at(blade.from()).add(offset).mul(k);
+        Vector3f tip = blade.at(blade.to()).add(offset).mul(k);
         BoneTrails.feed("shiraume_ryuka:" + entity, holder, pose.last().pose(), base, tip,
                 blade.style() != null ? blade.style() : set.style(), set.fixed(), emit, set.speed());
     }
