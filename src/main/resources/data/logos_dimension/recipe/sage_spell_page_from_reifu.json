@@ -1,0 +1,12 @@
+{
+  "type": "logos:page_upgrade",
+  "category": "misc",
+  "group": "logos_dimension_sage_reifu",
+  "ingredients": [
+    "logos_dimension:sage_reifu",
+    "minecraft:white_dye"
+  ],
+  "result": {
+    "id": "logos:sage_spell_page"
+  }
+}

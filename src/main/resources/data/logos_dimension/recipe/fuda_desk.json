@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "logos:inscription_table",
+    "minecraft:bamboo",
+    "minecraft:ink_sac"
+  ],
+  "result": {
+    "id": "logos_dimension:fuda_desk"
+  }
+}

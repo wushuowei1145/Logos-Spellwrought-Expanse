@@ -1,0 +1,13 @@
+{
+  "type": "logos:page_upgrade",
+  "category": "misc",
+  "group": "logos_dimension_firmament_reifu_upgrade",
+  "ingredients": [
+    "logos_dimension:chalk_inscribed_reifu",
+    "logos:firmament_stone",
+    "logos:adhesive"
+  ],
+  "result": {
+    "id": "logos_dimension:firmament_inscribed_reifu"
+  }
+}

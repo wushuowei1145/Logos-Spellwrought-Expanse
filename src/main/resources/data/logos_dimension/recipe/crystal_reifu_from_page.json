@@ -1,0 +1,12 @@
+{
+  "type": "logos:page_upgrade",
+  "category": "misc",
+  "group": "logos_dimension_crystal_reifu",
+  "ingredients": [
+    "logos:crystal_spell_page",
+    "minecraft:red_dye"
+  ],
+  "result": {
+    "id": "logos_dimension:crystal_reifu"
+  }
+}

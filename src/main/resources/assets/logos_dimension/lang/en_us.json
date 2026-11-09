@@ -1209,5 +1209,22 @@
   "death.attack.logos_dimension.shiraume_beast.player": "%1$s was torn apart by %2$s",
   "death.attack.logos_dimension.foxfire": "%1$s was consumed by %2$s's foxfire",
   "death.attack.logos_dimension.foxfire.player": "%1$s was consumed by foxfire while fighting %2$s",
-  "death.attack.logos_dimension.foxfire.item": "%1$s was consumed by foxfire %2$s kindled with %3$s"
+  "death.attack.logos_dimension.foxfire.item": "%1$s was consumed by foxfire %2$s kindled with %3$s",
+  "block.logos_dimension.fuda_desk": "Fuda Writing Desk",
+  "item.logos_dimension.basic_reifu": "Washi Reifu",
+  "item.logos_dimension.basic_inscribed_reifu": "Washi Reifu",
+  "item.logos_dimension.crystal_reifu": "Wisteria Reifu",
+  "item.logos_dimension.crystal_inscribed_reifu": "Wisteria Reifu",
+  "item.logos_dimension.echo_reifu": "Kodama Reifu",
+  "item.logos_dimension.echo_inscribed_reifu": "Kodama Reifu",
+  "item.logos_dimension.transmuted_reifu": "Rentan Reifu",
+  "item.logos_dimension.transmuted_inscribed_reifu": "Rentan Reifu",
+  "item.logos_dimension.chalk_reifu": "Gofun Reifu",
+  "item.logos_dimension.chalk_inscribed_reifu": "Gofun Reifu",
+  "item.logos_dimension.firmament_reifu": "Amatsu Reifu",
+  "item.logos_dimension.firmament_inscribed_reifu": "Amatsu Reifu",
+  "item.logos_dimension.sage_reifu": "Senshu Reifu",
+  "item.logos_dimension.sage_inscribed_reifu": "Senshu Reifu",
+  "item.logos_dimension.principle_reifu": "Muso Reifu",
+  "item.logos_dimension.principle_inscribed_reifu": "Shinchoku Reifu"
 }

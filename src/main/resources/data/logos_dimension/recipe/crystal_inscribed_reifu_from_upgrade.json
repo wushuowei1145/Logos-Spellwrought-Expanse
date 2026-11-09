@@ -1,0 +1,13 @@
+{
+  "type": "logos:page_upgrade",
+  "category": "misc",
+  "group": "logos_dimension_crystal_reifu_upgrade",
+  "ingredients": [
+    "logos_dimension:basic_inscribed_reifu",
+    "minecraft:amethyst_shard",
+    "logos:adhesive"
+  ],
+  "result": {
+    "id": "logos_dimension:crystal_inscribed_reifu"
+  }
+}

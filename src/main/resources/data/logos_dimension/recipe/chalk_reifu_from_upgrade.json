@@ -1,0 +1,13 @@
+{
+  "type": "logos:page_upgrade",
+  "category": "misc",
+  "group": "logos_dimension_chalk_reifu_upgrade",
+  "ingredients": [
+    "logos_dimension:transmuted_reifu",
+    "logos:chalk",
+    "logos:adhesive"
+  ],
+  "result": {
+    "id": "logos_dimension:chalk_reifu"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "textures": {
+    "sheet": "logos_dimension:block/fuda_desk_sheet_echo_reifu",
+    "particle": "logos_dimension:block/fuda_desk_wood"
+  },
+  "elements": [
+    {
+      "from": [6.25, 12.6, 4.4],
+      "to": [9.75, 12.65, 12.4],
+      "faces": {
+        "up": {"uv": [4, 0, 11, 16], "texture": "#sheet"}
+      }
+    }
+  ]
+}
