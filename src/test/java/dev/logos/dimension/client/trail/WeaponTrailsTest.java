@@ -79,7 +79,12 @@ class WeaponTrailsTest {
             for (var blade : config.meshes().values()) assertTrue(blade.from() < blade.to(), set);
             if (config.blade() != null) assertTrue(config.blade().from() < config.blade().to(), set);
             assertTrue(Files.isRegularFile(ASSETS.resolve("combat/trail_styles/" + config.style().getPath() + ".json")), set + " 的默认样式不存在");
-            JsonObject clips = json(ASSETS.resolve("combat/animations/" + set + "_tp.animation.json")).getAsJsonObject("animations");
+            // 和 LongswordRig 一样：动作组的动作，再叠上各网格自己的动作文件（拔剑、收剑、施法姿势等）
+            JsonObject clips = json(ASSETS.resolve("combat/animations/" + set + "_tp.animation.json")).getAsJsonObject("animations").deepCopy();
+            for (String mesh : config.meshes().keySet()) {
+                Path own = ASSETS.resolve("combat/animations/" + mesh + "_tp.animation.json");
+                if (Files.isRegularFile(own)) for (var e : json(own).getAsJsonObject("animations").entrySet()) clips.add(e.getKey(), e.getValue());
+            }
             for (var entry : config.clips().entrySet()) {
                 String clip = entry.getKey();
                 assertTrue(clips.has(clip), set + " 里没有动作 " + clip);
