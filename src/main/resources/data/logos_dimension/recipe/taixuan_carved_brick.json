@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": "minecraft:stone_bricks",
+  "result": {
+    "id": "logos_dimension:taixuan_carved_brick",
+    "count": 1
+  }
+}

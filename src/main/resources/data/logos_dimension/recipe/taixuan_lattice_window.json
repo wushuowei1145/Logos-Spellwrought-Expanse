@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "SSS",
+    "PPP",
+    "SSS"
+  ],
+  "key": {
+    "S": "minecraft:stick",
+    "P": "minecraft:dark_oak_planks"
+  },
+  "result": {
+    "id": "logos_dimension:taixuan_lattice_window",
+    "count": 4
+  }
+}

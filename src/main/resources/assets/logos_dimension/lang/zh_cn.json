@@ -1446,5 +1446,10 @@
   "subtitles.logos_dimension.instrument.trumpet": "小号声",
   "message.logos_dimension.instrument.need_instrument": "先拿着一件手持乐器右键乐谱架，把它放上去",
   "screen.logos_dimension.instrument.held_status": "起始 %s · 力度 %s · 音域 %s",
-  "screen.logos_dimension.instrument.held_hint": "两排字母弹奏  ←→ 换八度  ↑↓ 力度  Esc 收起"
+  "screen.logos_dimension.instrument.held_hint": "两排字母弹奏  ←→ 换八度  ↑↓ 力度  Esc 收起",
+  "biome.logos_dimension.taixuan_vale": "太玄灵境",
+  "block.logos_dimension.taixuan_lattice_window": "徽式花格窗",
+  "block.logos_dimension.taixuan_carved_brick": "云纹砖雕",
+  "item.logos_dimension.taixuan_lattice_window": "徽式花格窗",
+  "item.logos_dimension.taixuan_carved_brick": "云纹砖雕"
 }

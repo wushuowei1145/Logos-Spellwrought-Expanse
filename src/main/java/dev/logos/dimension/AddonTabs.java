@@ -44,7 +44,9 @@ public final class AddonTabs {
             "journey_kawara_roof", "journey_kawara_stairs", "journey_kawara_slab",
             "journey_tatami", "journey_tatami_slab",
             "journey_shoji_door", "journey_shoji_window",
-            "journey_stepping_stone"));
+            "journey_stepping_stone",
+            // 太玄：花窗、云纹砖雕
+            "taixuan_lattice_window", "taixuan_carved_brick"));
 
     /** 装饰：家具、灯、布帘与绳结、石像，没有交互。 */
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> DECORATIONS = tab("decorations", BUILDING, "journey_stone_lantern", out -> ids(out,

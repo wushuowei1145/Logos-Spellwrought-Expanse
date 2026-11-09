@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "logos_dimension:taixuan_sanctuary",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 32,
+    "separation": 16,
+    "salt": 7652031
+  }
+}

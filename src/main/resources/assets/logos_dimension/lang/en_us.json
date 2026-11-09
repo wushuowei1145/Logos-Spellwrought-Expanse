@@ -1446,5 +1446,10 @@
   "subtitles.logos_dimension.instrument.trumpet": "Trumpet plays",
   "message.logos_dimension.instrument.need_instrument": "Use a handheld instrument on the stand to put it there first",
   "screen.logos_dimension.instrument.held_status": "From %s · velocity %s · range %s",
-  "screen.logos_dimension.instrument.held_hint": "Two letter rows play  ←→ octave  ↑↓ velocity  Esc put away"
+  "screen.logos_dimension.instrument.held_hint": "Two letter rows play  ←→ octave  ↑↓ velocity  Esc put away",
+  "biome.logos_dimension.taixuan_vale": "Taixuan Vale",
+  "block.logos_dimension.taixuan_lattice_window": "Hui Lattice Window",
+  "block.logos_dimension.taixuan_carved_brick": "Cloud-Carved Brick",
+  "item.logos_dimension.taixuan_lattice_window": "Hui Lattice Window",
+  "item.logos_dimension.taixuan_carved_brick": "Cloud-Carved Brick"
 }

@@ -3014,7 +3014,8 @@
         "if_true": {
           "type": "minecraft:biome",
           "biome_is": [
-            "logos_dimension:cloudsea_sunlit_glade"
+            "logos_dimension:cloudsea_sunlit_glade",
+            "logos_dimension:taixuan_vale"
           ]
         },
         "then_run": {

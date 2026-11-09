@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:jigsaw",
+  "biomes": [
+    "logos_dimension:taixuan_vale"
+  ],
+  "step": "surface_structures",
+  "terrain_adaptation": "none",
+  "spawn_overrides": {
+    "monster": {
+      "bounding_box": "full",
+      "spawns": []
+    },
+    "creature": {
+      "bounding_box": "full",
+      "spawns": []
+    }
+  },
+  "start_pool": "logos_dimension:taixuan/tile_4_0_4",
+  "start_jigsaw_name": "logos_dimension:taixuan_anchor",
+  "size": 19,
+  "start_height": {
+    "absolute": -1
+  },
+  "project_start_to_heightmap": "WORLD_SURFACE_WG",
+  "max_distance_from_center": {
+    "horizontal": 128,
+    "vertical": 256
+  },
+  "use_expansion_hack": false
+}

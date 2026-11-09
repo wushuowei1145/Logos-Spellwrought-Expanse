@@ -66,6 +66,13 @@ dependencies {
 }
 
 tasks.named('test', Test) { useJUnitPlatform(); testLogging { events 'passed', 'failed' } }
+// 测试 JVM 的工作目录由模组测试器决定；通过测试资源读取预设，避免依赖当前目录。
+tasks.named('processTestResources') {
+    from('gametest-packs/crucible/data/minecraft/worldgen/world_preset/flat.json') {
+        into 'fixtures'
+        rename { 'journey-world-preset.json' }
+    }
+}
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 
 if (file('gradle/ldlib2-uitest.gradle').exists()) {
