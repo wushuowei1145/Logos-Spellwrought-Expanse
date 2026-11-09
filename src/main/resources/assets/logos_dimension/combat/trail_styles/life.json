@@ -1,0 +1,98 @@
+{
+  "life": 0.38,
+  "layers": [
+    {
+      "mask": "logos_dimension:textures/vfx/trail/slash_wisp.png",
+      "noise": "logos:textures/vfx/charge_aura/noise_03.png",
+      "span": [
+        0.05,
+        1.05
+      ],
+      "colors": [
+        "#F2FFD8",
+        "#40E050",
+        "#1A9A30"
+      ],
+      "intensity": 1.2,
+      "opacity": 0.75,
+      "noise_scale": 0.6,
+      "scroll": 1.0,
+      "distort": 0.1,
+      "detail": 0.45,
+      "erosion": 0.88,
+      "soft": 0.25,
+      "heat": 1.2,
+      "occlude": 0.45
+    },
+    {
+      "mask": "logos_dimension:textures/vfx/trail/slash_body.png",
+      "noise": "logos:textures/vfx/charge_aura/noise_cloudy.png",
+      "span": [
+        0.1,
+        1.0
+      ],
+      "colors": [
+        "#F2FFD8",
+        "#40E050",
+        "#0A4A18"
+      ],
+      "intensity": 0.85,
+      "opacity": 0.4,
+      "noise_scale": 0.5,
+      "scroll": 0.7,
+      "distort": 0.06,
+      "detail": 0.5,
+      "erosion": 0.96,
+      "soft": 0.3,
+      "heat": 1.1,
+      "occlude": 0.5
+    },
+    {
+      "mask": "logos_dimension:textures/vfx/trail/slash_edge.png",
+      "noise": "logos:textures/vfx/charge_aura/noise_07.png",
+      "span": [
+        0.55,
+        1.03
+      ],
+      "colors": [
+        "#FFFFFF",
+        "#F2FFD8",
+        "#40E050"
+      ],
+      "intensity": 1.7,
+      "opacity": 1,
+      "noise_scale": 1.2,
+      "scroll": 1.5,
+      "distort": 0.03,
+      "detail": 0.25,
+      "erosion": 0.8,
+      "soft": 0.2,
+      "heat": 1.2,
+      "rim": 1.3,
+      "rim_width": 11,
+      "occlude": 0.2
+    }
+  ],
+  "sparks": {
+    "texture": "logos:textures/vfx/life_impact/leaf.png",
+    "per_block": 2.5,
+    "life": 0.9,
+    "size": 0.07,
+    "colors": [
+      "#F2FFD8",
+      "#7AE868",
+      "#1A9A30"
+    ],
+    "gravity": 0.4,
+    "drag": 2.2,
+    "spread": 0.9,
+    "inherit": 0.15,
+    "spin": 5,
+    "blend": "blend"
+  },
+  "glow": {
+    "alpha": 0.3,
+    "color": "#40E050",
+    "width": 0.2
+  }
+}

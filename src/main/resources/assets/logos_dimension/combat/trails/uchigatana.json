@@ -1,0 +1,17 @@
+{
+  "blade": {
+    "from": 3.5,
+    "to": 15.5
+  },
+  "style": "logos_dimension:physical",
+  "speed": 5.5,
+  "auto": false,
+  "clips": {
+    "slash_1": {},
+    "slash_2": {},
+    "slash_3": {},
+    "slash_4": {},
+    "parry": {},
+    "riposte": {}
+  }
+}
