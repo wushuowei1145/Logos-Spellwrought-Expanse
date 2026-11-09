@@ -1195,5 +1195,19 @@
   "tooltip.logos_dimension.lingxiao.flight": "Use: sword flight, 10 mana per second",
   "tooltip.logos_dimension.lingxiao.controls": "Move toward your view; jump to ascend; sneak to dismount",
   "message.logos_dimension.lingxiao.no_mana": "Not enough mana to continue sword flight",
-  "message.logos_dimension.lingxiao.cost": "Sword flight · -%s per second"
+  "message.logos_dimension.lingxiao.cost": "Sword flight · -%s per second",
+  "entity.logos_dimension.shiraume": "Shiraume",
+  "entity.logos_dimension.shiraume_beast": "Shiraume (Nine-Tailed Fox)",
+  "entity.logos_dimension.shiraume_foxfire": "Foxfire",
+  "entity.logos_dimension.shiraume.bar": "Shiraume, the Nine-Tailed Fox",
+  "gui.logos_dimension.shiraume.title_epithet": "Nine-Tailed Fox",
+  "gui.logos_dimension.shiraume.title_name": "Shiraume",
+  "gui.logos_dimension.shiraume.title_kana": "しらうめ",
+  "death.attack.logos_dimension.shiraume_execution": "%1$s was cut into cherry blossoms",
+  "death.attack.logos_dimension.shiraume_execution.player": "%1$s was cut into cherry blossoms by %2$s",
+  "death.attack.logos_dimension.shiraume_beast": "%1$s was torn apart by a nine-tailed fox",
+  "death.attack.logos_dimension.shiraume_beast.player": "%1$s was torn apart by %2$s",
+  "death.attack.logos_dimension.foxfire": "%1$s was consumed by %2$s's foxfire",
+  "death.attack.logos_dimension.foxfire.player": "%1$s was consumed by foxfire while fighting %2$s",
+  "death.attack.logos_dimension.foxfire.item": "%1$s was consumed by foxfire %2$s kindled with %3$s"
 }

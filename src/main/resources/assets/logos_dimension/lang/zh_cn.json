@@ -1195,5 +1195,19 @@
   "tooltip.logos_dimension.lingxiao.flight": "右键：御剑飞行，每秒消耗 10 魔力",
   "tooltip.logos_dimension.lingxiao.controls": "方向键移动，朝向控制升降，空格上升，Shift 下剑",
   "message.logos_dimension.lingxiao.no_mana": "魔力不足，御剑已结束",
-  "message.logos_dimension.lingxiao.cost": "御剑中 · 每秒 -%s"
+  "message.logos_dimension.lingxiao.cost": "御剑中 · 每秒 -%s",
+  "entity.logos_dimension.shiraume": "白梅",
+  "entity.logos_dimension.shiraume_beast": "白梅（九尾狐）",
+  "entity.logos_dimension.shiraume_foxfire": "狐火",
+  "entity.logos_dimension.shiraume.bar": "九尾妖狐 白梅",
+  "gui.logos_dimension.shiraume.title_epithet": "九尾妖狐",
+  "gui.logos_dimension.shiraume.title_name": "白梅",
+  "gui.logos_dimension.shiraume.title_kana": "しらうめ",
+  "death.attack.logos_dimension.shiraume_execution": "%1$s 被斩成了樱花",
+  "death.attack.logos_dimension.shiraume_execution.player": "%1$s 被 %2$s 斩成了樱花",
+  "death.attack.logos_dimension.shiraume_beast": "%1$s 被九尾狐撕碎了",
+  "death.attack.logos_dimension.shiraume_beast.player": "%1$s 被 %2$s 撕碎了",
+  "death.attack.logos_dimension.foxfire": "%1$s 被 %2$s 的狐火吞没了",
+  "death.attack.logos_dimension.foxfire.player": "%1$s 在躲避 %2$s 时被狐火吞没了",
+  "death.attack.logos_dimension.foxfire.item": "%1$s 被 %2$s 用 %3$s 燃起的狐火吞没了"
 }

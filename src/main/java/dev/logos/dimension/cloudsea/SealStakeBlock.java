@@ -33,7 +33,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 /**
  * 封印杭：两格高的黑木桩，缠着草绳、贴着御札，上半截透出一点幽光。神狐聚落地下的封印之间里九根围成一圈，
  * 封着杀生石里的九尾狐；破坏一根，封印就少一道（剩几道会告诉在场的玩家）。不掉落、炸不坏、推不动。
- * 九尾狐首领战还没有做，最后一道断掉时现在只有声响与提示。
+ * 最后一道断掉时九尾妖狐 白梅觉醒（{@link dev.logos.dimension.shiraume.ShiraumeFight}）。
  */
 public class SealStakeBlock extends Block {
     public static final MapCodec<SealStakeBlock> CODEC = simpleCodec(SealStakeBlock::new);
@@ -129,5 +129,7 @@ public class SealStakeBlock extends Block {
             level.playSound(null, stone, SoundEvents.WITHER_AMBIENT, SoundSource.HOSTILE, 2.0f, 0.5f);
             level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, c.x, c.y + 4, c.z, 160, 2.5, 4, 2.5, 0.05);
         }
+        // 色散；最后一道断开时开始觉醒（docs/SHIRAUME_BOSS.md 第 2 节）
+        dev.logos.dimension.shiraume.ShiraumeFight.sealBroken(level, vault, left);
     }
 }

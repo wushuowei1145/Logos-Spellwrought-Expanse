@@ -2,6 +2,8 @@
   "replace": false,
   "values": [
     "minecraft:ender_dragon",
-    "minecraft:wither"
+    "minecraft:wither",
+    "logos_dimension:shiraume",
+    "logos_dimension:shiraume_beast"
   ]
 }

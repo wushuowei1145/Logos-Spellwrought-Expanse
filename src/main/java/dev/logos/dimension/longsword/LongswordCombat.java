@@ -148,6 +148,8 @@ public final class LongswordCombat {
     /** 原版格挡成功：交给招式文件的 block 输入（打刀格挡开始 0.3 秒内转入弹刀）；转入的招式是弹刀时不消耗耐久，近战的攻击方进入僵直。 */
     @SubscribeEvent static void blocked(LivingShieldBlockEvent event) {
         if (!event.getBlocked() || !(event.getEntity() instanceof ServerPlayer player)) return;
+        // 弹不开的攻击（白梅狐形等，伤害类型带 logos_dimension:unparryable）：只算挡下，不进弹刀
+        if (event.getDamageSource().is(dev.logos.dimension.shiraume.ShiraumeStrike.UNPARRYABLE)) return;
         var state = active(player);
         if (state != null && state.runner.input(Moveset.Input.BLOCK, player.level().getGameTime())
                 && CombatEffects.PARRY.equals(state.runner.move().effect())) {

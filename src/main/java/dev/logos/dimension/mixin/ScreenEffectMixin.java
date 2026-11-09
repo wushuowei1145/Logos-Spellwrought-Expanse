@@ -45,6 +45,8 @@ public abstract class ScreenEffectMixin {
         dev.logos.dimension.client.screenfx.PostVfx.draw(viewProjection);
         // 泛光排在前面：画风和黑白闪处理的是已经带泛光的画面
         GlowBloom.draw(hudProjection.getMatrix(new Matrix4f()));
+        // 白梅战的色散与红光：在泛光之后（红晕和刀光一起被分开、被染红），画风与黑白闪之前
+        dev.logos.dimension.client.shiraume.ShiraumeScreen.draw();
         WorldStyleRenderer.draw();
         // 处决特写把整个画面换成平涂的颜色，黑白闪和蒙版还能叠在它上面
         dev.logos.dimension.client.execution.ExecutionRenderer.draw();
