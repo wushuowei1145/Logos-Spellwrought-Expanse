@@ -71,7 +71,8 @@
       "heat": 1.2,
       "rim": 1.5,
       "rim_width": 11,
-      "occlude": 0.3
+      "occlude": 0.3,
+      "facing": 0.06
     }
   ],
   "sparks": {

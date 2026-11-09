@@ -26,12 +26,14 @@ public record TrailStyle(Identifier id, float life, List<Layer> layers, @Nullabl
      * 一层带子。{@code inner}/{@code outer} 是横跨刀身的位置（0 刀身起点，1 刀尖；大于 1 伸出刀尖之外）。
      * 颜色按热度在 {@code core}（最亮）、{@code mid}、{@code edge}（将散）之间取。{@code occlude} 是这层压暗背景的程度：
      * 0 纯发光，1 照常盖上去（墨色、虚空这类不发光的底）；白天的亮天空会把纯发光的颜色洗成白，带颜色的身子要取中间值。
+     * {@code facing}：沿刀尖路径再画一条朝向镜头的带子，半宽多少格（0 不画）。刀扫过的面被侧着看（从背后看竖劈、
+     * 直刺几乎扫不出面）时会细成一条线，这条带子按侧着的程度淡入，补上一道看得见的刀光；正对着看时不画。
      * 其余参数见 weapon_trail.fsh。
      */
     public record Layer(Identifier mask, Identifier noise, float occlude, float inner, float outer,
                         int core, int mid, int edge, float intensity, float opacity,
                         float noiseScale, float noiseStretch, float scroll, float distort, float detail,
-                        float erosion, float soft, float heat, float rim, float rimWidth) {}
+                        float erosion, float soft, float heat, float rim, float rimWidth, float facing) {}
 
     /**
      * 刀尖甩出的粒子。{@code perBlock}：刀尖每走一格甩出几颗；{@code frames}：贴图里横排几帧（随机取一帧）；
@@ -60,7 +62,7 @@ public record TrailStyle(Identifier id, float life, List<Layer> layers, @Nullabl
                 f(j, "intensity", 1), f(j, "opacity", 1),
                 f(j, "noise_scale", .6f), f(j, "noise_stretch", 1), f(j, "scroll", .8f), f(j, "distort", .08f),
                 f(j, "detail", .5f), f(j, "erosion", 1.1f), f(j, "soft", .25f), f(j, "heat", 1.3f),
-                f(j, "rim", 0), f(j, "rim_width", 14));
+                f(j, "rim", 0), f(j, "rim_width", 14), f(j, "facing", 0));
     }
 
     private static Sparks sparks(JsonObject j) {

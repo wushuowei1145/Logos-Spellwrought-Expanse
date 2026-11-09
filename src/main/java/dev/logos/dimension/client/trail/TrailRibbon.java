@@ -94,7 +94,42 @@ final class TrailRibbon {
             corner(pose, buf, a, layer.outer(), origin, sa, 1, light, fade);
             corner(pose, buf, b, layer.outer(), origin, sb, 1, light, fade);
             corner(pose, buf, b, layer.inner(), origin, sb, 0, light, fade);
+            if (layer.facing() > 0) facing(pose, buf, a, b, layer, origin, sa, sb, light, fade);
         }
+    }
+
+    /**
+     * 沿刀尖路径朝向镜头的带子：中线是刃（纵向坐标 1，最亮），两侧到 0。扫过的面越是侧对镜头越显，
+     * 正对镜头时淡成 0（那时扫过的面本身看得清）。镜头在 {@code origin}（减完以后就是原点）。
+     */
+    private static void facing(PoseStack.Pose pose, VertexConsumer buf, Point a, Point b, TrailStyle.Layer layer, Vec3 origin,
+                               float sa, float sb, int seed, float fade) {
+        Vec3 ta = a.tip.lerp(a.base, 1 - layer.outer()), tb = b.tip.lerp(b.base, 1 - layer.outer());
+        Vec3 along = tb.subtract(ta);
+        if (along.lengthSqr() < 1e-8) return;
+        Vec3 mid = ta.add(tb).scale(.5).subtract(origin);
+        Vec3 view = mid.lengthSqr() < 1e-8 ? new Vec3(0, 0, 1) : mid.normalize();
+        Vec3 side = along.cross(view);
+        if (side.lengthSqr() < 1e-10) return;
+        side = side.normalize().scale(layer.facing());
+        // 扫过的面的法线：刀身方向 × 刀尖走的方向；与视线越垂直（侧对）带子越亮
+        Vec3 normal = a.tip.subtract(a.base).cross(along);
+        float edgeOn = normal.lengthSqr() < 1e-10 ? 1 : 1 - (float) Math.abs(normal.normalize().dot(view));
+        float f = fade * edgeOn * edgeOn;
+        if (f < .02f) return;
+        for (int sgn = -1; sgn <= 1; sgn += 2) {
+            Vec3 off = side.scale(sgn);
+            strip(pose, buf, ta, origin, sa, 1, seed, f, a.arc);
+            strip(pose, buf, ta.add(off), origin, sa, 0, seed, f, a.arc);
+            strip(pose, buf, tb.add(off), origin, sb, 0, seed, f, b.arc);
+            strip(pose, buf, tb, origin, sb, 1, seed, f, b.arc);
+        }
+    }
+
+    private static void strip(PoseStack.Pose pose, VertexConsumer buf, Vec3 p, Vec3 origin, float age, float v, int seed, float fade, float arc) {
+        int units = Math.floorMod(Math.round(arc * 64), 32768);
+        buf.addVertex(pose, (float) (p.x - origin.x), (float) (p.y - origin.y), (float) (p.z - origin.z))
+                .setColor(255, 255, 255, Math.round(Math.clamp(fade, 0, 1) * 255)).setUv(age, v).setLight(units | seed << 16);
     }
 
     private static void corner(PoseStack.Pose pose, VertexConsumer buf, Point p, float across, Vec3 origin, float age, float v,
