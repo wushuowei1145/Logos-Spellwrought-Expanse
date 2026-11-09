@@ -38,6 +38,7 @@
 - **晶莹感**：刀身另画一层自发光（发光遮罩换色后的 `ryuka_glow.png`，加法叠加），刀身略透明。透明度在游戏里调。
 - **命中**：Logos 每次元素伤害都放一团奥秘冲击特效，流火出刀快，第一人称会被白光盖住（维护者看过截图后要求去掉）。`RyukaBurstMixin` 只在结算流火这一下时跳过 Logos 的命中特效（`Vfx.burst` 的 `DAMAGE`），换成一小簇樱花瓣和几点淡粉的光；Logos 别的伤害不受影响。注入写了 `require = 0`，Logos 改了这个方法就注入不上、退回原样，不会崩。
 - **狐火**：拿在手上时刀身一直燃着淡粉的狐火（`SurfaceAura` FIRE 样式，客户端直接加在刀上，不占玩家的魔力缠绕）。玩家另外施加的魔力缠绕照常显示。
+- **刀光**（[刀光](WEAPON_TRAILS.md)）：自己的样式 `combat/trail_styles/ryuka.json`，樱粉晶刃的身子、速度线、狐火火舌、刀尖一侧的碎晶反光和一道白热刃线，甩出樱花瓣。狐火是刀自带的，缠上别的元素也不换（`fixed`）。五段连斩、弹刀、突刺按挥刀的那一段出光（`combat/trails/ryuka.json` 的 `windows`，取自 `tools/ryuka_moves.py` 每一刀的 `arc`），蓄势不出；凝聚、散去、只剩刀柄时刀身不完整，不出。刀身量从樱花刀镡之上（y 1.6）到刀尖（y 18）。白梅手里的流火读同一份设置，见 [白梅](SHIRAUME_BOSS.md) 11.1。
 - **预览**：`art/liuhuo/anim_v01/retexture_v01.png`（四视角，暗处与亮处），`retexture_hilt_v01.png`（柄部近景）。
 
 ## 3. 机制
@@ -107,3 +108,4 @@
 | `tools/ryuka_moves.py` | 编排与烘焙（第三人称、第一人称） |
 | `combat/weapons/ryuka.json` | 战斗网格（124 块，`glow` 指向发光层） |
 | `combat/movesets/ryuka.json` | 招式文件 |
+| `combat/trails/ryuka.json`、`combat/trail_styles/ryuka.json` | 刀光：出光时段、刀身范围与样式 |
