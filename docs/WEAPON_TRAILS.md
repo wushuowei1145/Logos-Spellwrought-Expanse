@@ -69,12 +69,25 @@
   - `"none"`：不出光。
   - 每一招都可以再用 `"style"` 覆盖样式。
 
-**样式按什么顺序选：** 招式指定 → `meshes` → 动作组默认；拿刀的手缠着魔力、且样式不 `fixed` 时，换成 `logos_dimension:<元素>`。
+**样式按什么顺序选：** 招式指定 → `meshes` → 动作组默认；拿刀的手缠着魔力、且样式不 `fixed` 时，换成 `logos_dimension:<元素>`。狐火缠绕在 Logos 看来是奥秘，但刀上烧的是狐火，所以先认狐火：白梅的淡粉换成 `foxfire`，神狐一族的幽蓝换成 `foxfire_kitsune`（`TrailStyles.resolve`）。
 
 **挑招式：**
 - 攻击类招式都要有刀光：连招、重击、突刺、弹刀后的反击。
 - 待机、格挡、拔刀、收刀一般不要，转刀这类纯展示的动作看效果决定。
 - 自动出光省事。如果出光拖得太长（蓄势也亮）或太短（只亮一下），就改用 `windows`，以动作文件 `timeline` 里的 `contact` 为中心往前后取。
+
+## 现有武器
+
+| 武器 | 设置 | 样式 | 出光 | 场景 |
+| --- | --- | --- | --- | --- |
+| 神狐打刀（四套刀装） | `trails/uchigatana.json` | `physical` | 四段连砍、弹刀、突刺按速度 | `weapon_trails` |
+| 曦誓、黑钢长剑 | `trails/longsword.json`（`meshes` 分样式） | `dawn`、`blacksteel` | 三段连击与曦誓的蓄力斩按时段 | `weapon_trails_longsword` |
+| 群誓·狼牙长枪 | `trails/oath_spear.json` | `oath_spear` | 直刺、横扫、上挑、连刺各刺按时段，砸地按速度 | `weapon_trails_spear` |
+| 凌霄 | `trails/lingxiao.json` | `lingxiao`；御剑飞行的尾迹 `lingxiao_flight` | 四式按时段，收剑的剑花也出光 | `weapon_trails_lingxiao` |
+| 流火（玩家与白梅） | `trails/ryuka.json`（`tip_x` 弯刀） | `ryuka`（`fixed`） | 五段连斩、弹刀、突刺按时段；白梅按 GeckoLib 动画名记时段 | `weapon_trails_ryuka` |
+| 神狐 NPC 的打刀 | 读玩家的 `trails/uchigatana.json` | `physical`，狐火缠绕时 `foxfire_kitsune` | 只在 `contact` 前后出光，够快就亮到这段结束 | `weapon_trails_fox` |
+
+和弓不出刀光。
 
 ## 给 NPC 的刀加刀光
 

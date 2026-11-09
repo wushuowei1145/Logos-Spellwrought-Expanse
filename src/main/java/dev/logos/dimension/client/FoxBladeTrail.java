@@ -1,14 +1,11 @@
 package dev.logos.dimension.client;
 
-import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.client.dissolve.Dissolves;
 import dev.logos.dimension.client.longsword.LongswordRig;
 import dev.logos.dimension.client.trail.BoneTrails;
 import dev.logos.dimension.client.trail.TrailConfigs;
 import dev.logos.dimension.client.trail.WeaponTrails;
 import dev.logos.dimension.combat.CombatWeapon;
-import dev.logos.dimension.foxfire.FoxfireFlame;
-import dev.logos.dimension.foxfire.FoxfireWraps;
 import dev.logos.dimension.npc.DivineFox;
 import dev.logos.dimension.npc.NpcAnimated;
 import java.util.HashMap;
@@ -34,17 +31,12 @@ import org.jspecify.annotations.Nullable;
  * 神狐举刀过顶、收刀回身时刀尖也很快，只看速度会把蓄势也画成一道（没有 contact 的招式，如弹刀，才整招按速度）。招式的时刻从本机看到换招起算，
  * 并跳过动画控制器换招时那一刻的直线过渡（那不是挥砍，画出来是一块平板）。
  *
- * <p>样式：神狐的刀造成的是物理伤害（生物的普通攻击），缠着魔力时换成那种元素的刀光。神狐自己缠的是狐火
- * （{@link FoxfireWraps}：按 Logos 算是奥秘缠绕，刀身画的却是幽蓝的狐火），这时换成那种颜色的狐火刀光并固定，
- * 不让 Logos 按奥秘换成紫色——神狐一族是幽蓝的 {@link #KITSUNE}，白梅给的淡粉狐火用共用的 {@code foxfire}。
+ * <p>样式：神狐的刀造成的是物理伤害（生物的普通攻击），缠着魔力时换成那种元素的刀光；神狐自己缠的狐火按颜色换成
+ * 幽蓝的 {@code foxfire_kitsune}，白梅给的淡粉狐火用共用的 {@code foxfire}（都由 {@code TrailStyles.resolve} 认）。
  */
 final class FoxBladeTrail {
     /** 神狐的刀用的动作组（与玩家的打刀相同）。 */
     static final String ANIMATIONS = "uchigatana";
-    /** 神狐一族幽蓝的狐火刀光。 */
-    static final Identifier KITSUNE = LogosDimension.id("foxfire_kitsune");
-    /** 白梅淡粉的狐火刀光（共用样式）。 */
-    static final Identifier SHIRAUME = LogosDimension.id("foxfire");
     /** 四套刀装的武器网格名（按刀装下标），每帧用，不拼字符串。 */
     private static final String[] MESHES = DivineFox.KATANAS.stream().map(v -> "fox_uchigatana_" + v).toArray(String[]::new);
 
@@ -147,14 +139,9 @@ final class FoxBladeTrail {
             if (EMITTING.size() >= 256) EMITTING.clear();
             EMITTING.add(fox.getId());
         }
-        // 样式：招式 → 网格 → 动作组；狐火缠绕换成那种颜色的狐火（固定），其他缠绕交给 BoneTrails 按元素换
+        // 样式：招式 → 网格 → 动作组；缠绕（狐火按颜色，其他按元素）由 BoneTrails 经 TrailStyles.resolve 换
         Identifier style = clip != null && clip.style() != null ? clip.style() : blade.style() != null ? blade.style() : set.style();
         boolean fixed = set.fixed();
-        FoxfireFlame flame = fixed ? null : FoxfireWraps.flame(fox);
-        if (flame != null) {
-            style = flame == FoxfireFlame.SHIRAUME ? SHIRAUME : KITSUNE;
-            fixed = true;
-        }
         return new Frame(key(fox.getId()), fox, new Vector3f(0, blade.from() * scale, 0), new Vector3f(0, blade.to() * scale, 0),
                 style, fixed, window, latch, set.speed());
     }

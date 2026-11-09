@@ -43,6 +43,8 @@ public final class WeaponTrails {
     private static final int SPARK_CAP = 600;
     /** 这么多秒没送点、刀光也散尽了，就忘掉这个发射者。 */
     private static final double STALE = 2;
+    /** 隔了这么多秒才又送点，就断开当前这一道。 */
+    private static final double QUIET = .25;
 
     private static final Map<Object, Emitter> EMITTERS = new HashMap<>();
     private static final List<Spark> SPARKS = new ArrayList<>();
@@ -79,11 +81,18 @@ public final class WeaponTrails {
         }
     }
 
-    /** 当前时刻（秒）：客户端游戏时间加帧内插值。 */
+    private static double clock;
+
+    /**
+     * 当前时刻（秒）：客户端游戏时间加帧内插值，只进不退。服务端的时间包偶尔会把客户端时间往回拨一点，
+     * 往回走会让刚记的点被当成重复丢掉、年龄变成负的，所以回拨时停在原处等它追上。换世界时从头算。
+     */
     public static double now() {
         var mc = Minecraft.getInstance();
-        if (mc.level == null) return 0;
-        return (mc.level.getGameTime() + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false)) / 20.0;
+        if (mc.level == null) return clock = 0;
+        double t = (mc.level.getGameTime() + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false)) / 20.0;
+        if (t > clock || clock - t > 5) clock = t;
+        return clock;
     }
 
     /**
@@ -119,9 +128,12 @@ public final class WeaponTrails {
             e = new Emitter(space, style);
             EMITTERS.put(key, e);
         }
+        double now = now();
+        // 停了一阵才又送点（切了视角、被剔除后又回来）：断开，不和停之前那一道连起来
+        if (now - e.seen > QUIET) e.ribbon.add(now, Vec3.ZERO, Vec3.ZERO, false);
         // 换了样式（比如中途缠上了魔力）：从下一刀起用新的；正在散的这一道保持原样
         if (emit && !e.ribbon.emitting()) e.style = style;
-        e.seen = now();
+        e.seen = now;
         return e;
     }
 

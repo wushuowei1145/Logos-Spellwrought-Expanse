@@ -3,6 +3,8 @@ package dev.logos.dimension.client.trail;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
 import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.foxfire.FoxfireFlame;
+import dev.logos.dimension.foxfire.FoxfireWraps;
 import dev.logos.lang.Element;
 import dev.logos.runtime.ManaWrap;
 import java.util.HashMap;
@@ -38,11 +40,19 @@ public final class TrailStyles {
         return LogosDimension.id(element.name().toLowerCase(Locale.ROOT));
     }
 
+    /** 狐火的刀光：白梅的淡粉用共用的 {@code foxfire}，神狐一族的幽蓝用 {@code foxfire_kitsune}。 */
+    public static Identifier of(FoxfireFlame flame) {
+        return flame == FoxfireFlame.SHIRAUME ? LogosDimension.id("foxfire") : LogosDimension.id("foxfire_" + flame.name().toLowerCase(Locale.ROOT));
+    }
+
     /**
      * 实际要用的样式名：{@code fixed} 为假且持刀者缠着魔力时，换成那种元素的刀光（有这个样式文件的话），否则就是 {@code base}。
+     * 狐火缠绕在 Logos 看来是奥秘，但刀上烧的是狐火，所以先认狐火，按颜色换成对应的狐火刀光。
      */
     public static Identifier resolve(Identifier base, boolean fixed, @Nullable LivingEntity holder) {
         if (fixed || holder == null) return base;
+        FoxfireFlame flame = FoxfireWraps.flame(holder);
+        if (flame != null && exists(of(flame))) return of(flame);
         ManaWrap wrap = ManaWrap.of(holder);
         if (wrap == null) return base;
         Identifier element = of(wrap.element());
