@@ -5,9 +5,9 @@ import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.combat.Moveset;
 import dev.logos.dimension.dissolve.DissolveShape;
 import dev.logos.dimension.dissolve.Dissolving;
+import dev.logos.dimension.foxfire.Foxfire;
+import dev.logos.dimension.foxfire.FoxfireFlame;
 import dev.logos.dimension.item.RyukaItem;
-import dev.logos.lang.Element;
-import dev.logos.runtime.Effects;
 import dev.logos.runtime.PlayerMagic;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
@@ -122,13 +122,16 @@ public final class Ryuka {
         return true;
     }
 
-    /** 流火的一下：奥秘伤害，不能被盾挡；打死的生物化作花瓣（见 {@link #blossom}）。 */
+    /**
+     * 流火的一下：白梅的淡粉狐火（docs/FOXFIRE.md，本质是奥秘伤害），不能被盾挡；打死的生物化作花瓣（见 {@link #blossom}）。
+     * 命中特效仍是流火自己的一小簇樱花，不放狐火的那一团（出刀太快，会盖住第一人称画面）。
+     */
     public static boolean strike(ServerPlayer player, LivingEntity target, double amount) {
         ServerPlayer outer = STRIKE.get();
         STRIKE.set(player);
         try {
             // Logos 的参数顺序是（出手的，挨打的）
-            boolean hurt = Effects.damage(player, target, amount, Element.ARCANE);
+            boolean hurt = Foxfire.deal(player, target, amount, FoxfireFlame.SHIRAUME);
             if (hurt) {
                 double y = target.getY() + target.getBbHeight() * .6;
                 player.level().playSound(null, target.getX(), y, target.getZ(), SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.PLAYERS, .8f, 1.4f);

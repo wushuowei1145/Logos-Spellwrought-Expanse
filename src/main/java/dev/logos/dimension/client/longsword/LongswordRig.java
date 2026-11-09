@@ -245,6 +245,8 @@ public final class LongswordRig {
 
     /** 视角的武器缩放（骨架的 weapon_scale 乘武器网格的 scale）：武器网格一单位在骨架里的像素数。 */
     public float weaponScale() { return weaponScale; }
+    /** 参考骨架里 Weapon 骨骼的枢轴（武器网格原点在骨架里的静止位置）；把网格画到别的骨架上时要先减掉它（白梅）。 */
+    public Vector3f weaponPivot() { return new Vector3f(weaponPivot); }
     /** 武器自己的骨骼（只读）。 */
     public Map<String, OwnBone> ownBones() { return Collections.unmodifiableMap(ownBones); }
 

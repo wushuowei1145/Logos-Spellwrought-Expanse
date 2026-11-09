@@ -195,6 +195,14 @@ public class SanctuaryVaultPiece extends StructurePiece {
         return frame.world(center[0], frame.p + center[1], center[2]);
     }
 
+    /** 封印之间（空气范围）的世界包围盒，白梅战的红光和防卡位用。 */
+    public net.minecraft.world.phys.AABB arenaBox() {
+        BlockPos a = frame.world(arena[0], frame.p + arena[4], arena[1]);
+        BlockPos b = frame.world(arena[2], frame.p + arena[5], arena[3]);
+        return new net.minecraft.world.phys.AABB(Math.min(a.getX(), b.getX()), Math.min(a.getY(), b.getY()), Math.min(a.getZ(), b.getZ()),
+            Math.max(a.getX(), b.getX()) + 1, Math.max(a.getY(), b.getY()) + 1, Math.max(a.getZ(), b.getZ()) + 1);
+    }
+
     /** 这一组占的全部世界坐标（含已经是空气的格子），自上而下排好：拆的时候先拆上面，灯笼与狐火不会掉成物品。 */
     public List<BlockPos> blocks(Removable group) {
         List<BlockPos> out = new ArrayList<>();

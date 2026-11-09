@@ -1,0 +1,26 @@
+{
+  "_comment": "九尾妖狐 白梅（狐形）。时刻与模型目录 sealed_nine_tailed_fox_beast/tools/beast_moves.py 的动作一致；damage 是这一下的伤害，字段含义同 shiraume.json。这一阶段的攻击都不能弹反（parry 都是 none）。",
+  "start": "idle_combat",
+  "moves": {
+    "idle_combat": {"length": 2.0, "playback": "loop", "blend_in": 0.15},
+    "reveal_hold": {"length": 1.0, "playback": "loop"},
+    "reveal": {"length": 2.0, "next": "idle_combat"},
+    "rest": {"length": 3.0, "playback": "loop", "blend_in": 0.3},
+
+    "charge_windup": {"length": 0.7, "next": "charge", "blend_in": 0.1, "eye_flash": 0.6},
+    "charge": {"length": 0.5, "playback": "loop", "blend_in": 0.06},
+    "charge_stop": {"length": 0.6, "next": "idle_combat", "blend_in": 0.06},
+    "pounce_crouch": {"length": 0.7, "next": "pounce_air", "blend_in": 0.1, "eye_flash": 0.6},
+    "pounce_air": {"length": 0.5, "playback": "loop", "blend_in": 0.06},
+    "pounce_land": {"length": 0.8, "next": "idle_combat", "blend_in": 0.04},
+    "tail_sweep": {"length": 1.4, "contact": 0.75, "next": "idle_combat", "blend_in": 0.1, "damage": 10, "eye_flash": 0.5},
+    "bite_slash": {"length": 1.3, "contact": [0.42, 0.7], "next": "idle_combat", "blend_in": 0.1, "damage": 10, "cone": 140,
+                   "eye_flash": 0.25, "reach": 4.8},
+    "paw_swipe": {"length": 1.2, "contact": [0.38, 0.72], "next": "idle_combat", "blend_in": 0.1, "damage": 8, "cone": 120,
+                  "eye_flash": 0.25, "reach": 4.4},
+    "roar": {"length": 1.6, "contact": 0.5, "next": "idle_combat", "blend_in": 0.1},
+    "back_leap": {"length": 0.8, "next": "idle_combat", "blend_in": 0.06, "leap": [0.15, 6.0, 0.5]},
+    "tail_flick": {"length": 0.8, "contact": 0.45, "next": "idle_combat", "blend_in": 0.08},
+    "stumble": {"length": 2.0, "playback": "loop", "blend_in": 0.1}
+  }
+}

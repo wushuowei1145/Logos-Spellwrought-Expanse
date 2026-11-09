@@ -112,7 +112,7 @@ public final class ManaGuard {
     }
 
     /**
-     * 魔法伤害也挡，虚空一律穿透。最先结算：后面打刀的弹刀判定（流火弹得开魔法）、流火的无形之刃（挡不住流火）都看它的结果；
+     * 魔法伤害也挡（狐火也是魔法，docs/FOXFIRE.md），虚空一律穿透。最先结算：后面打刀的弹刀判定（流火弹得开魔法）、流火的无形之刃（挡不住流火）都看它的结果；
      * 黑钢长剑只认竖剑格挡，{@link #guard} 本身就查了，和 {@link SwordCasting} 的先后无关。
      */
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -123,7 +123,7 @@ public final class ManaGuard {
             return;
         }
         var source = event.getDamageSource();
-        if (!event.getBlocked() && event.getBlockedDamage() > 0 && (source.is(DamageTypes.MAGIC) || source.is(DamageTypes.INDIRECT_MAGIC))) {
+        if (!event.getBlocked() && event.getBlockedDamage() > 0 && (source.is(DamageTypes.MAGIC) || source.is(DamageTypes.INDIRECT_MAGIC) || source.is(dev.logos.dimension.foxfire.Foxfire.DAMAGE))) {
             event.setBlocked(true);
         }
     }

@@ -123,9 +123,12 @@ public final class LogosDimension {
         dev.logos.dimension.tarot.TarotCards.register(bus);
         dev.logos.dimension.paint.PaintSystem.register(bus);
         dev.logos.dimension.npc.NpcEntities.register(bus);
+        dev.logos.dimension.shiraume.ShiraumeEntities.register(bus);
+        dev.logos.dimension.foxfire.Foxfire.register(bus);
         GENERATORS.register(bus); BIOME_SOURCES.register(bus); TABS.register(bus);
         DimensionGameTests.register(bus);
         dev.logos.dimension.gametest.CloudseaGameTests.register(bus);
+        dev.logos.dimension.gametest.FoxfireGameTests.register(bus);
         dev.logos.dimension.gametest.CauldronInstanceGameTests.register(bus);
         dev.logos.dimension.gametest.GrapeGameTests.register(bus);
         dev.logos.dimension.gametest.PlantSupportGameTests.register(bus);

@@ -23,8 +23,9 @@ public final class LogosMagicBridge {
     /** Logos 示例「生息之环」：治疗施法者周围 16 格内的非玩家生物各 6 点，不分敌我。 */
     public static final String NPC_GROUP_HEAL = "npc-group-heal";
     /**
-     * 神狐的「狐火缠绕」（维护者给的术式，不是 Logos 示例）：60 秒魔力缠绕，命中附加 3 点奥秘伤害并点燃 1 秒，
-     * 挥刀（生物的挥砍以命中计）放出 120° 的横扫游脉。外观由附属自己画成幽蓝的狐火（DivineFoxRenderer）。
+     * 神狐的「狐火缠绕」（维护者给的术式，不是 Logos 示例）：60 秒魔力缠绕，命中附加 3 点狐火伤害（原来的点燃 1 秒换成了狐火缠身），
+     * 挥刀（生物的挥砍以命中计）放出 120° 的横扫游脉，扫到的受 5 点狐火伤害。狐火（docs/FOXFIRE.md）就是奥秘伤害，
+     * {@code foxfire} 这个词只有附属认得、编纂台里写不了；刀身、游脉、命中都画成幽蓝的狐火。
      */
     public static final String FOX_FIRE_WRAP = "fox-fire-wrap";
 
@@ -43,13 +44,13 @@ public final class LogosMagicBridge {
                       (heal (entities :at (pos-of caster) :radius 16 :filter (kind living)) 6))
                     """,
             FOX_FIRE_WRAP, """
-                    ; 狐火缠绕：神狐遇上强敌时给自己的手缠上狐火；横扫游脉的特效以后再补
+                    ; 狐火缠绕：神狐遇上强敌时给自己的手缠上狐火（foxfire 只有附属认得，见 docs/FOXFIRE.md）
                     (spell :name "狐火缠绕" :mana 100 :trigger cast :players true
                       (imbue :life 60 :every 60
-                        (on-hit (damage target 3 arcane) (ignite target 1))
+                        (on-hit (damage target 3 foxfire))
                         (on-swing
                           (vein :motion sweep :spread 120
-                            :ccw (on-hit (damage target 5 arcane))))))
+                            :ccw (on-hit (damage target 5 foxfire))))))
                     """);
 
     private static volatile boolean resolved;
