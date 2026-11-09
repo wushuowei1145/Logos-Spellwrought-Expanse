@@ -1,0 +1,100 @@
+{
+  "life": 0.4,
+  "layers": [
+    {
+      "mask": "logos_dimension:textures/vfx/trail/slash_flame.png",
+      "noise": "logos:textures/vfx/charge_aura/noise_fire04.png",
+      "span": [
+        0.1,
+        1.1
+      ],
+      "colors": [
+        "#E8F7FF",
+        "#5CB8FF",
+        "#1C56B8"
+      ],
+      "intensity": 1.3,
+      "opacity": 0.85,
+      "noise_scale": 0.8,
+      "noise_stretch": 1.4,
+      "scroll": 2.0,
+      "distort": 0.14,
+      "detail": 0.65,
+      "erosion": 1.08,
+      "soft": 0.22,
+      "heat": 1.4,
+      "occlude": 0.55
+    },
+    {
+      "mask": "logos_dimension:textures/vfx/trail/slash_wisp.png",
+      "noise": "logos:textures/vfx/charge_aura/noise_01.png",
+      "span": [
+        0.05,
+        1.0
+      ],
+      "colors": [
+        "#FFFFFF",
+        "#BFE6FF",
+        "#3FA8FF"
+      ],
+      "intensity": 1.1,
+      "opacity": 0.55,
+      "noise_scale": 0.6,
+      "scroll": 1.0,
+      "distort": 0.08,
+      "detail": 0.4,
+      "erosion": 0.88,
+      "soft": 0.3,
+      "heat": 1.2,
+      "occlude": 0.45
+    },
+    {
+      "mask": "logos_dimension:textures/vfx/trail/slash_edge.png",
+      "noise": "logos:textures/vfx/charge_aura/noise_07.png",
+      "span": [
+        0.55,
+        1.03
+      ],
+      "colors": [
+        "#FFFFFF",
+        "#DDF2FF",
+        "#3FA8FF"
+      ],
+      "intensity": 1.7,
+      "opacity": 1,
+      "noise_scale": 1.2,
+      "scroll": 1.5,
+      "distort": 0.03,
+      "detail": 0.25,
+      "erosion": 0.8,
+      "soft": 0.2,
+      "heat": 1.2,
+      "rim": 1.3,
+      "rim_width": 11,
+      "occlude": 0.2
+    }
+  ],
+  "sparks": {
+    "texture": "logos:textures/vfx/fire_impact/ember.png",
+    "per_block": 6,
+    "life": 0.6,
+    "size": 0.045,
+    "colors": [
+      "#E8F7FF",
+      "#7CC8FF",
+      "#3FA8FF",
+      "#0E2A66"
+    ],
+    "gravity": -1.4,
+    "drag": 1.8,
+    "spread": 1.2,
+    "inherit": 0.2,
+    "spin": 2,
+    "blend": "blend"
+  },
+  "glow": {
+    "alpha": 0.45,
+    "color": "#3FA8FF",
+    "width": 0.26
+  }
+}
