@@ -20,7 +20,8 @@ import org.joml.Vector3f;
 
 /**
  * 白梅人形的渲染：身体照 NPC 的通用渲染；流火画在 {@code Weapon} 骨骼上（{@link RyukaOnBone}），跪坐时还没有刀，
- * 起身的 1.4–2.8 秒从拳中凝聚出来；背后光环的封印每放一次投技烧掉一枚；出招前双眼的红光画在眼球骨骼上。
+ * 起身的 1.4–2.8 秒从拳中凝聚出来，挥刀时留刀光（{@link ShiraumeTrails}）；背后光环的封印每放一次投技烧掉一枚；
+ * 出招前双眼的红光画在眼球骨骼上。
  */
 public class ShiraumeRenderer<R extends LivingEntityRenderState & GeoRenderState> extends NpcRenderer<Shiraume, R> {
     /** 刀的样子：-2 不画（还没凝出来），-1 完整，0–1 凝聚的进度。 */
@@ -29,6 +30,8 @@ public class ShiraumeRenderer<R extends LivingEntityRenderState & GeoRenderState
     private static final DataTicket<Float> EYES = DataTicket.create("logos_dimension_shiraume_eyes", Float.class);
     private static final DataTicket<Integer> ID = DataTicket.create("logos_dimension_shiraume_id", Integer.class);
     private static final DataTicket<ItemStackRenderState> FIRE = DataTicket.create("logos_dimension_shiraume_fire", ItemStackRenderState.class);
+    /** 此刻正在挥刀、刀身完整：留刀光（{@link ShiraumeTrails}）。 */
+    private static final DataTicket<Boolean> TRAIL = DataTicket.create("logos_dimension_shiraume_trail", Boolean.class);
     /** 起身时刀凝聚的那一段（动作时间，秒），与 tools/shiraume_moves.py 的 rise 标记相同。 */
     static final float MANIFEST = 1.4f, MANIFEST_END = 2.8f;
     private static final SoftGlow EYE_GLOW = new SoftGlow();
@@ -57,6 +60,7 @@ public class ShiraumeRenderer<R extends LivingEntityRenderState & GeoRenderState
         state.addGeckolibData(EYES, ShiraumeClient.eyes(boss.getId(), partialTick));
         state.addGeckolibData(ID, boss.getId());
         if (sword == -1 && !boss.isDeadOrDying()) state.addGeckolibData(FIRE, RyukaOnBone.fire(boss));
+        state.addGeckolibData(TRAIL, sword == -1 && ShiraumeTrails.swinging(boss));
     }
 
     /** 刀此刻画成什么样：跪坐时没有；起身时按动作时间凝聚；其余完整。 */
@@ -97,6 +101,7 @@ public class ShiraumeRenderer<R extends LivingEntityRenderState & GeoRenderState
         float sword = info.getOrDefaultGeckolibData(SWORD, -1f);
         RyukaOnBone.submit(info.poseStack(), out, info.packedLight(), new Vector3f(), sword >= 0 ? sword : -1,
                 info.getGeckolibData(FIRE), "shiraume" + info.getOrDefaultGeckolibData(ID, 0));
+        ShiraumeTrails.feed(info.poseStack(), new Vector3f(), info.getOrDefaultGeckolibData(ID, 0), info.getOrDefaultGeckolibData(TRAIL, false));
     }
 
     /** 双眼红光：眼球的位置换成相对镜头的世界坐标，交给泛光一团星芒。 */
