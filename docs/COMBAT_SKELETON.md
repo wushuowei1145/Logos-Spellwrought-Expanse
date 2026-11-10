@@ -138,7 +138,7 @@ CombatWeapon.register(6, "glaive", "glaive", GLAIVE_MOVESET).withCone(90);
 
 伤害仍走原版 `player.attack`：`damage` 与效果的倍数在 NeoForge 的 `LivingIncomingDamageEvent` 里只乘到这一招的目标上，击退在 `LivingKnockBackEvent` 里取消（浮空目标总是不击退）。
 
-转移字段：`input` 为 `attack`、`use_press`、`use_release`、`block`（原版格挡组件挡下一次攻击，由服务端在 `LivingShieldBlockEvent` 里给出）；`to` 为目标招式或 `$clear`；`window` 为 `[起, 止]` 动作时间窗口（含端点，`止` 可省略表示到结束）；`queue` 为真时输入先记下（输入缓冲），到 `at`（取消点，动作时间）那一刻切换，没写 `at` 就等本招式播完；取消点已过才输入则立即切换；切换时刻不对齐游戏刻，连段节奏不漂移。`at` 不能早于本招式的 `contact`（多段命中看最后一段），否则缓冲的下一招会吞掉这一下命中；`combo` 为真时若连招记忆有效，改去记忆中那一段的 `combo_next`。
+转移字段：`input` 为 `attack`、`use_press`、`use_release`、`block`（原版格挡组件挡下一次攻击，由服务端在 `LivingShieldBlockEvent` 里给出）、`attack_release`（松开左键，客户端在左键抬起的那一刻发；流火格挡中按住左键蓄力、松开突进）；`to` 为目标招式或 `$clear`；`window` 为 `[起, 止]` 动作时间窗口（含端点，`止` 可省略表示到结束）；`queue` 为真时输入先记下（输入缓冲），到 `at`（取消点，动作时间）那一刻切换，没写 `at` 就等本招式播完；取消点已过才输入则立即切换；切换时刻不对齐游戏刻，连段节奏不漂移。`at` 不能早于本招式的 `contact`（多段命中看最后一段），否则缓冲的下一招会吞掉这一下命中；`combo` 为真时若连招记忆有效，改去记忆中那一段的 `combo_next`。
 
 时间约定：招式里的时间都是**动作时间**，带 `attack_speed_base` 的招式按攻速缩放；`combo_memory` 与 `blend_in` 用游戏时间。没有缓冲输入时播完整段（包括收势）再进入 `next`。
 

@@ -89,10 +89,16 @@ public final class LongswordClient {
         if (pose == null || !pose.acceptsAttack()) return;
         while (mc.options.keyAttack.consumeClick()) { ClientPacketDistributor.sendToServer(new LongswordPayload.Attack()); repeat = 2; }
     }
+    /** 上一刻左键是否按着：松开的那一刻告诉服务端（流火蓄力后松开突进）。 */
+    private static boolean attackHeld;
     @SubscribeEvent static void tick(ClientTickEvent.Post event) {
         var mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) { STATES.clear(); PREVIOUS.clear(); return; }
+        if (mc.player == null || mc.level == null) { STATES.clear(); PREVIOUS.clear(); attackHeld = false; return; }
         var own = STATES.get(mc.player.getUUID());
+        boolean held = mc.screen == null && mc.options.keyAttack.isDown();
+        if (attackHeld && !held && own != null && CombatWeapon.id(mc.player.getMainHandItem()) >= 0)
+            ClientPacketDistributor.sendToServer(new LongswordPayload.AttackRelease());
+        attackHeld = held;
         if (mc.screen == null && mc.options.keyAttack.isDown() && own != null && (!mc.player.isUsingItem() || own.acceptsAttack())
                 && CombatWeapon.id(mc.player.getMainHandItem()) >= 0) {
             if (repeat-- <= 0) { ClientPacketDistributor.sendToServer(new LongswordPayload.Attack()); repeat = 2; }

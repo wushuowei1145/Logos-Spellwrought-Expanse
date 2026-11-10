@@ -165,4 +165,57 @@ class ExecutionTimelineTest {
         ExecutionShot.CODEC.encode(buffer, plain);
         assertEquals(plain, ExecutionShot.CODEC.decode(buffer));
     }
+
+    /**
+     * 可交互的处决：刀由点击一刀刀加进来；重击、落地和整段时长只看点击窗口有多长，和砍了几刀无关（服务端和客户端各算一遍对得上）。
+     * 同一个种子、同样多刀，两边加出来的刀一模一样。节拍是第一刀和每次切机位后的第一刀，任何一秒不超过三次对调。
+     */
+    @Test void interactiveSlashesArriveOneByOne() {
+        var shot = ExecutionShot.of(7).live(40, 0xF7B6D6);
+        assertTrue(shot.interactive());
+        var a = new ExecutionTimeline(shot);
+        var none = new ExecutionTimeline(shot);
+        assertTrue(a.slashes().isEmpty());
+        assertEquals(ExecutionTimeline.FIRST_SLASH + 40, a.windowEnd(), 1e-6);
+        assertEquals(a.windowEnd() + ExecutionTimeline.QUIET, a.finalHit(), 1e-6);
+        assertFalse(a.open(ExecutionTimeline.FIRST_SLASH - .1f));
+        assertTrue(a.open(ExecutionTimeline.FIRST_SLASH));
+        assertFalse(a.open(a.windowEnd()));
+        // 一刻一刀砍满整个窗口
+        var b = new ExecutionTimeline(shot);
+        for (int t = (int) ExecutionTimeline.FIRST_SLASH; t < a.windowEnd(); t++) {
+            var x = a.add(t);
+            var y = b.add(t);
+            assertEquals(x, y, "两边同样第几刀不一样");
+        }
+        assertEquals(40, a.slashes().size());
+        assertEquals(none.finalHit(), a.finalHit(), 1e-6);
+        assertEquals(none.impact(), a.impact(), 1e-6);
+        assertEquals(none.duration(), a.duration());
+        assertEquals(1, a.buildUp(a.finalHit()), 1e-6, "砍满了镜头推到最近");
+        // 相邻两刀至少转 60 度
+        for (int i = 1; i < a.slashes().size(); i++) {
+            double d = Math.abs(a.slashes().get(i).angle() - a.slashes().get(i - 1).angle()) % Math.TAU;
+            d = Math.min(d, Math.TAU - d);
+            assertTrue(d >= Math.toRadians(59), "第 " + i + " 刀只转了 " + Math.toDegrees(d));
+        }
+        // 节拍：第一刀和切机位后的第一刀，任何一秒不超过三次
+        var beats = a.beats();
+        assertEquals(0, beats.getFirst());
+        assertTrue(beats.size() >= 2 && beats.size() <= 3, "节拍 " + beats);
+        for (int i = 1; i < beats.size(); i++)
+            assertTrue(a.slashes().get(beats.get(i)).contact() - a.slashes().get(beats.get(i - 1)).contact() >= ExecutionTimeline.MIN_BEAT_GAP);
+        // 一刀没砍也照样有重击、落地
+        assertTrue(none.phase(none.finalHit()) == Phase.RED && none.phase(none.impact()) == Phase.IMPACT);
+        // 网络上来回一趟不变
+        var buf = Unpooled.buffer();
+        ExecutionShot.CODEC.encode(buf, shot);
+        assertEquals(shot, ExecutionShot.CODEC.decode(buf));
+    }
+
+    /** 不可交互的处决不能加刀。 */
+    @Test void scriptedShotsRefuseExtraSlashes() {
+        assertFalse(DEFAULT.interactive());
+        assertThrows(IllegalStateException.class, () -> new ExecutionTimeline(ExecutionShot.of(1)).add(10));
+    }
 }

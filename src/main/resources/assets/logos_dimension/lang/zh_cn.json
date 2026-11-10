@@ -463,6 +463,8 @@
   "tooltip.logos_dimension.ryuka.combo": "左键：五段连斩，终式放出樱花刀气（另耗 30 点魔力）",
   "tooltip.logos_dimension.ryuka.guard": "右键按住立即格挡；格挡后 0.5 秒内被击中会弹刀，随即左键突刺",
   "tooltip.logos_dimension.ryuka.ward": "格挡是魔力护盾：挡下的扣魔力，魔法也挡；弹开斧头不费魔力，硬挡要多付，魔力不够才破防",
+  "tooltip.logos_dimension.ryuka.marks": "每砍中一次留一枚狐火印，攒满五枚爆开：高额狐火伤害，之后 8 秒内可以处决",
+  "tooltip.logos_dimension.ryuka.stance": "格挡中按住左键转成平一文字の構え，松开闪身突进上挑：挑飞目标，狐火印刚爆开的则处决（连点左键）",
   "tooltip.logos_dimension.ryuka.blade": "只造成奥秘伤害，穿过盾牌；斩杀的生物化作樱花散去",
   "item.logos_dimension.fox_yumi_bamboo": "神狐和弓（素竹·米白握）",
   "item.logos_dimension.fox_yumi_vermilion": "神狐和弓（墨漆·朱红握）",

@@ -35,6 +35,10 @@ IDLE = dict(grip=(0.44, -0.86, -0.16), blade=(0.32, -0.16, -0.93), edge=(0.2, -0
             rfoot=(0.16, 0, -0.18, -10), lfoot=(-0.2, 0, 0.16, 20),
             # 第一人称看不到腰下，刀在右前方、刀尖斜指前上。
             fp=dict(grip=(0.34, -0.5, -0.62), blade=(-0.12, 0.3, -0.95), edge=(0.2, -0.95, -0.3)))
+# 平一文字の構え：双手握在右肩前、颈的高度，刀身横平，刀尖指左、刃朝前（参考维护者给的图）。
+HIRA = dict(grip=(0.28, 0.1, -0.38), blade=(-0.96, 0.03, -0.27), edge=(0.27, 0.0, -0.96), up=(-4, 6, 0), hips=(0, -0.1, 0),
+            lmode='two', rfoot=(0.22, 0, -0.16, -8), lfoot=(-0.26, 0, 0.2, 22),
+            fp=dict(grip=(0.3, -0.3, -0.62), blade=(-0.97, 0.06, -0.22), edge=(0.22, 0.0, -0.97), up=(0, 0, 0)))
 # 格挡：刀竖在身前略向左斜，左掌抵住刀背。
 GUARD = dict(grip=(0.22, -0.38, -0.72), blade=(-0.32, 0.94, -0.1), edge=(0.05, 0.1, -1), up=(0, -6, 0), hips=(0, -0.06, 0),
              lmode='mune', mune=10.0, rfoot=(0.2, 0, -0.18, -5), lfoot=(-0.24, 0, 0.18, 20))
@@ -84,6 +88,11 @@ def arc(t0, t1, grips, blades, n=6, hold=None, **extra):
     if hold is not None:
         keys.append(dict(keys[-1], t=hold, ease='hold'))
     return keys
+
+
+def wrist(blade, edge):
+    """刃绕着刀身转四分之一圈：两刀方向相反时，中间先把刃转到刀面朝这边，免得插值时刃向两头相消、刀一帧翻过去。"""
+    return tuple(unit(np.cross(unit(blade), unit(edge))))
 
 
 def last(keys):
@@ -181,6 +190,84 @@ def clips():
           rfoot=(0.16, 0, -0.66, -6), lfoot=(-0.2, 0, 0.3, 25)),
         k(0.5, up=(15, 30, 0), hips=(0, -0.15, -0.23), lhand=(-0.64, -0.5, 0.32), ease='hold'),
         k(0.62, up=(8, 20, 0), hips=(0, -0.1, -0.14), lhand=(-0.55, -0.66, 0.2)),
+    ]))
+
+    # 平一文字の構え（维护者给的参考图）：格挡中按住左键蓄力时转成这个架势。双手握在右肩前、颈的高度，
+    # 刀身横平地横在身前，刀尖指向左边，刃朝前；仍是格挡状态。第一人称刀压低到胸前，不挡视线。
+    out.append(dict(name='stance', length=2.0, loop='loop', keys=[
+        k(0.0, HIRA),
+        k(1.0, HIRA, grip=(0.27, 0.09, -0.41), up=(-3, 6, 0), hips=(0, -0.12, 0)),
+        k(2.0, HIRA),
+    ]))
+
+    # 平一文字的格挡：挨了一下，刀被压得往脸前一缩、刀尖往下一沉，马上顶回去。
+    out.append(dict(name='stance_block', length=0.32, loop='once', keys=[
+        k(0.0, HIRA),
+        k(0.04, HIRA, grip=(0.25, 0.16, -0.28), blade=(-0.97, -0.12, -0.2), up=(-8, 8, 0), hips=(0, -0.14, 0.04), ease='hold'),
+        k(0.1, HIRA, grip=(0.26, 0.13, -0.32), blade=(-0.97, -0.08, -0.22), up=(-6, 7, 0)),
+        k(0.32, HIRA),
+    ]))
+
+    # 闪身突进：右手单手把刀从横架拖到右后下方（脇構え），身体前倾压低，左手往前探；接上挑。
+    low = dict(grip=(0.46, -0.66, 0.06), blade=(0.34, -0.62, 0.71), edge=(0.34, -0.62, -0.69))
+    # 刀从横架甩到右后下方要转 150° 多：用 0.1 秒分五步走。
+    swing = arc(0.0, 0.1, [HIRA['grip'], (0.48, -0.32, -0.18), low['grip']], [HIRA['blade'], (0.4, -0.3, -0.87), low['blade']], n=5,
+                lmode='free', lhand=(-0.3, -0.35, -0.65))
+    # 甩下来时刃朝后；突进的后半段手腕慢慢翻过来，上挑往前撩时刃向才接得上
+    low = dict(low, edge=wrist(low['blade'], last(swing)['edge']))
+    out.append(dict(name='dash', length=0.3, loop='once', keys=[
+        k(0.0, HIRA),
+        *swing,
+        k(0.1, up=(18, 16, 0), hips=(0, -0.2, -0.06), rfoot=(0.16, 0, -0.5, -8), lfoot=(-0.2, 0, 0.4, 20)),
+        k(0.3, low, up=(20, 18, 0), hips=(0, -0.22, -0.08), lmode='free', lhand=(-0.34, -0.3, -0.7),
+          rfoot=(0.16, 0, -0.55, -8), lfoot=(-0.2, 0, 0.45, 22)),
+    ]))
+
+    # 上挑：从右后下方一刀撩到左上，挑飞目标（或接处决）；刀举过头顶定住。
+    s_rise = arc(0.03, 0.11, [low['grip'], (0.12, -0.36, -0.86), (-0.08, 0.5, -0.42)],
+                 [low['blade'], (0.04, -0.08, -1), (-0.28, 0.94, -0.2)], hold=0.32)
+    out.append(dict(name='rise', length=0.5, loop='once', markers={'contact': 0.07, 'cancel': 0.35}, keys=[
+        k(0.0, low, up=(20, 18, 0), hips=(0, -0.22, -0.08), lmode='free', lhand=(-0.34, -0.3, -0.7)),
+        *s_rise,
+        k(0.11, up=(-14, -20, 0), hips=(0, -0.06, -0.04), lhand=(-0.6, -0.55, 0.3), rfoot=(0.16, 0, -0.35, -8), lfoot=(-0.2, 0, 0.3, 22)),
+        k(0.32, up=(-12, -18, 0), hips=(0, -0.06, -0.04), lhand=(-0.6, -0.55, 0.28)),
+        # 收回待机：刀从头顶往右前放下，刃先转到朝外，免得和待机的刃向正好相反
+        k(0.41, grip=(0.3, -0.2, -0.5), blade=(0.2, 0.45, -0.87), edge=wrist((0.2, 0.45, -0.87), last(s_rise)['edge'])),
+        k(0.5, IDLE),
+    ]))
+
+    # 处决：目标在头顶半空，仰身往上连斩。一个循环两刀：右上横斩到左上，再从左上斩回右上，每刀两三刻、定一下。
+    a_up = dict(grip=(0.42, 0.12, -0.42), blade=(0.62, 0.7, -0.35), edge=(-0.78, 0.56, -0.26))
+    b_up = dict(grip=(-0.22, 0.2, -0.48), blade=(-0.6, 0.72, -0.34), edge=(0.78, -0.56, -0.26))
+    cut_a = arc(0.05, 0.12, [a_up['grip'], (0.1, 0.3, -0.62), b_up['grip']], [a_up['blade'], (0.02, 0.85, -0.52), b_up['blade']], hold=0.3)
+    cut_b = arc(0.35, 0.42, [b_up['grip'], (0.1, 0.32, -0.62), a_up['grip']], [b_up['blade'], (0.0, 0.88, -0.48), a_up['blade']], hold=0.55)
+    # 两刀方向相反：定住之后手腕一翻，刃先转到刀面朝外，再朝回砍的方向（循环的接缝处同样）
+    turn_ab = dict(grip=b_up['grip'], blade=b_up['blade'], edge=wrist(b_up['blade'], last(cut_a)['edge']))
+    turn_ba = dict(grip=a_up['grip'], blade=a_up['blade'], edge=wrist(a_up['blade'], last(cut_b)['edge']))
+    a_up = dict(a_up, edge=cut_a[0]['edge'])
+    out.append(dict(name='execution', length=0.6, loop='loop', keys=[
+        k(0.0, a_up, up=(-22, -14, 0), hips=(0, -0.08, 0), lmode='free', lhand=(-0.5, -0.4, -0.3)),
+        *cut_a,
+        k(0.12, up=(-24, 18, 0), lhand=(-0.6, -0.5, 0.2)),
+        k(0.3, up=(-22, 16, 0), lhand=(-0.58, -0.5, 0.18)),
+        k(0.325, turn_ab),
+        *cut_b,
+        k(0.42, up=(-24, -16, 0), lhand=(-0.48, -0.42, -0.32)),
+        k(0.575, turn_ba),
+        k(0.6, a_up, up=(-22, -14, 0), hips=(0, -0.08, 0), lhand=(-0.5, -0.4, -0.3)),
+    ]))
+
+    # 处决的最后一刀：双手把刀高举过头，一刀从上劈到左下（把目标拍下去），定住半拍，收回待机。
+    overhead = dict(grip=(0.08, 0.62, -0.3), blade=(0.15, 0.55, 0.82), edge=(0.05, 0.83, -0.55))
+    s_end = arc(0.08, 0.16, [overhead['grip'], (0.0, -0.1, -0.82), (-0.3, -0.72, -0.5)],
+                [overhead['blade'], (0.0, 0.3, -0.95), (-0.42, -0.8, -0.42)], hold=0.42)
+    out.append(dict(name='execution_end', length=0.7, loop='once', keys=[
+        k(0.0, a_up, up=(-22, -14, 0), hips=(0, -0.08, 0), lmode='free', lhand=(-0.5, -0.4, -0.3)),
+        k(0.07, overhead, up=(-18, 4, 0), hips=(0, -0.04, 0.05), lmode='two', ease='hold'),
+        *s_end,
+        k(0.16, up=(18, 24, 0), hips=(0, -0.2, -0.12), rfoot=(0.16, 0, -0.45, -8), lfoot=(-0.2, 0, 0.32, 22)),
+        k(0.42, up=(16, 22, 0), hips=(0, -0.19, -0.11)),
+        k(0.7, IDLE),
     ]))
 
     # 格挡：刀竖在身前，左掌抵住刀背。按下立刻进入，靠过渡时长做到“马上”。

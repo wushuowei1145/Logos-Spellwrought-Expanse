@@ -181,7 +181,8 @@ public final class ExecutionRenderer {
 
         // 静下来蓄势、重击定格的时候，速度线也停住不闪
         float seedAge = age;
-        float quietFrom = timeline.slashes().getLast().start() + ExecutionTimeline.STROKE;
+        float quietFrom = timeline.slashes().isEmpty() ? timeline.windowEnd() : Math.max(timeline.slashes().getLast().start() + ExecutionTimeline.STROKE,
+                timeline.interactive() ? timeline.windowEnd() : 0);
         if (age >= quietFrom && age < timeline.finalHit()) seedAge = quietFrom;
         else if (age >= timeline.finalHit() && age < timeline.slamStart()) seedAge = timeline.finalHit();
         float seed = ExecutionTimeline.frame(seedAge) + timeline.shot().seed() % 97;
@@ -193,12 +194,20 @@ public final class ExecutionRenderer {
         int frame = ExecutionTimeline.frame(age);
         if (mode == Mode.INK || mode == Mode.RED && !slamming) {
             var slashes = timeline.slashes();
+            // 可交互时刀可能多过刀痕的格子：只留最近的那些刀痕
+            int scarFrom = 0;
+            if (slashes.size() > SCARS) {
+                int seen = 0;
+                for (int i = slashes.size() - 1; i >= 0; i--) {
+                    if (slashes.get(i).progress(shown) > .5f && ++seen > SCARS) { scarFrom = i + 1; break; }
+                }
+            }
             for (int i = 0; i < slashes.size(); i++) {
                 Slash s = slashes.get(i);
                 float p = s.progress(shown);
                 float offset = s.offset() * screen[2];
                 if (mode == Mode.INK && p > 0 && p < 1.05f && active.size() < SLASHES) active.add(new float[] {s.angle(), offset, p, s.width() * BLADE, s.bend()});
-                if (p > .5f && scars.size() < SCARS) {
+                if (p > .5f && i >= scarFrom && scars.size() < SCARS) {
                     // 刀痕一侧的身体沿刀错开，正负交替；重击时错得更开
                     float shift = accents ? (i % 2 == 0 ? 1 : -1) * SLICE * (1 + 2 * burst) : 0;
                     scars.add(new float[] {s.angle(), offset, s.bend(), shift});

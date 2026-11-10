@@ -38,6 +38,10 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import com.mojang.blaze3d.platform.InputConstants;
+import org.lwjgl.glfw.GLFW;
 import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
@@ -49,6 +53,8 @@ import org.jspecify.annotations.Nullable;
  * 本机的处决特写。每个被处决的实体一段 {@link Run}：身体怎么被抛起、挨打、拍下，按时间表算出来交给实体渲染（所有看得见它的玩家都有）；
  * 看特写的那一段还接管镜头（{@link CameraDirector.Rig}：三个机位硬切、每刀抖一下、视角收窄再猛地推近）和全屏画面（{@link ExecutionRenderer}）。
  * 身体的样子和画面都由时间表直接算出，同一刻在实体渲染和全屏通道里算出来一模一样，剪影才对得上。
+ * <p>可交互的处决（{@link dev.logos.dimension.execution.InteractiveExecutions}）：刀不是种子定好的，处决的人点一下左键这边先画一刀
+ * 并告诉服务端，被处决的玩家和旁观的人收到服务端发来的每一刀再画。旁观的人还在世界里看到刀光（{@link ExecutionSlashes}）。
  */
 @EventBusSubscriber(modid = LogosDimension.ID, value = Dist.CLIENT)
 public final class ExecutionClient {
@@ -75,6 +81,63 @@ public final class ExecutionClient {
 
     @SubscribeEvent static void packets(RegisterClientPayloadHandlersEvent event) {
         event.register(ExecutionPayload.TYPE, (payload, context) -> start(payload));
+        event.register(ExecutionPayload.Slash.TYPE, (payload, context) -> slash(payload));
+    }
+
+    /** 服务端发来可交互处决的一刀：按服务端的刻数放，这边已经走过了就从现在开始划。 */
+    public static void slash(ExecutionPayload.Slash payload) {
+        Run run = RUNS.get(payload.target());
+        if (run != null && run.timeline.interactive() && !run.clicker) run.addSlash(Math.max(payload.age(), run.age(partialTick()) - .5f));
+    }
+
+    /** 正在看的那一段已经有几刀（客户端场景检查用），没在看为 -1。 */
+    public static int slashes() {
+        Run run = viewing();
+        return run == null ? -1 : run.timeline.slashes().size();
+    }
+
+    /** 本机是不是可交互处决里出刀的人，而且现在点得了。 */
+    public static boolean clicking() {
+        Run run = viewing();
+        return run != null && run.clicker && run.timeline.open(run.age(partialTick()));
+    }
+
+    /**
+     * 可交互处决里，处决的人按下攻击键（鼠标或键盘，按它绑定的那个）：这边先画一刀，再告诉服务端。
+     * 镜头锁着时按键映射每刻都被松开，只能在原始的输入事件里认；认到了就吞掉，不交给原版。
+     */
+    @SubscribeEvent static void mouse(InputEvent.MouseButton.Pre event) {
+        var key = Minecraft.getInstance().options.keyAttack.getKey();
+        if (key.getType() == InputConstants.Type.MOUSE && key.getValue() == event.getButton() && click(event.getAction())) event.setCanceled(true);
+    }
+
+    @SubscribeEvent static void key(InputEvent.Key event) {
+        var key = Minecraft.getInstance().options.keyAttack.getKey();
+        if (key.getType() == InputConstants.Type.KEYSYM && key.getValue() == event.getKey()) click(event.getAction());
+    }
+
+    /** 测试用：当成处决的人点了一下。 */
+    public static boolean click() {
+        return click(GLFW.GLFW_PRESS);
+    }
+
+    private static boolean click(int action) {
+        Run run = viewing();
+        if (run == null || !run.clicker || Minecraft.getInstance().screen != null) return false;
+        if (action != GLFW.GLFW_PRESS) return true;
+        float age = run.age(partialTick());
+        if (!run.timeline.open(age) || age - run.lastClick < run.minGap) return true;
+        run.lastClick = age;
+        run.addSlash(age);
+        ClientPacketDistributor.sendToServer(new ExecutionPayload.Click());
+        return true;
+    }
+
+    /** 旁观的人看的可交互处决（世界里画刀光用）。 */
+    static List<Run> watched() {
+        List<Run> out = new ArrayList<>();
+        for (Run run : RUNS.values()) if (!run.viewer && run.timeline.interactive()) out.add(run);
+        return out;
     }
 
     public static void start(ExecutionPayload payload) {
@@ -212,13 +275,19 @@ public final class ExecutionClient {
         final float height, width, pivot;
         /** 抛多高（脚底离地），头顶有方块时矮一些；躺下时身体中心比站着低多少（负数）。 */
         final float lift, lie;
-        private final Vector3f[] push, axis;
-        private final Vector3f[] shakeDir;
+        /** 第几刀被往哪推、身体绕哪根轴歪、镜头往哪抖；可交互时刀一刀刀加进来，跟着加。 */
+        private final List<Vector3f> push = new ArrayList<>(), axis = new ArrayList<>(), shakeDir = new ArrayList<>();
+        private final Vector3f hitShake, landShake;
         private final Vector3f finisherPush, finisherAxis, slamAxis;
         private final float spin;
         private final List<Cue> cues = new ArrayList<>();
         private int nextCue;
         int ticks;
+        /** 可交互处决里本机是出刀的人；上一刀点在第几刻；两刀至少隔几刻（和服务端一样是 1 刻）。 */
+        final boolean clicker;
+        float lastClick = -100;
+        final float minGap = 1;
+        private final Random slashRandom;
 
         private record Cue(float at, Runnable action) {}
 
@@ -227,6 +296,7 @@ public final class ExecutionClient {
             this.target = entity.getId();
             this.timeline = new ExecutionTimeline(payload.shot());
             this.viewer = payload.viewer();
+            this.clicker = payload.clicker();
             double yaw = Math.toRadians(payload.yaw());
             forward = new Vec3(-Math.sin(yaw), 0, Math.cos(yaw));
             side = new Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
@@ -238,17 +308,10 @@ public final class ExecutionClient {
 
             Random random = new Random(payload.shot().seed() * 31L + 7);
             var slashes = timeline.slashes();
-            push = new Vector3f[slashes.size()];
-            axis = new Vector3f[slashes.size()];
-            shakeDir = new Vector3f[slashes.size() + 2];
-            for (int i = 0; i < slashes.size(); i++) {
-                Slash s = slashes.get(i);
-                push[i] = screenToWorld(timeline.cut(s.contact()), s.angle());
-                axis[i] = tipAxis(push[i], timeline.cut(s.contact()));
-                shakeDir[i] = new Vector3f(random.nextFloat() - .5f, random.nextFloat() - .5f, random.nextFloat() - .5f).normalize();
-            }
-            shakeDir[slashes.size()] = new Vector3f(random.nextFloat() - .5f, .6f, random.nextFloat() - .5f).normalize();
-            shakeDir[slashes.size() + 1] = new Vector3f(random.nextFloat() * .4f - .2f, 1, random.nextFloat() * .4f - .2f).normalize();
+            for (Slash s : slashes) react(s, random);
+            hitShake = new Vector3f(random.nextFloat() - .5f, .6f, random.nextFloat() - .5f).normalize();
+            landShake = new Vector3f(random.nextFloat() * .4f - .2f, 1, random.nextFloat() * .4f - .2f).normalize();
+            slashRandom = new Random(payload.shot().seed() * 131L + 3);
             Cut last = timeline.cut(timeline.finalHit());
             finisherPush = screenToWorld(last, timeline.finisher().angle());
             finisherAxis = tipAxis(finisherPush, last);
@@ -256,6 +319,35 @@ public final class ExecutionClient {
             slamAxis = flat.lengthSquared() < 1e-4 ? toVector(right(last)) : new Vector3f(UP).cross(flat).normalize();
             spin = (random.nextBoolean() ? 1 : -1) * .012f;
             buildCues(random);
+        }
+
+        /** 记下这一刀把身体往哪推、绕哪根轴歪、镜头往哪抖。 */
+        private void react(Slash s, Random random) {
+            Vector3f p = screenToWorld(timeline.cut(s.contact()), s.angle());
+            push.add(p);
+            axis.add(tipAxis(p, timeline.cut(s.contact())));
+            shakeDir.add(new Vector3f(random.nextFloat() - .5f, random.nextFloat() - .5f, random.nextFloat() - .5f).normalize());
+        }
+
+        /** 可交互：第 {@code at} 刻起划一刀，身体、镜头、声音跟着。 */
+        void addSlash(float at) {
+            Slash s = timeline.add(at);
+            react(s, slashRandom);
+            int i = timeline.slashes().size() - 1;
+            // 越砍越快，音调也越来越高；暴击声隔几刀响一下
+            float pitch = 1.05f + .5f * Math.min(1, i / 24f) + slashRandom.nextFloat() * .1f;
+            boolean crit = i % 3 == 2;
+            float contact = s.contact();
+            addCue(new Cue(contact, () -> {
+                sound(SoundEvents.PLAYER_ATTACK_SWEEP, .9f, pitch, contact);
+                if (crit) sound(SoundEvents.PLAYER_ATTACK_CRIT, .6f, 1.3f, contact);
+            }));
+        }
+
+        private void addCue(Cue cue) {
+            int at = nextCue;
+            while (at < cues.size() && cues.get(at).at() <= cue.at()) at++;
+            cues.add(at, cue);
         }
 
         /** 头顶有方块时抛不了那么高：留出头顶 0.3 格。 */
@@ -324,12 +416,12 @@ public final class ExecutionClient {
             var slashes = timeline.slashes();
             for (int i = 0; i < slashes.size(); i++) {
                 float since = age - slashes.get(i).contact();
-                if (since > 0 && since < 6) sum.fma(.045f * slashes.get(i).force() * (float) (Math.exp(-since / 1.1) * Math.sin(since * 4.2 + i)), shakeDir[i]);
+                if (since > 0 && since < 6) sum.fma(.045f * slashes.get(i).force() * (float) (Math.exp(-since / 1.1) * Math.sin(since * 4.2 + i)), shakeDir.get(i));
             }
             float hit = age - timeline.finalHit();
-            if (hit > 0 && hit < 10) sum.fma((float) (.2 * Math.exp(-hit / 2.2) * Math.sin(hit * 3.6)), shakeDir[slashes.size()]);
+            if (hit > 0 && hit < 10) sum.fma((float) (.2 * Math.exp(-hit / 2.2) * Math.sin(hit * 3.6)), hitShake);
             float land = age - timeline.impact();
-            if (land > 0 && land < 10) sum.fma((float) (.28 * Math.exp(-land / 2) * Math.sin(land * 3.9 + 1)), shakeDir[slashes.size() + 1]);
+            if (land > 0 && land < 10) sum.fma((float) (.28 * Math.exp(-land / 2) * Math.sin(land * 3.9 + 1)), landShake);
             return new Vec3(sum.x, sum.y, sum.z);
         }
 
@@ -410,10 +502,10 @@ public final class ExecutionClient {
                 float since = a - s.contact();
                 if (since <= 0 || since > 14) continue;
                 float k = ExecutionTimeline.punch(since, .7f) * s.force();
-                rotation.fma(.42f * k, axis[i]);
+                rotation.fma(.42f * k, axis.get(i));
                 rotation.fma(s.twist() * ExecutionTimeline.punch(since, .9f), UP);
-                move.fma(.1f * k, push[i]);
-                flail.fma(ExecutionTimeline.punch(since - .35f, 1) * s.force(), push[i]);
+                move.fma(.1f * k, push.get(i));
+                flail.fma(ExecutionTimeline.punch(since - .35f, 1) * s.force(), push.get(i));
             }
             rotation.fma(spin * Mth.clamp(a - ExecutionTimeline.APEX, 0, timeline.slamStart() - ExecutionTimeline.APEX), UP);
             if (a >= timeline.finalHit()) {

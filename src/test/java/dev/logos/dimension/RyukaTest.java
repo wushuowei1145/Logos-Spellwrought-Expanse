@@ -136,4 +136,55 @@ class RyukaTest {
             }
         }
     }
+
+    /**
+     * 平一文字の構え（docs/RYUKA.md 第 3.3 节）：格挡中左键进构え；蓄不到 0.3 秒松开回到格挡，蓄够了松开突进，突进完上挑（砍一下）再回待机；
+     * 构え里挨打用构え的格挡，之后留在构え，这时松开立即突进（格挡动作里松开的先记着，0.12 秒再走）。
+     */
+    @Test void stanceChargesThenDashesIntoTheRisingCut() throws Exception {
+        var set = moveset();
+        assertEquals("ryuka_rise", set.move("rise").effect());
+        assertFalse(set.move("rise").knockback(), "上挑不击退：挑飞或处决接手");
+        var s = new Sim(set).until(20);
+        assertTrue(s.input(Moveset.Input.USE_PRESS));
+        assertEquals("guard", s.move());
+        assertTrue(s.input(Moveset.Input.ATTACK));
+        assertEquals("stance", s.move());
+        s.until(s.now + 3);
+        assertTrue(s.input(Moveset.Input.ATTACK_RELEASE));
+        assertEquals("guard", s.move(), "蓄不到 0.3 秒松开");
+        assertTrue(s.input(Moveset.Input.ATTACK));
+        s.until(s.now + 6);
+        assertTrue(s.input(Moveset.Input.ATTACK_RELEASE));
+        assertEquals("dash", s.move());
+        int contacts = s.actor.contacts.size();
+        s.until(s.now + 7);
+        assertEquals("rise", s.move(), "突进 0.3 秒后接上挑");
+        s.until(s.now + 3);
+        assertEquals(contacts + 1, s.actor.contacts.size(), "上挑砍一下");
+        s.until(s.now + 12);
+        assertEquals("idle", s.move());
+
+        // 构え里挨打
+        s.input(Moveset.Input.USE_PRESS);
+        s.input(Moveset.Input.ATTACK);
+        assertTrue(s.input(Moveset.Input.BLOCK));
+        assertEquals("stance_block", s.move());
+        assertTrue(s.input(Moveset.Input.ATTACK_RELEASE), "格挡动作里松开要记着");
+        assertEquals("stance_block", s.move());
+        s.until(s.now + 3);
+        assertEquals("dash", s.move(), "0.12 秒时接上突进");
+
+        s.until(s.now + 40);
+        s.input(Moveset.Input.USE_PRESS);
+        s.input(Moveset.Input.ATTACK);
+        s.input(Moveset.Input.BLOCK);
+        s.until(s.now + 8);
+        assertEquals("stance_hold", s.move(), "构え的格挡之后回到构え");
+        assertTrue(s.input(Moveset.Input.ATTACK_RELEASE));
+        assertEquals("dash", s.move(), "已经蓄过了，松开就突进");
+        // 处决的两个招式在：一个循环，一个收尾回待机
+        assertEquals(Moveset.Playback.LOOP, set.move("execution").playback());
+        assertEquals("idle", set.move("execution_end").next());
+    }
 }

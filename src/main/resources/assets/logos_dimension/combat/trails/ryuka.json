@@ -14,6 +14,9 @@
     "slash_4": {"windows": [[0.09, 0.2]]},
     "slash_5": {"windows": [[0.16, 0.25]]},
     "parry": {"windows": [[0.0, 0.06]]},
-    "riposte": {"windows": [[0.02, 0.08]]}
+    "riposte": {"windows": [[0.02, 0.08]]},
+    "rise": {"windows": [[0.03, 0.12]]},
+    "execution": {"windows": [[0.05, 0.13], [0.35, 0.43]]},
+    "execution_end": {"windows": [[0.08, 0.17]]}
   }
 }

@@ -17,8 +17,8 @@ public record Moveset(String start, String sheathe, double comboMemory, Map<Stri
     public static final String PARRIED = "parried";
     /** 保留的招式名：NPC 被弹反时强制进入，比玩家的僵直长；没有时退回 {@link #PARRIED}（见 {@link Parry#staggerNpc}）。 */
     public static final String PARRIED_NPC = "parried_npc";
-    /** {@code BLOCK}：原版格挡成功挡下一次攻击（服务端给出）。 */
-    public enum Input { ATTACK, USE_PRESS, USE_RELEASE, BLOCK }
+    /** {@code BLOCK}：原版格挡成功挡下一次攻击（服务端给出）。{@code ATTACK_RELEASE}：松开左键（流火在格挡中按住左键蓄力，松开突进）。 */
+    public enum Input { ATTACK, USE_PRESS, USE_RELEASE, BLOCK, ATTACK_RELEASE }
     public enum Playback { ONCE, LOOP, REVERSE }
 
     /**
