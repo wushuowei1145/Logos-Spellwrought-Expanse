@@ -21,6 +21,9 @@ from combat_render import Camera, Geo, mannequin_quads, render, sheet, weapon_qu
 
 ROOT = Path(__file__).resolve().parent.parent
 TIP = np.array([-0.4, 15.4, 0, 1])
+# 神狐的烘焙结果在模型目录 Animation/katana/ 下的文件名（tools/divine_fox_assets.py 的 KATANA_SOURCE 读它）。
+# _v2 起补了中间帧、去掉刀翻面；之前的 divine_fox_katana.animation.json 留在原处不动。
+FOX_KATANA = 'divine_fox_katana_v2.animation.json'
 
 # ---------------------------------------------------------------- 常用姿势
 
@@ -79,6 +82,10 @@ def clips():
         # 神狐的刀约为手臂的 2.2 倍，左手要把鞘向后猛拉、转开，刀才拔得到底。
         k(0.40, sheathed=13.4, ease='lin', saya=(0, -42, 4), saya_off=(0, 0.02, 0.32), up=(0, 0, 0), chest=(0, -6, 0),
           fox=dict(saya=(0, -50, 0), saya_off=(0, 0, 0.58), up=(0, 6, 0), chest=(0, 26, 0))),
+        # 刀尖出鞘后经朝下甩到右前。
+        k(0.46, grip=(0.57, -0.15, -0.63), blade=(0.36, -0.93, 0.01), edge=(0.4, 0.16, 0.9),
+          fp=dict(grip=(0.59, -0.36, -0.31)),
+          fox=dict(grip=(0.9, 0.04, -0.64), blade=(0.15, -0.97, -0.21), edge=(0.43, -0.13, 0.89))),
         k(0.52, grip=(0.72, -0.30, -0.55), blade=(0.75, 0.05, -0.55), edge=(0.5, 0.1, 0.8), up=(0, -22, 0),
           chest=(0, -8, 0), saya=(0, -20, 0), saya_off=(0, 0, 0.12)),
         k(0.66, grip=(0.55, -0.35, -0.55), blade=(0.6, 0.55, 0.2), edge=(0.2, -0.3, 1), up=(0, -10, 0), chest=(0, 0, 0)),
@@ -89,8 +96,15 @@ def clips():
     # 第一刀：右手单手逆袈裟，从右下撩向左上。
     out.append(dict(name='slash_1', length=0.48, loop='once', markers={'input_open': 0.08, 'contact': 0.15, 'cancel': 0.3}, keys=[
         k(0.0, IDLE),
+        # 相邻两帧的刀向或刃向差过 90° 时补中间帧，免得插值时两头相消、刀一帧翻过去（combat_author.Baker.sword 会报）。
+        # 引刀：刀尖经右下转到身后，刃由朝下经朝后转成朝上。
+        k(0.035, grip=(0.47, -0.73, -0.08), blade=(0.65, -0.75, -0.1), edge=(0.02, -0.12, 0.99),
+          fp=dict(grip=(0.44, -0.59, -0.26), blade=(0.97, 0, -0.26), edge=(0.25, -0.25, 0.93))),
         k(0.07, grip=(0.52, -0.66, 0.02), blade=(0.38, -0.3, 0.88), edge=(0.1, 0.8, 0.2), up=(0, -22, 0),
           lmode='free', lhand=(-0.62, -0.62, 0.25), blend=0.08, ease='hold'),
+        # 撩斩：刀尖从身后绕过右下、经身前低处，在同一个斜面里撩向左上；刃由刀面朝前转成刃朝前。
+        k(0.10, grip=(0.43, -0.62, -0.19), blade=(0.8, -0.6, -0.04), edge=(0.6, 0.8, -0.02)),
+        k(0.125, grip=(0.27, -0.53, -0.5), blade=(0.28, -0.32, -0.91), edge=(0.19, 0.94, -0.27)),
         k(0.15, grip=(0.12, -0.42, -0.72), blade=(-0.55, 0.32, -0.77), edge=(-0.4, 0.9, 0.1), up=(0, 14, 0),
           lhand=(-0.66, -0.5, 0.35)),
         k(0.22, grip=(-0.22, 0.08, -0.55), blade=(-0.5, 0.8, 0.3), edge=(-0.3, 0.2, 0.95), up=(0, 32, 0),
@@ -104,6 +118,8 @@ def clips():
     out.append(dict(name='slash_2', length=0.52, loop='once', markers={'input_open': 0.08, 'contact': 0.18, 'cancel': 0.32}, keys=[
         k(0.0, grip=(-0.18, 0.04, -0.56), blade=(-0.45, 0.82, 0.32), edge=(-0.3, 0.2, 0.95), up=(0, 30, 0),
           lmode='free', lhand=(-0.62, -0.48, 0.42)),
+        # 刀向几乎不变，刃由朝后经朝右翻到朝前上。
+        k(0.04, grip=(-0.2, 0.14, -0.44), blade=(-0.38, 0.78, 0.5), edge=(0.92, 0.26, 0.3)),
         k(0.08, grip=(-0.22, 0.22, -0.35), blade=(-0.3, 0.7, 0.65), edge=(0.3, 0.35, -0.9), up=(0, 26, 0),
           lmode='two', blend=0.07, ease='hold'),
         k(0.18, grip=(0.08, -0.45, -0.72), blade=(0.45, -0.1, -0.9), edge=(0.6, -0.8, 0), up=(0, -12, 0)),
@@ -135,6 +151,8 @@ def clips():
           lmode='two', blend=0.1, hips=(0, 0.02, 0)),
         k(0.28, grip=(0.06, 0.58, -0.36), blade=(0, 0.42, 0.9), edge=(0, 0.9, -0.42), up=(-14, 4, 0), hips=(0, 0.03, 0.02),
           ease='hold', rfoot=(0.16, 0.06, -0.22, -10)),
+        # 刀尖从脑后经正上方劈向前下。
+        k(0.335, grip=(0.06, 0.17, -0.62), blade=(0, 0.96, -0.28), edge=(0, -0.28, -0.96)),
         k(0.38, grip=(0.06, -0.3, -0.85), blade=(0, -0.15, -1), edge=(0, -1, -0.1), up=(16, 0, 0),
           hips=(0, -0.16, -0.12), rfoot=(0.16, 0, -0.6, -6), lfoot=(-0.2, 0, 0.3, 25)),
         k(0.46, grip=(0.06, -0.72, -0.6), blade=(0, -0.75, -0.66), edge=(0, -0.66, 0.75), up=(20, 0, 0),
@@ -201,7 +219,9 @@ def clips():
           lmode='free', lhand=(-0.48, -0.85, 0.05), blend=0.1),
         k(0.22, grip=(0.58, -0.58, -0.48), blade=(0.4, -0.5, -0.75), edge=(0.2, -0.85, 0.45), up=(0, -10, 0), ease='hold'),
         *spins,
-        k(1.18, grip=(0.5, -0.36, -0.62), blade=(-0.7, -0.05, 0.7), edge=(0, 1, 0.1), up=(0, 10, 0),
+        # 转完刀，刀尖经左侧转到左后方，刃由朝下经朝后转成朝上。
+        k(1.12, grip=(0.56, -0.3, -0.55), blade=(-0.91, -0.18, -0.37), edge=(-0.38, 0, 0.93)),
+        k(1.18,grip=(0.5, -0.36, -0.62), blade=(-0.7, -0.05, 0.7), edge=(0, 1, 0.1), up=(0, 10, 0),
           lmode='saya', blend=0.16, saya=(0, -30, 0), saya_off=(0, 0, -0.05)),
         k(1.4, sheathed=13.4, saya=(0, -50, 0), saya_off=(0, 0.02, -0.16), chest=(0, 14, 0),
           fox=dict(saya=(0, -50, 0), saya_off=(0, 0, 0.58), chest=(0, 26, 0))),
@@ -289,7 +309,8 @@ def main():
     all_clips = clips()
     baked = {}
     for who, sk in (('player', player), ('fp', fp), ('fox', fox)):
-        baker = Baker(sk)
+        # 打刀的编排已经补齐中间帧，再出现刀翻面就直接报错。
+        baker = Baker(sk, strict=True)
         for clip in all_clips:
             baked[(who, clip['name'])] = baker.bake(clip, 60)
         worst = {}
@@ -315,12 +336,12 @@ def main():
                        bones + (['Root'] if view == 'fp' else []))
         text = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
         (assets / f'uchigatana_{view}.animation.json').write_text(text, encoding='utf-8')
-    # 神狐：同一套编排烘焙到神狐骨架（刀按 1.6 倍），写进模型目录的 Animation/katana/；
+    # 神狐：同一套编排烘焙到神狐骨架（刀按 1.6 倍），写进模型目录的 Animation/katana/（文件名见 FOX_KATANA）；
     # tools/divine_fox_assets.py 给动画名加 katana_ 前缀并入神狐的动画文件，Weapon / Sheath 骨骼也由它并进模型。
     fox_out = art / 'MinecraftLogosMod/fox_model/divine_fox/Animation/katana'
     fox_out.mkdir(parents=True, exist_ok=True)
     data = bedrock(all_clips, {c['name']: baked[('fox', c['name'])] for c in all_clips}, fox, bones)
-    (fox_out / 'divine_fox_katana.animation.json').write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+    (fox_out / FOX_KATANA).write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
     cams = {'player': [Camera(-35, 8, 6.2, (0, 16, -2), (230, 270)), Camera(80, 6, 6.2, (0, 16, -2), (230, 270))],
             'fox': [Camera(-35, 8, 3.6, (0, 26, -3), (230, 270)), Camera(80, 6, 3.6, (0, 26, -3), (230, 270))]}
 

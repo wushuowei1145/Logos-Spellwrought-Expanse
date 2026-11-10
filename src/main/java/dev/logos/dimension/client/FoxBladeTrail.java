@@ -50,12 +50,9 @@ final class FoxBladeTrail {
                  @Nullable Boolean window, boolean latch, float speed) {
         /**
          * 骨骼回调里调：{@code pose} 是刀身骨骼此刻的姿势（{@code poseStack.last().pose()}）。
-         * <ul>
-         * <li>接触前后那一段里刀尖一旦够快就一直出光到这段结束：神狐的一刀往往两三帧就扫完，扫完后刀尖慢下来，
-         *     只看每帧的速度会在中间断开一下，收尾那一截另起一段，看起来像错开的两片。</li>
-         * <li>神狐的动作是逐帧烘焙的欧拉角，个别相邻两帧之间角度表示翻了一面（如 X 从 72° 跳到 219°），
-         *     GeckoLib 线性插值时那一两帧刀会闪到别处；这种帧刀尖快得不可能（{@link #POP_SPEED}），不送进刀光。</li>
-         * </ul>
+         * 接触前后那一段里刀尖一旦够快就一直出光到这段结束：神狐的一刀往往两三帧就扫完，扫完后刀尖慢下来，
+         * 只看每帧的速度会在中间断开一下，收尾那一截另起一段，看起来像错开的两片。
+         * （动作文件里刀不会在相邻两个关键帧之间翻面，DivineFoxAssetsTest 查这一点，这里不用再挑掉闪帧。）
          */
         void feed(Matrix4fc pose) {
             // 光影包阴影通道里的姿势是太阳视角的，量出来的刀尖不对（BoneTrails 也会丢掉这一次）
@@ -69,8 +66,6 @@ final class FoxBladeTrail {
             double dt = last == null ? 0 : now - last.time;
             // 刀尖相对神狐脚下的速度（走路、突进不算）；隔得太久（刚进入视野）或同一帧画第二次时不算
             double tipSpeed = dt > 1e-4 && dt < .1 ? relative.distanceTo(last.relative) / dt : 0;
-            // 闪帧不记，下一帧仍和最近一次正常的帧比
-            if (window != Boolean.FALSE && tipSpeed > POP_SPEED) return;
             boolean on = window != null ? window : latch && last != null && last.on || tipSpeed >= speed;
             if (LAST_TIP.size() >= 256) LAST_TIP.clear();
             LAST_TIP.put(key, new Tip(now, relative, on));
@@ -78,8 +73,6 @@ final class FoxBladeTrail {
         }
     }
 
-    /** 刀尖相对神狐快过这么多（格/秒）就是动作数据里欧拉角翻面造成的闪帧（真正挥砍最快约 55 格/秒）。 */
-    private static final double POP_SPEED = 75;
     private record Tip(double time, Vec3 relative, boolean on) {}
     /** 每把刀上一次送进刀光的刀尖（相对神狐脚下），以及那时是否在出光。 */
     private static final Map<String, Tip> LAST_TIP = new HashMap<>();
