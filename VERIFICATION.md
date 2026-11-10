@@ -1,5 +1,23 @@
 # 首版验证记录
 
+## 魔女之森乐器（第一版）
+
+2026-11-10：分支 `feat/hexenwald-instruments`，在 main `64d4481f`（#232）上做完后 rebase 到 main `f3ea2b44`（#234），下表是 rebase 后重跑的结果，Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`（main 合了 #234，要用这个构建）。设计与实现说明见 [docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md)。星辰花三角钢琴（2×2）、灵猫竖琴（两格高）、空白纸带与打孔纸带；采样全部由 `tools/instrument_samples.py` 合成（钢琴 30 个、竖琴 27 个，约 1.6 MB）。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 全量 **332/333**，唯一失败的仍是 main 上就缺的 `item.logos_dimension.fuda_desk`。新增 `MusicRollTest` 6/6（编码往返、排序、上限、逐字节截断与伪造长度、乐器音域与取样不超过 ±1 半音）、`MidiReaderTest` 5/5（速度表变化、运行状态、力度 0 当松开、踏板、打击乐提示、出错报出轨道与事件、伪造长度与格式 2、事件上限截断、SMPTE 时间码） |
+| 世界测试 | 新增 `instrument_*` **5/5**：钢琴四格的 part 与主块、只有主块有方块实体，拆琴尾一块整架消失、掉一架钢琴和槽里的纸带；竖琴拆上半整个消失；复制配方（一卷 + 两张空白 → 两卷同内容，原卷留下）；纸带存档读写与临时纸带；红石上升沿开始、默认失去信号不停、「信号停止时停止」、上半格旁的信号也算。`creative_tabs_cover_items` 1/1 |
+| 实际客户端 | 新增 `instrument_views`、`instrument_play_ui`、`roll_editor_ui`、`midi_import_ui` **4/4**：认领演奏者、按住 Z C B 弹 C–E–G、切纸带页播放后服务端在放且客户端跟上纸带；编辑器读入 18 个音；往 `logos_music/` 写一个四轨小 MIDI，选中后预览两个声部并提示打击乐没导入 |
+| 截图人工看过 | 正面、侧面（两种朝向）、竖琴近景、俯视琴键（黑键 2+3 分组）、物品栏图标、演奏页、纸带页、编辑器、导入页。截图和试听音阶在仓库外 `builds/instruments-2026-11-10` |
+| 未验证 | 音色只能人工试听；多人同步没用两个客户端连同一服务器试过；专用服务器、光影包没测 |
+
+```text
+./gradlew test --tests "dev.logos.dimension.music.*" -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:instrument_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=instrument_views,instrument_play_ui,roll_editor_ui,midi_import_ui" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 白梅同伴（第二版）试玩后：出刀、打神狐、立契过场、深温泉、狐火灯
 
 2026-11-10：分支 `feat/shiraume-pact`。提 PR 时第一版（#229）和 Logos 的长期同伴接口（MagicFoxDemon/MinecraftLogosMod#423）都已合并，改成直接基于 main `0e9ec038`（#233）重建；形代按 #232 的分类放进「道具」页。重建后全量单元测试 321/322（唯一失败同前，main 上的 `fuda_desk`），`creative_tabs_cover_items` 通过，`shiraume_companion` 14/14 场景、40/40 检查，打两只神狐三轮全赢。Logos jar 同下一节。按试玩反馈改：突刺一直刺、沿用 Boss 出招太慢打不过两只神狐、机位二被自己挡住、台词生硬（改成谢罪、愿做式神，加发抖）、一格半深的露天风吕里被淹、狐火灯改成飘在身边的淡粉狐火。设计见 [白梅同伴](docs/SHIRAUME_COMPANION.md) 8.1、8.1.1、8.4、8.6、8.9 节。试玩包 `builds/shiraume-pact-r2-2026-11-10`。

@@ -178,5 +178,575 @@
       "logos_dimension:entity/divine_fox/death_5e0ece4a",
       "logos_dimension:entity/divine_fox/death_808fd280"
     ]
+  },
+  "instrument.grand_piano.s21": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s21",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s24": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s24",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s27": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s27",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s30": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s30",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s33": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s33",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s36": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s36",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s39": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s39",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s42": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s42",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s45": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s45",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s48": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s48",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s51": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s51",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s54": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s54",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s57": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s57",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s60": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s60",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s63": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s63",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s66": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s66",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s69": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s69",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s72": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s72",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s75": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s75",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s78": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s78",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s81": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s81",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s84": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s84",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s87": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s87",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s90": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s90",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s93": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s93",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s96": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s96",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s99": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s99",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s102": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s102",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s105": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s105",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.grand_piano.s108": {
+    "subtitle": "subtitles.logos_dimension.instrument.grand_piano",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/grand_piano/s108",
+        "attenuation_distance": 32,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s24": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s24",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s27": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s27",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s30": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s30",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s33": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s33",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s36": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s36",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s39": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s39",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s42": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s42",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s45": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s45",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s48": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s48",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s51": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s51",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s54": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s54",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s57": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s57",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s60": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s60",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s63": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s63",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s66": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s66",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s69": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s69",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s72": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s72",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s75": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s75",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s78": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s78",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s81": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s81",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s84": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s84",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s87": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s87",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s90": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s90",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s93": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s93",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s96": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s96",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s99": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s99",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.concert_harp.s102": {
+    "subtitle": "subtitles.logos_dimension.instrument.concert_harp",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/concert_harp/s102",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
   }
 }

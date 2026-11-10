@@ -1,0 +1,55 @@
+{
+  "variants": {
+    "facing=north,part=0": {
+      "model": "logos_dimension:block/starbloom_grand_piano"
+    },
+    "facing=north,part=1": {
+      "model": "logos_dimension:block/starbloom_grand_piano_part"
+    },
+    "facing=north,part=2": {
+      "model": "logos_dimension:block/starbloom_grand_piano_part"
+    },
+    "facing=north,part=3": {
+      "model": "logos_dimension:block/starbloom_grand_piano_part"
+    },
+    "facing=east,part=0": {
+      "model": "logos_dimension:block/starbloom_grand_piano",
+      "y": 90
+    },
+    "facing=east,part=1": {
+      "model": "logos_dimension:block/starbloom_grand_piano_part"
+    },
+    "facing=east,part=2": {
+      "model": "logos_dimension:block/starbloom_grand_piano_part"
+    },
+    "facing=east,part=3": {
+      "model": "logos_dimension:block/starbloom_grand_piano_part"
+    },
+    "facing=south,part=0": {
+      "model": "logos_dimension:block/starbloom_grand_piano",
+      "y": 180
+    },
+    "facing=south,part=1": {
+      "model": "logos_dimension:block/starbloom_grand_piano_part"
+    },
+    "facing=south,part=2": {
+      "model": "logos_dimension:block/starbloom_grand_piano_part"
+    },
+    "facing=south,part=3": {
+      "model": "logos_dimension:block/starbloom_grand_piano_part"
+    },
+    "facing=west,part=0": {
+      "model": "logos_dimension:block/starbloom_grand_piano",
+      "y": 270
+    },
+    "facing=west,part=1": {
+      "model": "logos_dimension:block/starbloom_grand_piano_part"
+    },
+    "facing=west,part=2": {
+      "model": "logos_dimension:block/starbloom_grand_piano_part"
+    },
+    "facing=west,part=3": {
+      "model": "logos_dimension:block/starbloom_grand_piano_part"
+    }
+  }
+}

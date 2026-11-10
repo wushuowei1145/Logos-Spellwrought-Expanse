@@ -58,8 +58,8 @@ public final class CreativeTabGameTests {
             var id = entry.getKey().identifier();
             if (!id.getNamespace().equals(LogosDimension.ID)) continue;
             String path = id.getPath();
-            // 只为旧存档保留的稻子；写好的霊符要在符札书案上写，不放空壳
-            if (path.equals("journey_rice") || path.endsWith("_inscribed_reifu")) continue;
+            // 只为旧存档保留的稻子；写好的霊符要在符札书案上写、打孔纸带要在乐器上写，不放空壳
+            if (path.equals("journey_rice") || path.endsWith("_inscribed_reifu") || path.equals("music_roll")) continue;
             if (!listed.contains(entry.getValue())) missing.add(path);
         }
         h.assertTrue(missing.isEmpty(), "Not in any creative tab: " + missing);
