@@ -185,12 +185,11 @@ public final class WeaponTrails {
     public static void submitHand(Object key, PoseStack pose, SubmitNodeCollector out) {
         Emitter e = EMITTERS.get(key);
         double now = now();
-        if (e != null && e.space == Space.HAND && !e.ribbon.isEmpty()) {
-            SubmitNodeCollector collector = ShaderPackOverlay.collector(out);
-            draw(e, pose, VfxParts.layered(out, collector), now, Vec3.ZERO);
-        }
+        // 开着光影时 Iris 用它自己的投影画第一人称的手：交给手部的叠加收集器，合成后按那套投影补画（同剑身发光、魔力缠绕）
+        SubmitNodeCollector collector = ShaderPackOverlay.item(out, true);
+        if (e != null && e.space == Space.HAND && !e.ribbon.isEmpty()) draw(e, pose, VfxParts.layered(out, collector), now, Vec3.ZERO);
         // 手部坐标与镜头同向：右是 +X，上是 +Y
-        drawSparks(Space.HAND, key, pose, ShaderPackOverlay.collector(out), now,
+        drawSparks(Space.HAND, key, pose, collector, now,
                 new VfxParts.View(Vec3.ZERO, new Vec3(1, 0, 0), new Vec3(0, 1, 0)), Vec3.ZERO);
     }
 
