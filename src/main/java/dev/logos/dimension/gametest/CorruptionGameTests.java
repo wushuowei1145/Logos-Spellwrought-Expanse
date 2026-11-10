@@ -322,9 +322,10 @@ public final class CorruptionGameTests {
     private static void grows(GameTestHelper h) {
         var chunks = forceArea(h, new BlockPos(0, 0, 0), new BlockPos(24, 0, 24));
         BlockPos below = new BlockPos(12, 0, 12), core = below.above();
-        clear(h, new BlockPos(-1, 1, -1), new BlockPos(25, 4, 25));
-        // 地面先铺黑曜石：转化不了，核心的初始电荷就长不出这里放的以外的方块，网络大小只由测试决定
-        for (BlockPos p : BlockPos.betweenClosed(new BlockPos(-1, 0, -1), new BlockPos(25, 0, 25))) h.setBlock(p, Blocks.OBSIDIAN);
+        // 污秽悬空放，上下和四周各留一格空气：脉络不贴污秽、不贴核心，周围又没有别的面可贴，核心撒的初始电荷只能在污秽上游走、
+        // 慢慢耗光，网络大小只由测试决定。原来地面铺黑曜石：转化不了，可光标走到污秽边上时脉络照样爬上黑曜石、绕到底下，
+        // 网络就比放的多（99 块时偶尔已经 105 以上，阶段提前变成 1）。
+        clear(h, new BlockPos(-1, -1, -1), new BlockPos(25, 4, 25));
         h.setBlock(core, Corruption.CORE.get());
         List<BlockPos> floor = new ArrayList<>();
         for (int x = 0; x < 25; x++) for (int z = 0; z < 25; z++) floor.add(new BlockPos(x, 0, z));
@@ -516,6 +517,17 @@ public final class CorruptionGameTests {
     }
 
     /**
+     * 这些区块都在走方块刻。{@code setChunkForced} 加的票只有在区块还没加载时才当场处理（为了把它加载出来）；
+     * 已经加载的区块要等下一刻处理票时才更新走刻的范围。离测试原点两个区块的地方本来就被测试结构所在的强制区块带着加载了，
+     * 所以加票的这一刻里它们的 {@code shouldTickBlocksAt} 还是 false。
+     */
+    private static Runnable blocksTicking(GameTestHelper h, List<ChunkPos> chunks) {
+        return () -> {
+            for (ChunkPos c : chunks) check(h, h.getLevel().shouldTickBlocksAt(c.pack()), "区块 " + c + " 应当在走方块刻");
+        };
+    }
+
+    /**
      * 一块 {@code size}×{@code size} 的污秽地（记着原来是泥土）、中间上方一个核心，由近到远放，全归这个核心。
      * {@code veins} 时污秽上再全铺脉络。返回核心的相对位置。
      */
@@ -544,6 +556,16 @@ public final class CorruptionGameTests {
      */
     private static void splits(GameTestHelper h) {
         var chunks = forceArea(h, new BlockPos(0, 0, 0), new BlockPos(24, 0, 24));
+        // 子核心种在场地的角上，离测试原点所在的区块可能隔两个区块。强制加载的票要到下一刻才算数，这之前那里虽然加载了，
+        // 却不走方块刻，同族分电荷（nearestKin）不挑这种网络：三个子核心都落在那里时，第 4 次的电荷就进了储备。
+        // 所以先等整片区块都走方块刻，再在同一刻里铺地和喂电荷（隔一刻，满了的母网络会拿初始电荷自己先种一个子核心）。
+        h.startSequence()
+                .thenWaitUntil(blocksTicking(h, chunks))
+                .thenExecute(() -> splitsOnTickingGround(h, chunks))
+                .thenSucceed();
+    }
+
+    private static void splitsOnTickingGround(GameTestHelper h, List<ChunkPos> chunks) {
         BlockPos core = filthField(h, 25, false);
         var data = data(h);
         var root = data.ofCore(h.absolutePos(core));
@@ -585,7 +607,6 @@ public final class CorruptionGameTests {
             check(h, h.getLevel().getBlockState(cores.get(i)).is(Corruption.CORE.get()), "子核心应当还在");
         }
         release(h, chunks);
-        h.succeed();
     }
 
     /** 满了但没地方种子核心（20×20 的污秽上铺满脉络，799 格，离核心最远也不到 16 格），又没有同族：杀生的电荷存进储备。 */

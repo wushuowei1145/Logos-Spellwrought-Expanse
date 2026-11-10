@@ -1,5 +1,32 @@
 # 首版验证记录
 
+## 修复：时好时坏的世界测试（腐败两项、狐火缠身、精灵世界树光照）
+
+2026-11-11：分支 `fix/flaky-gametests`，基于 main `b70ec0f5`（#235），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。只改了测试代码，玩法代码没动；`build.gradle` 加了一个查偶发失败用的开关 `-PdimensionTestRepeat`。
+
+原来猜的「相邻的腐败测试互相蔓延」不成立：26.1 按测试环境分批，这几项各有自己的环境，所以各是一批，一批跑完才跑下一批；每个测试在格子上占一个新位置（不清空、不复用），起点和批次顺序每次随机，所以测试场地和区块边界的相对位置每次都不一样。几项失败都出在测试自己身上：
+
+| 测试与失败消息 | 原因 | 改法 |
+| --- | --- | --- |
+| `corruption_core_grows_with_network`：「网络 107 块时阶段应当是 0，实际 1」 | 核心自己撒的 24 点初始电荷。光标在放好的污秽上游走，走到边上时，脉络照样爬上铺的黑曜石、绕到黑曜石底下（黑曜石只是转化不了），脉络也算网络的方块。加日志跑到一次失败：前 10 刻正好 99 块，之后 105、107、112……多出来的全是污秽外圈黑曜石上面和底下的脉络，光标钻到了地面底下 | 不铺黑曜石，污秽悬空放，上下四周各留一格空气。脉络不贴污秽和核心，周围没有别的面可贴，电荷只能在污秽上耗光，网络大小正好是放的块数 |
+| `corruption_full_network_splits`：「种满后杀生的电荷应当交给子核心：之前 120，之后 120」 | 测试在同一刻里强制加载场地、铺地、喂电荷。`setChunkForced` 对已经加载的区块要到下一刻处理票时才生效，离测试原点两个区块的场地角落在这一刻还不走方块刻。子核心种在角上，同族分电荷只挑在走刻的网络，三个子核心都落在这种区块里时，第 4 次的电荷就进了储备（原点 x、z 除以 16 的余数都不小于 8，且没有子核心种在原点那个角，约 1/16） | 先等这片区块都走方块刻，再在同一刻里铺地、喂电荷。不能隔一刻，否则满了的母网络会先拿初始电荷自己种一个子核心 |
+| `foxfire_burns_then_goes_out`：「三秒缠身应当烧掉 3 点，实际 0.0」 | 缠身在被烧的生物走实体刻时才烧。测试框架只强制加载一格测试结构所在的区块，隔壁区块只走方块刻、不走实体刻。铁傀儡站的 (2, 1, 3) 在原点 x 余数不小于 14 或 z 余数不小于 13 时落在隔壁区块（约 29%），一刻也不走 | 先强制加载尸壳和铁傀儡所在的区块，等它们进入实体走刻（`RealTimeWait`）再放生物、点火。这一项的时限从 200 刻改成 600 刻 |
+| `elven_living_world_tree`：等光照超时 | 6000 刻的时限按刻算，全套测试时一两秒就空跑完了，光照还在后台线程排队 | 等光照那一步包上 `RealTimeWait.paced`，和 #199 的做法一样（以前的草稿分支 `fix/gametest-tick-budget` 也这样改过） |
+
+| 层级 | 结果 |
+| --- | --- |
+| 改前改后对照 | 用 `-PdimensionTestRepeat=50` 把一项复制 50 份放进同一批，散在格子的不同位置一起跑。`grows`：改前 **14/50** 失败，改后 **0/50**。`splits`：50 份的子核心彼此隔不开 16 格，第 3 个种不下，所以只为这次对照临时把腐败测试的留白从 16 格加到 32 格，改前 200 份失败 **13 份**（6.5%，消息都是「之前 120，之后 120」），改后 **0/200**。狐火缠身：改前 **6/50**，改后 **0/50**。另外改前单跑狐火缠身 10 次失败 1 次，正好是 10 次里唯一一次铁傀儡落在隔壁区块的那次 |
+| 验收 | `corruption_*` 连跑 10 次 **10/10**（每次 16/16）。狐火缠身单跑 10 次 **10/10**。全部世界测试跑一次 **249/249**（3.7 分钟；`elven_living_world_tree` 通过，连放树带等光照用了 25 秒，树心最暗的一格亮度 9） |
+| 测试的坑 | 超平坦测试世界的地面在 y = -61，测试场地都悬在空中；黑曜石、石头这类转化不了的方块，脉络照样能贴上去。测试框架只强制加载测试结构那一格所在的区块：隔壁区块只走方块刻、不走实体刻，隔两个的只是加载着。自己 `setChunkForced` 的区块，要是本来就加载着，下一刻才开始走刻。`-PdimensionTestRepeat` 的复本在同一批里一起跑：会看全维度所有核心的（子核心的间距）、会扫到隔壁的（狐火横扫）测试不适合这样跑 |
+| 未验证 | 失败率是在这台机器上数的，CI 上没有跑；全部世界测试只跑了一次；世界树光照超时没法按需复现，没有改前改后对照；单元测试没有重跑（只改了世界测试和 `runGameTestServer` 的参数） |
+
+```text
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:corruption_*"
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:foxfire_burns_then_goes_out"
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:corruption_core_grows_with_network" -PdimensionTestRepeat=50
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar
+```
+
 ## 魔女之森乐器（第一版）
 
 2026-11-10：分支 `feat/hexenwald-instruments`，在 main `64d4481f`（#232）上做完后 rebase 到 main `f3ea2b44`（#234），下表是 rebase 后重跑的结果，Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`（main 合了 #234，要用这个构建）。设计与实现说明见 [docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md)。星辰花三角钢琴（2×2）、灵猫竖琴（两格高）、空白纸带与打孔纸带；采样全部由 `tools/instrument_samples.py` 合成（钢琴 30 个、竖琴 27 个，约 1.6 MB）。

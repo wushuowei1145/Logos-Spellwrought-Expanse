@@ -38,6 +38,8 @@ neoForge {
             // flat preset containing the real generator; this pack is never shipped with the mod.
             programArguments.addAll '--tests', providers.gradleProperty('dimensionTests').getOrElse("${mod_id}:*"), '--packs', file('gametest-packs').absolutePath,
                     '--report', file('build/gametest-results.xml').absolutePath
+            // 查偶发失败用：-PdimensionTestRepeat=50 把选中的每个测试复制 50 份放进同一批，散在不同位置一起跑
+            if (project.hasProperty('dimensionTestRepeat')) programArguments.addAll '--repeatCount', project.property('dimensionTestRepeat').toString()
         }
         configureEach { logLevel = org.slf4j.event.Level.INFO }
     }
