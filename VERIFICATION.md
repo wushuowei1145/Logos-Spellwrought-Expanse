@@ -1,5 +1,16 @@
 # 首版验证记录
 
+## 白梅同伴（第一版）
+
+2026-11-10：分支 `feat/shiraume-companion`，提 PR 前 rebase 到 main `34c49450`（#228）并重跑下表的单元测试和客户端场景，结果相同。Logos jar 用 `builds/shiraume-tuning-2026-11-10/logos-0.6.0-page-variants.jar`（main 合了 #220 霊符，要用 page-variants）。设计见 [白梅同伴](docs/SHIRAUME_COMPANION.md)；模型是仓库外 `fox_model/nine_tailed_fox_companion` 的 `_7`。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | `CompanionTest` **6/6**：数值继承照原版算法、剔掉状态效果给的加成、近战与法强取高、阶数与上限、玩家模型的判断；`NpcAnimationsTest` 5/5。`LangCoverageTest` 1/2：符札书案缺中文物品名 `item.logos_dimension.fuda_desk`，main 上就是这样（#220），这里没动 |
+| 实际客户端 | `shiraume_companion` **4/4 场景、8/8 检查**：召唤（入场播 `summon`，播完换回）、跟随（主人到 18 格外，她跑过来跟上）、战斗（两只尸壳冲着站在石台上的主人来，她放狐火弹打倒；主人打不动的劫掠兽时，她给主人缠上淡粉狐火）、睡觉（主人睡下，她在床边蜷起来睡；客户端看到的也是蜷着）、离场（致命一击后跪下、消散，放下形代，只飞出一缕魂火；之后要休息，休息时叫不出来） |
+| 截图人工看过 | 入场弹出与合手行礼、跑过来、放狐火弹（淡粉、带泛光）、夜里床边蜷睡、跪着含泪浅笑、消散时形代飘落与魂火、形代烧起幽蓝狐火 |
+| 没做 | 世界测试（GameTest）没写，服务端行为由实际客户端场景覆盖；光影包、多人没测 |
+
 ## 流火：狐火印、平一文字の構え、突进上挑、可交互处决
 
 2026-11-10：分支 `feat/ryuka-execution`，提 PR 前 rebase 到 main `70071ef2`（#227）并重跑下面所有测试，全部通过（单元 64/64、`longsword_*` 22/22、`foxfire_*` 10/10、`shiraume_*` 13/13、`group:ryuka,group:execution_shot` 7/7 场景 88/88 检查）。下表里提到的失败是之前在 `d950cf17` 上跑的，那时 main 本身有这几处失败或时好时坏；Logos jar `builds/shiraume-tuning-2026-11-10/logos-0.6.0-page-variants.jar`。设计见 [docs/RYUKA.md](docs/RYUKA.md) 3.2–3.4 节，通用的可交互处决见 [docs/EXECUTION_SHOTS.md](docs/EXECUTION_SHOTS.md)「可交互的处决」。
