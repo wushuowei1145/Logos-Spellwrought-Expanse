@@ -34,6 +34,23 @@ public final class Bank extends SavedData {
 
     public BankAccount account(UUID player) { return accounts.computeIfAbsent(player, k -> new BankAccount()); }
 
+    /** 时钟往回拨时随市场一起挪：持仓开仓时刻、挂单时刻、通知和已读时刻，以及计息的日界。 */
+    static void rebase(MinecraftServer server, long shift) {
+        var bank = of(server);
+        for (var a : bank.accounts.values()) {
+            a.positions.replaceAll(p -> new Margin.Position(p.id(), p.currency(), p.side(), p.margin(), p.leverage(), p.entry(), p.units(),
+                    p.opened() + shift, p.stop(), p.take(), p.accrued(), p.trail(), p.best(), p.warned()));
+            a.orders.replaceAll(o -> new Orders.Pending(o.id(), o.kind(), o.currency(), o.side(), o.amount(), o.leverage(), o.price(),
+                    o.stop(), o.take(), o.trail(), o.placed() + shift));
+            var moved = new java.util.ArrayList<FxMarket.News>(a.notices.size());
+            for (var n : a.notices) moved.add(new FxMarket.News(n.time() + shift, n.key(), n.args(), n.tier()));
+            a.notices.clear(); a.notices.addAll(moved);
+            if (a.seen != Long.MIN_VALUE) a.seen += shift;
+        }
+        if (bank.lastDay != Long.MIN_VALUE) bank.lastDay = Math.floorDiv(bank.lastDay * FxMarket.DAY + shift, FxMarket.DAY);
+        bank.setDirty();
+    }
+
     // ---------------------------------------------------------------- 随市场结算
 
     /** 市场推进之后调用：跨过几夜就计几次利息，再逐笔更新移动止损、预警、强平止损；开市时撮合挂单；最后看价格提醒。 */

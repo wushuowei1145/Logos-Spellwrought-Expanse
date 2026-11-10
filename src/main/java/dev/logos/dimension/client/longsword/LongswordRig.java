@@ -289,7 +289,12 @@ public final class LongswordRig {
      * {@code strength} 0–1，{@code rgb} 为发光颜色。
      */
     public void submitGlow(Sample sample, PoseStack pose, SubmitNodeCollector collector, boolean firstPerson, float strength, int rgb) {
-        if (glow == null || strength <= 0.003f) return;
+        if (glow != null) submitGlow(sample, pose, collector, firstPerson, strength, rgb, glow);
+    }
+
+    /** 同上，发光层贴图由调用方给（惊鸿剑身上的激活刻度，见 {@code SwordArrayClient}）。 */
+    public void submitGlow(Sample sample, PoseStack pose, SubmitNodeCollector collector, boolean firstPerson, float strength, int rgb, Identifier texture) {
+        if (strength <= 0.003f) return;
         List<Vector3f[]> faces = new ArrayList<>();
         List<float[]> uvs = new ArrayList<>();
         for (var quad : quads) if (quad.layer == Layer.WEAPON && quad.bone.equals(CombatBones.WEAPON)) {
@@ -299,8 +304,31 @@ public final class LongswordRig {
             faces.add(points);
             uvs.add(quad.uv);
         }
+        glowFaces(pose, dev.logos.client.ShaderPackOverlay.item(collector, firstPerson), faces, uvs, strength, rgb, texture);
+    }
+
+    /**
+     * 不跟骨架的武器（{@link #submitLoose} 画的那种）的发光层：{@code mesh} 同 {@link #submitLoose}，{@code overlay} 由调用方
+     * 包好光影兼容（世界里用 {@code ShaderPackOverlay.collector}）。剑穗、剑鞘不发光。
+     */
+    public void submitGlowLoose(PoseStack pose, SubmitNodeCollector overlay, Matrix4f mesh, float strength, int rgb, Identifier texture) {
+        if (strength <= 0.003f) return;
+        var matrix = new Matrix4f(mesh).scale(1 / weaponScale).translate(-weaponPivot.x, -weaponPivot.y, -weaponPivot.z);
+        List<Vector3f[]> faces = new ArrayList<>();
+        List<float[]> uvs = new ArrayList<>();
+        for (var quad : quads) if (quad.layer == Layer.WEAPON && quad.material == 0 && !quad.bone.equals(CombatBones.SHEATH)
+                && !quad.bone.startsWith("Tassel")) {
+            var points = new Vector3f[4];
+            for (int i = 0; i < 4; i++) points[i] = matrix.transformPosition(new Vector3f(quad.points[i]));
+            faces.add(points);
+            uvs.add(quad.uv);
+        }
+        glowFaces(pose, overlay, faces, uvs, strength, rgb, texture);
+    }
+
+    private static void glowFaces(PoseStack pose, SubmitNodeCollector out, List<Vector3f[]> faces, List<float[]> uvs, float strength, int rgb, Identifier texture) {
         int color = dev.logos.client.VfxParts.argb(Math.min(1, strength), rgb);
-        dev.logos.client.ShaderPackOverlay.item(collector, firstPerson).submitCustomGeometry(pose, dev.logos.client.VfxParts.add(glow), (p, buffer) -> {
+        out.submitCustomGeometry(pose, dev.logos.client.VfxParts.add(texture), (p, buffer) -> {
             for (int f = 0; f < faces.size(); f++) for (int i = 0; i < 4; i++) {
                 var point = faces.get(f)[i]; var uv = uvs.get(f);
                 float u = i == 0 || i == 3 ? uv[2] : uv[0], v = i < 2 ? uv[3] : uv[1];

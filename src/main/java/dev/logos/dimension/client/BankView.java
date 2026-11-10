@@ -24,7 +24,7 @@ public class BankView implements UIScenario {
     }
     @Override public void configure(ScenarioOptions o) { o.tags("economy").defaultTimeoutMs(60000).scenarioTimeoutMs(180000); }
     @Override public void define(ScenarioBuilder s) {
-        s.setGameMode(GameType.SURVIVAL).runCommand("time set 0").runCommand("weather clear")
+        s.setGameMode(GameType.SURVIVAL).runCommand("time set 0").runCommand("time of logos_dimension:cloudsea set 0").runCommand("weather clear")
                 .step("设置视口与中文", ctx -> {
                     var mc = Minecraft.getInstance(); mc.options.hideGui = false;
                     var w = mc.getWindow(); w.setWindowed(1280,720); w.setWidth(1280); w.setHeight(720);
@@ -46,7 +46,7 @@ public class BankView implements UIScenario {
                     Purse.receive(p, Currency.CAT, 2 * 240 + 5);
                     FxMarketData.reset(ctx.server(), Economy.clock(ctx.server()));
                 })
-                .runCommand("time add 24000").ticks(3).runCommand("time add 24000").ticks(3).runCommand("time add 27000").ticks(110)
+                .runCommand("time of logos_dimension:cloudsea add 24000").ticks(3).runCommand("time of logos_dimension:cloudsea add 24000").ticks(3).runCommand("time of logos_dimension:cloudsea add 27000").ticks(110)
                 .server("打开钱庄", ctx -> Economy.openBank(ctx.player(), BANK))
                 .waitUntil("钱庄面板", ctx -> Minecraft.getInstance().screen instanceof BankScreen).ticks(3)
                 .step("全部存入", ctx -> { for (var c : Currency.values()) order(BankOrderPayload.DEPOSIT, c, 0, 0, 0, 0); }).ticks(10)

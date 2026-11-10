@@ -132,7 +132,7 @@ public final class ExchangeScreen extends Screen {
         long clock = data == null ? 0 : data.clock();
         boolean open = FxMarket.open(clock);
         g.text(font, title, x0 + 8, y0 + 7, 0xFFE8C77A);
-        var status = EconomyClient.when(clock, false).copy().append(" · ")
+        var status = EconomyClient.clockLine(clock).append(" · ")
                 .append(Component.translatable(open ? "screen.logos_dimension.fx.open" : "screen.logos_dimension.fx.closed"));
         g.text(font, status, x0 + W - 8 - font.width(status), y0 + 7, open ? 0xFFB8E0A0 : 0xFFE09070);
 
@@ -170,9 +170,9 @@ public final class ExchangeScreen extends Screen {
 
     private void order(GuiGraphicsExtractor g, long typed) {
         int rx = x0 + 238, rw = W - 246;
-        int y = y0 + 118;
+        int y = y0 + 123;
         var held = Component.translatable("screen.logos_dimension.fx.held").append(Money.format(from, held(from)));
-        for (var line : font.split(held, rw)) { g.text(font, line, rx, y, DIM); y += 9; if (y > y0 + 135) break; }
+        for (var line : font.split(held, rw)) { g.text(font, line, rx, y, DIM); y += 9; if (y > y0 + 140) break; }
         if (typed <= 0) return;
         var target = limitTarget();
         if (limit && target == null) { g.text(font, Component.translatable("screen.logos_dimension.fx.limit_imperial"), rx, y0 + 166, 0xFFE09070); return; }

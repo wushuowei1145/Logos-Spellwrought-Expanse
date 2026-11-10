@@ -11,6 +11,37 @@
 | 截图人工看过 | 入场弹出与合手行礼、跑过来、放狐火弹（淡粉、带泛光）、夜里床边蜷睡、跪着含泪浅笑、消散时形代飘落与魂火、形代烧起幽蓝狐火 |
 | 没做 | 世界测试（GameTest）没写，服务端行为由实际客户端场景覆盖；光影包、多人没测 |
 
+## 修复：钱庄和兑换台的时间不跟 /time set
+
+2026-11-10：分支 `fix/fx-clock`，基于 main `a55b287e`。原因：26.1 起每个维度有自己的时钟，远行大陆用 `logos_dimension:cloudsea`，在那里执行 `/time set` 只改它；市场和钱庄却读主世界时钟。改为读远行大陆的时钟，柜台在别的维度时面板注明「远行大陆」。另外原来时钟往回拨时只重新对齐，待揭晓事件、消息、K 线、挂单和通知的时刻还留在未来，传闻要等很多天才会揭晓；现在往回拨时把这些时间一起挪。顺带把兑换台「持有」一行下移，不再被市价按钮压住。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 经济全部通过（`FxMarketTest` 新增：拨回第 0 天后消息和 K 线都不在未来、K 线按小时挪、原本五小时后揭晓的战事照常揭晓、往前走不挪） |
+| 世界测试 | 经济全部 **9/9**，连跑 4 次都通过（新增 `economy_clock_set_back`：市场读远行大陆时钟、拨回 60 天后消息不在未来、挂单时刻同步挪 60 天、原本六小时后揭晓的议会照常揭晓） |
+| 实际客户端 | `bank_views` 6/6、`economy_views` **5/5**（新增：`/time of logos_dimension:cloudsea set 1000` 后打开兑换台，面板显示「远行大陆 第 0 天 07:00」，消息和 K 线都不在未来） |
+
+main 现在要用较新的 Logos 构建编译（2026-11-10 的 `lasting-companion` 构建可以；11-05 的 `logos-spell-ward` 缺霊符需要的接口）。
+
+```text
+./gradlew test --tests "dev.logos.dimension.economy.*" -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:economy_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=bank_views,economy_views" -PldTestHeadless -PldTestWindow=1280x720
+```
+
+## 惊鸿：新剑与剑阵（追击、横剑格挡与弹剑、掷剑、万剑归宗、剑身刻度）
+
+2026-11-10：分支 `feat/new-sword`，基于 main `34c49450`（#228），Logos jar `builds/reifu-2026-11-09/logos-0.6.0-page-variants.jar`。设计见 [docs/JINGHONG.md](docs/JINGHONG.md)。共用代码只加了两个钩子（`CombatWeapon.Holder.hit`、`blocked`），所以加跑了 `longsword_*`。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元与构建 | 全量 **301/302**。唯一失败的 `LangCoverageTest.everyBlockAndItemHasAName`（符札书案 `fuda_desk` 没有 `item.` 名字）是 main 上就有的，这次没动。`JinghongTest` 7/7：骨骼、握点、剑长与凌霄一致；精度；物品模型等于网格平移；连招走不到御剑；格挡的弹剑窗口 0.3 秒；掷剑出手等于接触时刻，飞剑回手对上 `catch`；剑阵时间轴；刻度贴图逐段多亮。时间轴测试抓到过一次虚影剑没落完就贯下，已改 |
+| 世界测试 | `jinghong_*` **7/7**：追击（概率定为 1 时五把错开出手，伤害正好砍中 6 + 五把各 3，五把都激活）；格挡（弹剑 2–5 把，普通格挡概率 1 时一把、0 时不飞）；真实弹剑（右键架剑后下一刻挨一拳，转入弹剑、不掉血、有剑反击）；掷剑时挡不住且掷完回到格挡；两把协同（伤害够，飞完激活清零）；万剑归宗（贯下前正好是掷剑加九下虚影剑，之后清零）；没有目标时激活保留。`longsword_*` 回归 **22/22** |
+| 实际客户端 | `group:jinghong` **1/1、12/12 检查**：刻度 0、2、5 把；身后五把都画了；第一人称不画自己身后那一扇；左键追击飞出、五把激活、伤到靶子；横剑格挡；弹剑反击（靶子一拳落在弹剑窗口里，不掉血）；两把协同掷剑后激活清零；万剑归宗结环、剑雨、贯下，之后清零；收剑后身后的剑也收了；掉在地上的立体模型 |
+| 截图人工看过 | 仓库外 `art/jinghong/ingame_v06`：背面和左前的剑阵、激活发光、追击、横剑（第三人称、第一人称）、弹剑反击、掷剑协同、万剑归宗三张、第一人称刻度与星芒。离线预览在 `art/jinghong/model_v01`、`anim_v02` |
+| 测试的坑 | 场景里要 `difficulty easy`：和平难度下生物攻击伤害是 0，根本走不到格挡。测试概率的开关要按玩家记，世界测试并行时会互相覆盖。机位不是玩家时要第一人称，第三人称会把镜头拉到机位后面四格。第一人称的星芒要在手里那把剑的坐标里画、两面都画 |
+| 未验证 | 光影包下；多人下旁观者看到的剑阵（单机只能本机演）；手感、数值、音效都没试玩过 |
+
 ## 流火：狐火印、平一文字の構え、突进上挑、可交互处决
 
 2026-11-10：分支 `feat/ryuka-execution`，提 PR 前 rebase 到 main `70071ef2`（#227）并重跑下面所有测试，全部通过（单元 64/64、`longsword_*` 22/22、`foxfire_*` 10/10、`shiraume_*` 13/13、`group:ryuka,group:execution_shot` 7/7 场景 88/88 检查）。下表里提到的失败是之前在 `d950cf17` 上跑的，那时 main 本身有这几处失败或时好时坏；Logos jar `builds/shiraume-tuning-2026-11-10/logos-0.6.0-page-variants.jar`。设计见 [docs/RYUKA.md](docs/RYUKA.md) 3.2–3.4 节，通用的可交互处决见 [docs/EXECUTION_SHOTS.md](docs/EXECUTION_SHOTS.md)「可交互的处决」。

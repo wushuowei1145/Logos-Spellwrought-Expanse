@@ -52,6 +52,14 @@ public final class EconomyClient {
         return Component.translatable(short_ ? "screen.logos_dimension.fx.when_short" : "screen.logos_dimension.fx.when", day, String.format("%02d:00", hour));
     }
 
+    /** 面板顶上的时刻：市场按远行大陆的时钟走，人在别的维度时注明是远行大陆的时间，免得和头顶的天色对不上。 */
+    static MutableComponent clockLine(long clock) {
+        var mc = Minecraft.getInstance();
+        var when = when(clock, false).copy();
+        if (mc.level == null || mc.level.dimension() == LogosDimension.CLOUDSEA) return when;
+        return Component.translatable("screen.logos_dimension.fx.cloudsea_time").append(when);
+    }
+
     /** 一条消息的完整文字：来源标签加正文。参数里的货币键翻译成名字。 */
     static MutableComponent news(FxMarket.News n) {
         var args = new ArrayList<Object>();
