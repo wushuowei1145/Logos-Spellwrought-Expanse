@@ -11,6 +11,7 @@ import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
+import dev.logos.dimension.ClientConfig;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.worldstyle.StyleDoor;
 import dev.logos.dimension.worldstyle.StyleRealm;
@@ -24,15 +25,21 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
@@ -41,6 +48,10 @@ import org.jspecify.annotations.Nullable;
  * 本机的区域画风：判断镜头在哪个区域，播进出时的球形波，再用一个全屏通道把画风画上去。
  * 只用「半透明之前的深度」和「最终画面的颜色」，不往世界里画东西，所以和 Sodium、光影包都走同一条路。
  * 附近没有门、也不在区域里时整个通道都不跑，没有开销。
+ *
+ * <p>群系也能带画风（见 {@link WorldStyle#biomes()}）：镜头所在群系有画风时，它就替代「原画」，
+ * 门里门外、波里波外凡是原画的地方都换成它；进出群系时用几秒淡入淡出，不放波。
+ * 群系画风带球形遮罩，离镜头 64 格以内保持原画、128 格以外才是完整的画风（着色器里的 {@code BIOME_MASK}）。
  */
 @EventBusSubscriber(modid = LogosDimension.ID, value = Dist.CLIENT)
 public final class WorldStyleRenderer {
@@ -54,6 +65,12 @@ public final class WorldStyleRenderer {
     private static final float PREVIEW = .5f, FULL = 1;
     /** 一帧内挪动超过这么远就不是走过去的了：传送的直线路径碰巧穿过门框时，不能算走门。 */
     private static final double MAX_WALK_STEP = 8;
+    /** 进出带画风的群系时淡入淡出要多久。 */
+    private static final float BIOME_FADE_SECONDS = 2.5f;
+    /** 贴在世界上的纹理（笔触、云气）在 x、z 上每隔这么远重复一次：坐标先取模再传进着色器，免得远离原点时浮点精度不够。须是 256 的倍数。 */
+    private static final long NOISE_PERIOD = 4096;
+    /** 云气随风飘的速度，格每秒。 */
+    private static final double WIND_X = 1.1, WIND_Z = .45;
     private static final RenderPipeline PIPELINE = RenderPipeline.builder(RenderPipelines.POST_PROCESSING_SNIPPET)
             .withLocation(LogosDimension.id("pipeline/world_style"))
             .withVertexShader(Identifier.withDefaultNamespace("core/screenquad"))
@@ -67,7 +84,7 @@ public final class WorldStyleRenderer {
     static {
         var size = new Std140SizeCalculator().putMat4f();
         for (int i = 0; i < MAX_DOORS * 3; i++) size.putVec4();
-        UNIFORM_SIZE = size.putVec4().putVec4().putVec4().get();
+        UNIFORM_SIZE = size.putVec4().putVec4().putVec4().putVec4().putVec4().putVec4().get();
     }
 
     private static List<StyleRealm> realms = List.of();
@@ -82,6 +99,12 @@ public final class WorldStyleRenderer {
     private static Vec3 waveCenter = Vec3.ZERO;
     private static int outerStyle;
     private static float outerLevel;
+    /** 群系画风：哪一种、现在淡到几成，上一帧的时间。离开群系后画风留着，直到淡完。 */
+    private static @Nullable WorldStyle biomeStyle;
+    private static float biomeLevel;
+    private static long lastFrame;
+    /** 这一帧最终的雾色（其他模组改完之后），国画用它定纸色的明暗：夜里纸也是暗的。 */
+    private static float fogRed = .75f, fogGreen = .8f, fogBlue = .85f;
     private static @Nullable RenderTarget scene;
     private static @Nullable MappableRingBuffer uniforms;
 
@@ -104,7 +127,8 @@ public final class WorldStyleRenderer {
         Camera camera = mc.gameRenderer.getMainCamera();
         Vec3 eye = camera.position();
         trackCamera(camera, eye);
-        if (current == null && !waving && doorsNear(eye).isEmpty()) return;
+        trackBiome(mc, camera, eye);
+        if (current == null && !waving && biomeLevel <= 0 && doorsNear(eye).isEmpty()) return;
 
         RenderTarget main = mc.getMainRenderTarget();
         if (scene == null || scene.useStencil != main.useStencil) {
@@ -128,6 +152,39 @@ public final class WorldStyleRenderer {
         if (lastEye != null && now != current) startWave(camera, current, now, crossedDoor(lastEye, eye, current, now));
         current = now;
         lastEye = eye;
+    }
+
+    /** 镜头所在群系的画风，按真实时间淡入淡出。水下、岩浆里不算：那时看到的已经不是山水了。 */
+    private static void trackBiome(Minecraft mc, Camera camera, Vec3 eye) {
+        long now = Util.getNanos();
+        float dt = lastFrame == 0 ? 0 : Math.min((now - lastFrame) / 1e9f, .25f);
+        lastFrame = now;
+        WorldStyle found = null;
+        if (mc.level != null && camera.getFluidInCamera() == FogType.NONE && ClientConfig.BIOME_STYLE.getAsDouble() > 0) {
+            Holder<Biome> biome = mc.level.getBiome(BlockPos.containing(eye));
+            for (WorldStyle style : WorldStyle.values()) {
+                if (biome.is(style.biomes())) {
+                    found = style;
+                    break;
+                }
+            }
+        }
+        // 换到另一种群系画风时先淡出旧的，再淡入新的
+        float step = dt / BIOME_FADE_SECONDS;
+        if (found != null && (found == biomeStyle || biomeStyle == null)) {
+            biomeStyle = found;
+            biomeLevel = Math.min(biomeLevel + step, 1);
+        } else {
+            biomeLevel = Math.max(biomeLevel - step, 0);
+            if (biomeLevel <= 0) biomeStyle = null;
+        }
+    }
+
+    /** 记下最终的雾色。排在最后，别的模组改过的也算进去。 */
+    @SubscribeEvent(priority = EventPriority.LOWEST) static void fogColor(ViewportEvent.ComputeFogColor event) {
+        fogRed = event.getRed();
+        fogGreen = event.getGreen();
+        fogBlue = event.getBlue();
     }
 
     private static boolean crossedDoor(Vec3 from, Vec3 to, @Nullable StyleRealm a, @Nullable StyleRealm b) {
@@ -209,7 +266,14 @@ public final class WorldStyleRenderer {
             }
             out.putVec4((float) wave.x, (float) wave.y, (float) wave.z, radius);
             out.putVec4(current == null ? 0 : current.style().shaderId(), outerStyle, outerLevel, RenderSystem.getDevice().isZZeroToOne() ? 1 : 0);
-            out.putVec4(doors.size(), 0, 0, 0);
+            float biome = biomeStyle == null ? 0 : biomeLevel * (float) ClientConfig.BIOME_STYLE.getAsDouble();
+            out.putVec4(doors.size(), biomeStyle == null ? 0 : biomeStyle.shaderId(), biome, mc.options.getEffectiveRenderDistance() * 16);
+            // 世界坐标取模后传进去，笔触贴在地形上；云气另减去风吹过的路程
+            double seconds = Util.getNanos() / 1e9;
+            out.putVec4(wrap(eye.x), (float) eye.y, wrap(eye.z), (float) (seconds % 3600));
+            out.putVec4(fogRed, fogGreen, fogBlue, 0);
+            // y 是投影矩阵的纵向缩放：着色器拿它算一格方块在屏幕上有多大
+            out.putVec4(wrap(WIND_X * seconds), PROJECTION.m11(), wrap(WIND_Z * seconds), 0);
         }
         var nearest = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
         try (RenderPass pass = encoder.createRenderPass(() -> "logos_dimension world style", main.getColorTextureView(), OptionalInt.empty())) {
@@ -222,6 +286,10 @@ public final class WorldStyleRenderer {
         }
         uniforms.rotate();
         passes++;
+    }
+
+    private static float wrap(double coordinate) {
+        return (float) (coordinate - Math.floor(coordinate / NOISE_PERIOD) * NOISE_PERIOD);
     }
 
     /** 波现在的半径，没有波时是 -1。开头慢慢起步、然后快速铺开，看得清是从脚下出来的。 */
@@ -247,6 +315,21 @@ public final class WorldStyleRenderer {
     /** 收到了几个区域。客户端场景用。 */
     public static int realmCount() {
         return realms.size();
+    }
+
+    /** 群系画风现在淡到几成，没有时是 0。客户端场景用。 */
+    public static float biomeLevel() {
+        return biomeStyle == null ? 0 : biomeLevel;
+    }
+
+    /** 跳过淡入淡出，直接到位。客户端场景截图用。 */
+    public static void settleBiomeFade() {
+        Minecraft mc = Minecraft.getInstance();
+        Camera camera = mc.gameRenderer.getMainCamera();
+        for (int i = 0; i < 40; i++) {
+            lastFrame = Util.getNanos() - 250_000_000L;
+            trackBiome(mc, camera, camera.position());
+        }
     }
 
     /** 通道一共跑了多少次：确认附近没有门时确实不跑。客户端场景用。 */

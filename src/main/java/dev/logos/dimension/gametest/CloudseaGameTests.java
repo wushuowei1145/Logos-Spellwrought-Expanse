@@ -24,7 +24,7 @@ public final class CloudseaGameTests {
         var level=level(h);h.assertTrue(NativeWorlds.vanilla(level),"Journey does not use minecraft:noise");
         var biomes=level.registryAccess().lookupOrThrow(Registries.BIOME);
         for(var b:CloudseaBiome.values())biomes.getOrThrow(ResourceKey.create(Registries.BIOME,LogosDimension.id(b.id())));
-        h.assertTrue(CloudseaBiome.values().length==33,"New forest and glade biomes missing");
+        h.assertTrue(CloudseaBiome.values().length==34,"New forest, glade and peak biomes missing");
         h.assertTrue(!BuiltInRegistries.ITEM.containsKey(LogosDimension.id("cloudsea_portal")),"Unrequested entrance item added");h.succeed();
     }
     private static void terrain(GameTestHelper h){

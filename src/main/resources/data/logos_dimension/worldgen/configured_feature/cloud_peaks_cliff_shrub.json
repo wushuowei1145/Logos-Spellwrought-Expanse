@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:simple_block",
+  "config": {
+    "to_place": {
+      "type": "minecraft:simple_state_provider",
+      "state": {
+        "Name": "logos_dimension:cloudsea_cloud_peaks_leaf",
+        "Properties": {
+          "distance": "7",
+          "persistent": "true",
+          "waterlogged": "false",
+          "season": "0"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:simple_random_selector",
+  "config": {
+    "features": [
+      {
+        "feature": "logos_dimension:cloud_peaks_pine_tiered",
+        "placement": []
+      },
+      {
+        "feature": "logos_dimension:cloud_peaks_pine_leaning",
+        "placement": []
+      },
+      {
+        "feature": "logos_dimension:cloud_peaks_pine_tiered",
+        "placement": []
+      }
+    ]
+  }
+}

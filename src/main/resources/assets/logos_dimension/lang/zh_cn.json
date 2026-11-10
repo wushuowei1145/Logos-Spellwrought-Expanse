@@ -1251,5 +1251,12 @@
   "item.logos_dimension.sage_inscribed_reifu": "仙朱霊符",
   "item.logos_dimension.principle_reifu": "無相霊符",
   "item.logos_dimension.principle_inscribed_reifu": "神勅霊符",
-  "screen.logos_dimension.fx.cloudsea_time": "远行大陆 "
+  "screen.logos_dimension.fx.cloudsea_time": "远行大陆 ",
+  "biome.logos_dimension.cloudsea_cloud_peaks": "云岫峰林",
+  "block.logos_dimension.cloudsea_cloud_peaks_ground": "云岫草皮",
+  "item.logos_dimension.cloudsea_cloud_peaks_ground": "云岫草皮",
+  "block.logos_dimension.cloudsea_cloud_peaks_leaf": "云岫松针",
+  "item.logos_dimension.cloudsea_cloud_peaks_leaf": "云岫松针",
+  "block.logos_dimension.cloudsea_cloud_peaks_log": "云岫松木",
+  "item.logos_dimension.cloudsea_cloud_peaks_log": "云岫松木"
 }

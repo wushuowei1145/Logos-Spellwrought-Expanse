@@ -1,0 +1,96 @@
+{
+  "type": "minecraft:cache_2d",
+  "argument": {
+    "type": "minecraft:add",
+    "argument1": {
+      "type": "minecraft:add",
+      "argument1": 55.0,
+      "argument2": {
+        "type": "minecraft:mul",
+        "argument1": {
+          "type": "minecraft:clamp",
+          "input": {
+            "type": "minecraft:mul",
+            "argument1": {
+              "type": "minecraft:add",
+              "argument1": "logos_dimension:cloud_peaks/river",
+              "argument2": -0.035
+            },
+            "argument2": 11.76470588235294
+          },
+          "min": 0.0,
+          "max": 1.0
+        },
+        "argument2": 180.0
+      }
+    },
+    "argument2": {
+      "type": "minecraft:mul",
+      "argument1": {
+        "type": "minecraft:add",
+        "argument1": 1.0,
+        "argument2": {
+          "type": "minecraft:mul",
+          "argument1": {
+            "type": "minecraft:mul",
+            "argument1": {
+              "type": "minecraft:mul",
+              "argument1": {
+                "type": "minecraft:clamp",
+                "input": {
+                  "type": "minecraft:mul",
+                  "argument1": {
+                    "type": "minecraft:add",
+                    "argument1": "logos_dimension:cloud_peaks/gate",
+                    "argument2": -0.05
+                  },
+                  "argument2": 2.2222222222222223
+                },
+                "min": 0.0,
+                "max": 1.0
+              },
+              "argument2": {
+                "type": "minecraft:clamp",
+                "input": {
+                  "type": "minecraft:mul",
+                  "argument1": {
+                    "type": "minecraft:add",
+                    "argument1": "logos_dimension:cloud_peaks/gate",
+                    "argument2": -0.05
+                  },
+                  "argument2": 2.2222222222222223
+                },
+                "min": 0.0,
+                "max": 1.0
+              }
+            },
+            "argument2": {
+              "type": "minecraft:add",
+              "argument1": 3.0,
+              "argument2": {
+                "type": "minecraft:mul",
+                "argument1": {
+                  "type": "minecraft:clamp",
+                  "input": {
+                    "type": "minecraft:mul",
+                    "argument1": {
+                      "type": "minecraft:add",
+                      "argument1": "logos_dimension:cloud_peaks/gate",
+                      "argument2": -0.05
+                    },
+                    "argument2": 2.2222222222222223
+                  },
+                  "min": 0.0,
+                  "max": 1.0
+                },
+                "argument2": -2.0
+              }
+            }
+          },
+          "argument2": -1.0
+        }
+      },
+      "argument2": 400.0
+    }
+  }
+}
