@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PPP",
+    "LGL",
+    "PPP"
+  ],
+  "key": {
+    "P": "minecraft:dark_oak_planks",
+    "L": "minecraft:leather",
+    "G": "minecraft:gold_nugget"
+  },
+  "result": {
+    "id": "logos_dimension:organ_wind_chest",
+    "count": 2
+  }
+}

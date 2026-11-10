@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=north,shape=single": {
+      "model": "logos_dimension:block/organ_wood_pipe_single"
+    },
+    "facing=north,shape=bottom": {
+      "model": "logos_dimension:block/organ_wood_pipe_bottom"
+    },
+    "facing=north,shape=middle": {
+      "model": "logos_dimension:block/organ_wood_pipe_middle"
+    },
+    "facing=north,shape=top": {
+      "model": "logos_dimension:block/organ_wood_pipe_top"
+    },
+    "facing=east,shape=single": {
+      "model": "logos_dimension:block/organ_wood_pipe_single",
+      "y": 90
+    },
+    "facing=east,shape=bottom": {
+      "model": "logos_dimension:block/organ_wood_pipe_bottom",
+      "y": 90
+    },
+    "facing=east,shape=middle": {
+      "model": "logos_dimension:block/organ_wood_pipe_middle",
+      "y": 90
+    },
+    "facing=east,shape=top": {
+      "model": "logos_dimension:block/organ_wood_pipe_top",
+      "y": 90
+    },
+    "facing=south,shape=single": {
+      "model": "logos_dimension:block/organ_wood_pipe_single",
+      "y": 180
+    },
+    "facing=south,shape=bottom": {
+      "model": "logos_dimension:block/organ_wood_pipe_bottom",
+      "y": 180
+    },
+    "facing=south,shape=middle": {
+      "model": "logos_dimension:block/organ_wood_pipe_middle",
+      "y": 180
+    },
+    "facing=south,shape=top": {
+      "model": "logos_dimension:block/organ_wood_pipe_top",
+      "y": 180
+    },
+    "facing=west,shape=single": {
+      "model": "logos_dimension:block/organ_wood_pipe_single",
+      "y": 270
+    },
+    "facing=west,shape=bottom": {
+      "model": "logos_dimension:block/organ_wood_pipe_bottom",
+      "y": 270
+    },
+    "facing=west,shape=middle": {
+      "model": "logos_dimension:block/organ_wood_pipe_middle",
+      "y": 270
+    },
+    "facing=west,shape=top": {
+      "model": "logos_dimension:block/organ_wood_pipe_top",
+      "y": 270
+    }
+  }
+}

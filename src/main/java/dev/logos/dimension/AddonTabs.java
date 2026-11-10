@@ -96,6 +96,7 @@ public final class AddonTabs {
             "exchange_counter", "bank_counter", "alchemical_cauldron",
             // 魔女之森的乐器
             "starbloom_grand_piano", "hexen_concert_harp",
+            "hexen_organ_console", "organ_wind_chest", "organ_tin_pipe", "organ_wood_pipe", "organ_trumpet_pipe",
             // 运镜的测试方块
             "camera_test_block"));
 

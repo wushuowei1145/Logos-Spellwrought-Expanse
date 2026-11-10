@@ -103,8 +103,11 @@ public class RollEditorScreen extends Screen {
     }
 
     private String kindName() {
-        return Component.translatable("block.logos_dimension." +
-            (kind() == InstrumentKind.GRAND_PIANO ? "starbloom_grand_piano" : "hexen_concert_harp")).getString();
+        return Component.translatable("block.logos_dimension." + switch (kind()) {
+            case GRAND_PIANO -> "starbloom_grand_piano";
+            case CONCERT_HARP -> "hexen_concert_harp";
+            case PIPE_ORGAN -> "hexen_organ_console";
+        }).getString();
     }
 
     private static Component tr(String key, Object... args) {

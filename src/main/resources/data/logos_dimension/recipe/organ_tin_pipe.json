@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "I",
+    "I",
+    "G"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "G": "minecraft:gold_nugget"
+  },
+  "result": {
+    "id": "logos_dimension:organ_tin_pipe",
+    "count": 3
+  }
+}

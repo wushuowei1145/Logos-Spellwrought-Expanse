@@ -65,14 +65,36 @@ public final class Instruments {
         "hexen_concert_harp", ConcertHarpBlock::new,
         p -> p.mapColor(MapColor.GOLD).strength(1.5f).sound(SoundType.WOOD).noOcclusion().pushReaction(PushReaction.BLOCK));
 
+    public static final DeferredBlock<dev.logos.dimension.music.organ.OrganConsoleBlock> ORGAN_CONSOLE = DimensionBlocks.BLOCKS.registerBlock(
+        "hexen_organ_console", dev.logos.dimension.music.organ.OrganConsoleBlock::new,
+        p -> p.mapColor(MapColor.COLOR_BROWN).strength(2.5f).sound(SoundType.WOOD).noOcclusion().pushReaction(PushReaction.BLOCK));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> ORGAN_WIND_CHEST = DimensionBlocks.BLOCKS.registerBlock(
+        "organ_wind_chest", net.minecraft.world.level.block.Block::new,
+        p -> p.mapColor(MapColor.COLOR_BROWN).strength(2.0f).sound(SoundType.WOOD));
+    public static final DeferredBlock<dev.logos.dimension.music.organ.OrganPipeBlock> ORGAN_TIN_PIPE = DimensionBlocks.BLOCKS.registerBlock(
+        "organ_tin_pipe", p -> new dev.logos.dimension.music.organ.OrganPipeBlock(p, 3.5),
+        p -> p.mapColor(MapColor.METAL).strength(2.0f).sound(SoundType.COPPER).noOcclusion());
+    public static final DeferredBlock<dev.logos.dimension.music.organ.OrganPipeBlock> ORGAN_WOOD_PIPE = DimensionBlocks.BLOCKS.registerBlock(
+        "organ_wood_pipe", p -> new dev.logos.dimension.music.organ.OrganPipeBlock(p, 4.0),
+        p -> p.mapColor(MapColor.COLOR_BROWN).strength(1.5f).sound(SoundType.WOOD).noOcclusion());
+    public static final DeferredBlock<dev.logos.dimension.music.organ.OrganTrumpetBlock> ORGAN_TRUMPET_PIPE = DimensionBlocks.BLOCKS.registerBlock(
+        "organ_trumpet_pipe", dev.logos.dimension.music.organ.OrganTrumpetBlock::new,
+        p -> p.mapColor(MapColor.GOLD).strength(2.0f).sound(SoundType.COPPER).noOcclusion());
+
     public static final DeferredItem<?> GRAND_PIANO_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("starbloom_grand_piano", GRAND_PIANO);
     public static final DeferredItem<?> CONCERT_HARP_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_concert_harp", CONCERT_HARP);
+
+    public static final DeferredItem<?> ORGAN_CONSOLE_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_organ_console", ORGAN_CONSOLE);
+    public static final DeferredItem<?> ORGAN_WIND_CHEST_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("organ_wind_chest", ORGAN_WIND_CHEST);
+    public static final DeferredItem<?> ORGAN_TIN_PIPE_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("organ_tin_pipe", ORGAN_TIN_PIPE);
+    public static final DeferredItem<?> ORGAN_WOOD_PIPE_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("organ_wood_pipe", ORGAN_WOOD_PIPE);
+    public static final DeferredItem<?> ORGAN_TRUMPET_PIPE_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("organ_trumpet_pipe", ORGAN_TRUMPET_PIPE);
 
     public static final DeferredItem<Item> BLANK_ROLL = DimensionBlocks.ITEMS.registerItem("blank_music_roll", p -> new Item(p.stacksTo(16)));
     public static final DeferredItem<Item> MUSIC_ROLL_ITEM = DimensionBlocks.ITEMS.registerItem("music_roll", p -> new MusicRollItem(p.stacksTo(1)));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<InstrumentBlockEntity>> INSTRUMENT_ENTITY =
-        BLOCK_ENTITIES.register("instrument", () -> new BlockEntityType<>(InstrumentBlockEntity::new, GRAND_PIANO.get(), CONCERT_HARP.get()));
+        BLOCK_ENTITIES.register("instrument", () -> new BlockEntityType<>(InstrumentBlockEntity::new, GRAND_PIANO.get(), CONCERT_HARP.get(), ORGAN_CONSOLE.get()));
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<RollInfo>> MUSIC_ROLL =
         COMPONENTS.registerComponentType("music_roll", b -> b.persistent(RollInfo.CODEC).networkSynchronized(RollInfo.STREAM_CODEC));
@@ -82,6 +104,7 @@ public final class Instruments {
 
     static {
         for (InstrumentKind kind : InstrumentKind.values()) {
+            if (kind.synthesized()) continue;
             for (int s : kind.samples()) {
                 var id = kind.soundId(s);
                 SOUNDS.register(id.getPath(), () -> SoundEvent.createVariableRangeEvent(id));
@@ -164,7 +187,7 @@ public final class Instruments {
         }
         if (clean.isEmpty()) return;
         Vec3 at = be.soundCenter();
-        PacketDistributor.sendToPlayersNear((ServerLevel) player.level(), player, at.x, at.y, at.z, be.kind().broadcastRange(),
+        PacketDistributor.sendToPlayersNear((ServerLevel) player.level(), player, at.x, at.y, at.z, be.hearingRange(),
             new MusicPayloads.LiveNotesOut(be.getBlockPos(), player.getId(), false, clean));
     }
 
@@ -173,7 +196,7 @@ public final class Instruments {
         be.setPerformer(null);
         if (be.getLevel() instanceof ServerLevel level) {
             Vec3 at = be.soundCenter();
-            PacketDistributor.sendToPlayersNear(level, null, at.x, at.y, at.z, be.kind().broadcastRange(),
+            PacketDistributor.sendToPlayersNear(level, null, at.x, at.y, at.z, be.hearingRange(),
                 new MusicPayloads.LiveNotesOut(be.getBlockPos(), player == null ? -1 : player.getId(), true, List.of()));
         }
     }
@@ -212,6 +235,12 @@ public final class Instruments {
             }
             case MusicPayloads.Control.PART_MASK -> be.setPartMask(p.arg());
             case MusicPayloads.Control.SIGNAL_MODE -> be.setStopWithSignal(p.arg() != 0);
+            case MusicPayloads.Control.STOPS -> {
+                if (be.kind() == InstrumentKind.PIPE_ORGAN) be.setStops(p.arg());
+            }
+            case MusicPayloads.Control.REVERB -> {
+                if (be.kind() == InstrumentKind.PIPE_ORGAN) be.setReverbMode(p.arg());
+            }
             default -> { }
         }
     }

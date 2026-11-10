@@ -1,0 +1,145 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "iron": "minecraft:block/iron_block",
+    "particle": "minecraft:block/iron_block"
+  },
+  "elements": [
+    {
+      "from": [
+        5.5,
+        0,
+        4.5
+      ],
+      "to": [
+        10.5,
+        16,
+        11.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#iron",
+          "uv": [
+            5.5,
+            0.0,
+            10.5,
+            16.0
+          ]
+        },
+        "south": {
+          "texture": "#iron",
+          "uv": [
+            5.5,
+            0.0,
+            10.5,
+            16.0
+          ]
+        },
+        "east": {
+          "texture": "#iron",
+          "uv": [
+            4.5,
+            0.0,
+            11.5,
+            16.0
+          ]
+        },
+        "west": {
+          "texture": "#iron",
+          "uv": [
+            4.5,
+            0.0,
+            11.5,
+            16.0
+          ]
+        },
+        "up": {
+          "texture": "#iron",
+          "uv": [
+            5.5,
+            4.5,
+            10.5,
+            11.5
+          ]
+        },
+        "down": {
+          "texture": "#iron",
+          "uv": [
+            5.5,
+            4.5,
+            10.5,
+            11.5
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        4.5,
+        0,
+        5.5
+      ],
+      "to": [
+        11.5,
+        16,
+        10.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#iron",
+          "uv": [
+            4.5,
+            0.0,
+            11.5,
+            16.0
+          ]
+        },
+        "south": {
+          "texture": "#iron",
+          "uv": [
+            4.5,
+            0.0,
+            11.5,
+            16.0
+          ]
+        },
+        "east": {
+          "texture": "#iron",
+          "uv": [
+            5.5,
+            0.0,
+            10.5,
+            16.0
+          ]
+        },
+        "west": {
+          "texture": "#iron",
+          "uv": [
+            5.5,
+            0.0,
+            10.5,
+            16.0
+          ]
+        },
+        "up": {
+          "texture": "#iron",
+          "uv": [
+            4.5,
+            5.5,
+            11.5,
+            10.5
+          ]
+        },
+        "down": {
+          "texture": "#iron",
+          "uv": [
+            4.5,
+            5.5,
+            11.5,
+            10.5
+          ]
+        }
+      }
+    }
+  ]
+}

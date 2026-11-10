@@ -1,0 +1,137 @@
+{
+  "textures": {
+    "gold": "minecraft:block/gold_block",
+    "inlay": "logos_dimension:block/instrument/starbloom_inlay",
+    "walnut": "minecraft:block/dark_oak_planks",
+    "particle": "minecraft:block/dark_oak_planks"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        15,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#inlay",
+          "uv": [
+            0.0,
+            1,
+            16.0,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#inlay",
+          "uv": [
+            0.0,
+            1,
+            16.0,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#inlay",
+          "uv": [
+            0.0,
+            1,
+            16.0,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#inlay",
+          "uv": [
+            0.0,
+            1,
+            16.0,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#walnut",
+          "uv": [
+            0.0,
+            0.0,
+            16.0,
+            16.0
+          ]
+        },
+        "down": {
+          "texture": "#walnut",
+          "uv": [
+            0.0,
+            0.0,
+            16.0,
+            16.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        15,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            0.0,
+            0.0,
+            16.0,
+            1.0
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            0.0,
+            0.0,
+            16.0,
+            1.0
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            0.0,
+            0.0,
+            16.0,
+            1.0
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            0.0,
+            0.0,
+            16.0,
+            1.0
+          ]
+        },
+        "up": {
+          "texture": "#walnut",
+          "uv": [
+            0.0,
+            0.0,
+            16.0,
+            16.0
+          ]
+        }
+      }
+    }
+  ]
+}

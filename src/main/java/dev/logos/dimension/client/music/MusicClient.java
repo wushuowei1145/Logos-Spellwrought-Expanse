@@ -64,7 +64,19 @@ public final class MusicClient {
 
     static Vec3 centerAt(BlockPos pos) {
         var level = Minecraft.getInstance().level;
-        return level == null ? Vec3.atCenterOf(pos) : InstrumentBlock.center(level.getBlockState(pos), pos);
+        if (level == null) return Vec3.atCenterOf(pos);
+        // 管风琴的声音从音管墙的中心发出
+        if (level.getBlockEntity(pos) instanceof dev.logos.dimension.music.InstrumentBlockEntity be) return be.voiceCenter();
+        return InstrumentBlock.center(level.getBlockState(pos), pos);
+    }
+
+    /** 管风琴：预先合成当前音栓的组合（打开界面、开始放纸带时调用）。 */
+    static void prewarmOrgan(BlockPos pos) {
+        var level = Minecraft.getInstance().level;
+        if (level != null && level.getBlockEntity(pos) instanceof dev.logos.dimension.music.InstrumentBlockEntity be
+                && be.kind() == InstrumentKind.PIPE_ORGAN) {
+            OrganMixer.prewarm(be.effectiveStops());
+        }
     }
 
     private static boolean audible(BlockPos pos) {
@@ -96,6 +108,8 @@ public final class MusicClient {
         recorder = null;
         BATCH.clear();
         VoiceBank.clear();
+        OrganMixer.clear();
+        OrganRoom.clear();
     }
 
     // —— 定时 ——
@@ -128,6 +142,7 @@ public final class MusicClient {
     @SubscribeEvent
     static void tick(ClientTickEvent.Post event) {
         flushLive();
+        VoiceBank.tickOrgans();
     }
 
     // —— 实时演奏：发送 ——
@@ -159,7 +174,7 @@ public final class MusicClient {
     static void localNote(BlockPos pos, int pitch, int velocity) {
         InstrumentKind kind = kindAt(pos);
         if (kind == null) return;
-        if (velocity > 0) VoiceBank.noteOn(liveKey(pos), kind, centerAt(pos), pitch, velocity, 0);
+        if (velocity > 0) VoiceBank.noteOn(liveKey(pos), kind, pos, centerAt(pos), pitch, velocity, 0);
         else VoiceBank.noteOff(liveKey(pos), pitch, 0);
         queueLive(pos, pitch, velocity);
         if (recorder != null) recorder.note(pitch, velocity);
@@ -168,7 +183,7 @@ public final class MusicClient {
     static void localPedal(BlockPos pos, boolean down) {
         InstrumentKind kind = kindAt(pos);
         if (kind == null) return;
-        VoiceBank.pedal(liveKey(pos), kind, centerAt(pos), 0, down);
+        VoiceBank.pedal(liveKey(pos), kind, pos, centerAt(pos), 0, down);
         queueLive(pos, MusicPayloads.PEDAL, down ? 127 : 0);
         if (recorder != null) recorder.pedal(down);
     }
@@ -184,13 +199,14 @@ public final class MusicClient {
         InstrumentKind kind = kindAt(p.pos());
         if (kind == null || !audible(p.pos())) return;
         Vec3 at = centerAt(p.pos());
+        BlockPos where = p.pos().immutable();
         long base = System.nanoTime() + LISTEN_DELAY_NS;
         for (MusicPayloads.LiveNote n : p.notes()) {
             long when = base + n.offsetMs() * 1_000_000L;
             if (n.pitch() == MusicPayloads.PEDAL) {
-                at(when, () -> VoiceBank.pedal(key, kind, at, 0, n.velocity() > 0));
+                at(when, () -> VoiceBank.pedal(key, kind, where, at, 0, n.velocity() > 0));
             } else if (n.velocity() > 0) {
-                at(when, () -> VoiceBank.noteOn(key, kind, at, n.pitch(), n.velocity(), 0));
+                at(when, () -> VoiceBank.noteOn(key, kind, where, at, n.pitch(), n.velocity(), 0));
             } else {
                 at(when, () -> VoiceBank.noteOff(key, n.pitch(), 0));
             }
@@ -290,10 +306,10 @@ public final class MusicClient {
                 MusicRoll.Event e = ev.get(cursor++);
                 if ((partMask & (1 << e.part())) == 0 || !hear) continue;
                 if (e.type() == MusicRoll.NOTE) {
-                    VoiceBank.noteOn(key, kind, at, e.pitch(), e.velocity(), e.part());
+                    VoiceBank.noteOn(key, kind, this.pos, at, e.pitch(), e.velocity(), e.part());
                     offs.add(new long[]{anchor + e.endMs() * 1_000_000L, e.part(), e.pitch()});
                 } else {
-                    VoiceBank.pedal(key, kind, at, e.part(), e.type() == MusicRoll.PEDAL_DOWN);
+                    VoiceBank.pedal(key, kind, this.pos, at, e.part(), e.type() == MusicRoll.PEDAL_DOWN);
                 }
             }
         }
@@ -317,6 +333,7 @@ public final class MusicClient {
             t.rollId = p.roll();
             t.roll = roll(p.roll());
             TRACKS.put(pos, t);
+            prewarmOrgan(pos);
             t.playing = false;
         }
         t.partMask = p.partMask();
@@ -373,7 +390,7 @@ public final class MusicClient {
     static void audition(BlockPos pos, int pitch) {
         InstrumentKind kind = kindAt(pos);
         if (kind == null) return;
-        VoiceBank.noteOn("audition", kind, centerAt(pos), pitch, 90, 0);
+        VoiceBank.noteOn("audition", kind, pos, centerAt(pos), pitch, 90, 0);
         at(System.nanoTime() + 400_000_000L, () -> VoiceBank.noteOff("audition", pitch, 0));
     }
 

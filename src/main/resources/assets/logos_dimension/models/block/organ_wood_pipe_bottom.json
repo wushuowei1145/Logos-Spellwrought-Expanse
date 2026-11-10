@@ -1,0 +1,265 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "black": "minecraft:block/black_concrete",
+    "maple": "minecraft:block/birch_planks",
+    "walnut": "minecraft:block/dark_oak_planks",
+    "particle": "minecraft:block/dark_oak_planks"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        3,
+        4
+      ],
+      "to": [
+        12,
+        16,
+        12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#walnut",
+          "uv": [
+            4,
+            0.0,
+            12,
+            13.0
+          ]
+        },
+        "south": {
+          "texture": "#walnut",
+          "uv": [
+            4,
+            0.0,
+            12,
+            13.0
+          ]
+        },
+        "east": {
+          "texture": "#walnut",
+          "uv": [
+            4,
+            0.0,
+            12,
+            13.0
+          ]
+        },
+        "west": {
+          "texture": "#walnut",
+          "uv": [
+            4,
+            0.0,
+            12,
+            13.0
+          ]
+        },
+        "up": {
+          "texture": "#walnut",
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#walnut",
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        6,
+        0,
+        6
+      ],
+      "to": [
+        10,
+        3,
+        10
+      ],
+      "faces": {
+        "north": {
+          "texture": "#walnut",
+          "uv": [
+            6,
+            13,
+            10,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#walnut",
+          "uv": [
+            6,
+            13,
+            10,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#walnut",
+          "uv": [
+            6,
+            13,
+            10,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#walnut",
+          "uv": [
+            6,
+            13,
+            10,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#walnut",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        },
+        "down": {
+          "texture": "#walnut",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        3.5,
+        3.9
+      ],
+      "to": [
+        11,
+        5,
+        4
+      ],
+      "faces": {
+        "north": {
+          "texture": "#black",
+          "uv": [
+            5,
+            11,
+            11,
+            12.5
+          ]
+        },
+        "east": {
+          "texture": "#black",
+          "uv": [
+            3.9,
+            11,
+            4.0,
+            12.5
+          ]
+        },
+        "west": {
+          "texture": "#black",
+          "uv": [
+            3.9,
+            11,
+            4.0,
+            12.5
+          ]
+        },
+        "up": {
+          "texture": "#black",
+          "uv": [
+            5,
+            3.9,
+            11,
+            4.0
+          ]
+        },
+        "down": {
+          "texture": "#black",
+          "uv": [
+            5,
+            3.9,
+            11,
+            4.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        5,
+        3.8
+      ],
+      "to": [
+        11,
+        5.6,
+        4
+      ],
+      "faces": {
+        "north": {
+          "texture": "#maple",
+          "uv": [
+            5,
+            10.4,
+            11,
+            11.0
+          ]
+        },
+        "east": {
+          "texture": "#maple",
+          "uv": [
+            3.8,
+            10.4,
+            4.0,
+            11.0
+          ]
+        },
+        "west": {
+          "texture": "#maple",
+          "uv": [
+            3.8,
+            10.4,
+            4.0,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#maple",
+          "uv": [
+            5,
+            3.8,
+            11,
+            4.0
+          ]
+        },
+        "down": {
+          "texture": "#maple",
+          "uv": [
+            5,
+            3.8,
+            11,
+            4.0
+          ]
+        }
+      }
+    }
+  ]
+}

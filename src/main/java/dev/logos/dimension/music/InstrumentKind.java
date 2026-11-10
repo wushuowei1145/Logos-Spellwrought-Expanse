@@ -11,7 +11,12 @@ public enum InstrumentKind {
     /** 星辰花三角钢琴：88 键 A0–C8，松键止音（踩下延音踏板时不止）。 */
     GRAND_PIANO("grand_piano", 21, 108, 21, 108, 48, true),
     /** 灵猫竖琴：C1–G7，琴弦拨响后自然衰减，松键不止音。 */
-    CONCERT_HARP("concert_harp", 24, 103, 24, 102, 40, false);
+    CONCERT_HARP("concert_harp", 24, 103, 24, 102, 40, false),
+    /**
+     * 教堂管风琴：C1–C7，按住多久响多久。声音不放 ogg，由客户端按当前音栓合成循环段
+     * （{@link dev.logos.dimension.music.organ.OrganSynth}），可闻距离随音管数量变化，见 docs/PIPE_ORGAN.md。
+     */
+    PIPE_ORGAN("pipe_organ", 24, 96, 24, 96, 64, true);
 
     public static final int SAMPLE_STEP = 3;
 
@@ -39,6 +44,8 @@ public enum InstrumentKind {
     /** 实时演奏转发给其他玩家的半径（格）。 */
     public int broadcastRange() { return broadcastRange; }
     public boolean dampsOnRelease() { return dampsOnRelease; }
+    /** 声音由客户端现场合成（管风琴），不注册声音事件、没有 ogg。 */
+    public boolean synthesized() { return this == PIPE_ORGAN; }
 
     /** 超出音域的音按八度移进来。 */
     public int fold(int pitch) {

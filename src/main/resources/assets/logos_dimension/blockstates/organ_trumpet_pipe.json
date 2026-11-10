@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "logos_dimension:block/organ_trumpet_pipe"
+    },
+    "facing=east": {
+      "model": "logos_dimension:block/organ_trumpet_pipe",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "logos_dimension:block/organ_trumpet_pipe",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "logos_dimension:block/organ_trumpet_pipe",
+      "y": 270
+    }
+  }
+}
