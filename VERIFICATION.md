@@ -1,5 +1,23 @@
 # 首版验证记录
 
+## 教堂管风琴（第一版）
+
+2026-11-11：分支 `feat/pipe-organ`，基于 main `b70ec0f5`（#235），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。设计与实现说明见 [docs/PIPE_ORGAN.md](docs/PIPE_ORGAN.md)。演奏台（2×2）、风箱、锡音管、木音管、号角管；十个音栓（预设 + 自由开关，全开也只占一路声音）；音色在客户端合成，不放 ogg；混响按房间自动判断，另有关 / 小厅 / 教堂三档。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 全量 **338/339**，唯一失败的仍是 main 上就缺的 `item.logos_dimension.fuda_desk`。新增 `OrganSynthTest` 6/6：四种组合的 25 个循环段首尾都接得上、约 1 秒；C1–C7 每个音校正后误差小于 0.1 音分、变调在 ±1 半音内；长笛 8′ 中央 C 的最强频率就是 261.6 Hz；尾音 2 秒衰减约 60 dB、开头淡入；材质与音栓、预设；露天没有混响、小屋 < 大厅 < 教堂、羊毛房间短而暗、「自动」遇到 Sound Physics 让开、手动档照常 |
+| 世界测试 | 新增 `organ_*` **4/4**：演奏台四格（第三格在主块正上方）、拆右上一块整体消失、只掉一个演奏台；锡管叠三格成下 / 中 / 上，拆中间后两头变短管，木管叠在锡管上不连；四个相连的风箱、锡 7 木 2 号角 1 根，可闻 26 格，不相连的风箱和音管不算；没有音管时只接受长笛 8′，搭上锡管后全奏只留锡管的四个音栓、可闻 18 格。`instrument_*` 5/5、`creative_tabs_cover_items` 1/1 回归通过 |
+| 实际客户端 | 新增 `organ_views`、`organ_play_ui`，连同钢琴竖琴的四组共 **6/6、7/7 检查**：客户端识别到锡 69、木 26、号角 2；石砌玻璃顶大厅里自动混响约 1.4 秒，掀掉屋顶和墙后量出露天、没有混响；音栓页切全奏后客户端合成出这套组合；按住四个键 1.5 秒后声音引擎里仍有 4 路在响（循环段确实交给了 OpenAL 并在循环），松开后有尾音 |
+| 截图人工看过 | 大厅全景、演奏台近景（两层手键盘、音栓拉钮、脚键盘、镶嵌板）、侧面、物品栏、音栓页、演奏页。截图在仓库外 `builds/pipe-organ-2026-11-11` |
+| 未验证 | 音色与混响只能人工试听；多人同步没用两个客户端连同一服务器试过；专用服务器、光影包、Sound Physics Remastered 实装都没测 |
+
+```text
+./gradlew test --tests "dev.logos.dimension.music.organ.*" -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:organ_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=organ_views,organ_play_ui" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 魔女之森乐器（第一版）
 
 2026-11-10：分支 `feat/hexenwald-instruments`，在 main `64d4481f`（#232）上做完后 rebase 到 main `f3ea2b44`（#234），下表是 rebase 后重跑的结果，Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`（main 合了 #234，要用这个构建）。设计与实现说明见 [docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md)。星辰花三角钢琴（2×2）、灵猫竖琴（两格高）、空白纸带与打孔纸带；采样全部由 `tools/instrument_samples.py` 合成（钢琴 30 个、竖琴 27 个，约 1.6 MB）。

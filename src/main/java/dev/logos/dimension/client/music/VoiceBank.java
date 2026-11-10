@@ -1,29 +1,44 @@
 package dev.logos.dimension.client.music;
 
 import dev.logos.dimension.ClientConfig;
+import dev.logos.dimension.music.InstrumentBlockEntity;
 import dev.logos.dimension.music.InstrumentKind;
+import dev.logos.dimension.music.organ.OrganSynth;
+import dev.logos.dimension.music.organ.RoomAcoustics;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
+import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.sounds.SoundManager;
+import net.minecraft.client.sounds.WeighedSoundEvents;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.valueproviders.ConstantFloat;
 import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.Nullable;
 
 /**
- * 乐器的发声：每个音从最近的采样变调播放（{@link InstrumentKind#sampleFor}），松键时在约 150 ms 内淡出；
- * 钢琴踩下延音踏板时松键不止音，竖琴的弦拨响后自然衰减。复音有上限，满了先停「已松开、最旧」的音。
+ * 乐器的发声：
+ * <ul>
+ *   <li>钢琴、竖琴：每个音从最近的采样变调播放（{@link InstrumentKind#sampleFor}），松键时在约 150 ms 内淡出；
+ *       钢琴踩下延音踏板时松键不止音，竖琴的弦拨响后自然衰减。</li>
+ *   <li>管风琴：按当前音栓组合的循环段（{@link OrganMixer}）按住多久响多久，起音 3 tick 推上来，松键淡出，
+ *       室内时补一段混响尾音；按着音时换了音栓，已按住的音交叉淡入新组合（{@link #tickOrgans}）。</li>
+ * </ul>
+ * 复音有上限，满了先停「已松开、最旧」的音（尾音也算）。
  *
  * <p>「声源」是一件乐器上的一路演奏（实时演奏一路、纸带播放一路、编辑器试听一路），各自记踏板和发声的音。
  */
 final class VoiceBank {
     private static final Map<Identifier, SoundEvent> EVENTS = new HashMap<>();
     private static final Map<String, Source> SOURCES = new HashMap<>();
+    private static final int MAX_TAILS = 32;
 
     private VoiceBank() {}
 
@@ -32,13 +47,19 @@ final class VoiceBank {
         final int pitch;
         final int part;
         final long started;
+        /** 管风琴：用的哪一代组合（0 表示不是管风琴）。 */
+        final int gen;
+        final boolean tail;
         boolean held = true;
 
-        Voice(NoteSound sound, int pitch, int part, long started) {
+        Voice(NoteSound sound, int pitch, int part, long started, int gen, boolean tail) {
             this.sound = sound;
             this.pitch = pitch;
             this.part = part;
             this.started = started;
+            this.gen = gen;
+            this.tail = tail;
+            this.held = !tail;
         }
 
         /** 采样自然放完时声音引擎直接把它移走，不再调用 tick，所以还要问一下声音引擎它是否还在。 */
@@ -50,12 +71,14 @@ final class VoiceBank {
 
     private static final class Source {
         final InstrumentKind kind;
+        final BlockPos pos;
         Vec3 at;
         final List<Voice> voices = new ArrayList<>();
         int pedalMask;
 
-        Source(InstrumentKind kind, Vec3 at) {
+        Source(InstrumentKind kind, BlockPos pos, Vec3 at) {
             this.kind = kind;
+            this.pos = pos;
             this.at = at;
         }
 
@@ -64,22 +87,26 @@ final class VoiceBank {
         }
     }
 
-    /** 一个音的声音：音量可以在每 tick 里逐渐降下来。 */
-    static final class NoteSound extends AbstractTickableSoundInstance {
+    /** 一个音的声音：音量可以在每 tick 里逐渐推上来、降下来。 */
+    static class NoteSound extends AbstractTickableSoundInstance {
         private boolean releasing;
         private float fade = 0.45f;
+        private final float target;
+        private final int attackTicks;
         private int age;
         boolean finished;
 
-        NoteSound(SoundEvent event, float pitch, float volume, Vec3 at) {
+        NoteSound(SoundEvent event, float pitch, float volume, Vec3 at, int attackTicks, boolean loop) {
             super(event, SoundSource.RECORDS, SoundInstance.createUnseededRandom());
             this.pitch = pitch;
-            this.volume = volume;
+            this.target = volume;
+            this.attackTicks = attackTicks;
+            this.volume = attackTicks > 0 ? volume / (attackTicks + 1) : volume;
             this.x = at.x;
             this.y = at.y;
             this.z = at.z;
             this.attenuation = Attenuation.LINEAR;
-            this.looping = false;
+            this.looping = loop;
             this.delay = 0;
         }
 
@@ -102,12 +129,32 @@ final class VoiceBank {
                     finished = true;
                     stop();
                 }
+            } else if (age <= attackTicks) {
+                volume = target * (age + 1f) / (attackTicks + 1f);
             }
-            // 采样最长约 6.5 秒，到点后声音引擎自己会结束，这里只是保险
-            if (age > 20 * 8) {
+            // 钢琴、竖琴的采样最长约 6.5 秒，到点后声音引擎自己会结束，这里只是保险；循环的管风琴不限时
+            if (!looping && age > 20 * 8) {
                 finished = true;
                 stop();
             }
+        }
+    }
+
+    /** 管风琴的声音：数据不在资源里，而是 {@link OrganMixer} 现做的循环段或尾音。 */
+    static final class OrganSound extends NoteSound {
+        private final Identifier buffer;
+        private final int range;
+
+        OrganSound(Identifier buffer, float pitch, float volume, Vec3 at, int range, int attackTicks, boolean loop) {
+            super(event(buffer), pitch, volume, at, attackTicks, loop);
+            this.buffer = buffer;
+            this.range = range;
+        }
+
+        @Override
+        public @Nullable WeighedSoundEvents resolve(SoundManager manager) {
+            this.sound = new Sound(buffer, ConstantFloat.of(1f), ConstantFloat.of(1f), 1, Sound.Type.FILE, false, false, range);
+            return new WeighedSoundEvents(buffer, "subtitles.logos_dimension.instrument.pipe_organ");
         }
     }
 
@@ -115,11 +162,11 @@ final class VoiceBank {
         return EVENTS.computeIfAbsent(id, SoundEvent::createVariableRangeEvent);
     }
 
-    private static Source source(String key, InstrumentKind kind, Vec3 at) {
+    private static Source source(String key, InstrumentKind kind, BlockPos pos, Vec3 at) {
         Source s = SOURCES.get(key);
-        if (s == null || s.kind != kind) {
+        if (s == null || s.kind != kind || !s.pos.equals(pos)) {
             if (s != null) allOff(key);
-            s = new Source(kind, at);
+            s = new Source(kind, pos.immutable(), at);
             SOURCES.put(key, s);
         }
         s.at = at;
@@ -135,7 +182,7 @@ final class VoiceBank {
         return n;
     }
 
-    /** 挑一个可以停掉的音：先挑已松开的最旧的，没有就挑最旧的。 */
+    /** 挑一个可以停掉的音：先挑尾音和已松开的、最旧的，没有就挑最旧的。 */
     private static void steal(List<Voice> pool) {
         Voice pick = null;
         for (Voice v : pool) {
@@ -143,25 +190,16 @@ final class VoiceBank {
             if (pick == null || (!v.held && pick.held) || (v.held == pick.held && v.started < pick.started)) pick = v;
         }
         if (pick != null) {
-            pick.sound.release(0.1f);
             pick.sound.finished = true;
             Minecraft.getInstance().getSoundManager().stop(pick.sound);
             pool.remove(pick);
         }
     }
 
-    static void noteOn(String key, InstrumentKind kind, Vec3 at, int pitch, int velocity, int part) {
-        Source s = source(key, kind, at);
-        pitch = kind.fold(pitch);
-        // 同一个音再次弹下：先止住还在响的那一个（琴槌或手指重新碰到弦）
-        for (Voice v : s.voices) {
-            if (v.pitch == pitch && v.alive()) {
-                v.held = false;
-                v.sound.release(0.3f);
-            }
-        }
+    private static void makeRoom(Source s) {
         s.voices.removeIf(v -> !v.alive());
         int cap = ClientConfig.INSTRUMENT_VOICES.get();
+        if (s.kind == InstrumentKind.PIPE_ORGAN) cap = Math.max(cap, 48);
         while (s.voices.size() >= cap) steal(s.voices);
         if (totalAlive() >= ClientConfig.INSTRUMENT_TOTAL_VOICES.get()) {
             List<Voice> all = new ArrayList<>();
@@ -169,25 +207,95 @@ final class VoiceBank {
             steal(all);
             for (Source o : SOURCES.values()) o.voices.retainAll(all);
         }
-        float volume = (float) Math.pow(Math.max(1, Math.min(127, velocity)) / 127.0, 1.6);
-        NoteSound sound = new NoteSound(event(kind.soundId(kind.sampleFor(pitch))), kind.pitchRatio(pitch), volume, at);
+    }
+
+    private static @Nullable InstrumentBlockEntity organAt(BlockPos pos) {
+        var level = Minecraft.getInstance().level;
+        return level != null && level.getBlockEntity(pos) instanceof InstrumentBlockEntity be ? be : null;
+    }
+
+    static void noteOn(String key, InstrumentKind kind, BlockPos pos, Vec3 at, int pitch, int velocity, int part) {
+        Source s = source(key, kind, pos, at);
+        pitch = kind.fold(pitch);
+        // 同一个音再次弹下：先止住还在响的那一个（琴槌或手指重新碰到弦；管风琴同一根管不会响两次）
+        for (Voice v : s.voices) {
+            if (v.pitch == pitch && v.alive() && !v.tail) {
+                v.held = false;
+                v.sound.release(0.3f);
+            }
+        }
+        makeRoom(s);
+        NoteSound sound;
+        int gen = 0;
+        if (kind == InstrumentKind.PIPE_ORGAN) {
+            InstrumentBlockEntity be = organAt(pos);
+            if (be == null) return;
+            OrganMixer.Mix mix = OrganMixer.now(be.effectiveStops());
+            gen = mix.gen;
+            sound = organSound(mix, be, pitch, false, 3);
+        } else {
+            float volume = (float) Math.pow(Math.max(1, Math.min(127, velocity)) / 127.0, 1.6);
+            sound = new NoteSound(event(kind.soundId(kind.sampleFor(pitch))), kind.pitchRatio(pitch), volume, at, 0, false);
+        }
         Minecraft.getInstance().getSoundManager().play(sound);
-        s.voices.add(new Voice(sound, pitch, part, System.nanoTime()));
+        s.voices.add(new Voice(sound, pitch, part, System.nanoTime(), gen, false));
+    }
+
+    private static OrganSound organSound(OrganMixer.Mix mix, InstrumentBlockEntity be, int pitch, boolean tail, int attack) {
+        OrganSynth.Sample sample = mix.sample(pitch);
+        var o = be.organ();
+        int range = o == null ? 16 : o.range();
+        float base = mix.loudness * (o != null && o.pipes() == 0 ? 0.5f : 1f);
+        Vec3 at = be.voiceCenter();
+        if (tail) {
+            RoomAcoustics.Reverb r = OrganRoom.reverb(be.getBlockPos(), be);
+            float wet = (float) (0.3 + 0.15 * Math.min(1, r.seconds() / 3));
+            return new OrganSound(mix.tail(pitch, r), OrganSynth.ratio(sample, pitch), base * wet, at, range, 0, false);
+        }
+        return new OrganSound(mix.loop(pitch), OrganSynth.ratio(sample, pitch), base * 0.9f, at, range, attack, true);
+    }
+
+    /** 松开一个管风琴的音：淡出，室内时补尾音（同一个音的旧尾音先止住）。 */
+    private static void releaseOrgan(Source s, Voice v) {
+        v.held = false;
+        v.sound.release(0.5f);
+        InstrumentBlockEntity be = organAt(s.pos);
+        if (be == null) return;
+        if (!OrganRoom.reverb(s.pos, be).on()) return;
+        OrganMixer.Mix mix = OrganMixer.ready(be.effectiveStops());
+        if (mix == null || mix.gen != v.gen) return;
+        int tails = 0;
+        for (Voice t : s.voices) {
+            if (!t.tail || !t.alive()) continue;
+            if (t.pitch == v.pitch) t.sound.release(0.5f);
+            else tails++;
+        }
+        if (tails >= MAX_TAILS) return;
+        makeRoom(s);
+        OrganSound tail = organSound(mix, be, v.pitch, true, 0);
+        Minecraft.getInstance().getSoundManager().play(tail);
+        s.voices.add(new Voice(tail, v.pitch, v.part, System.nanoTime(), mix.gen, true));
     }
 
     static void noteOff(String key, int pitch, int part) {
         Source s = SOURCES.get(key);
         if (s == null) return;
         pitch = s.kind.fold(pitch);
-        for (Voice v : s.voices) {
+        for (Voice v : new ArrayList<>(s.voices)) {
             if (v.pitch != pitch || v.part != part || !v.held) continue;
+            if (s.kind == InstrumentKind.PIPE_ORGAN) {
+                releaseOrgan(s, v);
+                continue;
+            }
             v.held = false;
             if (s.kind.dampsOnRelease() && !s.pedal(part)) v.sound.release(0.45f);
         }
     }
 
-    static void pedal(String key, InstrumentKind kind, Vec3 at, int part, boolean down) {
-        Source s = source(key, kind, at);
+    static void pedal(String key, InstrumentKind kind, BlockPos pos, Vec3 at, int part, boolean down) {
+        // 管风琴没有延音踏板
+        if (kind == InstrumentKind.PIPE_ORGAN) return;
+        Source s = source(key, kind, pos, at);
         if (down) {
             s.pedalMask |= 1 << part;
             return;
@@ -197,6 +305,36 @@ final class VoiceBank {
         for (Voice v : s.voices) {
             if (v.part == part && !v.held) v.sound.release(0.45f);
         }
+    }
+
+    /**
+     * 每 tick：管风琴按着的音如果用的不是当前音栓的组合（玩家刚换了音栓），新组合合成好之后交叉淡入；
+     * 同时预先合成当前组合，免得下一个音要当场合成。
+     */
+    static void tickOrgans() {
+        for (Source s : SOURCES.values()) {
+            if (s.kind != InstrumentKind.PIPE_ORGAN) continue;
+            InstrumentBlockEntity be = organAt(s.pos);
+            if (be == null) continue;
+            OrganMixer.Mix mix = OrganMixer.ready(be.effectiveStops());
+            if (mix == null) continue;
+            for (Voice v : new ArrayList<>(s.voices)) {
+                if (!v.held || v.tail || v.gen == mix.gen || !v.alive()) continue;
+                v.held = false;
+                v.sound.release(0.6f);
+                OrganSound fresh = organSound(mix, be, v.pitch, false, 2);
+                Minecraft.getInstance().getSoundManager().play(fresh);
+                s.voices.add(new Voice(fresh, v.pitch, v.part, System.nanoTime(), mix.gen, false));
+            }
+        }
+    }
+
+    /** 有没有还在响的声音用着这一代组合（{@link OrganMixer} 清缓存前问）。 */
+    static boolean uses(int gen) {
+        for (Source s : SOURCES.values()) {
+            for (Voice v : s.voices) if (v.gen == gen && v.alive()) return true;
+        }
+        return false;
     }
 
     /** 全部松开（演奏者离开、纸带停止、跳到别处）。 */
@@ -211,14 +349,12 @@ final class VoiceBank {
         SOURCES.clear();
     }
 
-    /** 测试与界面用：这一路还在响的音数。 */
+    /** 测试与界面用：这一路还在响的音数（含尾音）。 */
     static int sounding(String key) {
         Source s = SOURCES.get(key);
         if (s == null) return 0;
         int n = 0;
-        for (Iterator<Voice> it = s.voices.iterator(); it.hasNext(); ) {
-            if (it.next().alive()) n++;
-        }
+        for (Voice v : s.voices) if (v.alive()) n++;
         return n;
     }
 }

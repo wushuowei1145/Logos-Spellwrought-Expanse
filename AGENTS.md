@@ -16,7 +16,7 @@
 - 要在画面变暗、调色之后仍然亮着的特效（或要在雾和光影包之外、几百格外都看得见的特效）交给 `PostVfx`，见 [docs/SCREEN_EFFECTS.md](docs/SCREEN_EFFECTS.md)；爆裂魔法按 [docs/EXPLOSION_MAGIC.md](docs/EXPLOSION_MAGIC.md)，大面积改方块照它的 `Crater` 直接写区块数据、按区块重发，不要逐个 `setBlock`。
 - 腐败（核心、脉络、污秽、网络）按 [docs/CORRUPTION.md](docs/CORRUPTION.md)：蔓延照搬原版幽匿催发体，改蔓延规则时对照原版 `SculkSpreader` 等类；玩法数值在 `ServerConfig` 的 `[corruption]` 一节。
 - 门后异画风按 [docs/WORLD_STYLES.md](docs/WORLD_STYLES.md)：服务端调 `StyleRealms.add`，只能换画风，不要用第二镜头显示别处。
-- 乐器（钢琴、竖琴、打孔纸带、MIDI 导入）按 [docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md)：采样用 `tools/instrument_samples.py` 合成，不放录音素材；服务端从不读 MIDI 或玩家给的路径，只收客户端解析好的纸带并重新校验。
+- 乐器（钢琴、竖琴、打孔纸带、MIDI 导入）按 [docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md)，管风琴按 [docs/PIPE_ORGAN.md](docs/PIPE_ORGAN.md)：钢琴与竖琴的采样用 `tools/instrument_samples.py` 合成，管风琴的音色在客户端现场合成、经 `OrganBufferMixin` 交给声音引擎，都不放录音素材；服务端从不读 MIDI 或玩家给的路径，只收客户端解析好的纸带并重新校验。
 - 新增植被或树叶方块时加进 Logos 的 `logos:fragile_plants` 标签，否则衰退符文对它无效；见 [docs/LOGOS_TAGS.md](docs/LOGOS_TAGS.md)。
 - 不使用原版新版本硫磺方块，不添加原版主世界矿物生成。
 - 两个维度使用原版数据包生成，不恢复 Java 地形/种树/建筑填块生成器。咒械原为每釜独立的 20,000×20,000 格 UUID 世界，原版大群系替代同心环，以太占多数。挖掘保留绑定，实体损毁才销毁对应实例。

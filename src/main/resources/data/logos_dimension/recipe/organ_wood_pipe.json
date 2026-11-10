@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "P",
+    "P",
+    "G"
+  ],
+  "key": {
+    "P": "minecraft:dark_oak_planks",
+    "G": "minecraft:gold_nugget"
+  },
+  "result": {
+    "id": "logos_dimension:organ_wood_pipe",
+    "count": 3
+  }
+}
