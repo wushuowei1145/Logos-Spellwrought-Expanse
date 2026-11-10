@@ -13,6 +13,7 @@ import dev.logos.dimension.execution.ExecutionShots;
 import dev.logos.dimension.execution.ExecutionTimeline;
 import dev.logos.dimension.npc.NpcAnimated;
 import dev.logos.dimension.npc.NpcAnimations;
+import dev.logos.runtime.Effects;
 import java.util.UUID;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
@@ -80,6 +81,20 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
     /** 投技冲刺：最多几刻、每刻几格。 */
     static final int THROW_DASH_TICKS = 10;
     static final double THROW_DASH_SPEED = 1.6;
+    /** 背后挨打时转身横扫的机会，隔多少刻才会再转，挨打后多少刻内（手上这招结束后）还会转。 */
+    static final float TURN_CHANCE = .4f;
+    /**
+     * 一字斩没被弹开也没被挡下时顺着刀势挥出的剑气：一道竖着的淡粉光刃，每刻 {@link #WAVE_SPEED} 格贴地往前，
+     * 走 {@link #WAVE_RANGE} 格或撞墙散掉；高 {@link #WAVE_HEIGHT}、左右各 {@link #WAVE_HALF_WIDTH} 格，往旁边闪就躲开，盾能挡。
+     */
+    public static final double WAVE_SPEED = 1.1, WAVE_RANGE = 24, WAVE_HEIGHT = 4.2, WAVE_HALF_WIDTH = .9;
+    static final float WAVE_DAMAGE = 10;
+    static final int TURN_AGAIN = 100, TURN_PENDING = 14;
+    /** 读指令：玩家吃喝时的机会、隔多少刻才会再读；第一刀落在吃完之后几刻。 */
+    static final float READ_CHANCE = .5f;
+    static final int READ_AGAIN = 240, READ_AFTER = 5;
+    /** 他吃完（或停下）超过这么多刻她才腾出手：这次不读了。 */
+    static final int READ_STALE = 10;
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private @Nullable MoveRunner runner;
@@ -95,8 +110,30 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
     private long nextAttack, holdUntil, pantUntil, followAt, dashStart, executionEnds;
     private @Nullable String follow, lastAttack;
     private @Nullable Vec3 dashDirection;
+    private @Nullable LivingEntity dashTarget;
     private @Nullable ServerPlayer victim;
     private float dashDistance;
+    /** 对付术师（{@link ShiraumeCounter}）。 */
+    final ShiraumeCounter counter = new ShiraumeCounter();
+    /** 正在飞的剑气：起点、方向、放出的刻、上一刻走到哪、已经打到的人。 */
+    private record Wave(Vec3 from, Vec3 dir, long start, double[] last, java.util.Set<java.util.UUID> hit) {}
+    private final java.util.List<Wave> waves = new java.util.ArrayList<>();
+    /** 读档时血条是亮着的：下一刻重新亮起（血条不随实体存下来）。 */
+    private boolean barOnLoad;
+    /** 这一招（按开始的时刻认）已经清过谁的增益。 */
+    private double purgedFor = Double.NaN;
+    private final java.util.Set<java.util.UUID> purgedWho = new java.util.HashSet<>();
+
+    /** 对付术师的那一份（盯上了谁、冷却），测试与调试读。 */
+    public ShiraumeCounter counter() {
+        return counter;
+    }
+    // ---- 转身横扫：背后打她的人、什么时候之前还会转、转向谁、下次能转的刻
+    private @Nullable LivingEntity turnFrom, turnTarget;
+    private long turnPending, turnAgain;
+    // ---- 读指令：在吃喝的人、他什么时候吃完、下次能读的刻
+    private @Nullable ServerPlayer readTarget;
+    private long readEnds, readAgain;
     private int strafeSide = 1;
     private long strafeSwitch;
     // ---- 客户端
@@ -178,6 +215,7 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
                 dashDirection = new Vec3(to.x, 0, to.z).normalize();
                 dashStart = now;
                 victim = null;
+                speed(target, THROW_DASH_TICKS + 4);
             }
             case "pant" -> pantUntil = now + PANT_TICKS;
             default -> { }
@@ -197,13 +235,30 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
             launch(level);
             return;
         }
+        if (name.equals("kitsunebi")) {
+            counter.cut(level, this, 5.5);
+            level.playSound(null, getX(), getY() + 2, getZ(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.HOSTILE, 1.6f, .6f);
+            return;
+        }
         ShiraumeMoves.Extra extra = extra(name);
         double reach = extra.reach() > 0 ? extra.reach() : 4.5;
-        double cone = move.cone() > 0 ? move.cone() : 110;
+        // 转身横扫一整圈（招式文件里的 cone 最大 180，这里按 360 算）
+        double cone = name.equals("turn_sweep") ? 360 : move.cone() > 0 ? move.cone() : 110;
         float damage = (float) (move.damage() * difficultyScale(level));
+        boolean stopped = false;
+        java.util.Set<java.util.UUID> struck = new java.util.HashSet<>();
         for (LivingEntity target : ShiraumeStrike.targets(this, reach, cone)) {
-            ShiraumeStrike.Result result = ShiraumeStrike.strike(this, this, target, damage, true);
+            // 一招对一个人只清一次增益：突き前后两下都中也只清两个
+            if (r.start() != purgedFor) {
+                purgedFor = r.start();
+                purgedWho.clear();
+            }
+            int purge = purgedWho.contains(target.getUUID()) ? 0 : extra.purge();
+            ShiraumeStrike.Result result = ShiraumeStrike.strike(this, this, target, damage, true, extra.guardBreak(), purge);
+            if (result == ShiraumeStrike.Result.HIT && purge > 0) purgedWho.add(target.getUUID());
+            struck.add(target.getUUID());
             if (result == ShiraumeStrike.Result.BLOCKED || result == ShiraumeStrike.Result.PARRIED) {
+                stopped = true;
                 Vec3 at = target.position().add(0, target.getBbHeight() * .6, 0).add(position().subtract(target.position()).normalize().scale(.5));
                 ShiraumeCue.near(level, at, 64, ShiraumeCue.spark(at, result == ShiraumeStrike.Result.PARRIED));
             }
@@ -211,6 +266,75 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
             if (r != runner || r.move() != move) break;
         }
         level.playSound(null, getX(), getY() + 2, getZ(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.HOSTILE, 1.4f, .7f + getRandom().nextFloat() * .2f);
+        // 一字斩没人弹开、没人挡下：挥出一道剑气（刚砍中的人不再挨一次）
+        if (name.startsWith("ichimonji_cut") && !stopped && r == runner && r.move() == move) wave(level, struck);
+    }
+
+    /** 一字斩挥出剑气：从身前顺着她面朝的方向出去。 */
+    private void wave(ServerLevel level, java.util.Set<java.util.UUID> struck) {
+        Vec3 dir = forward();
+        Vec3 from = position().add(dir.scale(1.2));
+        long now = level.getGameTime();
+        waves.add(new Wave(from, dir, now, new double[] {0}, new java.util.HashSet<>(struck)));
+        ShiraumeCue.near(level, from, 96, ShiraumeCue.wave(this, from, dir, now));
+        level.playSound(null, from.x, from.y + 1.5, from.z, SoundEvents.TRIDENT_RIPTIDE_1.value(), SoundSource.HOSTILE, 1.6f, 1.4f);
+    }
+
+    /** 剑气这一刻扫过的人各挨一下（能挡、弹不开），撞墙或走到头就散掉。 */
+    private void tickWaves(ServerLevel level, long now) {
+        if (waves.isEmpty()) return;
+        float damage = (float) (WAVE_DAMAGE * difficultyScale(level));
+        for (var it = waves.iterator(); it.hasNext(); ) {
+            Wave w = it.next();
+            double from = w.last[0], dist = Math.min(WAVE_RANGE, WAVE_SPEED * (now - w.start));
+            Vec3 a = w.from.add(w.dir.scale(from)).add(0, 1, 0), b = w.from.add(w.dir.scale(dist)).add(0, 1, 0);
+            var block = level.clip(new net.minecraft.world.level.ClipContext(a, b, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                    net.minecraft.world.level.ClipContext.Fluid.NONE, this));
+            boolean wall = block.getType() != net.minecraft.world.phys.HitResult.Type.MISS;
+            if (wall) dist = from + block.getLocation().distanceTo(a);
+            Vec3 side = new Vec3(-w.dir.z, 0, w.dir.x);
+            Vec3 p0 = w.from.add(w.dir.scale(from)), p1 = w.from.add(w.dir.scale(dist));
+            var box = new net.minecraft.world.phys.AABB(p0, p1).inflate(WAVE_HALF_WIDTH + 1, 0, WAVE_HALF_WIDTH + 1).expandTowards(0, WAVE_HEIGHT, 0)
+                    .expandTowards(0, -1, 0);
+            for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, box, e -> e != this && e.isAlive() && !(e instanceof ShiraumeBoss))) {
+                if (e instanceof Player p && (p.isCreative() || p.isSpectator())) continue;
+                Vec3 rel = e.position().subtract(w.from);
+                double along = rel.x * w.dir.x + rel.z * w.dir.z, across = Math.abs(rel.x * side.x + rel.z * side.z), half = e.getBbWidth() / 2;
+                if (along < from - half - .3 || along > dist + half + .3 || across > WAVE_HALF_WIDTH + half) continue;
+                if (e.getY() > w.from.y + WAVE_HEIGHT || e.getY() + e.getBbHeight() < w.from.y - .5 || !w.hit.add(e.getUUID())) continue;
+                ShiraumeStrike.Result result = ShiraumeStrike.strike(this, this, e, damage, false, false, 0);
+                if (result == ShiraumeStrike.Result.HIT) {
+                    e.push(w.dir.x * .6, .2, w.dir.z * .6);
+                    e.hurtMarked = true;
+                } else if (result == ShiraumeStrike.Result.BLOCKED) {
+                    Vec3 at = e.position().add(0, e.getBbHeight() * .6, 0);
+                    ShiraumeCue.near(level, at, 64, ShiraumeCue.spark(at, false));
+                }
+            }
+            w.last[0] = dist;
+            if (dist >= WAVE_RANGE || wall) {
+                if (wall) {
+                    Vec3 at = block.getLocation();
+                    ShiraumeCue.near(level, at, 64, ShiraumeCue.spark(at, true));
+                    level.playSound(null, at.x, at.y, at.z, SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.HOSTILE, 1.4f, .7f);
+                }
+                it.remove();
+            }
+        }
+    }
+
+    /** 测试用：还在飞的剑气有几道。 */
+    public int waves() {
+        return waves.size();
+    }
+
+    /** 离她 6 格内、在她背后的玩家（最近的那个），没有为 null。 */
+    private @Nullable LivingEntity playerBehind(ServerLevel level) {
+        LivingEntity best = null;
+        for (Player p : level.getEntitiesOfClass(Player.class, getBoundingBox().inflate(6), p -> p.isAlive() && !p.isCreative() && !p.isSpectator())) {
+            if (behind(p) && (best == null || p.distanceToSqr(this) < best.distanceToSqr(this))) best = p;
+        }
+        return best;
     }
 
     static float difficultyScale(ServerLevel level) {
@@ -280,6 +404,15 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
         if (source.getEntity() instanceof LivingEntity attacker && attacker != this && !(attacker instanceof ShiraumeBoss)) {
             if (getTarget() == null || attacker instanceof Player && getTarget() != attacker && getRandom().nextFloat() < .15f) setTarget(attacker);
             ShiraumeFight.joined(level, this, attacker);
+            long now = level.getGameTime();
+            // 术式打中她：同一个人打得多了就盯上他（之后他一蓄力就冲过去斩）
+            if (Effects.inSpell() && attacker instanceof ServerPlayer caster) counter.spellHit(level, this, caster, now);
+            // 有人在身后近身砍她：有机会猛地转身横扫一圈
+            if (attacker instanceof Player && source.getDirectEntity() == attacker && behind(attacker) && now >= turnAgain
+                    && (alwaysTurn || getRandom().nextFloat() < TURN_CHANCE)) {
+                turnFrom = attacker;
+                turnPending = now + TURN_PENDING;
+            }
         }
         // 看不到实体的远程（瞬发的枪、其他模组的远程法术）：空着、正面对着时挡掉
         boolean ranged = source.is(DamageTypeTags.IS_PROJECTILE) || source.getDirectEntity() != source.getEntity();
@@ -442,6 +575,13 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
         if (now - imbalanceAt > IMBALANCE_GRACE) imbalance = Math.max(0, imbalance - IMBALANCE_DECAY / 20f);
         if (resting && tickCount % 20 == 0) heal(getMaxHealth() * .02f);
         if (tickCount % 20 == 0) updateBar(level);
+        counter.refresh(level, now);
+        tickWaves(level, now);
+        // 存档时血条亮着（区块卸载后又载回来）：载回来重新亮起，只有这一条
+        if (barOnLoad) {
+            barOnLoad = false;
+            showBar(true, 1);
+        }
     }
 
     /** 招式里按动作时间发生的事：双眼红光、往前冲、后跳、冲刺。 */
@@ -467,6 +607,10 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
             level.sendParticles(ParticleTypes.CHERRY_LEAVES, getX(), getY() + 1.5, getZ(), 3, .4, .8, .4, 0);
         }
         if (name.equals("throw_dash") && dashDirection != null) throwDash(level, now);
+        // 转身横扫：起手的一瞬间整个人拧过来对着背后打她的人
+        if (name.equals("turn_sweep") && turnTarget != null && after > .06 && before < .36) face(turnTarget, 48);
+        if (name.equals("kitsunebi") && after < .3) level.sendParticles(new net.minecraft.core.particles.DustParticleOptions(
+                dev.logos.dimension.foxfire.FoxfireFlame.SHIRAUME.core, 1.6f), getX(), getY() + 1.8, getZ(), 6, .5, .7, .5, 0);
     }
 
     void eyes(ServerLevel level) {
@@ -516,6 +660,18 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
             if (!m.startsWith("parried")) play(next);
             return;
         }
+        // 一字斩举刀、蓄力时有人绕到了背后：不等斩下，直接转身横扫
+        if (m.startsWith("ichimonji_raise") || m.startsWith("ichimonji_hold")) {
+            LivingEntity back = playerBehind(level);
+            if (back != null) {
+                turnTarget = back;
+                turnAgain = now + TURN_AGAIN;
+                getNavigation().stop();
+                play("turn_sweep");
+                return;
+            }
+        }
+        if (free(m) && special(level, now)) return;
         switch (m) {
             case "ichimonji_hold", "ichimonji_hold_combo" -> {
                 face(target, 6);
@@ -538,9 +694,12 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
                 return;
             }
             case "dash" -> {
-                if (target != null && (target.distanceTo(this) < 3.2 || clipTime(now) >= .4)) {
+                LivingEntity to = dashTarget != null && dashTarget.isAlive() ? dashTarget : target;
+                if (to != null && (to.distanceTo(this) < 3.2 || clipTime(now) >= .4)) {
                     String next = lastAttack == null ? "tsubame_1" : lastAttack;
                     lastAttack = null;
+                    dashTarget = null;
+                    face(to, 180);
                     play(next);
                 }
                 return;
@@ -590,6 +749,110 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
         attack(pick(new String[] {"kesa", "gyaku", "yoko", "ichimonji_raise", "tsubame_1", "sanren_1", "tsuki_kiriage", "kesa", "gyaku"}), now);
     }
 
+    /** 她现在空着（站定、绕走、刚弹开箭）：可以被下面这些特别的应对打断。 */
+    private static boolean free(String m) {
+        return m.equals("idle") || m.equals("deflect");
+    }
+
+    /**
+     * 空着的时候先看有没有要特别应对的：盯上的术师在蓄力（冲过去斩）、刚才有人在背后砍她（转身横扫）、
+     * 有人在她面前吃喝（读指令：等他吃完那一刻砍下来）。应对了就返回真。
+     */
+    private boolean special(ServerLevel level, long now) {
+        ServerPlayer caster = counter.charging(level, this, now);
+        if (caster != null) {
+            eyes(level);
+            dashTo(caster, "kitsunebi");
+            return true;
+        }
+        if (turnFrom != null) {
+            LivingEntity from = turnFrom;
+            turnFrom = null;
+            if (now <= turnPending && from.isAlive() && from.distanceToSqr(this) < 7 * 7) {
+                turnTarget = from;
+                turnAgain = now + TURN_AGAIN;
+                getNavigation().stop();
+                play("turn_sweep");
+                return true;
+            }
+        }
+        if (readTarget != null) return read(level, now);
+        return false;
+    }
+
+    /**
+     * 有人在吃喝时（{@link #readEating}）：贴到他跟前、盯着他，算好时刻起刀，让第一刀正好落在他吃完之后
+     * {@link #READ_AFTER} 刻——吃得完，吃完不马上举盾就挨两刀（第一刀清掉两个增益）。他中途停下就当场砍。
+     */
+    private boolean read(ServerLevel level, long now) {
+        ServerPlayer p = readTarget;
+        if (p == null || !p.isAlive() || p.level() != level || p.isSpectator() || horizontal(p) > 20) {
+            readTarget = null;
+            return false;
+        }
+        // 按他手上正在吃的这一口算（她忙完别的招才腾出手时，他可能已经在吃下一个了）；早就吃完了就不读了
+        boolean eating = p.isUsingItem() && eats(p.getUseItem());
+        if (eating) readEnds = now + p.getUseItemRemainingTicks();
+        else if (now > readEnds + READ_STALE) {
+            readTarget = null;
+            return false;
+        }
+        if (horizontal(p) > 3.4) {
+            dashTo(p, "idle");
+            return true;
+        }
+        getNavigation().stop();
+        face(p, 30);
+        getLookControl().setLookAt(p, 30, 30);
+        long lead = Math.round(contactTime("yomi_1") * 20) - READ_AFTER;
+        if (!eating || now >= readEnds - lead) {
+            readTarget = null;
+            lastAttack = "yomi_1";
+            play("yomi_1");
+            nextAttack = now + 20;
+        }
+        return true;
+    }
+
+    static boolean eats(net.minecraft.world.item.ItemStack stack) {
+        var anim = stack.getUseAnimation();
+        return anim == net.minecraft.world.item.ItemUseAnimation.EAT || anim == net.minecraft.world.item.ItemUseAnimation.DRINK;
+    }
+
+    /** 有人开始吃喝（{@code ShiraumeFight} 的事件）：她有机会读这一下。 */
+    public void readEating(ServerPlayer p, int duration) {
+        if (!(level() instanceof ServerLevel level) || scripted || resting || readTarget != null) return;
+        long now = level.getGameTime();
+        if (now < readAgain || p.isCreative() || p.isSpectator() || horizontal(p) > 16) return;
+        if (arena != null && !ShiraumeFight.inArena(level, arena, p.blockPosition())) return;
+        String m = move();
+        if (m.startsWith("throw") || m.startsWith("pant") || m.startsWith("kneel") || m.equals("slam")) return;
+        if (!alwaysRead && getRandom().nextFloat() >= READ_CHANCE) return;
+        readTarget = p;
+        readEnds = now + duration;
+        readAgain = now + READ_AGAIN;
+    }
+
+    /** 测试用：读指令、转身横扫必定发生。 */
+    public static boolean alwaysRead, alwaysTurn;
+
+    /** 背后：在她身后 140° 里。 */
+    private boolean behind(Entity e) {
+        Vec3 to = e.position().subtract(position());
+        Vec3 f = forward();
+        double flat = Math.sqrt(to.x * to.x + to.z * to.z);
+        return flat > .3 && (to.x * f.x + to.z * f.z) / flat < Math.cos(Math.toRadians(110));
+    }
+
+    /** 冲过去：冲向的那个人画面上速度线与动态模糊最强，旁边的人淡一些。 */
+    private void speed(@Nullable LivingEntity to, int ticks) {
+        if (!(level() instanceof ServerLevel level)) return;
+        for (ServerPlayer p : level.players()) {
+            if (p.distanceToSqr(this) > 48 * 48) continue;
+            ShiraumeCue.send(p, ShiraumeCue.speed(this, p == to ? 1f : .35f, ticks));
+        }
+    }
+
     private double contactTime(String move) {
         if (runner == null) return 0;
         Moveset.Move mv = runner.moveset().move(move);
@@ -613,6 +876,8 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
     /** 縮地：一瞬间贴到目标面前，接着出 {@code then}。 */
     private void dashTo(LivingEntity target, String then) {
         getNavigation().stop();
+        dashTarget = target;
+        speed(target, 12);
         Vec3 to = target.position().subtract(position());
         dashDirection = new Vec3(to.x, 0, to.z).normalize();
         dashDistance = (float) Math.max(0, Math.sqrt(to.x * to.x + to.z * to.z) - 2.6);
@@ -728,6 +993,22 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
         super.remove(reason);
     }
 
+    /**
+     * 不再被这个玩家看着（走远、死后在别处重生、换了维度、区块卸载）：从血条里拿掉。
+     * 只在 {@link #remove} 里拿掉不够：区块卸载时不经过它，客户端的血条就一直留着，回来时又加一条新的。
+     */
+    @Override
+    public void stopSeenByPlayer(ServerPlayer player) {
+        super.stopSeenByPlayer(player);
+        if (bar != null) bar.removePlayer(player);
+    }
+
+    /** 栓绳拴不住她。 */
+    @Override
+    public boolean canBeLeashed() {
+        return false;
+    }
+
     // ---------------------------------------------------------------- 存档
 
     @Override
@@ -737,6 +1018,7 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
         output.putInt("Specials", specials);
         output.putInt("Halo", entityData.get(HALO));
         output.putBoolean("Resting", resting);
+        output.putBoolean("BarShown", bar != null && bar.isVisible());
     }
 
     @Override
@@ -746,6 +1028,7 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
         specials = input.getIntOr("Specials", 0);
         entityData.set(HALO, input.getIntOr("Halo", 0));
         resting = input.getBooleanOr("Resting", false);
+        barOnLoad = input.getBooleanOr("BarShown", false);
     }
 
     // ---------------------------------------------------------------- 动画

@@ -24,6 +24,12 @@ final class DissolveCapture implements VertexConsumer {
     private static final int CELLS_PER_BLOCK = 32, MAX_CELLS = 64;
     /** 读不到贴图时当它是这个尺寸；只影响噪波的疏密。 */
     private static final int ASSUMED_TEXTURE = 64;
+    /**
+     * 一个模型一次最多切这么多小格。高分辨率贴图配上几千个方块的模型（白梅 v3 狐形：6976 块、约四万个面、贴图 2048）
+     * 照每个像素四格切，一帧要切上亿格，消散的第一帧就卡十几秒（服务端照走，客户端回过神来她已经散完了）。
+     * 超过时每个面按比例少切；普通生物远到不了这个数，样子不变。
+     */
+    private static final int CELL_BUDGET = 100_000;
 
     private float[] in = new float[STRIDE * 4 * 64];
     private int vertices;
@@ -66,14 +72,16 @@ final class DissolveCapture implements VertexConsumer {
         float threshold = dissolve.threshold(now);
         Vector3f p = new Vector3f(), n = new Vector3f();
         int width = skin != null ? skin.width : ASSUMED_TEXTURE, height = skin != null ? skin.height : ASSUMED_TEXTURE;
+        // 每个面每边最多切几格：总数不超过 CELL_BUDGET
+        int cap = Mth.clamp((int) Math.sqrt((double) CELL_BUDGET / Math.max(1, vertices / 4)), 1, MAX_CELLS);
         float[] v = in;
         for (int q = 0; q + 3 < vertices; q += 4) {
             int a = q * STRIDE, b = a + STRIDE, d = a + 3 * STRIDE;
             float ex = v[b] - v[a], ey = v[b + 1] - v[a + 1], ez = v[b + 2] - v[a + 2];
             float fx = v[d] - v[a], fy = v[d + 1] - v[a + 1], fz = v[d + 2] - v[a + 2];
             float du1 = v[b + 4] - v[a + 4], dv1 = v[b + 5] - v[a + 5], du3 = v[d + 4] - v[a + 4], dv3 = v[d + 5] - v[a + 5];
-            int ns = cells(Mth.sqrt(ex * ex + ey * ey + ez * ez), du1, dv1, skin, particles);
-            int nt = cells(Mth.sqrt(fx * fx + fy * fy + fz * fz), du3, dv3, skin, particles);
+            int ns = cells(Mth.sqrt(ex * ex + ey * ey + ez * ez), du1, dv1, skin, particles, cap);
+            int nt = cells(Mth.sqrt(fx * fx + fy * fy + fz * fz), du3, dv3, skin, particles, cap);
             float nx = v[a + 8], ny = v[a + 9], nz = v[a + 10];
             for (int i = 0; i < ns; i++) for (int j = 0; j < nt; j++) {
                 float s0 = i / (float) ns, s1 = (i + 1f) / ns, t0 = j / (float) nt, t1 = (j + 1f) / nt, sc = (s0 + s1) / 2, tc = (t0 + t1) / 2;
@@ -112,9 +120,9 @@ final class DissolveCapture implements VertexConsumer {
     }
 
     /** 光影包的阴影通道（{@code fine} 为假）看不出这么细的差别，切粗一档，省下大部分开销。 */
-    private static int cells(float length, float du, float dv, @Nullable DissolveSkin skin, boolean fine) {
+    private static int cells(float length, float du, float dv, @Nullable DissolveSkin skin, boolean fine, int cap) {
         float n = skin != null ? Math.max(Math.abs(du) * skin.width, Math.abs(dv) * skin.height) * PER_TEXEL : length * CELLS_PER_BLOCK;
-        return Mth.clamp(Math.round(fine ? n : n / PER_TEXEL), 1, MAX_CELLS);
+        return Mth.clamp(Math.round(fine ? n : n / PER_TEXEL), 1, cap);
     }
 
     /** 这一帧在用的 {@link Left} 数组和已经空出来的数组。几个生物每秒就有几百兆顶点数据，所以反复用，不留给垃圾回收。都在同一帧内画完。 */

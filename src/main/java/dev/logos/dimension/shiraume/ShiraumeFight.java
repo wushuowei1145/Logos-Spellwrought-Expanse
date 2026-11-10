@@ -663,6 +663,7 @@ public final class ShiraumeFight {
         scale(beast, level, a);
         beast.setArena(a.key);
         beast.setScripted(true);
+        beast.counter.inherit(human.counter);
         human.discard();
         level.addFreshEntity(beast);
         beast.play("reveal_hold");
@@ -816,6 +817,15 @@ public final class ShiraumeFight {
             double angle = level.getRandom().nextDouble() * Math.PI * 2, r = Math.sqrt(level.getRandom().nextDouble()) * 24;
             level.sendParticles(dust, c.x + Math.cos(angle) * r, c.y + 29, c.z + Math.sin(angle) * r, 4, .5, 0, .5, 0);
         }
+    }
+
+    // ---------------------------------------------------------------- 读指令
+
+    /** 有人开始吃喝：附近的人形白梅有机会读这一下（{@link Shiraume#readEating}）。 */
+    @SubscribeEvent
+    static void eating(net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent.Start event) {
+        if (!(event.getEntity() instanceof ServerPlayer p) || !(p.level() instanceof ServerLevel level) || !Shiraume.eats(event.getItem())) return;
+        for (Shiraume s : level.getEntitiesOfClass(Shiraume.class, p.getBoundingBox().inflate(24))) s.readEating(p, event.getDuration());
     }
 
     // ---------------------------------------------------------------- 过场保护

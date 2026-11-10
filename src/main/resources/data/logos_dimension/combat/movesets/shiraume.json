@@ -1,5 +1,5 @@
 {
-  "_comment": "九尾妖狐 白梅（人形）。时刻与 tools/shiraume_moves.py 的动作一致；damage 在这里是这一刀的伤害（Boss 的基础伤害为 1），其余 Boss 专用字段见 docs/SHIRAUME_BOSS.md 第 4 节：eye_flash 双眼红光的时刻，parry 被弹反时怎么办（single 播 parried 动作、combo 接下一刀、none 弹不开），parried 被弹反的动作，follow 连招被弹反时直接接的下一招，reach 够得到多远（格），lunge [起, 止, 格数] 这段时间往前冲，leap [时刻, 后退格数, 上跳速度]。",
+  "_comment": "九尾妖狐 白梅（人形）。时刻与 tools/shiraume_moves.py 的动作一致；damage 在这里是这一刀的伤害（Boss 的基础伤害为 1），其余 Boss 专用字段见 docs/SHIRAUME_BOSS.md 第 4 节：eye_flash 双眼红光的时刻，parry 被弹反时怎么办（single 播 parried 动作、combo 接下一刀、none 弹不开），parried 被弹反的动作，follow 连招被弹反时直接接的下一招，reach 够得到多远（格），lunge [起, 止, 格数] 这段时间往前冲，leap [时刻, 后退格数, 上跳速度]，guard_break 格挡下来却没弹反就破盾（拿流火挡的除外），purge 打中时随机清除几个增益效果。",
   "start": "idle",
   "moves": {
     "idle": {"length": 2.4, "playback": "loop", "blend_in": 0.15},
@@ -14,13 +14,13 @@
     "gyaku": {"length": 1.4, "contact": 0.58, "next": "idle", "blend_in": 0.12, "damage": 8, "cone": 110,
               "eye_flash": 0.45, "parry": "single", "parried": "parried_high", "reach": 4.6},
     "yoko": {"length": 1.6, "contact": 0.79, "next": "idle", "blend_in": 0.12, "damage": 9, "cone": 180,
-             "eye_flash": 0.62, "parry": "single", "parried": "parried_low", "reach": 5.0},
+             "eye_flash": 0.62, "parry": "single", "parried": "parried_low", "reach": 5.0, "guard_break": true},
     "tsuki": {"length": 1.5, "contact": [0.64, 0.72], "next": "idle", "blend_in": 0.12, "damage": 10, "cone": 40,
-              "eye_flash": 0.5, "parry": "single", "parried": "parried_low", "reach": 5.4, "lunge": [0.58, 0.76, 4.0]},
+              "eye_flash": 0.5, "parry": "single", "parried": "parried_low", "reach": 5.4, "lunge": [0.58, 0.76, 4.0], "purge": 2},
     "ichimonji_raise": {"length": 0.6, "next": "ichimonji_hold", "blend_in": 0.1},
     "ichimonji_hold": {"length": 1.0, "playback": "loop"},
     "ichimonji_cut": {"length": 1.2, "contact": 0.33, "next": "idle", "damage": 14, "cone": 50,
-                      "eye_flash": 0.02, "parry": "single", "parried": "parried_high", "reach": 5.4},
+                      "eye_flash": 0.02, "parry": "single", "parried": "parried_high", "reach": 5.4, "guard_break": true},
 
     "tsubame_1": {"length": 0.9, "contact": 0.47, "next": "tsubame_2", "blend_in": 0.1, "damage": 7, "cone": 110,
                   "eye_flash": 0.36, "parry": "combo", "follow": "tsubame_2", "reach": 4.6},
@@ -29,7 +29,7 @@
     "ichimonji_raise_combo": {"length": 0.6, "next": "ichimonji_hold_combo"},
     "ichimonji_hold_combo": {"clip": "ichimonji_hold", "length": 1.0, "playback": "loop"},
     "ichimonji_cut_combo": {"length": 1.2, "contact": 0.33, "next": "idle", "damage": 12, "cone": 50,
-                            "parry": "combo", "reach": 5.4},
+                            "parry": "combo", "reach": 5.4, "guard_break": true},
 
     "sanren_1": {"length": 0.6, "contact": 0.37, "next": "sanren_2", "blend_in": 0.08, "damage": 7, "cone": 110,
                  "eye_flash": 0.26, "parry": "combo", "follow": "sanren_2", "reach": 4.6},
@@ -41,6 +41,14 @@
     "tsuki_kiriage": {"clip": "tsuki", "length": 1.5, "contact": [0.64, 0.72], "next": "kiriage", "blend_in": 0.12, "damage": 9, "cone": 40,
                       "eye_flash": 0.5, "parry": "combo", "follow": "kiriage", "reach": 5.4, "lunge": [0.58, 0.76, 4.0]},
     "kiriage": {"length": 0.9, "contact": 0.29, "next": "idle", "damage": 8, "cone": 110, "parry": "combo", "reach": 4.6},
+
+    "turn_sweep": {"length": 1.0, "contact": 0.32, "next": "idle", "blend_in": 0.04, "damage": 9, "cone": 180,
+                   "eye_flash": 0.14, "parry": "single", "parried": "parried_low", "reach": 5.2, "guard_break": true},
+    "yomi_1": {"clip": "tsubame_1", "length": 0.9, "contact": 0.47, "next": "yomi_2", "blend_in": 0.06, "damage": 7, "cone": 110,
+               "eye_flash": 0.36, "parry": "combo", "follow": "yomi_2", "reach": 4.6, "purge": 2},
+    "yomi_2": {"clip": "tsubame_2", "length": 0.9, "contact": 0.39, "next": "backstep", "damage": 7, "cone": 110,
+               "parry": "combo", "follow": "backstep", "reach": 4.6},
+    "kitsunebi": {"clip": "recover_slash", "length": 0.6, "contact": 0.2, "next": "backstep", "blend_in": 0.04, "parry": "none", "reach": 5.5},
 
     "dash": {"length": 0.45, "next": "idle", "blend_in": 0.06},
     "backstep": {"length": 0.7, "next": "idle", "blend_in": 0.06, "leap": [0.12, 5.0, 0.42]},

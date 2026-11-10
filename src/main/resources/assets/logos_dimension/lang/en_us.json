@@ -1207,6 +1207,8 @@
   "death.attack.logos_dimension.shiraume_execution.player": "%1$s was cut into cherry blossoms by %2$s",
   "death.attack.logos_dimension.shiraume_beast": "%1$s was torn apart by a nine-tailed fox",
   "death.attack.logos_dimension.shiraume_beast.player": "%1$s was torn apart by %2$s",
+  "death.attack.logos_dimension.shiraume_counter": "%1$s was cut down mid-spell by %2$s, %3$s mana still unspent",
+  "message.logos_dimension.shiraume.locked": "Shiraume has marked you — beware of charging spells",
   "death.attack.logos_dimension.foxfire": "%1$s was consumed by %2$s's foxfire",
   "death.attack.logos_dimension.foxfire.player": "%1$s was consumed by foxfire while fighting %2$s",
   "death.attack.logos_dimension.foxfire.item": "%1$s was consumed by foxfire %2$s kindled with %3$s",

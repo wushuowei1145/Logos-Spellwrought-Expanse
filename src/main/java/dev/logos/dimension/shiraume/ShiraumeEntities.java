@@ -22,9 +22,12 @@ public final class ShiraumeEntities {
             EntityType.Builder.of(Shiraume::new, MobCategory.MONSTER).sized(1.3f, 3.4f).eyeHeight(2.62f).fireImmune().clientTrackingRange(10)
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("shiraume"))));
 
-    /** 狐形：肩高约 2.3 格、头顶约 2.9 格；身长 4.3 格比判定箱长，像劫掠兽一样只算躯干。 */
+    /**
+     * 狐形：肩高约 2.3 格、头顶约 2.9 格；身长 4.3 格比判定箱长，像劫掠兽一样只算躯干。
+     * 大跳、跳闪按弧线走，位置每两刻发一次（默认三刻），客户端看到的弧线才圆。
+     */
     public static final Supplier<EntityType<ShiraumeBeast>> BEAST = TYPES.register("shiraume_beast", () ->
-            EntityType.Builder.of(ShiraumeBeast::new, MobCategory.MONSTER).sized(2.6f, 2.8f).eyeHeight(2.6f).fireImmune().clientTrackingRange(10)
+            EntityType.Builder.of(ShiraumeBeast::new, MobCategory.MONSTER).sized(2.6f, 2.8f).eyeHeight(2.6f).fireImmune().clientTrackingRange(10).updateInterval(2)
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("shiraume_beast"))));
 
     /** 狐形八分之一血以下从尾尖放出的狐火飞弹。 */
