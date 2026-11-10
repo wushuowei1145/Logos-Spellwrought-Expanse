@@ -128,6 +128,7 @@ public final class LogosDimension {
         dev.logos.dimension.paint.PaintSystem.register(bus);
         dev.logos.dimension.npc.NpcEntities.register(bus);
         dev.logos.dimension.shiraume.ShiraumeEntities.register(bus);
+        dev.logos.dimension.companion.Companions.register(bus);
         dev.logos.dimension.foxfire.Foxfire.register(bus);
         dev.logos.dimension.reifu.Reifu.register(bus);
         GENERATORS.register(bus); BIOME_SOURCES.register(bus); TABS.register(bus);
