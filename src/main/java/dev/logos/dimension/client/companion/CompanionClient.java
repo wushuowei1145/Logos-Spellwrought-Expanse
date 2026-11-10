@@ -1,5 +1,6 @@
 package dev.logos.dimension.client.companion;
 
+import com.geckolib.cache.model.BakedGeoModel;
 import com.geckolib.cache.model.GeoBone;
 import com.geckolib.constant.dataticket.DataTicket;
 import com.geckolib.model.DefaultedEntityGeoModel;
@@ -14,7 +15,12 @@ import dev.logos.dimension.client.NpcRenderer;
 import dev.logos.dimension.client.shiraume.FoxfireRenderer;
 import dev.logos.dimension.client.shiraume.RyukaOnBone;
 import dev.logos.dimension.companion.CompanionBlade;
+import dev.logos.dimension.companion.CompanionOutfit;
 import dev.logos.dimension.companion.Companions;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 import dev.logos.dimension.companion.Katashiro;
 import dev.logos.dimension.companion.ShiraumeCompanion;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -61,6 +67,11 @@ public final class CompanionClient {
         private static final DataTicket<Float> CLOCK = DataTicket.create("logos_dimension_companion_clock", Float.class);
         private static final DataTicket<Float> TREMBLE = DataTicket.create("logos_dimension_companion_tremble", Float.class);
         private static final DataTicket<Float> LANTERN = DataTicket.create("logos_dimension_companion_lantern", Float.class);
+        /** 当前装束。 */
+        private static final DataTicket<CompanionOutfit> OUTFIT = DataTicket.create("logos_dimension_companion_outfit", CompanionOutfit.class);
+        /** 每套装束下要隐藏的组（别的装束的 outfit_* 顶层组），按模型缓存（资源重载后模型换了就重算）。 */
+        private BakedGeoModel outfitModel;
+        private final Map<CompanionOutfit, List<String>> hiddenGroups = new EnumMap<>(CompanionOutfit.class);
         /** 网格单位 → 模型像素，与模型 tools/companion_ryuka.py 的 WEAPON_SCALE 相同。 */
         static final float SWORD_SCALE = .93f;
         static final int MANIFEST_TICKS = CompanionBlade.MANIFEST;
@@ -91,6 +102,7 @@ public final class CompanionClient {
             state.addGeckolibData(CLOCK, animatable.tickCount + partialTick);
             state.addGeckolibData(TREMBLE, animatable.tremble(partialTick));
             state.addGeckolibData(LANTERN, animatable.lanternGlow(partialTick));
+            state.addGeckolibData(OUTFIT, animatable.outfit());
         }
 
         @Override
@@ -98,6 +110,29 @@ public final class CompanionClient {
             super.adjustModelBonesForRender(info, snapshots);
             float k = info.getOrDefaultGeckolibData(TREMBLE, 0f);
             if (k > 0) tremble(snapshots, k, info.getOrDefaultGeckolibData(CLOCK, 0f) / 20);
+            // 别的装束的组连同子骨骼都不画
+            for (String group : hidden(info.model(), info.getOrDefaultGeckolibData(OUTFIT, CompanionOutfit.MIKO))) {
+                snapshots.ifPresent(group, s -> {
+                    s.skipRender(true);
+                    s.skipChildrenRender(true);
+                });
+            }
+        }
+
+        /** 这套装束下要隐藏的组：名字是别的装束的 outfit_* 前缀、父骨骼不是 outfit_* 的那些（子树一起隐藏）。 */
+        private List<String> hidden(BakedGeoModel model, CompanionOutfit outfit) {
+            if (model != outfitModel) {
+                outfitModel = model;
+                hiddenGroups.clear();
+            }
+            return hiddenGroups.computeIfAbsent(outfit, o -> {
+                List<String> out = new ArrayList<>();
+                for (GeoBone bone : model.boneLookup().get().values()) {
+                    boolean top = bone.parent() == null || !bone.parent().name().startsWith(CompanionOutfit.PREFIX);
+                    if (top && o.hides(bone.name())) out.add(bone.name());
+                }
+                return List.copyOf(out);
+            });
         }
 
         /**
