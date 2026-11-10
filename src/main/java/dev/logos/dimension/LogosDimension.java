@@ -44,6 +44,7 @@ public final class LogosDimension {
                     out.accept(dev.logos.dimension.explosion.ExplosionStaffItem.ITEM.get());
                     out.accept(dev.logos.dimension.item.LongswordItem.BLACKSTEEL.get());
                     out.accept(dev.logos.dimension.item.LingxiaoSwordItem.ITEM.get());
+                    out.accept(dev.logos.dimension.item.JinghongSwordItem.ITEM.get());
                     out.accept(dev.logos.dimension.item.UchigatanaItem.INK.get());
                     out.accept(dev.logos.dimension.item.UchigatanaItem.VERMILION.get());
                     out.accept(dev.logos.dimension.item.UchigatanaItem.INDIGO.get());
@@ -87,6 +88,7 @@ public final class LogosDimension {
         dev.logos.dimension.item.ElfSpearItem.init();
         dev.logos.dimension.item.LongswordItem.init();
         dev.logos.dimension.item.LingxiaoSwordItem.init();
+        dev.logos.dimension.item.JinghongSwordItem.init();
         dev.logos.dimension.lingxiao.LingxiaoFlight.register(bus);
         dev.logos.dimension.longsword.ManaGuard.init();
         dev.logos.dimension.item.UchigatanaItem.init();
@@ -150,6 +152,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.AncientEmbraceGameTests.register(bus);
         dev.logos.dimension.gametest.LongswordGameTests.register(bus);
         dev.logos.dimension.gametest.LingxiaoGameTests.register(bus);
+        dev.logos.dimension.gametest.JinghongGameTests.register(bus);
         dev.logos.dimension.gametest.DawnvowGameTests.register(bus);
         dev.logos.dimension.gametest.OmikujiGameTests.register(bus);
         dev.logos.dimension.gametest.DawnvowChargeGameTests.register(bus);

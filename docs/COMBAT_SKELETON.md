@@ -162,6 +162,7 @@ CombatWeapon.register(6, "glaive", "glaive", GLAIVE_MOVESET).withCone(90);
 | `trail_start`、`trail_end` | 可选 | 刀光的开始与结束，一般包住 `contact` 前后挥得最快的一段。 | 刀光功能做好后使用 |
 | `tip_fx` | 可选 | 枪尖残影：刺到头的那一刻，客户端在枪尖放出一枚沿刺出方向冲出去的枪头光影（长枪连刺，[OATH_SPEAR.md](OATH_SPEAR.md) 第 4 节）。一般与 `contact` 同一时刻。 | 客户端直接读动作 |
 | `handoff` | 可选 | 武器离手交给别处画的时刻：凌霄起飞把剑抛到脚下，这一刻之后骨架里的剑缩成 0，由御剑载具自己画（剑尖顺着飞行方向，[LINGXIAO.md](LINGXIAO.md) 第 4 节）。客户端用 `LongswordClient.handedOff` 判断。 | 客户端直接读动作 |
+| `release`、`catch` | 可选 | 掷出武器、接回武器的时刻：惊鸿掷剑在 `release` 出手（与 `contact` 同一时刻，服务端在这一刻结算掷剑），剑飞回来在 `catch` 接住；两者之间骨架里的剑缩成 0，飞出去的剑由客户端在世界里画（[JINGHONG.md](JINGHONG.md) 第 4 节）。回手时刻由 `SwordFlight.THROW_HOME` 对上，单元测试检查。 | 客户端直接读动作 |
 
 规则：
 

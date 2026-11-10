@@ -10,6 +10,7 @@
 | 神狐和弓 | [YUMI.md](YUMI.md) | `import_yumi.py` | `yumi_moves.py` | `group:yumi` |
 | 流火 | [RYUKA.md](RYUKA.md) | `import_ryuka.py`（含换色） | `ryuka_moves.py`（`arc` 一刀快挥加定住） | `group:ryuka` |
 | 凌霄 | [LINGXIAO.md](LINGXIAO.md) | `import_lingxiao.py` | `lingxiao_moves.py` | `group:lingxiao` |
+| 惊鸿（剑阵） | [JINGHONG.md](JINGHONG.md) | `jinghong_sword.py`（网格、贴图都由脚本生成） | `jinghong_moves.py`（格挡、弹剑、掷剑；其余共用凌霄） | `group:jinghong` |
 
 ## 1. 几条原则
 

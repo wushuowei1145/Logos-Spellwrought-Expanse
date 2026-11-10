@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "logos_dimension:item/jinghong_sword"
+  }
+}
