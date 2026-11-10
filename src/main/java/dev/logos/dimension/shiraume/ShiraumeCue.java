@@ -40,6 +40,20 @@ public record ShiraumeCue(int kind, int entity, long time, Vec3 pos, float[] val
     public static final int SPARK = 6;
     /** 落点标记（狐形大跳）：pos 落点，values[0] 半径，values[1] 持续刻数。 */
     public static final int MARK = 7;
+    /** 速度感（缩地、投技的冲刺）：entity 是冲过来的她，values[0] 强度（冲向的那个人 1，旁人小一些），values[1] 持续刻数。 */
+    public static final int SPEED = 8;
+    /** 清除增益：entity 是被清掉的人，values 是清掉的效果的颜色（RGB）。 */
+    public static final int PURGE = 9;
+    /** 破盾：pos 位置。 */
+    public static final int GUARD_BREAK = 10;
+    /** 锁定术师：entity 是被盯上的人，values[0] 1 盯上、0 放开。 */
+    public static final int LOCK = 11;
+    /** 斩法那一刀：entity 是挨刀的人，pos 位置，values[0] 斩下的魔力。 */
+    public static final int COUNTER = 12;
+    /** 狂暴大跳落地的狐火冲击：pos 圆心，time 放出的刻；半径照 {@code ShiraumeBeast.ringRadius} 算。 */
+    public static final int RING = 13;
+    /** 一字斩的剑气：entity 是她，pos 起点，time 放出的刻，values 是方向 (x, z)；走法照 {@code Shiraume.WAVE_*}。 */
+    public static final int WAVE = 14;
 
     public static final Type<ShiraumeCue> TYPE = new Type<>(LogosDimension.id("shiraume_cue"));
     public static final StreamCodec<ByteBuf, ShiraumeCue> CODEC = StreamCodec.of((b, c) -> {
@@ -109,5 +123,33 @@ public record ShiraumeCue(int kind, int entity, long time, Vec3 pos, float[] val
 
     public static ShiraumeCue mark(Vec3 at, float radius, int ticks, long start) {
         return new ShiraumeCue(MARK, -1, start, at, new float[] {radius, ticks});
+    }
+
+    public static ShiraumeCue speed(Entity who, float strength, int ticks) {
+        return new ShiraumeCue(SPEED, who.getId(), who.level().getGameTime(), who.position(), new float[] {strength, ticks});
+    }
+
+    public static ShiraumeCue purge(Entity who, float[] colours) {
+        return new ShiraumeCue(PURGE, who.getId(), who.level().getGameTime(), who.position(), colours);
+    }
+
+    public static ShiraumeCue guardBreak(Vec3 at) {
+        return new ShiraumeCue(GUARD_BREAK, -1, 0, at, new float[0]);
+    }
+
+    public static ShiraumeCue lock(Entity who, boolean on) {
+        return new ShiraumeCue(LOCK, who.getId(), who.level().getGameTime(), who.position(), new float[] {on ? 1 : 0});
+    }
+
+    public static ShiraumeCue counter(Entity who, Vec3 at, float mana) {
+        return new ShiraumeCue(COUNTER, who.getId(), who.level().getGameTime(), at, new float[] {mana});
+    }
+
+    public static ShiraumeCue ring(Vec3 center, long start) {
+        return new ShiraumeCue(RING, -1, start, center, new float[0]);
+    }
+
+    public static ShiraumeCue wave(Entity who, Vec3 from, Vec3 dir, long start) {
+        return new ShiraumeCue(WAVE, who.getId(), start, from, new float[] {(float) dir.x, (float) dir.z});
     }
 }

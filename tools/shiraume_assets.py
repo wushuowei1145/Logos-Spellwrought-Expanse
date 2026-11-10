@@ -6,7 +6,7 @@
 模型目录（维护者的工程，不在本仓库）：
 - 人形 `MinecraftLogosMod/fox_model/sealed_nine_tailed_fox/source/sealed_nine_tailed_fox_<N>.bbmodel`，取编号最大的
   （维护者最新保存的那一版）；招式动作是 tools/shiraume_moves.py 烘焙好的 `Animation/shiraume_moves.animation.json`。
-- 狐形 `MinecraftLogosMod/fox_model/sealed_nine_tailed_fox_beast/source/sealed_nine_tailed_fox_beast.bbmodel`；
+- 狐形 `MinecraftLogosMod/fox_model/sealed_nine_tailed_fox_beast/source/sealed_nine_tailed_fox_beast_<N>.bbmodel`，同样取编号最大的；
   战斗动作是那边 tools/beast_moves.py 写的 `Animation/beast_moves.animation.json`（没有时只导入模型自带的动作）。
 
 写出（附属资源）：
@@ -36,8 +36,9 @@ GECKO = ASSETS / 'geckolib'
 ELF_ANIMATION = GECKO / 'animations/entity/forest_elf.animation.json'
 HUMAN = Path('MinecraftLogosMod/fox_model/sealed_nine_tailed_fox')
 BEAST = Path('MinecraftLogosMod/fox_model/sealed_nine_tailed_fox_beast')
-#: 狐形叼刀的位置（Blockbench 坐标，模型像素）：上下颌之间、犬齿后面。
-BEAST_MOUTH = (0.0, 85.0, -84.0)
+#: 狐形叼刀的位置：从下颌铰点（Jaw 的枢轴）往嘴尖（MouthLocator）去这么多，正好在上下颌之间、犬齿后面。
+#: 按模型的骨骼算，维护者改了头的造型也跟着走（初版是 (0, 85, -84)，v3 头颈前压后约 (0, 72.6, -86.8)）。
+BEAST_MOUTH_ALONG = 0.55
 #: 刀横在嘴里：刀尖（网格 +Y）指向狐狸右边（+X），刃（网格 +X）朝前下方 30°。矩阵的三列是网格 X、Y、Z 转过去的方向，
 #: 换成 Blockbench 欧拉角（Z·Y·X 顺序）是 (0, 60, -90)。刃不能正对前方：那样正好落在万向节锁上，欧拉角算不出来。
 BEAST_WEAPON_MATRIX = np.array([[0.0, 1.0, 0.0], [-0.5, 0.0, -0.8660254], [-0.8660254, 0.0, 0.5]])
@@ -137,11 +138,18 @@ def human(art, bb):
     return source.name, len(b.data['elements']), sorted(out)
 
 
+def mouth(b):
+    """叼刀的位置（Blockbench 坐标，模型像素），见 BEAST_MOUTH_ALONG。"""
+    piv = {g['name']: np.array(g['origin'], float) for g in b.groups.values()}
+    return tuple(float(v) for v in piv['Jaw'] + BEAST_MOUTH_ALONG * (piv['MouthLocator'] - piv['Jaw']))
+
+
 def beast(art, bb):
-    source = art / BEAST / 'source/sealed_nine_tailed_fox_beast.bbmodel'
+    source = latest(art / BEAST / 'source', 'sealed_nine_tailed_fox_beast')
     b, geo = model(bb, source, 'geometry.shiraume_beast')
     ex, ey, ez = matrix_euler(BEAST_WEAPON_MATRIX)
-    x, y, z = BEAST_MOUTH
+    x, y, z = mouth(b)
+    print(f'狐形叼刀的位置 {x:.2f}, {y:.2f}, {z:.2f}')
     # Bedrock 坐标：x 取反、绕 x/y 的转角取反（同 bbtool.export_geo）
     add_bone(geo, {'name': 'Weapon', 'parent': 'Head', 'pivot': [-x, y, z], 'rotation': [round(-ex, 4), round(-ey, 4), round(ez, 4)]})
     names = bone_names(geo)
@@ -159,7 +167,8 @@ def beast(art, bb):
                 out[name] = only(anim, names)
             else:
                 out[BEAST_PREFIX + name] = only(anim, names)
-    write(GECKO / 'models/entity/shiraume_beast.geo.json', geo)
+    # 六千多块，写成紧凑格式（缩进后近 9 MB）
+    write(GECKO / 'models/entity/shiraume_beast.geo.json', geo, compact=True)
     from PIL import Image
     Image.fromarray(b.texture()).save(ASSETS / 'textures/entity/shiraume_beast.png', optimize=True)
     write(GECKO / 'animations/entity/shiraume_beast.animation.json', {'format_version': '1.8.0', 'animations': out}, compact=True)

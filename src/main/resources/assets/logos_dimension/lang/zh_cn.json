@@ -1207,6 +1207,8 @@
   "death.attack.logos_dimension.shiraume_execution.player": "%1$s 被 %2$s 斩成了樱花",
   "death.attack.logos_dimension.shiraume_beast": "%1$s 被九尾狐撕碎了",
   "death.attack.logos_dimension.shiraume_beast.player": "%1$s 被 %2$s 撕碎了",
+  "death.attack.logos_dimension.shiraume_counter": "%1$s 蓄着的 %3$s 点魔力还没放出去，就被 %2$s 连人带术一刀斩断了",
+  "message.logos_dimension.shiraume.locked": "白梅盯上了你——蓄力时当心",
   "death.attack.logos_dimension.foxfire": "%1$s 被 %2$s 的狐火吞没了",
   "death.attack.logos_dimension.foxfire.player": "%1$s 在躲避 %2$s 时被狐火吞没了",
   "death.attack.logos_dimension.foxfire.item": "%1$s 被 %2$s 用 %3$s 燃起的狐火吞没了",

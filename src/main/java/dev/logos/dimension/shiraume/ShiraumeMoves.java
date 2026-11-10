@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 
 /**
  * Boss 招式文件里只有 Boss 用的字段（通用的招式状态机不认识它们，照常忽略）：
- * 双眼红光的时刻、被弹反时怎么办、够得到多远、往前冲的一段、后跳。
+ * 双眼红光的时刻、被弹反时怎么办、够得到多远、往前冲的一段、后跳、破盾、清除增益。
  * 和 {@link dev.logos.dimension.combat.Movesets} 读同一个文件，按资源管理器缓存，{@code /reload} 后重新读。
  */
 public final class ShiraumeMoves {
@@ -25,11 +25,12 @@ public final class ShiraumeMoves {
 
     /**
      * 一招的 Boss 专用字段。{@code eyeFlash} 小于 0 表示这一招不闪；{@code lunge} 是 [起, 止, 格数]（动作时间），
-     * {@code leap} 是 [时刻, 后退格数, 上跳速度]，没有时为 null。
+     * {@code leap} 是 [时刻, 后退格数, 上跳速度]，没有时为 null。{@code guardBreak}：格挡下来、却没有弹反时破盾（流火除外）；
+     * {@code purge}：打中时随机清除几个增益药水效果。
      */
     public record Extra(double eyeFlash, ParryKind parry, @Nullable String parried, @Nullable String follow, double reach,
-                        double damage, double cone, double @Nullable [] lunge, double @Nullable [] leap) {
-        static final Extra NONE = new Extra(-1, ParryKind.NONE, null, null, 0, 0, 0, null, null);
+                        double damage, double cone, double @Nullable [] lunge, double @Nullable [] leap, boolean guardBreak, int purge) {
+        static final Extra NONE = new Extra(-1, ParryKind.NONE, null, null, 0, 0, 0, null, null, false, 0);
     }
 
     private static ResourceManager cachedFor;
@@ -72,7 +73,9 @@ public final class ShiraumeMoves {
                     m.has("reach") ? m.get("reach").getAsDouble() : 0,
                     m.has("damage") ? m.get("damage").getAsDouble() : 0,
                     m.has("cone") ? m.get("cone").getAsDouble() : 0,
-                    numbers(m, "lunge", 3), numbers(m, "leap", 3)));
+                    numbers(m, "lunge", 3), numbers(m, "leap", 3),
+                    m.has("guard_break") && m.get("guard_break").getAsBoolean(),
+                    m.has("purge") ? m.get("purge").getAsInt() : 0));
         }
         return Map.copyOf(out);
     }

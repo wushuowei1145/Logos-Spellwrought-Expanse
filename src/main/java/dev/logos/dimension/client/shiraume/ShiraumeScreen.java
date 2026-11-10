@@ -23,9 +23,10 @@ import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 import org.jspecify.annotations.Nullable;
 
 /**
- * 白梅战的全屏通道（docs/SHIRAUME_BOSS.md 第 9 节）：断封印、弹反、拍地时的色散，以及封印全断之后封印之间里高光转红。
+ * 白梅战的全屏通道（docs/SHIRAUME_BOSS.md 第 9 节）：断封印、弹反、拍地时的色散，封印全断之后封印之间里高光转红，
+ * 以及缩地、处决冲刺、斩法扑击时朝她汇聚的速度线与径向模糊。
  * 由 {@code ScreenEffectMixin} 在泛光之后、画风与黑白闪之前调用；只读最终画面的颜色，不碰光影包的缓冲。
- * 两样都没有时一个通道都不跑。
+ * 三样都没有时一个通道都不跑。
  */
 @EventBusSubscriber(modid = LogosDimension.ID, value = Dist.CLIENT)
 public final class ShiraumeScreen {
@@ -36,7 +37,7 @@ public final class ShiraumeScreen {
             .withSampler("InSampler")
             .withUniform("Shiraume", UniformType.UNIFORM_BUFFER)
             .build();
-    private static final int UNIFORM_SIZE = new Std140SizeCalculator().putVec4().get();
+    private static final int UNIFORM_SIZE = new Std140SizeCalculator().putVec4().putVec4().get();
     private static @Nullable RenderTarget copy;
     private static @Nullable MappableRingBuffer uniforms;
     private static long passes;
@@ -60,14 +61,16 @@ public final class ShiraumeScreen {
         float pt = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         float split = ShiraumeClient.aberration();
         float mood = ShiraumeClient.mood(mc.gameRenderer.getMainCamera().position(), pt);
-        if (split < .002f && mood < .002f) return;
+        float[] speed = ShiraumeClient.speed(pt);
+        if (split < .002f && mood < .002f && speed[0] < .002f) return;
         RenderTarget main = mc.getMainRenderTarget();
         RenderTarget target = target(main);
         if (uniforms == null) uniforms = new MappableRingBuffer(() -> "logos_dimension shiraume", GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_MAP_WRITE, UNIFORM_SIZE);
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
         encoder.copyTextureToTexture(main.getColorTexture(), target.getColorTexture(), 0, 0, 0, 0, 0, main.width, main.height);
         try (GpuBuffer.MappedView view = encoder.mapBuffer(uniforms.currentBuffer(), false, true)) {
-            Std140Builder.intoBuffer(view.data()).putVec4(split, mood, (float) main.width / main.height, (mc.level.getGameTime() + pt) / 20f);
+            Std140Builder.intoBuffer(view.data()).putVec4(split, mood, (float) main.width / main.height, (mc.level.getGameTime() + pt) / 20f)
+                    .putVec4(speed[0], speed[1], speed[2], 0);
         }
         try (RenderPass pass = encoder.createRenderPass(() -> "logos_dimension shiraume", main.getColorTextureView(), OptionalInt.empty())) {
             pass.setPipeline(PIPELINE);

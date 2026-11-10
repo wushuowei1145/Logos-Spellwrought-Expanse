@@ -132,6 +132,7 @@ public final class LogosDimension {
         DimensionGameTests.register(bus);
         dev.logos.dimension.gametest.CloudseaGameTests.register(bus);
         dev.logos.dimension.gametest.FoxfireGameTests.register(bus);
+        dev.logos.dimension.gametest.ShiraumeGameTests.register(bus);
         dev.logos.dimension.gametest.ReifuGameTests.register(bus);
         dev.logos.dimension.gametest.CauldronInstanceGameTests.register(bus);
         dev.logos.dimension.gametest.GrapeGameTests.register(bus);

@@ -5,9 +5,16 @@ import dev.logos.dimension.foxfire.Foxfire;
 import dev.logos.dimension.foxfire.FoxfireFlame;
 import dev.logos.lang.Element;
 import dev.logos.runtime.Effects;
+import dev.logos.dimension.item.RyukaItem;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Util;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -38,6 +45,10 @@ public final class ShiraumeStrike {
     public static final ResourceKey<DamageType> EXECUTION = ResourceKey.create(Registries.DAMAGE_TYPE, LogosDimension.id("shiraume_execution"));
     /** 带这个标签的伤害被格挡时不进入弹刀（{@code LongswordCombat.blocked}）。 */
     public static final TagKey<DamageType> UNPARRYABLE = TagKey.create(Registries.DAMAGE_TYPE, LogosDimension.id("unparryable"));
+    /** 斩法（锁定的术师蓄力时那一刀）：伤害等于对方已经蓄进去的魔力，不看护甲、附魔与抗性，盾也挡不住。 */
+    public static final ResourceKey<DamageType> COUNTER = ResourceKey.create(Registries.DAMAGE_TYPE, LogosDimension.id("shiraume_counter"));
+    /** 破盾：盾（打刀、古木之拥……）几秒用不了，同原版斧头。 */
+    public static final float GUARD_BREAK_SECONDS = 5;
     private static final ThreadLocal<LivingEntity> STRIKING = new ThreadLocal<>();
 
     public enum Result { MISS, HIT, BLOCKED, PARRIED }
@@ -52,20 +63,93 @@ public final class ShiraumeStrike {
      * 返回结果；被弹反时 {@link ShiraumeBoss#takeParried()} 已经由格挡事件置上。
      */
     public static Result strike(Mob boss, ShiraumeBoss self, LivingEntity target, float damage, boolean parryable) {
+        return strike(boss, self, target, damage, parryable, false, 0);
+    }
+
+    /**
+     * 同上，另加两样：{@code guardBreak} 格挡下来却没有弹反时破盾（拿流火格挡的除外）；{@code purge} 打中时随机清除几个增益效果。
+     * 打中是指这一下真的让对方掉了血（Logos 的伤害只在打死时才返回真，不能用它判断）。
+     */
+    public static Result strike(Mob boss, ShiraumeBoss self, LivingEntity target, float damage, boolean parryable, boolean guardBreak, int purge) {
         if (!(boss.level() instanceof ServerLevel level) || !target.isAlive()) return Result.MISS;
         DamageSource melee = parryable ? level.damageSources().mobAttack(boss)
                 : new DamageSource(level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(BEAST), boss);
         // 连招里上一刀刚砍过这个人：原版的受击冷却会把这一刀吞掉
         if (target.getLastHurtByMob() == boss) target.invulnerableTime = 0;
         if (blocks(target, melee, damage)) {
+            ItemStack blocking = target.getItemBlockingWith();
             target.hurtServer(level, melee, damage);
-            return self.takeParried() ? Result.PARRIED : Result.BLOCKED;
+            boolean parried = self.takeParried();
+            if (!parried && guardBreak && blocking != null) breakGuard(level, target, blocking);
+            return parried ? Result.PARRIED : Result.BLOCKED;
         }
         STRIKING.set(boss);
         try {
-            return Effects.damage(boss, target, damage, Element.ARCANE) ? Result.HIT : Result.MISS;
+            float before = target.getHealth() + target.getAbsorptionAmount();
+            boolean killed = Effects.damage(boss, target, damage, Element.ARCANE);
+            boolean landed = killed || target.getHealth() + target.getAbsorptionAmount() < before - 1e-4f;
+            if (landed && purge > 0) purge(level, target, purge);
+            return landed ? Result.HIT : Result.MISS;
         } finally {
             STRIKING.remove();
+        }
+    }
+
+    /** 破盾：拿在手里格挡的东西几秒用不了（同原版斧头），流火（魔力护体）除外。返回是否破了。 */
+    public static boolean breakGuard(ServerLevel level, LivingEntity target, ItemStack blocking) {
+        if (blocking.getItem() instanceof RyukaItem) return false;
+        BlocksAttacks blocks = blocking.get(DataComponents.BLOCKS_ATTACKS);
+        if (blocks != null) blocks.disable(level, target, GUARD_BREAK_SECONDS, blocking);
+        else {
+            if (target instanceof Player p) p.getCooldowns().addCooldown(blocking, Math.round(GUARD_BREAK_SECONDS * 20));
+            target.stopUsingItem();
+        }
+        Vec3 at = target.position().add(0, target.getBbHeight() * .6, 0);
+        level.playSound(null, at.x, at.y, at.z, SoundEvents.SHIELD_BREAK.value(), SoundSource.HOSTILE, 1.4f, .7f);
+        ShiraumeCue.near(level, at, 64, ShiraumeCue.guardBreak(at));
+        return true;
+    }
+
+    /** 随机清除 {@code target} 身上最多 {@code count} 个增益药水效果，返回清掉几个。 */
+    public static int purge(ServerLevel level, LivingEntity target, int count) {
+        List<MobEffectInstance> good = new ArrayList<>(target.getActiveEffects().stream().filter(e -> e.getEffect().value().isBeneficial()).toList());
+        if (good.isEmpty() || count <= 0) return 0;
+        Util.shuffle(good, level.getRandom());
+        int n = Math.min(count, good.size());
+        float[] colours = new float[n];
+        for (int i = 0; i < n; i++) {
+            colours[i] = good.get(i).getEffect().value().getColor();
+            target.removeEffect(good.get(i).getEffect());
+        }
+        Vec3 at = target.position().add(0, target.getBbHeight() * .6, 0);
+        level.playSound(null, at.x, at.y, at.z, SoundEvents.GLASS_BREAK, SoundSource.HOSTILE, 1.2f, 1.3f);
+        level.playSound(null, at.x, at.y, at.z, SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.HOSTILE, 1.0f, .8f);
+        ShiraumeCue.near(level, at, 64, ShiraumeCue.purge(target, colours));
+        return n;
+    }
+
+    /**
+     * 斩法的伤害来源：记着对方蓄进去的魔力，死亡消息照着写
+     * （「X 蓄了 N 点魔力的术式被白梅一刀斩断……」）。
+     */
+    public static DamageSource counter(ServerLevel level, Entity boss, double mana) {
+        return new CounterHit(level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(COUNTER), boss, mana);
+    }
+
+    private static final class CounterHit extends DamageSource {
+        private final double mana;
+
+        CounterHit(net.minecraft.core.Holder<DamageType> type, Entity boss, double mana) {
+            super(type, boss);
+            this.mana = mana;
+        }
+
+        @Override
+        public Component getLocalizedDeathMessage(LivingEntity killed) {
+            Entity by = getEntity();
+            String amount = mana == Math.rint(mana) ? String.valueOf((long) mana) : String.format(java.util.Locale.ROOT, "%.1f", mana);
+            return Component.translatable("death.attack." + type().msgId(), killed.getDisplayName(),
+                    by == null ? Component.literal("?") : by.getDisplayName(), amount);
         }
     }
 
