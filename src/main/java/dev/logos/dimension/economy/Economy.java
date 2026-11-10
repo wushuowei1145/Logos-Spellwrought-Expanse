@@ -44,7 +44,6 @@ public final class Economy {
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(LogosDimension.ID);
     private static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(LogosDimension.ID);
     private static final DeferredRegister.DataComponents COMPONENTS = DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, LogosDimension.ID);
-    private static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, LogosDimension.ID);
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<WalletContents>> WALLET = COMPONENTS.registerComponentType(
             "wallet", b -> b.persistent(WalletContents.CODEC).networkSynchronized(WalletContents.STREAM_CODEC));
@@ -63,20 +62,20 @@ public final class Economy {
         }
         ITEMS.registerSimpleBlockItem("exchange_counter", EXCHANGE);
         ITEMS.registerSimpleBlockItem("bank_counter", BANK);
-        TABS.register("economy", () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.logos_dimension.economy"))
-                .icon(() -> coin(Currency.FOX, 2).getDefaultInstance())
-                .displayItems((params, out) -> {
-                    out.accept(WALLET_ITEM.get());
-                    out.accept(EXCHANGE.get());
-                    out.accept(BANK.get());
-                    COINS.values().forEach(list -> list.forEach(out::accept));
-                }).build());
+    }
+
+    /** 货币页的内容：钱囊、兑换台、钱庄，再按国别列钱币。页本身由 {@code AddonTabs} 注册。 */
+    public static void creativeItems(CreativeModeTab.Output out) {
+        out.accept(WALLET_ITEM.get());
+        out.accept(EXCHANGE.get());
+        out.accept(BANK.get());
+        COINS.values().forEach(list -> list.forEach(out::accept));
     }
 
     public static CoinItem coin(Currency c, int denomination) { return COINS.get(c).get(denomination).get(); }
 
     public static void register(IEventBus bus) {
-        ITEMS.register(bus); BLOCKS.register(bus); COMPONENTS.register(bus); TABS.register(bus);
+        ITEMS.register(bus); BLOCKS.register(bus); COMPONENTS.register(bus);
         bus.addListener((RegisterPayloadHandlersEvent event) -> event.registrar("1")
                 .playToClient(MarketPayload.TYPE, MarketPayload.CODEC)
                 .playToClient(BankPayload.TYPE, BankPayload.CODEC)

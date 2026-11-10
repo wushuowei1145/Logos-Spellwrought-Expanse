@@ -1,6 +1,6 @@
 # 精灵长矛
 
-物品 ID 为 `logos_dimension:elf_spear`。与自然之力同属生命元素武器，使用维护者提供的 `elf_spear.png`，图标原样导入。创造模式在远行大陆标签页获取，或执行：
+物品 ID 为 `logos_dimension:elf_spear`。与自然之力同属生命元素武器，使用维护者提供的 `elf_spear.png`，图标原样导入。创造模式在「远行大陆 · 武器」页获取，或执行：
 
 ```text
 /give @s logos_dimension:elf_spear

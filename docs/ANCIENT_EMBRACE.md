@@ -1,6 +1,6 @@
 # 古木之拥
 
-物品 ID 为 `logos_dimension:ancient_embrace`，可在远行大陆创造标签页获取，或使用：
+物品 ID 为 `logos_dimension:ancient_embrace`，可在创造模式「远行大陆 · 武器」页获取，或使用：
 
 ```text
 /give @s logos_dimension:ancient_embrace

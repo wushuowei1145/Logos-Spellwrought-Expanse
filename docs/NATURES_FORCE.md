@@ -1,6 +1,6 @@
 # 自然之力
 
-物品 ID：`logos_dimension:natures_force`。在远行大陆创造标签页中获取，或执行：
+物品 ID：`logos_dimension:natures_force`。在创造模式「远行大陆 · 武器」页中获取，或执行：
 
 ```text
 /give @s logos_dimension:natures_force

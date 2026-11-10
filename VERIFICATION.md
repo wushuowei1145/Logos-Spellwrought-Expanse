@@ -1,5 +1,21 @@
 # 首版验证记录
 
+## 创造模式物品栏分类
+
+2026-11-10：分支 `feat/addon-creative-tabs`，基于 main `a9323e08`（#229），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。原「远行大陆」一页拆成建材、装饰、自然、功能方块、道具、武器六页，补上原来不在任何一页的 33 件灵狐樱野方块和签纸；货币、塔罗、炼金釜三页内容不变，九页统一在 `AddonTabs` 注册、按顺序挨在一起。运镜测试方块从炼金釜页挪到功能方块页末尾。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | `LangCoverageTest` 1/2：失败的仍是 main 上就缺的 `item.logos_dimension.fuda_desk`，这次没动；新页名中英文都有 |
+| 世界测试 | 新增 `creative_tabs_cover_items` **1/1**：附属的每件物品都在某一页（刷怪蛋在原版刷怪蛋页；只为旧存档保留的 `journey_rice` 和写好的霊符故意不放）；建材、装饰、功能方块页只有方块，武器页没有方块 |
+| 实际客户端 | 新增 `creative_tab_views` 九页依次打开截图，人工看过建材、装饰、功能方块、武器四页；`ema_views` 照旧通过（检查改为绘马在道具页、绘马挂在功能方块页）。共 2/2 场景、14/14 检查 |
+| 未验证 | 和其他模组一起装时页签的前后位置；自然页较长，截图只看到第一屏 |
+
+```text
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:creative_tabs_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=creative_tab_views,ema_views" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 白梅同伴（第一版）
 
 2026-11-10：分支 `feat/shiraume-companion`，提 PR 前 rebase 到 main `34c49450`（#228）并重跑下表的单元测试和客户端场景，结果相同。Logos jar 用 `builds/shiraume-tuning-2026-11-10/logos-0.6.0-page-variants.jar`（main 合了 #220 霊符，要用 page-variants）。设计见 [白梅同伴](docs/SHIRAUME_COMPANION.md)；模型是仓库外 `fox_model/nine_tailed_fox_companion` 的 `_7`。
