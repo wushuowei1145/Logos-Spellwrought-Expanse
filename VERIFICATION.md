@@ -2,13 +2,14 @@
 
 ## 流火：狐火印、平一文字の構え、突进上挑、可交互处决
 
-2026-11-10：分支 `feat/ryuka-execution`，基于 main `d950cf17`（#223）；Logos jar `builds/shiraume-tuning-2026-11-10/logos-0.6.0-page-variants.jar`。设计见 [docs/RYUKA.md](docs/RYUKA.md) 3.2–3.4 节，通用的可交互处决见 [docs/EXECUTION_SHOTS.md](docs/EXECUTION_SHOTS.md)「可交互的处决」。
+2026-11-10：分支 `feat/ryuka-execution`，提 PR 前 rebase 到 main `70071ef2`（#227）并重跑下面所有测试，全部通过（单元 64/64、`longsword_*` 22/22、`foxfire_*` 10/10、`shiraume_*` 13/13、`group:ryuka,group:execution_shot` 7/7 场景 88/88 检查）。下表里提到的失败是之前在 `d950cf17` 上跑的，那时 main 本身有这几处失败或时好时坏；Logos jar `builds/shiraume-tuning-2026-11-10/logos-0.6.0-page-variants.jar`。设计见 [docs/RYUKA.md](docs/RYUKA.md) 3.2–3.4 节，通用的可交互处决见 [docs/EXECUTION_SHOTS.md](docs/EXECUTION_SHOTS.md)「可交互的处决」。
 
 | 层级 | 结果 |
 | --- | --- |
 | 单元 | 相关 68/69：新增 `RyukaTest.stanceChargesThenDashesIntoTheRisingCut`（构え、蓄不到 0.3 秒回格挡、突进接上挑、构え的格挡后松开立即突进）、`ExecutionTimelineTest` 两项（可交互：刀一刀刀加、两端一样、重击和整段时长与刀数无关、节拍每秒不超过三次、编解码不变；不可交互的不能加刀）、`PaleFireTest` 两项。唯一失败的 `ShiraumeTrailsTest.everyHumanAttackLeavesATrail`（白梅的 `turn_sweep` 没有刀光）在干净的 main 上同样失败，与本改动无关 |
 | 世界测试 | `longsword_*` **22/22**，新增：`longsword_ryuka_marks`（平时的刀照常缠身但不能处决、四刀四枚印、第五刀爆开多掉 30、缠身 8 秒、8 秒内能处决）、`longsword_ryuka_dash`（格挡中左键进构え、0.3 秒内松开回格挡、构え的格挡、松开突进、撞上木桩停下上挑挑飞、扣 20 + 10）、`longsword_ryuka_execution`（只缠身没爆开过的只挑飞；爆开过的被上挑时处决、用掉这次爆开：定住、窗口前点的不算、同一刻点两下只算一刀、9 刀 99、窗口关了不收、重击 11、落地 25 摔落、结束后放开）。改成「爆开后 8 秒内可处决、平时照常缠身」之后重跑：单元 49/49、`longsword_*` 22/22、`foxfire_*` **10/10**、`group:ryuka` 3/3（33/33 检查）。之前 `foxfire_burns_then_goes_out` 在本分支和干净的 main 上都失败过，这次通过，是时好时坏。`shiraume_*`（白梅的处决也走 `ExecutionShots.play`）本分支跑三次：13/13 一次，另两次各错一项（`ichimonji_turns_when_behind`、`ichimonji_wave`）；干净的 main 上跑一次也错两项（`ichimonji_wave`、`thrust_purges_two`），是 main 上本来就不稳 |
 | 实际客户端 | `group:ryuka` 三个场景、`group:execution_shot` 四个场景：`ryuka`（原有，弹刀后再按左键接突刺）、`ryuka_stance`（刀身狐火变淡、构え正面/背面/第一人称、构え的格挡、突进 1.5 格以上撞上尸壳挑飞、四枚印客户端看得见、爆开、客户端看得出能处决）、`ryuka_execution`（狐火印爆开过的尸壳被突进上挑后进处决特写，一刻一下点到窗口关上，两端刀数一样，伤害正好是刀数 × 11 + 11 + 25，重击变红、落地白一拍、镜头回来；本机演一段旁观的处决，世界里画了刀光）。处决特写原有的四个场景照旧通过 |
+| 刀翻面 | rebase 到 main `70071ef2` 后用 #225 的翻面检查重新烘焙：新的 `dash`、`rise`、`execution` 原来各有一两处刀一帧转过 90° 以上，补了翻腕的中间帧（`ryuka_moves.py` 的 `wrist`），现在都不报；刀走的弧线没变。`slash_1`–`slash_5` 的翻面是之前就有的，这次没动 |
 | 截图 | 仓库外 `art/liuhuo/execution_v01`：刀身狐火前后对比、构え、挑飞、狐火印、处决的黑白/红/落地、旁观的刀光 |
 | 未验证 | 真机手感（突进距离、点击节奏）、多人下旁观者真的收到刀光（单机只能本机演）、光影包下的刀光和狐火印 |
 

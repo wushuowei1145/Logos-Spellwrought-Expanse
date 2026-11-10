@@ -90,6 +90,11 @@ def arc(t0, t1, grips, blades, n=6, hold=None, **extra):
     return keys
 
 
+def wrist(blade, edge):
+    """刃绕着刀身转四分之一圈：两刀方向相反时，中间先把刃转到刀面朝这边，免得插值时刃向两头相消、刀一帧翻过去。"""
+    return tuple(unit(np.cross(unit(blade), unit(edge))))
+
+
 def last(keys):
     """一刀定住时的握点、刀尖、刃（下一刀从这里起手）。"""
     key = keys[-1]
@@ -205,11 +210,15 @@ def clips():
 
     # 闪身突进：右手单手把刀从横架拖到右后下方（脇構え），身体前倾压低，左手往前探；接上挑。
     low = dict(grip=(0.46, -0.66, 0.06), blade=(0.34, -0.62, 0.71), edge=(0.34, -0.62, -0.69))
+    # 刀从横架甩到右后下方要转 150° 多：用 0.1 秒分五步走。
+    swing = arc(0.0, 0.1, [HIRA['grip'], (0.48, -0.32, -0.18), low['grip']], [HIRA['blade'], (0.4, -0.3, -0.87), low['blade']], n=5,
+                lmode='free', lhand=(-0.3, -0.35, -0.65))
+    # 甩下来时刃朝后；突进的后半段手腕慢慢翻过来，上挑往前撩时刃向才接得上
+    low = dict(low, edge=wrist(low['blade'], last(swing)['edge']))
     out.append(dict(name='dash', length=0.3, loop='once', keys=[
         k(0.0, HIRA),
-        *arc(0.0, 0.06, [HIRA['grip'], (0.48, -0.32, -0.18), low['grip']], [HIRA['blade'], (0.4, -0.3, -0.87), low['blade']], n=3,
-             lmode='free', lhand=(-0.3, -0.35, -0.65)),
-        k(0.06, up=(18, 16, 0), hips=(0, -0.2, -0.06), rfoot=(0.16, 0, -0.5, -8), lfoot=(-0.2, 0, 0.4, 20)),
+        *swing,
+        k(0.1, up=(18, 16, 0), hips=(0, -0.2, -0.06), rfoot=(0.16, 0, -0.5, -8), lfoot=(-0.2, 0, 0.4, 20)),
         k(0.3, low, up=(20, 18, 0), hips=(0, -0.22, -0.08), lmode='free', lhand=(-0.34, -0.3, -0.7),
           rfoot=(0.16, 0, -0.55, -8), lfoot=(-0.2, 0, 0.45, 22)),
     ]))
@@ -222,6 +231,8 @@ def clips():
         *s_rise,
         k(0.11, up=(-14, -20, 0), hips=(0, -0.06, -0.04), lhand=(-0.6, -0.55, 0.3), rfoot=(0.16, 0, -0.35, -8), lfoot=(-0.2, 0, 0.3, 22)),
         k(0.32, up=(-12, -18, 0), hips=(0, -0.06, -0.04), lhand=(-0.6, -0.55, 0.28)),
+        # 收回待机：刀从头顶往右前放下，刃先转到朝外，免得和待机的刃向正好相反
+        k(0.41, grip=(0.3, -0.2, -0.5), blade=(0.2, 0.45, -0.87), edge=wrist((0.2, 0.45, -0.87), last(s_rise)['edge'])),
         k(0.5, IDLE),
     ]))
 
@@ -229,15 +240,21 @@ def clips():
     a_up = dict(grip=(0.42, 0.12, -0.42), blade=(0.62, 0.7, -0.35), edge=(-0.78, 0.56, -0.26))
     b_up = dict(grip=(-0.22, 0.2, -0.48), blade=(-0.6, 0.72, -0.34), edge=(0.78, -0.56, -0.26))
     cut_a = arc(0.05, 0.12, [a_up['grip'], (0.1, 0.3, -0.62), b_up['grip']], [a_up['blade'], (0.02, 0.85, -0.52), b_up['blade']], hold=0.3)
-    cut_b = arc(0.35, 0.42, [b_up['grip'], (0.1, 0.32, -0.62), a_up['grip']], [b_up['blade'], (0.0, 0.88, -0.48), a_up['blade']], hold=0.6)
+    cut_b = arc(0.35, 0.42, [b_up['grip'], (0.1, 0.32, -0.62), a_up['grip']], [b_up['blade'], (0.0, 0.88, -0.48), a_up['blade']], hold=0.55)
+    # 两刀方向相反：定住之后手腕一翻，刃先转到刀面朝外，再朝回砍的方向（循环的接缝处同样）
+    turn_ab = dict(grip=b_up['grip'], blade=b_up['blade'], edge=wrist(b_up['blade'], last(cut_a)['edge']))
+    turn_ba = dict(grip=a_up['grip'], blade=a_up['blade'], edge=wrist(a_up['blade'], last(cut_b)['edge']))
+    a_up = dict(a_up, edge=cut_a[0]['edge'])
     out.append(dict(name='execution', length=0.6, loop='loop', keys=[
         k(0.0, a_up, up=(-22, -14, 0), hips=(0, -0.08, 0), lmode='free', lhand=(-0.5, -0.4, -0.3)),
         *cut_a,
         k(0.12, up=(-24, 18, 0), lhand=(-0.6, -0.5, 0.2)),
         k(0.3, up=(-22, 16, 0), lhand=(-0.58, -0.5, 0.18)),
+        k(0.325, turn_ab),
         *cut_b,
         k(0.42, up=(-24, -16, 0), lhand=(-0.48, -0.42, -0.32)),
-        k(0.6, up=(-22, -14, 0), hips=(0, -0.08, 0), lhand=(-0.5, -0.4, -0.3)),
+        k(0.575, turn_ba),
+        k(0.6, a_up, up=(-22, -14, 0), hips=(0, -0.08, 0), lhand=(-0.5, -0.4, -0.3)),
     ]))
 
     # 处决的最后一刀：双手把刀高举过头，一刀从上劈到左下（把目标拍下去），定住半拍，收回待机。
