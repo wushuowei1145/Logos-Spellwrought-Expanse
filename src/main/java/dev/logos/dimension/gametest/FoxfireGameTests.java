@@ -1,6 +1,8 @@
 package dev.logos.dimension.gametest;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -32,6 +34,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.golem.IronGolem;
 import net.minecraft.world.entity.monster.zombie.Husk;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
@@ -63,9 +66,11 @@ public final class FoxfireGameTests {
             // 每个测试单独一批：狐火横扫能扫出十几格，同一批里会扫到隔壁测试的生物
             for (var name : tests.keySet()) {
                 var env = event.registerEnvironment(LogosDimension.id(name), new TestEnvironmentDefinition.AllOf());
+                // 缠身那项先要等区块进入实体走刻（每刻没等到就睡 10 毫秒），多给些刻，忙的时候也等得到
+                int maxTicks = name.equals("foxfire_burns_then_goes_out") ? 600 : 200;
                 event.registerTest(LogosDimension.id(name), new FunctionGameTestInstance(
                         ResourceKey.create(Registries.TEST_FUNCTION, LogosDimension.id(name)), new TestData<>(env,
-                        Identifier.withDefaultNamespace("empty"), 200, 0, true, Rotation.NONE, false, 1, 1, false, 8)));
+                        Identifier.withDefaultNamespace("empty"), maxTicks, 0, true, Rotation.NONE, false, 1, 1, false, 8)));
             }
         });
     }
@@ -122,19 +127,53 @@ public final class FoxfireGameTests {
         h.succeed();
     }
 
-    /** 缠身三秒，每秒一点狐火；烧完就灭。 */
+    /**
+     * 缠身三秒，每秒一点狐火；烧完就灭。缠身是在被烧的生物走实体刻时烧的，测试框架却只强制加载测试结构那一格所在的区块，
+     * 铁傀儡站的 (2, 1, 3) 约有三成落在隔壁区块，在那里一刻也不走，一点都不烧。所以先把两只所在的区块强制加载、
+     * 等它们进入实体走刻，再放生物、点火。
+     */
     private static void burnsThenGoesOut(GameTestHelper h) {
-        var husk = attacker(h);
-        var golem = golem(h, 2);
-        Foxfire.deal(husk, golem, 4, FoxfireFlame.SHIRAUME);
-        float afterHit = golem.getHealth();
-        h.assertTrue(FoxfireRules.burning(golem) == FoxfireFlame.SHIRAUME, "没有缠上淡粉的狐火");
-        h.runAfterDelay(FoxfireRules.BURN_TICKS + 5, () -> {
-            float burned = afterHit - golem.getHealth();
-            h.assertTrue(Math.abs(burned - 3 * FoxfireRules.BURN_DAMAGE) < 1e-3, "三秒缠身应当烧掉 3 点，实际 " + burned);
-            h.assertTrue(FoxfireRules.burning(golem) == null && !golem.hasData(FoxfireAttachments.BURN), "缠身烧完没有灭");
-            h.assertTrue(golem.getLastDamageSource() != null && golem.getLastDamageSource().is(Foxfire.DAMAGE), "缠身烧的不是狐火");
-            h.succeed();
+        floor(h);
+        BlockPos huskAt = new BlockPos(0, 1, 0), golemAt = new BlockPos(2, 1, 3);
+        var chunks = forceChunks(h, huskAt, golemAt);
+        IronGolem[] golem = {null};
+        float[] afterHit = {0};
+        h.startSequence()
+                .thenWaitUntil(entitiesTicking(h, huskAt, golemAt))
+                .thenExecute(() -> {
+                    var husk = h.spawnWithNoFreeWill(EntityType.HUSK, huskAt);
+                    golem[0] = golem(h, golemAt.getX());
+                    Foxfire.deal(husk, golem[0], 4, FoxfireFlame.SHIRAUME);
+                    afterHit[0] = golem[0].getHealth();
+                    h.assertTrue(FoxfireRules.burning(golem[0]) == FoxfireFlame.SHIRAUME, "没有缠上淡粉的狐火");
+                })
+                .thenExecuteAfter(FoxfireRules.BURN_TICKS + 5, () -> {
+                    float burned = afterHit[0] - golem[0].getHealth();
+                    h.assertTrue(Math.abs(burned - 3 * FoxfireRules.BURN_DAMAGE) < 1e-3, "三秒缠身应当烧掉 3 点，实际 " + burned);
+                    h.assertTrue(FoxfireRules.burning(golem[0]) == null && !golem[0].hasData(FoxfireAttachments.BURN), "缠身烧完没有灭");
+                    h.assertTrue(golem[0].getLastDamageSource() != null && golem[0].getLastDamageSource().is(Foxfire.DAMAGE), "缠身烧的不是狐火");
+                    for (ChunkPos c : chunks) h.getLevel().setChunkForced(c.x(), c.z(), false);
+                })
+                .thenSucceed();
+    }
+
+    /** 强制加载这些位置所在的区块，返回原来没强制加载、这次才加的（测试结束时只放开这些）。 */
+    private static List<ChunkPos> forceChunks(GameTestHelper h, BlockPos... at) {
+        List<ChunkPos> added = new ArrayList<>();
+        for (BlockPos p : at) {
+            ChunkPos c = ChunkPos.containing(h.absolutePos(p));
+            if (!added.contains(c) && h.getLevel().setChunkForced(c.x(), c.z(), true)) added.add(c);
+        }
+        return added;
+    }
+
+    /** 这些位置所在的区块都已经进入实体走刻（强制加载后要等周围区块加载好，花的是真实时间）。 */
+    private static Runnable entitiesTicking(GameTestHelper h, BlockPos... at) {
+        return RealTimeWait.paced(() -> {
+            for (BlockPos p : at) {
+                ChunkPos c = ChunkPos.containing(h.absolutePos(p));
+                h.assertTrue(h.getLevel().areEntitiesActuallyLoadedAndTicking(c), "区块 " + c + " 应当进入实体走刻");
+            }
         });
     }
 
