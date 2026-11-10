@@ -231,6 +231,8 @@ public final class LongswordClient {
             float glow = SwordCastClient.glow(mc.player, p, now, event.getPartialTick());
             if (glow > 0) rig.submitGlow(sample, pose, event.getSubmitNodeCollector(), true, glow, SwordCastClient.color(mc.player));
         }
+        // 惊鸿：剑脊上亮几段，身后就激活了几把（第一人称看不到身后）
+        dev.logos.dimension.client.jinghong.SwordArrayClient.gauge(rig, p, sample, pose, event.getSubmitNodeCollector(), true, now, shown);
         var tip = SwordCastClient.tip(mc.player.getMainHandItem());
         if (tip != null) SwordCastClient.reportFirstPerson(mc.player.getId(), pose.last().pose(), LongswordRig.onWeapon(sample, tip));
         if (shown) LongswordAuras.firstPerson(mc.player,sample,pose,event.getSubmitNodeCollector(),ryuka);
@@ -270,6 +272,8 @@ public final class LongswordClient {
             } else rig.submit(frame.sample, pose, collector, light, state.skin, !state.isInvisible, shown);
             dev.logos.dimension.client.YumiClient.reportArrow(state.id, pose.last().pose(), frame.sample);
             if (shown && frame.glow > 0) rig.submitGlow(frame.sample, pose, collector, false, frame.glow, frame.glowColor);
+            dev.logos.dimension.client.jinghong.SwordArrayClient.gauge(rig, frame.move, frame.sample, pose, collector, false, frame.time,
+                    shown && !state.isInvisible);
             if (frame.tip != null) SwordCastClient.reportThirdPerson(state.id, pose.last().pose(), LongswordRig.onWeapon(frame.sample, frame.tip));
             DawnvowSummon.submit(frame.move, frame.time, frame.sample, pose, collector, false);
             // 刀光（第一人称看自己时身体只在光影包的阴影通道里画，那里不送点）

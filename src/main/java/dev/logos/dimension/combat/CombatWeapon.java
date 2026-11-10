@@ -41,6 +41,16 @@ public record CombatWeapon(int id, String mesh, String animations, Identifier mo
         default boolean manaGuard(net.minecraft.server.level.ServerPlayer player, String move) { return false; }
         /** 魔力护盾挡下一击、付完这一下的魔力之后调用（流火在这里结算破盾）。 */
         default void manaGuarded(net.minecraft.server.level.ServerPlayer player, net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent event) {}
+        /**
+         * 这一刀打中了 {@code target}（原版攻击已结算、没有被弹开）之后调用，每个目标一次；{@code first} 为这一刀的第一个目标
+         * （准星正对着的那个排第一）。惊鸿在这里让身后的剑追击。
+         */
+        default void hit(net.minecraft.server.level.ServerPlayer player, net.minecraft.world.entity.Entity target, Moveset.Move move, boolean first) {}
+        /**
+         * 原版格挡挡下一击、交给招式文件的 {@code block} 输入之后调用；{@code parried} 为这一下转入了弹刀（{@code effect: parry}）。
+         * 惊鸿在这里让身后的剑反击。
+         */
+        default void blocked(net.minecraft.server.level.ServerPlayer player, net.minecraft.world.damagesource.DamageSource source, boolean parried) {}
     }
 
     public static CombatWeapon register(int id, String mesh, String animations, Identifier moveset) {
