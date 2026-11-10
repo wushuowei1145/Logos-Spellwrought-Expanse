@@ -46,7 +46,8 @@ import net.minecraft.world.phys.Vec3;
  * <li>{@code companion_execute}：主人的流火印在劫掠兽身上爆开，她冲上去上挑接处决；
  * <li>{@code companion_feed}：喂她甜浆果（喜欢）、腐肉（不吃）；她饿了自己去摘浆果，浆果丛扎不到她；
  * <li>{@code companion_soak}：主人泡在一格半深的露天风吕格局里，她浮在旁边泡着不起身；换到浅池，她跟过去坐在池底泡；
- * <li>{@code companion_lantern}：主人在没有天光的地方，她身边飘起一团淡粉狐火；潜行右键打开她的包袱。
+ * <li>{@code companion_lantern}：主人在没有天光的地方，她身边飘起一团淡粉狐火；潜行右键打开她的包袱；
+ * <li>{@code companion_outfit}：泡温泉换上浴衣「梅灯夜渡」，出浴后还穿着，一打起来换回巫女服；命令也能换。
  * </ul>
  */
 public abstract class CompanionLifeViews extends CompanionViews {
@@ -566,6 +567,68 @@ public abstract class CompanionLifeViews extends CompanionViews {
                     .server("关上", ctx -> ctx.player().closeContainer())
                     .server("收回她", ctx -> Companions.dismiss(ctx.player()))
                     .waitUntilServer("灯拆掉了", ctx -> CompanionLight.count(ctx.server().overworld()) == 0)
+                    .teardown("恢复界面", ctx -> Minecraft.getInstance().options.hideGui = false);
+        }
+    }
+
+    // ---------------------------------------------------------------- 装束
+
+    /**
+     * 装束（第 8.10 节）：平时巫女服；主人泡温泉，她下水泡着时换上浴衣「梅灯夜渡」（客户端隐藏巫女服的组）；主人出浴后她还穿着；
+     * 一打起来就换回巫女服。命令也能换。
+     */
+    @LDLRegisterClient(name = "companion_outfit", group = "shiraume_companion", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class Outfit extends CompanionLifeViews {
+        private static final Vec3 IN_POOL = new Vec3(-1.5, FLOOR + 1, 1.5), DRY = new Vec3(-1.5, FLOOR + 1, -2.5);
+        private ShiraumeCompanion c;
+
+        private static dev.logos.dimension.companion.CompanionOutfit clientOutfit() {
+            return clientCompanions().isEmpty() ? null : clientCompanions().get(0).outfit();
+        }
+
+        @Override
+        public void define(ScenarioBuilder s) {
+            stage(s, GameType.SURVIVAL, 55).runCommand("difficulty normal")
+                    .server("三乘三的浅温泉，主人泡在里面", ctx -> {
+                        ServerLevel level = ctx.server().overworld();
+                        for (int x = -3; x <= 1; x++)
+                            for (int z = 0; z <= 4; z++) {
+                                boolean pool = x >= -2 && x <= 0 && z >= 1 && z <= 3;
+                                if (pool) {
+                                    level.setBlockAndUpdate(new BlockPos(x, FLOOR, z), FoxWildsBlocks.HOT_SPRING_STONE.get().defaultBlockState());
+                                    level.setBlockAndUpdate(new BlockPos(x, FLOOR + 1, z), Blocks.WATER.defaultBlockState());
+                                } else {
+                                    level.setBlockAndUpdate(new BlockPos(x, FLOOR + 1, z), Blocks.SMOOTH_STONE_SLAB.defaultBlockState());
+                                }
+                            }
+                        ServerPlayer p = ctx.player();
+                        p.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, 20 * 120, 4, false, false));
+                        c = summonAt(p, new Vec3(2.5, FLOOR + 1, -1.5));
+                        aim(p, IN_POOL.add(0, p.getEyeHeight(), 0), new Vec3(-.5, FLOOR + 1, 3.5));
+                    })
+                    .waitUntil("同步到客户端", ctx -> clientOutfit() != null)
+                    .check("平时穿巫女服", ctx -> clientOutfit() == dev.logos.dimension.companion.CompanionOutfit.MIKO)
+                    .waitUntilServer("她下水泡着，换上了浴衣", ctx -> c.soaking() && c.outfit() == dev.logos.dimension.companion.CompanionOutfit.UMEAKARI)
+                    .server("看她", ctx -> aim(ctx.player(), IN_POOL.add(0, ctx.player().getEyeHeight(), 0), c.position().add(0, .7, 0)))
+                    .step("对准", ctx -> aimClient(clientCompanions().get(0).position().add(0, .7, 0)))
+                    .ticks(20)
+                    .check("客户端也是浴衣", ctx -> clientOutfit() == dev.logos.dimension.companion.CompanionOutfit.UMEAKARI)
+                    .screenshot("companion_outfit_soak")
+                    .server("主人出浴，站到岸上", ctx -> aim(ctx.player(), DRY.add(0, ctx.player().getEyeHeight(), 0), new Vec3(-.5, FLOOR + 1, 1.5)))
+                    .waitUntilServer("她也出来了", ctx -> !c.soaking() && !c.isInWater())
+                    .ticks(40)
+                    .server("看她", ctx -> aim(ctx.player(), ctx.player().getEyePosition(), c.position().add(0, .8, 0)))
+                    .step("对准", ctx -> aimClient(clientCompanions().get(0).position().add(0, .8, 0)))
+                    .ticks(10)
+                    .checkServer("出浴后还穿着浴衣", ctx -> c.outfit() == dev.logos.dimension.companion.CompanionOutfit.UMEAKARI)
+                    .screenshot("companion_outfit_yukata")
+                    .server("一只尸壳冲她来", ctx -> spawn(ctx.server().overworld(), EntityType.HUSK, c.position().add(3, 0, 0), 90).setTarget(c))
+                    .waitUntilServer("一打起来换回巫女服", ctx -> c.outfit() == dev.logos.dimension.companion.CompanionOutfit.MIKO)
+                    .server("清掉尸壳", ctx -> ctx.server().overworld().getEntitiesOfClass(Mob.class, AREA, m -> m.getType() == EntityType.HUSK).forEach(Mob::discard))
+                    .ticks(40)
+                    .server("用命令换上浴衣（以主人的身份）", ctx -> ctx.server().getCommands().performPrefixedCommand(
+                            ctx.server().createCommandSourceStack().withEntity(ctx.player()).withLevel(ctx.player().level()), "alchemy companion outfit umeakari"))
+                    .checkServer("命令也能换上浴衣", ctx -> c.outfit() == dev.logos.dimension.companion.CompanionOutfit.UMEAKARI)
                     .teardown("恢复界面", ctx -> Minecraft.getInstance().options.hideGui = false);
         }
     }

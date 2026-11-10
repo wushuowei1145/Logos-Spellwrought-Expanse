@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "QQQ",
+    "GNG",
+    "PPP"
+  ],
+  "key": {
+    "Q": "minecraft:quartz_block",
+    "G": "minecraft:gold_ingot",
+    "N": "minecraft:note_block",
+    "P": "minecraft:dark_oak_planks"
+  },
+  "result": {
+    "id": "logos_dimension:hexen_organ_console",
+    "count": 1
+  }
+}

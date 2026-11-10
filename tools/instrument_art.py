@@ -34,6 +34,7 @@ T = {
     "blue": "minecraft:block/blue_concrete",
     "keys": "logos_dimension:block/instrument/piano_keys",
     "inlay": "logos_dimension:block/instrument/starbloom_inlay",
+    "black": "minecraft:block/black_concrete",
 }
 
 
@@ -417,11 +418,182 @@ def art():
     png(tex / "item/music_roll.png", roll_icon(True))
 
 
+# —— 管风琴（docs/PIPE_ORGAN.md）——
+# 演奏台按 FACING=north 画：键盘朝北（z 小），占 x 0–32、y 0–32、z 0–16；主块在 x 0–16、y 0–16，「侧边」是 +x。
+
+def organ_console_elements():
+    el = []
+    # 脚键盘：胡桃木框 + 琴键贴图
+    el.append(box((1, 0, 0), (31, 1.2, 5), "walnut"))
+    el.append(box((2, 1.2, 0.5), (30, 1.8, 4.5), "white", faces={"up": "keys", "down": None}, uv={"up": [0, 0, 16, 16]}))
+    # 下层琴身与金色腰线
+    el.append(box((0, 0, 5), (32, 12.5, 16), "walnut"))
+    # 正面两块方形星辰花镶嵌板（整张贴图缩成 8×8），左右各一，中间留胡桃木
+    for x in (5, 19):
+        el.append(box((x, 2.5, 4.8), (x + 8, 10.5, 4.85), "inlay", faces={"south": None, "up": None, "down": None, "east": None, "west": None},
+                      uv={"north": [0, 0, 16, 16]}))
+        el.append(box((x - 0.4, 2.1, 4.85), (x + 8.4, 10.9, 4.95), "gold", faces={"south": None, "up": None, "down": None, "east": None, "west": None}))
+    el.append(box((0, 12.5, 4.8), (32, 13, 16), "gold"))
+    # 两侧扶手
+    el.append(box((0, 13, 3.5), (2, 19, 16), "walnut"))
+    el.append(box((30, 13, 3.5), (32, 19, 16), "walnut"))
+    # 下层手键盘
+    el.append(box((2, 13, 3), (30, 14, 9), "walnut"))
+    el.append(box((2.5, 14, 3.2), (29.5, 14.8, 8), "white", faces={"up": "keys", "down": None}, uv={"up": [0, 0, 16, 16]}))
+    # 上层手键盘
+    el.append(box((2, 15, 6.5), (30, 16, 11), "walnut"))
+    el.append(box((2.5, 16, 6.7), (29.5, 16.8, 10.5), "white", faces={"up": "keys", "down": None}, uv={"up": [0, 0, 16, 16]}))
+    # 后面板：两侧各两列象牙色音栓拉钮
+    el.append(box((2, 16, 11), (30, 24, 13), "walnut"))
+    for x in (3.2, 5.4, 25.4, 27.6):
+        for y in (17.2, 19.4, 21.6):
+            el.append(box((x, y, 10.2), (x + 1.3, y + 1.3, 11), "lacquer", faces={"south": None}))
+    # 谱架
+    tilt = rotation("x", -15, (16, 17, 10.6))
+    el.append(box((10, 17, 10.2), (22, 22.5, 10.8), "walnut", rot=tilt))
+    # 顶上一小排装饰音管（中间最高）与金色檐口、星辰花镶嵌
+    el.append(box((0, 24, 11), (32, 25, 16), "walnut"))
+    el.append(box((0, 24.8, 10.8), (32, 25.2, 16), "gold"))
+    heights = [3, 4, 5, 6, 6.8, 6, 5, 4, 3]
+    for i, h in enumerate(heights):
+        x = 3.2 + i * 2.95
+        el.append(box((x, 25.2, 12.8), (x + 1.8, 25.2 + h, 14.6), "iron"))
+        el.append(box((x + 0.3, 25.6, 12.7), (x + 1.5, 26.2, 12.8), "black", faces={"south": None, "up": None, "down": None}))
+    el.append(box((0, 30.6, 12), (32, 32, 16), "walnut", faces={"north": "inlay"}))
+    el.append(box((0, 30.4, 11.8), (32, 30.7, 16), "gold"))
+    return el
+
+
+def organ_wind_chest_elements():
+    return [
+        box((0, 0, 0), (16, 15, 16), "inlay", faces={"up": "walnut", "down": "walnut"}),
+        # 顶面胡桃木，只在四边留一道细金边
+        box((0, 15, 0), (16, 16, 16), "gold", faces={"up": "walnut", "down": None}),
+    ]
+
+
+def organ_pipe_elements(kind, shape):
+    """kind: tin / wood；shape: single / bottom / middle / top。"""
+    el = []
+    has_foot = shape in ("single", "bottom")
+    has_top = shape in ("single", "top")
+    y0 = 3 if has_foot else 0
+    if kind == "tin":
+        # 八角形的管身（两块交叉）
+        el.append(box((5.5, y0, 4.5), (10.5, 16, 11.5), "iron"))
+        el.append(box((4.5, y0, 5.5), (11.5, 16, 10.5), "iron"))
+        if has_foot:
+            el.append(box((6.5, 0, 6.5), (9.5, 3, 9.5), "iron"))
+            el.append(box((6, 4, 4.4), (10, 5.5, 4.5), "black", faces={"south": None}))
+            el.append(box((6, 5.5, 4.3), (10, 6.2, 4.5), "gold", faces={"south": None}))
+            el.append(box((4.4, 2.8, 5.4), (11.6, 3.3, 10.6), "gold"))
+        if has_top:
+            el.append(box((4.4, 15.2, 5.4), (11.6, 16, 10.6), "gold"))
+            el.append(box((6, 16, 6), (10, 16.02, 10), "black", faces={"down": None}))
+    else:
+        el.append(box((4, y0, 4), (12, 16, 12), "walnut"))
+        if has_foot:
+            el.append(box((6, 0, 6), (10, 3, 10), "walnut"))
+            el.append(box((5, 3.5, 3.9), (11, 5, 4), "black", faces={"south": None}))
+            el.append(box((5, 5, 3.8), (11, 5.6, 4), "maple", faces={"south": None}))
+        if has_top:
+            el.append(box((3.8, 15, 3.8), (12.2, 16, 12.2), "maple"))
+            el.append(box((5, 16, 5), (11, 16.02, 11), "black", faces={"down": None}))
+    return el
+
+
+def organ_trumpet_elements():
+    el = [box((6, 0, 6), (10, 9, 10), "gold"), box((5.5, 0, 5.5), (10.5, 1, 10.5), "walnut")]
+    # 向北横伸、越来越粗的喇叭
+    for z0, z1, r in ((4, 10, 1.0), (2, 4, 1.6), (0.6, 2, 2.6)):
+        el.append(box((8 - r, 9 - r, z0), (8 + r, 9 + r, z1), "gold"))
+    el.append(box((4.5, 5.5, 0), (11.5, 12.5, 0.6), "gold"))
+    el.append(box((6, 7, -0.02), (10, 11, 0), "black", faces={"south": None, "up": None, "down": None, "east": None, "west": None}))
+    return el
+
+
+def organ():
+    blocks = ASSETS / "models/block"
+    items = ASSETS / "models/item"
+    con = organ_console_elements()
+    tex = {k: T[k] for k in used(con)} | {"particle": T["walnut"]}
+    write(blocks / "hexen_organ_console.json", {"ambientocclusion": False, "textures": tex, "elements": con})
+    write(blocks / "hexen_organ_console_part.json", {"textures": {"particle": T["walnut"]}})
+    write(items / "hexen_organ_console.json", {"ambientocclusion": False, "textures": tex,
+        "elements": shifted(con, -8, -8, 0), "display": display(0.42, ground=0.2, rot_y=210)})
+    chest = organ_wind_chest_elements()
+    write(blocks / "organ_wind_chest.json", {"textures": {k: T[k] for k in used(chest)} | {"particle": T["walnut"]}, "elements": chest})
+    for kind in ("tin", "wood"):
+        for shape in ("single", "bottom", "middle", "top"):
+            e = organ_pipe_elements(kind, shape)
+            particle = T["iron"] if kind == "tin" else T["walnut"]
+            write(blocks / f"organ_{kind}_pipe_{shape}.json", {"ambientocclusion": False,
+                "textures": {k: T[k] for k in used(e)} | {"particle": particle}, "elements": e})
+    trumpet = organ_trumpet_elements()
+    write(blocks / "organ_trumpet_pipe.json", {"ambientocclusion": False,
+        "textures": {k: T[k] for k in used(trumpet)} | {"particle": T["gold"]}, "elements": trumpet})
+    for name, model in (("organ_wind_chest", "organ_wind_chest"), ("organ_tin_pipe", "organ_tin_pipe_single"),
+                        ("organ_wood_pipe", "organ_wood_pipe_single"), ("organ_trumpet_pipe", "organ_trumpet_pipe")):
+        write(items / f"{name}.json", {"parent": f"logos_dimension:block/{model}"})
+    for name in ("hexen_organ_console", "organ_wind_chest", "organ_tin_pipe", "organ_wood_pipe", "organ_trumpet_pipe"):
+        write(ASSETS / f"items/{name}.json", {"model": {"type": "minecraft:model", "model": f"logos_dimension:item/{name}"}})
+
+    yrot = {"north": 0, "east": 90, "south": 180, "west": 270}
+    variants = {}
+    for facing, y in yrot.items():
+        for part in range(4):
+            model = "hexen_organ_console" if part == 0 else "hexen_organ_console_part"
+            v = {"model": f"logos_dimension:block/{model}"}
+            if y and part == 0:
+                v["y"] = y
+            variants[f"facing={facing},part={part}"] = v
+    write(ASSETS / "blockstates/hexen_organ_console.json", {"variants": variants})
+    write(ASSETS / "blockstates/organ_wind_chest.json", {"variants": {"": {"model": "logos_dimension:block/organ_wind_chest"}}})
+    for kind in ("tin", "wood"):
+        variants = {}
+        for facing, y in yrot.items():
+            for shape in ("single", "bottom", "middle", "top"):
+                v = {"model": f"logos_dimension:block/organ_{kind}_pipe_{shape}"}
+                if y:
+                    v["y"] = y
+                variants[f"facing={facing},shape={shape}"] = v
+        write(ASSETS / f"blockstates/organ_{kind}_pipe.json", {"variants": variants})
+    variants = {}
+    for facing, y in yrot.items():
+        v = {"model": "logos_dimension:block/organ_trumpet_pipe"}
+        if y:
+            v["y"] = y
+        variants[f"facing={facing}"] = v
+    write(ASSETS / "blockstates/organ_trumpet_pipe.json", {"variants": variants})
+
+    def self_drop(name):
+        return {"type": "minecraft:block", "pools": [{"rolls": 1, "conditions": [{"condition": "minecraft:survives_explosion"}],
+            "entries": [{"type": "minecraft:item", "name": f"logos_dimension:{name}"}]}]}
+    write(DATA / "loot_table/blocks/hexen_organ_console.json", {"type": "minecraft:block", "pools": [{"rolls": 1, "conditions": [
+        {"condition": "minecraft:survives_explosion"},
+        {"condition": "minecraft:block_state_property", "block": "logos_dimension:hexen_organ_console", "properties": {"part": "0"}}],
+        "entries": [{"type": "minecraft:item", "name": "logos_dimension:hexen_organ_console"}]}]})
+    for name in ("organ_wind_chest", "organ_tin_pipe", "organ_wood_pipe", "organ_trumpet_pipe"):
+        write(DATA / f"loot_table/blocks/{name}.json", self_drop(name))
+
+    def shaped(name, pattern, key, count):
+        write(DATA / f"recipe/{name}.json", {"type": "minecraft:crafting_shaped", "category": "misc", "pattern": pattern,
+            "key": key, "result": {"id": f"logos_dimension:{name}", "count": count}})
+    shaped("hexen_organ_console", ["QQQ", "GNG", "PPP"],
+           {"Q": "minecraft:quartz_block", "G": "minecraft:gold_ingot", "N": "minecraft:note_block", "P": "minecraft:dark_oak_planks"}, 1)
+    shaped("organ_wind_chest", ["PPP", "LGL", "PPP"],
+           {"P": "minecraft:dark_oak_planks", "L": "minecraft:leather", "G": "minecraft:gold_nugget"}, 2)
+    shaped("organ_tin_pipe", ["I", "I", "G"], {"I": "minecraft:iron_ingot", "G": "minecraft:gold_nugget"}, 3)
+    shaped("organ_wood_pipe", ["P", "P", "G"], {"P": "minecraft:dark_oak_planks", "G": "minecraft:gold_nugget"}, 3)
+    shaped("organ_trumpet_pipe", ["  G", "GG ", "G  "], {"G": "minecraft:gold_ingot"}, 2)
+
+
 def main():
     models()
     blockstates()
     loot_and_recipes()
     art()
+    organ()
     print("instrument art written")
 
 

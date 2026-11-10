@@ -38,6 +38,11 @@ public class InstrumentBlockEntity extends BlockEntity {
     private boolean stopWithSignal;
     private boolean powered;
     private @Nullable UUID performer;
+    /** 管风琴：开着的音栓（掩码）与混响档位。 */
+    private int stops = dev.logos.dimension.music.organ.OrganStop.ALWAYS;
+    private int reverbMode = dev.logos.dimension.music.organ.RoomAcoustics.AUTO;
+    private dev.logos.dimension.music.organ.@Nullable OrganStructure organ;
+    private long organAt = Long.MIN_VALUE;
 
     // 服务端播放状态
     private @Nullable UUID playing;
@@ -60,10 +65,60 @@ public class InstrumentBlockEntity extends BlockEntity {
     public int partMask() { return partMask; }
     public boolean stopWithSignal() { return stopWithSignal; }
     public @Nullable UUID performer() { return performer; }
+    public int stops() { return stops; }
+    public int reverbMode() { return reverbMode; }
+
+    /** 管风琴的音管结构（缓存 2 秒）；不是管风琴时为 null。 */
+    public dev.logos.dimension.music.organ.@Nullable OrganStructure organ() {
+        if (kind() != InstrumentKind.PIPE_ORGAN || level == null) return null;
+        long now = level.getGameTime();
+        if (organ == null || now - organAt > 40 || now < organAt) {
+            organ = dev.logos.dimension.music.organ.OrganStructure.scan(level, getBlockState(), worldPosition);
+            organAt = now;
+        }
+        return organ;
+    }
+
+    /** 立即重新识别音管（不等 2 秒缓存过期）。 */
+    public void rescanOrgan() {
+        organ = null;
+    }
+
+    /** 此刻真正响的音栓：开着的、且结构里有对应音管的；一个都没有时用长笛 8′。 */
+    public int effectiveStops() {
+        var o = organ();
+        int mask = o == null ? stops : stops & o.availableStops();
+        return mask == 0 ? dev.logos.dimension.music.organ.OrganStop.ALWAYS : mask;
+    }
+
+    /** 实时演奏转发给附近玩家的半径。 */
+    public int hearingRange() {
+        var o = organ();
+        return o == null ? kind().broadcastRange() : o.range();
+    }
+
+    public void setStops(int mask) {
+        mask &= dev.logos.dimension.music.organ.OrganStop.ALL;
+        var o = organ();
+        if (o != null) mask &= o.availableStops();
+        stops = mask == 0 ? dev.logos.dimension.music.organ.OrganStop.ALWAYS : mask;
+        changed();
+    }
+
+    public void setReverbMode(int mode) {
+        reverbMode = Math.max(0, Math.min(3, mode));
+        changed();
+    }
 
     /** 声音的中心：钢琴是 2×2 的中间，竖琴是两格高的中间。 */
     public Vec3 soundCenter() {
         return InstrumentBlock.center(getBlockState(), worldPosition);
+    }
+
+    /** 声音实际从哪里发出：管风琴是音管墙的中心，其他乐器同 {@link #soundCenter()}。 */
+    public Vec3 voiceCenter() {
+        var o = organ();
+        return o == null ? soundCenter() : o.center();
     }
 
     // —— 纸带槽 ——
@@ -230,6 +285,9 @@ public class InstrumentBlockEntity extends BlockEntity {
         stopWithSignal = input.read("stop_with_signal", Codec.BOOL).orElse(false);
         powered = input.read("powered", Codec.BOOL).orElse(false);
         performer = input.read("performer", UUIDUtil.CODEC).orElse(null);
+        stops = input.read("stops", Codec.INT).orElse(dev.logos.dimension.music.organ.OrganStop.ALWAYS);
+        reverbMode = input.read("reverb", Codec.INT).orElse(0);
+        organ = null;
     }
 
     @Override
@@ -239,6 +297,10 @@ public class InstrumentBlockEntity extends BlockEntity {
         output.store("part_mask", Codec.INT, partMask);
         output.store("stop_with_signal", Codec.BOOL, stopWithSignal);
         output.store("powered", Codec.BOOL, powered);
+        if (kind() == InstrumentKind.PIPE_ORGAN) {
+            output.store("stops", Codec.INT, stops);
+            output.store("reverb", Codec.INT, reverbMode);
+        }
     }
 
     @Override

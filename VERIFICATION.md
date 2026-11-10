@@ -26,6 +26,35 @@
 ./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:corruption_core_grows_with_network" -PdimensionTestRepeat=50
 ./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar
 ```
+## 教堂管风琴（第一版）
+
+2026-11-11：分支 `feat/pipe-organ`，基于 main `b70ec0f5`（#235），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。设计与实现说明见 [docs/PIPE_ORGAN.md](docs/PIPE_ORGAN.md)。演奏台（2×2）、风箱、锡音管、木音管、号角管；十个音栓（预设 + 自由开关，全开也只占一路声音）；音色在客户端合成，不放 ogg；混响按房间自动判断，另有关 / 小厅 / 教堂三档。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 全量 **338/339**，唯一失败的仍是 main 上就缺的 `item.logos_dimension.fuda_desk`。新增 `OrganSynthTest` 6/6：四种组合的 25 个循环段首尾都接得上、约 1 秒；C1–C7 每个音校正后误差小于 0.1 音分、变调在 ±1 半音内；长笛 8′ 中央 C 的最强频率就是 261.6 Hz；尾音 2 秒衰减约 60 dB、开头淡入；材质与音栓、预设；露天没有混响、小屋 < 大厅 < 教堂、羊毛房间短而暗、「自动」遇到 Sound Physics 让开、手动档照常 |
+| 世界测试 | 新增 `organ_*` **4/4**：演奏台四格（第三格在主块正上方）、拆右上一块整体消失、只掉一个演奏台；锡管叠三格成下 / 中 / 上，拆中间后两头变短管，木管叠在锡管上不连；四个相连的风箱、锡 7 木 2 号角 1 根，可闻 26 格，不相连的风箱和音管不算；没有音管时只接受长笛 8′，搭上锡管后全奏只留锡管的四个音栓、可闻 18 格。`instrument_*` 5/5、`creative_tabs_cover_items` 1/1 回归通过 |
+| 实际客户端 | 新增 `organ_views`、`organ_play_ui`，连同钢琴竖琴的四组共 **6/6、7/7 检查**：客户端识别到锡 69、木 26、号角 2；石砌玻璃顶大厅里自动混响约 1.4 秒，掀掉屋顶和墙后量出露天、没有混响；音栓页切全奏后客户端合成出这套组合；按住四个键 1.5 秒后声音引擎里仍有 4 路在响（循环段确实交给了 OpenAL 并在循环），松开后有尾音 |
+| 截图人工看过 | 大厅全景、演奏台近景（两层手键盘、音栓拉钮、脚键盘、镶嵌板）、侧面、物品栏、音栓页、演奏页。截图在仓库外 `builds/pipe-organ-2026-11-11` |
+| 未验证 | 音色与混响只能人工试听；多人同步没用两个客户端连同一服务器试过；专用服务器、光影包、Sound Physics Remastered 实装都没测 |
+
+```text
+./gradlew test --tests "dev.logos.dimension.music.organ.*" -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:organ_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=organ_views,organ_play_ui" -PldTestHeadless -PldTestWindow=1280x720
+```
+## 白梅装束：浴衣「梅灯夜渡」
+
+2026-11-11：分支 `feat/shiraume-outfits`，基于 main `b70ec0f5`（#235）。Logos jar 同「白梅同伴（第二版）」。模型是仓库外 `fox_model/nine_tailed_fox_companion` 的 `_9`（维护者画的浴衣 `skins/umeakari` 按规范整理，见那里 README「第 9 版」）；设计见 [白梅同伴](docs/SHIRAUME_COMPANION.md) 第 8.10 节。试玩包 `builds/shiraume-outfits-2026-11-11`。
+
+| 层级 | 结果 |
+| --- | --- |
+| 模型 | `tools/validate_companion.py` **18/18**（贴图 1 纹素/单位、方块名唯一、动画骨骼都在、导出一致等）。原稿三处不合规范：两套衣服同名骨骼、贴图约 8–16 纹素/单位、49 个方块重名；整理后 1027 块、273 根骨骼、55 段动画，贴图 128×141 |
+| 单元 | 新增 `CompanionOutfitTest` **3/3**（两套装束的组挂在同一组衣服骨骼下、隐藏别的装束不碰共用骨骼、梅灯梅花簪在浴衣组里且有摆动）；`CompanionPactTest` 12/12、`CompanionTest` 6/6、`NpcAnimationsTest` 5/5（立契的刻数和新动画文件的标记仍然一致） |
+| 实际客户端 | `shiraume_companion` **15/15 场景、44/44 检查**；新增 `companion_outfit`（平时巫女服；泡温泉换上浴衣，客户端也是；出浴后还穿着；尸壳冲她来就换回巫女服；命令能换）。打两只神狐这一轮 2/3 |
+| 问题与修正 | 立契过场机位二又被挡：测试里主人手是空的，献上的流火直接塞到手上，发光的刀横在镜头前。献上的东西改放背包里手上以外的空格，重跑 `companion_pact`、`companion_pact_again`、`companion_outfit` 3/3（17/17 检查），机位二只拍到她和形代 |
+| 截图人工看过 | 浴衣站姿（藏青底白梅点、青绿腰带红腰绳、梅灯、木屐红鼻绪、梅花簪）、泡温泉换装的花瓣、巫女服预览与第 8 版一致；离线预览含原稿对照 |
+| 没做 | 花纹按 1 纹素/单位重画的样子待维护者确认；夏夜祭典没有；多人、光影包没测 |
 
 ## 魔女之森乐器（第一版）
 

@@ -75,6 +75,8 @@ public final class MusicPayloads {
     /** 演奏界面上的操作。 */
     public record Control(BlockPos pos, int action, int arg) implements CustomPacketPayload {
         public static final int CLAIM = 0, RELEASE = 1, PLAY = 2, PAUSE = 3, STOP = 4, EJECT = 5, PART_MASK = 6, SIGNAL_MODE = 7;
+        /** 管风琴：arg 是音栓掩码、混响档位。 */
+        public static final int STOPS = 8, REVERB = 9;
         public static final Type<Control> TYPE = new Type<>(LogosDimension.id("instrument_control"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Control> CODEC = StreamCodec.of(
             (b, p) -> { b.writeBlockPos(p.pos); b.writeVarInt(p.action); b.writeVarInt(p.arg); },

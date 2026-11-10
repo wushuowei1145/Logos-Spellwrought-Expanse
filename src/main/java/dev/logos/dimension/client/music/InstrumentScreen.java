@@ -6,6 +6,8 @@ import dev.logos.dimension.music.Instruments;
 import dev.logos.dimension.music.MusicPayloads;
 import dev.logos.dimension.music.MusicRoll;
 import dev.logos.dimension.music.RollInfo;
+import dev.logos.dimension.music.organ.OrganStop;
+import dev.logos.dimension.music.organ.RoomAcoustics;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -36,7 +38,8 @@ public class InstrumentScreen extends Screen {
     private static final int KEY_LEFT = 263, KEY_RIGHT = 262, KEY_UP = 265, KEY_DOWN = 264, KEY_SPACE = 32;
 
     private final BlockPos pos;
-    private boolean rollPage;
+    private static final int PLAY = 0, ROLL = 1, STOPS = 2;
+    private int page = PLAY;
     private boolean diatonic;
     private int base;
     private int velocity = 96;
@@ -84,24 +87,101 @@ public class InstrumentScreen extends Screen {
         y0 = (height - H) / 2;
         recordButton = null;
         int right = x0 + W - PAD;
-        addRenderableWidget(Button.builder(tr("tab_play"), b -> page(false)).bounds(right - 104, y0 + 20, 50, 16).build()).active = rollPage;
-        addRenderableWidget(Button.builder(tr("tab_roll"), b -> page(true)).bounds(right - 50, y0 + 20, 50, 16).build()).active = !rollPage;
-        if (rollPage) initRollPage();
-        else initPlayPage();
+        boolean organ = kind() == InstrumentKind.PIPE_ORGAN;
+        int tx = right - (organ ? 156 : 104);
+        addRenderableWidget(Button.builder(tr("tab_play"), b -> page(PLAY)).bounds(tx, y0 + 20, 50, 16).build()).active = page != PLAY;
+        if (organ) {
+            addRenderableWidget(Button.builder(tr("tab_stops"), b -> page(STOPS)).bounds(tx + 52, y0 + 20, 50, 16).build()).active = page != STOPS;
+        }
+        addRenderableWidget(Button.builder(tr("tab_roll"), b -> page(ROLL)).bounds(right - 50, y0 + 20, 50, 16).build()).active = page != ROLL;
+        switch (page) {
+            case ROLL -> initRollPage();
+            case STOPS -> initStopsPage();
+            default -> initPlayPage();
+        }
     }
 
     /** 场景测试用：切到纸带页。 */
     void showRollPage() {
-        page(true);
+        page(ROLL);
     }
 
-    private void page(boolean roll) {
-        if (roll == rollPage) return;
+    /** 场景测试用：切到音栓页。 */
+    void showStopsPage() {
+        page(STOPS);
+    }
+
+    private void page(int to) {
+        if (to == page) return;
         releaseAll();
-        if (roll) MusicClient.control(pos, MusicPayloads.Control.RELEASE, 0);
-        else MusicClient.control(pos, MusicPayloads.Control.CLAIM, 0);
-        rollPage = roll;
+        if (page == PLAY) MusicClient.control(pos, MusicPayloads.Control.RELEASE, 0);
+        if (to == PLAY) MusicClient.control(pos, MusicPayloads.Control.CLAIM, 0);
+        page = to;
         rebuildWidgets();
+    }
+
+    private String nameKey() {
+        return "block.logos_dimension." + switch (kind()) {
+            case GRAND_PIANO -> "starbloom_grand_piano";
+            case CONCERT_HARP -> "hexen_concert_harp";
+            case PIPE_ORGAN -> "hexen_organ_console";
+        };
+    }
+
+    // —— 音栓页（管风琴）——
+
+    private void initStopsPage() {
+        InstrumentBlockEntity be = entity();
+        if (be == null) return;
+        var organ = be.organ();
+        int available = organ == null ? OrganStop.ALWAYS : organ.availableStops();
+        int stops = be.stops();
+        int x = x0 + PAD, y = y0 + 58;
+        OrganStop[] all = OrganStop.values();
+        for (int i = 0; i < all.length; i++) {
+            OrganStop s = all[i];
+            boolean on = s.in(stops);
+            Component label = Component.literal((on ? "● " : "○ ")).append(tr("stop." + s.id()));
+            Button b = Button.builder(label, btn -> {
+                InstrumentBlockEntity e = entity();
+                if (e != null) MusicClient.control(pos, MusicPayloads.Control.STOPS, e.stops() ^ s.bit());
+            }).bounds(x + (i % 4) * 86, y + (i / 4) * 15, 84, 14).build();
+            b.active = s.in(available);
+            addRenderableWidget(b);
+        }
+        int py = y0 + 118;
+        OrganStop.Preset[] presets = OrganStop.Preset.values();
+        for (int i = 0; i < presets.length; i++) {
+            OrganStop.Preset p = presets[i];
+            Button b = Button.builder(tr("preset." + p.id()), btn -> MusicClient.control(pos, MusicPayloads.Control.STOPS, p.mask()))
+                .bounds(x + (i % 3) * 115, py + (i / 3) * 15, 112, 14).build();
+            // 预设里有音管不够的音栓时也能按：服务端只保留能用的那些
+            b.active = (p.mask() & available) != 0;
+            addRenderableWidget(b);
+        }
+        int mode = be.reverbMode();
+        addRenderableWidget(Button.builder(tr("reverb", tr("reverb." + mode)), b -> {
+            InstrumentBlockEntity e = entity();
+            if (e != null) MusicClient.control(pos, MusicPayloads.Control.REVERB, (e.reverbMode() + 1) % 4);
+        }).bounds(x, y0 + H - PAD - 16, 170, 16).build());
+        MusicClient.prewarmOrgan(pos);
+    }
+
+    private void drawStopsPage(GuiGraphicsExtractor g) {
+        InstrumentBlockEntity be = entity();
+        if (be == null) return;
+        var organ = be.organ();
+        int x = x0 + PAD;
+        if (organ != null) {
+            g.text(font, tr("pipes", organ.tin(), organ.wood(), organ.reed(), organ.chests(), organ.range()), x, y0 + 44, Parchment.INK, false);
+        }
+        g.text(font, tr("presets"), x, y0 + 107, Parchment.INK_HINT, false);
+        RoomAcoustics.Reverb auto = OrganRoom.estimate(pos, be);
+        Component room;
+        if (OrganRoom.soundPhysics() && be.reverbMode() == RoomAcoustics.AUTO) room = tr("room_sound_physics");
+        else if (!auto.on()) room = tr("room_open");
+        else room = tr("room_inside", String.format("%.1f", auto.seconds()));
+        g.text(font, room, x + 176, y0 + H - PAD - 12, Parchment.INK_HINT, false);
     }
 
     private void initPlayPage() {
@@ -164,12 +244,15 @@ public class InstrumentScreen extends Screen {
             onClose();
             return;
         }
-        if (rollPage) {
-            String slot = be.roll().getComponents().toString() + be.partMask() + be.stopWithSignal();
-            if (!slot.equals(lastSlot)) {
-                lastSlot = slot;
-                rebuildWidgets();
-            }
+        String slot = "";
+        if (page == ROLL) slot = be.roll().getComponents().toString() + be.partMask() + be.stopWithSignal();
+        if (page == STOPS) {
+            var o = be.organ();
+            slot = be.stops() + "/" + be.reverbMode() + "/" + (o == null ? "" : o.availableStops());
+        }
+        if (page != PLAY && !slot.equals(lastSlot)) {
+            lastSlot = slot;
+            rebuildWidgets();
         }
         if (recordButton != null) {
             recordButton.setMessage(recordLabel());
@@ -180,7 +263,8 @@ public class InstrumentScreen extends Screen {
     @Override
     public void added() {
         super.added();
-        MusicClient.control(pos, MusicPayloads.Control.CLAIM, 0);
+        if (page == PLAY) MusicClient.control(pos, MusicPayloads.Control.CLAIM, 0);
+        MusicClient.prewarmOrgan(pos);
     }
 
     @Override
@@ -244,7 +328,7 @@ public class InstrumentScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        if (rollPage || event.isEscape()) return super.keyPressed(event);
+        if (page != PLAY || event.isEscape()) return super.keyPressed(event);
         int key = event.key();
         switch (key) {
             case KEY_LEFT -> shiftOctave(-1);
@@ -274,7 +358,7 @@ public class InstrumentScreen extends Screen {
 
     @Override
     public boolean keyReleased(KeyEvent event) {
-        if (rollPage) return super.keyReleased(event);
+        if (page != PLAY) return super.keyReleased(event);
         if (event.key() == KEY_SPACE) {
             if (pedal) {
                 pedal = false;
@@ -311,8 +395,7 @@ public class InstrumentScreen extends Screen {
             return;
         }
         String title = tr("record_title", LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM-dd HH:mm"))).getString();
-        MusicRoll roll = r.finish(Component.translatable("block.logos_dimension." +
-            (kind() == InstrumentKind.GRAND_PIANO ? "starbloom_grand_piano" : "hexen_concert_harp")).getString()).withMeta(title, "");
+        MusicRoll roll = r.finish(Component.translatable(nameKey()).getString()).withMeta(title, "");
         try {
             MusicClient.upload(pos, MusicPayloads.Upload.WRITE, roll.encode());
         } catch (MusicRoll.FormatException e) {
@@ -369,7 +452,7 @@ public class InstrumentScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        if (!rollPage && event.button() == 0 && !busy()) {
+        if (page == PLAY && event.button() == 0 && !busy()) {
             List<KeyRect> keys = keyboard();
             for (int i = keys.size() - 1; i >= 0; i--) {
                 KeyRect k = keys.get(i);
@@ -397,11 +480,13 @@ public class InstrumentScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         Parchment.draw(g, x0, y0, W, H);
-        Component name = Component.translatable("block.logos_dimension." +
-            (kind() == InstrumentKind.GRAND_PIANO ? "starbloom_grand_piano" : "hexen_concert_harp"));
+        Component name = Component.translatable(nameKey());
         g.text(font, name, x0 + PAD, y0 + 24, Parchment.INK_TITLE, false);
-        if (rollPage) drawRollPage(g);
-        else drawPlayPage(g);
+        switch (page) {
+            case ROLL -> drawRollPage(g);
+            case STOPS -> drawStopsPage(g);
+            default -> drawPlayPage(g);
+        }
         if (notice != null && System.currentTimeMillis() < noticeUntil) {
             g.text(font, Component.literal(notice), x0 + PAD, y0 + H - PAD - 30, 0xFF8A2A1A, false);
         }
@@ -415,7 +500,12 @@ public class InstrumentScreen extends Screen {
             var other = Minecraft.getInstance().level.getPlayerByUUID(be.performer());
             status = tr("busy", other == null ? "?" : other.getName().getString());
         } else {
-            status = tr("status", KeyLayout.noteName(base), velocity, pedal ? "●" : "○");
+            if (kind() == InstrumentKind.PIPE_ORGAN) {
+                // 管风琴不分力度、没有延音踏板：显示开着几个音栓
+                status = tr("status_organ", KeyLayout.noteName(base), be == null ? 0 : Integer.bitCount(be.effectiveStops()));
+            } else {
+                status = tr("status", KeyLayout.noteName(base), velocity, pedal ? "●" : "○");
+            }
         }
         g.text(font, status, x0 + PAD, y0 + 44, Parchment.INK, false);
         var r = MusicClient.recorder;
@@ -440,7 +530,8 @@ public class InstrumentScreen extends Screen {
             for (int i = 0; i < 7; i++) sb.append(i + 1).append(':').append(names[i]).append(sharp[i] ? "♯ " : "♮ ");
             g.text(font, Component.literal(sb.toString()), x0 + PAD, y0 + 158 - 2, Parchment.INK_HINT, false);
         }
-        g.text(font, diatonic ? tr("hint_diatonic") : tr("hint"), x0 + PAD, y0 + H - PAD - 10, Parchment.INK_HINT, false);
+        Component hint = kind() == InstrumentKind.PIPE_ORGAN ? tr("hint_organ") : diatonic ? tr("hint_diatonic") : tr("hint");
+        g.text(font, hint, x0 + PAD, y0 + H - PAD - 10, Parchment.INK_HINT, false);
     }
 
     private void drawRollPage(GuiGraphicsExtractor g) {
