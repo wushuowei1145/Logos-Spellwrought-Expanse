@@ -17,7 +17,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.clock.WorldClocks;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Rotation;
 import net.neoforged.bus.api.IEventBus;
@@ -36,7 +35,8 @@ public final class EconomyGameTests {
                 "economy_bank_loan_stays_in_the_bank", EconomyGameTests::bankLoan,
                 "economy_bank_liquidates_and_stops", EconomyGameTests::bankLiquidation,
                 "economy_bank_orders_fill_and_refund", EconomyGameTests::bankOrders,
-                "economy_bank_manage_position", EconomyGameTests::bankManage);
+                "economy_bank_manage_position", EconomyGameTests::bankManage,
+                "economy_clock_set_back", EconomyGameTests::clockSetBack);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test)); FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
             var env = event.registerEnvironment(LogosDimension.id("economy"), new TestEnvironmentDefinition.AllOf());
@@ -68,7 +68,7 @@ public final class EconomyGameTests {
 
     private static void setClock(GameTestHelper h, long ticks) {
         var server = h.getLevel().getServer();
-        var clock = h.getLevel().registryAccess().lookupOrThrow(Registries.WORLD_CLOCK).getOrThrow(WorldClocks.OVERWORLD);
+        var clock = h.getLevel().registryAccess().lookupOrThrow(Registries.WORLD_CLOCK).getOrThrow(dev.logos.dimension.cloudsea.JourneySeasons.CLOCK);
         server.clockManager().setTotalTicks(clock, ticks);
     }
 
@@ -173,7 +173,7 @@ public final class EconomyGameTests {
             setClock(h, 40 * FxMarket.DAY + 3_000);
             var server = h.getLevel().getServer();
             var market = FxMarketData.market(server);
-            market.advance(Economy.clock(server));
+            Economy.market(server);
             // 测试顺序每次运行都不同，钱庄上次结到哪一天也不定；先结掉跨过的夜，否则下面两笔仓位白拿几十夜利息，余额对不上
             Bank.update(server, market, Economy.clock(server));
             var account = Bank.of(server).account(p.getUUID());
@@ -201,7 +201,7 @@ public final class EconomyGameTests {
             setClock(h, 50 * FxMarket.DAY + 3_000);
             var server = h.getLevel().getServer();
             var market = FxMarketData.market(server);
-            market.advance(Economy.clock(server));
+            Economy.market(server);
             var wallet = giveWallet(p);
             Purse.receive(p, Currency.IMPERIAL, 300_000);
             Purse.receive(p, Currency.FOX, 8_000);
@@ -243,7 +243,7 @@ public final class EconomyGameTests {
             setClock(h, 60 * FxMarket.DAY + 3_000);
             var server = h.getLevel().getServer();
             var market = FxMarketData.market(server);
-            market.advance(Economy.clock(server));
+            Economy.market(server);
             // 别的测试把时钟拨来拨去；先让钱庄结掉跨过的夜，免得下面这笔仓位白拿几夜利息
             Bank.update(server, market, Economy.clock(server));
             var account = Bank.of(server).account(p.getUUID());
@@ -280,6 +280,38 @@ public final class EconomyGameTests {
             h.assertTrue(!Bank.open(p, Currency.FOX, -1, 500_000_000L, 25, 0, 0) && account.positions().isEmpty(), "超出市场深度的单子要拒绝");
             h.assertTrue(!Bank.placeOpen(p, Currency.FOX, -1, 500_000_000L, 25, fox, 0, 0, 0) && account.orders().isEmpty(), "挂单也拒绝");
             h.assertTrue(Math.abs(market.rate(Currency.FOX) / fox - 1) < 1e-9, "被拒的单子不推动价格");
+            h.succeed();
+        } finally { p.discard(); }
+    }
+
+    /** 玩家报告：/time set 后柜台上的时间对不上。市场跟远行大陆的时钟走，往回拨时记下的时间一起挪。 */
+    private static void clockSetBack(GameTestHelper h) {
+        var p = player(h);
+        try {
+            var server = h.getLevel().getServer();
+            setClock(h, 70 * FxMarket.DAY + 3_000);
+            var market = Economy.market(server);
+            Bank.update(server, market, Economy.clock(server));
+            h.assertTrue(Economy.clock(server) == 70 * FxMarket.DAY + 3_000, "市场读的是远行大陆的时钟");
+            var account = Bank.of(server).account(p.getUUID());
+            Purse.receive(p, Currency.IMPERIAL, 100_000);
+            Bank.deposit(p, Currency.IMPERIAL, 0);
+            h.assertTrue(Bank.placeOpen(p, Currency.WOLF, 1, 10_000, 2, market.rate(Currency.WOLF) * .5, 0, 0, 0), "挂一张远低于现价的单");
+            long placed = account.orders().getFirst().placed();
+            market.force("council", Economy.clock(server), 6 * FxMarket.HOUR);
+            // 拨回 60 天
+            setClock(h, 10 * FxMarket.DAY + 3_000);
+            Economy.market(server);
+            long clock = Economy.clock(server);
+            h.assertTrue(market.news().stream().allMatch(n -> n.time() <= clock), "消息时刻跟着往回挪，不留在未来");
+            h.assertTrue(placed - account.orders().getFirst().placed() == 60 * FxMarket.DAY, "挂单时刻跟着挪");
+            // 原本六小时后揭晓的议会，拨回后照样在六小时后揭晓，而不是要等六十天
+            setClock(h, 10 * FxMarket.DAY + 3_000 + 7 * FxMarket.HOUR);
+            Economy.market(server);
+            // 拨回时旧消息都挪到了 clock 之前，所以晚于 clock 的议会结果只能是这次揭晓的（消息列表有上限，不能数条数）
+            h.assertTrue(market.news().stream().anyMatch(n -> n.key().startsWith("fx.news.council.") && !n.key().contains("rumor") && n.time() > clock),
+                    "拨回后待揭晓的事件照常揭晓");
+            Bank.cancel(p, account.orders().getFirst().id());
             h.succeed();
         } finally { p.discard(); }
     }

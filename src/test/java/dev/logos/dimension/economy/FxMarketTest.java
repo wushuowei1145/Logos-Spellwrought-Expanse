@@ -60,6 +60,25 @@ class FxMarketTest {
         }
     }
 
+    @Test void settingTheClockBackShiftsEverything() {
+        var m = new FxMarket(31);
+        m.advance(0);
+        m.advance(30 * FxMarket.DAY + 4_000);
+        m.force("war", m.last(), 5 * FxMarket.HOUR);
+        var lastCandle = m.candles(Currency.WOLF).getLast().slot();
+        // /time set 1000：拨回第 0 天早上
+        long shift = m.advance(1_000);
+        assertEquals(1_000 - (30 * FxMarket.DAY + 4_000), shift);
+        assertEquals(1_000, m.last());
+        for (var n : m.news()) assertTrue(n.time() <= 1_000, "消息不能留在未来：" + n);
+        assertTrue(m.candles(Currency.WOLF).getLast().slot() * FxMarket.HOUR <= 1_000, "K 线跟着往回挪");
+        assertEquals(lastCandle + Math.floorDiv(shift, FxMarket.HOUR), m.candles(Currency.WOLF).getLast().slot());
+        // 原本五小时后揭晓的战事，拨回后照样五小时后揭晓
+        m.advance(1_000 + 6 * FxMarket.HOUR);
+        assertTrue(m.news().stream().anyMatch(n -> n.key().startsWith("fx.news.war.") && !n.key().contains("rumor")), "拨回后事件照常揭晓");
+        assertEquals(0, m.advance(1_000 + 7 * FxMarket.HOUR), "往前走不挪");
+    }
+
     @Test void saveAndLoadKeepEverything() {
         var m = new FxMarket(99);
         m.advance(12 * FxMarket.DAY + 5_000);

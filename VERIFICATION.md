@@ -1,5 +1,23 @@
 # 首版验证记录
 
+## 修复：钱庄和兑换台的时间不跟 /time set
+
+2026-11-10：分支 `fix/fx-clock`，基于 main `a55b287e`。原因：26.1 起每个维度有自己的时钟，远行大陆用 `logos_dimension:cloudsea`，在那里执行 `/time set` 只改它；市场和钱庄却读主世界时钟。改为读远行大陆的时钟，柜台在别的维度时面板注明「远行大陆」。另外原来时钟往回拨时只重新对齐，待揭晓事件、消息、K 线、挂单和通知的时刻还留在未来，传闻要等很多天才会揭晓；现在往回拨时把这些时间一起挪。顺带把兑换台「持有」一行下移，不再被市价按钮压住。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 经济全部通过（`FxMarketTest` 新增：拨回第 0 天后消息和 K 线都不在未来、K 线按小时挪、原本五小时后揭晓的战事照常揭晓、往前走不挪） |
+| 世界测试 | 经济全部 **9/9**，连跑 4 次都通过（新增 `economy_clock_set_back`：市场读远行大陆时钟、拨回 60 天后消息不在未来、挂单时刻同步挪 60 天、原本六小时后揭晓的议会照常揭晓） |
+| 实际客户端 | `bank_views` 6/6、`economy_views` **5/5**（新增：`/time of logos_dimension:cloudsea set 1000` 后打开兑换台，面板显示「远行大陆 第 0 天 07:00」，消息和 K 线都不在未来） |
+
+main 现在要用较新的 Logos 构建编译（2026-11-10 的 `lasting-companion` 构建可以；11-05 的 `logos-spell-ward` 缺霊符需要的接口）。
+
+```text
+./gradlew test --tests "dev.logos.dimension.economy.*" -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:economy_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=bank_views,economy_views" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 惊鸿：新剑与剑阵（追击、横剑格挡与弹剑、掷剑、万剑归宗、剑身刻度）
 
 2026-11-10：分支 `feat/new-sword`，基于 main `34c49450`（#228），Logos jar `builds/reifu-2026-11-09/logos-0.6.0-page-variants.jar`。设计见 [docs/JINGHONG.md](docs/JINGHONG.md)。共用代码只加了两个钩子（`CombatWeapon.Holder.hit`、`blocked`），所以加跑了 `longsword_*`。

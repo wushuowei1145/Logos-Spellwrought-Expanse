@@ -20,7 +20,7 @@ public class EconomyView implements UIScenario {
     private static final BlockPos COUNTER = new BlockPos(0, 100, 2);
     @Override public void configure(ScenarioOptions o) { o.tags("economy").defaultTimeoutMs(60000).scenarioTimeoutMs(180000); }
     @Override public void define(ScenarioBuilder s) {
-        s.setGameMode(GameType.SURVIVAL).runCommand("time set 0").runCommand("weather clear")
+        s.setGameMode(GameType.SURVIVAL).runCommand("time set 0").runCommand("time of logos_dimension:cloudsea set 0").runCommand("weather clear")
                 .step("设置视口", ctx -> {
                     var mc = Minecraft.getInstance(); mc.options.hideGui = false;
                     var w = mc.getWindow(); w.setWindowed(1280,720); w.setWidth(1280); w.setHeight(720);
@@ -49,13 +49,13 @@ public class EconomyView implements UIScenario {
                     FxMarketData.reset(ctx.server(), Economy.clock(ctx.server()));
                 })
                 // 走过五个游戏日，攒下 K 线和几条传闻
-                .runCommand("time add 24000").ticks(3).runCommand("time add 24000").ticks(3)
+                .runCommand("time of logos_dimension:cloudsea add 24000").ticks(3).runCommand("time of logos_dimension:cloudsea add 24000").ticks(3)
                 .server("放出几条传闻", ctx -> {
                     var market = FxMarketData.market(ctx.server());
                     long clock = Economy.clock(ctx.server());
                     market.force("war", clock, 30_000); market.force("council", clock, 8_000); market.force("calamity", clock, 20_000);
                 })
-                .runCommand("time add 24000").ticks(3).runCommand("time add 24000").ticks(3).runCommand("time add 27000").ticks(110)
+                .runCommand("time of logos_dimension:cloudsea add 24000").ticks(3).runCommand("time of logos_dimension:cloudsea add 24000").ticks(3).runCommand("time of logos_dimension:cloudsea add 27000").ticks(110)
                 .server("打开兑换台", ctx -> Economy.openExchange(ctx.player(), COUNTER))
                 .waitUntil("兑换台面板", ctx -> Minecraft.getInstance().screen instanceof ExchangeScreen).ticks(5)
                 .check("收到 K 线", ctx -> EconomyClient.latest != null && EconomyClient.latest.candles(Currency.FOX).size() > 30)
@@ -71,6 +71,19 @@ public class EconomyView implements UIScenario {
                 .step("存入散币", ctx -> EconomyClient.send(EconomyActionPayload.DEPOSIT, 0, 0, 0, 0)).ticks(10)
                 .checkServer("散币已入囊", ctx -> Purse.loose(ctx.player(), Currency.FOX) == 0 && Purse.loose(ctx.player(), Currency.WOLF) == 0)
                 .screenshot("wallet_deposited")
-                .step("关闭钱囊", ctx -> Minecraft.getInstance().setScreen(null));
+                .step("关闭钱囊", ctx -> Minecraft.getInstance().setScreen(null))
+                // 玩家报告：/time set 之后柜台上的时间和游戏里对不上。把远行大陆的时钟拨回第 0 天早上七点
+                .runCommand("time of logos_dimension:cloudsea set 1000").ticks(110)
+                .server("再开兑换台", ctx -> Economy.openExchange(ctx.player(), COUNTER))
+                .waitUntil("兑换台面板", ctx -> Minecraft.getInstance().screen instanceof ExchangeScreen).ticks(5)
+                .check("柜台时间跟着拨回，消息和 K 线都不在未来", ctx -> {
+                    var d = EconomyClient.latest;
+                    long clock = d.clock();
+                    boolean news = d.news().stream().allMatch(n -> n.time() <= clock);
+                    boolean candles = d.candles(Currency.FOX).isEmpty() || d.candles(Currency.FOX).getLast().slot() * FxMarket.HOUR <= clock;
+                    return clock >= 1000 && clock < FxMarket.DAY && news && candles;
+                })
+                .screenshot("exchange_after_time_set")
+                .step("关闭兑换台", ctx -> Minecraft.getInstance().setScreen(null));
     }
 }

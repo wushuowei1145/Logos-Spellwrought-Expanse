@@ -17,7 +17,7 @@ import net.minecraft.nbt.StringTag;
  * 基本面由剧情、探索和事件结果永久改变；玩家冲击（pressure）来自大额兑换，约一天后散去。
  * 交叉汇率全由同一组对帝国币的汇率推出，每次兑换都收点差，所以不存在三角套利。
  *
- * <p>时间用主世界时钟：每 100 刻走一步，6:00–18:00 兑换商开门，按游戏小时记 K 线；
+ * <p>时间用远行大陆的时钟（`/time set` 在远行大陆里执行才会改到它）：每 100 刻走一步，6:00–18:00 兑换商开门，按游戏小时记 K 线；
  * 夜里汇率照走、事件照常揭晓，所以早上开盘会跳空。随机数自带状态并存档，读档不会重掷。
  */
 public final class FxMarket {
@@ -153,11 +153,33 @@ public final class FxMarket {
 
     // ---------------------------------------------------------------- 时间推进
 
-    /** 追到主世界时钟 now。时钟倒退（/time set）只重新对齐，不倒推；一次最多补 60 天。 */
-    public void advance(long now) {
-        if (last == Long.MIN_VALUE || now < last) { last = now - Math.floorMod(now, STEP); return; }
+    /**
+     * 追到时钟 now（远行大陆的时钟），一次最多补 60 天。时钟往回拨时不倒推行情，而是把记下的时间整体往回挪；
+     * 返回挪了多少刻（负数），没挪为 0，调用方据此把钱庄里的时间也挪一下。
+     */
+    public long advance(long now) {
+        long aligned = now - Math.floorMod(now, STEP);
+        if (last == Long.MIN_VALUE) { last = aligned; return 0; }
+        // 时钟往回拨（/time set 一个更小的数）：把记下的时间一起往回挪，传闻照常在原来相隔的时间后揭晓，K 线和消息的时刻也对得上
+        if (now < last) { long shift = aligned - last; rebase(shift); return shift; }
         if (now - last > 60 * DAY) last = now - 60 * DAY - Math.floorMod(now, STEP);
         while (last + STEP <= now) step(last + STEP);
+        return 0;
+    }
+
+    /** 所有记下的时间（最后一步、待揭晓事件、消息、K 线）一起挪 shift 刻。 */
+    void rebase(long shift) {
+        last += shift;
+        for (var e : pending) { e.announced += shift; e.resolveAt += shift; }
+        var moved = new ArrayList<News>(news.size());
+        for (var n : news) moved.add(new News(n.time() + shift, n.key(), n.args(), n.tier()));
+        news.clear(); news.addAll(moved);
+        long slots = Math.floorDiv(shift, HOUR);
+        for (var l : lines.values()) {
+            var shifted = new ArrayList<Candle>(l.candles.size());
+            for (var k : l.candles) shifted.add(new Candle(k.slot() + slots, k.open(), k.high(), k.low(), k.close()));
+            l.candles.clear(); l.candles.addAll(shifted);
+        }
     }
 
     private void step(long t) {

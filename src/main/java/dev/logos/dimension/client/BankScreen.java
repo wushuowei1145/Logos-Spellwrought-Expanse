@@ -252,7 +252,7 @@ public final class BankScreen extends Screen {
         boolean open = FxMarket.open(clock);
         g.fill(x0, y0, x0 + W, y0 + H, PANEL);
         g.outline(x0, y0, W, H, EDGE);
-        var head = Component.empty().append(title).append("  ").append(EconomyClient.when(clock, false)).append(" · ")
+        var head = Component.empty().append(title).append("  ").append(EconomyClient.clockLine(clock)).append(" · ")
                 .append(Component.translatable(open ? "screen.logos_dimension.fx.open" : "screen.logos_dimension.fx.closed"));
         AccountViews.clipped(g, font, head, x0 + 8, y0 + 7, W - 156, GOLD, mouseX, mouseY);
         for (int i = 0; i < pageButtons.size(); i++) pageButtons.get(i).active = i != page;

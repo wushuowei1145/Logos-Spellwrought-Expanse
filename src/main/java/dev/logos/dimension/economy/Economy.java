@@ -10,6 +10,7 @@ import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
+import dev.logos.dimension.cloudsea.JourneySeasons;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -101,12 +102,21 @@ public final class Economy {
     private static final java.util.Set<UUID> TICKER = new java.util.HashSet<>();
     private static final double REACH = 8;
 
-    public static long clock(MinecraftServer server) { return server.overworld().getOverworldClockTime(); }
+    /**
+     * 市场、钱庄和兑换商用远行大陆的时钟：经济在那里，玩家看到的天色也是它。
+     * 26.1 起每个维度可以有自己的时钟，在远行大陆里执行 /time set 只改它；以前读主世界时钟，柜台上的时间就对不上。
+     */
+    public static long clock(MinecraftServer server) {
+        var clock = server.registryAccess().lookupOrThrow(Registries.WORLD_CLOCK).get(JourneySeasons.CLOCK);
+        return clock.isPresent() ? server.clockManager().getTotalTicks(clock.get()) : server.overworld().getOverworldClockTime();
+    }
 
-    private static FxMarket market(MinecraftServer server) {
+    /** 让市场追到当前时刻；时钟往回拨过就把钱庄里记的时间一起挪。 */
+    public static FxMarket market(MinecraftServer server) {
         var market = FxMarketData.market(server);
         long before = market.last();
-        market.advance(clock(server));
+        long shift = market.advance(clock(server));
+        if (shift != 0) Bank.rebase(server, shift);
         if (market.last() != before) FxMarketData.touch(server);
         return market;
     }
