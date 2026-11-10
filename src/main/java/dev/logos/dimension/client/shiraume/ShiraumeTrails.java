@@ -35,6 +35,7 @@ public final class ShiraumeTrails {
             Map.entry("ryuka_kesa", new float[]{.64f, .77f}),
             Map.entry("ryuka_gyaku", new float[]{.52f, .65f}),
             Map.entry("ryuka_yoko", new float[]{.72f, .87f}),
+            Map.entry("ryuka_turn_sweep", new float[]{.26f, .39f}),
             Map.entry("ryuka_tsuki", new float[]{.56f, .66f}),
             Map.entry("ryuka_ichimonji_cut", new float[]{.27f, .37f}),
             Map.entry("ryuka_ichimonji_cut_combo", new float[]{.27f, .37f}),
