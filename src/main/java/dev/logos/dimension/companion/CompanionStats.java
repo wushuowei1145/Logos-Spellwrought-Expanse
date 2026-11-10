@@ -23,7 +23,7 @@ import net.minecraft.world.entity.player.Player;
  * <li>只继承长期的属性：基础值和装备带来的。药水、信标这类状态效果给的加成剔掉（按状态效果自己登记的修饰 id）。
  * <li>攻击按打法折算：近战攻击和 Logos 法术强度折算成的攻击，取高的那个，用法术的主人不吃亏。
  * <li>在场时每隔几秒重算一次，换了装备不用重新召唤。
- * <li>继承比例随尾之契的阶数升高，最多 {@link #MAX_RATIO}。第一版阶数恒为 0。
+ * <li>继承比例随契印（白梅的叫尾之契）升高，最多 {@link #MAX_RATIO}。
  * </ul>
  */
 public final class CompanionStats {
@@ -46,13 +46,13 @@ public final class CompanionStats {
 
     private CompanionStats() {}
 
-    /** 第 {@code tails} 阶的继承比例。 */
-    public static double ratio(int tails) {
-        return Math.min(MAX_RATIO, RATIO + .05 * Math.max(0, tails));
+    /** 盖了 {@code seals} 枚契印时的继承比例。 */
+    public static double ratio(int seals) {
+        return Math.min(MAX_RATIO, RATIO + .05 * Math.max(0, seals));
     }
 
-    public static Stats of(Owner owner, int tails) {
-        double r = ratio(tails);
+    public static Stats of(Owner owner, int seals) {
+        double r = ratio(seals);
         return new Stats(r, BASE_HEALTH + r * owner.health(), BASE_ARMOR + r * owner.armor(), r * owner.toughness(),
                 BASE_FOXFIRE + r * owner.attack());
     }
@@ -90,8 +90,8 @@ public final class CompanionStats {
     }
 
     /** 把继承来的那部分挂到她身上（生命上限、护甲、护甲韧性），狐火的伤害记在她身上。生命上限变了时按比例保留当前生命。 */
-    static Stats apply(ShiraumeCompanion c, Player owner, int tails) {
-        Stats s = of(read(owner), tails);
+    static Stats apply(ShiraumeCompanion c, Player owner, int seals) {
+        Stats s = of(read(owner), seals);
         float before = c.getMaxHealth(), fraction = before > 0 ? c.getHealth() / before : 1;
         set(c, Attributes.MAX_HEALTH, s.health() - BASE_HEALTH);
         set(c, Attributes.ARMOR, s.armor() - BASE_ARMOR);

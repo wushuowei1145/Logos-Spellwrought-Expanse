@@ -10,22 +10,25 @@ import org.jspecify.annotations.Nullable;
 /**
  * 白梅的表情和小动作（docs/SHIRAUME_COMPANION.md 第 7.3 节）：每半秒按处境挑一种情绪（{@code face_*}，循环），
  * 遇到事情时插一个小动作（{@code act_*}，播一次）。都走 {@code misc} 控制器，优先级：
- * 入场 / 小动作 → 蜷着睡 → 情绪。小动作有长短，播完自动交回情绪。
+ * 入场 / 小动作 → 蜷着睡 → 姿势（泡温泉、跪坐歇着）→ 情绪。小动作有长短，播完自动交回情绪。
  *
  * <p>情绪和小动作的意思见模型 README「第 5 版」，这里只决定什么时候用哪一个。
  */
 final class CompanionMood {
     /** 每段 misc 动画的长度（刻），与动画文件一致。 */
-    static final Map<String, Integer> LENGTH = Map.of("summon", 56, "act_petted", 60, "act_proud", 60, "act_sleeve_laugh", 52,
-            "act_stretch", 72, "act_startle", 32, "act_wave", 48, "act_head_tilt", 36, "act_sneeze", 36);
+    static final Map<String, Integer> LENGTH = Map.ofEntries(Map.entry("summon", 56), Map.entry("act_petted", 60), Map.entry("act_proud", 60),
+            Map.entry("act_sleeve_laugh", 52), Map.entry("act_stretch", 72), Map.entry("act_startle", 32), Map.entry("act_wave", 48),
+            Map.entry("act_head_tilt", 36), Map.entry("act_sneeze", 36), Map.entry("eat", 48), Map.entry("pick", 24), Map.entry("refuse", 20),
+            Map.entry("pact", 192));
     /** 两个小动作之间至少隔这么久，免得一直在演。 */
     static final int ACT_GAP = 200;
 
     private final ShiraumeCompanion c;
-    private @Nullable String act, face;
+    private @Nullable String act, face, pose;
     private long actUntil, faceUntil, nextAct;
     private boolean curled;
-    private long pettedAt = -10_000, poutAt = -10_000, surprisedAt = -10_000, curiousUntil = -10_000;
+    private long pettedAt = -10_000, poutAt = -10_000, surprisedAt = -10_000, curiousUntil = -10_000, delightUntil = -10_000, afraidUntil = -10_000;
+    private long nextHungry;
     private int pets;
     private long strongKillSeen, fallSeen, stretchDay = -1, nextTilt, nextSneeze;
     private long farSince = -1;
@@ -59,6 +62,11 @@ final class CompanionMood {
         return act != null && now() < actUntil;
     }
 
+    /** 入场动画还在播。 */
+    boolean summoning() {
+        return "summon".equals(act) && now() < actUntil;
+    }
+
     @Nullable String face() {
         return face;
     }
@@ -72,6 +80,25 @@ final class CompanionMood {
 
     boolean curled() {
         return curled;
+    }
+
+    /** 整身姿势（{@code soak} 泡温泉、{@code pact_wait} 跪坐歇着）；null 收起。小动作播完回到它。 */
+    void pose(@Nullable String name) {
+        pose = name;
+    }
+
+    @Nullable String pose() {
+        return pose;
+    }
+
+    /** 吃到最喜欢的：开心一阵。 */
+    void delighted(long now) {
+        delightUntil = now + 200;
+    }
+
+    /** 附近有狗（狼）：慌一阵，耳朵压低（日本传说里狐狸怕狗）。 */
+    void afraid(long now) {
+        afraidUntil = now + 40;
     }
 
     void petted(long now) {
@@ -93,7 +120,7 @@ final class CompanionMood {
                 chooseFace(owner, now);
             }
         }
-        String misc = act != null ? act : curled ? "sleep" : face == null ? "" : face;
+        String misc = act != null ? act : curled ? "sleep" : pose != null ? pose : face == null ? "" : face;
         c.setMisc(misc);
     }
 
@@ -133,6 +160,14 @@ final class CompanionMood {
             return;
         }
         if (engaged) return;
+        // 饿了：隔一阵提一句
+        var bond = owner.getData(Companions.BOND);
+        if (bond.satiety() < CompanionBond.HUNGRY && now >= nextHungry && dist < 10) {
+            nextHungry = now + 3600;
+            CompanionLines.say(owner, "hungry", 50);
+            act("act_head_tilt");
+            return;
+        }
         long clock = c.level().getOverworldClockTime(), day = clock / 24000, time = clock % 24000;
         if (time < 1500 && day != stretchDay && dist < 10) {
             stretchDay = day;
@@ -173,7 +208,9 @@ final class CompanionMood {
         boolean engaged = c.mind() != null && c.mind().engaged();
         String want;
         if (engaged) want = "face_angry";
+        else if (now < afraidUntil) want = "face_flustered";
         else if (now - surprisedAt < 30) want = "face_surprised";
+        else if (now < delightUntil) want = "face_happy";
         else if (owner.getHealth() < owner.getMaxHealth() * .35f) want = "face_sad";
         else if (now - pettedAt < 200) want = pets >= 3 ? "face_shy" : "face_happy";
         else if (now - poutAt < 300) want = "face_pout";

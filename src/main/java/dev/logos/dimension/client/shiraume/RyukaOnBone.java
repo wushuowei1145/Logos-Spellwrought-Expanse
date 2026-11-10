@@ -27,7 +27,7 @@ import org.jspecify.annotations.Nullable;
  * 已经带着骨骼的静止旋转与动作。
  * 战斗网格的方块已经按参考骨架放好（Weapon 枢轴 + 网格 × 视角缩放），这里先退回网格坐标，再按白梅的倍数放大。
  */
-final class RyukaOnBone {
+public final class RyukaOnBone {
     /** 网格单位 → 模型像素：与 tools/shiraume_moves.py 的 WEAPON_SCALE 相同。 */
     static final float SCALE = 2.4f;
     private static final int EDGE = ShiraumeEntities.CHERRY | Dissolving.PETALS;
@@ -36,7 +36,7 @@ final class RyukaOnBone {
     private RyukaOnBone() {}
 
     /** 本帧刀身上的淡粉狐火（物品渲染状态，取物品模型时就换好）；在渲染数据阶段取。 */
-    static ItemStackRenderState fire(LivingEntity holder) {
+    public static ItemStackRenderState fire(LivingEntity holder) {
         ItemStackRenderState item = new ItemStackRenderState();
         Minecraft.getInstance().getItemModelResolver().updateForLiving(item, STACK, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, holder);
         RyukaClient.pinkFire(item);
@@ -49,11 +49,17 @@ final class RyukaOnBone {
      */
     static void submit(PoseStack pose, SubmitNodeCollector out, int light, Vector3f offset, float progress,
                        @Nullable ItemStackRenderState fire, Object key) {
+        submit(pose, out, light, offset, progress, fire, key, SCALE);
+    }
+
+    /** 同上，按 {@code scale}（网格单位 → 模型像素）放大：少女白梅个子小，刀也按她的臂长缩小（模型 tools/companion_ryuka.py）。 */
+    public static void submit(PoseStack pose, SubmitNodeCollector out, int light, Vector3f offset, float progress,
+                              @Nullable ItemStackRenderState fire, Object key, float scale) {
         LongswordRig rig = LongswordRig.get(RyukaItem.WEAPON.id(), false);
         if (rig == null) return;
         float wsp = rig.weaponScale();
         Vector3f ref = rig.weaponPivot();
-        Matrix4f toMesh = new Matrix4f().scale(SCALE / 16)
+        Matrix4f toMesh = new Matrix4f().scale(scale / 16)
                 .translate(offset).scale(1 / wsp).translate(-ref.x, -ref.y, -ref.z);
         Matrix4f weapon = new Matrix4f(toMesh).translate(ref).scale(wsp);
         var sample = new LongswordRig.Sample(Map.of("Weapon", toMesh), new Vector3f(), weapon, 0, new Vector3f(), new Vector3f());

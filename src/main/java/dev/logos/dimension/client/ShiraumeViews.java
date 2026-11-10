@@ -8,7 +8,6 @@ import com.lowdragmc.lowdraglib2.uitest.UIScenario;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.client.shiraume.ShiraumeClient;
 import dev.logos.dimension.client.shiraume.ShiraumeScreen;
-import dev.logos.dimension.item.RyukaItem;
 import dev.logos.dimension.shiraume.FoxfireBolt;
 import dev.logos.dimension.shiraume.Shiraume;
 import dev.logos.dimension.shiraume.ShiraumeBeast;
@@ -25,7 +24,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.gamerules.GameRules;
@@ -179,7 +177,7 @@ public class ShiraumeViews implements UIScenario {
                 .ticks(10)
                 .screenshot("shiraume_foxfire")
                 .server("log moves 2", ctx -> System.out.println("[shiraume] all moves " + MOVES))
-                // 击倒：趴下、化作花瓣、红光退去、流火落在场地中央
+                // 击倒：趴下、化作花瓣、红光退去；花瓣在杀生石前聚回少女，跪坐着等你（白梅同伴第二版，立契时才献上流火）
                 .server("击倒", ctx -> {
                     ShiraumeBeast b = beast(level(ctx));
                     b.hurtServer(level(ctx), level(ctx).damageSources().genericKill(), 1e6f);
@@ -187,7 +185,8 @@ public class ShiraumeViews implements UIScenario {
                 .waitUntilServer("场地记为击败", ctx -> ShiraumeFight.state(level(ctx), arenaKey(level(ctx))) == ShiraumeFight.State.DEFEATED)
                 .ticks(70)
                 .screenshot("shiraume_petals")
-                .waitUntilServer("流火落下", ctx -> level(ctx).getEntitiesOfClass(ItemEntity.class, AREA, i -> i.getItem().is(RyukaItem.ITEM.get())).size() >= 1)
+                .waitUntilServer("她跪坐着等你", ctx -> level(ctx).getEntitiesOfClass(dev.logos.dimension.companion.ShiraumeCompanion.class, AREA,
+                        c -> c.waiting() && ctx.player().getUUID().equals(c.ownerId())).size() == 1)
                 .ticks(20)
                 .screenshot("shiraume_reward")
                 .check("全屏通道跑过", ctx -> ShiraumeScreen.passes() > 0)

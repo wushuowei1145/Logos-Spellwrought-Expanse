@@ -42,20 +42,27 @@ public final class FoxfireRenderer extends EntityRenderer<FoxfireBolt, FoxfireRe
 
     @Override
     public void submit(State state, PoseStack pose, SubmitNodeCollector out, CameraRenderState camera) {
-        VfxParts.View view = VfxParts.View.of(camera);
+        flame(pose, out, VfxParts.View.of(camera), new Vec3(0, .3, 0), new Vec3(state.x, state.y + .3, state.z), state.age, 1, state.age * .2f, 1, 1);
+        super.submit(state, pose, out, camera);
+    }
+
+    /**
+     * 一团淡粉狐火（飞弹和白梅身边的狐火灯共用）：{@code at} 是相对 {@code pose} 的位置，{@code world} 是同一点的世界坐标（泛光用）；
+     * {@code size} 1 是飞弹的大小，{@code spin} 是外焰转到的角度，{@code alpha} 整体的淡入淡出，{@code core} 白芯的浓淡（飞弹 1）。
+     */
+    public static void flame(PoseStack pose, SubmitNodeCollector out, VfxParts.View view, Vec3 at, Vec3 world, float age, float size, float spin,
+                             float alpha, float core) {
         SubmitNodeCollector glow = ShaderPackOverlay.collector(out);
-        Vec3 at = new Vec3(0, .3, 0);
-        float pulse = 1 + .15f * (float) Math.sin(state.age * .9f);
-        glow.submitCustomGeometry(pose, FLAME, (p, buf) -> VfxParts.sprite(p, buf, view, at, .75f * pulse, state.age * .2f, VfxParts.argb(.85f, FoxfireFlame.SHIRAUME.core)));
+        float pulse = 1 + .15f * (float) Math.sin(age * .9f);
+        glow.submitCustomGeometry(pose, FLAME, (p, buf) -> VfxParts.sprite(p, buf, view, at, .75f * size * pulse, spin,
+                VfxParts.argb(.85f * alpha, FoxfireFlame.SHIRAUME.core)));
         glow.submitCustomGeometry(pose, GLOW, (p, buf) -> {
-            VfxParts.sprite(p, buf, view, at, .5f * pulse, 0, VfxParts.argb(.9f, 0xF7B9DC));
-            VfxParts.sprite(p, buf, view, at, .24f, 0, VfxParts.argb(1, 0xFFFFFF));
+            VfxParts.sprite(p, buf, view, at, .5f * size * pulse, 0, VfxParts.argb(.9f * alpha, 0xF7B9DC));
+            VfxParts.sprite(p, buf, view, at, .24f * size, 0, VfxParts.argb(alpha * core, 0xFFFFFF));
         });
         if (!Dissolves.shadowPass()) {
-            Vec3 world = new Vec3(state.x, state.y + .3, state.z);
-            BLOOM.begin(view).disc(world, .7f * pulse, VfxParts.argb(.75f, FoxfireFlame.SHIRAUME.core));
+            BLOOM.begin(view).disc(world, .7f * size * pulse, VfxParts.argb(.75f * alpha, FoxfireFlame.SHIRAUME.core));
             BLOOM.flush();
         }
-        super.submit(state, pose, out, camera);
     }
 }

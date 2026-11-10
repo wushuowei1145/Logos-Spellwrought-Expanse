@@ -20,7 +20,7 @@ public final class ShiraumeDeflect {
 
     private ShiraumeDeflect() {}
 
-    static void claim(Projectile projectile, Entity by) {
+    public static void claim(Projectile projectile, Entity by) {
         PENDING.add(new Claim(projectile, by));
     }
 

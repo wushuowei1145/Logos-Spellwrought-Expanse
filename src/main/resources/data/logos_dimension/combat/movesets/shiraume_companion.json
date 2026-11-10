@@ -1,0 +1,25 @@
+{
+  "_comment": "白梅（少女形态）同伴的流火（docs/SHIRAUME_COMPANION.md 第 8.4 节）。动作是 Boss 人形的编排重新烘焙到她骨架上的 ryuka_*（模型第 8 版，tools/companion_ryuka.py），时刻照 Boss 的 shiraume.json。damage 是乘在她刀伤（狐火弹 × 1.5）上的倍数；攻击招式按她的攻速 2.2 倍播，砍完最后一下两刻后就能接下一刀（CompanionBlade.RECOVER），突刺冲多远、出刀带多远的步在 CompanionBlade.approach。",
+  "start": "draw",
+  "sheathe": "sheathe",
+  "moves": {
+    "draw": {"clip": "idle", "length": 0.4, "next": "idle", "blend_in": 0.15},
+    "idle": {"length": 2.4, "playback": "loop", "blend_in": 0.15},
+    "kesa": {"length": 1.5, "contact": 0.7, "next": "idle", "blend_in": 0.1, "attack_speed_base": 1, "damage": 1.2, "cone": 110},
+    "gyaku": {"length": 1.4, "contact": 0.58, "next": "idle", "blend_in": 0.1, "attack_speed_base": 1, "damage": 1.2, "cone": 110},
+    "yoko": {"length": 1.6, "contact": 0.79, "next": "idle", "blend_in": 0.1, "attack_speed_base": 1, "damage": 1.3, "cone": 180},
+    "tsuki": {"length": 1.5, "contact": [0.64, 0.72], "next": "idle", "blend_in": 0.1, "attack_speed_base": 1, "damage": 0.8, "cone": 40},
+    "kiriage": {"length": 0.9, "contact": 0.29, "next": "idle", "blend_in": 0.08, "attack_speed_base": 1, "damage": 1.1, "cone": 110},
+    "sanren_1": {"length": 0.6, "contact": 0.37, "next": "sanren_2", "blend_in": 0.08, "attack_speed_base": 1, "damage": 0.9, "cone": 110},
+    "sanren_2": {"length": 0.5, "contact": 0.17, "next": "sanren_3", "attack_speed_base": 1, "damage": 0.9, "cone": 110},
+    "sanren_3": {"length": 0.7, "contact": 0.33, "next": "idle", "attack_speed_base": 1, "damage": 1.1, "cone": 180},
+    "tsubame_1": {"length": 0.9, "contact": 0.47, "next": "tsubame_2", "blend_in": 0.08, "attack_speed_base": 1, "damage": 1.0, "cone": 110},
+    "tsubame_2": {"length": 0.9, "contact": 0.39, "next": "idle", "attack_speed_base": 1, "damage": 1.0, "cone": 110},
+    "deflect": {"length": 0.4, "next": "idle", "blend_in": 0.03},
+    "backstep": {"length": 0.7, "next": "idle", "blend_in": 0.05},
+    "parried_npc": {"clip": "parried_high", "length": 0.8, "next": "idle", "blend_in": 0.03, "reset_combo": true},
+    "throw_kiriage": {"length": 0.9, "contact": 0.08, "next": "throw_hold", "blend_in": 0.05},
+    "throw_hold": {"length": 1.2, "playback": "loop"},
+    "sheathe": {"clip": "idle", "length": 0.35, "next": "$clear", "blend_in": 0.1}
+  }
+}
