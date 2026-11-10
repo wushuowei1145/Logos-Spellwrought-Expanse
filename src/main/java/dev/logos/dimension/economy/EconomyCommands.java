@@ -55,7 +55,7 @@ public final class EconomyCommands {
                     if (cur == null) return 0;
                     var server = c.getSource().getServer();
                     var market = FxMarketData.market(server);
-                    market.advance(Economy.clock(server));
+                    Economy.market(server);
                     market.shock(cur, Math.log1p(IntegerArgumentType.getInteger(c, "percent") / 100.0));
                     FxMarketData.touch(server);
                     Bank.update(server, market, Economy.clock(server));
@@ -96,7 +96,7 @@ public final class EconomyCommands {
     private static int status(CommandSourceStack source) {
         var server = source.getServer();
         var market = FxMarketData.market(server);
-        market.advance(Economy.clock(server));
+        Economy.market(server);
         long clock = Economy.clock(server);
         source.sendSuccess(() -> Component.literal("外汇市场 · 第 " + Math.floorDiv(clock, FxMarket.DAY) + " 天 · "
                 + (FxMarket.open(clock) ? "开市" : "休市") + " · 待揭晓 " + market.pending.size() + " 件"), false);
@@ -126,7 +126,7 @@ public final class EconomyCommands {
         var server = source.getServer();
         var market = FxMarketData.market(server);
         long clock = Economy.clock(server);
-        market.advance(clock);
+        Economy.market(server);
         if (!market.force(kind, clock, hours * FxMarket.HOUR)) { source.sendFailure(Component.literal("未知事件：" + kind)); return 0; }
         FxMarketData.touch(server);
         source.sendSuccess(() -> Component.literal("已放出传闻，" + hours + " 小时后揭晓"), true);
