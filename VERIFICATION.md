@@ -1,5 +1,22 @@
 # 首版验证记录
 
+## 电子琴（MIDI 键盘）输入
+
+2026-11-11：分支 `feat/midi-keyboard`，基于 main `9001a6a0`（#238），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md) 第 12 节。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 全量 **346/347**，唯一失败的仍是 main 上就缺的 `item.logos_dimension.fuda_desk`。新增 `MidiInputTest` 5/5：按下与力度 0、松开、任意通道；踏板阈值、CC120/123、忽略音量旋钮、Program Change；忽略时钟、主动感知、SysEx、触后、弯音和数据字节；通道过滤、移调越界丢弃；三种力度曲线的大小顺序与边界 |
+| 世界测试 | 没有服务端改动；`instrument_*` 5/5、`organ_*` 4/4、`creative_tabs_cover_items` 1/1 回归 |
+| 实际客户端 | 新增 `midi_keyboard_ui`，连同乐器的六组 **7/7、13/13 检查**：消息直接塞进接收器；没打开乐器时被丢掉；踏板 + 三个音让琴键亮起、声音引擎里 ≥3 路在响；力度 0 的按下、松开都能松开；录下的纸带力度 100/80/60、两次踏板；「轻」曲线下 40 → 63；设置页显示「没有找到 MIDI 输入设备」和收到的消息 |
+| 截图人工看过 | 演奏页（C4、E4、G4 亮着、延音●、录制中、MIDI 键盘按钮）、设置页 |
+| 未验证 | **没有真的电子琴**：开发机只有 Windows 自带的输出合成器（Gervill、MIDI Mapper、GS Wavetable）；真实设备的连接、拔插、macOS/Linux 都没试 |
+
+```text
+./gradlew test --tests "dev.logos.dimension.music.MidiInputTest" -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=midi_keyboard_ui" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 教堂管风琴（第一版）
 
 2026-11-11：分支 `feat/pipe-organ`，基于 main `b70ec0f5`（#235），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。设计与实现说明见 [docs/PIPE_ORGAN.md](docs/PIPE_ORGAN.md)。演奏台（2×2）、风箱、锡音管、木音管、号角管；十个音栓（预设 + 自由开关，全开也只占一路声音）；音色在客户端合成，不放 ogg；混响按房间自动判断，另有关 / 小厅 / 教堂三档。

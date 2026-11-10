@@ -29,5 +29,22 @@ public final class ClientConfig {
                     "Default: two piano-style rows, Z S X D C V G B H N J M (lower octave) then Q 2 W 3 E R 5 T 6 Y 7 U I 9 O 0 P.")
             .define("instrumentKeys", "ZSXDCVGBHNJMQ2W3ER5T6Y7UI9O0P");
 
+    public static final ModConfigSpec.ConfigValue<String> MIDI_DEVICE = BUILDER
+            .comment("Name of the MIDI keyboard to connect to when an instrument screen opens. Empty: none.",
+                    "Pick it in game: instrument screen, Play page, MIDI keyboard.")
+            .define("midiDevice", "");
+
+    public static final ModConfigSpec.IntValue MIDI_CHANNEL = BUILDER
+            .comment("MIDI channel to listen to: 0 = all channels, 1-16 = only that one (useful for split keyboards).")
+            .defineInRange("midiChannel", 0, 0, 16);
+
+    public static final ModConfigSpec.IntValue MIDI_TRANSPOSE = BUILDER
+            .comment("Semitones added to every note from the MIDI keyboard.")
+            .defineInRange("midiTranspose", 0, -36, 36);
+
+    public static final ModConfigSpec.IntValue MIDI_VELOCITY_CURVE = BUILDER
+            .comment("How the MIDI keyboard's key velocity maps to loudness: 0 = light (soft touches still sound), 1 = normal, 2 = heavy.")
+            .defineInRange("midiVelocityCurve", 1, 0, 2);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 }
