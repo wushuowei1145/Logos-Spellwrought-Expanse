@@ -66,9 +66,9 @@ public final class FoxfireRules {
     }
 
     /** 狐火打进去了（{@code attacker} 是记在谁名下）。 */
-    static void landed(@Nullable Entity attacker, LivingEntity target, FoxfireFlame flame) {
+    static void landed(@Nullable Entity attacker, LivingEntity target, FoxfireFlame flame, boolean burn) {
         if (!(target.level() instanceof ServerLevel level) || kin(target) || !target.isAlive()) return;
-        burn(target, flame, attacker, corruptedKin(target) ? CORRUPTED_BURN_TICKS : BURN_TICKS);
+        if (burn) burn(target, flame, attacker, corruptedKin(target) ? CORRUPTED_BURN_TICKS : BURN_TICKS);
         if (target instanceof ServerPlayer player) FoxfireCue.send(player, FoxfireCue.bewitch(flame));
         else if (target instanceof Mob mob) bewitch(level, mob, flame);
     }

@@ -55,9 +55,42 @@
       "length": 1.6, "playback": "loop", "reset_combo": true, "blend_in": 0.05,
       "on": [
         {"input": "block", "to": "parry", "window": [0, 0.5]},
+        {"input": "attack", "to": "stance"},
         {"input": "use_release", "to": "idle"}
       ]
     },
+    "stance": {
+      "length": 2.0, "playback": "loop", "blend_in": 0.12,
+      "on": [
+        {"input": "block", "to": "stance_block"},
+        {"input": "attack_release", "to": "guard", "window": [0, 0.29]},
+        {"input": "attack_release", "to": "dash", "window": [0.3]},
+        {"input": "use_release", "to": "idle"}
+      ]
+    },
+    "stance_block": {
+      "length": 0.32, "blend_in": 0.02, "next": "stance_hold",
+      "on": [
+        {"input": "attack_release", "to": "dash", "window": [0], "queue": true, "at": 0.12},
+        {"input": "use_release", "to": "idle"}
+      ]
+    },
+    "stance_hold": {
+      "clip": "stance", "length": 2.0, "playback": "loop", "blend_in": 0.06,
+      "on": [
+        {"input": "block", "to": "stance_block"},
+        {"input": "attack_release", "to": "dash"},
+        {"input": "use_release", "to": "idle"}
+      ]
+    },
+    "dash": {"length": 0.3, "blend_in": 0.03, "reset_combo": true, "next": "rise"},
+    "rise": {
+      "length": 0.5, "contact": 0.07, "damage": 1.5, "cone": 120, "knockback": false, "effect": "ryuka_rise",
+      "blend_in": 0.02, "next": "idle",
+      "on": [{"input": "use_press", "to": "guard", "window": [0.35]}]
+    },
+    "execution": {"length": 0.6, "playback": "loop", "blend_in": 0.05, "reset_combo": true},
+    "execution_end": {"length": 0.7, "blend_in": 0.02, "next": "idle"},
     "parry": {
       "length": 0.36, "blend_in": 0.03, "next": "guard", "effect": "parry",
       "on": [{"input": "attack", "to": "riposte", "window": [0], "queue": true, "at": 0.1}]

@@ -27,7 +27,8 @@ public final class RyukaClient {
     public static final float FADE_TICKS = 16;
     /** 狐火的色相：原本的橙红往回转到淡粉。 */
     public static final float PINK_HUE = .85f;
-    private static final SurfaceAura PINK_FIRE = new SurfaceAura(SurfaceAura.Style.FIRE, PINK_HUE);
+    /** 刀身的狐火：淡粉，再压一点饱和度（{@link PaleFire}；2026-11-10 维护者嫌原来的粉太浓）。 */
+    private static final SurfaceAura PINK_FIRE = new SurfaceAura(SurfaceAura.Style.FIRE, PaleFire.hue(PINK_HUE));
     /** 刀身自发光的强弱。 */
     private static final float GLOW = .55f;
     public static final String MANIFEST = "manifest", DISSIPATE = "dissipate";

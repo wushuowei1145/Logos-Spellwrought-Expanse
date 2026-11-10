@@ -48,6 +48,9 @@ public final class LongswordGameTests {
                 Map.entry("longsword_guard",LongswordGameTests::guard),
                 Map.entry("longsword_mana_guard",LongswordGameTests::manaGuard),
                 Map.entry("longsword_ryuka_guard",LongswordGameTests::ryukaGuard),
+                Map.entry("longsword_ryuka_marks",LongswordGameTests::ryukaMarks),
+                Map.entry("longsword_ryuka_dash",LongswordGameTests::ryukaDash),
+                Map.entry("longsword_ryuka_execution",LongswordGameTests::ryukaExecution),
                 Map.entry("longsword_cast",LongswordGameTests::cast),
                 Map.entry("longsword_cast_beam",LongswordGameTests::castBeam),
                 Map.entry("longsword_parried",LongswordGameTests::parried),
@@ -293,6 +296,128 @@ public final class LongswordGameTests {
      * 流火的魔力护盾：拿斧头的木桩一刚架刀就砍来 → 弹刀，不扣魔力也不破防；过了弹刀窗口再砍 → 照样挡下，扣 6 伤害的 7 点
      * 加破盾 5 秒 × 4 = 20 点，不破防；魔法伤害照样挡（4 → 5）；虚空穿透；魔力只够挡不够顶住斧头时 → 挡下这一击，但破防 5 秒。
      */
+    /** 不让魔力自己回：要按扣了多少魔力断言。 */
+    private static void noRegeneration(ServerPlayer p) {
+        p.getAttribute(dev.logos.runtime.SpellModifiers.MANA_REGENERATION).addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                LogosDimension.id("test_no_regeneration"),-1,net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+    }
+    /** 一只血很厚、不动的尸壳（处决要砍好多刀；铁傀儡原版不受摔落伤害，所以不用它）。 */
+    private static LivingEntity dummy(GameTestHelper h, Vec3 at) {
+        var golem=EntityType.HUSK.create(h.getLevel(),EntitySpawnReason.COMMAND);
+        golem.setNoAi(true);golem.setNoGravity(true);golem.setPos(at);
+        golem.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1000);golem.setHealth(1000);
+        h.getLevel().addFreshEntity(golem);
+        return golem;
+    }
+    /**
+     * 流火的狐火印：平时的刀照狐火的规矩缠身 3 秒，每砍中一下留一枚印，这时还不能处决；第五下爆开，多打 30 点狐火、印清零、
+     * 狐火缠身 8 秒，接下来 8 秒里可以处决。
+     */
+    private static void ryukaMarks(GameTestHelper h) {
+        var f=Fixture.create(h,new ItemStack(dev.logos.dimension.item.RyukaItem.ITEM.get()));mana(f.p);
+        var t=f.target;
+        f.at(30,()->{
+            for(int i=1;i<=4;i++){
+                t.invulnerableTime=0;
+                h.assertTrue(dev.logos.dimension.ryuka.Ryuka.strike(f.p,t,9),"第 "+i+" 刀没打进去");
+                h.assertTrue(dev.logos.dimension.ryuka.FoxMarks.count(t)==i,"第 "+i+" 刀后应有 "+i+" 枚印，实际 "+dev.logos.dimension.ryuka.FoxMarks.count(t));
+                h.assertTrue(dev.logos.dimension.foxfire.FoxfireRules.burning(t)!=null,"流火平时的刀没有照常缠身");
+                h.assertTrue(!dev.logos.dimension.ryuka.FoxMarks.executable(t),"还没爆开就能处决了");
+            }
+            int bursts=dev.logos.dimension.ryuka.FoxMarks.bursts();float before=t.getHealth();t.invulnerableTime=0;
+            dev.logos.dimension.ryuka.Ryuka.strike(f.p,t,9);
+            h.assertTrue(dev.logos.dimension.ryuka.FoxMarks.bursts()==bursts+1 && dev.logos.dimension.ryuka.FoxMarks.count(t)==0,"第五刀没有爆开或印没清零");
+            h.assertTrue(Math.abs(before-t.getHealth()-39)<.01,"第五刀加爆开应掉 9 + 30：掉了 "+(before-t.getHealth()));
+            h.assertTrue(dev.logos.dimension.foxfire.FoxfireRules.burning(t)==dev.logos.dimension.foxfire.FoxfireFlame.SHIRAUME,"爆开后没有淡粉的狐火缠身");
+            h.assertTrue(dev.logos.dimension.ryuka.FoxMarks.executable(t),"爆开后不能处决");
+        });
+        // 平时的缠身只有 3 秒；爆开的 8 秒，5 秒后还在烧，也还能处决
+        f.at(130,()->{
+            h.assertTrue(dev.logos.dimension.foxfire.FoxfireRules.burning(t)!=null,"爆开后的狐火缠身不到 5 秒就灭了");
+            h.assertTrue(dev.logos.dimension.ryuka.FoxMarks.executable(t),"爆开后不到 5 秒就不能处决了");
+            f.succeed();
+        });
+    }
+    /**
+     * 平一文字の構え：格挡中左键进构え，蓄不到 0.3 秒松开回到格挡；蓄够了松开突进，前面就是木桩所以第一刻就停下接上挑，
+     * 木桩没缠身被挑飞；突进付 20、上挑那刀付 10。
+     */
+    private static void ryukaDash(GameTestHelper h) {
+        var f=Fixture.create(h,new ItemStack(dev.logos.dimension.item.RyukaItem.ITEM.get()));mana(f.p);noRegeneration(f.p);
+        double[] before={0};
+        f.at(30,()->{f.idle();f.use();});
+        f.at(32,()->{f.attack();h.assertTrue("stance".equals(LongswordCombat.move(f.p)),"格挡中左键没有进平一文字："+LongswordCombat.move(f.p));});
+        f.at(35,()->{LongswordCombat.attackRelease(f.p);h.assertTrue("guard".equals(LongswordCombat.move(f.p)),"蓄不到 0.3 秒松开应回到格挡："+LongswordCombat.move(f.p));});
+        f.at(36,()->{f.attack();h.assertTrue("stance".equals(LongswordCombat.move(f.p)),"再按左键没有进平一文字");});
+        f.at(40,()->{
+            f.p.hurtServer(h.getLevel(),f.p.damageSources().mobAttack(f.target),4);
+            h.assertTrue("stance_block".equals(LongswordCombat.move(f.p)),"平一文字挨打没有用构え的格挡："+LongswordCombat.move(f.p));
+        });
+        f.at(50,()->{
+            h.assertTrue("stance_hold".equals(LongswordCombat.move(f.p)),"构え的格挡之后没有回到构え："+LongswordCombat.move(f.p));
+            before[0]=manaOf(f.p);LongswordCombat.attackRelease(f.p);
+            h.assertTrue("dash".equals(LongswordCombat.move(f.p)),"蓄够了松开没有突进："+LongswordCombat.move(f.p));
+        });
+        f.at(56,()->h.assertTrue(!f.p.isUsingItem(),"突进时还在格挡"));
+        f.at(60,()->{
+            h.assertTrue(dev.logos.dimension.combat.Airborne.is(f.target),"上挑没有挑飞木桩："+LongswordCombat.move(f.p));
+            double spent=before[0]-manaOf(f.p);
+            h.assertTrue(spent>=30 && spent<31,"突进 20 + 上挑 10 加维持费，扣了 "+spent);
+            h.assertTrue(f.target.getHealth()<100,"上挑没有砍中");
+            f.succeed();
+        });
+    }
+    /**
+     * 只是狐火缠身、没爆开过的目标被上挑只是挑飞。狐火印爆开过的目标被上挑时处决：特写开始、目标被定住、人进处决的招式，
+     * 这次爆开被用掉；点击窗口里点一下砍一刀（11 点），同一刻点两下只算一刀、下一刻补上；窗口关了再点不算；
+     * 重击 11 点，落地 25 点摔落；结束后放开目标、人回到待机。
+     */
+    private static void ryukaExecution(GameTestHelper h) {
+        var f=Fixture.create(h,new ItemStack(dev.logos.dimension.item.RyukaItem.ITEM.get()));mana(f.p);
+        var t=dummy(h,f.origin.add(2.3,0,1.6));
+        float[] hp={0};int[] start={0};
+        f.at(30,()->{
+            f.idle();
+            // 只是缠身：挑飞，不处决
+            dev.logos.dimension.foxfire.FoxfireRules.burn(f.target,dev.logos.dimension.foxfire.FoxfireFlame.SHIRAUME,f.p,300);
+            dev.logos.dimension.ryuka.RyukaExecution.rise(f.p,f.target);
+            h.assertTrue(dev.logos.dimension.combat.Airborne.is(f.target) && !dev.logos.dimension.execution.InteractiveExecutions.executing(f.p),"只是缠身、没爆开过的目标不该处决");
+            // 砍满五枚印爆开
+            for(int i=0;i<5;i++){t.invulnerableTime=0;dev.logos.dimension.ryuka.Ryuka.strike(f.p,t,9);}
+            h.assertTrue(dev.logos.dimension.ryuka.FoxMarks.executable(t),"五刀没有爆开");
+            hp[0]=t.getHealth();start[0]=30;
+            dev.logos.dimension.ryuka.RyukaExecution.rise(f.p,t);
+            h.assertTrue(dev.logos.dimension.execution.InteractiveExecutions.executing(f.p),"爆开过的目标被上挑没有处决");
+            h.assertTrue(!dev.logos.dimension.ryuka.FoxMarks.executable(t),"处决开始没有用掉这次爆开");
+            h.assertTrue("execution".equals(LongswordCombat.move(f.p)),"处决时人没进处决的招式："+LongswordCombat.move(f.p));
+            h.assertTrue(dev.logos.dimension.execution.ExecutionShots.frozen(t) && !dev.logos.dimension.combat.Airborne.is(t),"处决的目标应被定住、不是普通挑飞");
+            // 窗口还没开：点了不算
+            dev.logos.dimension.execution.InteractiveExecutions.click(f.p);
+        });
+        // 第 6 刻开窗：一刻点一下点 8 刻，其中一刻点两下（只算一刀，下一刻补上）
+        for(int i=0;i<8;i++){int d=i;f.at(30+7+d,()->{
+            dev.logos.dimension.execution.InteractiveExecutions.click(f.p);
+            if(d==3)dev.logos.dimension.execution.InteractiveExecutions.click(f.p);
+        });}
+        f.at(30+20,()->{
+            int n=dev.logos.dimension.execution.InteractiveExecutions.slashes(f.p);
+            h.assertTrue(n==9,"点了 9 下（窗口开之前那下不算）应砍 9 刀，实际 "+n);
+            h.assertTrue(Math.abs(hp[0]-t.getHealth()-99)<.01,"9 刀每刀 11 点应掉 99：掉了 "+(hp[0]-t.getHealth()));
+        });
+        // 窗口 40 刻，第 46 刻关；之后再点不算
+        f.at(30+48,()->dev.logos.dimension.execution.InteractiveExecutions.click(f.p));
+        f.at(30+52,()->{
+            h.assertTrue(dev.logos.dimension.execution.InteractiveExecutions.slashes(f.p)==9,"窗口关了还在收刀");
+            h.assertTrue("execution_end".equals(LongswordCombat.move(f.p)),"重击时人没出最后一刀："+LongswordCombat.move(f.p));
+            h.assertTrue(Math.abs(hp[0]-t.getHealth()-110)<.01,"重击应再掉 11：一共掉了 "+(hp[0]-t.getHealth()));
+        });
+        f.at(30+60,()->h.assertTrue(Math.abs(hp[0]-t.getHealth()-135)<.01,"落地应再掉 25 摔落：一共掉了 "+(hp[0]-t.getHealth())));
+        f.at(30+76,()->{
+            h.assertTrue(!dev.logos.dimension.execution.InteractiveExecutions.executing(f.p) && !dev.logos.dimension.execution.ExecutionShots.frozen(t),"处决结束后没有放开");
+            h.assertTrue(!"execution".equals(LongswordCombat.move(f.p)),"处决结束后人还在处决的招式");
+            t.discard();f.succeed();
+        });
+    }
     private static void ryukaGuard(GameTestHelper h) {
         var f=Fixture.create(h,new ItemStack(dev.logos.dimension.item.RyukaItem.ITEM.get()));mana(f.p);
         f.p.getAttribute(dev.logos.runtime.SpellModifiers.MANA_REGENERATION).addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(

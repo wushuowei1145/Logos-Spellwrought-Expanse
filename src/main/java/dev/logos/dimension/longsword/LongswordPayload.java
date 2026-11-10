@@ -32,6 +32,12 @@ public record LongswordPayload(UUID player, int variant, String move, String cli
     public boolean acceptsAttack() { return (flags & ACCEPTS_ATTACK) != 0; }
     @Override public Type<LongswordPayload> type() { return TYPE; }
 
+    /** 松开左键（招式文件的 {@code attack_release}）。 */
+    public record AttackRelease() implements CustomPacketPayload {
+        public static final Type<AttackRelease> TYPE = new Type<>(LogosDimension.id("longsword_attack_release"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, AttackRelease> CODEC = StreamCodec.unit(new AttackRelease());
+        @Override public Type<AttackRelease> type() { return TYPE; }
+    }
     public record Attack() implements CustomPacketPayload {
         public static final Type<Attack> TYPE = new Type<>(LogosDimension.id("longsword_attack"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Attack> CODEC = StreamCodec.unit(new Attack());

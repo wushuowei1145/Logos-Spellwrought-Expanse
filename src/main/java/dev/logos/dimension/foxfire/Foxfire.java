@@ -49,8 +49,15 @@ public final class Foxfire {
     /** 术式里狐火的词。 */
     public static final String WORD = "foxfire";
 
-    /** 正在结算的这一下是狐火：什么颜色，打中后要不要附带效果（缠身每秒烧的那一下不再附带）。 */
-    public record Context(FoxfireFlame flame, boolean rules) {}
+    /**
+     * 正在结算的这一下是狐火：什么颜色，打中后要不要附带效果（缠身每秒烧的那一下不再附带）。
+     * {@code burn} 为假时附带效果里不点狐火缠身（流火平时的刀：缠身要靠狐火印攒满爆开，见 docs/RYUKA.md）。
+     */
+    public record Context(FoxfireFlame flame, boolean rules, boolean burn) {
+        public Context(FoxfireFlame flame, boolean rules) {
+            this(flame, rules, rules);
+        }
+    }
 
     private static final ThreadLocal<Context> CURRENT = new ThreadLocal<>();
     /** Logos 正在执行的符文、正在触发的事件属于一条狐火术式时，它的颜色（换掉符文自己放的奥秘特效用）。 */
@@ -102,7 +109,8 @@ public final class Foxfire {
         return deal(attacker, target, amount, new Context(flame, true));
     }
 
-    static boolean deal(LivingEntity attacker, LivingEntity target, double amount, Context context) {
+    /** 同上，附带效果按 {@code context}（例如不点缠身）。 */
+    public static boolean deal(LivingEntity attacker, LivingEntity target, double amount, Context context) {
         NEXT.set(context);
         try {
             return Effects.damage(attacker, target, amount, Element.ARCANE);
@@ -158,7 +166,7 @@ public final class Foxfire {
     /** Logos 的这一下确实打进去了：附带狐火的效果（读当前的狐火）。 */
     public static void landed(DamageSource source, LivingEntity target) {
         Context context = CURRENT.get();
-        if (context != null && context.rules()) FoxfireRules.landed(source.getEntity(), target, context.flame());
+        if (context != null && context.rules()) FoxfireRules.landed(source.getEntity(), target, context.flame(), context.burn());
     }
 
     // ---------------------------------------------------------------- 术式里藏着的词

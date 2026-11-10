@@ -122,10 +122,10 @@ public class RyukaView implements UIScenario {
                 // ---- 格挡、0.5 秒内弹刀、突刺
                 // 弹刀窗口 0.5 秒（打刀 0.3 秒）的逐刻边界由单元测试 RyukaTest 检查。这里在服务端一进入格挡的那一刻就挨打：
                 // 场景每一步都要等一会儿，从客户端绕一圈再打会超过 0.5 秒。左键先按住，弹刀后马上接突刺。
-                .step("第三人称格挡并按住左键", ctx -> {
+                // 格挡中按住左键会转成平一文字の構え（docs/RYUKA.md 3.3 节），所以弹刀之后再按左键接突刺
+                .step("第三人称格挡", ctx -> {
                     camera(CameraType.THIRD_PERSON_FRONT);
                     var mc = Minecraft.getInstance(); mc.options.keyUse.setDown(true); mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
-                    hold(true);
                 }).server("木桩拿起斧头", ctx -> golem(ctx.server()).setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.IRON_AXE)))
                 .waitUntilServer("一进入格挡就被木桩的斧头砍中", ctx -> {
                     if (!"guard".equals(dev.logos.dimension.longsword.LongswordCombat.move(ctx.player()))) return false;
@@ -138,7 +138,8 @@ public class RyukaView implements UIScenario {
                     guardKept = ctx.player().isUsingItem();
                     return true;
                 })
-                .waitUntil("弹刀或突刺", ctx -> phase("parry", "riposte")).screenshot("parry_riposte")
+                .waitUntil("弹刀", ctx -> phase("parry", "riposte")).step("弹刀后按左键", ctx -> hold(true))
+                .waitUntil("突刺", ctx -> phase("riposte")).screenshot("parry_riposte")
                 .check("按下当刻已在格挡（无举盾延迟）", ctx -> blockingAtHit)
                 .check("弹开斧头不破防、不花魔力", ctx -> guardKept && guardCost == 0)
                 .step("松开左键", ctx -> hold(false))
@@ -213,7 +214,13 @@ public class RyukaView implements UIScenario {
                 .waitUntilServer("刀身散去", ctx -> Ryuka.faded(ctx.player().getMainHandItem()))
                 .waitUntilServer("散去中", ctx -> pinned(ctx, 6)).screenshot("fading")
                 .waitUntilServer("散完", ctx -> pinned(ctx, 16)).screenshot("hilt_only")
-                .server("记录木桩", ctx -> health = golem(ctx.server()).getHealth())
+                // 前面连砍攒满过狐火印、爆开后木桩还在狐火缠身（每秒烧 1 点）：灭掉再记，才看得出出刀有没有伤害
+                .server("灭掉缠身、记录木桩", ctx -> {
+                    var golem = golem(ctx.server());
+                    golem.removeData(dev.logos.dimension.foxfire.FoxfireAttachments.BURN);
+                    dev.logos.dimension.ryuka.FoxMarks.clear(golem);
+                    health = golem.getHealth();
+                })
                 .step("只剩刀柄时左键", ctx -> hold(true))
                 .waitUntilServer("按住左键一会儿", ctx -> pinned(ctx, 10)).step("松开左键", ctx -> hold(false))
                 .check("只剩刀柄不出刀", ctx -> phase("idle"))

@@ -96,10 +96,13 @@ public final class LongswordCombat {
     }
     @SubscribeEvent static void packets(RegisterPayloadHandlersEvent event) {
         // 同步包格式变化时提高版本号，新旧版本不会互相解码。
-        var registrar = event.registrar("3");
+        var registrar = event.registrar("4");
         registrar.playToClient(LongswordPayload.TYPE, LongswordPayload.CODEC);
         registrar.playToServer(LongswordPayload.Attack.TYPE, LongswordPayload.Attack.CODEC, (p, ctx) -> {
             if (ctx.player() instanceof ServerPlayer player) attack(player);
+        });
+        registrar.playToServer(LongswordPayload.AttackRelease.TYPE, LongswordPayload.AttackRelease.CODEC, (p, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer player) attackRelease(player);
         });
     }
     public static LongswordPayload pose(ServerPlayer player) {
@@ -131,6 +134,11 @@ public final class LongswordCombat {
         if (state != null && (!player.isUsingItem() || state.runner.move().accepts(Moveset.Input.ATTACK))
                 && (!(state.stack.getItem() instanceof CombatWeapon.Holder holder) || holder.allowsAttack(player, state.runner.move().name())))
             state.runner.input(Moveset.Input.ATTACK, player.level().getGameTime());
+    }
+    /** 松开左键：交给招式文件的 {@code attack_release}（流火平一文字の構え蓄够了就突进）。 */
+    public static void attackRelease(ServerPlayer player) {
+        var state = active(player);
+        if (state != null) state.runner.input(Moveset.Input.ATTACK_RELEASE, player.level().getGameTime());
     }
     /** 直接切到招式文件里的 {@code move}（施法剑按施放结果选收势）；没有持剑动作或招式文件里没有这个招式时不动。 */
     public static void force(ServerPlayer player, String move) {

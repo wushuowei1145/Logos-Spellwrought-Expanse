@@ -463,6 +463,8 @@
   "tooltip.logos_dimension.ryuka.combo": "Attack: five-hit combo; the finisher releases a cherry-blossom wave (30 more mana)",
   "tooltip.logos_dimension.ryuka.guard": "Hold Use to guard instantly; a hit within 0.5 s of guarding is parried, then Attack to thrust",
   "tooltip.logos_dimension.ryuka.ward": "The guard is a mana shield: blocks cost mana and stop magic too; parrying an axe is free, blocking one costs more, and only an empty pool breaks the guard",
+  "tooltip.logos_dimension.ryuka.marks": "Each hit leaves a foxfire mark; five burst for heavy foxfire damage and leave the target open to execution for 8 seconds",
+  "tooltip.logos_dimension.ryuka.stance": "While guarding, hold Attack for the hira-ichimonji stance; release to dash and cut upward: launches, or executes a target whose marks just burst (tap Attack)",
   "tooltip.logos_dimension.ryuka.blade": "Deals only arcane damage and passes through shields; foes it slays scatter as petals",
   "item.logos_dimension.fox_yumi_bamboo": "Fox Yumi (Plain Bamboo, Ivory Grip)",
   "item.logos_dimension.fox_yumi_vermilion": "Fox Yumi (Ink Lacquer, Vermilion Grip)",

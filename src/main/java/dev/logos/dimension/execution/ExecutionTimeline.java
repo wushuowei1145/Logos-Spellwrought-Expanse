@@ -11,6 +11,9 @@ import java.util.Random;
  * 抛起 ─ 黑白 ─ 一刀刀划过（越来越快）─ 静下来 ─ 重击（变红，定格）─ 拍下去 ─ 落地白一拍 ─ 恢复颜色，镜头回去
  * </pre>
  * 默认 12 刀时，从抛起到落地约 2 秒，镜头再用半秒回到玩家。
+ * <p>可交互的处决（{@link ExecutionShot#interactive}）：第一刀的时刻起留 {@link ExecutionShot#window} 刻让处决的人自己点，
+ * 刀在点到时由 {@link #add} 一刀刀加进来；重击、拍下、落地的时刻只看这段时长，和砍了几刀无关，所以两端仍能各算一遍。
+ * 机位在这段的三分之一、三分之二处切，节拍是第一刀和每次切机位后的第一刀。
  */
 public final class ExecutionTimeline {
     /** 画面按 24 帧一拍地换（和黑白闪一样），一拍是多少刻。身体的动作也一拍一拍地跳，像动画里的「一拍一张」。 */
@@ -84,6 +87,9 @@ public final class ExecutionTimeline {
      */
     public record Cut(float start, double side, double up, double forward, double distance, float roll) {}
 
+    /** 可交互的处决：攒满几刀时镜头推到最近、速度线最密。 */
+    static final int LIVE_BUILD = 16;
+
     private final ExecutionShot shot;
     private final List<Slash> slashes;
     private final Slash finisher;
@@ -91,10 +97,32 @@ public final class ExecutionTimeline {
     private final List<Cut> cuts;
     /** 节拍上的刀（第几刀）：第一刀、切机位的那两刀、最后一刀，太挤的去掉。 */
     private final List<Integer> beats;
+    /** 可交互时：上一刀的角度（下一刀相对它转）。 */
+    private double lastAngle;
 
     public ExecutionTimeline(ExecutionShot shot) {
         this.shot = shot;
         Random random = new Random(shot.seed());
+        if (shot.interactive()) {
+            slashes = new ArrayList<>();
+            beats = new ArrayList<>();
+            lastAngle = random.nextDouble() * Math.TAU;
+            float end = windowEnd();
+            finalHit = end + QUIET;
+            double down = Math.toRadians(30 + random.nextDouble() * 15);
+            float finalAngle = (float) (random.nextBoolean() ? -down : Math.PI + down);
+            finisher = new Slash(finalHit - STROKE * CONTACT, finalAngle, 0, (float) (random.nextDouble() - .5) * .3f, 4, 2.4f, 0);
+            slamStart = finalHit + HIT_STOP;
+            impact = slamStart + SLAM;
+            returnAt = impact + SETTLE;
+            double mirror = random.nextBoolean() ? 1 : -1;
+            float third = shot.window() / 3f;
+            cuts = List.of(new Cut(0, mirror, -.42, .45, 4.3, 0),
+                    new Cut(FIRST_SLASH + third, -.85 * mirror, -.18, .62, 3.3, (float) (14 * mirror)),
+                    new Cut(FIRST_SLASH + 2 * third, -.25 * mirror, -.6, 1, 3.7, (float) (-11 * mirror)),
+                    new Cut(end, .9 * mirror, -.22, -.55, 5.4, (float) (7 * mirror)));
+            return;
+        }
         int n = shot.slashes();
         var list = new ArrayList<Slash>(n);
         float at = FIRST_SLASH;
@@ -147,7 +175,40 @@ public final class ExecutionTimeline {
 
     /** 节拍上的刀（第几刀）。 */
     public List<Integer> beats() {
-        return beats;
+        return List.copyOf(beats);
+    }
+
+    public boolean interactive() {
+        return shot.interactive();
+    }
+
+    /** 可交互时：点击窗口在哪一刻关上（之后不再收刀，静一会儿就是重击）；不可交互时是最后一刀划完的时刻。 */
+    public float windowEnd() {
+        return shot.interactive() ? FIRST_SLASH + shot.window() : slashes.getLast().start() + STROKE;
+    }
+
+    /** 可交互时，第 {@code age} 刻还收不收新的一刀。 */
+    public boolean open(float age) {
+        return shot.interactive() && age >= FIRST_SLASH && age < windowEnd();
+    }
+
+    /**
+     * 可交互时加一刀，从第 {@code at} 刻开始划（刀头走 {@link #CONTACT} 成时打中）。角度、位置、力度按种子和这是第几刀
+     * 随出来，每端加同样多刀就一样。返回这一刀。
+     */
+    public Slash add(float at) {
+        if (!shot.interactive()) throw new IllegalStateException("不是可交互的处决");
+        int i = slashes.size();
+        Random random = new Random(shot.seed() * 0x9E3779B97F4A7C15L + i * 31L + 17);
+        if (i > 0) lastAngle += (random.nextBoolean() ? 1 : -1) * Math.toRadians(60 + random.nextDouble() * 100);
+        Slash slash = new Slash(at, (float) (lastAngle % Math.TAU), (float) (random.nextDouble() - .5) * .9f, (float) (random.nextDouble() - .5) * .5f,
+                .6f + random.nextFloat() * .6f, .75f + random.nextFloat() * .5f, (random.nextBoolean() ? 1 : -1) * (.15f + random.nextFloat() * .2f));
+        slashes.add(slash);
+        // 节拍：第一刀，以及每次切机位后的第一刀；和上一个节拍隔得太近就不算
+        Cut cut = cut(slash.contact());
+        boolean firstAfterCut = i == 0 || cut(slashes.get(i - 1).contact()) != cut;
+        if (firstAfterCut && (beats.isEmpty() || slash.contact() - slashes.get(beats.getLast()).contact() >= MIN_BEAT_GAP)) beats.add(i);
+        return slash;
     }
 
     /** 第 {@code i} 刀划过时是否对调。 */
@@ -163,6 +224,7 @@ public final class ExecutionTimeline {
     public float buildUp(float age) {
         int done = 0;
         for (Slash s : slashes) if (s.contact() <= age) done++;
+        if (shot.interactive()) return Math.min(1, done / (float) LIVE_BUILD);
         return done / (float) slashes.size();
     }
 
@@ -170,8 +232,9 @@ public final class ExecutionTimeline {
         return shot;
     }
 
+    /** 重击之前的刀；可交互时是到现在为止加进来的（只读）。 */
     public List<Slash> slashes() {
-        return slashes;
+        return java.util.Collections.unmodifiableList(slashes);
     }
 
     /** 最后的重击：比普通的一刀粗得多。 */

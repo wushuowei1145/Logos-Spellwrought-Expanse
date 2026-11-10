@@ -50,6 +50,8 @@ public final class RyukaItem extends Item implements CombatWeapon.Holder {
                         Component.translatable("tooltip.logos_dimension.ryuka.combo"),
                         Component.translatable("tooltip.logos_dimension.ryuka.guard"),
                         Component.translatable("tooltip.logos_dimension.ryuka.ward"),
+                        Component.translatable("tooltip.logos_dimension.ryuka.marks"),
+                        Component.translatable("tooltip.logos_dimension.ryuka.stance"),
                         Component.translatable("tooltip.logos_dimension.ryuka.blade")))));
     }
 
@@ -71,7 +73,10 @@ public final class RyukaItem extends Item implements CombatWeapon.Holder {
 
     @Override public boolean allowsAttack(ServerPlayer player, String move) { return Ryuka.canSwing(player); }
 
-    @Override public void combatTick(ServerPlayer player, String move) { Ryuka.upkeep(player, player.getMainHandItem()); }
+    @Override public void combatTick(ServerPlayer player, String move) {
+        Ryuka.upkeep(player, player.getMainHandItem());
+        dev.logos.dimension.ryuka.RyukaDash.tick(player, move);
+    }
 
     @Override public boolean swing(ServerPlayer player, Moveset.Move move) { return Ryuka.swing(player, move); }
 
@@ -81,7 +86,11 @@ public final class RyukaItem extends Item implements CombatWeapon.Holder {
     @Override public void manaGuarded(ServerPlayer player, net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent event) { Ryuka.guarded(player, event); }
 
     @Override public boolean strike(ServerPlayer player, Entity target, Moveset.Move move) {
-        if (target instanceof LivingEntity living) Ryuka.strike(player, living, Ryuka.DAMAGE * move.damage());
+        if (target instanceof LivingEntity living) {
+            Ryuka.strike(player, living, Ryuka.DAMAGE * move.damage());
+            // 突进后的上挑：缠身着的处决，其余挑飞
+            if (dev.logos.dimension.ryuka.RyukaDash.RISE_EFFECT.equals(move.effect())) dev.logos.dimension.ryuka.RyukaExecution.rise(player, living);
+        }
         return true;
     }
 }

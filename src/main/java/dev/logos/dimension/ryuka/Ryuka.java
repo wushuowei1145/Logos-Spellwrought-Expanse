@@ -64,7 +64,10 @@ public final class Ryuka {
 
     private Ryuka() {}
 
-    public static void register(IEventBus bus) { COMPONENTS.register(bus); }
+    public static void register(IEventBus bus) {
+        COMPONENTS.register(bus);
+        bus.addListener(FoxMarks::register);
+    }
 
     public static boolean faded(ItemStack stack) { return stack.getOrDefault(FADED.get(), false); }
 
@@ -125,13 +128,25 @@ public final class Ryuka {
     /**
      * 流火的一下：白梅的淡粉狐火（docs/FOXFIRE.md，本质是奥秘伤害），不能被盾挡；打死的生物化作花瓣（见 {@link #blossom}）。
      * 命中特效仍是流火自己的一小簇樱花，不放狐火的那一团（出刀太快，会盖住第一人称画面）。
+     * 打进去了还在目标身上留一枚狐火印，攒满爆开（{@link FoxMarks}）。缠身、惑照狐火的规矩。
+     * 返回这一下打进去没有。
      */
     public static boolean strike(ServerPlayer player, LivingEntity target, double amount) {
+        return hit(player, target, amount, true);
+    }
+
+    /**
+     * 流火打出的一下狐火。{@code mark} 为假时不留狐火印，也不附带缠身和惑（处决的刀）。Logos 的 {@code Effects.damage}
+     * 只在目标被打死时返回真，所以打没打进去看血量（含伤害吸收）有没有掉。
+     */
+    static boolean hit(ServerPlayer player, LivingEntity target, double amount, boolean mark) {
         ServerPlayer outer = STRIKE.get();
         STRIKE.set(player);
         try {
+            float before = target.getHealth() + target.getAbsorptionAmount();
             // Logos 的参数顺序是（出手的，挨打的）
-            boolean hurt = Foxfire.deal(player, target, amount, FoxfireFlame.SHIRAUME);
+            boolean died = Foxfire.deal(player, target, amount, new Foxfire.Context(FoxfireFlame.SHIRAUME, mark));
+            boolean hurt = died || target.getHealth() + target.getAbsorptionAmount() < before;
             if (hurt) {
                 double y = target.getY() + target.getBbHeight() * .6;
                 player.level().playSound(null, target.getX(), y, target.getZ(), SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.PLAYERS, .8f, 1.4f);
@@ -141,6 +156,7 @@ public final class Ryuka {
                     level.sendParticles(net.minecraft.core.particles.ParticleTypes.CHERRY_LEAVES, target.getX(), y, target.getZ(), 4, w, .25, w, 0);
                     level.sendParticles(HIT_DUST, target.getX(), y, target.getZ(), 5, w, .2, w, 0);
                 }
+                if (mark && !died) FoxMarks.add(player, target);
             }
             return hurt;
         } finally {
