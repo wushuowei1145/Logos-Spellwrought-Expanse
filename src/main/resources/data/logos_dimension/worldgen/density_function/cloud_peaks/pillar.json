@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:cache_2d",
+  "argument": {
+    "type": "minecraft:noise",
+    "noise": "logos_dimension:cloud_peaks_pillar",
+    "xz_scale": 1.0,
+    "y_scale": 0.0
+  }
+}

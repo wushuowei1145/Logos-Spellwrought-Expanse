@@ -1,5 +1,20 @@
 # 首版验证记录
 
+## 云岫峰林：张家界式峰林群系、群系大小与国画后期
+
+2026-11-10：分支 `feat/cloud-peaks`，基于 main `70071ef2`，提交前 rebase 到 main `64d4481f`（#232 创造栏之后）。Logos 用 page-variants 的 jar（Logos #422）。地形、植被、群系数据都由 `tools/cloud_peaks.py` 生成。说明见 [群系大小](docs/NATIVE_WORLDGEN.md) 和 [国画](docs/WORLD_STYLES.md)。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元与构建 | rebase 前全量 **290/291**，rebase 后 **309/310**，唯一失败都是 main 上本来就有的 `LangCoverageTest`（`fuda_desk` 少中文名）；新增 `StyleRealmTest` 两项（国画的着色器编号、群系画风标签里有云岫峰林） |
+| 世界测试 | 全部 232 个跑了两次：第一次 229/232，第二次 231/232。`cloudsea_registry` 原来要求 33 个群系，加了云岫峰林改成 34，之后通过。剩下的都是腐败的偶发失败（`corruption_core_grows_with_network`、`corruption_full_network_splits`，第一次还有 `shiraume_rage_ring_jumpable`）：每次失败的不一样；单独跑都过；测试顺序每次打乱；干净的 main 上只跑腐败那 16 个，8 次里也失败 1 次（同样这两项）；这个分支把群系格点改回 main 的样子，5 次里失败 2 次。判断是相邻的腐败测试互相蔓延，和这次改动无关，没有修。rebase 后 243 个跑一次 **241/243**：`foxfire_burns_then_goes_out`（干净的 main 上单跑 3 次也失败 1 次，同样的消息）和 `shiraume_beast_pounce_lands_on_mark`（单跑 2 次都过）；干净的 main 跑全部 243 个也失败 1 个（`elven_living_world_tree` 光照超时）。再 rebase 到 `64d4481f` 后 244 个 **243/244**，只有腐败那个偶发；#232 的 `creative_tabs_default` 通过，三种新方块按群系循环自动进了自然栏 |
+| 群系普查 | `cloudsea_biome_census`（32768×32768 格，每 64 格一点）：云岫峰林占地图 **1.69%**（45 个格点时 0.88%），34 片，一片的中位数约 300 格、最大约 1950 格，**93.5%** 的面积在能放下 320 格见方的大片里（太玄灵境完整地标 252×252 格），能当 256 格见方中心的地方占地图 0.35%（原来 0.16%）。近海那一盒的地表高度和中等侵蚀那片差不多（四分之一分位约 72–79、中位数约 82–94），没有大山垫在石柱底下 |
+| 实际客户端 | 不装 Sodium 和 Iris：`group:cloud_peaks` **7/7**（每个机位原画、国画各一张，柱顶加一张夜景），`group:world_style` **5/5、20/20 检查**，`group:screen_fx` **5/5、11/11 检查**。rebase 后重跑 `group:world_style` **5/5、20/20 检查**，`cloud_peaks_pine`、`cloud_peaks_overview` **2/2** |
+| 光影包与 Sodium | 只装 Sodium 0.9.2、Sodium + Iris 1.11.4 光影关闭：`group:world_style` **5/5**，`cloud_peaks_pine`、`cloud_peaks_summit` **2/2**。Iris + photon v1.3b、Iris + Complementary Reimagined r5.9.3：`group:world_style` **4/5**（没过的是 `world_style_fabulous`，只在不开光影时跑，同上一节），两个峰林机位 **2/2**，日志确认光影包已加载 |
+| 截图人工看过 | 原画和国画对比（七个机位）、64–128 格遮罩的过渡、夜里墨比纸深、四种环境下的柱顶黄山松；新格点下的 384 格俯视高度图 |
+| 耗时 | 不是在游戏里量的：用 moderngl 在这台机器的 RTX 5080 上跑同一个着色器（合成深度、镜头在云带里）。不带遮罩的最费情况 3440×1369 约 1.1 毫秒、1920×1080 约 0.5 毫秒（同样条件下童话风约 0.3 毫秒）；群系画风带遮罩、约一半画面在 64 格外时约 0.6 毫秒 |
+| 未验证 | 最终这一版（100 个格点）没有真人试玩，维护者试玩过的是之前的版本；中低端显卡的耗时；其他光影包；Distant Horizons（它画的远景不在原版深度里，国画可能把远处的 LOD 地形当成天空）；专用服务器；已经探索过的区块保留旧群系，新旧交界的接缝没有看过 |
+
 ## 创造模式物品栏分类
 
 2026-11-10：分支 `feat/addon-creative-tabs`，基于 main `a9323e08`（#229），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。原「远行大陆」一页拆成建材、装饰、自然、功能方块、道具、武器六页，补上原来不在任何一页的 33 件灵狐樱野方块和签纸；货币、塔罗、炼金釜三页内容不变，九页统一在 `AddonTabs` 注册、按顺序挨在一起。运镜测试方块从炼金釜页挪到功能方块页末尾。

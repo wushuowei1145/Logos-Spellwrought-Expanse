@@ -1251,5 +1251,12 @@
   "item.logos_dimension.sage_inscribed_reifu": "Senshu Reifu",
   "item.logos_dimension.principle_reifu": "Muso Reifu",
   "item.logos_dimension.principle_inscribed_reifu": "Shinchoku Reifu",
-  "screen.logos_dimension.fx.cloudsea_time": "Wayfarer Lands "
+  "screen.logos_dimension.fx.cloudsea_time": "Wayfarer Lands ",
+  "biome.logos_dimension.cloudsea_cloud_peaks": "Cloudveil Peaks",
+  "block.logos_dimension.cloudsea_cloud_peaks_ground": "Cloudveil Turf",
+  "item.logos_dimension.cloudsea_cloud_peaks_ground": "Cloudveil Turf",
+  "block.logos_dimension.cloudsea_cloud_peaks_leaf": "Cloudveil Pine Needles",
+  "item.logos_dimension.cloudsea_cloud_peaks_leaf": "Cloudveil Pine Needles",
+  "block.logos_dimension.cloudsea_cloud_peaks_log": "Cloudveil Pine Log",
+  "item.logos_dimension.cloudsea_cloud_peaks_log": "Cloudveil Pine Log"
 }

@@ -58,7 +58,7 @@ public final class CloudseaBlocks {
         LEAVES.put(b,canopy(b.id()+"_leaf"));
         TRUNKS.put(b,wood(b.id()+"_log"));
     } }
-    public static boolean isEvergreen(Block block){for(var b:CloudseaBiome.values())if(b.conifer()&&LEAVES.get(b).get()==block)return true;return false;}
+    public static boolean isEvergreen(Block block){for(var b:CloudseaBiome.values())if(b.evergreen()&&LEAVES.get(b).get()==block)return true;return false;}
     public static class FlammableLogBlock extends RotatedPillarBlock {
         public FlammableLogBlock(Properties properties) { super(properties); }
         @Override

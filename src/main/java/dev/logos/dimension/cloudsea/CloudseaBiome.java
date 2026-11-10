@@ -36,7 +36,9 @@ public enum CloudseaBiome {
     COPPER_COPSE("铜叶林丘",0x829167,0x718149,Form.FOLD,160,25,.88),
     SUNLIT_GLADE("曦光林隙",0x91A274,0x6F8853,Form.FOLD,160,25,.94),
     STARFLOWER_GLADE("星铃花甸",0x889E75,0x70895A,Form.FOLD,160,25,.96),
-WHITE_CHERRY("灵狐樱野",0x8B9870,0xFFE6EF,Form.PETAL,157,23,.90);
+WHITE_CHERRY("灵狐樱野",0x8B9870,0xFFE6EF,Form.PETAL,157,23,.90),
+    /** 仙侠风的张家界峰林：石柱从谷底直上，柱顶与崖边长黄山松。地形与植被见 tools/cloud_peaks.py。 */
+    CLOUD_PEAKS("云岫峰林",0x7D9A6B,0x35553A,Form.SPIRE,170,90,.70);
 
     public enum Form { FOLD, PETAL, BASIN, HANGING, RIBBON, STEPS, DUNE, SPIRE }
     public final String title; public final int groundColor, leafColor, base, relief; public final Form form; public final double flora;
@@ -44,6 +46,8 @@ WHITE_CHERRY("灵狐樱野",0x8B9870,0xFFE6EF,Form.PETAL,157,23,.90);
         this.title=title;groundColor=ground;leafColor=leaf;this.form=form;this.base=base;this.relief=relief;this.flora=flora;
     }
     public boolean conifer(){return this==LILAC_STEPS||this==CLOUDROOT_SHELVES||this==FIR_HEART;}
+    /** 四季常绿的树叶：针叶林，加上云岫峰林的黄山松。 */
+    public boolean evergreen(){return conifer()||this==CLOUD_PEAKS;}
     public boolean birch(){return this==REVERSE_GARDENS||this==IVORY_STEPS||this==MOON_BIRCH;}
     public boolean glade(){return this==SUNLIT_GLADE||this==STARFLOWER_GLADE;}
     public boolean forest(){return conifer()||birch()||this==JADE_WHIRLS||this==VERDANT_WHIRLS||this==LANTERN_SHELVES

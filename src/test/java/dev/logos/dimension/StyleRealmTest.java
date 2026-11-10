@@ -78,5 +78,15 @@ class StyleRealmTest {
     @Test void stylesKeepTheirShaderIds() {
         assertEquals(1, WorldStyle.MONOCHROME.shaderId());
         assertEquals(2, WorldStyle.FAIRY_TALE.shaderId());
+        assertEquals(3, WorldStyle.INK_WASH.shaderId());
+    }
+
+    /** 群系画风靠标签找群系：云岫峰林在国画的标签里。 */
+    @Test void cloudPeaksUseTheInkWashStyle() throws java.io.IOException {
+        assertEquals("logos_dimension:world_style/ink_wash", WorldStyle.INK_WASH.biomes().location().toString());
+        try (var in = StyleRealmTest.class.getResourceAsStream("/data/logos_dimension/tags/worldgen/biome/world_style/ink_wash.json")) {
+            assertNotNull(in);
+            assertTrue(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8).contains("\"logos_dimension:cloudsea_cloud_peaks\""));
+        }
     }
 }

@@ -1,0 +1,92 @@
+{
+  "type": "minecraft:cache_2d",
+  "argument": {
+    "type": "minecraft:add",
+    "argument1": {
+      "type": "minecraft:add",
+      "argument1": 64.0,
+      "argument2": {
+        "type": "minecraft:mul",
+        "argument1": "logos_dimension:cloud_peaks/gate",
+        "argument2": {
+          "type": "minecraft:add",
+          "argument1": 28.0,
+          "argument2": {
+            "type": "minecraft:mul",
+            "argument1": {
+              "type": "minecraft:noise",
+              "noise": "logos_dimension:cloud_peaks_ground",
+              "xz_scale": 1.0,
+              "y_scale": 0.0
+            },
+            "argument2": 7.0
+          }
+        }
+      }
+    },
+    "argument2": {
+      "type": "minecraft:mul",
+      "argument1": {
+        "type": "minecraft:mul",
+        "argument1": "logos_dimension:cloud_peaks/gate",
+        "argument2": {
+          "type": "minecraft:mul",
+          "argument1": {
+            "type": "minecraft:mul",
+            "argument1": {
+              "type": "minecraft:clamp",
+              "input": {
+                "type": "minecraft:mul",
+                "argument1": {
+                  "type": "minecraft:add",
+                  "argument1": "logos_dimension:cloud_peaks/pillar",
+                  "argument2": 0.27999999999999997
+                },
+                "argument2": 3.3333333333333335
+              },
+              "min": 0.0,
+              "max": 1.0
+            },
+            "argument2": {
+              "type": "minecraft:clamp",
+              "input": {
+                "type": "minecraft:mul",
+                "argument1": {
+                  "type": "minecraft:add",
+                  "argument1": "logos_dimension:cloud_peaks/pillar",
+                  "argument2": 0.27999999999999997
+                },
+                "argument2": 3.3333333333333335
+              },
+              "min": 0.0,
+              "max": 1.0
+            }
+          },
+          "argument2": {
+            "type": "minecraft:add",
+            "argument1": 30.0,
+            "argument2": {
+              "type": "minecraft:mul",
+              "argument1": {
+                "type": "minecraft:noise",
+                "noise": "logos_dimension:cloud_peaks_ground",
+                "xz_scale": 1.0,
+                "y_scale": 0.0
+              },
+              "argument2": 9.0
+            }
+          }
+        }
+      },
+      "argument2": {
+        "type": "minecraft:add",
+        "argument1": 1.0,
+        "argument2": {
+          "type": "minecraft:mul",
+          "argument1": "logos_dimension:cloud_peaks/riverness",
+          "argument2": -1.0
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "has_precipitation": true,
+  "temperature": 0.9,
+  "downfall": 0.85,
+  "effects": {
+    "water_color": "#5e8f97",
+    "grass_color": "#7d9a6b",
+    "foliage_color": "#4f6f4d",
+    "fog_color": "#c8d4d2"
+  },
+  "carvers": [
+    "minecraft:cave",
+    "minecraft:cave_extra_underground",
+    "minecraft:canyon"
+  ],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "logos_dimension:cloud_peaks_edge_pines",
+      "logos_dimension:cloud_peaks_summit_pines",
+      "logos_dimension:cloud_peaks_wall_pines",
+      "logos_dimension:cloud_peaks_valley_trees",
+      "logos_dimension:cloud_peaks_cliff_shrubs",
+      "logos_dimension:cloud_peaks_cliff_vines",
+      "logos_dimension:cloudsea_fernwood_floor",
+      "minecraft:patch_sugar_cane",
+      "minecraft:patch_waterlily"
+    ],
+    []
+  ],
+  "spawners": {},
+  "spawn_costs": {},
+  "attributes": {
+    "minecraft:visual/fog_start_distance": 64.0,
+    "minecraft:visual/fog_end_distance": 420.0
+  }
+}
