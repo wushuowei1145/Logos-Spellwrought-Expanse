@@ -1,0 +1,473 @@
+package dev.logos.dimension.client.music;
+
+import dev.logos.dimension.music.InstrumentBlockEntity;
+import dev.logos.dimension.music.InstrumentKind;
+import dev.logos.dimension.music.Instruments;
+import dev.logos.dimension.music.MusicPayloads;
+import dev.logos.dimension.music.MusicRoll;
+import dev.logos.dimension.music.RollInfo;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import org.jspecify.annotations.Nullable;
+
+/**
+ * 乐器界面，两页：
+ * <ul>
+ *   <li>演奏：屏幕键盘 + 键盘实时弹奏（键位见 {@link KeyLayout}），←→ 换八度、↑↓ 改力度、空格延音；
+ *       可以录制成纸带。打开这一页时向服务端「认领」演奏者，同一台乐器同时只能一个人弹。</li>
+ *   <li>纸带：纸带槽里的纸带信息、播放/暂停/停止/取出、选择演奏哪些声部、红石模式、打孔编辑器、导入 MIDI。</li>
+ * </ul>
+ */
+public class InstrumentScreen extends Screen {
+    private static final int W = 400, H = 226, PAD = 28;
+    private static final int KEY_LEFT = 263, KEY_RIGHT = 262, KEY_UP = 265, KEY_DOWN = 264, KEY_SPACE = 32;
+
+    private final BlockPos pos;
+    private boolean rollPage;
+    private boolean diatonic;
+    private int base;
+    private int velocity = 96;
+    private boolean pedal;
+    private final boolean[] sharp = new boolean[7];
+    /** 按住的键：键码 → 发出的音高。松开时按这里的音高止音，换八度不会卡音。 */
+    private final Map<Integer, Integer> held = new HashMap<>();
+    private int mousePitch = -1;
+    private int x0, y0;
+    private @Nullable Button recordButton;
+    private @Nullable String notice;
+    private long noticeUntil;
+
+    public InstrumentScreen(BlockPos pos) {
+        super(Component.translatable("screen.logos_dimension.instrument.title"));
+        this.pos = pos.immutable();
+        this.base = 48;
+    }
+
+    private @Nullable InstrumentBlockEntity entity() {
+        var level = Minecraft.getInstance().level;
+        return level != null && level.getBlockEntity(pos) instanceof InstrumentBlockEntity be ? be : null;
+    }
+
+    private InstrumentKind kind() {
+        InstrumentKind k = MusicClient.kindAt(pos);
+        return k == null ? InstrumentKind.GRAND_PIANO : k;
+    }
+
+    private boolean busy() {
+        InstrumentBlockEntity be = entity();
+        var me = Minecraft.getInstance().player;
+        return be != null && me != null && be.performer() != null && !be.performer().equals(me.getUUID());
+    }
+
+    private static Component tr(String key, Object... args) {
+        return Component.translatable("screen.logos_dimension.instrument." + key, args);
+    }
+
+    // —— 布局 ——
+
+    @Override
+    protected void init() {
+        x0 = (width - W) / 2;
+        y0 = (height - H) / 2;
+        recordButton = null;
+        int right = x0 + W - PAD;
+        addRenderableWidget(Button.builder(tr("tab_play"), b -> page(false)).bounds(right - 104, y0 + 20, 50, 16).build()).active = rollPage;
+        addRenderableWidget(Button.builder(tr("tab_roll"), b -> page(true)).bounds(right - 50, y0 + 20, 50, 16).build()).active = !rollPage;
+        if (rollPage) initRollPage();
+        else initPlayPage();
+    }
+
+    /** 场景测试用：切到纸带页。 */
+    void showRollPage() {
+        page(true);
+    }
+
+    private void page(boolean roll) {
+        if (roll == rollPage) return;
+        releaseAll();
+        if (roll) MusicClient.control(pos, MusicPayloads.Control.RELEASE, 0);
+        else MusicClient.control(pos, MusicPayloads.Control.CLAIM, 0);
+        rollPage = roll;
+        rebuildWidgets();
+    }
+
+    private void initPlayPage() {
+        int y = y0 + 166;
+        int x = x0 + PAD;
+        addRenderableWidget(Button.builder(Component.literal("◀"), b -> shiftOctave(-1)).bounds(x, y, 20, 16).build());
+        addRenderableWidget(Button.builder(Component.literal("▶"), b -> shiftOctave(1)).bounds(x + 22, y, 20, 16).build());
+        recordButton = addRenderableWidget(Button.builder(recordLabel(), b -> toggleRecording()).bounds(x + 48, y, 92, 16).build());
+        if (kind() == InstrumentKind.CONCERT_HARP) {
+            addRenderableWidget(Button.builder(diatonic ? tr("mode_diatonic") : tr("mode_chromatic"), b -> {
+                releaseAll();
+                diatonic = !diatonic;
+                base = diatonic ? 36 : 48;
+                rebuildWidgets();
+            }).bounds(x + 146, y, 92, 16).build());
+        }
+    }
+
+    private void initRollPage() {
+        int x = x0 + PAD, y = y0 + 92;
+        addRenderableWidget(Button.builder(tr("play"), b -> MusicClient.control(pos, MusicPayloads.Control.PLAY, 0)).bounds(x, y, 60, 16).build());
+        addRenderableWidget(Button.builder(tr("pause"), b -> MusicClient.control(pos, MusicPayloads.Control.PAUSE, 0)).bounds(x + 64, y, 60, 16).build());
+        addRenderableWidget(Button.builder(tr("stop"), b -> MusicClient.control(pos, MusicPayloads.Control.STOP, 0)).bounds(x + 128, y, 60, 16).build());
+        addRenderableWidget(Button.builder(tr("eject"), b -> MusicClient.control(pos, MusicPayloads.Control.EJECT, 0)).bounds(x + 192, y, 60, 16).build());
+        // 声部
+        InstrumentBlockEntity be = entity();
+        RollInfo info = be == null ? null : be.roll().get(Instruments.MUSIC_ROLL.get());
+        if (info != null && info.parts().size() > 1) {
+            int mask = be.partMask();
+            for (int i = 0; i < info.parts().size() && i < MusicRoll.MAX_PARTS; i++) {
+                int bit = 1 << i;
+                String name = info.parts().get(i);
+                String shown = (mask & bit) != 0 ? "✔ " + name : "  " + name;
+                if (font.width(shown) > 80) shown = font.plainSubstrByWidth(shown, 76) + "…";
+                int col = i % 4, row = i / 4;
+                addRenderableWidget(Button.builder(Component.literal(shown), b -> {
+                    InstrumentBlockEntity e = entity();
+                    if (e != null) MusicClient.control(pos, MusicPayloads.Control.PART_MASK, e.partMask() ^ bit);
+                }).bounds(x + col * 86, y0 + 126 + row * 12, 84, 11).build());
+            }
+        }
+        int by = y0 + H - PAD - 16;
+        addRenderableWidget(Button.builder(tr("editor"), b -> openEditor()).bounds(x, by, 84, 16).build());
+        addRenderableWidget(Button.builder(tr("import"), b -> minecraft.setScreen(new MidiImportScreen(pos, this))).bounds(x + 88, by, 84, 16).build());
+        boolean stopMode = be != null && be.stopWithSignal();
+        addRenderableWidget(Button.builder(stopMode ? tr("signal_stop") : tr("signal_start"), b -> {
+            InstrumentBlockEntity e = entity();
+            if (e != null) MusicClient.control(pos, MusicPayloads.Control.SIGNAL_MODE, e.stopWithSignal() ? 0 : 1);
+        }).bounds(x + 176, by, 168, 16).build());
+    }
+
+    /** 纸带槽里的东西变了（服务端同步过来）就重排按钮。 */
+    private String lastSlot = "";
+
+    @Override
+    public void tick() {
+        InstrumentBlockEntity be = entity();
+        var me = Minecraft.getInstance().player;
+        if (be == null || me == null || me.distanceToSqr(be.soundCenter()) > Instruments.REACH * Instruments.REACH) {
+            onClose();
+            return;
+        }
+        if (rollPage) {
+            String slot = be.roll().getComponents().toString() + be.partMask() + be.stopWithSignal();
+            if (!slot.equals(lastSlot)) {
+                lastSlot = slot;
+                rebuildWidgets();
+            }
+        }
+        if (recordButton != null) {
+            recordButton.setMessage(recordLabel());
+            recordButton.active = MusicClient.recorder != null || Instruments.isRoll(be.roll());
+        }
+    }
+
+    @Override
+    public void added() {
+        super.added();
+        MusicClient.control(pos, MusicPayloads.Control.CLAIM, 0);
+    }
+
+    @Override
+    public void removed() {
+        releaseAll();
+        if (MusicClient.recorder != null) MusicClient.recorder = null;
+        MusicClient.control(pos, MusicPayloads.Control.RELEASE, 0);
+        super.removed();
+    }
+
+    @Override
+    public boolean isPauseScreen() {
+        return false;
+    }
+
+    private void say(String text) {
+        notice = text;
+        noticeUntil = System.currentTimeMillis() + 4000;
+    }
+
+    // —— 弹奏 ——
+
+    private void shiftOctave(int d) {
+        releaseAll();
+        int lo = diatonic ? 24 : 12, hi = diatonic ? 72 : 96;
+        base = Math.max(lo, Math.min(hi, base + 12 * d));
+    }
+
+    private void press(int key, int pitch) {
+        if (busy() || held.containsKey(key)) return;
+        held.put(key, pitch);
+        MusicClient.localNote(pos, pitch, velocity);
+    }
+
+    private void lift(int key) {
+        Integer pitch = held.remove(key);
+        if (pitch != null) MusicClient.localNote(pos, pitch, 0);
+    }
+
+    private void releaseAll() {
+        for (int key : new ArrayList<>(held.keySet())) lift(key);
+        if (mousePitch >= 0) {
+            MusicClient.localNote(pos, mousePitch, 0);
+            mousePitch = -1;
+        }
+        if (pedal) {
+            pedal = false;
+            MusicClient.localPedal(pos, false);
+        }
+    }
+
+    /** 这个键码此刻对应的音高；没有映射时 -1。 */
+    private int pitchFor(int key) {
+        if (diatonic) {
+            int i = KeyLayout.whiteIndex(key);
+            return i < 0 ? -1 : KeyLayout.whitePitch(base, i, sharp);
+        }
+        int off = KeyLayout.chromaticOffset(KeyLayout.chromatic(), key);
+        return off < 0 ? -1 : base + off;
+    }
+
+    @Override
+    public boolean keyPressed(KeyEvent event) {
+        if (rollPage || event.isEscape()) return super.keyPressed(event);
+        int key = event.key();
+        switch (key) {
+            case KEY_LEFT -> shiftOctave(-1);
+            case KEY_RIGHT -> shiftOctave(1);
+            case KEY_UP -> velocity = Math.min(127, velocity + 16);
+            case KEY_DOWN -> velocity = Math.max(16, velocity - 16);
+            case KEY_SPACE -> {
+                if (!pedal && !busy()) {
+                    pedal = true;
+                    MusicClient.localPedal(pos, true);
+                }
+            }
+            default -> {
+                int degree = diatonic ? KeyLayout.pedalDegree(key) : -1;
+                if (degree >= 0) {
+                    sharp[degree] = !sharp[degree];
+                } else {
+                    int pitch = pitchFor(key);
+                    if (pitch >= 0) press(key, pitch);
+                }
+            }
+        }
+        // 演奏页的键都归乐器，不交给按钮（空格不会按下有焦点的按钮）
+        setFocused(null);
+        return true;
+    }
+
+    @Override
+    public boolean keyReleased(KeyEvent event) {
+        if (rollPage) return super.keyReleased(event);
+        if (event.key() == KEY_SPACE) {
+            if (pedal) {
+                pedal = false;
+                MusicClient.localPedal(pos, false);
+            }
+            return true;
+        }
+        lift(event.key());
+        return true;
+    }
+
+    // —— 录制 ——
+
+    private Component recordLabel() {
+        var r = MusicClient.recorder;
+        return r == null ? tr("record") : tr("record_stop", RollInfo.clock(r.elapsedMs()));
+    }
+
+    private void toggleRecording() {
+        setFocused(null);
+        var r = MusicClient.recorder;
+        if (r == null) {
+            InstrumentBlockEntity be = entity();
+            if (be == null || !Instruments.isRoll(be.roll())) {
+                say(tr("need_blank").getString());
+                return;
+            }
+            MusicClient.recorder = new MusicClient.Recorder();
+            return;
+        }
+        MusicClient.recorder = null;
+        if (r.count() == 0) {
+            say(tr("record_empty").getString());
+            return;
+        }
+        String title = tr("record_title", LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM-dd HH:mm"))).getString();
+        MusicRoll roll = r.finish(Component.translatable("block.logos_dimension." +
+            (kind() == InstrumentKind.GRAND_PIANO ? "starbloom_grand_piano" : "hexen_concert_harp")).getString()).withMeta(title, "");
+        try {
+            MusicClient.upload(pos, MusicPayloads.Upload.WRITE, roll.encode());
+        } catch (MusicRoll.FormatException e) {
+            say(e.getMessage());
+        }
+    }
+
+    private void openEditor() {
+        InstrumentBlockEntity be = entity();
+        if (be == null) return;
+        minecraft.setScreen(new RollEditorScreen(pos, this, be.roll().get(Instruments.MUSIC_ROLL.get())));
+    }
+
+    // —— 屏幕键盘 ——
+
+    private record KeyRect(int pitch, int x, int y, int w, int h, boolean black, String label) {}
+
+    private List<KeyRect> keyboard() {
+        List<KeyRect> keys = new ArrayList<>();
+        int left = x0 + PAD, top = y0 + 64, area = W - PAD * 2, height = 92;
+        if (diatonic) {
+            int n = KeyLayout.DIATONIC.length();
+            int kw = area / n;
+            for (int i = 0; i < n; i++) {
+                keys.add(new KeyRect(KeyLayout.whitePitch(base, i, sharp), left + i * kw, top, kw - 1, height, false,
+                    KeyLayout.label(KeyLayout.DIATONIC.charAt(i))));
+            }
+            return keys;
+        }
+        String layout = KeyLayout.chromatic();
+        int whites = 0;
+        for (int i = 0; i < layout.length(); i++) if (!KeyLayout.isBlack(base + i)) whites++;
+        int kw = Math.min(22, area / Math.max(1, whites));
+        int wi = 0;
+        List<KeyRect> blacks = new ArrayList<>();
+        for (int i = 0; i < layout.length(); i++) {
+            int p = base + i;
+            String label = KeyLayout.label(layout.charAt(i));
+            if (KeyLayout.isBlack(p)) {
+                int bw = kw * 3 / 5;
+                blacks.add(new KeyRect(p, left + wi * kw - bw / 2, top, bw, height * 3 / 5, true, label));
+            } else {
+                keys.add(new KeyRect(p, left + wi * kw, top, kw - 1, height, false, label));
+                wi++;
+            }
+        }
+        keys.addAll(blacks);
+        return keys;
+    }
+
+    private boolean sounding(int pitch) {
+        return held.containsValue(pitch) || mousePitch == pitch;
+    }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (!rollPage && event.button() == 0 && !busy()) {
+            List<KeyRect> keys = keyboard();
+            for (int i = keys.size() - 1; i >= 0; i--) {
+                KeyRect k = keys.get(i);
+                if (event.x() >= k.x && event.x() < k.x + k.w && event.y() >= k.y && event.y() < k.y + k.h) {
+                    mousePitch = k.pitch;
+                    MusicClient.localNote(pos, k.pitch, velocity);
+                    return true;
+                }
+            }
+        }
+        return super.mouseClicked(event, doubleClick);
+    }
+
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (mousePitch >= 0) {
+            MusicClient.localNote(pos, mousePitch, 0);
+            mousePitch = -1;
+        }
+        return super.mouseReleased(event);
+    }
+
+    // —— 绘制 ——
+
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
+        Parchment.draw(g, x0, y0, W, H);
+        Component name = Component.translatable("block.logos_dimension." +
+            (kind() == InstrumentKind.GRAND_PIANO ? "starbloom_grand_piano" : "hexen_concert_harp"));
+        g.text(font, name, x0 + PAD, y0 + 24, Parchment.INK_TITLE, false);
+        if (rollPage) drawRollPage(g);
+        else drawPlayPage(g);
+        if (notice != null && System.currentTimeMillis() < noticeUntil) {
+            g.text(font, Component.literal(notice), x0 + PAD, y0 + H - PAD - 30, 0xFF8A2A1A, false);
+        }
+        super.extractRenderState(g, mouseX, mouseY, partialTick);
+    }
+
+    private void drawPlayPage(GuiGraphicsExtractor g) {
+        InstrumentBlockEntity be = entity();
+        Component status;
+        if (busy() && be != null) {
+            var other = Minecraft.getInstance().level.getPlayerByUUID(be.performer());
+            status = tr("busy", other == null ? "?" : other.getName().getString());
+        } else {
+            status = tr("status", KeyLayout.noteName(base), velocity, pedal ? "●" : "○");
+        }
+        g.text(font, status, x0 + PAD, y0 + 44, Parchment.INK, false);
+        var r = MusicClient.recorder;
+        if (r != null) {
+            g.text(font, tr("recording", RollInfo.clock(r.elapsedMs()), r.count()), x0 + PAD + 200, y0 + 44, 0xFFA02020, false);
+        }
+        for (KeyRect k : keyboard()) {
+            boolean on = sounding(k.pitch);
+            int fill = k.black ? (on ? Parchment.GOLD : 0xFF241812) : (on ? 0xFFF4D27A : 0xFFF6F0E2);
+            g.fill(k.x, k.y, k.x + k.w, k.y + k.h, fill);
+            g.outline(k.x, k.y, k.w, k.h, k.black ? 0xFF120A06 : 0xFF8C7A60);
+            int labelColor = k.black ? 0xFFE8DCC0 : Parchment.INK_HINT;
+            int lx = k.x + (k.w - font.width(k.label)) / 2;
+            g.text(font, Component.literal(k.label), lx, k.y + k.h - 11, labelColor, false);
+            if (!k.black && Math.floorMod(k.pitch, 12) == 0) {
+                g.text(font, Component.literal(KeyLayout.noteName(k.pitch)), k.x + 1, k.y + 2, 0xFFB09A78, false);
+            }
+        }
+        if (diatonic) {
+            StringBuilder sb = new StringBuilder();
+            String[] names = {"C", "D", "E", "F", "G", "A", "B"};
+            for (int i = 0; i < 7; i++) sb.append(i + 1).append(':').append(names[i]).append(sharp[i] ? "♯ " : "♮ ");
+            g.text(font, Component.literal(sb.toString()), x0 + PAD, y0 + 158 - 2, Parchment.INK_HINT, false);
+        }
+        g.text(font, diatonic ? tr("hint_diatonic") : tr("hint"), x0 + PAD, y0 + H - PAD - 10, Parchment.INK_HINT, false);
+    }
+
+    private void drawRollPage(GuiGraphicsExtractor g) {
+        InstrumentBlockEntity be = entity();
+        int x = x0 + PAD, y = y0 + 44;
+        ItemStack slot = be == null ? ItemStack.EMPTY : be.roll();
+        RollInfo info = slot.get(Instruments.MUSIC_ROLL.get());
+        if (slot.isEmpty()) {
+            g.text(font, tr("slot_empty"), x, y, Parchment.INK, false);
+        } else if (info == null) {
+            g.text(font, tr("slot_blank"), x, y, Parchment.INK, false);
+        } else {
+            g.text(font, Component.literal(info.title().isEmpty() ? "—" : info.title()), x, y, Parchment.INK_TITLE, false);
+            g.text(font, tr("slot_info", info.author().isEmpty() ? "—" : info.author(), RollInfo.clock(info.durationMs()), info.noteCount()),
+                x, y + 12, Parchment.INK, false);
+        }
+        MusicClient.Track t = MusicClient.track(pos);
+        Component state;
+        if (t == null) {
+            state = tr("state_stopped");
+        } else {
+            int now = t.positionMs(System.nanoTime());
+            int total = t.roll == null ? 0 : t.roll.durationMs();
+            state = tr(t.playing ? "state_playing" : "state_paused", RollInfo.clock(now), RollInfo.clock(total));
+            if (t.roll == null && t.rollId != null && MusicClient.missing(t.rollId)) state = tr("state_missing");
+        }
+        g.text(font, state, x, y + 28, Parchment.INK_HINT, false);
+        if (info != null && info.parts().size() > 1) g.text(font, tr("parts"), x, y0 + 114, Parchment.INK_HINT, false);
+    }
+}

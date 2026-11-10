@@ -74,6 +74,7 @@ public final class LogosDimension {
         dev.logos.dimension.economy.Economy.register(bus);
         dev.logos.dimension.tarot.TarotCards.register(bus);
         dev.logos.dimension.paint.PaintSystem.register(bus);
+        dev.logos.dimension.music.Instruments.register(bus);
         dev.logos.dimension.npc.NpcEntities.register(bus);
         dev.logos.dimension.shiraume.ShiraumeEntities.register(bus);
         dev.logos.dimension.companion.Companions.register(bus);
@@ -83,6 +84,7 @@ public final class LogosDimension {
         DimensionGameTests.register(bus);
         dev.logos.dimension.gametest.CloudseaGameTests.register(bus);
         dev.logos.dimension.gametest.CreativeTabGameTests.register(bus);
+        dev.logos.dimension.gametest.InstrumentGameTests.register(bus);
         dev.logos.dimension.gametest.FoxfireGameTests.register(bus);
         dev.logos.dimension.gametest.ShiraumeGameTests.register(bus);
         dev.logos.dimension.gametest.ReifuGameTests.register(bus);

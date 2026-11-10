@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:paper",
+    "minecraft:paper",
+    "minecraft:paper",
+    "minecraft:string"
+  ],
+  "result": {
+    "id": "logos_dimension:blank_music_roll",
+    "count": 1
+  }
+}

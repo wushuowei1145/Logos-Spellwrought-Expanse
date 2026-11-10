@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "QGQ",
+    "PNP",
+    "S S"
+  ],
+  "key": {
+    "Q": "minecraft:quartz_block",
+    "G": "minecraft:gold_ingot",
+    "P": "minecraft:dark_oak_planks",
+    "N": "minecraft:note_block",
+    "S": "minecraft:stick"
+  },
+  "result": {
+    "id": "logos_dimension:starbloom_grand_piano",
+    "count": 1
+  }
+}

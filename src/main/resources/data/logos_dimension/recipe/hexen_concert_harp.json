@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " GS",
+    "GNS",
+    "PPP"
+  ],
+  "key": {
+    "G": "minecraft:gold_ingot",
+    "S": "minecraft:string",
+    "N": "minecraft:note_block",
+    "P": "minecraft:birch_planks"
+  },
+  "result": {
+    "id": "logos_dimension:hexen_concert_harp",
+    "count": 1
+  }
+}
