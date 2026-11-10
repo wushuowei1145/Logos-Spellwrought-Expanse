@@ -17,6 +17,18 @@
 ./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:organ_*"
 ./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=organ_views,organ_play_ui" -PldTestHeadless -PldTestWindow=1280x720
 ```
+## 白梅装束：浴衣「梅灯夜渡」
+
+2026-11-11：分支 `feat/shiraume-outfits`，基于 main `b70ec0f5`（#235）。Logos jar 同「白梅同伴（第二版）」。模型是仓库外 `fox_model/nine_tailed_fox_companion` 的 `_9`（维护者画的浴衣 `skins/umeakari` 按规范整理，见那里 README「第 9 版」）；设计见 [白梅同伴](docs/SHIRAUME_COMPANION.md) 第 8.10 节。试玩包 `builds/shiraume-outfits-2026-11-11`。
+
+| 层级 | 结果 |
+| --- | --- |
+| 模型 | `tools/validate_companion.py` **18/18**（贴图 1 纹素/单位、方块名唯一、动画骨骼都在、导出一致等）。原稿三处不合规范：两套衣服同名骨骼、贴图约 8–16 纹素/单位、49 个方块重名；整理后 1027 块、273 根骨骼、55 段动画，贴图 128×141 |
+| 单元 | 新增 `CompanionOutfitTest` **3/3**（两套装束的组挂在同一组衣服骨骼下、隐藏别的装束不碰共用骨骼、梅灯梅花簪在浴衣组里且有摆动）；`CompanionPactTest` 12/12、`CompanionTest` 6/6、`NpcAnimationsTest` 5/5（立契的刻数和新动画文件的标记仍然一致） |
+| 实际客户端 | `shiraume_companion` **15/15 场景、44/44 检查**；新增 `companion_outfit`（平时巫女服；泡温泉换上浴衣，客户端也是；出浴后还穿着；尸壳冲她来就换回巫女服；命令能换）。打两只神狐这一轮 2/3 |
+| 问题与修正 | 立契过场机位二又被挡：测试里主人手是空的，献上的流火直接塞到手上，发光的刀横在镜头前。献上的东西改放背包里手上以外的空格，重跑 `companion_pact`、`companion_pact_again`、`companion_outfit` 3/3（17/17 检查），机位二只拍到她和形代 |
+| 截图人工看过 | 浴衣站姿（藏青底白梅点、青绿腰带红腰绳、梅灯、木屐红鼻绪、梅花簪）、泡温泉换装的花瓣、巫女服预览与第 8 版一致；离线预览含原稿对照 |
+| 没做 | 花纹按 1 纹素/单位重画的样子待维护者确认；夏夜祭典没有；多人、光影包没测 |
 
 ## 魔女之森乐器（第一版）
 

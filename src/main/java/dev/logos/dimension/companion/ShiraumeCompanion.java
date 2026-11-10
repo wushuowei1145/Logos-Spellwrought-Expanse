@@ -110,6 +110,8 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
     private static final EntityDataAccessor<String> BLADE_STATE = SynchedEntityData.defineId(ShiraumeCompanion.class, EntityDataSerializers.STRING);
     /** 狐火灯亮着（客户端按它画她身边飘着的那团淡粉狐火）。 */
     private static final EntityDataAccessor<Boolean> LANTERN = SynchedEntityData.defineId(ShiraumeCompanion.class, EntityDataSerializers.BOOLEAN);
+    /** 当前装束的 ID（{@link CompanionOutfit}）。 */
+    private static final EntityDataAccessor<String> OUTFIT = SynchedEntityData.defineId(ShiraumeCompanion.class, EntityDataSerializers.STRING);
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     final CompanionMood mood = new CompanionMood(this);
@@ -164,6 +166,7 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
         builder.define(MODE, (byte) Mode.COMPANION.ordinal());
         builder.define(BLADE_STATE, "0|0");
         builder.define(LANTERN, false);
+        builder.define(OUTFIT, CompanionOutfit.MIKO.id);
     }
 
     @Override
@@ -503,6 +506,31 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
         }
         BlockPos head = blockPosition().above();
         setLantern(CompanionLight.hold(level, head) || CompanionLight.hold(level, blockPosition()));
+    }
+
+    // ---------------------------------------------------------------- 装束
+
+    private long dressedAt;
+
+    public CompanionOutfit outfit() {
+        return CompanionOutfit.byId(entityData.get(OUTFIT));
+    }
+
+    /** 换上 {@code o}（已经穿着就只记下时间）：身边一阵花瓣和淡粉狐火，像变身一样换好。 */
+    void dress(CompanionOutfit o, long now) {
+        dressedAt = now;
+        if (outfit() == o) return;
+        entityData.set(OUTFIT, o.id);
+        if (level() instanceof ServerLevel level) {
+            level.sendParticles(ParticleTypes.CHERRY_LEAVES, getX(), getY() + .7, getZ(), 24, .35, .5, .35, .03);
+            level.sendParticles(new DustParticleOptions(FoxfireFlame.SHIRAUME.core, 1.2f), getX(), getY() + .7, getZ(), 16, .3, .45, .3, 0);
+            level.playSound(null, getX(), getY(), getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.NEUTRAL, .7f, 1.4f);
+        }
+    }
+
+    /** 上次换装（或泡着温泉、续上浴衣）是哪一刻。 */
+    long dressedAt() {
+        return dressedAt;
     }
 
     public boolean lanternOn() {
@@ -858,6 +886,7 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
         super.addAdditionalSaveData(output);
         if (owner != null) output.store("Owner", UUIDUtil.CODEC, owner);
         output.putBoolean("Staying", staying);
+        output.putString("Outfit", outfit().id);
         // 过场中途存档：读回来接着等
         output.putBoolean("Waiting", waiting());
     }
@@ -867,6 +896,7 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
         super.readAdditionalSaveData(input);
         owner = input.read("Owner", UUIDUtil.CODEC).orElse(null);
         staying = input.getBooleanOr("Staying", false);
+        entityData.set(OUTFIT, CompanionOutfit.byId(input.getStringOr("Outfit", CompanionOutfit.MIKO.id)).id);
         // 泡温泉时存的档：泡的状态不存，失重也别带回来
         setNoGravity(false);
         if (input.getBooleanOr("Waiting", false) && owner != null) waitFor(owner);

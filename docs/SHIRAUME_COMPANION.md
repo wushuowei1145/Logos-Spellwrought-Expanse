@@ -333,15 +333,20 @@ Logos 本来就是「说出的道理」。玩家用术式编辑器那种节点�
 - 一起泡（每天头一次）好感加一点。
 - 补充：出水时像狐狸一样抖一抖水。要新动作，这一版不做。
 
-### 8.10 装束（换装）：建议做，做法和车万女仆不同
+### 8.10 装束（换装）：做法和车万女仆不同
 
-二游里角色的装束本来就是塑造角色的一部分。跟着场合换装（泡温泉、夏夜祭典穿浴衣）是陪伴感，不是私人定制。建议这样做：
+二游里角色的装束本来就是塑造角色的一部分。跟着场合换装（泡温泉、夏夜祭典穿浴衣）是陪伴感，不是私人定制。
 
 - 每个同伴有几套写好的装束，不做自由搭配，也不导入模型包；
-- 按场合自动换：泡温泉、夏夜祭典换浴衣，回到冒险换回巫女服。以后也可以在对话或契令里让她换；
-- 做法同神狐：一个模型里放所有装束的方块组，渲染时按当前装束隐藏其余的组（神狐 `npcAppearance` 里的 `outfit`）。
+- 按场合自动换，以后也可以在对话或契令里让她换；
+- 做法同神狐：一个模型里放所有装束的方块组，渲染时按当前装束隐藏其余的组。
 
-浴衣的方块和贴图要美术（建议白底淡粉梅纹、红腰带），这一版不做，等维护者定是自己画还是先由我出一版。
+**已做（模型第 9 版）**：两套，巫女服 `miko` 和维护者画的浴衣「梅灯夜渡」`umeakari`（藏青渐变底、白梅红梅、青绿腰带、红腰绳、腰上的梅灯、发上的梅花簪、木屐）。
+
+- 模型：每根衣服骨骼下分出 `outfit_miko_<骨骼>`、`outfit_umeakari_<骨骼>` 两个组（枢轴同父骨骼，动画照旧作用在父骨骼上），各放那套衣服的方块；两套之间没有共用的方块。梅灯 `UmeLantern`、梅花簪 `UmeKanzashi` 挂在浴衣的组下，在待机、走、跑、挥手、笑、施法里跟着摆。
+- 贴图按规范 1 纹素/单位：原稿每个面铺一整幅 64×64 的画（约 8–16 纹素/单位），这里按图层重画成像素图——底色留成色带，青海波隔格留一排，金线红边留一格宽的线，梅花点成一个个色点（维护者选的「按规范重画」）。
+- 换装：她下到温泉里泡着时换上浴衣（一阵花瓣和淡粉狐火）；出浴后再穿 5 分钟（`CompanionOutfit.LINGER`）；一打起来（迎战、护主、缠火、处决、后撤、拿着刀）马上换回巫女服。装束随她存档。
+- 渲染：隐藏别的装束的顶层组，连同子骨骼。
 
 ### 8.11 交互一览
 
@@ -369,7 +374,7 @@ Logos 新增 `LastingCompanion` 接口（属于 `KeptFamiliar` 的一种，Logos
 - **性格的分寸**：建议战斗命令一定听，小事上有主见（偶尔闹别扭、捉弄你）。
 - **强度**：第一版是「靠得住但不替你通关」，试玩后再调。
 - **契令接 Logos 的方式**：定了，给 Logos 加长期同伴接口（第 8.12 节）。
-- **浴衣**：自己画，还是先由我出一版（第 8.10 节）。
+- **浴衣**：维护者画了「梅灯夜渡」，第 9 版接入（第 8.10 节）；花纹按 1 纹素/单位重画的样子待维护者确认。夏夜祭典还没有，以后有了也换浴衣。
 - **契印第二印以后的机制**：第 5 节的清单里「连携收刀」已经成了第二版的基础能力（第 8.4 节），要换一条。
 - **重复打的 Boss 要不要跟着她的阶数变强。**
 
@@ -389,6 +394,7 @@ Logos 新增 `LastingCompanion` 接口（属于 `KeptFamiliar` 的一种，Logos
 | 截弹射物、形代替身 | `companion/CompanionGuard.java` |
 | 吃什么 | `companion/CompanionFood.java`，物品标签 `shiraume_favorite_food`、`shiraume_refused_food` |
 | 狐火灯 | `companion/CompanionLight.java` |
+| 装束 | `companion/CompanionOutfit.java`；换装在 `CompanionMind`（温泉、开打），隐藏在 `client/companion/CompanionClient.java` |
 | 台词 | `companion/CompanionLines.java`、`client/companion/CompanionLinesHud.java`；台词在语言文件 `line.logos_dimension.shiraume.*` |
 | 接 Logos | `companion/LogosCompanionBridge.java`（Logos 的 `LastingCompanion`） |
 | 渲染 | `client/companion/CompanionClient.java`（流火画在 `Weapon` 骨骼上，复用 Boss 的 `RyukaOnBone`） |
@@ -408,6 +414,7 @@ Boss 战击败后不再在场地中央掉流火：`ShiraumeFight.reward` 改为�
 /alchemy companion pact          在你面前放一位跪坐等你的白梅（不用打 Boss，试立契）
 /alchemy companion seal [枚数]   盖契印
 /alchemy companion satiety 值    设她的饱腹（0 到 20）
+/alchemy companion outfit 装束   换装束：miko（巫女服）、umeakari（梅灯夜渡，浴衣）
 ```
 
 ### 10.2 测试
@@ -415,9 +422,11 @@ Boss 战击败后不再在场地中央掉流火：`ShiraumeFight.reward` 改为�
 - **单元**：
   - `CompanionTest`：数值继承照原版的算法、剔掉状态效果给的加成、近战与法强取高、阶数与上限、玩家模型的判断；
   - `CompanionPactTest`：一天里吃饭、摸头的好感递减；饱腹；好感阶段；第一印；截弹射物的判断（正对着的截、擦身的和太远的不截、火球没有重力）；招式文件里每一招在模型里都有动作；立契、吃东西、摘浆果的服务端时刻和动画的时间标记一致；立契的两个机位看她时视线不穿过主人（旧的机位二会）；突刺冲的那一段同 Boss；每一招平均每砍中一下不超过半秒；基础一刀同玩家手里流火的一刀。
-- **实际客户端**：`shiraume_companion` 一组十四个场景，在白瓷台上，镜头就是玩家的视线：
+  - `CompanionOutfitTest`：两套装束的组挂在同一组衣服骨骼下、组名 `outfit_<id>_<父骨骼>`；隐藏别的装束不会碰到共用的骨骼；梅灯、梅花簪在浴衣的组里，而且有摆动。
+- **实际客户端**：`shiraume_companion` 一组十五个场景，在白瓷台上，镜头就是玩家的视线：
   - 第一版：`companion_summon`、`companion_fight`、`companion_sleep`、`companion_death`；
   - 第二版：`companion_boss_reward`（打倒狐形白梅后她跪坐着等你，不再掉流火）、`companion_pact`（站在两格外说话：发抖、献刀、折形代、立契，Logos 认她是长期同伴）、`companion_pact_again`（贴着她说话先退开；空白形代、盖契印）、`companion_melee`（60 血的尸壳：突刺只拉近，接着连砍）、`companion_vs_foxes`（两只寻常神狐一起上，连打三轮至少赢两轮）、`companion_guard`、`companion_execute`、`companion_feed`（喂浆果、拒吃腐肉、饿了自己摘浆果）、`companion_soak`（一格半深的露天风吕格局里浮着泡、过了呛水的时间还在泡；换到浅池跟过去坐在池底泡）、`companion_lantern`（露天不点灯，屋里飘起狐火灯；包袱）。
+  - 装束：`companion_outfit`（泡温泉换上浴衣，客户端也是；出浴后还穿着；尸壳冲她来就换回巫女服；命令能换）。
 - Boss 战的 `shiraume_duel` 最后一步改成检查她跪坐等你（原来是流火落在场地中央）。
 - **世界测试**（GameTest）没写，服务端的行为由实际客户端场景覆盖。
 

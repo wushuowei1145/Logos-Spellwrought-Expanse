@@ -226,6 +226,9 @@ public final class CompanionMind extends Goal {
         }
         // 没在打了：刀收起来
         if (!engaged() && current != Kind.RETREAT && c.blade().drawn() && !c.blade().executing()) c.blade().sheathe();
+        // 浴衣（第 8.10 节）：一打起来就换回巫女服；出浴后穿一阵（CompanionOutfit.LINGER）再换回
+        if (c.outfit() == CompanionOutfit.UMEAKARI && (engaged() || current == Kind.RETREAT || c.blade().drawn()
+                || current != Kind.SOAK && now - c.dressedAt() > CompanionOutfit.LINGER)) c.dress(CompanionOutfit.MIKO, now);
         if (dog != null) c.mood.afraid(now);
     }
 
@@ -774,6 +777,8 @@ public final class CompanionMind extends Goal {
         c.setPos(c.position().lerp(new Vec3(at.x, soakY, at.z), .3));
         c.setDeltaMovement(Vec3.ZERO);
         c.setAirSupply(c.getMaxAirSupply());
+        // 泡温泉换上浴衣（泡着时一直续着，出浴后再穿一阵）
+        c.dress(CompanionOutfit.UMEAKARI, now);
         c.mood.pose("soak");
         c.getLookControl().setLookAt(p, 10, 10);
         if (soakSince < 0) soakSince = now;
