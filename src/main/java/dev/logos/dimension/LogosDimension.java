@@ -4,10 +4,8 @@ import com.mojang.serialization.MapCodec;
 import dev.logos.dimension.gametest.DimensionGameTests;
 import dev.logos.dimension.world.LegacyWorldgenCodecs;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -24,61 +22,11 @@ public final class LogosDimension {
     public static final ResourceKey<Level> CLOUDSEA = ResourceKey.create(Registries.DIMENSION, id("cloudsea"));
     private static final DeferredRegister<MapCodec<? extends ChunkGenerator>> GENERATORS = DeferredRegister.create(Registries.CHUNK_GENERATOR, ID);
     private static final DeferredRegister<MapCodec<? extends BiomeSource>> BIOME_SOURCES = DeferredRegister.create(Registries.BIOME_SOURCE, ID);
-    private static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, ID);
     static {
         GENERATORS.register("crucible", () -> LegacyWorldgenCodecs.generator("crucible"));
         BIOME_SOURCES.register("alchemical", () -> LegacyWorldgenCodecs.ALCHEMICAL);
         GENERATORS.register("cloudsea", () -> LegacyWorldgenCodecs.generator("journey"));
         BIOME_SOURCES.register("cloudsea", () -> LegacyWorldgenCodecs.CLOUDSEA);
-        TABS.register("cloudsea", () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.logos_dimension.cloudsea"))
-                .icon(() -> dev.logos.dimension.cloudsea.CloudseaBlocks.PORCELAIN.get().asItem().getDefaultInstance())
-                .displayItems((p,out) -> {
-                    dev.logos.dimension.cloudsea.CloudseaBlocks.PALETTE.forEach(b -> out.accept(b.get()));
-                    out.accept(dev.logos.dimension.cloudsea.CloudseaBlocks.GRAPES.get());out.accept(dev.logos.dimension.cloudsea.CloudseaBlocks.GRAPE_LEAF.get());
-                    out.accept(dev.logos.dimension.item.NaturesForceItem.ITEM.get());
-                    out.accept(dev.logos.dimension.item.ElfSpearItem.ITEM.get());
-                    out.accept(dev.logos.dimension.item.AncientEmbraceItem.ITEM.get());
-                    out.accept(dev.logos.dimension.item.LongswordItem.DAWNVOW.get());
-                    out.accept(dev.logos.dimension.dawnvow.Dawnvow.STONE.get());
-                    out.accept(dev.logos.dimension.dawnvow.Dawnvow.EMPTY_STONE.get());
-                    out.accept(dev.logos.dimension.explosion.ExplosionStaffItem.ITEM.get());
-                    out.accept(dev.logos.dimension.item.LongswordItem.BLACKSTEEL.get());
-                    out.accept(dev.logos.dimension.item.LingxiaoSwordItem.ITEM.get());
-                    out.accept(dev.logos.dimension.item.JinghongSwordItem.ITEM.get());
-                    out.accept(dev.logos.dimension.item.UchigatanaItem.INK.get());
-                    out.accept(dev.logos.dimension.item.UchigatanaItem.VERMILION.get());
-                    out.accept(dev.logos.dimension.item.UchigatanaItem.INDIGO.get());
-                    out.accept(dev.logos.dimension.item.UchigatanaItem.WOOD.get());
-                    out.accept(dev.logos.dimension.item.OathSpearItem.PACK_OATH.get());
-                    out.accept(dev.logos.dimension.item.YumiItem.BAMBOO.get());
-                    out.accept(dev.logos.dimension.item.YumiItem.VERMILION.get());
-                    out.accept(dev.logos.dimension.item.YumiItem.INDIGO.get());
-                    out.accept(dev.logos.dimension.item.YumiItem.CHESTNUT.get());
-                    out.accept(dev.logos.dimension.item.RyukaItem.ITEM.get());
-                    out.accept(dev.logos.dimension.paint.PaintSystem.BRUSH.get());
-                    out.accept(dev.logos.dimension.paint.PaintSystem.PALETTE_ITEM.get());
-                    out.accept(dev.logos.dimension.cloudsea.AquaticFlora.SEAGRASS_ITEM.get());
-                    out.accept(dev.logos.dimension.cloudsea.AquaticFlora.GLOW_SEAGRASS_ITEM.get());
-                    out.accept(dev.logos.dimension.cloudsea.AquaticFlora.KELP_ITEM.get());
-                    out.accept(dev.logos.dimension.cloudsea.FoxWildsBlocks.EMA_RACK.get());
-                    out.accept(dev.logos.dimension.cloudsea.FoxWildsBlocks.EMA.get());
-                    out.accept(dev.logos.dimension.cloudsea.FoxWildsBlocks.OMIKUJI_BOX.get());
-                    out.accept(dev.logos.dimension.cloudsea.FoxWildsBlocks.OMIKUJI_RACK.get());
-                    out.accept(dev.logos.dimension.cloudsea.FoxWildsBlocks.MENU_STRIPS.get());
-                    out.accept(dev.logos.dimension.reifu.Reifu.FUDA_DESK_ITEM.get());
-                    dev.logos.dimension.reifu.Reifu.REIFU.values().forEach(r -> out.accept(r.blank().get()));
-                    out.accept(dev.logos.dimension.gate.Gate.GATE_STONE.get());
-                }).build());
-        TABS.register("crucible", () -> CreativeModeTab.builder().title(Component.translatable("itemGroup.logos_dimension"))
-                .icon(() -> DimensionBlocks.SALT_CRYSTAL.get().asItem().getDefaultInstance())
-                .displayItems((p, out) -> {
-                    DimensionBlocks.PALETTE.forEach(b -> out.accept(b.get()));
-                    out.accept(DimensionFluids.MERCURY_BUCKET.get()); out.accept(DimensionFluids.GLASS_BUCKET.get());
-                    out.accept(dev.logos.dimension.camera.CameraTestBlock.BLOCK.get());
-                    out.accept(dev.logos.dimension.corruption.Corruption.CORE.get());
-                    out.accept(dev.logos.dimension.corruption.Corruption.BLOCK.get());
-                    out.accept(dev.logos.dimension.corruption.Corruption.VEIN.get());
-                }).build());
     }
     public LogosDimension(IEventBus bus, net.neoforged.fml.ModContainer container) {
         container.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, ClientConfig.SPEC);
@@ -131,9 +79,10 @@ public final class LogosDimension {
         dev.logos.dimension.companion.Companions.register(bus);
         dev.logos.dimension.foxfire.Foxfire.register(bus);
         dev.logos.dimension.reifu.Reifu.register(bus);
-        GENERATORS.register(bus); BIOME_SOURCES.register(bus); TABS.register(bus);
+        GENERATORS.register(bus); BIOME_SOURCES.register(bus); AddonTabs.register(bus);
         DimensionGameTests.register(bus);
         dev.logos.dimension.gametest.CloudseaGameTests.register(bus);
+        dev.logos.dimension.gametest.CreativeTabGameTests.register(bus);
         dev.logos.dimension.gametest.FoxfireGameTests.register(bus);
         dev.logos.dimension.gametest.ShiraumeGameTests.register(bus);
         dev.logos.dimension.gametest.ReifuGameTests.register(bus);
