@@ -163,7 +163,8 @@ final class TrailRibbon {
     private static void strip(PoseStack.Pose pose, VertexConsumer buf, Vec3 p, Vec3 origin, float age, float v, int seed, float fade, float arc) {
         int units = Math.floorMod(Math.round(arc * 64), 32768);
         buf.addVertex(pose, (float) (p.x - origin.x), (float) (p.y - origin.y), (float) (p.z - origin.z))
-                .setColor(255, 255, 255, Math.round(Math.clamp(fade, 0, 1) * 255)).setUv(age, v).setLight(units | seed << 16);
+                .setColor(255, 255, 255, Math.round(Math.clamp(fade, 0, 1) * 255)).setUv(age, v).setLight(units | seed << 16)
+                .setNormal(pose, 0, 1, 0);
     }
 
     private static void corner(PoseStack.Pose pose, VertexConsumer buf, Point p, float across, Vec3 origin, float age, float v,
@@ -174,8 +175,9 @@ final class TrailRibbon {
         double z = p.base.z + (p.tip.z - p.base.z) * across + out.z - origin.z;
         int arc = Math.floorMod(Math.round(p.arc * 64), 32768);
         int alpha = Math.round(Math.clamp(fade, 0, 1) * 255);
+        // 顶点写全（Logos SHADER_PACK_VFX.md）：开光影时 Iris 把格式换成带法线的扩展格式，少写法线会崩溃；没有光影时多写的元素被忽略
         buf.addVertex(pose, (float) x, (float) y, (float) z).setColor(255, 255, 255, alpha).setUv(age, v)
-                .setLight(arc | seed << 16);
+                .setLight(arc | seed << 16).setNormal(pose, 0, 1, 0);
     }
 
     /** 最近一段里刀尖走过的点（新到旧），给泛光与粒子用。 */
