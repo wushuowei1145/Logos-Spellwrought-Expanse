@@ -20,6 +20,7 @@ import net.minecraft.world.phys.Vec3;
  * /alchemy companion pact          在你面前放一位跪坐等你的白梅（不用打 Boss，试立契）
  * /alchemy companion seal [枚数]   盖契印（默认一枚）
  * /alchemy companion satiety 值    设她的饱腹（0–20，试吃东西、摘浆果）
+ * /alchemy companion outfit 装束   换装束：miko（巫女服）、umeakari（梅灯夜渡，浴衣）
  * </pre>
  */
 public final class CompanionCommands {
@@ -58,7 +59,26 @@ public final class CompanionCommands {
                     ServerPlayer p = c.getSource().getPlayerOrException();
                     Companions.setSatiety(p, FloatArgumentType.getFloat(c, "value"));
                     return 1;
-                })));
+                })))
+                .then(outfits());
+    }
+
+    /** {@code outfit <装束>}：给外面的她换上（浴衣照常穿一阵、一打起来换回巫女服）。 */
+    private static LiteralArgumentBuilder<CommandSourceStack> outfits() {
+        LiteralArgumentBuilder<CommandSourceStack> node = Commands.literal("outfit");
+        for (CompanionOutfit o : CompanionOutfit.values()) {
+            node.then(Commands.literal(o.id).executes(c -> {
+                ShiraumeCompanion s = Companions.out(c.getSource().getPlayerOrException());
+                if (s == null) {
+                    c.getSource().sendFailure(Component.literal("白梅不在外面"));
+                    return 0;
+                }
+                s.dress(o, s.level().getGameTime());
+                c.getSource().sendSuccess(() -> Component.literal("白梅换上了 " + o.id), false);
+                return 1;
+            }));
+        }
+        return node;
     }
 
     private static int seal(CommandSourceStack src, int count) throws CommandSyntaxException {

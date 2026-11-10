@@ -178,8 +178,20 @@ public final class ShiraumePact {
         Companions.join(p, c);
     }
 
+    /**
+     * 献上的东西先放进背包里手上以外的空格：手是空的话，原版会塞到手上，过场里拿在手上的流火会横在机位二前面（又被自己挡住）。
+     * 没有别的空格才照原版放。
+     */
     private static void give(ServerPlayer p, ItemStack stack) {
-        if (!p.getInventory().add(stack)) p.drop(stack, false);
+        var inv = p.getInventory();
+        var items = inv.getNonEquipmentItems();
+        for (int i = 0; i < items.size(); i++) {
+            if (i != inv.getSelectedSlot() && items.get(i).isEmpty()) {
+                inv.setItem(i, stack);
+                return;
+            }
+        }
+        if (!inv.add(stack)) p.drop(stack, false);
     }
 
     private static void puff(ServerLevel level, Vec3 at) {
