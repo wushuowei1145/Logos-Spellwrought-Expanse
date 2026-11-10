@@ -33,7 +33,7 @@ import org.joml.Matrix4f;
  * 神狐的渲染：刀由模型里的 {@code Weapon} / {@code Sheath} 骨骼画（打刀动作直接驱动），和弓由 {@code Yumi} 骨骼下的弓画，
  * 所以手里的刀和和弓不再按物品画一遍；拉和弓时上半身跟着视线俯仰；
  * 缠着狐火缠绕时，刀身与手里的弓燃起幽蓝的狐火——复用 Logos 的物品表面火焰（{@code /alchemy aura fire}），色相转到鬼火的蓝，
- * 并换掉 Logos 按奥秘元素画的缠绕外观。
+ * 并换掉 Logos 按奥秘元素画的缠绕外观。挥刀时刀身扫过的地方留下刀光（{@link FoxBladeTrail}，和弓没有）。
  */
 public class DivineFoxRenderer<R extends LivingEntityRenderState & GeoRenderState> extends NpcRenderer<DivineFox, R> {
     /** 火焰色相：原本的橙红转半圈，成为幽蓝的鬼火。 */
@@ -51,6 +51,10 @@ public class DivineFoxRenderer<R extends LivingEntityRenderState & GeoRenderStat
     private static final DataTicket<ItemStackRenderState> BLADE_FIRE = DataTicket.create("logos_dimension_fox_blade_fire", ItemStackRenderState.class);
     /** 这只神狐的刀装（刀身骨骼 {@code katana_<配色>_blade}）。 */
     private static final DataTicket<String> BLADE_BONE = DataTicket.create("logos_dimension_fox_blade_bone", String.class);
+    /** 本帧刀身的刀光（刀拿在手上时才有），见 {@link FoxBladeTrail}。 */
+    private static final DataTicket<FoxBladeTrail.Frame> BLADE_TRAIL = DataTicket.create("logos_dimension_fox_blade_trail", FoxBladeTrail.Frame.class);
+    /** 刀身骨骼的名字（按刀装下标），每帧用，不拼字符串。 */
+    private static final String[] BLADE_BONES = DivineFox.KATANAS.stream().map(v -> "katana_" + v + "_blade").toArray(String[]::new);
     /** 客户端测试用：画过几次刀身狐火。 */
     private static int bladeFires;
 
@@ -89,13 +93,20 @@ public class DivineFoxRenderer<R extends LivingEntityRenderState & GeoRenderStat
         ItemStack held = fox.getMainHandItem();
         boolean yumi = held.getItem() instanceof YumiItem;
         state.addGeckolibData(HOLDS_YUMI, yumi);
+        boolean katana = held.getItem() instanceof UchigatanaItem && !fox.isDeadOrDying();
+        // 刀光：刀拿在手上才送点（入鞘的刀、和弓都没有）
+        if (katana) {
+            state.addGeckolibData(BLADE_BONE, BLADE_BONES[fox.katanaVariant()]);
+            FoxBladeTrail.Frame trail = FoxBladeTrail.of(fox, partialTick, KATANA_SCALE / 16);
+            if (trail != null) state.addGeckolibData(BLADE_TRAIL, trail);
+        }
         // 只在刀拔出来（拿在手上）时画：入鞘的刀身在鞘里，火从鞘口冒出来不好看
-        if (fox.wrapped() && (yumi || held.getItem() instanceof UchigatanaItem) && !fox.isDeadOrDying()) {
+        if (fox.wrapped() && (yumi || katana) && !fox.isDeadOrDying()) {
             ItemStackRenderState item = new ItemStackRenderState();
             Minecraft.getInstance().getItemModelResolver().updateForLiving(item, held, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, fox);
             ghostFire(item, fox.getId());
             state.addGeckolibData(BLADE_FIRE, item);
-            state.addGeckolibData(BLADE_BONE, yumi ? DivineFox.YUMI_BONE : "katana_" + DivineFox.KATANAS.get(fox.katanaVariant()) + "_blade");
+            if (yumi) state.addGeckolibData(BLADE_BONE, DivineFox.YUMI_BONE);
         }
     }
 
@@ -103,9 +114,17 @@ public class DivineFoxRenderer<R extends LivingEntityRenderState & GeoRenderStat
     public void adjustRenderPose(RenderPassInfo<R> info) {
         super.adjustRenderPose(info);
         String name = info.getGeckolibData(BLADE_BONE);
-        if (info.getGeckolibData(BLADE_FIRE) == null || name == null) return;
+        if (name == null) return;
         GeoBone bone = info.model().boneLookup().get().get(name);
-        if (bone != null) info.addPerBoneRender(bone, this::submitBladeFire);
+        if (bone == null) return;
+        if (info.getGeckolibData(BLADE_FIRE) != null) info.addPerBoneRender(bone, this::submitBladeFire);
+        if (info.getGeckolibData(BLADE_TRAIL) != null) info.addPerBoneRender(bone, DivineFoxRenderer::submitBladeTrail);
+    }
+
+    /** 刀光：刀身骨骼此刻的姿势把骨骼坐标换成相对镜头的世界坐标，刀身两端已由 {@link FoxBladeTrail} 换算到骨骼里。 */
+    private static <R extends GeoRenderState> void submitBladeTrail(RenderPassInfo<R> info, GeoBone bone, SubmitNodeCollector out) {
+        FoxBladeTrail.Frame trail = info.getGeckolibData(BLADE_TRAIL);
+        if (trail != null) trail.feed(info.poseStack().last().pose());
     }
 
     /**

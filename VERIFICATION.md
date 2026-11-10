@@ -1,5 +1,16 @@
 # 首版验证记录
 
+## 刀光
+
+2026-11-09：分支 `feat/weapon-trails`，基于 main `bcae9d1d`（#219）。先做刀光核心（[docs/WEAPON_TRAILS.md](docs/WEAPON_TRAILS.md)），再按武器分头接入：长剑、长枪、凌霄、流火与白梅、神狐 NPC 的打刀各一个分支，合并回来；最后合进 main `4755289b`（#220 霊符），之后 Logos jar 要用 `builds/reifu-2026-11-09/logos-0.6.0-page-variants.jar`（#220 用到 Logos 的 writtenForm 钩子）。下面的结果是合进 main 之后重跑的。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 相关的 **75/75**：`WeaponTrailsTest`（样式与设置文件读得通、引用的贴图与动作都在、各网格自己的动作也认、出光时段不超出动作、七种元素加狐火都有样式；扫过的面按段记点、散尽后再送点另起一段、帧间补点贴着圆弧），各武器的 `*TrailsTest` 与原有的长剑、凌霄、流火、白梅、神狐、打刀、长枪测试 |
+| 实际客户端 | 8 个场景全部通过，**193/193 检查**：`weapon_trails`（打刀与七种元素缠绕）、`weapon_trails_dawnvow`、`weapon_trails_blacksteel`、`weapon_trails_spear`、`weapon_trails_lingxiao`、`ryuka_trails`、`shiraume_trails`、`weapon_trails_fox`。每一击都在画刀光、蓄势与待机时没有、回到待机后散尽、样式对，缠绕时换成对应元素，狐火缠绕换成狐火 |
+| 截图人工看过 | 背后、正面、侧面与第一人称：刀光都顺着挥刀的方向，白天亮天空前也看得出颜色；背后看竖劈、长枪横扫有刃线的朝镜头带子补上 |
+| 照 UE 重做之后 | 着色器与样式照 StylizedSlashesV2 的 `M_ComplexSlash_01` 重做（越老越从柄侧收窄、尾部被条纹侵蚀、颜色噪声流动、弯钩刃线）。8 个场景重跑 **193/193**，相关单元 **76/76**；打刀场景改成命中后约 0.1 秒定格（/tick freeze）再截，加了俯视机位；神狐场景结束时带走神狐与靶子，不再站到后面场景的镜头前。人工对照 UE 截图：刀光是头宽尾尖的月牙、尾部碎成条纹，流火回旋不再是一样宽的圈 |
+
 ## 九尾妖狐 白梅 Boss 战与狐火
 
 2026-11-09：分支 `feat/shiraume-boss`，基于 main `cd9ed21c`（#216），推送前 rebase 到 `a0bd54cc`（#217 只改爆裂魔法着色器）。Logos jar 用 `build-latest-20261105/logos-spell-ward`（`ba471315`，与 CI 的 `LOGOS_REF` 相同；试玩包里的 `logos-0.6.0-spell-ward.jar`）。设计见 [九尾妖狐 白梅](docs/SHIRAUME_BOSS.md)、[狐火](docs/FOXFIRE.md)。试玩包在仓库外的 `builds/shiraume-boss-2026-11-09`。

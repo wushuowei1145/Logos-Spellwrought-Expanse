@@ -1,0 +1,19 @@
+{
+  "blade": {
+    "from": 1.6,
+    "to": 18.0,
+    "tip_x": -2.25
+  },
+  "style": "logos_dimension:ryuka",
+  "fixed": true,
+  "auto": false,
+  "clips": {
+    "slash_1": {"windows": [[0.05, 0.15]]},
+    "slash_2": {"windows": [[0.04, 0.14]]},
+    "slash_3": {"windows": [[0.05, 0.16]]},
+    "slash_4": {"windows": [[0.09, 0.2]]},
+    "slash_5": {"windows": [[0.16, 0.25]]},
+    "parry": {"windows": [[0.0, 0.06]]},
+    "riposte": {"windows": [[0.02, 0.08]]}
+  }
+}

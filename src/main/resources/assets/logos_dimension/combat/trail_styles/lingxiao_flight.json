@@ -1,0 +1,64 @@
+{
+  "life": 0.7,
+  "expand": 0,
+  "layers": [
+    {
+      "mask": "logos_dimension:textures/vfx/trail/slash_wisp.png",
+      "span": [
+        -1.25,
+        1.25
+      ],
+      "colors": [
+        "#FFFFFF",
+        "#8FDCF2",
+        "#FFFFFF"
+      ],
+      "occlude": 0.35,
+      "color_strength": 2.6,
+      "color_tile": [
+        0.55,
+        1
+      ],
+      "color_pan": 0.7,
+      "hot_from": 0.7,
+      "hot_gain": 2,
+      "emissive_mask": 0.6,
+      "main_contrast": 1.5,
+      "opacity": 1,
+      "detail_noise": "logos:textures/vfx/charge_aura/noise_07.png",
+      "opacity_noise": {
+        "strength": 1.0,
+        "contrast": 2,
+        "tile": [
+          0.6,
+          1
+        ],
+        "pan": 0.8
+      },
+      "distort": 0.08,
+      "distort_tile": [
+        0.4,
+        1
+      ],
+      "distort_pan": 0.35,
+      "erosion": {
+        "amount": 1.0,
+        "start": 0.2,
+        "pow": 1.4,
+        "feather": 0.3,
+        "tile": [
+          0.3,
+          0.2
+        ]
+      },
+      "narrow": 0,
+      "narrow_pow": 1.2,
+      "narrow_soft": 0.15,
+      "fade": {
+        "in": 0.15,
+        "out": 0.15,
+        "tail": 0.3
+      }
+    }
+  ]
+}

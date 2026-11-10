@@ -233,9 +233,12 @@
 | 光源红晕 | `client/shiraume/ShiraumeHalos.java`（交给 `GlowBloom`） |
 | 标题 | `client/shiraume/ShiraumeTitle.java` |
 | 两种形态的渲染（流火画在 `Weapon` 骨骼上、凝聚、光环封印、双眼红光） | `client/shiraume/ShiraumeRenderer.java`、`ShiraumeBeastRenderer.java`、`RyukaOnBone.java` |
+| 流火的刀光（只在挥刀的那一段出光；刀身与样式读玩家流火的 `combat/trails/ryuka.json`） | `client/shiraume/ShiraumeTrails.java`，经 `BoneTrails` 送点（[刀光](WEAPON_TRAILS.md)） |
 | 命令 | `shiraume/ShiraumeCommands.java`（`/alchemy shiraume …`） |
 | 弹不开的攻击只算挡下 | 伤害类型标签 `logos_dimension:unparryable`，`LongswordCombat.blocked` 里看 |
 | 处决的伤害 | 伤害类型 `logos_dimension:shiraume_execution`（绕过护甲、附魔、抗性与盾，不绕过无敌） |
+
+刀光的出光时段按 GeckoLib 动画名记在 `ShiraumeTrails.WINDOWS`（人形 `ryuka_*`、狐形 `fox_bite_slash`），取自 `tools/shiraume_moves.py` 每一刀 `arc` 的起止；改了动作的时刻要一起改。时刻取模型上 `combat` 控制器自己播到的秒数，不按招式开始刻推算（客户端收到换招晚一两刻，一刀只挥 0.1 秒，推算会落在挥刀前的停顿里）。狐形只有叼刀甩头的 `bite_slash` 出光，爪击、尾扫不是刀。
 
 封印杭（`SealStakeBlock`）每断一根调 `ShiraumeFight.sealBroken`。`SanctuaryVaultPiece` 加了 `arenaBox()`。
 
@@ -261,9 +264,11 @@
 ```text
 ./gradlew runClient -PlogosJar=... -PldTest=shiraume_duel -PldTestHeadless -PldTestWindow=1280x720
 ./gradlew runClient -PlogosJar=... -PldTest=shiraume_awakening -PldTestHeadless -PldTestWindow=1280x720
+./gradlew runClient -PlogosJar=... -PldTest=group:weapon_trails_ryuka -PldTestHeadless -PldTestWindow=1280x720
 ```
 
 - `shiraume_duel`：白瓷台上召出人形，玩家站着挨打：出招、双眼红光、砍中；逼出投技，处决后只剩 1 点血，光环烧掉一枚；变身（光柱、狐形登场）；狐形出招；狂暴放狐火；击倒、化作花瓣、流火落下。
+- `shiraume_trails`（与玩家流火的 `ryuka_trails` 同组 `weapon_trails_ryuka`）：停掉 AI 逐一放人形各招与狐形的 `bite_slash`，挥到底时截图，检查留下流火的刀光、起手时没有、挥完散尽。
 - `shiraume_awakening`：真实的封印之间（同 `fox_vault_views` 强制每处聚落都有地下场地），拆掉九根封印杭：每根色散、红光、两次震动、爆炸、太近的玩家被挪到底座外、杀生石与底座拆干净、跪坐、起身凝刀、标题、开打。
 
 都只在不开光影、不装 Sodium 的无窗口客户端里跑过。光影包下的红光、色散、红晕没有测，没有真人操作的弹反手感也要进游戏试。

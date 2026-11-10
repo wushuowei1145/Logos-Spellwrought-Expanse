@@ -48,6 +48,8 @@ public final class LongswordClient {
                         LongswordPayload move, double time, org.joml.Vector3f tip, float glow, int glowColor) {}
 
     public static LongswordPayload pose(UUID player) { return STATES.get(player); }
+    /** 这个实体在这个视角的刀光现在用的样式；没有刀光时为 null（场景检查用）。 */
+    public static dev.logos.dimension.client.trail.TrailStyle trailStyle(int entity, boolean firstPerson) { return RigTrails.style(entity, firstPerson); }
     /**
      * 武器是否已经离手交给别处画：当前动作带 {@code handoff} 标记（御剑起飞把剑抛到脚下）且还没播到那一刻时为 false，
      * 其余情况（没有动作、动作没有这个标记、已过那一刻）为 true。
@@ -72,7 +74,12 @@ public final class LongswordClient {
     @SubscribeEvent static void logout(ClientPlayerNetworkEvent.LoggingOut event) { STATES.clear(); PREVIOUS.clear(); repeat = 0; RyukaClient.clear(); }
     @SubscribeEvent static void reload(AddClientReloadListenersEvent event) {
         event.addListener(LogosDimension.id("longsword_rigs"),
-                (net.minecraft.server.packs.resources.ResourceManagerReloadListener) manager -> LongswordRig.clear());
+                (net.minecraft.server.packs.resources.ResourceManagerReloadListener) manager -> {
+                    LongswordRig.clear();
+                    dev.logos.dimension.client.trail.WeaponTrails.clear();
+                    dev.logos.dimension.client.trail.TrailConfigs.clear();
+                    RigTrails.clear();
+                });
     }
     /** 按住右键时原版会吞掉左键；当前招式接受左键（弹刀后接突刺）时先取走这次点击发给服务端。 */
     @SubscribeEvent static void attackWhileUsing(ClientTickEvent.Pre event) {
@@ -113,7 +120,7 @@ public final class LongswordClient {
         }
     }
     /** 骨架或动作取不到时为 null，此时保持原版渲染。 */
-    private static LongswordRig.Sample sample(LongswordPayload p, boolean firstPerson, double now) {
+    static LongswordRig.Sample sample(LongswordPayload p, boolean firstPerson, double now) {
         var rig = LongswordRig.get(p.variant(), firstPerson);
         if (rig == null) return null;
         var pose = pose(rig, p, now);
@@ -196,7 +203,9 @@ public final class LongswordClient {
         if (sample == null) return;
         event.setCanceled(true);
         if (event.getHand() != InteractionHand.MAIN_HAND) return;
-        var pose = event.getPoseStack(); pose.pushPose();
+        var pose = event.getPoseStack();
+        var entry = new org.joml.Matrix4f(pose.last().pose());
+        pose.pushPose();
         pose.mulPose(Axis.XP.rotationDegrees(2));
         pose.scale(1/16f, 1/16f, 1/16f);
         pose.translate(0, -29, .6f);
@@ -222,7 +231,14 @@ public final class LongswordClient {
         DawnvowSummon.submit(p, now, sample, pose, event.getSubmitNodeCollector(), true);
         if (shown) DawnvowBlade.submit(DawnvowClient.blade(mc.player.getId(), event.getPartialTick()), sample, pose, event.getSubmitNodeCollector(), true,
                 mc.player.tickCount + event.getPartialTick());
+        // 刀光：骨架坐标 → 进入手部渲染时的坐标；出栈后在那个姿势里画，刀光跟着镜头走
+        RigTrails.firstPerson(p, mc.player.getId(), now, new org.joml.Matrix4f(entry).invert().mul(pose.last().pose()), shown);
         pose.popPose();
+        RigTrails.submitHand(mc.player.getId(), pose, event.getSubmitNodeCollector());
+    }
+    private static boolean firstPersonSelf(int entity) {
+        var mc = Minecraft.getInstance();
+        return mc.getCameraEntity() != null && mc.getCameraEntity().getId() == entity && mc.options.getCameraType().isFirstPerson();
     }
     private static final class SwordLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         private final net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer equipment;
@@ -250,6 +266,8 @@ public final class LongswordClient {
             if (shown && frame.glow > 0) rig.submitGlow(frame.sample, pose, collector, false, frame.glow, frame.glowColor);
             if (frame.tip != null) SwordCastClient.reportThirdPerson(state.id, pose.last().pose(), LongswordRig.onWeapon(frame.sample, frame.tip));
             DawnvowSummon.submit(frame.move, frame.time, frame.sample, pose, collector, false);
+            // 刀光（第一人称看自己时身体只在光影包的阴影通道里画，那里不送点）
+            if (!firstPersonSelf(state.id)) RigTrails.thirdPerson(frame.move, state.id, frame.time, pose.last().pose(), shown && !state.isInvisible);
             if (shown) {
                 LongswordAuras.submit(frame.effects,frame.sample,pose,collector);
                 Float glow = state.getRenderData(DawnvowBlade.GLOW);

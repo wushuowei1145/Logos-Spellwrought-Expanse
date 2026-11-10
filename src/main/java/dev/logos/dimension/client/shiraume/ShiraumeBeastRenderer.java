@@ -15,7 +15,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 /**
- * 白梅狐形的渲染：流火横叼在嘴里（{@code Weapon} 骨骼在 Head 下、上下颌之间，刀尖指向右边），
+ * 白梅狐形的渲染：流火横叼在嘴里（{@code Weapon} 骨骼在 Head 下、上下颌之间，刀尖指向右边），甩头挥刀时留刀光，
  * 出招前双眼红光（眼睛是 {@code face_left_eye} / {@code face_right_eye} 两片）。狂暴（八分之一血以下）时眼光更大。
  */
 public class ShiraumeBeastRenderer<R extends LivingEntityRenderState & GeoRenderState> extends NpcRenderer<ShiraumeBeast, R> {
@@ -23,6 +23,8 @@ public class ShiraumeBeastRenderer<R extends LivingEntityRenderState & GeoRender
     private static final DataTicket<Boolean> RAGE = DataTicket.create("logos_dimension_shiraume_beast_rage", Boolean.class);
     private static final DataTicket<Integer> ID = DataTicket.create("logos_dimension_shiraume_beast_id", Integer.class);
     private static final DataTicket<ItemStackRenderState> FIRE = DataTicket.create("logos_dimension_shiraume_beast_fire", ItemStackRenderState.class);
+    /** 此刻正甩头挥刀：留刀光（{@link ShiraumeTrails}）。 */
+    private static final DataTicket<Boolean> TRAIL = DataTicket.create("logos_dimension_shiraume_beast_trail", Boolean.class);
     /** 咬在刀镡下一点的柄上：网格原点相对 Weapon 枢轴（上下颌之间，tools/shiraume_assets.py 的 BEAST_MOUTH）的偏移，网格单位。 */
     private static final Vector3f BITE = new Vector3f(0, 1.4f, 0);
     /** 光在眼睛骨骼枢轴前面一点（模型像素，相对枢轴）。 */
@@ -60,6 +62,7 @@ public class ShiraumeBeastRenderer<R extends LivingEntityRenderState & GeoRender
         state.addGeckolibData(RAGE, beast.enraged());
         state.addGeckolibData(ID, beast.getId());
         if (!beast.isDeadOrDying()) state.addGeckolibData(FIRE, RyukaOnBone.fire(beast));
+        state.addGeckolibData(TRAIL, ShiraumeTrails.swinging(beast));
     }
 
     @Override
@@ -78,6 +81,7 @@ public class ShiraumeBeastRenderer<R extends LivingEntityRenderState & GeoRender
     private void submitSword(RenderPassInfo<R> info, GeoBone bone, SubmitNodeCollector out) {
         RyukaOnBone.submit(info.poseStack(), out, info.packedLight(), BITE, -1, info.getGeckolibData(FIRE),
                 "shiraume_beast" + info.getOrDefaultGeckolibData(ID, 0));
+        ShiraumeTrails.feed(info.poseStack(), BITE, info.getOrDefaultGeckolibData(ID, 0), info.getOrDefaultGeckolibData(TRAIL, false));
     }
 
     private void eye(RenderPassInfo<R> info, Vector3f at) {
