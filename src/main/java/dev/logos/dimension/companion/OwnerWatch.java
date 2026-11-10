@@ -27,6 +27,9 @@ public final class OwnerWatch {
 
     long lastMined = -10_000, lastBuilt = -10_000, lastHurt = -10_000, lastAttack = -10_000, lastFall = -10_000;
     long lastStrongKill = -10_000, lastKill = -10_000;
+    /** 主人最近一次死在哪里、什么时候：那附近的掉落是主人的遗物，她不捡。 */
+    long lastDeath = -100_000;
+    @Nullable Vec3 deathAt;
     float lastHurtAmount;
     int mined, built;
     @Nullable UUID attacker, attacked;
@@ -77,6 +80,11 @@ public final class OwnerWatch {
         lastAttack = now;
         attacked = target.getUUID();
         attackedAt = now;
+    }
+
+    void died(long now, Vec3 at) {
+        lastDeath = now;
+        deathAt = at;
     }
 
     void killed(long now, LivingEntity dead) {

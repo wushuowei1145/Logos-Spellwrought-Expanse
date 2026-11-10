@@ -11,7 +11,7 @@ import dev.logos.dimension.dissolve.DissolveShape;
 import dev.logos.dimension.dissolve.Dissolving;
 import dev.logos.dimension.fox.FoxSanctuaryStructure;
 import dev.logos.dimension.fox.SanctuaryVaultPiece;
-import dev.logos.dimension.item.RyukaItem;
+import dev.logos.dimension.companion.ShiraumePact;
 import dev.logos.dimension.screenfx.ScreenEffects;
 import dev.logos.dimension.screenfx.ScreenFlash;
 import java.util.ArrayList;
@@ -35,9 +35,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -690,19 +688,13 @@ public final class ShiraumeFight {
         if (age == REWARD_AT) reward(level, a);
     }
 
-    /** 每个参战的玩家各得一把流火，落在场地中央，只有本人能捡。白梅怎么加入还没定（docs/SHIRAUME_BOSS.md 第 8 节）。 */
+    /**
+     * 花瓣在杀生石前聚回少女：每个参战的玩家各有一位跪坐着等他来说话（分霊，只有本人看得见），
+     * 说话时她献上流火、折一个形代给他（docs/SHIRAUME_COMPANION.md 第 8.1、8.2 节，{@link ShiraumePact}）。
+     */
     private static void reward(ServerLevel level, Arena a) {
         Vec3 c = center(level, a).add(0, 1.2, 0);
-        int i = 0;
-        for (UUID id : a.players) {
-            double angle = i++ * 2.4;
-            ItemEntity item = new ItemEntity(level, c.x + Math.cos(angle) * .8, c.y, c.z + Math.sin(angle) * .8, new ItemStack(RyukaItem.ITEM.get()));
-            item.setDeltaMovement(0, .15, 0);
-            item.setTarget(id);
-            item.setUnlimitedLifetime();
-            item.setPickUpDelay(30);
-            level.addFreshEntity(item);
-        }
+        ShiraumePact.spawnWaiting(level, center(level, a), a.players);
         level.sendParticles(ParticleTypes.CHERRY_LEAVES, c.x, c.y + 2, c.z, 200, 3, 3, 3, .02);
         level.playSound(null, c.x, c.y, c.z, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.HOSTILE, 3f, .8f);
         arenas(level).setDirty();

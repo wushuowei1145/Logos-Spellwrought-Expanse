@@ -35,6 +35,7 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.common.NeoForge;
@@ -50,7 +51,7 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.jspecify.annotations.Nullable;
 
 /**
- * 白梅（少女形态）作为玩家同伴的入口（docs/SHIRAUME_COMPANION.md）：实体注册、玩家身上的「契」、召唤与收回，
+ * 白梅（少女形态）作为玩家同伴的入口（docs/SHIRAUME_COMPANION.md）：实体注册、玩家身上的「契」与包袱、召唤与收回，
  * 以及喂给玩家模型（{@link OwnerWatch}）的事件。
  *
  * <p>她跟着主人走：主人下线、死亡时悄悄收起，上线、重生时再叫出来；主人换维度时在新维度重新现身。
@@ -74,32 +75,95 @@ public final class Companions {
     public static final int REST_TICKS = 6000;
 
     /**
-     * 玩家和白梅的契：她此刻在不在外面（{@code out}）、休息到哪一刻、找回了几条尾巴（尾之契，第一版恒为 0）、
-     * 被悄悄收起时是否该再叫出来（下线、死亡、换维度之后）。死亡不清除。
+     * 玩家和白梅的契（docs/SHIRAUME_COMPANION.md 第 8 节）。死亡不清除。
+     * <ul>
+     *   <li>{@code pact}：在封印之间和她立过契（第一次打倒她、去找她说过话）；
+     *   <li>{@code out}、{@code restUntil}、{@code comeBack}：她此刻在不在外面、休息到哪一刻、被悄悄收起后是否该再叫出来；
+     *   <li>{@code seals}：契印（白梅的叫尾之契）；
+     *   <li>{@code affection}：好感，一起经历的事情慢慢加；{@code satiety}：她的饱腹（0–{@link CompanionBond#SATIETY_MAX}）；
+     *   <li>{@code mealDay}、{@code meals}：最近一次一起吃饭的游戏日、那天吃了几次；{@code soakDay}：最近一次一起泡温泉的日子；
+     *       {@code guardDay}：形代替身最近一次用掉的日子；{@code patDay}、{@code pats}：同理，摸头。
+     * </ul>
      */
-    public record Bond(Optional<UUID> out, long restUntil, int tails, boolean comeBack) {
-        public static final Bond NONE = new Bond(Optional.empty(), 0, 0, false);
+    public record Bond(boolean pact, Optional<UUID> out, long restUntil, int seals, boolean comeBack, float affection, float satiety,
+                       long mealDay, int meals, long soakDay, long guardDay, long patDay, int pats) {
+        public static final Bond NONE = new Bond(false, Optional.empty(), 0, 0, false, 0, CompanionBond.SATIETY_MAX, -1, 0, -1, -1, -1, 0);
         static final Codec<Bond> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.BOOL.optionalFieldOf("pact", false).forGetter(Bond::pact),
                 UUIDUtil.CODEC.optionalFieldOf("out").forGetter(Bond::out),
                 Codec.LONG.optionalFieldOf("rest_until", 0L).forGetter(Bond::restUntil),
-                Codec.INT.optionalFieldOf("tails", 0).forGetter(Bond::tails),
-                Codec.BOOL.optionalFieldOf("come_back", false).forGetter(Bond::comeBack)).apply(i, Bond::new));
+                Codec.INT.optionalFieldOf("seals", 0).forGetter(Bond::seals),
+                Codec.BOOL.optionalFieldOf("come_back", false).forGetter(Bond::comeBack),
+                Codec.FLOAT.optionalFieldOf("affection", 0f).forGetter(Bond::affection),
+                Codec.FLOAT.optionalFieldOf("satiety", CompanionBond.SATIETY_MAX).forGetter(Bond::satiety),
+                Codec.LONG.optionalFieldOf("meal_day", -1L).forGetter(Bond::mealDay),
+                Codec.INT.optionalFieldOf("meals", 0).forGetter(Bond::meals),
+                Codec.LONG.optionalFieldOf("soak_day", -1L).forGetter(Bond::soakDay),
+                Codec.LONG.optionalFieldOf("guard_day", -1L).forGetter(Bond::guardDay),
+                Codec.LONG.optionalFieldOf("pat_day", -1L).forGetter(Bond::patDay),
+                Codec.INT.optionalFieldOf("pats", 0).forGetter(Bond::pats)).apply(i, Bond::new));
 
         Bond withOut(@Nullable UUID id) {
-            return new Bond(Optional.ofNullable(id), restUntil, tails, comeBack);
+            return new Bond(pact, Optional.ofNullable(id), restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats);
         }
 
         Bond withRest(long until) {
-            return new Bond(out, until, tails, comeBack);
+            return new Bond(pact, out, until, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats);
         }
 
         Bond withComeBack(boolean back) {
-            return new Bond(out, restUntil, tails, back);
+            return new Bond(pact, out, restUntil, seals, back, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats);
+        }
+
+        Bond withPact(boolean made) {
+            return new Bond(made, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats);
+        }
+
+        Bond withSeals(int n) {
+            return new Bond(pact, out, restUntil, Math.max(0, n), comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats);
+        }
+
+        Bond withAffection(float a) {
+            return new Bond(pact, out, restUntil, seals, comeBack, Math.max(0, a), satiety, mealDay, meals, soakDay, guardDay, patDay, pats);
+        }
+
+        Bond withSatiety(float s) {
+            return new Bond(pact, out, restUntil, seals, comeBack, affection, Mth.clamp(s, 0, CompanionBond.SATIETY_MAX), mealDay, meals, soakDay,
+                    guardDay, patDay, pats);
+        }
+
+        Bond withMeal(long day, int count) {
+            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, day, count, soakDay, guardDay, patDay, pats);
+        }
+
+        Bond withSoak(long day) {
+            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, day, guardDay, patDay, pats);
+        }
+
+        Bond withGuard(long day) {
+            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, day, patDay, pats);
+        }
+
+        Bond withPats(long day, int count) {
+            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, day, count);
+        }
+
+        /** 今天（游戏日 {@code day}）已经一起吃过几次饭。 */
+        public int mealsOn(long day) {
+            return mealDay == day ? meals : 0;
+        }
+
+        public int patsOn(long day) {
+            return patDay == day ? pats : 0;
         }
     }
 
     public static final Supplier<AttachmentType<Bond>> BOND = ATTACHMENTS.register("shiraume_bond",
             () -> AttachmentType.builder(() -> Bond.NONE).serialize(Bond.CODEC.fieldOf("bond")).copyOnDeath().build());
+
+    /** 她的包袱：存在主人身上，所以她倒下、被收回、换维度都不会丢（第 8.8 节）。 */
+    public static final Supplier<AttachmentType<CompanionPouch>> POUCH = ATTACHMENTS.register("shiraume_pouch",
+            () -> AttachmentType.builder(CompanionPouch::new).serialize(CompanionPouch.CODEC.fieldOf("items")).copyOnDeath().build());
 
     /** 等到下一刻再叫出来的主人（上线、重生、换维度之后）：主人 UUID → 还要等几刻。 */
     private static final Map<UUID, Integer> PENDING = new HashMap<>();
@@ -109,11 +173,13 @@ public final class Companions {
     public static void register(IEventBus bus) {
         TYPES.register(bus);
         ATTACHMENTS.register(bus);
+        KatashiroItem.register(bus);
+        CompanionLines.register(bus);
         bus.addListener((EntityAttributeCreationEvent event) -> event.put(SHIRAUME.get(), ShiraumeCompanion.createAttributes().build()));
         NeoForge.EVENT_BUS.addListener(Companions::onBreak);
         NeoForge.EVENT_BUS.addListener(Companions::onPlace);
         NeoForge.EVENT_BUS.addListener(Companions::onDamaged);
-        NeoForge.EVENT_BUS.addListener(Companions::onDeath);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, Companions::onDeath);
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) stow(p, true);
             OwnerWatch.forget(e.getEntity().getUUID());
@@ -129,6 +195,7 @@ public final class Companions {
             if (e.getEntity() instanceof ServerPlayer p && p.getData(BOND).comeBack()) comeBackLater(p, 10);
         });
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> tickPending(e.getServer()));
+        NeoForge.EVENT_BUS.addListener(CompanionLight::tick);
     }
 
     // ---------------------------------------------------------------- 召唤与收回
@@ -144,6 +211,10 @@ public final class Companions {
     /** 还要休息多少刻（0 表示随时能叫）。 */
     public static long restLeft(ServerPlayer owner) {
         return Math.max(0, owner.getData(BOND).restUntil() - owner.level().getGameTime());
+    }
+
+    public static CompanionPouch pouch(Player owner) {
+        return owner.getData(POUCH);
     }
 
     /** 叫她出来，在主人身边；失败时返回原因。{@code quiet} 为真时不提示（自动叫回）。 */
@@ -168,9 +239,15 @@ public final class Companions {
         // 先定好入场动画再放进世界：客户端第一次看到她时就是入场的样子
         c.startSummon();
         level.addFreshEntity(c);
-        owner.setData(BOND, owner.getData(BOND).withOut(c.getUUID()).withComeBack(true));
+        join(owner, c);
         appearBurst(level, c.position().add(0, .75, 0));
         return null;
+    }
+
+    /** 她（召唤出来的，或刚在封印之间立契的）成了主人在外面的同伴：记在契上，交给 Logos 当作长期同伴。 */
+    static void join(ServerPlayer owner, ShiraumeCompanion c) {
+        owner.setData(BOND, owner.getData(BOND).withOut(c.getUUID()).withComeBack(true));
+        LogosCompanionBridge.bind(c, owner);
     }
 
     /** 让她回去：挥挥手，化作花瓣散去。 */
@@ -202,6 +279,31 @@ public final class Companions {
         owner.setData(BOND, owner.getData(BOND).withRest(0));
     }
 
+    /** 测试与命令用：立契（不走封印之间）。 */
+    public static void grantPact(ServerPlayer owner) {
+        owner.setData(BOND, owner.getData(BOND).withPact(true));
+    }
+
+    /** 盖一枚契印（空白形代、命令）；返回盖完后的枚数。 */
+    public static int addSeal(ServerPlayer owner) {
+        Bond b = owner.getData(BOND);
+        owner.setData(BOND, b.withSeals(b.seals() + 1));
+        ShiraumeCompanion c = out(owner);
+        if (c != null) CompanionStats.apply(c, owner, b.seals() + 1);
+        return b.seals() + 1;
+    }
+
+    /** 设她的饱腹（命令和测试用）。 */
+    public static void setSatiety(ServerPlayer owner, float satiety) {
+        owner.setData(BOND, owner.getData(BOND).withSatiety(satiety));
+    }
+
+    /** 好感加 {@code amount}（可以是负的）。 */
+    static void affection(ServerPlayer owner, float amount) {
+        Bond b = owner.getData(BOND);
+        owner.setData(BOND, b.withAffection(b.affection() + amount));
+    }
+
     private static void comeBackLater(ServerPlayer p, int ticks) {
         if (p.getData(BOND).comeBack()) PENDING.put(p.getUUID(), ticks);
     }
@@ -222,12 +324,6 @@ public final class Companions {
             p.setData(BOND, p.getData(BOND).withOut(null));
             summon(p, true);
         }
-    }
-
-    /** 换维度时旧的那位留在了原来的维度：在新维度现身之前先收掉。 */
-    static void dropStale(ServerPlayer owner, ShiraumeCompanion c) {
-        Optional<UUID> id = owner.getData(BOND).out();
-        if (id.isEmpty() || !id.get().equals(c.getUUID())) c.discard();
     }
 
     // ---------------------------------------------------------------- 位置与特效
@@ -291,6 +387,12 @@ public final class Companions {
     private static void onDeath(LivingDeathEvent e) {
         LivingEntity dead = e.getEntity();
         if (dead instanceof ServerPlayer p) {
+            // 第一印：形代替身（每个游戏日一次）
+            if (CompanionGuard.saveOwner(p, e.getSource())) {
+                e.setCanceled(true);
+                return;
+            }
+            OwnerWatch.of(p).died(p.level().getGameTime(), p.position());
             stow(p, true);
             return;
         }

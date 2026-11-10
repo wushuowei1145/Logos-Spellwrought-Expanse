@@ -77,9 +77,13 @@ public abstract class CompanionViews implements UIScenario {
                     for (int x = -14; x <= 15; x++)
                         for (int z = -14; z <= 15; z++) {
                             level.setBlockAndUpdate(new BlockPos(x, FLOOR, z), CloudseaBlocks.PORCELAIN.get().defaultBlockState());
-                            for (int y = FLOOR + 1; y <= FLOOR + 8; y++) level.removeBlock(new BlockPos(x, y, z), false);
+                            // 换成空气，不用 removeBlock：那个会把水源留下（泡温泉场景的池水漫过整个台子）
+                            for (int y = FLOOR + 1; y <= FLOOR + 8; y++) level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), 2);
                         }
                     level.getEntitiesOfClass(Mob.class, AREA).forEach(e -> e.discard());
+                    // 上一个场景留下的掉落物和经验球
+                    level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, AREA.inflate(4)).forEach(e -> e.discard());
+                    level.getEntitiesOfClass(net.minecraft.world.entity.ExperienceOrb.class, AREA.inflate(4)).forEach(e -> e.discard());
                     ServerPlayer p = ctx.player();
                     Companions.dismiss(p);
                     level.getEntitiesOfClass(ShiraumeCompanion.class, AREA).forEach(e -> e.discard());

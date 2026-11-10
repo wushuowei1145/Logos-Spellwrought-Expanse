@@ -11,7 +11,6 @@ import java.util.WeakHashMap;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -81,8 +80,8 @@ public final class FoxMarks {
         if (OPEN.remove(target) != null) sync(target, count(target), Payload.CLOSED);
     }
 
-    /** 流火的这一下打进去了：添一枚印，满了就爆开。返回爆开没有。 */
-    public static boolean add(ServerPlayer by, LivingEntity target) {
+    /** 流火的这一下打进去了（玩家，或拿着流火的白梅）：添一枚印，满了就爆开。返回爆开没有。 */
+    public static boolean add(LivingEntity by, LivingEntity target) {
         if (!target.isAlive() || !(target.level() instanceof ServerLevel level)) return false;
         long now = level.getGameTime();
         int count = count(target) + 1;
@@ -99,7 +98,7 @@ public final class FoxMarks {
     }
 
     /** 爆开：一团大的淡粉狐火，高额伤害，之后狐火缠身。 */
-    private static void burst(ServerPlayer by, LivingEntity target, ServerLevel level) {
+    private static void burst(LivingEntity by, LivingEntity target, ServerLevel level) {
         bursts++;
         Vec3 center = target.getBoundingBox().getCenter();
         float size = Math.max(1.6f, target.getBbHeight() * 1.2f);
