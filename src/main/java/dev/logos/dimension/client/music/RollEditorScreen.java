@@ -60,6 +60,8 @@ public class RollEditorScreen extends Screen {
     private final List<Note> notes = new ArrayList<>();
     private final List<MusicRoll.Event> pedals = new ArrayList<>();
     private final List<MusicRoll.Part> parts = new ArrayList<>();
+    /** 原纸带中途的速度、拍号变化（编辑器不改它们，存回去时原样带上，指挥照样按它画拍子）。 */
+    private List<MusicRoll.Tempo> tempos = List.of();
     private final Set<Note> selected = new HashSet<>();
     private String title = "";
     private String author = "";
@@ -123,6 +125,7 @@ public class RollEditorScreen extends Screen {
         author = roll.author();
         bpm = Math.max(20, Math.min(400, Math.round(roll.bpmX100() / 100f)));
         beatsPerBar = roll.beatsPerBar();
+        tempos = roll.tempos();
         beatUnit = roll.beatUnit();
         loaded = true;
         if (!notes.isEmpty()) {
@@ -238,7 +241,7 @@ public class RollEditorScreen extends Screen {
         List<MusicRoll.Event> events = new ArrayList<>(notes.size() + pedals.size());
         for (Note n : notes) events.add(MusicRoll.Event.note(n.start, n.part, n.pitch, n.vel, n.dur));
         events.addAll(pedals);
-        return new MusicRoll(title, author, bpm * 100, beatsPerBar, beatUnit, parts, events);
+        return new MusicRoll(title, author, bpm * 100, beatsPerBar, beatUnit, parts, events, tempos);
     }
 
     private void togglePreview() {

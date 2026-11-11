@@ -1550,6 +1550,128 @@ def banner_previews(out_dir):
         img.resize((img.width * 8, img.height * 8), Image.NEAREST).save(out_dir / f"banner_{style}.png")
 
 
+# —— 指挥台、指挥棒 ——
+
+def only(face):
+    """只画一面的薄片（谱子、镶嵌）。"""
+    return {f: None for f in ("north", "south", "east", "west", "up", "down") if f != face}
+
+
+def halves(frm, to, tex, faces=None, rot=None):
+    """跨两格的长条按 x=16 切成两段：每段的贴图按坐标取，不会被拉宽。"""
+    if frm[0] < 16 < to[0]:
+        return [box(frm, (16, to[1], to[2]), tex, faces=faces, rot=rot), box((16, frm[1], frm[2]), to, tex, faces=faces, rot=rot)]
+    return [box(frm, to, tex, faces=faces, rot=rot)]
+
+
+# 谱板向乐团（−z）倾：绕 x 转，托条朝着指挥。谱架立在台面前沿（离指挥 4 格像素多），垂着的手、挥到拍点的手臂都碰不到
+PODIUM_TILT = {"origin": [16, 17.0, 3.6], "x": -32, "y": 0, "z": 0}
+
+
+def podium_elements(score=False):
+    """指挥台（两格宽 x 0–32，指挥面朝 −z，站在 x=16、z=8 的台面中央，台面高 8）。
+    台前（朝乐团）一级踏步，立面一排星辰花镶嵌；深胡桃木台身，台面下一道金线；台后两角各一根矮栏柱，顶上金球，
+    柱间一道低扶栏；台面前沿正中一座斜谱架，放了总谱时摊开一本谱子（两页五线谱、红封面露一圈边）。"""
+    el = []
+    # 踏步与星辰花
+    el += halves((1, 0, 0), (31, 4, 3), "walnut")
+    el += halves((0.8, 3.6, -0.2), (31.2, 4.1, 3), "gold", faces={"down": None})
+    for i in range(6):
+        x = 2.4 + i * 4.75
+        el.append(box((x, 0.8, -0.1), (x + 3.2, 3.2, 0), "inlay", faces=only("north"), uv={"north": [0, 0, 8, 6]}))
+    # 台身、金线、略探出的台面
+    el += halves((0.4, 0, 3), (31.6, 6.6, 15.6), "walnut")
+    el += halves((0.2, 6.6, 2.8), (31.8, 7.1, 15.8), "gold")
+    el += halves((0, 7.1, 2.6), (32, 8, 16), "walnut")
+    # 台后的栏柱、金球与扶栏
+    for x in (1.0, 29.0):
+        el.append(box((x - 0.3, 8, 12.9), (x + 2.3, 9, 15.5), "walnut"))
+        el.append(box((x, 9, 13.2), (x + 2, 16.6, 15.2), "walnut"))
+        el.append(box((x - 0.15, 16.6, 13.05), (x + 2.15, 17.1, 15.35), "gold"))
+        el += disc(x + 1, 14.2, 0.95, 17.1, 18.9, "gold")
+        el += disc(x + 1, 14.2, 0.55, 16.9, 19.3, "gold")
+    el += halves((3, 14.9, 13.7), (29, 15.8, 14.7), "walnut")
+    el += halves((3, 15.8, 13.8), (29, 16.05, 14.6), "gold", faces={"down": None})
+    for x in (10.2, 21.0):
+        el.append(box((x, 8, 13.8), (x + 0.9, 14.9, 14.6), "walnut"))
+    # 斜谱架
+    el.append(box((14.0, 8, 2.6), (18.0, 8.8, 5.0), "walnut"))
+    el.append(box((15.2, 8.8, 2.8), (16.8, 17.0, 4.4), "walnut"))
+    el.append(box((15.0, 12.0, 2.6), (17.0, 12.6, 4.6), "gold"))
+    el.append(box((9.5, 17.0, 3.3), (22.5, 23.4, 3.9), "walnut", rot=PODIUM_TILT))
+    el.append(box((9.5, 16.6, 3.9), (22.5, 17.4, 4.8), "walnut", rot=PODIUM_TILT))
+    el.append(box((9.5, 17.35, 3.9), (22.5, 17.45, 4.8), "gold", faces={"down": None}, rot=PODIUM_TILT))
+    if score:
+        el.append(box((10.0, 17.5, 3.9), (22.0, 23.3, 4.0), "red", faces=only("south"), rot=PODIUM_TILT))
+        for x0, x1 in ((10.4, 15.8), (16.2, 21.6)):
+            el.append(box((x0, 17.8, 4.0), (x1, 23.0, 4.1), "white", faces=only("south"), rot=PODIUM_TILT))
+            for y in (18.6, 19.0, 19.4, 19.8, 20.2, 21.0, 21.4, 21.8, 22.2, 22.6):
+                el.append(box((x0 + 0.4, y, 4.1), (x1 - 0.4, y + 0.08, 4.12), "black", faces=only("south"), rot=PODIUM_TILT))
+        el.append(box((15.8, 17.7, 4.0), (16.2, 23.1, 4.07), "walnut", faces=only("south"), rot=PODIUM_TILT))
+    return el
+
+
+def baton_icon():
+    """指挥棒：金色尾球、软木色握柄、白色细杆，从左下到右上。16×16。"""
+    img = Image.new("RGBA", (16, 16))
+    px = img.load()
+    gold, gold_hi, gold_lo = (214, 172, 72, 255), (246, 220, 140, 255), (150, 112, 44, 255)
+    cork, cork_lo = (196, 156, 104, 255), (138, 100, 60, 255)
+    white, white_lo, tip = (242, 240, 232, 255), (190, 188, 180, 255), (255, 255, 252, 255)
+    for (x, y), c in {(1, 13): gold_hi, (2, 13): gold, (1, 14): gold, (2, 14): gold_lo, (3, 14): gold_lo, (1, 12): gold_lo}.items():
+        px[x, y] = c
+    for x, y in ((3, 12), (4, 11), (5, 10), (6, 9)):
+        px[x, y] = cork
+        px[x + 1, y] = cork
+        px[x, y + 1] = cork_lo
+    px[3, 13] = cork_lo
+    px[7, 9] = gold
+    px[7, 8] = gold_hi
+    for i, (x, y) in enumerate(((8, 7), (9, 6), (10, 5), (11, 4), (12, 3), (13, 2))):
+        px[x, y] = white
+        if i < 3:
+            px[x, y + 1] = white_lo
+    px[14, 1] = tip
+    return img
+
+
+def podium():
+    blocks = ASSETS / "models/block"
+    items = ASSETS / "models/item"
+    yrot = {"north": 0, "east": 90, "south": 180, "west": 270}
+    for name, el in (("hexen_podium", podium_elements(False)), ("hexen_podium_score", podium_elements(True))):
+        check_bounds(name, el)
+        write(blocks / f"{name}.json", {"ambientocclusion": False, "textures": {k: T[k] for k in used(el)} | {"particle": T["walnut"]},
+                                        "elements": el})
+    write(blocks / "hexen_podium_part.json", {"textures": {"particle": T["walnut"]}})
+    item_el = shifted(podium_elements(False), -8, -4, 0)
+    check_bounds("hexen_podium item", item_el)
+    write(items / "hexen_podium.json", {"ambientocclusion": False, "textures": {k: T[k] for k in used(item_el)} | {"particle": T["walnut"]},
+                                        "elements": item_el, "display": display(0.36)})
+    write(ASSETS / "items/hexen_podium.json", {"model": {"type": "minecraft:model", "model": "logos_dimension:item/hexen_podium"}})
+    variants = {}
+    for f, y in yrot.items():
+        for side in ("false", "true"):
+            for score in ("false", "true"):
+                m = "hexen_podium_part" if side == "true" else ("hexen_podium_score" if score == "true" else "hexen_podium")
+                variants[f"facing={f},score={score},side={side}"] = {"model": f"logos_dimension:block/{m}"} | ({"y": y} if y and side == "false" else {})
+    write(ASSETS / "blockstates/hexen_podium.json", {"variants": variants})
+    write(DATA / "loot_table/blocks/hexen_podium.json", loot("hexen_podium", {"side": "false"}))
+    shaped("hexen_podium", [" L ", "PGP", "PPP"], {"L": "minecraft:lectern", "G": "minecraft:gold_ingot", "P": "minecraft:dark_oak_planks"})
+    png(ASSETS / "textures/item/hexen_baton.png", baton_icon())
+    # 原版拿剑的转法（z 55°）让棒子垂直于手臂；转到 111° 时棒子顺着手臂往前、略往上翘，握柄仍在拳里（同原版剑柄的位置）
+    write(items / "hexen_baton.json", {"parent": "minecraft:item/handheld", "textures": {"layer0": "logos_dimension:item/hexen_baton"},
+                                       "display": {
+        "thirdperson_righthand": {"rotation": [0, -90, 111], "translation": [0, -0.74, -3.33], "scale": [0.6, 0.6, 0.6]},
+        "thirdperson_lefthand": {"rotation": [0, 90, -111], "translation": [0, -0.74, -3.33], "scale": [0.6, 0.6, 0.6]},
+        "firstperson_righthand": {"rotation": [0, -90, 25], "translation": [1.13, 1.43, 0.31], "scale": [0.45, 0.45, 0.45]},
+        "firstperson_lefthand": {"rotation": [0, 90, -25], "translation": [1.13, 1.43, 0.31], "scale": [0.45, 0.45, 0.45]}}})
+    write(ASSETS / "items/hexen_baton.json", {"model": {"type": "minecraft:model", "model": "logos_dimension:item/hexen_baton"}})
+    write(DATA / "recipe/hexen_baton.json", {"type": "minecraft:crafting_shapeless", "category": "misc",
+                                             "ingredients": ["minecraft:stick", "minecraft:gold_nugget"],
+                                             "result": {"id": "logos_dimension:hexen_baton", "count": 1}})
+
+
 def main():
     models()
     blockstates()
@@ -1559,6 +1681,7 @@ def main():
     mallet()
     handheld()
     orchestra()
+    podium()
     png(ROOT / "resourcepacks/concert_hall/pack.png", concert_hall_icon())
     if len(sys.argv) > 1:
         banner_previews(Path(sys.argv[1]))

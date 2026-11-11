@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:stick",
+    "minecraft:gold_nugget"
+  ],
+  "result": {
+    "id": "logos_dimension:hexen_baton",
+    "count": 1
+  }
+}

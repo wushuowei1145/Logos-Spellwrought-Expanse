@@ -157,7 +157,7 @@ public class MidiImportScreen extends Screen {
             int p = remap[e.part()];
             if (p >= 0) events.add(new MusicRoll.Event(e.timeMs(), e.type(), p, e.pitch(), e.velocity(), e.durationMs()));
         }
-        return new MusicRoll(roll.title(), roll.author(), roll.bpmX100(), roll.beatsPerBar(), roll.beatUnit(), parts, events);
+        return new MusicRoll(roll.title(), roll.author(), roll.bpmX100(), roll.beatsPerBar(), roll.beatUnit(), parts, events, roll.tempos());
     }
 
     private void send(int purpose) {

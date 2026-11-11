@@ -46,12 +46,24 @@ public final class MusicRoll {
         }
     }
 
+    /**
+     * 速度、拍号从 timeMs 起改变（整首开头的速度、拍号是 {@link #bpmX100()}、{@link #beatsPerBar()}、{@link #beatUnit()}）。
+     * bpmX100 是每分钟四分音符数 ×100（同 MIDI）；拍号改变时从这里起是新的一小节。指挥按它们画拍子（docs/ORCHESTRA.md 第 7 节）。
+     */
+    public record Tempo(int timeMs, int bpmX100, int beatsPerBar, int beatUnit) {}
+
+    /** 最多记这么多处速度、拍号的变化。 */
+    public static final int MAX_TEMPOS = 4096;
+
     /** 格式不对或超限。message 是给玩家看的中文说明。 */
     public static final class FormatException extends Exception {
         public FormatException(String message) {
             super(message);
         }
     }
+
+    /** 编码里速度、拍号表那一段的标记字节。 */
+    private static final int TEMPO_SECTION = 'T';
 
     private static final Comparator<Event> ORDER = Comparator.comparingInt(Event::timeMs)
         .thenComparingInt(e -> e.type() == PEDAL_UP ? 0 : e.type() == NOTE ? 1 : 2);
@@ -63,8 +75,14 @@ public final class MusicRoll {
     private final int beatUnit;
     private final List<Part> parts;
     private final List<Event> events;
+    private final List<Tempo> tempos;
 
     public MusicRoll(String title, String author, int bpmX100, int beatsPerBar, int beatUnit, List<Part> parts, List<Event> events) {
+        this(title, author, bpmX100, beatsPerBar, beatUnit, parts, events, List.of());
+    }
+
+    public MusicRoll(String title, String author, int bpmX100, int beatsPerBar, int beatUnit, List<Part> parts, List<Event> events,
+                     List<Tempo> tempos) {
         this.title = clip(title, MAX_TITLE);
         this.author = clip(author, MAX_TITLE);
         this.bpmX100 = Math.max(100, Math.min(100_000, bpmX100));
@@ -77,6 +95,14 @@ public final class MusicRoll {
         List<Event> sorted = new ArrayList<>(events);
         sorted.sort(ORDER);
         this.events = List.copyOf(sorted);
+        List<Tempo> ts = new ArrayList<>();
+        for (Tempo t : tempos) {
+            if (t.timeMs() <= 0) continue;
+            ts.add(new Tempo(t.timeMs(), Math.max(100, Math.min(100_000, t.bpmX100())), Math.max(1, Math.min(32, t.beatsPerBar())),
+                Math.max(1, Math.min(32, t.beatUnit()))));
+        }
+        ts.sort(Comparator.comparingInt(Tempo::timeMs));
+        this.tempos = List.copyOf(ts);
     }
 
     public String title() { return title; }
@@ -86,9 +112,11 @@ public final class MusicRoll {
     public int beatUnit() { return beatUnit; }
     public List<Part> parts() { return parts; }
     public List<Event> events() { return events; }
+    /** 开头之后的速度、拍号变化（按时间排好）。 */
+    public List<Tempo> tempos() { return tempos; }
 
     public MusicRoll withMeta(String newTitle, String newAuthor) {
-        return new MusicRoll(newTitle, newAuthor, bpmX100, beatsPerBar, beatUnit, parts, events);
+        return new MusicRoll(newTitle, newAuthor, bpmX100, beatsPerBar, beatUnit, parts, events, tempos);
     }
 
     public int noteCount() {
@@ -136,6 +164,8 @@ public final class MusicRoll {
     public String problem() {
         if (parts.size() > MAX_PARTS) return "声部超过 " + MAX_PARTS + " 个";
         if (events.size() > MAX_EVENTS) return "事件超过 " + MAX_EVENTS + " 个";
+        if (tempos.size() > MAX_TEMPOS) return "速度、拍号变化超过 " + MAX_TEMPOS + " 处";
+        for (Tempo t : tempos) if (t.timeMs() > MAX_DURATION_MS) return "超过 20 分钟";
         for (Event e : events) {
             if (e.timeMs() < 0 || e.timeMs() > MAX_DURATION_MS) return "超过 20 分钟";
             if (e.part() < 0 || e.part() >= parts.size()) return "声部编号不对";
@@ -179,6 +209,19 @@ public final class MusicRoll {
                 writeVarInt(out, e.durationMs());
             }
         }
+        // 速度、拍号表：只在中途有变化时写（没有变化的纸带与旧格式逐字节相同，旧纸带也照常读）
+        if (!tempos.isEmpty()) {
+            out.write(TEMPO_SECTION);
+            writeVarInt(out, tempos.size());
+            int lastT = 0;
+            for (Tempo t : tempos) {
+                writeVarInt(out, t.timeMs() - lastT);
+                lastT = t.timeMs();
+                writeVarInt(out, t.bpmX100());
+                out.write(t.beatsPerBar());
+                out.write(t.beatUnit());
+            }
+        }
         byte[] bytes = out.toByteArray();
         if (bytes.length > MAX_BYTES) throw new FormatException("纸带内容超过 256 KiB");
         return bytes;
@@ -217,8 +260,20 @@ public final class MusicRoll {
                 throw new FormatException("未知事件");
             }
         }
+        List<Tempo> tempos = new ArrayList<>();
+        if (in.remaining() > 0) {
+            if (in.u8() != TEMPO_SECTION) throw new FormatException("纸带结尾有多余数据");
+            int n = in.varInt();
+            if (n > MAX_TEMPOS) throw new FormatException("速度、拍号变化超过 " + MAX_TEMPOS + " 处");
+            long t = 0;
+            for (int i = 0; i < n; i++) {
+                t += in.varInt();
+                if (t > MAX_DURATION_MS) throw new FormatException("超过 20 分钟");
+                tempos.add(new Tempo((int) t, in.varInt(), in.u8(), in.u8()));
+            }
+        }
         if (in.remaining() != 0) throw new FormatException("纸带结尾有多余数据");
-        MusicRoll roll = new MusicRoll(title, author, bpm, beats, unit, parts, events);
+        MusicRoll roll = new MusicRoll(title, author, bpm, beats, unit, parts, events, tempos);
         String bad = roll.problem();
         if (bad != null) throw new FormatException(bad);
         return roll;

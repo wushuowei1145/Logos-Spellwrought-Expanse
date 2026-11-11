@@ -363,7 +363,26 @@ public final class MusicClient {
 
     // —— 纸带播放 ——
 
-    /** 一路按本地时钟播放的纸带（服务端同步的播放，或编辑器的本地试听）。 */
+    /**
+     * 乐团共用的时钟（{@link Conducting}）：位置可以为负（起奏前的预备拍），带速度倍率。
+     * 跟服务端对时只挪这个时钟，所有成员的播放一起跟着走。
+     */
+    static final class Clock {
+        long anchor;
+        double tempo = 1;
+
+        int position(long now) {
+            return (int) Math.floor((now - anchor) / 1_000_000.0 * tempo);
+        }
+
+        /** 让 now 这一刻的位置正好是 positionMs，此后按 tempo 走。 */
+        void set(int positionMs, double tempo, long now) {
+            this.tempo = tempo;
+            anchor = now - (long) (positionMs / tempo * 1_000_000.0);
+        }
+    }
+
+    /** 一路按本地时钟播放的纸带（服务端同步的播放、编辑器的本地试听，或乐团里的一件乐器）。 */
     static final class Track {
         final String key;
         final BlockPos pos;
@@ -378,8 +397,12 @@ public final class MusicClient {
         /** 每个声部整体移几个半音（按这件乐器的音域，{@link MusicRoll#octaveShifts}）；乐器换了就重算。 */
         int[] shifts = new int[MusicRoll.MAX_PARTS];
         @Nullable InstrumentKind shiftsFor;
-        /** 待松开的音：{时刻（纳秒）, 声部, 原音}。 */
+        /** 待松开的音：{松开的时刻（纸带上的毫秒）, 声部, 原音}。按纸带时间记，对时、改速度都不用重排。 */
         final PriorityQueue<long[]> offs = new PriorityQueue<>((a, b) -> Long.compare(a[0], b[0]));
+        /** 乐团成员：跟着指挥台的时钟走（为空时用自己的 anchor）。 */
+        @Nullable Clock shared;
+        /** 乐团里各声部的响度（倍数；为空时都是 1）。 */
+        float @Nullable [] gains;
 
         Track(String key, BlockPos pos) {
             this.key = key;
@@ -387,6 +410,7 @@ public final class MusicClient {
         }
 
         int positionMs(long now) {
+            if (shared != null) return shared.position(now);
             return playing ? (int) Math.max(0, (now - anchor) / 1_000_000L) : pausedAt;
         }
 
@@ -412,23 +436,16 @@ public final class MusicClient {
         void resync(long expected) {
             long delta = expected - anchor;
             anchor = expected;
-            if (Math.abs(delta) > JUMP_NS) {
-                needSeek = true;
-                return;
-            }
-            if (offs.isEmpty()) return;
-            List<long[]> pending = new ArrayList<>(offs);
-            offs.clear();
-            for (long[] o : pending) {
-                o[0] += delta;
-                offs.add(o);
-            }
+            if (Math.abs(delta) > JUMP_NS) needSeek = true;
         }
 
         void advance(long now) {
-            while (!offs.isEmpty() && offs.peek()[0] <= now) {
-                long[] o = offs.poll();
-                VoiceBank.noteOff(key, (int) o[2], (int) o[1]);
+            if (playing) {
+                int at = positionMs(now);
+                while (!offs.isEmpty() && offs.peek()[0] <= at) {
+                    long[] o = offs.poll();
+                    VoiceBank.noteOff(key, (int) o[2], (int) o[1]);
+                }
             }
             if (roll == null) {
                 if (rollId != null) roll = MusicClient.roll(rollId);
@@ -440,7 +457,7 @@ public final class MusicClient {
                 // 纸带和乐器都知道了：按乐器音域定各声部的移调，把要用到的采样先解码好（合奏开始时不会慢半拍、漏音）
                 shifts = roll.octaveShifts(kind.low(), kind.high());
                 shiftsFor = kind;
-                SampleMaps.prewarm(kind, roll, shifts);
+                SampleMaps.prewarm(kind, roll, shifts, partMask);
             }
             if (!playing) return;
             int pos = positionMs(now);
@@ -455,8 +472,9 @@ public final class MusicClient {
                     if (pos - e.timeMs() > LATE_MS) continue;
                     // 整个声部移八度；声部比乐器的音域还宽时，剩下的个别音才按八度折进来
                     int sounding = kind.fold(e.pitch() + shifts[e.part()]);
-                    VoiceBank.noteOn(key, kind, this.pos, at, e.pitch(), sounding, e.velocity(), e.part());
-                    offs.add(new long[]{anchor + e.endMs() * 1_000_000L, e.part(), e.pitch()});
+                    float gain = gains == null ? 1f : gains[e.part()];
+                    VoiceBank.noteOn(key, kind, this.pos, at, e.pitch(), sounding, e.velocity(), e.part(), gain);
+                    offs.add(new long[]{e.endMs(), e.part(), e.pitch()});
                 } else {
                     VoiceBank.pedal(key, kind, this.pos, at, e.part(), e.type() == MusicRoll.PEDAL_DOWN);
                 }

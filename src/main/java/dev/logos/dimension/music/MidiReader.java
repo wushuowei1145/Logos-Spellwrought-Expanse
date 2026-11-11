@@ -48,6 +48,7 @@ public final class MidiReader {
         Map<Integer, String> trackNames = new HashMap<>();
         int[] timeSig = {4, 4};
         boolean sawTimeSig = false;
+        TreeMap<Long, int[]> meters = new TreeMap<>();
         boolean truncated = false;
         int track = 0;
         while (track < trackCount && c.remaining() >= 8) {
@@ -77,10 +78,14 @@ public final class MidiReader {
                         if (us > 0) tempos.put(tick, us);
                     } else if (type == 0x03 && !trackNames.containsKey(track)) {
                         trackNames.put(track, new String(meta, StandardCharsets.UTF_8).strip());
-                    } else if (type == 0x58 && mlen >= 2 && !sawTimeSig) {
-                        timeSig[0] = Math.max(1, meta[0] & 0xFF);
-                        timeSig[1] = 1 << Math.min(5, meta[1] & 0xFF);
-                        sawTimeSig = true;
+                    } else if (type == 0x58 && mlen >= 2) {
+                        int[] sig = {Math.max(1, meta[0] & 0xFF), 1 << Math.min(5, meta[1] & 0xFF)};
+                        meters.putIfAbsent(tick, sig);
+                        if (!sawTimeSig) {
+                            timeSig[0] = sig[0];
+                            timeSig[1] = sig[1];
+                            sawTimeSig = true;
+                        }
                     }
                     status = 0;
                     continue;
@@ -122,6 +127,26 @@ public final class MidiReader {
         // tick → 毫秒：速度表分段累加
         TempoMap map = new TempoMap(division, tempos);
         int bpmX100 = (int) Math.round(60_000_000.0 / tempos.getOrDefault(tempos.isEmpty() ? 0L : tempos.firstKey(), 500_000) * 100.0);
+        // 中途的速度、拍号变化（指挥按它画拍子）：开头那一处已经是 bpmX100 和 timeSig
+        List<MusicRoll.Tempo> marks = new ArrayList<>();
+        {
+            java.util.TreeSet<Long> at = new java.util.TreeSet<>();
+            at.addAll(tempos.keySet());
+            at.addAll(meters.keySet());
+            long firstTempo = tempos.isEmpty() ? 0L : tempos.firstKey();
+            long firstMeter = meters.isEmpty() ? 0L : meters.firstKey();
+            int[] meter = timeSig.clone();
+            int us = tempos.isEmpty() ? 500_000 : tempos.firstEntry().getValue();
+            for (long tick : at) {
+                if (tempos.containsKey(tick)) us = tempos.get(tick);
+                if (meters.containsKey(tick)) meter = meters.get(tick);
+                if (tick <= Math.max(firstTempo, firstMeter) && tick <= 0) continue;
+                if (tick == firstTempo && tick == firstMeter) continue;
+                int ms = map.ms(tick);
+                if (ms <= 0) continue;
+                marks.add(new MusicRoll.Tempo(ms, (int) Math.round(60_000_000.0 / us * 100.0), meter[0], meter[1]));
+            }
+        }
 
         // 第二遍：配对音符开始/结束，按通道分声部
         raws.sort((a, b) -> a.tick != b.tick ? Long.compare(a.tick, b.tick) : Integer.compare(a.order(), b.order()));
@@ -197,7 +222,7 @@ public final class MidiReader {
         if (truncated) notes.add("超过纸带上限（" + MusicRoll.MAX_EVENTS + " 个事件 / 20 分钟），后面的部分没有导入");
         if (kept.isEmpty()) throw new MusicRoll.FormatException("MIDI 文件里没有可以演奏的音符");
         if (parts.isEmpty()) parts.add(new MusicRoll.Part("", 0));
-        MusicRoll roll = new MusicRoll(fallbackTitle, "", bpmX100, timeSig[0], timeSig[1], parts, kept);
+        MusicRoll roll = new MusicRoll(fallbackTitle, "", bpmX100, timeSig[0], timeSig[1], parts, kept, marks);
         // 编码后可能仍超 256 KiB（极密集的曲子）：再按大小截一次
         while (true) {
             try {
@@ -206,7 +231,7 @@ public final class MidiReader {
             } catch (MusicRoll.FormatException tooBig) {
                 List<MusicRoll.Event> ev = roll.events();
                 if (ev.size() < 2) throw tooBig;
-                roll = new MusicRoll(roll.title(), "", bpmX100, timeSig[0], timeSig[1], parts, ev.subList(0, ev.size() * 9 / 10));
+                roll = new MusicRoll(roll.title(), "", bpmX100, timeSig[0], timeSig[1], parts, ev.subList(0, ev.size() * 9 / 10), marks);
                 if (!truncated) {
                     truncated = true;
                     notes.add("内容超过 256 KiB，后面的部分没有导入");

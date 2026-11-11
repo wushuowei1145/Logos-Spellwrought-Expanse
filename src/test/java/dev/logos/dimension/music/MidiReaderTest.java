@@ -61,6 +61,7 @@ class MidiReaderTest {
         assertEquals(12000, roll.bpmX100());
         assertEquals(3, roll.beatsPerBar());
         assertEquals(4, roll.beatUnit());
+        assertEquals(java.util.List.of(new MusicRoll.Tempo(1000, 6000, 3, 4)), roll.tempos(), "the tempo change at tick 960 is kept for the conductor");
         assertEquals(1, roll.parts().size());
         assertEquals("Piano", roll.parts().get(0).name());
         var notes = roll.events().stream().filter(e -> e.type() == MusicRoll.NOTE).toList();

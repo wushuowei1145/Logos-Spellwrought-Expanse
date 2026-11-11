@@ -64,6 +64,8 @@ final class VoiceBank {
         /** 采样乐器：用的哪个采样区（松键时间、松键声、力度对应的音量）；管风琴为 null。 */
         final SampleMap.@Nullable Zone zone;
         final int velocity;
+        /** 乐团里这个声部的响度（倍数）：管风琴的余响、换音栓时的接续音也按它。 */
+        float gain = 1f;
         boolean held = true;
         boolean damped;
 
@@ -291,7 +293,12 @@ final class VoiceBank {
      * @param pitch 实际发声的音高；不在这件乐器的音域里就不出声
      */
     static void noteOn(String key, InstrumentKind kind, BlockPos pos, Vec3 at, int input, int pitch, int velocity, int part) {
-        if (pitch < kind.low() || pitch > kind.high()) return;
+        noteOn(key, kind, pos, at, input, pitch, velocity, part, 1f);
+    }
+
+    /** @param gain 乐团里这个声部的响度（倍数） */
+    static void noteOn(String key, InstrumentKind kind, BlockPos pos, Vec3 at, int input, int pitch, int velocity, int part, float gain) {
+        if (pitch < kind.low() || pitch > kind.high() || gain <= 0) return;
         Source s = source(key, kind, pos, at);
         // 同一个音再次弹下：先止住还在响的那一个（琴槌或手指重新碰到弦；管风琴同一根管不会响两次）
         for (Voice v : s.voices) {
@@ -310,7 +317,7 @@ final class VoiceBank {
             if (be == null) return;
             OrganMixer.Mix mix = OrganMixer.now(be.effectiveStops());
             gen = mix.gen;
-            sound = organSound(mix, be, pitch, false, 3);
+            sound = organSound(mix, be, pitch, false, 3, gain);
         } else {
             // 大键琴不分力度：一律按中强
             vel = kind.velocitySensitive() ? velocity : 100;
@@ -319,20 +326,22 @@ final class VoiceBank {
             if (zone == null) return;
             // 手持乐器跟着人走，可闻距离按转发范围；方块乐器按采样表
             int range = kind.handheld() ? Math.min(48, kind.broadcastRange() - 8) : map.range();
-            DirectSound note = new DirectSound(SampleMaps.sound(zone.file()), zone.ratio(pitch), zone.volume(vel), at, range, 0, zone.loops())
+            DirectSound note = new DirectSound(SampleMaps.sound(zone.file()), zone.ratio(pitch), Math.min(1f, zone.volume(vel) * gain), at, range, 0, zone.loops())
                 .subtitle("subtitles.logos_dimension.instrument." + kind.id());
             note.follow = s.follow;
             sound = note;
         }
         Minecraft.getInstance().getSoundManager().play(sound);
-        s.voices.add(new Voice(sound, input, pitch, part, System.nanoTime(), gen, false, zone, vel));
+        Voice voice = new Voice(sound, input, pitch, part, System.nanoTime(), gen, false, zone, vel);
+        voice.gain = gain;
+        s.voices.add(voice);
     }
 
-    private static DirectSound organSound(OrganMixer.Mix mix, InstrumentBlockEntity be, int pitch, boolean tail, int attack) {
+    private static DirectSound organSound(OrganMixer.Mix mix, InstrumentBlockEntity be, int pitch, boolean tail, int attack, float gain) {
         OrganSynth.Sample sample = mix.sample(pitch);
         var o = be.organ();
         int range = o == null ? 16 : o.range();
-        float base = mix.loudness * (o != null && o.pipes() == 0 ? 0.5f : 1f);
+        float base = Math.min(1f, mix.loudness * (o != null && o.pipes() == 0 ? 0.5f : 1f) * gain);
         Vec3 at = be.voiceCenter();
         if (tail) {
             RoomAcoustics.Reverb r = OrganRoom.reverb(be.getBlockPos(), be);
@@ -359,9 +368,11 @@ final class VoiceBank {
         }
         if (tails >= MAX_TAILS) return;
         makeRoom(s);
-        DirectSound tail = organSound(mix, be, v.pitch, true, 0);
+        DirectSound tail = organSound(mix, be, v.pitch, true, 0, v.gain);
         Minecraft.getInstance().getSoundManager().play(tail);
-        s.voices.add(new Voice(tail, v.input, v.pitch, v.part, System.nanoTime(), mix.gen, true));
+        Voice t = new Voice(tail, v.input, v.pitch, v.part, System.nanoTime(), mix.gen, true);
+        t.gain = v.gain;
+        s.voices.add(t);
     }
 
     /** 松开一个原音（与 noteOn 的 input 相同）。 */
@@ -430,9 +441,11 @@ final class VoiceBank {
                 if (!v.held || v.tail || v.gen == mix.gen || !v.alive()) continue;
                 v.held = false;
                 v.sound.release(0.6f);
-                DirectSound fresh = organSound(mix, be, v.pitch, false, 2);
+                DirectSound fresh = organSound(mix, be, v.pitch, false, 2, v.gain);
                 Minecraft.getInstance().getSoundManager().play(fresh);
-                s.voices.add(new Voice(fresh, v.input, v.pitch, v.part, System.nanoTime(), mix.gen, false));
+                Voice f = new Voice(fresh, v.input, v.pitch, v.part, System.nanoTime(), mix.gen, false);
+                f.gain = v.gain;
+                s.voices.add(f);
             }
         }
     }
