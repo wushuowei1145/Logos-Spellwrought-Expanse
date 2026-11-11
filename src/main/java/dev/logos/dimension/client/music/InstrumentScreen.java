@@ -33,7 +33,7 @@ import org.jspecify.annotations.Nullable;
  *   <li>纸带：纸带槽里的纸带信息、播放/暂停/停止/取出、选择演奏哪些声部、红石模式、打孔编辑器、导入 MIDI。</li>
  * </ul>
  */
-public class InstrumentScreen extends Screen {
+public class InstrumentScreen extends Screen implements MidiKeyboard.Target {
     private static final int W = 400, H = 226, PAD = 28;
     private static final int KEY_LEFT = 263, KEY_RIGHT = 262, KEY_UP = 265, KEY_DOWN = 264, KEY_SPACE = 32;
 
@@ -47,6 +47,8 @@ public class InstrumentScreen extends Screen {
     private final boolean[] sharp = new boolean[7];
     /** 按住的键：键码 → 发出的音高。松开时按这里的音高止音，换八度不会卡音。 */
     private final Map<Integer, Integer> held = new HashMap<>();
+    /** 电子琴上按住的音。 */
+    private final java.util.Set<Integer> midiHeld = new java.util.HashSet<>();
     private int mousePitch = -1;
     private int x0, y0;
     private @Nullable Button recordButton;
@@ -94,6 +96,9 @@ public class InstrumentScreen extends Screen {
             addRenderableWidget(Button.builder(tr("tab_stops"), b -> page(STOPS)).bounds(tx + 52, y0 + 20, 50, 16).build()).active = page != STOPS;
         }
         addRenderableWidget(Button.builder(tr("tab_roll"), b -> page(ROLL)).bounds(right - 50, y0 + 20, 50, 16).build()).active = page != ROLL;
+        // 只有演奏页接收电子琴
+        if (page == PLAY) MidiKeyboard.setTarget(this);
+        else MidiKeyboard.clearTarget(this);
         switch (page) {
             case ROLL -> initRollPage();
             case STOPS -> initStopsPage();
@@ -198,6 +203,13 @@ public class InstrumentScreen extends Screen {
                 rebuildWidgets();
             }).bounds(x + 146, y, 92, 16).build());
         }
+        addRenderableWidget(Button.builder(midiLabel(), b -> minecraft.setScreen(new MidiDeviceScreen(this)))
+            .bounds(x0 + W - PAD - 96, y, 96, 16).build());
+    }
+
+    private Component midiLabel() {
+        String name = MidiKeyboard.connected();
+        return name == null ? tr("midi_button") : tr("midi_button_on");
     }
 
     private void initRollPage() {
@@ -264,11 +276,13 @@ public class InstrumentScreen extends Screen {
     public void added() {
         super.added();
         if (page == PLAY) MusicClient.control(pos, MusicPayloads.Control.CLAIM, 0);
+        MidiKeyboard.autoConnect();
         MusicClient.prewarmOrgan(pos);
     }
 
     @Override
     public void removed() {
+        MidiKeyboard.clearTarget(this);
         releaseAll();
         if (MusicClient.recorder != null) MusicClient.recorder = null;
         MusicClient.control(pos, MusicPayloads.Control.RELEASE, 0);
@@ -306,6 +320,7 @@ public class InstrumentScreen extends Screen {
 
     private void releaseAll() {
         for (int key : new ArrayList<>(held.keySet())) lift(key);
+        midiAllOff();
         if (mousePitch >= 0) {
             MusicClient.localNote(pos, mousePitch, 0);
             mousePitch = -1;
@@ -314,6 +329,48 @@ public class InstrumentScreen extends Screen {
             pedal = false;
             MusicClient.localPedal(pos, false);
         }
+    }
+
+    // —— 电子琴 ——
+
+    @Override
+    public void midiNote(int pitch, int velocity, long nanos) {
+        if (page != PLAY || busy()) return;
+        // 同一个键还按着又来一次「按下」（有的琴会这样）：先松开
+        if (!midiHeld.add(pitch)) MusicClient.localNote(pos, pitch, 0, nanos);
+        MusicClient.localNote(pos, pitch, velocity, nanos);
+    }
+
+    @Override
+    public void midiOff(int pitch, long nanos) {
+        if (midiHeld.remove(pitch)) MusicClient.localNote(pos, pitch, 0, nanos);
+    }
+
+    @Override
+    public void midiPedal(boolean down, long nanos) {
+        if (page != PLAY || busy() || down == pedal) return;
+        pedal = down;
+        MusicClient.localPedal(pos, down, nanos);
+    }
+
+    @Override
+    public void midiAllOff() {
+        long now = System.nanoTime();
+        for (int p : new ArrayList<>(midiHeld)) MusicClient.localNote(pos, p, 0, now);
+        midiHeld.clear();
+    }
+
+    @Override
+    public void midiProgram(int program) {
+        // 管风琴：琴上的音色切换键轮流切六个预设
+        if (kind() != InstrumentKind.PIPE_ORGAN) return;
+        OrganStop.Preset[] presets = OrganStop.Preset.values();
+        MusicClient.control(pos, MusicPayloads.Control.STOPS, presets[Math.floorMod(program, presets.length)].mask());
+    }
+
+    /** 测试用：电子琴上正按着几个音。 */
+    int midiHeld() {
+        return midiHeld.size();
     }
 
     /** 这个键码此刻对应的音高；没有映射时 -1。 */
@@ -447,7 +504,7 @@ public class InstrumentScreen extends Screen {
     }
 
     private boolean sounding(int pitch) {
-        return held.containsValue(pitch) || mousePitch == pitch;
+        return held.containsValue(pitch) || mousePitch == pitch || midiHeld.contains(pitch);
     }
 
     @Override

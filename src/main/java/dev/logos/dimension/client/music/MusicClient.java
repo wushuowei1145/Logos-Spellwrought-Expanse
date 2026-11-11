@@ -126,6 +126,7 @@ public final class MusicClient {
 
     @SubscribeEvent
     static void frame(RenderFrameEvent.Pre event) {
+        MidiKeyboard.drain();
         long now = System.nanoTime();
         while (!SCHEDULE.isEmpty() && SCHEDULE.peek().at <= now) SCHEDULE.poll().run.run();
         for (Track t : new ArrayList<>(TRACKS.values())) {
@@ -151,14 +152,13 @@ public final class MusicClient {
     private static long batchStart;
     private static final List<MusicPayloads.LiveNote> BATCH = new ArrayList<>();
 
-    private static void queueLive(BlockPos pos, int pitch, int velocity) {
-        long now = System.nanoTime();
+    private static void queueLive(BlockPos pos, int pitch, int velocity, long now) {
         if (batchPos != null && !batchPos.equals(pos)) flushLive();
         if (BATCH.isEmpty()) {
             batchPos = pos;
             batchStart = now;
         }
-        BATCH.add(new MusicPayloads.LiveNote((int) Math.min(1000, (now - batchStart) / 1_000_000L), pitch, velocity));
+        BATCH.add(new MusicPayloads.LiveNote((int) Math.max(0, Math.min(1000, (now - batchStart) / 1_000_000L)), pitch, velocity));
         if (BATCH.size() >= MusicPayloads.MAX_BATCH) flushLive();
     }
 
@@ -172,20 +172,29 @@ public final class MusicClient {
 
     /** 演奏界面里弹下（velocity &gt; 0）或松开（velocity 0）一个音：本地立刻发声并转给服务端。 */
     static void localNote(BlockPos pos, int pitch, int velocity) {
+        localNote(pos, pitch, velocity, System.nanoTime());
+    }
+
+    /** nanos 是这个音真正按下的时刻（电子琴的消息比这一帧早到一点），录制和批内偏移按它算。 */
+    static void localNote(BlockPos pos, int pitch, int velocity, long nanos) {
         InstrumentKind kind = kindAt(pos);
         if (kind == null) return;
         if (velocity > 0) VoiceBank.noteOn(liveKey(pos), kind, pos, centerAt(pos), pitch, velocity, 0);
         else VoiceBank.noteOff(liveKey(pos), pitch, 0);
-        queueLive(pos, pitch, velocity);
-        if (recorder != null) recorder.note(pitch, velocity);
+        queueLive(pos, pitch, velocity, nanos);
+        if (recorder != null) recorder.note(pitch, velocity, nanos);
     }
 
     static void localPedal(BlockPos pos, boolean down) {
+        localPedal(pos, down, System.nanoTime());
+    }
+
+    static void localPedal(BlockPos pos, boolean down, long nanos) {
         InstrumentKind kind = kindAt(pos);
         if (kind == null) return;
         VoiceBank.pedal(liveKey(pos), kind, pos, centerAt(pos), 0, down);
-        queueLive(pos, MusicPayloads.PEDAL, down ? 127 : 0);
-        if (recorder != null) recorder.pedal(down);
+        queueLive(pos, MusicPayloads.PEDAL, down ? 127 : 0, nanos);
+        if (recorder != null) recorder.pedal(down, nanos);
     }
 
     // —— 实时演奏：收听 ——
@@ -406,7 +415,11 @@ public final class MusicClient {
         private boolean pedal;
 
         private int now() {
-            return (int) Math.min(MusicRoll.MAX_DURATION_MS, (System.nanoTime() - start) / 1_000_000L);
+            return at(System.nanoTime());
+        }
+
+        private int at(long nanos) {
+            return (int) Math.max(0, Math.min(MusicRoll.MAX_DURATION_MS, (nanos - start) / 1_000_000L));
         }
 
         int elapsedMs() {
@@ -418,16 +431,29 @@ public final class MusicClient {
         }
 
         void note(int pitch, int velocity) {
-            int t = now();
+            note(pitch, velocity, System.nanoTime());
+        }
+
+        void note(int pitch, int velocity, long nanos) {
+            int t = at(nanos);
             int[] o = open.remove(pitch);
             if (o != null) events.add(MusicRoll.Event.note(o[0], 0, pitch, o[1], Math.max(1, Math.min(MusicRoll.MAX_NOTE_MS, t - o[0]))));
             if (velocity > 0 && events.size() < MusicRoll.MAX_EVENTS) open.put(pitch, new int[]{t, velocity});
         }
 
         void pedal(boolean down) {
+            pedal(down, System.nanoTime());
+        }
+
+        void pedal(boolean down, long nanos) {
             if (down == pedal || events.size() >= MusicRoll.MAX_EVENTS) return;
             pedal = down;
-            events.add(MusicRoll.Event.pedal(now(), 0, down));
+            events.add(MusicRoll.Event.pedal(at(nanos), 0, down));
+        }
+
+        /** 测试用：录下的事件（按开始时间排好）。 */
+        List<MusicRoll.Event> events() {
+            return new MusicRoll("", "", 12000, 4, 4, List.of(), events).events();
         }
 
         MusicRoll finish(String partName) {
