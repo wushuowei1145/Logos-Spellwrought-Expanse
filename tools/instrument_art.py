@@ -38,6 +38,11 @@ T = {
     "black": "minecraft:block/black_concrete",
     "varnish": "minecraft:block/jungle_planks",
     "banner": "logos_dimension:block/instrument/hexenwald_banner",
+    # 中提琴、巴松管：深一些的红褐色清漆；低音提琴用深色胡桃木；定音鼓的铜鼓腔、演奏凳的红丝绒、鼓槌的毡头
+    "amber": "minecraft:block/mangrove_planks",
+    "copper": "minecraft:block/copper_block",
+    "velvet": "minecraft:block/red_wool",
+    "felt": "minecraft:block/white_wool",
 }
 
 
@@ -895,6 +900,295 @@ def transformed(elements, dx, dy, dz, rot=None):
     return out
 
 
+# —— 任意转动 ——
+# 26.1 的模型元素除了单轴 axis/angle，还认 {"x", "y", "z"} 欧拉角（度）：先绕 x、再绕 y、再绕 z（原版 rotationZYX）。
+# 下面用它把整件乐器当刚体转（大提琴后仰又左倾、斜靠在乐谱架上的巴松管），已带转动的元素与新的转动合成成一个。
+
+def _matmul(a, b):
+    return [[sum(a[i][k] * b[k][j] for k in range(3)) for j in range(3)] for i in range(3)]
+
+
+def _apply(m, v):
+    return [sum(m[i][k] * v[k] for k in range(3)) for i in range(3)]
+
+
+def euler(x=0.0, y=0.0, z=0.0):
+    cx, sx = math.cos(math.radians(x)), math.sin(math.radians(x))
+    cy, sy = math.cos(math.radians(y)), math.sin(math.radians(y))
+    cz, sz = math.cos(math.radians(z)), math.sin(math.radians(z))
+    rx = [[1, 0, 0], [0, cx, -sx], [0, sx, cx]]
+    ry = [[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]]
+    rz = [[cz, -sz, 0], [sz, cz, 0], [0, 0, 1]]
+    return _matmul(rz, _matmul(ry, rx))
+
+
+def _element_matrix(e):
+    r = e.get("rotation")
+    if not r:
+        return None
+    if "axis" in r:
+        return euler(**{r["axis"]: r["angle"]})
+    return euler(r.get("x", 0), r.get("y", 0), r.get("z", 0))
+
+
+def _decompose(m):
+    y = -math.asin(max(-1.0, min(1.0, m[2][0])))
+    x = math.atan2(m[2][1], m[2][2])
+    z = math.atan2(m[1][0], m[0][0])
+    return math.degrees(x), math.degrees(y), math.degrees(z)
+
+
+def rigid(elements, m, origin):
+    """整组元素绕 origin 转 m（3×3）。每个元素的长方体本身不动，只是平移后换成合成的欧拉角转动。"""
+    out = []
+    for e in elements:
+        e = json.loads(json.dumps(e))
+        m1 = _element_matrix(e)
+        o1 = list(origin) if m1 is None else e["rotation"]["origin"]
+        m1 = m1 or euler()
+        moved = _apply(m, [o1[i] - origin[i] for i in range(3)])
+        t = [origin[i] + moved[i] - o1[i] for i in range(3)]
+        x, y, z = _decompose(_matmul(m, m1))
+        e["from"] = [round(e["from"][i] + t[i], 3) for i in range(3)]
+        e["to"] = [round(e["to"][i] + t[i], 3) for i in range(3)]
+        e["rotation"] = {"origin": [round(o1[i] + t[i], 3) for i in range(3)], "x": round(x, 3), "y": round(y, 3), "z": round(z, 3)}
+        out.append(e)
+    return out
+
+
+def segment(p0, p1, size, tex):
+    """从 p0 到 p1 的一根细杆（方截面，边长 size）：沿 +X 画好再转过去。"""
+    d = [b - a for a, b in zip(p0, p1)]
+    length = math.sqrt(sum(v * v for v in d))
+    ux, uy, uz = (v / length for v in d)
+    h = size / 2
+    e = box((p0[0], p0[1] - h, p0[2] - h), (p0[0] + length, p0[1] + h, p0[2] + h), tex)
+    beta = -math.degrees(math.asin(max(-1.0, min(1.0, uz))))
+    alpha = math.degrees(math.atan2(uy, ux))
+    e["rotation"] = {"origin": [round(v, 3) for v in p0], "x": 0, "y": round(beta, 3), "z": round(alpha, 3)}
+    return e
+
+
+def retextured(elements, mapping):
+    out = json.loads(json.dumps(elements))
+    for e in out:
+        for f in e["faces"].values():
+            key = f["texture"][1:]
+            f["texture"] = "#" + mapping.get(key, key)
+    return out
+
+
+def check_bounds(name, elements):
+    """原版只收 −16–32 之内的元素坐标。"""
+    for e in elements:
+        for v in e["from"] + e["to"]:
+            assert -16 <= v <= 32, f"{name}: element out of range {e['from']} {e['to']}"
+
+
+def disc(cx, cz, r, y0, y1, tex, faces=None):
+    """近似的圆柱：宽扁、方、窄长三块交叠（同一贴图、按坐标取 uv，重叠的面看不出接缝）。"""
+    a, b, c = r, r * 0.62, r * 0.86
+    return [box((cx - a, y0, cz - b), (cx + a, y1, cz + b), tex, faces=faces),
+            box((cx - c, y0, cz - c), (cx + c, y1, cz + c), tex, faces=faces),
+            box((cx - b, y0, cz - a), (cx + b, y1, cz + a), tex, faces=faces)]
+
+
+# —— 中提琴、双簧管、巴松管（手持）——
+
+def viola_elements(bow=True):
+    """中提琴：小提琴的样子，清漆深一些（原版红树木板）；拿在手上时 HeldRig 把它放大一圈。"""
+    return retextured(violin_elements(bow), {"varnish": "amber"})
+
+
+def oboe_elements():
+    """双簧管：乌木黑的管身、银键，竖着画：喇叭口在下，哨片尖在 (8, 15.6, 8)，对着嘴（HeldRig.oboe 的支点）。
+    按键在 −Z 面（演奏时朝前上方），托指架和八度键在 +Z 面（朝演奏者），双手在 +Z 一侧 y 5、y 11 处扶着。"""
+    el = []
+    # 喇叭口：外沿一圈银边，往上收细
+    el.append(box((7.0, 0.4, 7.0), (9.0, 1.4, 9.0), "black"))
+    el.append(box((6.9, 0.4, 6.9), (9.1, 0.7, 9.1), "iron"))
+    el.append(box((7.25, 1.4, 7.25), (8.75, 2.6, 8.75), "black"))
+    # 下节、中间的银箍、上节（越往上越细）
+    el.append(box((7.4, 2.6, 7.4), (8.6, 8.1, 8.6), "black"))
+    el.append(box((7.3, 8.0, 7.3), (8.7, 8.5, 8.7), "iron"))
+    el.append(box((7.45, 8.5, 7.45), (8.55, 11.4, 8.55), "black"))
+    el.append(box((7.5, 11.4, 7.5), (8.5, 13.4, 8.5), "black"))
+    el.append(box((7.4, 13.3, 7.4), (8.6, 13.7, 8.6), "iron"))
+    # 哨片：缠红线的管座、扁的芦苇哨片
+    el.append(box((7.65, 13.7, 7.65), (8.35, 14.5, 8.35), "red"))
+    el.append(box((7.55, 14.5, 7.85), (8.45, 15.6, 8.15), "maple"))
+    # 正面的指孔环、侧面的长连杆，背面的托指架与八度键
+    front = {"south": None}
+    for y in (3.3, 4.4, 5.5, 9.0, 10.0, 11.0):
+        el.append(box((7.6, y, 7.2), (8.4, y + 0.5, 7.42), "iron", faces=front))
+    el.append(box((8.55, 3.0, 7.7), (8.75, 12.8, 7.9), "iron"))
+    el.append(box((7.7, 6.0, 8.58), (8.3, 6.6, 9.1), "iron"))
+    el.append(box((7.8, 12.0, 8.53), (8.2, 13.0, 8.7), "iron"))
+    return el
+
+
+# 巴松管弯管尽头的哨片尖（HeldRig.bassoon 的支点）
+BASSOON_REED = (12.33, 12.1, 12.5)
+
+
+def bassoon_elements():
+    """巴松管：红褐色枫木（原版红树木板）、银键，竖着画：管靴在下（y −5.4）、喇叭口在上（y 21.4）。
+    长管（−Z 一侧）和翼管（+Z，演奏时朝着人）并排插在管靴上；翼管顶上的细弯管朝 +X、+Z 弯过去，把哨片送到嘴边。
+    演奏时 +X 朝演奏者右手边：管靴在右胯前、喇叭口越过左肩。"""
+    el = []
+    # 管靴：两根管并排的粗段，底下一个金属 U 形盖
+    el.append(box((6.6, -5.0, 6.2), (9.4, 1.4, 9.9), "amber"))
+    el.append(box((6.8, -5.4, 6.4), (9.2, -5.0, 9.7), "iron"))
+    el.append(box((6.5, 1.2, 6.1), (9.5, 1.8, 10.0), "iron"))
+    # 长管、接口银箍、喇叭口节（顶上一圈象牙白）
+    el.append(box((6.85, 1.8, 6.35), (9.15, 16.8, 8.15), "amber"))
+    el.append(box((6.75, 16.6, 6.25), (9.25, 17.2, 8.25), "iron"))
+    el.append(box((6.7, 17.2, 6.2), (9.3, 20.7, 8.3), "amber"))
+    el.append(box((6.6, 20.6, 6.1), (9.4, 21.4, 8.4), "lacquer"))
+    # 翼管（左手按孔的那一节）与顶上的银箍
+    el.append(box((7.1, 1.8, 8.25), (8.9, 9.7, 9.75), "amber"))
+    el.append(box((7.0, 9.6, 8.15), (9.0, 10.1, 9.85), "iron"))
+    # 弯管：先竖着出来一小段，再弯向嘴边；尽头是哨片
+    el.append(box((8.3, 10.1, 8.75), (8.7, 11.3, 9.15), "iron"))
+    bend, base = (8.5, 11.2, 8.95), (11.75, 12.0, 11.95)
+    el.append(segment(bend, base, 0.4, "iron"))
+    el.append(segment(base, BASSOON_REED, 0.55, "maple"))
+    # 管靴上的托手架（右手）、翼管与管靴上的指孔环（朝演奏者）、长管侧面的长连杆
+    el.append(box((7.5, -0.8, 9.9), (8.5, 0.4, 10.7), "black"))
+    back = {"north": None}
+    for y in (3.6, 5.2, 6.8):
+        el.append(box((7.6, y, 9.73), (8.4, y + 0.5, 9.95), "iron", faces=back))
+    for y in (-3.4, -2.0):
+        el.append(box((7.6, y, 9.88), (8.4, y + 0.5, 10.1), "iron", faces=back))
+    el.append(box((9.12, 2.2, 6.9), (9.32, 15.8, 7.1), "iron"))
+    el.append(box((6.68, 3.0, 8.9), (6.88, 9.2, 9.1), "iron"))
+    return el
+
+
+# —— 大提琴、低音提琴、定音鼓（方块）——
+
+# 坐着（站着）拉的琴：琴按竖直、正面朝北画在自己的坐标里（琴脚尖在原点，y 沿琴身向上，x 向东，z 朝琴背），
+# 先后仰 lean°（琴头朝演奏者）、再向左倾 tilt°（琴头朝西），琴脚尖放在 endpin（方块像素，朝北放置）。
+# 和客户端 HeldRig 的 CELLO / BASS 是同一组数：contact 是弓毛压在弦上的点，左手沿 neck_z 那条线（指板与琴颈中间）
+# 在 neck 范围里找直臂够得着的位置。演奏者的位置见 SeatedInstrumentBlock.feet。
+SEATED = {
+    "hexen_cello": {"endpin": (8.8, 0, 2.1), "lean": 25, "tilt": 16, "contact": (0, 11.5, -2.5), "neck_z": -1.0,
+                    "neck": (12.5, 21.5), "feet": (8, -2.25, 12.5), "bow": 0.85},
+    "hexen_double_bass": {"endpin": (7, 0, 3.2), "lean": 14, "tilt": 10, "contact": (0, 13.6, -3.4), "neck_z": -1.5,
+                          "neck": (15.0, 26.5), "feet": (8, 0, 11.5), "bow": 0.8},
+}
+
+
+def cello_elements():
+    """大提琴（琴的局部坐标，见 SEATED）：尾柱 y 0–5，琴身 5–17.5，琴颈、弦轴箱、琴头到 25.6。"""
+    el = []
+    el.append(box((-0.2, 0, -0.2), (0.2, 4.6, 0.2), "iron"))
+    el.append(box((-0.5, 4.4, -0.5), (0.5, 5.0, 0.5), "black"))
+    # 琴身：下宽、腰细、上宽；面板云杉，背板、侧板清漆
+    for y0, y1, hw in ((5.0, 5.8, 2.6), (5.8, 9.2, 3.6), (9.2, 10.0, 3.0), (10.0, 12.2, 2.2),
+                       (12.2, 13.0, 2.6), (13.0, 16.4, 2.9), (16.4, 17.5, 2.0)):
+        el.append(box((-hw, y0, -1.2), (hw, y1, 1.2), "varnish", faces={"north": "spruce"}))
+    only_front = {"south": None, "up": None, "down": None, "east": None, "west": None}
+    for x in (-1.5, 1.1):
+        el.append(box((x, 9.6, -1.25), (x + 0.4, 11.8, -1.2), "black", faces=only_front))
+    # 拉弦板、琴马
+    el.append(box((-0.8, 5.6, -1.6), (0.8, 9.8, -1.2), "black"))
+    el.append(box((-1.2, 10.4, -2.35), (1.2, 10.9, -1.2), "maple"))
+    # 指板（悬在琴身上方）、琴颈、弦轴箱和弦轴、琴头（侧面的涡卷）
+    el.append(box((-0.75, 12.0, -2.2), (0.75, 21.8, -1.4), "black"))
+    el.append(box((-0.6, 17.5, -1.4), (0.6, 21.8, 0.2), "varnish"))
+    el.append(box((-0.6, 21.8, -1.2), (0.6, 24.2, 0.4), "varnish"))
+    for y in (22.3, 23.3):
+        el.append(box((-1.3, y, -0.6), (1.3, y + 0.4, -0.2), "black"))
+    el.append(box((-0.55, 24.2, -1.6), (0.55, 25.6, 0.6), "varnish"))
+    el.append(box((-0.6, 24.6, -1.2), (0.6, 25.2, 0.2), "black", faces={"north": None, "south": None, "up": None, "down": None}))
+    # 四根弦：越过琴马到琴枕
+    strings = {"south": None, "up": None, "down": None}
+    for x in (-0.45, -0.15, 0.15, 0.45):
+        el.append(box((x - 0.05, 9.8, -2.45), (x + 0.05, 21.8, -2.35), "iron", faces=strings))
+    return el
+
+
+def bass_elements():
+    """低音提琴（琴的局部坐标，见 SEATED）：尾柱 y 0–3，斜肩的琴身 3–20.5，琴颈到 26.9，弦轴箱的铜弦钮、琴头到 30.4。"""
+    el = []
+    el.append(box((-0.25, 0, -0.25), (0.25, 3.2, 0.25), "iron"))
+    el.append(box((-0.6, 2.8, -0.6), (0.6, 3.4, 0.6), "black"))
+    for y0, y1, hw in ((3.0, 3.8, 4.0), (3.8, 9.0, 5.2), (9.0, 10.0, 4.5), (10.0, 13.0, 3.4), (13.0, 14.0, 3.9),
+                       (14.0, 17.0, 4.2), (17.0, 18.6, 3.2), (18.6, 20.5, 1.9)):
+        el.append(box((-hw, y0, -1.6), (hw, y1, 1.6), "walnut", faces={"north": "spruce"}))
+    only_front = {"south": None, "up": None, "down": None, "east": None, "west": None}
+    for x in (-2.3, 1.8):
+        el.append(box((x, 11.0, -1.65), (x + 0.5, 14.2, -1.6), "black", faces=only_front))
+    el.append(box((-1.1, 4.6, -2.0), (1.1, 11.0, -1.6), "black"))
+    el.append(box((-1.6, 11.6, -3.25), (1.6, 12.2, -1.6), "maple"))
+    el.append(box((-0.9, 15.0, -3.0), (0.9, 26.9, -2.0), "black"))
+    el.append(box((-0.75, 20.5, -2.0), (0.75, 26.9, 0.0), "walnut"))
+    el.append(box((-0.75, 26.9, -1.8), (0.75, 29.0, 0.2), "walnut"))
+    for y in (27.3, 28.2):
+        el.append(box((-1.7, y, -0.8), (1.7, y + 0.4, -0.4), "gold"))
+    el.append(box((-0.7, 29.0, -2.0), (0.7, 30.4, 0.4), "walnut"))
+    el.append(box((-0.75, 29.4, -1.5), (0.75, 30.0, 0.0), "black", faces={"north": None, "south": None, "up": None, "down": None}))
+    strings = {"south": None, "up": None, "down": None}
+    for x in (-0.6, -0.2, 0.2, 0.6):
+        el.append(box((x - 0.06, 11.0, -3.35), (x + 0.06, 26.9, -3.25), "iron", faces=strings))
+    return el
+
+
+def seated_instrument(name, local):
+    s = SEATED[name]
+    return rigid(shifted(local, *s["endpin"]), euler(s["lean"], 0, s["tilt"]), s["endpin"])
+
+
+def cello_block_elements():
+    el = seated_instrument("hexen_cello", cello_elements())
+    # 琴后的演奏凳：胡桃木凳腿、红丝绒坐垫，坐面高 7.1（坐着的大腿正好压在上面）
+    for x, z in ((4.6, 10.2), (10.4, 10.2), (4.6, 14.6), (10.4, 14.6)):
+        el.append(box((x, 0, z), (x + 1, 5.4, z + 1), "walnut"))
+    el.append(box((4.6, 2.0, 10.7), (11.4, 2.5, 11.1), "walnut"))
+    el.append(box((4.6, 2.0, 14.9), (11.4, 2.5, 15.3), "walnut"))
+    el.append(box((4.2, 5.4, 9.8), (11.8, 6.2, 16.0), "walnut"))
+    el.append(box((4.4, 6.2, 10.0), (11.6, 7.1, 15.8), "velvet"))
+    return el
+
+
+def bass_block_elements():
+    s = SEATED["hexen_double_bass"]
+    el = seated_instrument("hexen_double_bass", bass_elements())
+    # 尾柱下的防滑垫
+    ex, _, ez = s["endpin"]
+    el.append(box((ex - 0.9, 0, ez - 0.9), (ex + 0.9, 0.25, ez + 0.9), "black"))
+    return el
+
+
+def timpani_elements():
+    """定音鼓：铜鼓腔（近似半球）、白鼓皮、铁鼓圈和六根调音拉杆，十字底座带小轮；朝演奏者（南）的一侧是踏板，鼓皮上搁两支毡头槌。"""
+    el = []
+    for x0, z0, x1, z1 in ((2.6, 7.4, 13.4, 8.6), (7.4, 2.6, 8.6, 13.4)):
+        el.append(box((x0, 0.4, z0), (x1, 1.0, z1), "iron"))
+    for x, z in ((2.4, 7.5), (12.6, 7.5), (7.5, 2.4), (7.5, 12.6)):
+        el.append(box((x, 0, z), (x + 1, 0.8, z + 1), "black"))
+    el.append(box((7.3, 1.0, 7.3), (8.7, 3.2, 8.7), "iron"))
+    for y0, y1, r in ((3.0, 4.2, 3.2), (4.2, 5.6, 4.6), (5.6, 7.4, 5.6), (7.4, 9.6, 6.1), (9.6, 12.3, 6.3)):
+        el += disc(8, 8, r, y0, y1, "copper")
+    el += disc(8, 8, 6.6, 12.2, 13.0, "iron")
+    el += disc(8, 8, 6.3, 13.0, 13.2, "lacquer", faces={"down": None})
+    for i in range(6):
+        a = math.pi / 6 + i * math.pi / 3
+        x, z = 8 + 6.8 * math.cos(a), 8 + 6.8 * math.sin(a)
+        el.append(box((x - 0.2, 7.2, z - 0.2), (x + 0.2, 12.6, z + 0.2), "iron"))
+        el.append(box((x - 0.4, 12.6, z - 0.4), (x + 0.4, 13.5, z + 0.4), "iron"))
+    # 踏板：从中柱伸向演奏者
+    el.append(box((7.5, 0.6, 8.6), (8.5, 1.2, 12.6), "iron"))
+    el.append(box((6.5, 0.4, 12.4), (9.5, 1.3, 15.6), "iron"))
+    el.append(box((7.0, 1.3, 12.8), (9.0, 1.5, 15.2), "black"))
+    # 两支鼓槌：胡桃木槌杆、白毡槌头，斜搁在鼓皮上
+    for (x0, z0), (x1, z1) in (((4.2, 9.6), (10.0, 6.4)), ((5.0, 11.0), (10.8, 8.4))):
+        el.append(segment((x0, 13.45, z0), (x1, 13.45, z1), 0.3, "walnut"))
+        el.append(box((x1 - 0.5, 13.2, z1 - 0.5), (x1 + 0.5, 14.1, z1 + 0.5), "felt"))
+    return el
+
+
 def handheld():
     blocks = ASSETS / "models/block"
     items = ASSETS / "models/item"
@@ -902,34 +1196,53 @@ def handheld():
         "hexen_violin": violin_elements(),
         "hexen_flute": flute_elements(),
         "hexen_trumpet": trumpet_elements(),
+        "hexen_viola": viola_elements(),
+        "hexen_oboe": oboe_elements(),
+        "hexen_bassoon": bassoon_elements(),
     }
-    # 平时拿着：竖着握在手里。演奏时第三人称的乐器由玩家层画在下巴、嘴边（HeldRig，用下面的 *_held / 弓模型），
+    particle = {"hexen_violin": "varnish", "hexen_flute": "iron", "hexen_trumpet": "gold",
+                "hexen_viola": "amber", "hexen_oboe": "black", "hexen_bassoon": "amber"}
+    # 平时拿着：竖着握在手里。演奏时第三人称的乐器由玩家层画在下巴、嘴边、身前（HeldRig，用下面的 *_held / 弓模型），
     # 手上的 _playing 只在第一人称看得到
     normal = {
         "hexen_violin": {"thirdperson_righthand": {"rotation": [0, 90, -20], "translation": [0, 1, 1], "scale": [0.55] * 3}},
         "hexen_flute": {"thirdperson_righthand": {"rotation": [0, 90, 55], "translation": [0, 2, 0.5], "scale": [0.6] * 3}},
         "hexen_trumpet": {"thirdperson_righthand": {"rotation": [0, 90, 0], "translation": [0, 0, 1], "scale": [0.55] * 3}},
+        "hexen_viola": {"thirdperson_righthand": {"rotation": [0, 90, -20], "translation": [0, 1.5, 1], "scale": [0.62] * 3}},
+        "hexen_oboe": {"thirdperson_righthand": {"rotation": [0, 90, -15], "translation": [0, 1.5, 1], "scale": [0.55] * 3}},
+        "hexen_bassoon": {"thirdperson_righthand": {"rotation": [0, 90, -10], "translation": [0, 2.5, 1], "scale": [0.42] * 3}},
     }
     playing = {
         # 第一人称抬高一些，露在屏幕底部的演奏条上面
         "hexen_violin": {"firstperson_righthand": {"rotation": [109, -3.5, 143], "translation": [-8, 5.5, -2], "scale": [0.6] * 3}},
         "hexen_flute": {"firstperson_righthand": {"rotation": [0, 170, 0], "translation": [-4, 6, -2], "scale": [0.6] * 3}},
         "hexen_trumpet": {"firstperson_righthand": {"rotation": [-8, 105, 0], "translation": [-7, 6, -2], "scale": [0.6] * 3}},
+        "hexen_viola": {"firstperson_righthand": {"rotation": [109, -3.5, 143], "translation": [-8, 5.5, -2], "scale": [0.66] * 3}},
+        # 双簧管：哨片朝自己、管身往前下方伸出去（比真实的角度平一些，好露在演奏条上面），按键朝上
+        "hexen_oboe": {"firstperson_righthand": {"rotation": [70, 0, 0], "translation": [-7, 6, -2], "scale": [0.6] * 3}},
+        # 巴松管：同第三人称的摆法（管身离竖直 30°、往左上方伸），哨片在嘴边、弯管朝自己
+        "hexen_bassoon": {"firstperson_righthand": {"rotation": [0, 0, 30], "translation": [-10, 2.5, 3.5], "scale": [0.5] * 3}},
     }
+    # 长的管乐器在物品栏里斜着放
+    gui = {"hexen_oboe": {"rotation": [20, 200, -40], "translation": [0, 0, 0], "scale": [0.9] * 3},
+           "hexen_bassoon": {"rotation": [20, 200, -40], "translation": [0, 0, 0], "scale": [0.56] * 3}}
+    fixed = {"hexen_bassoon": {"rotation": [0, 180, -40], "translation": [0, 0, 0], "scale": [0.56] * 3}}
     for name, el in inst.items():
-        tex = {k: T[k] for k in used(el)} | {"particle": T["varnish" if name == "hexen_violin" else "gold" if name == "hexen_trumpet" else "iron"]}
-        base = {"gui": {"rotation": [20, 200, 0], "translation": [0, 0, 0], "scale": [0.9] * 3},
+        tex = {k: T[k] for k in used(el)} | {"particle": T[particle[name]]}
+        base = {"gui": gui.get(name, {"rotation": [20, 200, 0], "translation": [0, 0, 0], "scale": [0.9] * 3}),
                 "ground": {"rotation": [0, 0, 0], "translation": [0, 2, 0], "scale": [0.45] * 3},
-                "fixed": {"rotation": [0, 180, 0], "translation": [0, 0, 0], "scale": [0.9] * 3},
+                "fixed": fixed.get(name, {"rotation": [0, 180, 0], "translation": [0, 0, 0], "scale": [0.9] * 3}),
                 "firstperson_righthand": {"rotation": [0, 100, 15], "translation": [1, 2, 0], "scale": [0.5] * 3}}
         for variant, extra in (("", normal[name]), ("_playing", playing[name])):
-            if variant == "_playing" and name == "hexen_violin":
+            if variant == "_playing" and name in ("hexen_violin", "hexen_viola"):
                 # 第一人称演奏时弓横搭在琴马和指板之间的弦上，弓根朝惯用手
                 el = violin_elements(bow=False) + [
                     box((-1.5, 4.6, 5.9), (13.7, 5.0, 6.3), "varnish"),
                     box((-0.7, 4.7, 6.3), (13.0, 4.9, 6.5), "white"),
                     box((-1.7, 4.4, 5.8), (-0.1, 5.2, 6.5), "black")]
-                tex = {k: T[k] for k in used(el)} | {"particle": T["varnish"]}
+                if name == "hexen_viola":
+                    el = retextured(el, {"varnish": "amber"})
+                tex = {k: T[k] for k in used(el)} | {"particle": T[particle[name]]}
             disp = dict(base) | extra
             if "thirdperson_righthand" in disp:
                 r = disp["thirdperson_righthand"]
@@ -939,6 +1252,7 @@ def handheld():
                 r = disp["firstperson_righthand"]
                 disp["firstperson_lefthand"] = {"rotation": [r["rotation"][0], -r["rotation"][1], -r["rotation"][2]],
                                                 "translation": [-r["translation"][0], r["translation"][1], r["translation"][2]], "scale": r["scale"]}
+            check_bounds(name, el)
             model = {"textures": tex, "elements": el, "display": disp}
             if name == "hexen_trumpet":
                 model["render_type"] = "minecraft:cutout"
@@ -946,13 +1260,14 @@ def handheld():
         write(ASSETS / f"items/{name}.json", {"model": {"type": "minecraft:condition", "property": "minecraft:using_item",
             "on_true": {"type": "minecraft:model", "model": f"logos_dimension:item/{name}_playing"},
             "on_false": {"type": "minecraft:model", "model": f"logos_dimension:item/{name}"}}})
-    # 玩家层画的演奏中的乐器：小提琴不带弓，弓单独一件（弓杆居中，弓毛在 +X 一侧）。
+    # 玩家层画的演奏中的乐器：弓弦乐器不带弓，弓单独一件（弓杆居中，弓毛在 +X 一侧；中提琴、大提琴、低音提琴共用这把弓）。
     # 物品定义放在 items/held/ 里：只供渲染用，不是物品
     held = {"hexen_violin": violin_elements(bow=False), "hexen_flute": flute_elements(), "hexen_trumpet": trumpet_elements(),
+            "hexen_viola": viola_elements(bow=False), "hexen_oboe": oboe_elements(), "hexen_bassoon": bassoon_elements(),
             "hexen_violin_bow": shifted([e for e in violin_elements() if e["from"][0] < 4][:3], 5.2, 0, -1.6)}
     for name, el in held.items():
         model_name = name if name.endswith("_bow") else f"{name}_held"
-        tex = {k: T[k] for k in used(el)} | {"particle": T["varnish" if "violin" in name else "gold" if "trumpet" in name else "iron"]}
+        tex = {k: T[k] for k in used(el)} | {"particle": T[particle.get(name, "varnish")]}
         model = {"textures": tex, "elements": el}
         if name == "hexen_trumpet":
             model["render_type"] = "minecraft:cutout"
@@ -960,7 +1275,8 @@ def handheld():
         short = model_name.removeprefix("hexen_").removesuffix("_held")
         write(ASSETS / f"items/held/{short}.json", {"model": {"type": "minecraft:model", "model": f"logos_dimension:item/{model_name}"}})
 
-    # 乐谱架：空、靠着小提琴（琴弓靠在另一侧）、谱台边横放长笛、谱台上搁小号
+    # 乐谱架：空、靠着小提琴（琴弓靠在另一侧）、谱台边横放长笛、谱台上搁小号；
+    # 中提琴同小提琴的摆法、大一圈；双簧管立在谱架前的小木座上、靠着托条；巴松管立在左前方、斜靠着谱台
     stand = music_stand_elements()
     lean = rotation("x", 14, (11.5, 0, 4.6))
     lean_bow = rotation("z", -12, (3.4, 0, 4.0))
@@ -970,8 +1286,13 @@ def handheld():
                   + transformed(scaled([e for e in violin_elements() if e["from"][0] < 4][:3], 0.8, (3, 0, 9.6)), 0.6, 0.2, -5.6, lean_bow),
         "flute": stand + shifted(flute_elements(), 0, 3.35, -1.3),
         "trumpet": stand + shifted(trumpet_elements(), 0, 2.3, -1.9),
+        "viola": stand + transformed(scaled(viola_elements(bow=False), 0.8, (8, 0, 8)), 3.4, 0.2, -3.9, rotation("x", 12, (11.4, 0, 4.4)))
+                 + transformed(scaled([e for e in viola_elements() if e["from"][0] < 4][:3], 0.85, (3, 0, 9.6)), 0.6, 0.2, -5.6, lean_bow),
+        "oboe": stand + oboe_on_stand(),
+        "bassoon": stand + bassoon_on_stand(),
     }
     for holds, el in variants.items():
+        check_bounds(f"music stand {holds}", el)
         tex = {k: T[k] for k in used(el)} | {"particle": T["walnut"]}
         model = {"ambientocclusion": False, "textures": tex, "elements": el}
         if holds == "trumpet":
@@ -989,15 +1310,157 @@ def handheld():
         "conditions": [{"condition": "minecraft:survives_explosion"}],
         "entries": [{"type": "minecraft:item", "name": "logos_dimension:hexen_music_stand"}]}]})
 
-    def shaped(name, pattern, key):
-        write(DATA / f"recipe/{name}.json", {"type": "minecraft:crafting_shaped", "category": "misc", "pattern": pattern,
-                                             "key": key, "result": {"id": f"logos_dimension:{name}", "count": 1}})
     shaped("hexen_violin", [" PS", "PSP", "SP "], {"P": "minecraft:jungle_planks", "S": "minecraft:string"})
     shaped("hexen_flute", ["  I", " I ", "I  "], {"I": "minecraft:iron_ingot"})
     shaped("hexen_trumpet", ["  G", "GGG", "WG "], {"G": "minecraft:gold_ingot", "W": "minecraft:blue_wool"})
     shaped("hexen_music_stand", ["PPP", " S ", "SSS"], {"P": "minecraft:dark_oak_planks", "S": "minecraft:stick"})
+    shaped("hexen_viola", [" PS", "PSP", "SP "], {"P": "minecraft:mangrove_planks", "S": "minecraft:string"})
+    shaped("hexen_oboe", ["  R", " P ", "P  "], {"R": "minecraft:sugar_cane", "P": "minecraft:dark_oak_planks"})
+    shaped("hexen_bassoon", ["  R", "PIP", "PP "], {"R": "minecraft:sugar_cane", "P": "minecraft:mangrove_planks", "I": "minecraft:iron_ingot"})
 
     png(ASSETS / "textures/block/instrument/hexenwald_banner.png", hexenwald_banner("night"))
+
+
+def shaped(name, pattern, key):
+    write(DATA / f"recipe/{name}.json", {"type": "minecraft:crafting_shaped", "category": "misc", "pattern": pattern,
+                                         "key": key, "result": {"id": f"logos_dimension:{name}", "count": 1}})
+
+
+def oboe_on_stand():
+    # 喇叭口朝下立在小木座上（缩到 0.8），微微后仰靠着谱台托条
+    el = shifted(scaled(oboe_elements(), 0.8, (8, 0.4, 8)), 4.2, 0.1, -3.6)
+    el = rigid(el, euler(9, 0, 0), (12.2, 0.5, 4.4))
+    return el + disc(12.2, 4.4, 1.3, 0, 0.5, "walnut")
+
+
+def bassoon_on_stand():
+    # 管靴着地立在谱架左前方（缩到 0.55），后仰并朝谱台一侧斜，喇叭口那头靠在谱台上
+    el = shifted(scaled(bassoon_elements(), 0.55, (8, -5.4, 8)), -6.8, 5.7, -3.4)
+    return rigid(el, euler(14, 0, -4), (1.2, 0.3, 4.6))
+
+
+def loot(name, cond=None):
+    conditions = [{"condition": "minecraft:survives_explosion"}]
+    if cond:
+        conditions.append({"condition": "minecraft:block_state_property", "block": f"logos_dimension:{name}", "properties": cond})
+    return {"type": "minecraft:block", "pools": [{"rolls": 1, "conditions": conditions,
+            "entries": [{"type": "minecraft:item", "name": f"logos_dimension:{name}"}]}]}
+
+
+def orchestra():
+    """大提琴、低音提琴（两格高：下半格的模型画整件琴和凳子，上半格只有粒子贴图）与定音鼓。"""
+    blocks = ASSETS / "models/block"
+    items = ASSETS / "models/item"
+    yrot = {"north": 0, "east": 90, "south": 180, "west": 270}
+    specs = {
+        "hexen_cello": (cello_block_elements(), "varnish"),
+        "hexen_double_bass": (bass_block_elements(), "walnut"),
+        "hexen_timpani": (timpani_elements(), "copper"),
+    }
+    for name, (el, particle) in specs.items():
+        check_bounds(name, el)
+        tex = {k: T[k] for k in used(el)} | {"particle": T[particle]}
+        write(blocks / f"{name}.json", {"ambientocclusion": False, "textures": tex, "elements": el})
+        write(ASSETS / f"items/{name}.json", {"model": {"type": "minecraft:model", "model": f"logos_dimension:item/{name}"}})
+        if name == "hexen_timpani":
+            write(items / f"{name}.json", {"parent": f"logos_dimension:block/{name}", "display": display(0.62, ground=0.3)})
+            write(ASSETS / f"blockstates/{name}.json", {"variants": {
+                f"facing={f}": ({"model": f"logos_dimension:block/{name}"} | ({"y": y} if y else {})) for f, y in yrot.items()}})
+            write(DATA / f"loot_table/blocks/{name}.json", loot(name))
+            continue
+        item_el = shifted(el, 0, -5, 0)
+        check_bounds(name + " item", item_el)
+        write(items / f"{name}.json", {"ambientocclusion": False, "textures": tex, "elements": item_el,
+                                       "display": display(0.5, ground=0.25, rot_y=200)})
+        write(blocks / f"{name}_part.json", {"textures": {"particle": T[particle]}})
+        variants = {}
+        for f, y in yrot.items():
+            for half in ("lower", "upper"):
+                m = name if half == "lower" else f"{name}_part"
+                variants[f"facing={f},half={half}"] = {"model": f"logos_dimension:block/{m}"} | ({"y": y} if y and half == "lower" else {})
+        write(ASSETS / f"blockstates/{name}.json", {"variants": variants})
+        write(DATA / f"loot_table/blocks/{name}.json", loot(name, {"half": "lower"}))
+    shaped("hexen_cello", [" PS", "PNP", "SP "], {"P": "minecraft:jungle_planks", "S": "minecraft:string", "N": "minecraft:note_block"})
+    shaped("hexen_double_bass", [" PS", "PNP", "PPS"], {"P": "minecraft:dark_oak_planks", "S": "minecraft:string", "N": "minecraft:note_block"})
+    shaped("hexen_timpani", ["LLL", "CNC", "C C"], {"L": "minecraft:leather", "C": "minecraft:copper_ingot", "N": "minecraft:note_block"})
+    seated_report()
+
+
+def seated_report():
+    """打印坐着（站着）拉的琴上几个关键点在玩家模型里的位置，核对 HeldRig 的布局（直臂够不够得着、琴颈是否让开头）。"""
+    ms = 0.9375
+    for name, s in SEATED.items():
+        m = euler(s["lean"], 0, s["tilt"])
+        fx, fy, fz = s["feet"]
+
+        def model(local):
+            w = [s["endpin"][i] + v for i, v in enumerate(_apply(m, local))]
+            return [-(w[0] - fx) / ms, 24 - (w[1] - fy) / ms, (w[2] - fz) / ms]
+        c = model(list(s["contact"]))
+        # 弓根该在的位置（弓搭在 contact、弓杆沿琴的横向）离右肩多远：直臂够得着大约 9
+        right = _apply(m, [1, 0, 0])
+        frog = [c[0] - right[0] * 8.7 * s["bow"] / ms, c[1] - right[1] * 8.7 * s["bow"] / ms, c[2] + right[2] * 8.7 * s["bow"] / ms]
+        dist = math.dist(frog, (-6, 2, 0))
+        lo, hi = s["neck"]
+        y = hi
+        while y > lo and math.dist(model([0, y, s["neck_z"]]), (6, 2, 0)) < 9:
+            y -= 0.25
+        print(f"{name}: bow contact {[round(v, 2) for v in c]} (frog {dist:.1f} px from the right shoulder), "
+              f"left hand at neck y {y:.2f} {[round(v, 2) for v in model([0, y, s['neck_z']])]}")
+
+
+def concert_hall_icon(size=32, scale=4):
+    """「音乐厅音源」资源包图标：深红丝绒幕布、金色帷幔、聚光灯下一把大提琴；按 32×32 像素画，再放大 4 倍。"""
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 255))
+    px = img.load()
+    folds = [0.6, 0.78, 0.95, 1.0, 0.86, 0.7]
+    for y in range(size):
+        for x in range(size):
+            k = folds[x % 6]
+            px[x, y] = (int(132 * k), int(22 * k), int(38 * k), 255)
+    for y in range(26, size):
+        for x in range(size):
+            seam = (x + (y - 26) * 5) % 9 == 0
+            px[x, y] = ((66, 40, 25) if seam else (96, 60, 37)) + (255,)
+    # 聚光灯：一束暖光从帷幔下打到地板上
+    for y in range(5, size):
+        half = 3.5 + (y - 5) * 0.32
+        for x in range(size):
+            d = abs(x + 0.5 - 16) / half
+            if d < 1:
+                a = 0.5 * (1 - d * d) * (0.75 if y >= 26 else 1)
+                r, g, b, _ = px[x, y]
+                px[x, y] = (int(r + (255 - r) * a), int(g + (228 - g) * a), int(b + (172 - b) * a), 255)
+    gold, gold_hi, gold_lo = (222, 180, 72), (250, 222, 140), (150, 108, 36)
+    for x in range(size):
+        drop = [1, 2, 3, 3, 3, 3, 2, 1][x % 8]
+        for y in range(0, 3 + drop):
+            px[x, y] = (gold_hi if y == 0 else gold_lo if y == 2 + drop else gold) + (255,)
+    # 大提琴：琴身逐行的半宽，琴颈、指板、琴马、f 孔、尾柱
+    amber, amber_hi, amber_lo = (176, 86, 42), (214, 128, 66), (104, 46, 22)
+    rows = {12: 1.5, 13: 2.5, 14: 3.0, 15: 3.5, 16: 3.5, 17: 3.0, 18: 2.5, 19: 3.0, 20: 4.0, 21: 4.5, 22: 4.5, 23: 4.5, 24: 4.0, 25: 3.0}
+    cx = 16.0
+    for y, hw in rows.items():
+        x0, x1 = int(round(cx - hw)), int(round(cx + hw))
+        for x in range(x0, x1):
+            edge = x in (x0, x1 - 1) or y in (12, 25)
+            px[x, y] = (amber_lo if edge else amber_hi if x < cx - hw / 2 else amber) + (255,)
+    for y in range(4, 12):
+        for x in (15, 16):
+            px[x, y] = (amber_lo if y < 7 else amber) + (255,)
+    px[17, 5] = amber_lo + (255,)
+    px[14, 6] = amber_lo + (255,)
+    for y in range(8, 20):
+        px[15, y] = (24, 18, 18, 255)
+        px[16, y] = (196, 196, 204, 255) if y > 9 else (24, 18, 18, 255)
+    for x in range(14, 18):
+        px[x, 21] = (232, 214, 170, 255)
+    for y in (19, 20, 21):
+        px[13, y] = (30, 14, 8, 255)
+        px[18, y] = (30, 14, 8, 255)
+    for y in (26, 27):
+        px[16, y] = (176, 176, 186, 255)
+    return img.resize((size * scale, size * scale), Image.NEAREST)
 
 
 def hexenwald_banner(style, size=32):
@@ -1095,6 +1558,8 @@ def main():
     organ()
     mallet()
     handheld()
+    orchestra()
+    png(ROOT / "resourcepacks/concert_hall/pack.png", concert_hall_icon())
     if len(sys.argv) > 1:
         banner_previews(Path(sys.argv[1]))
     print("instrument art written")

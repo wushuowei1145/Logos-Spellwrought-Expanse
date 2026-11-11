@@ -116,6 +116,34 @@ public final class Instruments {
     public static final DeferredItem<HandheldInstrumentItem> TRUMPET = DimensionBlocks.ITEMS.registerItem("hexen_trumpet",
         p -> new HandheldInstrumentItem(InstrumentKind.TRUMPET, p.stacksTo(1)));
 
+    /** 第三批：中提琴、双簧管、巴松（手持），大提琴、低音提琴（坐着拉，两格高），定音鼓（一格）。 */
+    public static final DeferredItem<HandheldInstrumentItem> VIOLA = DimensionBlocks.ITEMS.registerItem("hexen_viola",
+        p -> new HandheldInstrumentItem(InstrumentKind.VIOLA, p.stacksTo(1)));
+    public static final DeferredItem<HandheldInstrumentItem> OBOE = DimensionBlocks.ITEMS.registerItem("hexen_oboe",
+        p -> new HandheldInstrumentItem(InstrumentKind.OBOE, p.stacksTo(1)));
+    public static final DeferredItem<HandheldInstrumentItem> BASSOON = DimensionBlocks.ITEMS.registerItem("hexen_bassoon",
+        p -> new HandheldInstrumentItem(InstrumentKind.BASSOON, p.stacksTo(1)));
+    public static final DeferredBlock<SeatedInstrumentBlock> CELLO = DimensionBlocks.BLOCKS.registerBlock(
+        "hexen_cello", p -> new SeatedInstrumentBlock(p, InstrumentKind.CELLO, net.minecraft.world.level.block.Block.box(3, 0, 1, 13, 16, 16)),
+        p -> p.mapColor(MapColor.COLOR_BROWN).strength(1.5f).sound(SoundType.WOOD).noOcclusion().pushReaction(PushReaction.BLOCK));
+    public static final DeferredBlock<SeatedInstrumentBlock> DOUBLE_BASS = DimensionBlocks.BLOCKS.registerBlock(
+        "hexen_double_bass", p -> new SeatedInstrumentBlock(p, InstrumentKind.DOUBLE_BASS, net.minecraft.world.level.block.Block.box(2, 0, 0, 14, 16, 10)),
+        p -> p.mapColor(MapColor.COLOR_BROWN).strength(1.5f).sound(SoundType.WOOD).noOcclusion().pushReaction(PushReaction.BLOCK));
+    public static final DeferredBlock<SingleInstrumentBlock> TIMPANI = DimensionBlocks.BLOCKS.registerBlock(
+        "hexen_timpani", p -> new SingleInstrumentBlock(p, InstrumentKind.TIMPANI, net.minecraft.world.level.block.Block.box(0, 0, 0, 16, 14, 16)),
+        p -> p.mapColor(MapColor.COLOR_ORANGE).strength(2.0f).sound(SoundType.COPPER).noOcclusion().pushReaction(PushReaction.BLOCK));
+    public static final DeferredItem<?> CELLO_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_cello", CELLO);
+    public static final DeferredItem<?> DOUBLE_BASS_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_double_bass", DOUBLE_BASS);
+    public static final DeferredItem<?> TIMPANI_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_timpani", TIMPANI);
+
+    /** 大提琴、低音提琴后面的座位（看不见、不存盘）。 */
+    private static final DeferredRegister<net.minecraft.world.entity.EntityType<?>> ENTITY_TYPES =
+        DeferredRegister.create(Registries.ENTITY_TYPE, LogosDimension.ID);
+    public static final DeferredHolder<net.minecraft.world.entity.EntityType<?>, net.minecraft.world.entity.EntityType<InstrumentSeat>> SEAT =
+        ENTITY_TYPES.register("instrument_seat", () -> net.minecraft.world.entity.EntityType.Builder.<InstrumentSeat>of(InstrumentSeat::new,
+                net.minecraft.world.entity.MobCategory.MISC).sized(0.25f, 0.25f).noSummon().clientTrackingRange(10).updateInterval(20)
+            .build(net.minecraft.resources.ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("instrument_seat"))));
+
     /** 乐谱架：放一件手持乐器和一卷纸带，就像方块乐器一样受红石控制。 */
     public static final DeferredBlock<MusicStandBlock> MUSIC_STAND = DimensionBlocks.BLOCKS.registerBlock(
         "hexen_music_stand", MusicStandBlock::new,
@@ -127,7 +155,8 @@ public final class Instruments {
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<InstrumentBlockEntity>> INSTRUMENT_ENTITY =
         BLOCK_ENTITIES.register("instrument", () -> new BlockEntityType<>(InstrumentBlockEntity::new, GRAND_PIANO.get(), CONCERT_HARP.get(), ORGAN_CONSOLE.get(),
-            GLOCKENSPIEL.get(), CELESTA.get(), TUBULAR_BELLS.get(), HARPSICHORD.get(), MUSIC_STAND.get()));
+            GLOCKENSPIEL.get(), CELESTA.get(), TUBULAR_BELLS.get(), HARPSICHORD.get(), MUSIC_STAND.get(),
+            CELLO.get(), DOUBLE_BASS.get(), TIMPANI.get()));
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<RollInfo>> MUSIC_ROLL =
         COMPONENTS.registerComponentType("music_roll", b -> b.persistent(RollInfo.CODEC).networkSynchronized(RollInfo.STREAM_CODEC));
@@ -137,6 +166,7 @@ public final class Instruments {
 
     public static void register(IEventBus bus) {
         BLOCK_ENTITIES.register(bus);
+        ENTITY_TYPES.register(bus);
         COMPONENTS.register(bus);
         RECIPES.register(bus);
         bus.addListener(Instruments::payloads);

@@ -50,6 +50,11 @@ public class InstrumentBlockEntity extends BlockEntity {
     private int playingDuration;
     private boolean playingTemporary;
     private long startTick;
+    /**
+     * 播放位置按真实时间算（客户端也按真实时间放）：服务端卡顿、tick 变慢时音乐不跟着变慢，
+     * 心跳包报的位置就和客户端对得上，客户端不会每隔几秒重新对时、把正在响的音掐掉。startTick 只用来排心跳。
+     */
+    private long startNanos;
     private int startOffsetMs;
     private int pausedAt = -1;
 
@@ -196,7 +201,7 @@ public class InstrumentBlockEntity extends BlockEntity {
     public int positionMs() {
         if (playing == null || level == null) return 0;
         if (pausedAt >= 0) return pausedAt;
-        return startOffsetMs + (int) Math.min(Integer.MAX_VALUE / 2, (level.getGameTime() - startTick) * 50L);
+        return startOffsetMs + (int) Math.min(Integer.MAX_VALUE / 2, (System.nanoTime() - startNanos) / 1_000_000L);
     }
 
     /** 播放纸带槽里的纸带；暂停中则从暂停处继续。 */
@@ -205,6 +210,7 @@ public class InstrumentBlockEntity extends BlockEntity {
         if (playing != null && pausedAt >= 0) {
             startOffsetMs = pausedAt;
             startTick = level.getGameTime();
+            startNanos = System.nanoTime();
             pausedAt = -1;
             broadcast();
             return true;
@@ -227,6 +233,7 @@ public class InstrumentBlockEntity extends BlockEntity {
         playingDuration = durationMs;
         playingTemporary = temporary;
         startTick = level.getGameTime();
+        startNanos = System.nanoTime();
         startOffsetMs = 0;
         pausedAt = -1;
         broadcast();

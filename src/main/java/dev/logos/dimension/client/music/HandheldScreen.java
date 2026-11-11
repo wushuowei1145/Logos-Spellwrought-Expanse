@@ -38,6 +38,8 @@ public class HandheldScreen extends Screen implements MidiKeyboard.Target {
         super(Component.translatable(kind.nameKey()));
         this.kind = kind;
         this.hand = hand;
+        // 键盘从和音域重合最多的那个 C 开始（以前固定从 C4，巴松管的低音一半弹不到）
+        this.base = KeyLayout.defaultBase(kind, KeyLayout.chromatic().length(), 60);
     }
 
     private static Component tr(String key, Object... args) {
@@ -94,7 +96,12 @@ public class HandheldScreen extends Screen implements MidiKeyboard.Target {
 
     private void shiftOctave(int d) {
         releaseAll();
-        base = Math.max(24, Math.min(96, base + 12 * d));
+        base = KeyLayout.clampBase(kind, base + 12 * d, KeyLayout.chromatic().length());
+    }
+
+    /** 不在这件乐器音域里的键不出声（不按八度折叠，界面上画暗）。 */
+    private boolean playable(int pitch) {
+        return pitch >= kind.low() && pitch <= kind.high();
     }
 
     private void releaseAll() {
@@ -118,7 +125,7 @@ public class HandheldScreen extends Screen implements MidiKeyboard.Target {
             case KEY_DOWN -> velocity = Math.max(16, velocity - 16);
             default -> {
                 int off = KeyLayout.chromaticOffset(KeyLayout.chromatic(), key);
-                if (off >= 0 && !held.containsKey(key)) {
+                if (off >= 0 && !held.containsKey(key) && playable(base + off)) {
                     held.put(key, base + off);
                     note(base + off, velocity, System.nanoTime());
                 }
@@ -137,6 +144,7 @@ public class HandheldScreen extends Screen implements MidiKeyboard.Target {
 
     @Override
     public void midiNote(int pitch, int vel, long nanos) {
+        if (!playable(pitch)) return;
         if (!midiHeld.add(pitch)) note(pitch, 0, nanos);
         note(pitch, vel, nanos);
     }
@@ -206,6 +214,7 @@ public class HandheldScreen extends Screen implements MidiKeyboard.Target {
             for (int i = keys.size() - 1; i >= 0; i--) {
                 KeyRect k = keys.get(i);
                 if (e.x() >= k.x && e.x() < k.x + k.w && e.y() >= k.y && e.y() < k.y + k.h) {
+                    if (!playable(k.pitch)) return true;
                     mousePitch = k.pitch;
                     note(k.pitch, velocity, System.nanoTime());
                     return true;
@@ -230,7 +239,16 @@ public class HandheldScreen extends Screen implements MidiKeyboard.Target {
         g.text(font, title, x0 + 20, y0 + 16, Parchment.INK_TITLE, false);
         Component status = tr("held_status", KeyLayout.noteName(base), velocity,
             Component.translatable(KeyLayout.noteName(kind.low()) + "–" + KeyLayout.noteName(kind.high())));
-        g.text(font, status, x0 + 20 + font.width(title) + 12, y0 + 16, Parchment.INK, false);
+        int statusX = x0 + 20 + font.width(title) + 12;
+        g.text(font, status, statusX, y0 + 16, Parchment.INK, false);
+        // 音源写在右上角；名字、状态太长挤不下时挪到底下提示行的右边，那里也挤不下就不写
+        Component source = SampleMaps.sourceLabel(kind);
+        Component hint = tr("held_hint");
+        if (source != null) {
+            int sx = x0 + W - 20 - font.width(source);
+            if (sx >= statusX + font.width(status) + 8) g.text(font, source, sx, y0 + 16, Parchment.INK_HINT, false);
+            else if (sx >= x0 + 20 + font.width(hint) + 8) g.text(font, source, sx, y0 + H - 23, Parchment.INK_HINT, false);
+        }
         for (KeyRect k : keyboard()) {
             boolean on = sounding(k.pitch);
             boolean out = k.pitch < kind.low() || k.pitch > kind.high();
@@ -241,7 +259,7 @@ public class HandheldScreen extends Screen implements MidiKeyboard.Target {
             int lx = k.x + (k.w - font.width(k.label)) / 2;
             g.text(font, Component.literal(k.label), lx, k.y + k.h - 10, k.black ? 0xFFE8DCC0 : Parchment.INK_HINT, false);
         }
-        g.text(font, tr("held_hint"), x0 + 20, y0 + H - 23, Parchment.INK_HINT, false);
+        g.text(font, hint, x0 + 20, y0 + H - 23, Parchment.INK_HINT, false);
         super.extractRenderState(g, mouseX, mouseY, partialTick);
     }
 }

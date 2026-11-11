@@ -166,6 +166,14 @@ public final class OrganMixer {
         return buf;
     }
 
+    /**
+     * 声音引擎重新启动了：OpenAL 上下文是新的，这里留着的缓冲号都属于已经关掉的旧上下文——不能再交给引擎
+     * （按过的键会不出声或响成别的声音），也不能删（新上下文里同一个号可能是别的缓冲）。只把引用丢掉，下次用到时重做。
+     */
+    static void engineReloaded() {
+        for (Mix m : READY.values()) m.buffers.clear();
+    }
+
     /** 资源重载时原版会清掉自己的缓存；这里的数据自己管，退出存档时清掉。 */
     static void clear() {
         for (Mix m : READY.values()) for (SoundBuffer b : m.buffers.values()) b.discardAlBuffer();

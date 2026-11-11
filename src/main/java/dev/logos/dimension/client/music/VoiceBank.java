@@ -34,7 +34,12 @@ import org.jspecify.annotations.Nullable;
  *   <li>管风琴：按当前音栓组合的循环段（{@link OrganMixer}）按住多久响多久，起音 3 tick 推上来，松键淡出，
  *       室内时补一段混响尾音；按着音时换了音栓，已按住的音交叉淡入新组合（{@link #tickOrgans}）。</li>
  * </ul>
- * 复音有上限，满了先停「已松开、最旧」的音（尾音也算）。
+ * 复音有上限，满了先停「已松开、最旧」的音（尾音也算）；所有乐器加起来满了，从发声最多的那件乐器里停，
+ * 不去掐别的乐器仅有的一个长音。
+ *
+ * <p>音高：每个音记着调用方给的「原音」（键盘上的那个键、纸带上的那个音）和实际发声的音高。实时演奏（键盘、电子琴、
+ * 别人的演奏）不在音域里的音不出声、也不折叠；纸带由 {@link MusicClient} 先整个声部移八度再给实际音高。
+ * 松键、同一个音再弹都按原音找，两个不同的原音即使发同一个音高也互不影响。
  *
  * <p>「声源」是一件乐器上的一路演奏（实时演奏一路、纸带播放一路、编辑器试听一路），各自记踏板和发声的音。
  */
@@ -47,6 +52,9 @@ final class VoiceBank {
 
     private static final class Voice {
         final NoteSound sound;
+        /** 调用方给的原音（松键、重弹按它找）。 */
+        final int input;
+        /** 实际发声的音高。 */
         final int pitch;
         final int part;
         final long started;
@@ -59,12 +67,13 @@ final class VoiceBank {
         boolean held = true;
         boolean damped;
 
-        Voice(NoteSound sound, int pitch, int part, long started, int gen, boolean tail) {
-            this(sound, pitch, part, started, gen, tail, null, 0);
+        Voice(NoteSound sound, int input, int pitch, int part, long started, int gen, boolean tail) {
+            this(sound, input, pitch, part, started, gen, tail, null, 0);
         }
 
-        Voice(NoteSound sound, int pitch, int part, long started, int gen, boolean tail, SampleMap.@Nullable Zone zone, int velocity) {
+        Voice(NoteSound sound, int input, int pitch, int part, long started, int gen, boolean tail, SampleMap.@Nullable Zone zone, int velocity) {
             this.sound = sound;
+            this.input = input;
             this.pitch = pitch;
             this.part = part;
             this.started = started;
@@ -238,11 +247,26 @@ final class VoiceBank {
         if (s.kind == InstrumentKind.PIPE_ORGAN) cap = Math.max(cap, 48);
         while (s.voices.size() >= cap) steal(s.voices);
         if (totalAlive() >= ClientConfig.INSTRUMENT_TOTAL_VOICES.get()) {
-            List<Voice> all = new ArrayList<>();
-            for (Source o : SOURCES.values()) all.addAll(o.voices);
-            steal(all);
-            for (Source o : SOURCES.values()) o.voices.retainAll(all);
+            // 合奏时所有乐器加起来满了：先找有已松开（尾音）的乐器，其中发声最多的那件让出一个；
+            // 都按着时也从发声最多的那件里停最旧的，不去掐只剩一两个音的乐器
+            Source pick = null;
+            for (Source o : SOURCES.values()) {
+                if (o.voices.isEmpty()) continue;
+                boolean released = hasReleased(o);
+                if (pick == null) {
+                    pick = o;
+                    continue;
+                }
+                boolean pickReleased = hasReleased(pick);
+                if (released != pickReleased ? released : o.voices.size() > pick.voices.size()) pick = o;
+            }
+            if (pick != null) steal(pick.voices);
         }
+    }
+
+    private static boolean hasReleased(Source s) {
+        for (Voice v : s.voices) if (!v.held) return true;
+        return false;
     }
 
     private static @Nullable InstrumentBlockEntity organAt(BlockPos pos) {
@@ -257,12 +281,21 @@ final class VoiceBank {
         noteOn(key, kind, BlockPos.ZERO, at, pitch, velocity, 0);
     }
 
+    /** 实时演奏的一个音（键盘、电子琴、别人的演奏）：原音就是发声的音高，不在音域里不出声。 */
     static void noteOn(String key, InstrumentKind kind, BlockPos pos, Vec3 at, int pitch, int velocity, int part) {
+        noteOn(key, kind, pos, at, pitch, pitch, velocity, part);
+    }
+
+    /**
+     * @param input 原音：松键、同一个音再弹都按它找
+     * @param pitch 实际发声的音高；不在这件乐器的音域里就不出声
+     */
+    static void noteOn(String key, InstrumentKind kind, BlockPos pos, Vec3 at, int input, int pitch, int velocity, int part) {
+        if (pitch < kind.low() || pitch > kind.high()) return;
         Source s = source(key, kind, pos, at);
-        pitch = kind.fold(pitch);
         // 同一个音再次弹下：先止住还在响的那一个（琴槌或手指重新碰到弦；管风琴同一根管不会响两次）
         for (Voice v : s.voices) {
-            if (v.pitch == pitch && v.alive() && !v.tail) {
+            if (v.input == input && v.part == part && v.alive() && !v.tail) {
                 v.held = false;
                 v.sound.release(0.3f);
             }
@@ -292,7 +325,7 @@ final class VoiceBank {
             sound = note;
         }
         Minecraft.getInstance().getSoundManager().play(sound);
-        s.voices.add(new Voice(sound, pitch, part, System.nanoTime(), gen, false, zone, vel));
+        s.voices.add(new Voice(sound, input, pitch, part, System.nanoTime(), gen, false, zone, vel));
     }
 
     private static DirectSound organSound(OrganMixer.Mix mix, InstrumentBlockEntity be, int pitch, boolean tail, int attack) {
@@ -328,15 +361,15 @@ final class VoiceBank {
         makeRoom(s);
         DirectSound tail = organSound(mix, be, v.pitch, true, 0);
         Minecraft.getInstance().getSoundManager().play(tail);
-        s.voices.add(new Voice(tail, v.pitch, v.part, System.nanoTime(), mix.gen, true));
+        s.voices.add(new Voice(tail, v.input, v.pitch, v.part, System.nanoTime(), mix.gen, true));
     }
 
-    static void noteOff(String key, int pitch, int part) {
+    /** 松开一个原音（与 noteOn 的 input 相同）。 */
+    static void noteOff(String key, int input, int part) {
         Source s = SOURCES.get(key);
         if (s == null) return;
-        pitch = s.kind.fold(pitch);
         for (Voice v : new ArrayList<>(s.voices)) {
-            if (v.pitch != pitch || v.part != part || !v.held) continue;
+            if (v.input != input || v.part != part || !v.held) continue;
             if (s.kind == InstrumentKind.PIPE_ORGAN) {
                 releaseOrgan(s, v);
                 continue;
@@ -399,7 +432,7 @@ final class VoiceBank {
                 v.sound.release(0.6f);
                 DirectSound fresh = organSound(mix, be, v.pitch, false, 2);
                 Minecraft.getInstance().getSoundManager().play(fresh);
-                s.voices.add(new Voice(fresh, v.pitch, v.part, System.nanoTime(), mix.gen, false));
+                s.voices.add(new Voice(fresh, v.input, v.pitch, v.part, System.nanoTime(), mix.gen, false));
             }
         }
     }
@@ -422,6 +455,30 @@ final class VoiceBank {
     static void clear() {
         for (String key : new ArrayList<>(SOURCES.keySet())) allOff(key);
         SOURCES.clear();
+    }
+
+    /** 声音引擎重新启动了（换资源包、F3+T、换了音频设备）：原来的声音都已停掉，记录一并丢掉。 */
+    static void engineReloaded() {
+        SOURCES.clear();
+    }
+
+    /** 这一路有没有按着的音（手持乐器的演奏姿势用：按住长音时弓一直来回拉）。 */
+    static boolean holding(String key) {
+        Source s = SOURCES.get(key);
+        if (s == null) return false;
+        for (Voice v : s.voices) if (v.held && v.alive()) return true;
+        return false;
+    }
+
+    /** 这件方块乐器（大提琴、低音提琴）有没有按着的音，或者刚停 0.3 秒以内：坐在后面的演奏者的弓跟着拉。 */
+    static boolean recentlyPlayed(BlockPos pos) {
+        for (Source s : SOURCES.values()) {
+            if (!s.pos.equals(pos)) continue;
+            for (Voice v : s.voices) {
+                if (v.alive() && (v.held || System.nanoTime() - v.started < 300_000_000L)) return true;
+            }
+        }
+        return false;
     }
 
     /** 测试与界面用：这一路还在响的音数（含尾音）。 */

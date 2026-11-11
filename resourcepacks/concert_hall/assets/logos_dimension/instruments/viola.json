@@ -1,0 +1,424 @@
+{
+ "format": 1,
+ "quality": "recorded",
+ "source": "VS Chamber Orchestra: Community Edition (CC0 1.0) sgossner/VSCO-2-CE@440300901dfe",
+ "range": 32,
+ "zones": [
+  {
+   "file": "instrument/viola/48_0",
+   "key": 48.001,
+   "lo": 48,
+   "hi": 49,
+   "vlo": 1,
+   "vhi": 62,
+   "gain": 0.197,
+   "curve": 1.4,
+   "frames": 182696,
+   "release": 0.2,
+   "loop": [
+    54684,
+    182696
+   ]
+  },
+  {
+   "file": "instrument/viola/50_0",
+   "key": 50.002,
+   "lo": 50,
+   "hi": 51,
+   "vlo": 1,
+   "vhi": 62,
+   "gain": 0.1687,
+   "curve": 1.4,
+   "frames": 169931,
+   "release": 0.2,
+   "loop": [
+    112896,
+    169931
+   ]
+  },
+  {
+   "file": "instrument/viola/52_0",
+   "key": 52.031,
+   "lo": 52,
+   "hi": 53,
+   "vlo": 1,
+   "vhi": 62,
+   "gain": 0.1736,
+   "curve": 1.4,
+   "frames": 193577,
+   "release": 0.2,
+   "loop": [
+    72324,
+    193577
+   ]
+  },
+  {
+   "file": "instrument/viola/55_0",
+   "key": 54.986,
+   "lo": 54,
+   "hi": 56,
+   "vlo": 1,
+   "vhi": 62,
+   "gain": 0.1984,
+   "curve": 1.4,
+   "frames": 199225,
+   "release": 0.2,
+   "loop": [
+    133182,
+    199225
+   ]
+  },
+  {
+   "file": "instrument/viola/59_0",
+   "key": 58.988,
+   "lo": 57,
+   "hi": 60,
+   "vlo": 1,
+   "vhi": 62,
+   "gain": 0.1827,
+   "curve": 1.4,
+   "frames": 124435,
+   "release": 0.2,
+   "loop": [
+    58212,
+    124435
+   ]
+  },
+  {
+   "file": "instrument/viola/62_0",
+   "key": 62.005,
+   "lo": 61,
+   "hi": 63,
+   "vlo": 1,
+   "vhi": 62,
+   "gain": 0.2049,
+   "curve": 1.4,
+   "frames": 188341,
+   "release": 0.2,
+   "loop": [
+    71442,
+    188341
+   ]
+  },
+  {
+   "file": "instrument/viola/65_0",
+   "key": 64.966,
+   "lo": 64,
+   "hi": 66,
+   "vlo": 1,
+   "vhi": 62,
+   "gain": 0.1592,
+   "curve": 1.4,
+   "frames": 119985,
+   "release": 0.2,
+   "loop": [
+    58212,
+    119985
+   ]
+  },
+  {
+   "file": "instrument/viola/69_0",
+   "key": 68.993,
+   "lo": 67,
+   "hi": 70,
+   "vlo": 1,
+   "vhi": 62,
+   "gain": 0.1771,
+   "curve": 1.4,
+   "frames": 190596,
+   "release": 0.2,
+   "loop": [
+    133182,
+    190596
+   ]
+  },
+  {
+   "file": "instrument/viola/72_0",
+   "key": 71.971,
+   "lo": 71,
+   "hi": 74,
+   "vlo": 1,
+   "vhi": 62,
+   "gain": 0.1564,
+   "curve": 1.4,
+   "frames": 112401,
+   "release": 0.2,
+   "loop": [
+    52920,
+    112401
+   ]
+  },
+  {
+   "file": "instrument/viola/76_0",
+   "key": 76.049,
+   "lo": 75,
+   "hi": 77,
+   "vlo": 1,
+   "vhi": 62,
+   "gain": 0.2252,
+   "curve": 1.4,
+   "frames": 141062,
+   "release": 0.2,
+   "loop": [
+    61740,
+    141062
+   ]
+  },
+  {
+   "file": "instrument/viola/79_0",
+   "key": 79.051,
+   "lo": 78,
+   "hi": 81,
+   "vlo": 1,
+   "vhi": 62,
+   "gain": 0.1786,
+   "curve": 1.4,
+   "frames": 147329,
+   "release": 0.2,
+   "loop": [
+    54684,
+    147329
+   ]
+  },
+  {
+   "file": "instrument/viola/83_0",
+   "key": 83.058,
+   "lo": 82,
+   "hi": 84,
+   "vlo": 1,
+   "vhi": 62,
+   "gain": 0.2071,
+   "curve": 1.4,
+   "frames": 110219,
+   "release": 0.2,
+   "loop": [
+    52920,
+    110219
+   ]
+  },
+  {
+   "file": "instrument/viola/86_0",
+   "key": 85.99,
+   "lo": 85,
+   "hi": 88,
+   "vlo": 1,
+   "vhi": 62,
+   "gain": 0.1931,
+   "curve": 1.4,
+   "frames": 156974,
+   "release": 0.2,
+   "loop": [
+    51156,
+    156974
+   ]
+  },
+  {
+   "file": "instrument/viola/48_1",
+   "key": 48.007,
+   "lo": 48,
+   "hi": 48,
+   "vlo": 63,
+   "vhi": 127,
+   "gain": 0.4429,
+   "curve": 1.4,
+   "frames": 163428,
+   "release": 0.2,
+   "loop": [
+    24696,
+    163428
+   ]
+  },
+  {
+   "file": "instrument/viola/50_1",
+   "key": 49.974,
+   "lo": 49,
+   "hi": 50,
+   "vlo": 63,
+   "vhi": 127,
+   "gain": 0.5113,
+   "curve": 1.4,
+   "frames": 133277,
+   "release": 0.2,
+   "loop": [
+    22932,
+    133277
+   ]
+  },
+  {
+   "file": "instrument/viola/52_1",
+   "key": 52.023,
+   "lo": 51,
+   "hi": 53,
+   "vlo": 63,
+   "vhi": 127,
+   "gain": 0.478,
+   "curve": 1.4,
+   "frames": 96405,
+   "release": 0.2,
+   "loop": [
+    22050,
+    96405
+   ]
+  },
+  {
+   "file": "instrument/viola/55_1",
+   "key": 54.949,
+   "lo": 54,
+   "hi": 56,
+   "vlo": 63,
+   "vhi": 127,
+   "gain": 0.8392,
+   "curve": 1.4,
+   "frames": 144892,
+   "release": 0.2,
+   "loop": [
+    41454,
+    144892
+   ]
+  },
+  {
+   "file": "instrument/viola/59_1",
+   "key": 59.007,
+   "lo": 57,
+   "hi": 60,
+   "vlo": 63,
+   "vhi": 127,
+   "gain": 0.5978,
+   "curve": 1.4,
+   "frames": 91691,
+   "release": 0.2,
+   "loop": [
+    29988,
+    91691
+   ]
+  },
+  {
+   "file": "instrument/viola/62_1",
+   "key": 61.959,
+   "lo": 61,
+   "hi": 63,
+   "vlo": 63,
+   "vhi": 127,
+   "gain": 0.6531,
+   "curve": 1.4,
+   "frames": 175392,
+   "release": 0.2,
+   "loop": [
+    69678,
+    175392
+   ]
+  },
+  {
+   "file": "instrument/viola/65_1",
+   "key": 64.978,
+   "lo": 64,
+   "hi": 67,
+   "vlo": 63,
+   "vhi": 127,
+   "gain": 0.5796,
+   "curve": 1.4,
+   "frames": 149921,
+   "release": 0.2,
+   "loop": [
+    38808,
+    149921
+   ]
+  },
+  {
+   "file": "instrument/viola/69_1",
+   "key": 69.06,
+   "lo": 68,
+   "hi": 70,
+   "vlo": 63,
+   "vhi": 127,
+   "gain": 0.6955,
+   "curve": 1.4,
+   "frames": 129669,
+   "release": 0.2,
+   "loop": [
+    62622,
+    129669
+   ]
+  },
+  {
+   "file": "instrument/viola/72_1",
+   "key": 72.009,
+   "lo": 71,
+   "hi": 74,
+   "vlo": 63,
+   "vhi": 127,
+   "gain": 0.6968,
+   "curve": 1.4,
+   "frames": 145147,
+   "release": 0.2,
+   "loop": [
+    43218,
+    145147
+   ]
+  },
+  {
+   "file": "instrument/viola/76_1",
+   "key": 76.057,
+   "lo": 75,
+   "hi": 77,
+   "vlo": 63,
+   "vhi": 127,
+   "gain": 0.618,
+   "curve": 1.4,
+   "frames": 164536,
+   "release": 0.2,
+   "loop": [
+    105840,
+    164536
+   ]
+  },
+  {
+   "file": "instrument/viola/79_1",
+   "key": 79.044,
+   "lo": 78,
+   "hi": 80,
+   "vlo": 63,
+   "vhi": 127,
+   "gain": 0.6126,
+   "curve": 1.4,
+   "frames": 132733,
+   "release": 0.2,
+   "loop": [
+    40572,
+    132733
+   ]
+  },
+  {
+   "file": "instrument/viola/83_1",
+   "key": 82.926,
+   "lo": 81,
+   "hi": 84,
+   "vlo": 63,
+   "vhi": 127,
+   "gain": 0.6592,
+   "curve": 1.4,
+   "frames": 169351,
+   "release": 0.2,
+   "loop": [
+    52038,
+    169351
+   ]
+  },
+  {
+   "file": "instrument/viola/86_1",
+   "key": 86.005,
+   "lo": 85,
+   "hi": 88,
+   "vlo": 63,
+   "vhi": 127,
+   "gain": 0.417,
+   "curve": 1.4,
+   "frames": 90399,
+   "release": 0.2,
+   "loop": [
+    31752,
+    90399
+   ]
+  }
+ ]
+}

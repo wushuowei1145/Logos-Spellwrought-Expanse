@@ -44,6 +44,10 @@ public final class MusicClient {
     private static final long LISTEN_DELAY_NS = 100_000_000L;
     /** 心跳和本地时钟差多少才修正。 */
     private static final long RESYNC_NS = 150_000_000L;
+    /** 对时差这么多以内只挪时钟、不止音；再多（服务端那边跳了位置）才重新定位。 */
+    private static final long JUMP_NS = 3_000_000_000L;
+    /** 纸带上的音晚了这么多（卡顿、对时往前挪）就不补弹，免得一下子涌出来。 */
+    private static final int LATE_MS = 400;
     /** 离乐器多远就不放声音（只推进进度）。 */
     private static final double AUDIBLE = 72.0;
 
@@ -371,6 +375,10 @@ public final class MusicClient {
         int partMask = 0xFFFF;
         int cursor;
         boolean needSeek = true;
+        /** 每个声部整体移几个半音（按这件乐器的音域，{@link MusicRoll#octaveShifts}）；乐器换了就重算。 */
+        int[] shifts = new int[MusicRoll.MAX_PARTS];
+        @Nullable InstrumentKind shiftsFor;
+        /** 待松开的音：{时刻（纳秒）, 声部, 原音}。 */
         final PriorityQueue<long[]> offs = new PriorityQueue<>((a, b) -> Long.compare(a[0], b[0]));
 
         Track(String key, BlockPos pos) {
@@ -397,20 +405,46 @@ public final class MusicClient {
             needSeek = false;
         }
 
+        /**
+         * 跟服务端对时：差得不多时只挪时钟，正在响的音照常响，待松开的音一起挪；
+         * 差得太多（服务端那边跳了位置）才重新定位、止住所有音。
+         */
+        void resync(long expected) {
+            long delta = expected - anchor;
+            anchor = expected;
+            if (Math.abs(delta) > JUMP_NS) {
+                needSeek = true;
+                return;
+            }
+            if (offs.isEmpty()) return;
+            List<long[]> pending = new ArrayList<>(offs);
+            offs.clear();
+            for (long[] o : pending) {
+                o[0] += delta;
+                offs.add(o);
+            }
+        }
+
         void advance(long now) {
             while (!offs.isEmpty() && offs.peek()[0] <= now) {
                 long[] o = offs.poll();
                 VoiceBank.noteOff(key, (int) o[2], (int) o[1]);
             }
-            if (!playing) return;
             if (roll == null) {
                 if (rollId != null) roll = MusicClient.roll(rollId);
                 if (roll == null) return;
             }
-            int pos = positionMs(now);
-            if (needSeek) seek(pos);
             InstrumentKind kind = kindAt(this.pos);
             if (kind == null) return;
+            if (shiftsFor != kind) {
+                // 纸带和乐器都知道了：按乐器音域定各声部的移调，把要用到的采样先解码好（合奏开始时不会慢半拍、漏音）
+                shifts = roll.octaveShifts(kind.low(), kind.high());
+                shiftsFor = kind;
+                SampleMaps.prewarm(kind, roll, shifts);
+            }
+            if (!playing) return;
+            int pos = positionMs(now);
+            if (needSeek) seek(pos);
             boolean hear = audible(this.pos);
             Vec3 at = centerAt(this.pos);
             var ev = roll.events();
@@ -418,7 +452,10 @@ public final class MusicClient {
                 MusicRoll.Event e = ev.get(cursor++);
                 if ((partMask & (1 << e.part())) == 0 || !hear) continue;
                 if (e.type() == MusicRoll.NOTE) {
-                    VoiceBank.noteOn(key, kind, this.pos, at, e.pitch(), e.velocity(), e.part());
+                    if (pos - e.timeMs() > LATE_MS) continue;
+                    // 整个声部移八度；声部比乐器的音域还宽时，剩下的个别音才按八度折进来
+                    int sounding = kind.fold(e.pitch() + shifts[e.part()]);
+                    VoiceBank.noteOn(key, kind, this.pos, at, e.pitch(), sounding, e.velocity(), e.part());
                     offs.add(new long[]{anchor + e.endMs() * 1_000_000L, e.part(), e.pitch()});
                 } else {
                     VoiceBank.pedal(key, kind, this.pos, at, e.part(), e.type() == MusicRoll.PEDAL_DOWN);
@@ -430,7 +467,7 @@ public final class MusicClient {
     private static final Map<BlockPos, Track> TRACKS = new HashMap<>();
     private static @Nullable Track preview;
 
-    private static void playback(MusicPayloads.Playback p) {
+    static void playback(MusicPayloads.Playback p) {
         BlockPos pos = p.pos().immutable();
         if (p.roll() == null) {
             Track old = TRACKS.remove(pos);
@@ -446,17 +483,18 @@ public final class MusicClient {
             t.roll = roll(p.roll());
             TRACKS.put(pos, t);
             prewarmOrgan(pos);
-            InstrumentKind k = kindAt(pos);
-            if (k != null && k.handheld()) SampleMaps.prewarm(k, -1);
             t.playing = false;
         }
         t.partMask = p.partMask();
         if (p.playing()) {
             long expected = now - p.positionMs() * 1_000_000L;
-            if (!t.playing || Math.abs(expected - t.anchor) > RESYNC_NS) {
+            if (!t.playing) {
                 t.anchor = expected;
                 t.playing = true;
                 t.needSeek = true;
+            } else if (Math.abs(expected - t.anchor) > RESYNC_NS) {
+                // 心跳包：只挪时钟，不止音（以前会重新定位、把这件乐器正在响的音全部掐掉，合奏时一件件哑掉）
+                t.resync(expected);
             }
         } else {
             t.playing = false;
@@ -465,6 +503,12 @@ public final class MusicClient {
             t.offs.clear();
             t.needSeek = true;
         }
+    }
+
+    /** 声音引擎重新启动了：纸带要用的采样重新预读（下一帧按当前的采样表重算）。 */
+    static void engineReloaded() {
+        for (Track t : TRACKS.values()) t.shiftsFor = null;
+        if (preview != null) preview.shiftsFor = null;
     }
 
     /** 界面显示用：这件乐器的纸带播放状态（没有在放时为 null）。 */
@@ -504,7 +548,8 @@ public final class MusicClient {
     static void audition(BlockPos pos, int pitch) {
         InstrumentKind kind = kindAt(pos);
         if (kind == null) return;
-        VoiceBank.noteOn("audition", kind, pos, centerAt(pos), pitch, 90, 0);
+        // 编辑器里点的音可能在乐器音域外：试听时按八度折进来（放纸带时是整个声部一起移）
+        VoiceBank.noteOn("audition", kind, pos, centerAt(pos), pitch, kind.fold(pitch), 90, 0);
         at(System.nanoTime() + 400_000_000L, () -> VoiceBank.noteOff("audition", pitch, 0));
     }
 

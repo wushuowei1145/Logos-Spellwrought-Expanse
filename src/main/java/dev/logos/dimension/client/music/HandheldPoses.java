@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.music.HandheldInstrumentItem;
 import dev.logos.dimension.music.InstrumentKind;
+import dev.logos.dimension.music.InstrumentSeat;
 import dev.logos.dimension.music.Instruments;
 import java.util.EnumMap;
 import java.util.Map;
@@ -48,6 +49,9 @@ import org.jspecify.annotations.Nullable;
  * 乐器不再挂在手上：小提琴夹在下巴下（跟着身体），长笛、小号在嘴边（跟着头），由这里的玩家层按 {@link HeldRig}
  * 画出来（items/held/），双臂再伸向乐器上的手位——小提琴是经典的样子，非惯用手托琴、惯用手运弓。两只手里原本拿的东西这时不画。
  * 最近 0.6 秒有音时弓来回拉、管乐器轻轻起伏，不弹时静止。姿势经 META-INF/enumextensions.json 加进 {@link HumanoidModel.ArmPose}。
+ *
+ * <p>坐在大提琴、低音提琴后面（骑着 {@link InstrumentSeat}）时也在这里：乐器是方块、不画，只画琴弓；
+ * 双腿分开夹着大提琴（低音提琴站着拉，腿伸直），左手按琴颈、右手运弓，那件乐器最近在响时弓来回拉（纸带、红石放的也算）。
  */
 @EventBusSubscriber(modid = LogosDimension.ID, value = Dist.CLIENT)
 public final class HandheldPoses {
@@ -57,9 +61,32 @@ public final class HandheldPoses {
         true, true, (IArmPoseTransformer) (m, s, a) -> pose(InstrumentKind.FLUTE, m, s));
     public static final EnumProxy<HumanoidModel.ArmPose> TRUMPET = new EnumProxy<>(HumanoidModel.ArmPose.class,
         true, true, (IArmPoseTransformer) (m, s, a) -> pose(InstrumentKind.TRUMPET, m, s));
+    public static final EnumProxy<HumanoidModel.ArmPose> VIOLA = new EnumProxy<>(HumanoidModel.ArmPose.class,
+        true, true, (IArmPoseTransformer) (m, s, a) -> pose(InstrumentKind.VIOLA, m, s));
+    public static final EnumProxy<HumanoidModel.ArmPose> OBOE = new EnumProxy<>(HumanoidModel.ArmPose.class,
+        true, true, (IArmPoseTransformer) (m, s, a) -> pose(InstrumentKind.OBOE, m, s));
+    public static final EnumProxy<HumanoidModel.ArmPose> BASSOON = new EnumProxy<>(HumanoidModel.ArmPose.class,
+        true, true, (IArmPoseTransformer) (m, s, a) -> pose(InstrumentKind.BASSOON, m, s));
+    public static final EnumProxy<HumanoidModel.ArmPose> CELLO = new EnumProxy<>(HumanoidModel.ArmPose.class,
+        true, true, (IArmPoseTransformer) (m, s, a) -> pose(InstrumentKind.CELLO, m, s));
+    public static final EnumProxy<HumanoidModel.ArmPose> DOUBLE_BASS = new EnumProxy<>(HumanoidModel.ArmPose.class,
+        true, true, (IArmPoseTransformer) (m, s, a) -> pose(InstrumentKind.DOUBLE_BASS, m, s));
 
-    /** 正在演奏的乐器：种类、要画的模型（小提琴另有弓）、最近是否在弹。 */
-    record Held(InstrumentKind kind, ItemStackRenderState instrument, @Nullable ItemStackRenderState bow, float move) {}
+    private static HumanoidModel.ArmPose poseOf(InstrumentKind kind) {
+        return switch (kind) {
+            case VIOLIN -> VIOLIN.getValue();
+            case FLUTE -> FLUTE.getValue();
+            case VIOLA -> VIOLA.getValue();
+            case OBOE -> OBOE.getValue();
+            case BASSOON -> BASSOON.getValue();
+            case CELLO -> CELLO.getValue();
+            case DOUBLE_BASS -> DOUBLE_BASS.getValue();
+            default -> TRUMPET.getValue();
+        };
+    }
+
+    /** 正在演奏的乐器：种类、要画的模型（弓弦乐器另有弓；坐着拉的乐器是方块，instrument 为 null）、最近是否在弹。 */
+    record Held(InstrumentKind kind, @Nullable ItemStackRenderState instrument, @Nullable ItemStackRenderState bow, float move) {}
 
     static final ContextKey<Held> HELD = new ContextKey<>(LogosDimension.id("held_instrument"));
     /** 画乐器用的物品：模型换成 items/held/<乐器>.json（小提琴不带弓）和 items/held/violin_bow.json。 */
@@ -75,14 +102,16 @@ public final class HandheldPoses {
             public HumanoidModel.@Nullable ArmPose getArmPose(LivingEntity entity, InteractionHand hand, ItemStack stack) {
                 if (!entity.isUsingItem() || entity.getUsedItemHand() != hand) return null;
                 if (!(stack.getItem() instanceof HandheldInstrumentItem item)) return null;
-                return switch (item.kind()) {
-                    case VIOLIN -> VIOLIN.getValue();
-                    case FLUTE -> FLUTE.getValue();
-                    default -> TRUMPET.getValue();
-                };
+                return poseOf(item.kind());
             }
         };
-        event.registerItem(ext, Instruments.VIOLIN.get(), Instruments.FLUTE.get(), Instruments.TRUMPET.get());
+        event.registerItem(ext, Instruments.VIOLIN.get(), Instruments.FLUTE.get(), Instruments.TRUMPET.get(),
+            Instruments.VIOLA.get(), Instruments.OBOE.get(), Instruments.BASSOON.get());
+    }
+
+    @SubscribeEvent
+    static void renderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(Instruments.SEAT.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
     }
 
     @SubscribeEvent
@@ -104,6 +133,7 @@ public final class HandheldPoses {
     }
 
     private static @Nullable Held held(LivingEntity entity, AvatarRenderState state) {
+        if (entity.getVehicle() instanceof InstrumentSeat seat && seat.kind() != null) return seated(entity, state, seat);
         if (!entity.isUsingItem() || !(entity.getUseItem().getItem() instanceof HandheldInstrumentItem item)) return null;
         // 乐器由下面的层画在下巴、嘴边；两只手原本拿的（包括乐器本身）都不画
         state.rightHandItemState.clear();
@@ -112,11 +142,24 @@ public final class HandheldPoses {
         ItemStackRenderState body = new ItemStackRenderState();
         resolver.updateForLiving(body, body(item.kind()), ItemDisplayContext.NONE, entity);
         ItemStackRenderState bowState = null;
-        if (item.kind() == InstrumentKind.VIOLIN) {
+        if (item.kind() == InstrumentKind.VIOLIN || item.kind() == InstrumentKind.VIOLA) {
             bowState = new ItemStackRenderState();
             resolver.updateForLiving(bowState, bow(), ItemDisplayContext.NONE, entity);
         }
-        return new Held(item.kind(), body, bowState, MusicClient.recentlyPlayed(entity.getId()) ? 1 : 0);
+        boolean playing = MusicClient.recentlyPlayed(entity.getId()) || VoiceBank.holding(MusicClient.heldKey(entity.getId()));
+        return new Held(item.kind(), body, bowState, playing ? 1 : 0);
+    }
+
+    /** 坐在弦乐器后面：乐器是方块，只画弓；手里原本拿的不画；姿势挂在右臂上（按右手运弓布置，左撇子也一样）。 */
+    private static Held seated(LivingEntity entity, AvatarRenderState state, InstrumentSeat seat) {
+        InstrumentKind kind = seat.kind();
+        state.rightHandItemState.clear();
+        state.leftHandItemState.clear();
+        state.rightArmPose = poseOf(kind);
+        state.leftArmPose = HumanoidModel.ArmPose.EMPTY;
+        ItemStackRenderState bowState = new ItemStackRenderState();
+        Minecraft.getInstance().getItemModelResolver().updateForLiving(bowState, bow(), ItemDisplayContext.NONE, entity);
+        return new Held(kind, null, bowState, VoiceBank.recentlyPlayed(seat.instrument()) ? 1 : 0);
     }
 
     private static ItemStack body(InstrumentKind kind) {
@@ -124,6 +167,9 @@ public final class HandheldPoses {
             ItemStack stack = new ItemStack(switch (k) {
                 case VIOLIN -> Instruments.VIOLIN.get();
                 case FLUTE -> Instruments.FLUTE.get();
+                case VIOLA -> Instruments.VIOLA.get();
+                case OBOE -> Instruments.OBOE.get();
+                case BASSOON -> Instruments.BASSOON.get();
                 default -> Instruments.TRUMPET.get();
             });
             stack.set(DataComponents.ITEM_MODEL, LogosDimension.id("held/" + k.id()));
@@ -141,14 +187,40 @@ public final class HandheldPoses {
 
     /** 双臂伸向乐器上的两个手位（原版只为拿着乐器的那只手调用两手姿势，所以两只手臂都在这里摆，同原版拉弓）。 */
     private static void pose(InstrumentKind kind, HumanoidModel<?> model, HumanoidRenderState state) {
-        int id = state instanceof AvatarRenderState avatar ? avatar.id : -1;
-        float move = MusicClient.recentlyPlayed(id) ? 1f : 0f;
+        if (kind.seated()) {
+            seatedPose(kind, model, state);
+            return;
+        }
+        Held held = state.getRenderData(HELD);
+        float move = held == null ? 0f : held.move();
         boolean leftHanded = state.mainArm == HumanoidArm.LEFT;
         HeldRig.Place place = HeldRig.place(kind, model, state.isCrouching, true, leftHanded, state.ageInTicks, move);
         // 蹲下时原版在这之后把肩下移 3.2、手臂再往前抬 0.4，这里先扣掉
         float drop = state.isCrouching ? 3.2f : 0, lift = state.isCrouching ? 0.4f : 0;
         reach(leftHanded ? model.leftArm : model.rightArm, place.mainHand(), drop, lift, leftHanded ? 1 : -1);
         reach(leftHanded ? model.rightArm : model.leftArm, place.offHand(), drop, lift, leftHanded ? -1 : 1);
+    }
+
+    /** 坐（站）在弦乐器后面：右手运弓、左手按琴颈；大提琴双腿分开夹着琴，低音提琴站着拉、腿伸直。 */
+    private static void seatedPose(InstrumentKind kind, HumanoidModel<?> model, HumanoidRenderState state) {
+        Held held = state.getRenderData(HELD);
+        HeldRig.Place place = HeldRig.seated(kind, model, state.ageInTicks, held == null ? 0 : held.move());
+        reach(model.rightArm, place.mainHand(), 0, 0, -1);
+        reach(model.leftArm, place.offHand(), 0, 0, 1);
+        if (kind == InstrumentKind.DOUBLE_BASS) {
+            model.rightLeg.xRot = 0;
+            model.leftLeg.xRot = 0;
+            model.rightLeg.yRot = 0.1f;
+            model.leftLeg.yRot = -0.1f;
+        } else {
+            // 琴往左倾，琴身偏在左膝一侧：右腿分得少一点，两膝都贴着琴
+            model.rightLeg.xRot = -1.35f;
+            model.leftLeg.xRot = -1.35f;
+            model.rightLeg.yRot = 0.42f;
+            model.leftLeg.yRot = -0.5f;
+        }
+        model.rightLeg.zRot = 0;
+        model.leftLeg.zRot = 0;
     }
 
     /**
@@ -175,9 +247,9 @@ public final class HandheldPoses {
             Held held = state.getRenderData(HELD);
             if (held == null || state.isInvisible) return;
             PlayerModel model = getParentModel();
-            HeldRig.Place place = HeldRig.place(held.kind(), model, state.isCrouching, false,
-                state.mainArm == HumanoidArm.LEFT, state.ageInTicks, held.move());
-            draw(pose, collector, light, state, model, place.instrument(), held.instrument());
+            HeldRig.Place place = held.kind().seated() ? HeldRig.seated(held.kind(), model, state.ageInTicks, held.move())
+                : HeldRig.place(held.kind(), model, state.isCrouching, false, state.mainArm == HumanoidArm.LEFT, state.ageInTicks, held.move());
+            if (held.instrument() != null && place.instrument() != null) draw(pose, collector, light, state, model, place.instrument(), held.instrument());
             if (held.bow() != null && place.bow() != null) draw(pose, collector, light, state, model, place.bow(), held.bow());
         }
 

@@ -1,0 +1,424 @@
+{
+ "format": 1,
+ "quality": "recorded",
+ "source": "VS Chamber Orchestra: Community Edition (CC0 1.0) sgossner/VSCO-2-CE@440300901dfe",
+ "range": 32,
+ "zones": [
+  {
+   "file": "instrument/double_bass/30_0",
+   "key": 29.994,
+   "lo": 28,
+   "hi": 30,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2615,
+   "curve": 1.4,
+   "frames": 161885,
+   "release": 0.3,
+   "loop": [
+    108486,
+    161885
+   ]
+  },
+  {
+   "file": "instrument/double_bass/31_0",
+   "key": 30.959,
+   "lo": 31,
+   "hi": 32,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2808,
+   "curve": 1.4,
+   "frames": 185703,
+   "release": 0.3,
+   "loop": [
+    118188,
+    185703
+   ]
+  },
+  {
+   "file": "instrument/double_bass/34_0",
+   "key": 34.002,
+   "lo": 33,
+   "hi": 35,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.1947,
+   "curve": 1.4,
+   "frames": 145235,
+   "release": 0.3,
+   "loop": [
+    74088,
+    145235
+   ]
+  },
+  {
+   "file": "instrument/double_bass/36_0",
+   "key": 36.014,
+   "lo": 36,
+   "hi": 37,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.1843,
+   "curve": 1.4,
+   "frames": 145607,
+   "release": 0.3,
+   "loop": [
+    59976,
+    145607
+   ]
+  },
+  {
+   "file": "instrument/double_bass/38_0",
+   "key": 38.016,
+   "lo": 38,
+   "hi": 39,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.3791,
+   "curve": 1.4,
+   "frames": 198946,
+   "release": 0.3,
+   "loop": [
+    90846,
+    198946
+   ]
+  },
+  {
+   "file": "instrument/double_bass/40_0",
+   "key": 40.001,
+   "lo": 40,
+   "hi": 40,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.3519,
+   "curve": 1.4,
+   "frames": 183041,
+   "release": 0.3,
+   "loop": [
+    50274,
+    183041
+   ]
+  },
+  {
+   "file": "instrument/double_bass/42_0",
+   "key": 41.991,
+   "lo": 41,
+   "hi": 42,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2453,
+   "curve": 1.4,
+   "frames": 153215,
+   "release": 0.3,
+   "loop": [
+    62622,
+    153215
+   ]
+  },
+  {
+   "file": "instrument/double_bass/44_0",
+   "key": 44.003,
+   "lo": 43,
+   "hi": 44,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.1641,
+   "curve": 1.4,
+   "frames": 156141,
+   "release": 0.3,
+   "loop": [
+    88200,
+    156141
+   ]
+  },
+  {
+   "file": "instrument/double_bass/45_0",
+   "key": 45.001,
+   "lo": 45,
+   "hi": 47,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2044,
+   "curve": 1.4,
+   "frames": 105601,
+   "release": 0.3,
+   "loop": [
+    45864,
+    105601
+   ]
+  },
+  {
+   "file": "instrument/double_bass/49_0",
+   "key": 49.012,
+   "lo": 48,
+   "hi": 50,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2621,
+   "curve": 1.4,
+   "frames": 125972,
+   "release": 0.3,
+   "loop": [
+    70560,
+    125972
+   ]
+  },
+  {
+   "file": "instrument/double_bass/52_0",
+   "key": 52.006,
+   "lo": 51,
+   "hi": 54,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2281,
+   "curve": 1.4,
+   "frames": 142330,
+   "release": 0.3,
+   "loop": [
+    65268,
+    142330
+   ]
+  },
+  {
+   "file": "instrument/double_bass/56_0",
+   "key": 56.036,
+   "lo": 55,
+   "hi": 57,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.3287,
+   "curve": 1.4,
+   "frames": 131540,
+   "release": 0.3,
+   "loop": [
+    65268,
+    131540
+   ]
+  },
+  {
+   "file": "instrument/double_bass/59_0",
+   "key": 58.987,
+   "lo": 58,
+   "hi": 62,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2686,
+   "curve": 1.4,
+   "frames": 101405,
+   "release": 0.3,
+   "loop": [
+    44100,
+    101405
+   ]
+  },
+  {
+   "file": "instrument/double_bass/30_1",
+   "key": 29.988,
+   "lo": 28,
+   "hi": 30,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.5209,
+   "curve": 1.4,
+   "frames": 89980,
+   "release": 0.3,
+   "loop": [
+    30870,
+    89980
+   ]
+  },
+  {
+   "file": "instrument/double_bass/31_1",
+   "key": 31.009,
+   "lo": 31,
+   "hi": 32,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.7398,
+   "curve": 1.4,
+   "frames": 190697,
+   "release": 0.3,
+   "loop": [
+    137592,
+    190697
+   ]
+  },
+  {
+   "file": "instrument/double_bass/34_1",
+   "key": 33.988,
+   "lo": 33,
+   "hi": 35,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.3367,
+   "curve": 1.4,
+   "frames": 133259,
+   "release": 0.3,
+   "loop": [
+    43218,
+    133259
+   ]
+  },
+  {
+   "file": "instrument/double_bass/36_1",
+   "key": 36.027,
+   "lo": 36,
+   "hi": 37,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.4235,
+   "curve": 1.4,
+   "frames": 144328,
+   "release": 0.3,
+   "loop": [
+    91728,
+    144328
+   ]
+  },
+  {
+   "file": "instrument/double_bass/38_1",
+   "key": 37.983,
+   "lo": 38,
+   "hi": 38,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.4549,
+   "curve": 1.4,
+   "frames": 194284,
+   "release": 0.3,
+   "loop": [
+    61740,
+    194284
+   ]
+  },
+  {
+   "file": "instrument/double_bass/40_1",
+   "key": 40.0,
+   "lo": 39,
+   "hi": 41,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.6452,
+   "curve": 1.4,
+   "frames": 93899,
+   "release": 0.3,
+   "loop": [
+    23814,
+    93899
+   ]
+  },
+  {
+   "file": "instrument/double_bass/42_1",
+   "key": 42.004,
+   "lo": 42,
+   "hi": 43,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.4177,
+   "curve": 1.4,
+   "frames": 97264,
+   "release": 0.3,
+   "loop": [
+    29106,
+    97264
+   ]
+  },
+  {
+   "file": "instrument/double_bass/44_1",
+   "key": 44.024,
+   "lo": 44,
+   "hi": 44,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.3124,
+   "curve": 1.4,
+   "frames": 82374,
+   "release": 0.3,
+   "loop": [
+    22932,
+    82374
+   ]
+  },
+  {
+   "file": "instrument/double_bass/45_1",
+   "key": 45.012,
+   "lo": 45,
+   "hi": 47,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.3429,
+   "curve": 1.4,
+   "frames": 120851,
+   "release": 0.3,
+   "loop": [
+    63504,
+    120851
+   ]
+  },
+  {
+   "file": "instrument/double_bass/49_1",
+   "key": 48.996,
+   "lo": 48,
+   "hi": 50,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.4533,
+   "curve": 1.4,
+   "frames": 91628,
+   "release": 0.3,
+   "loop": [
+    38808,
+    91628
+   ]
+  },
+  {
+   "file": "instrument/double_bass/52_1",
+   "key": 51.986,
+   "lo": 51,
+   "hi": 53,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.5172,
+   "curve": 1.4,
+   "frames": 126324,
+   "release": 0.3,
+   "loop": [
+    36162,
+    126324
+   ]
+  },
+  {
+   "file": "instrument/double_bass/56_1",
+   "key": 55.991,
+   "lo": 54,
+   "hi": 57,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.5789,
+   "curve": 1.4,
+   "frames": 115568,
+   "release": 0.3,
+   "loop": [
+    54684,
+    115568
+   ]
+  },
+  {
+   "file": "instrument/double_bass/59_1",
+   "key": 59.023,
+   "lo": 58,
+   "hi": 62,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.4529,
+   "curve": 1.4,
+   "frames": 78988,
+   "release": 0.3,
+   "loop": [
+    23814,
+    78988
+   ]
+  }
+ ]
+}

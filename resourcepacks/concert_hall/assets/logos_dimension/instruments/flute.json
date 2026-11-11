@@ -1,0 +1,168 @@
+{
+ "format": 1,
+ "quality": "recorded",
+ "source": "VS Chamber Orchestra: Community Edition (CC0 1.0) sgossner/VSCO-2-CE@440300901dfe",
+ "range": 32,
+ "zones": [
+  {
+   "file": "instrument/flute/60_0",
+   "key": 59.958,
+   "lo": 60,
+   "hi": 61,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2722,
+   "curve": 1.2,
+   "frames": 150355,
+   "release": 0.15,
+   "loop": [
+    82026,
+    150355
+   ]
+  },
+  {
+   "file": "instrument/flute/64_0",
+   "key": 63.965,
+   "lo": 62,
+   "hi": 66,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2482,
+   "curve": 1.2,
+   "frames": 139670,
+   "release": 0.15,
+   "loop": [
+    49392,
+    139670
+   ]
+  },
+  {
+   "file": "instrument/flute/69_0",
+   "key": 69.017,
+   "lo": 67,
+   "hi": 70,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.354,
+   "curve": 1.2,
+   "frames": 132243,
+   "release": 0.15,
+   "loop": [
+    79380,
+    132243
+   ]
+  },
+  {
+   "file": "instrument/flute/72_0",
+   "key": 72.014,
+   "lo": 71,
+   "hi": 74,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2806,
+   "curve": 1.2,
+   "frames": 111543,
+   "release": 0.15,
+   "loop": [
+    56448,
+    111543
+   ]
+  },
+  {
+   "file": "instrument/flute/76_0",
+   "key": 75.992,
+   "lo": 75,
+   "hi": 78,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2656,
+   "curve": 1.2,
+   "frames": 129694,
+   "release": 0.15,
+   "loop": [
+    54684,
+    129694
+   ]
+  },
+  {
+   "file": "instrument/flute/81_0",
+   "key": 81.033,
+   "lo": 79,
+   "hi": 82,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3353,
+   "curve": 1.2,
+   "frames": 112059,
+   "release": 0.15,
+   "loop": [
+    56448,
+    112059
+   ]
+  },
+  {
+   "file": "instrument/flute/84_0",
+   "key": 83.909,
+   "lo": 83,
+   "hi": 85,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.4028,
+   "curve": 1.2,
+   "frames": 111163,
+   "release": 0.15,
+   "loop": [
+    58212,
+    111163
+   ]
+  },
+  {
+   "file": "instrument/flute/88_0",
+   "key": 88.031,
+   "lo": 86,
+   "hi": 90,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.4419,
+   "curve": 1.2,
+   "frames": 126141,
+   "release": 0.15,
+   "loop": [
+    29106,
+    126141
+   ]
+  },
+  {
+   "file": "instrument/flute/93_0",
+   "key": 92.916,
+   "lo": 91,
+   "hi": 94,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.6074,
+   "curve": 1.2,
+   "frames": 183895,
+   "release": 0.15,
+   "loop": [
+    119070,
+    183895
+   ]
+  },
+  {
+   "file": "instrument/flute/96_0",
+   "key": 96.016,
+   "lo": 95,
+   "hi": 96,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.4195,
+   "curve": 1.2,
+   "frames": 166255,
+   "release": 0.15,
+   "loop": [
+    27342,
+    166255
+   ]
+  }
+ ]
+}

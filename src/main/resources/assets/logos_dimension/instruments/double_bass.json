@@ -1,0 +1,200 @@
+{
+ "format": 1,
+ "quality": "synth",
+ "source": "synthesized by tools/instrument_samples.py",
+ "range": 32,
+ "zones": [
+  {
+   "file": "instrument/double_bass/s28",
+   "key": 27.844,
+   "lo": 28,
+   "hi": 29,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.481,
+   "curve": 1.4,
+   "frames": 60858,
+   "release": 0.3,
+   "loop": [
+    7938,
+    60858
+   ]
+  },
+  {
+   "file": "instrument/double_bass/s31",
+   "key": 31.059,
+   "lo": 30,
+   "hi": 32,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.4676,
+   "curve": 1.4,
+   "frames": 60858,
+   "release": 0.3,
+   "loop": [
+    7938,
+    60858
+   ]
+  },
+  {
+   "file": "instrument/double_bass/s34",
+   "key": 34.019,
+   "lo": 33,
+   "hi": 35,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3793,
+   "curve": 1.4,
+   "frames": 60858,
+   "release": 0.3,
+   "loop": [
+    7938,
+    60858
+   ]
+  },
+  {
+   "file": "instrument/double_bass/s37",
+   "key": 36.968,
+   "lo": 36,
+   "hi": 38,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.4043,
+   "curve": 1.4,
+   "frames": 60858,
+   "release": 0.3,
+   "loop": [
+    7938,
+    60858
+   ]
+  },
+  {
+   "file": "instrument/double_bass/s40",
+   "key": 40.02,
+   "lo": 39,
+   "hi": 41,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.4106,
+   "curve": 1.4,
+   "frames": 60858,
+   "release": 0.3,
+   "loop": [
+    7938,
+    60858
+   ]
+  },
+  {
+   "file": "instrument/double_bass/s43",
+   "key": 43.059,
+   "lo": 42,
+   "hi": 44,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3151,
+   "curve": 1.4,
+   "frames": 60858,
+   "release": 0.3,
+   "loop": [
+    7938,
+    60858
+   ]
+  },
+  {
+   "file": "instrument/double_bass/s46",
+   "key": 46.019,
+   "lo": 45,
+   "hi": 47,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3538,
+   "curve": 1.4,
+   "frames": 60858,
+   "release": 0.3,
+   "loop": [
+    7938,
+    60858
+   ]
+  },
+  {
+   "file": "instrument/double_bass/s49",
+   "key": 48.968,
+   "lo": 48,
+   "hi": 50,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3779,
+   "curve": 1.4,
+   "frames": 60858,
+   "release": 0.3,
+   "loop": [
+    7938,
+    60858
+   ]
+  },
+  {
+   "file": "instrument/double_bass/s52",
+   "key": 52.02,
+   "lo": 51,
+   "hi": 53,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3552,
+   "curve": 1.4,
+   "frames": 60858,
+   "release": 0.3,
+   "loop": [
+    7938,
+    60858
+   ]
+  },
+  {
+   "file": "instrument/double_bass/s55",
+   "key": 54.985,
+   "lo": 54,
+   "hi": 56,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3365,
+   "curve": 1.4,
+   "frames": 60858,
+   "release": 0.3,
+   "loop": [
+    7938,
+    60858
+   ]
+  },
+  {
+   "file": "instrument/double_bass/s58",
+   "key": 58.019,
+   "lo": 57,
+   "hi": 59,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3919,
+   "curve": 1.4,
+   "frames": 60858,
+   "release": 0.3,
+   "loop": [
+    7938,
+    60858
+   ]
+  },
+  {
+   "file": "instrument/double_bass/s61",
+   "key": 61.02,
+   "lo": 60,
+   "hi": 62,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3574,
+   "curve": 1.4,
+   "frames": 60858,
+   "release": 0.3,
+   "loop": [
+    7938,
+    60858
+   ]
+  }
+ ]
+}

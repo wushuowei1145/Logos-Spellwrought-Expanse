@@ -1,6 +1,7 @@
 package dev.logos.dimension.client.music;
 
 import dev.logos.dimension.ClientConfig;
+import dev.logos.dimension.music.InstrumentKind;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -59,6 +60,29 @@ final class KeyLayout {
     /** 数字 1–7 → 踏板（C–B），没有映射时 -1。 */
     static int pedalDegree(int key) {
         return key >= '1' && key <= '7' ? key - '1' : -1;
+    }
+
+    /**
+     * 打开演奏界面时键盘从哪个 C 开始：span 个键和这件乐器的音域重合得最多（钟琴从 C6、低音提琴从 C2），
+     * 一样多时离 preferred（以前固定的起点）最近。不在音域里的键不出声，界面上画暗。
+     */
+    static int defaultBase(InstrumentKind kind, int span, int preferred) {
+        int best = preferred, bestOverlap = -1;
+        for (int c = 0; c <= 120; c += 12) {
+            int overlap = Math.max(0, Math.min(c + span - 1, kind.high()) - Math.max(c, kind.low()) + 1);
+            if (overlap > bestOverlap || (overlap == bestOverlap && Math.abs(c - preferred) < Math.abs(best - preferred))) {
+                best = c;
+                bestOverlap = overlap;
+            }
+        }
+        return best;
+    }
+
+    /** 换八度时键盘起点的范围：至少有一个键还在这件乐器的音域里。 */
+    static int clampBase(InstrumentKind kind, int base, int span) {
+        int lo = Math.max(0, Math.floorDiv(kind.low() - span + 1 + 11, 12) * 12);
+        int hi = Math.min(120, Math.floorDiv(kind.high(), 12) * 12);
+        return Math.max(lo, Math.min(hi, base));
     }
 
     static boolean isBlack(int pitch) {

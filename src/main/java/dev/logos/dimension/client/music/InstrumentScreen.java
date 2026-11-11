@@ -42,6 +42,8 @@ public class InstrumentScreen extends Screen implements MidiKeyboard.Target {
     private int page = PLAY;
     private boolean diatonic;
     private int base;
+    /** 键盘起点只在第一次打开时按乐器的音域选（之后换八度、重建控件时保留）。 */
+    private boolean baseChosen;
     private int velocity = 96;
     private boolean pedal;
     private final boolean[] sharp = new boolean[7];
@@ -90,6 +92,11 @@ public class InstrumentScreen extends Screen implements MidiKeyboard.Target {
         recordButton = null;
         int right = x0 + W - PAD;
         boolean organ = kind() == InstrumentKind.PIPE_ORGAN;
+        if (!baseChosen) {
+            // 键盘从和这件乐器音域重合最多的那个 C 开始（以前一律 C3：钟琴、管钟在默认位置弹音阶会忽高忽低）
+            base = KeyLayout.defaultBase(kind(), KeyLayout.chromatic().length(), 48);
+            baseChosen = true;
+        }
         // 先把当前力度那一层的采样解码好（钢琴一层 30 个），第一下不慢半拍
         if (!organ) SampleMaps.prewarm(kind(), velocity);
         int tx = right - (organ ? 156 : 104);
@@ -301,12 +308,17 @@ public class InstrumentScreen extends Screen implements MidiKeyboard.Target {
 
     private void shiftOctave(int d) {
         releaseAll();
-        int lo = diatonic ? 24 : 12, hi = diatonic ? 72 : 96;
-        base = Math.max(lo, Math.min(hi, base + 12 * d));
+        base = diatonic ? Math.max(24, Math.min(72, base + 12 * d)) : KeyLayout.clampBase(kind(), base + 12 * d, KeyLayout.chromatic().length());
+    }
+
+    /** 不在这件乐器音域里的键不出声（不按八度折叠，界面上画暗）。 */
+    private boolean playable(int pitch) {
+        InstrumentKind k = kind();
+        return pitch >= k.low() && pitch <= k.high();
     }
 
     private void press(int key, int pitch) {
-        if (busy() || held.containsKey(key)) return;
+        if (busy() || held.containsKey(key) || !playable(pitch)) return;
         held.put(key, pitch);
         MusicClient.localNote(pos, pitch, velocity);
     }
@@ -333,6 +345,7 @@ public class InstrumentScreen extends Screen implements MidiKeyboard.Target {
 
     @Override
     public void midiNote(int pitch, int velocity, long nanos) {
+        if (!playable(pitch)) return;
         if (page != PLAY || busy()) return;
         // 同一个键还按着又来一次「按下」（有的琴会这样）：先松开
         if (!midiHeld.add(pitch)) MusicClient.localNote(pos, pitch, 0, nanos);
@@ -512,6 +525,7 @@ public class InstrumentScreen extends Screen implements MidiKeyboard.Target {
             for (int i = keys.size() - 1; i >= 0; i--) {
                 KeyRect k = keys.get(i);
                 if (event.x() >= k.x && event.x() < k.x + k.w && event.y() >= k.y && event.y() < k.y + k.h) {
+                    if (!playable(k.pitch)) return true;
                     mousePitch = k.pitch;
                     MusicClient.localNote(pos, k.pitch, velocity);
                     return true;
@@ -537,6 +551,9 @@ public class InstrumentScreen extends Screen implements MidiKeyboard.Target {
         Parchment.draw(g, x0, y0, W, H);
         Component name = Component.translatable(nameKey());
         g.text(font, name, x0 + PAD, y0 + 24, Parchment.INK_TITLE, false);
+        // 音源：合成（模组本体）或音乐厅录音（资源包）
+        Component source = SampleMaps.sourceLabel(kind());
+        if (source != null) g.text(font, source, x0 + PAD, y0 + 36, Parchment.INK_HINT, false);
         switch (page) {
             case ROLL -> drawRollPage(g);
             case STOPS -> drawStopsPage(g);
@@ -569,7 +586,8 @@ public class InstrumentScreen extends Screen implements MidiKeyboard.Target {
         }
         for (KeyRect k : keyboard()) {
             boolean on = sounding(k.pitch);
-            int fill = k.black ? (on ? Parchment.GOLD : 0xFF241812) : (on ? 0xFFF4D27A : 0xFFF6F0E2);
+            boolean out = !playable(k.pitch);
+            int fill = k.black ? (on ? Parchment.GOLD : out ? 0xFF5A4A40 : 0xFF241812) : (on ? 0xFFF4D27A : out ? 0xFFD8CCB4 : 0xFFF6F0E2);
             g.fill(k.x, k.y, k.x + k.w, k.y + k.h, fill);
             g.outline(k.x, k.y, k.w, k.h, k.black ? 0xFF120A06 : 0xFF8C7A60);
             int labelColor = k.black ? 0xFFE8DCC0 : Parchment.INK_HINT;

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "  R",
+    " P ",
+    "P  "
+  ],
+  "key": {
+    "R": "minecraft:sugar_cane",
+    "P": "minecraft:dark_oak_planks"
+  },
+  "result": {
+    "id": "logos_dimension:hexen_oboe",
+    "count": 1
+  }
+}

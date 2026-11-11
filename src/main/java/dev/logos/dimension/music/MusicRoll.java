@@ -97,6 +97,34 @@ public final class MusicRoll {
         return n;
     }
 
+    /**
+     * 用音域 low–high 的乐器放这卷纸带时，每个声部整体移几个半音（12 的倍数）：让能弹到的音最多，
+     * 整个声部一起移，旋律里的音程保持不变（不逐音折叠）。一样多时不移优先，再是移得少的、往上移的。
+     * 移完仍超出音域的个别音由播放时按八度折进来（声部本身比乐器音域还宽时才会有）。
+     */
+    public int[] octaveShifts(int low, int high) {
+        int[] shifts = new int[MAX_PARTS];
+        int[][] inRange = new int[MAX_PARTS][11];
+        boolean[] used = new boolean[MAX_PARTS];
+        for (Event e : events) {
+            if (e.type() != NOTE || e.part() < 0 || e.part() >= MAX_PARTS) continue;
+            used[e.part()] = true;
+            for (int k = -5; k <= 5; k++) {
+                int p = e.pitch() + 12 * k;
+                if (p >= low && p <= high) inRange[e.part()][k + 5]++;
+            }
+        }
+        for (int part = 0; part < MAX_PARTS; part++) {
+            if (!used[part]) continue;
+            int best = 0;
+            for (int k : new int[]{1, -1, 2, -2, 3, -3, 4, -4, 5, -5}) {
+                if (inRange[part][k + 5] > inRange[part][best + 5]) best = k;
+            }
+            shifts[part] = 12 * best;
+        }
+        return shifts;
+    }
+
     /** 最后一个音结束（或最后一个踏板事件）的时刻。 */
     public int durationMs() {
         int end = 0;

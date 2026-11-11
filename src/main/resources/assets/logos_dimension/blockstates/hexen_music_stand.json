@@ -12,6 +12,15 @@
     "facing=north,holds=trumpet": {
       "model": "logos_dimension:block/hexen_music_stand_trumpet"
     },
+    "facing=north,holds=viola": {
+      "model": "logos_dimension:block/hexen_music_stand_viola"
+    },
+    "facing=north,holds=oboe": {
+      "model": "logos_dimension:block/hexen_music_stand_oboe"
+    },
+    "facing=north,holds=bassoon": {
+      "model": "logos_dimension:block/hexen_music_stand_bassoon"
+    },
     "facing=east,holds=none": {
       "model": "logos_dimension:block/hexen_music_stand_none",
       "y": 90
@@ -26,6 +35,18 @@
     },
     "facing=east,holds=trumpet": {
       "model": "logos_dimension:block/hexen_music_stand_trumpet",
+      "y": 90
+    },
+    "facing=east,holds=viola": {
+      "model": "logos_dimension:block/hexen_music_stand_viola",
+      "y": 90
+    },
+    "facing=east,holds=oboe": {
+      "model": "logos_dimension:block/hexen_music_stand_oboe",
+      "y": 90
+    },
+    "facing=east,holds=bassoon": {
+      "model": "logos_dimension:block/hexen_music_stand_bassoon",
       "y": 90
     },
     "facing=south,holds=none": {
@@ -44,6 +65,18 @@
       "model": "logos_dimension:block/hexen_music_stand_trumpet",
       "y": 180
     },
+    "facing=south,holds=viola": {
+      "model": "logos_dimension:block/hexen_music_stand_viola",
+      "y": 180
+    },
+    "facing=south,holds=oboe": {
+      "model": "logos_dimension:block/hexen_music_stand_oboe",
+      "y": 180
+    },
+    "facing=south,holds=bassoon": {
+      "model": "logos_dimension:block/hexen_music_stand_bassoon",
+      "y": 180
+    },
     "facing=west,holds=none": {
       "model": "logos_dimension:block/hexen_music_stand_none",
       "y": 270
@@ -58,6 +91,18 @@
     },
     "facing=west,holds=trumpet": {
       "model": "logos_dimension:block/hexen_music_stand_trumpet",
+      "y": 270
+    },
+    "facing=west,holds=viola": {
+      "model": "logos_dimension:block/hexen_music_stand_viola",
+      "y": 270
+    },
+    "facing=west,holds=oboe": {
+      "model": "logos_dimension:block/hexen_music_stand_oboe",
+      "y": 270
+    },
+    "facing=west,holds=bassoon": {
+      "model": "logos_dimension:block/hexen_music_stand_bassoon",
       "y": 270
     }
   }

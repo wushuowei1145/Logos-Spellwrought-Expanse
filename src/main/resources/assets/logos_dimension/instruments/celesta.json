@@ -1,4 +1,6 @@
 {
+ "format": 1,
+ "quality": "synth",
  "source": "synthesized by tools/instrument_samples.py",
  "range": 24,
  "zones": [
@@ -9,9 +11,9 @@
    "hi": 61,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.871,
+   "gain": 0.2733,
    "curve": 1.6,
-   "frames": 159424,
+   "frames": 158760,
    "release": 0.3
   },
   {
@@ -21,9 +23,9 @@
    "hi": 64,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.8788,
+   "gain": 0.2317,
    "curve": 1.6,
-   "frames": 154304,
+   "frames": 153798,
    "release": 0.3
   },
   {
@@ -33,9 +35,9 @@
    "hi": 67,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.8861,
+   "gain": 0.3114,
    "curve": 1.6,
-   "frames": 149184,
+   "frames": 148837,
    "release": 0.3
   },
   {
@@ -45,9 +47,9 @@
    "hi": 70,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.8916,
+   "gain": 0.3146,
    "curve": 1.6,
-   "frames": 144064,
+   "frames": 143876,
    "release": 0.3
   },
   {
@@ -57,9 +59,9 @@
    "hi": 73,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.8947,
+   "gain": 0.2381,
    "curve": 1.6,
-   "frames": 139072,
+   "frames": 138915,
    "release": 0.3
   },
   {
@@ -69,9 +71,9 @@
    "hi": 76,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.9,
+   "gain": 0.3433,
    "curve": 1.6,
-   "frames": 134848,
+   "frames": 133953,
    "release": 0.3
   },
   {
@@ -81,9 +83,9 @@
    "hi": 79,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.9013,
+   "gain": 0.2633,
    "curve": 1.6,
-   "frames": 129728,
+   "frames": 128992,
    "release": 0.3
   },
   {
@@ -93,9 +95,9 @@
    "hi": 82,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.8892,
+   "gain": 0.4087,
    "curve": 1.6,
-   "frames": 124608,
+   "frames": 124031,
    "release": 0.3
   },
   {
@@ -105,9 +107,9 @@
    "hi": 85,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.8828,
+   "gain": 0.2728,
    "curve": 1.6,
-   "frames": 119488,
+   "frames": 119070,
    "release": 0.3
   },
   {
@@ -117,9 +119,9 @@
    "hi": 88,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.8639,
+   "gain": 0.2609,
    "curve": 1.6,
-   "frames": 114496,
+   "frames": 114108,
    "release": 0.3
   },
   {
@@ -129,9 +131,9 @@
    "hi": 91,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.8395,
+   "gain": 0.2914,
    "curve": 1.6,
-   "frames": 109248,
+   "frames": 109147,
    "release": 0.3
   },
   {
@@ -141,9 +143,9 @@
    "hi": 94,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.8129,
+   "gain": 0.1991,
    "curve": 1.6,
-   "frames": 105152,
+   "frames": 104186,
    "release": 0.3
   },
   {
@@ -153,9 +155,9 @@
    "hi": 97,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.7953,
+   "gain": 0.3252,
    "curve": 1.6,
-   "frames": 100032,
+   "frames": 99225,
    "release": 0.3
   },
   {
@@ -165,9 +167,9 @@
    "hi": 100,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.7823,
+   "gain": 0.1745,
    "curve": 1.6,
-   "frames": 94912,
+   "frames": 94263,
    "release": 0.3
   },
   {
@@ -177,9 +179,9 @@
    "hi": 103,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.7781,
+   "gain": 0.1797,
    "curve": 1.6,
-   "frames": 89920,
+   "frames": 89302,
    "release": 0.3
   },
   {
@@ -189,9 +191,9 @@
    "hi": 106,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.7781,
+   "gain": 0.1812,
    "curve": 1.6,
-   "frames": 84672,
+   "frames": 84341,
    "release": 0.3
   },
   {
@@ -201,9 +203,9 @@
    "hi": 108,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.7858,
+   "gain": 0.2473,
    "curve": 1.6,
-   "frames": 79552,
+   "frames": 79380,
    "release": 0.3
   }
  ]

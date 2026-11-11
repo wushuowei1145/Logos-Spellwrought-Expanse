@@ -1,0 +1,264 @@
+{
+ "format": 1,
+ "quality": "synth",
+ "source": "synthesized by tools/instrument_samples.py",
+ "range": 32,
+ "zones": [
+  {
+   "file": "instrument/cello/s36",
+   "key": 35.892,
+   "lo": 36,
+   "hi": 37,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.4783,
+   "curve": 1.4,
+   "frames": 59535,
+   "release": 0.25,
+   "loop": [
+    6615,
+    59535
+   ]
+  },
+  {
+   "file": "instrument/cello/s39",
+   "key": 38.937,
+   "lo": 38,
+   "hi": 40,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3901,
+   "curve": 1.4,
+   "frames": 59535,
+   "release": 0.25,
+   "loop": [
+    6615,
+    59535
+   ]
+  },
+  {
+   "file": "instrument/cello/s42",
+   "key": 42.0,
+   "lo": 41,
+   "hi": 43,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3994,
+   "curve": 1.4,
+   "frames": 59535,
+   "release": 0.25,
+   "loop": [
+    6615,
+    59535
+   ]
+  },
+  {
+   "file": "instrument/cello/s45",
+   "key": 45.0,
+   "lo": 44,
+   "hi": 46,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.4067,
+   "curve": 1.4,
+   "frames": 59535,
+   "release": 0.25,
+   "loop": [
+    6615,
+    59535
+   ]
+  },
+  {
+   "file": "instrument/cello/s48",
+   "key": 48.003,
+   "lo": 47,
+   "hi": 49,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.446,
+   "curve": 1.4,
+   "frames": 59535,
+   "release": 0.25,
+   "loop": [
+    6615,
+    59535
+   ]
+  },
+  {
+   "file": "instrument/cello/s51",
+   "key": 51.03,
+   "lo": 50,
+   "hi": 52,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3595,
+   "curve": 1.4,
+   "frames": 59535,
+   "release": 0.25,
+   "loop": [
+    6615,
+    59535
+   ]
+  },
+  {
+   "file": "instrument/cello/s54",
+   "key": 54.0,
+   "lo": 53,
+   "hi": 55,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3489,
+   "curve": 1.4,
+   "frames": 59535,
+   "release": 0.25,
+   "loop": [
+    6615,
+    59535
+   ]
+  },
+  {
+   "file": "instrument/cello/s57",
+   "key": 57.0,
+   "lo": 56,
+   "hi": 58,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.4241,
+   "curve": 1.4,
+   "frames": 59535,
+   "release": 0.25,
+   "loop": [
+    6615,
+    59535
+   ]
+  },
+  {
+   "file": "instrument/cello/s60",
+   "key": 60.003,
+   "lo": 59,
+   "hi": 61,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3958,
+   "curve": 1.4,
+   "frames": 59535,
+   "release": 0.25,
+   "loop": [
+    6615,
+    59535
+   ]
+  },
+  {
+   "file": "instrument/cello/s63",
+   "key": 62.984,
+   "lo": 62,
+   "hi": 64,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.4011,
+   "curve": 1.4,
+   "frames": 59535,
+   "release": 0.25,
+   "loop": [
+    6615,
+    59535
+   ]
+  },
+  {
+   "file": "instrument/cello/s66",
+   "key": 66.0,
+   "lo": 65,
+   "hi": 67,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3318,
+   "curve": 1.4,
+   "frames": 59535,
+   "release": 0.25,
+   "loop": [
+    6615,
+    59535
+   ]
+  },
+  {
+   "file": "instrument/cello/s69",
+   "key": 69.0,
+   "lo": 68,
+   "hi": 70,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3845,
+   "curve": 1.4,
+   "frames": 59535,
+   "release": 0.25,
+   "loop": [
+    6615,
+    59535
+   ]
+  },
+  {
+   "file": "instrument/cello/s72",
+   "key": 72.003,
+   "lo": 71,
+   "hi": 73,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.307,
+   "curve": 1.4,
+   "frames": 59535,
+   "release": 0.25,
+   "loop": [
+    6615,
+    59535
+   ]
+  },
+  {
+   "file": "instrument/cello/s75",
+   "key": 75.007,
+   "lo": 74,
+   "hi": 76,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3596,
+   "curve": 1.4,
+   "frames": 59535,
+   "release": 0.25,
+   "loop": [
+    6615,
+    59535
+   ]
+  },
+  {
+   "file": "instrument/cello/s78",
+   "key": 78.0,
+   "lo": 77,
+   "hi": 79,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2747,
+   "curve": 1.4,
+   "frames": 59535,
+   "release": 0.25,
+   "loop": [
+    6615,
+    59535
+   ]
+  },
+  {
+   "file": "instrument/cello/s81",
+   "key": 81.0,
+   "lo": 80,
+   "hi": 81,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3527,
+   "curve": 1.4,
+   "frames": 59535,
+   "release": 0.25,
+   "loop": [
+    6615,
+    59535
+   ]
+  }
+ ]
+}

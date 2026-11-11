@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """
-魔女之森乐器的真实采样：从公开采样库（钉在固定提交上）下载需要的文件，做成游戏用的单声道 ogg，
-并写出每件乐器的采样表 assets/logos_dimension/instruments/<乐器>.json（{@code SampleMap} 读它）。
+魔女之森乐器的录音采样（「音乐厅音源」资源包，resourcepacks/concert_hall）：从公开采样库（钉在固定提交上）
+下载需要的文件，做成游戏用的单声道 ogg，并写出每件乐器的采样表 assets/logos_dimension/instruments/<乐器>.json
+（{@code SampleMap} 读它）。资源包里的表覆盖模组本体里合成的那一张（tools/instrument_samples.py 生成）；
+不装资源包时用合成音源。
 
 来源与许可（另见 docs/INSTRUMENT_SAMPLES.md、CREDITS.md）：
 - 钢琴：Salamander Grand Piano V3（Alexander Holm，CC BY 3.0），sfzinstruments 的 FLAC 版，音准用 Markus Fiedler 的重新调律值
 - 竖琴、钟琴、管钟、大键琴：Versilian Community Sample Library（VCSL，CC0）
 - 小提琴、长笛、小号：VS Chamber Orchestra: Community Edition（VSCO 2 CE，CC0）
-两个库都没有钢片琴，钢片琴仍由 tools/instrument_samples.py 合成；管风琴仍在客户端按音栓现场合成。
+两个库都没有钢片琴，资源包里就没有钢片琴（用本体合成的）；管风琴在客户端按音栓现场合成，也不在资源包里。
 
 每个采样的处理：
   解码 → 混成单声道 → soxr 重采样到 44.1 kHz → 去直流 → 按谐波测音高（定八度、量出音分偏差）→
@@ -41,7 +43,9 @@ import numpy as np
 from scipy import signal
 
 ROOT = Path(__file__).resolve().parent.parent
-ASSETS = ROOT / "src/main/resources/assets/logos_dimension"
+PACK = ROOT / "resourcepacks/concert_hall"
+ASSETS = PACK / "assets/logos_dimension"
+MAP_FORMAT = 1   # 采样表的格式版本（SampleMap.FORMAT）；改了表的结构就加一，旧资源包会被跳过、退回模组本体的合成音源
 SR = 44100
 NAMES = "C C# D D# E F F# G G# A A# B".split()
 FFMPEG = "ffmpeg"
@@ -166,6 +170,8 @@ class Spec:
     quality: float = 5.0           # libvorbis -q
     range: int = 32                # 方块乐器的可闻距离（格）
     keep_files: bool = False       # 文件已在资源里（合成的钢片琴）：只量响度、写采样表，不重新编码
+    trust_octave: bool = False     # 以实测的八度为准（备用乐器：还没核对过各文件夹的八度写法）
+    auto_range: bool = False       # 音域按采样实际音高定（备用乐器）
     note: str = ""
 
 
@@ -245,10 +251,6 @@ def harpsichord_releases(cache: Cache) -> dict[int, str]:
     return out
 
 
-def celesta_sources(cache: Cache) -> list[Src]:
-    return [Src(f"instrument/celesta/s{m}.ogg", m, 0) for m in range(60, 109, 3)]
-
-
 def violin_sources(cache: Cache) -> list[Src]:
     out = []
     for p in files_in(cache, "vsco", "Strings/Solo Violin/Arco Vib"):
@@ -276,6 +278,61 @@ def trumpet_sources(cache: Cache) -> list[Src]:
     return out
 
 
+def notes_in(cache: Cache, repo: str, folder: str, regex: str, layers: dict[str, int]) -> list[Src]:
+    """文件夹里按正则挑采样：第 1 组是文件名里的音名，第 2 组是力度记号（映射到 Spec.layers 的下标）；同一音同一层只取第一个。"""
+    out, seen = [], set()
+    for p in sorted(files_in(cache, repo, folder)):
+        m = re.search(regex, p.rsplit("/", 1)[1])
+        if not m or m.group(2) not in layers:
+            continue
+        k = (midi_of(m.group(1)), layers[m.group(2)])
+        if k not in seen:
+            seen.add(k)
+            out.append(Src(p, *k))
+    return out
+
+
+def viola_sources(cache: Cache) -> list[Src]:
+    return notes_in(cache, "vsco", "Strings/Viola Section/susvib", r"ViolaEns_susvib_([A-G]#?\d)_v(\d)_1\.wav$", {"1": 0, "2": 1})
+
+
+def cello_sources(cache: Cache) -> list[Src]:
+    return notes_in(cache, "vsco", "Strings/Cello Section/susvib", r"susvib_([A-G]#?\d)_v(\d)_1\.wav$", {"1": 0, "3": 1})
+
+
+def double_bass_sources(cache: Cache) -> list[Src]:
+    return notes_in(cache, "vsco", "Strings/Solo Contrabass/SusVib", r"BKCtbss_SusVib_([A-G]#?\d)_v(\d)_rr1\.wav$", {"1": 0, "3": 1})
+
+
+def oboe_sources(cache: Cache) -> list[Src]:
+    return notes_in(cache, "vsco", "Woodwinds/Oboe/Vib", r"Oboe_Vib_([A-G]#?\d)_v(\d)_Main\.wav$", {"1": 0, "3": 1})
+
+
+def bassoon_sources(cache: Cache) -> list[Src]:
+    return notes_in(cache, "vsco", "Woodwinds/Bassoon/sus", r"PSBassoon_([A-G]#?\d)_v(\d)_1\.wav$", {"1": 0, "2": 1})
+
+
+# 定音鼓：VSCO 2 CE 的五面鼓（Timpani1–5），文件名不写音名，音高按它的 SFZ：F#2 A#2 C#3 E3 F#3
+TIMPANI_KEYS = {1: 42, 2: 46, 3: 49, 4: 52, 5: 54}
+
+
+def timpani_sources(cache: Cache) -> list[Src]:
+    """v1 / v3 / v4 三层；第一面鼓没有录 v4，最强一层用它的 v3（放大到那一层的音量）。"""
+    out, have = [], set()
+    for p in sorted(files_in(cache, "vsco", "Percussion/Timpani")):
+        m = re.search(r"Timpani(\d)_Hit_v(\d)_rr1_Sum\.wav$", p)
+        if not m or m.group(2) not in ("1", "3", "4"):
+            continue
+        drum, layer = int(m.group(1)), {"1": 0, "3": 1, "4": 2}[m.group(2)]
+        out.append(Src(p, TIMPANI_KEYS[drum], layer))
+        have.add((drum, layer))
+    for drum, key in TIMPANI_KEYS.items():
+        if (drum, 2) not in have:
+            mid = next(src for src in out if src.label == key and src.layer == 1)
+            out.append(Src(mid.path, key, 2))
+    return out
+
+
 SPECS: dict[str, Spec] = {
     "grand_piano": Spec(
         "grand_piano", "salamander", 21, 108, [(1, 36), (37, 56), (57, 80), (81, 104), (105, 127)], piano_sources,
@@ -299,10 +356,6 @@ SPECS: dict[str, Spec] = {
         max_seconds=lambda m: 4.5 if m < 53 else 3.0 if m < 72 else 2.5, release=lambda m: 0.08, releases=harpsichord_releases,
         release_level=0.0, level=-2.0, velocity=False, range=28,
         note="Harpsichord, Unk（Harpsi4），每个半音一个、带松键声；文件名比实际发声低一个八度"),
-    "celesta": Spec(
-        "celesta", "local", 60, 108, [(1, 127)], celesta_sources, pitch="label", keep_files=True,
-        release=lambda m: 0.3, level=-4.0, curve=1.6, range=24,
-        note="两个采样库都没有钢片琴：仍用 tools/instrument_samples.py 合成的采样，这里只量响度、写采样表"),
     "violin": Spec(
         "violin", "vsco", 55, 100, [(1, 79), (80, 127)], violin_sources, sustain=True,
         max_seconds=lambda m: 7.0, release=lambda m: 0.2, level=-1.0,
@@ -315,6 +368,32 @@ SPECS: dict[str, Spec] = {
         "trumpet", "vsco", 54, 84, [(1, 84), (85, 127)], trumpet_sources, shift=12, sustain=True,
         max_seconds=lambda m: 7.0, release=lambda m: 0.12, level=0.0,
         note="Trumpet sus（直音长音），弱 / 强两层，文件名比实际发声低一个八度"),
+    # 第六轮：中提琴、大提琴、低音提琴、双簧管、巴松管、定音鼓（都来自 VSCO 2 CE）。八度按它的 SFZ：
+    # 弦乐与木管的文件名都比实际发声低一个八度（shift 12），只量音分；音域、松键、电平与模组本体的合成音源一致
+    "viola": Spec(
+        "viola", "vsco", 48, 88, [(1, 62), (63, 127)], viola_sources, shift=12, sustain=True,
+        max_seconds=lambda m: 7.0, release=lambda m: 0.2, level=-1.0,
+        note="Viola Section susvib（中提琴组，揉弦长弓），v1 / v2 两层，文件名比实际发声低一个八度"),
+    "cello": Spec(
+        "cello", "vsco", 36, 81, [(1, 79), (80, 127)], cello_sources, shift=12, sustain=True,
+        max_seconds=lambda m: 7.0, release=lambda m: 0.25, level=0.0,
+        note="Cello Section susvib（大提琴组，揉弦长弓），v1 / v3 两层，文件名比实际发声低一个八度"),
+    "double_bass": Spec(
+        "double_bass", "vsco", 28, 62, [(1, 79), (80, 127)], double_bass_sources, shift=12, sustain=True,
+        max_seconds=lambda m: 7.0, release=lambda m: 0.3, level=0.0,
+        note="Solo Contrabass SusVib（独奏低音提琴，揉弦长弓），v1 / v3 两层，文件名比实际发声低一个八度"),
+    "oboe": Spec(
+        "oboe", "vsco", 58, 92, [(1, 84), (85, 127)], oboe_sources, shift=12, sustain=True,
+        max_seconds=lambda m: 7.0, release=lambda m: 0.12, level=-2.0, curve=1.2,
+        note="Oboe Vib（带揉音的长音），v1 / v3 两层，文件名比实际发声低一个八度"),
+    "bassoon": Spec(
+        "bassoon", "vsco", 34, 76, [(1, 84), (85, 127)], bassoon_sources, shift=12, sustain=True,
+        max_seconds=lambda m: 7.0, release=lambda m: 0.15, level=-1.0, curve=1.2,
+        note="Bassoon sus（长音），v1 / v2 两层，文件名比实际发声低一个八度"),
+    "timpani": Spec(
+        "timpani", "vsco", 38, 57, [(1, 56), (57, 96), (97, 127)], timpani_sources, pitch="label",
+        max_seconds=lambda m: 5.0, level=-2.0, range=48,
+        note="Timpani Hit（五面鼓），v1 / v3 / v4 三层；音高按 VSCO 的 SFZ（F#2 A#2 C#3 E3 F#3）"),
 }
 
 
@@ -621,6 +700,8 @@ def process(spec: Spec, cache: Cache, src: Src, log) -> Sample:
             log(f"    ! {src.path}: retuned key {key:.2f} but measured {measured:.2f}; keeping the retuning (bass)")
     elif spec.pitch == "label":
         key = float(expected)
+    elif spec.trust_octave:
+        key = measured
     else:
         key = measured - (octave_note - expected)
     if spec.keep_files:
@@ -764,6 +845,10 @@ def build(spec: Spec, cache: Cache, write: bool, log) -> list[Sample]:
     samples = []
     for src in sorted(srcs, key=lambda s: (s.layer, s.label)):
         samples.append(process(spec, cache, src, log))
+    if spec.auto_range:
+        spec.low = round(min(s.key for s in samples)) - 2
+        spec.high = round(max(s.key for s in samples)) + 3
+        log(f"   range {name_of(spec.low)}-{name_of(spec.high)}")
     balance(spec, samples, log)
     zones(spec, samples)
     used = [s for s in samples if s.hi >= 0]
@@ -810,6 +895,13 @@ def build(spec: Spec, cache: Cache, write: bool, log) -> list[Sample]:
     return used
 
 
+def write_map_json(path: Path, source: str, attenuation: int, quality: str, zones: list[dict]) -> None:
+    """采样表：format 是格式版本，quality 是 recorded（资源包的录音）或 synth（模组本体合成的）。"""
+    data = {"format": MAP_FORMAT, "quality": quality, "source": source, "range": attenuation, "zones": zones}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
+
+
 def write_map(spec: Spec, used: list[Sample]) -> None:
     zs = []
     for s in sorted(used, key=lambda s: (s.src.layer, s.key)):
@@ -824,10 +916,7 @@ def write_map(spec: Spec, used: list[Sample]) -> None:
         zs.append(z)
     repo = REPOS[spec.repo]
     source = f"{repo.title} ({repo.license}) {repo.slug}@{repo.commit[:12]}" if repo.slug else repo.title
-    data = {"source": source, "range": spec.range, "zones": zs}
-    path = ASSETS / "instruments" / f"{spec.kind}.json"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
+    write_map_json(ASSETS / "instruments" / f"{spec.kind}.json", source, spec.range, "recorded", zs)
 
 
 def pick(zones: list[dict], pitch: int, velocity: int) -> dict:
@@ -914,6 +1003,68 @@ def demo(spec: Spec, out: Path) -> None:
     encode(mix, out / f"demo_{spec.kind}.ogg", 6)
 
 
+# ---------------------------------------------------------------- 以后备用的乐器（--reserve：只做出来量体积、渲染试听，不写进模组）
+
+
+def pattern(repo: str, folder: str, regex: str, layers: dict, label: int | None = None):
+    """文件夹里按正则挑采样：note 组是音名（没有时用 label，无音高的打击乐），dyn 组映射到力度层；同一音同一层只取第一个。"""
+    def sources(cache: Cache) -> list[Src]:
+        out, seen = [], set()
+        for path in sorted(files_in(cache, repo, folder)):
+            m = re.search(regex, path.rsplit("/", 1)[1])
+            if not m or m.group("dyn") not in layers:
+                continue
+            note = midi_of(m.group("note")) if "note" in m.groupdict() and m.group("note") else label
+            k = (note, layers[m.group("dyn")], m.groupdict().get("drum"))
+            if k in seen:
+                continue
+            seen.add(k)
+            out.append(Src(path, note, layers[m.group("dyn")]))
+        return out
+    return sources
+
+
+N = r"(?P<note>[A-G]#?-?\d)"
+
+
+def sustained(kind: str, folder: str, regex: str, layers: dict, splits: list, **kw) -> Spec:
+    return Spec(kind, "vsco", 0, 0, splits, pattern("vsco", folder, regex, layers), sustain=True, trust_octave=True,
+                auto_range=True, max_seconds=lambda m: 7.0, release=lambda m: 0.18, **kw)
+
+
+def struck(kind: str, repo: str, folder: str, regex: str, layers: dict, splits: list, seconds: float, label: int | None = None,
+           **kw) -> Spec:
+    pitched = label is None
+    return Spec(kind, repo, 60 if not pitched else 0, 60 if not pitched else 0, splits, pattern(repo, folder, regex, layers, label),
+                pitch="harmonic" if pitched else "label", trust_octave=pitched, auto_range=pitched,
+                max_seconds=lambda m: seconds, **kw)
+
+
+TWO = [(1, 84), (85, 127)]
+THREE = [(1, 56), (57, 96), (97, 127)]
+RESERVES: dict[str, Spec] = {
+    "piccolo": sustained("piccolo", "Woodwinds/Piccolo/Sus", rf"piccolo_{N}_sustain(?P<dyn>1)\.wav$", {"1": 0}, [(1, 127)], curve=1.2),
+    "clarinet": sustained("clarinet", "Woodwinds/Clarinet/susLong", rf"DCClar_susLong_{N}_v(?P<dyn>\d)_rr1_sum\.wav$", {"1": 0, "2": 1, "3": 2}, THREE),
+    "french_horn": sustained("french_horn", "Brass/F Horn/sus", rf"MOHorn_sus_{N}_v(?P<dyn>\d)_1\.wav$", {"1": 0, "2": 1, "3": 2}, THREE),
+    "trombone": sustained("trombone", "Brass/Tenor Trombone/sus", rf"tenortbn_sus_{N}_v(?P<dyn>\d)_1\.wav$", {"1": 0, "2": 1, "3": 2}, THREE),
+    "tuba": sustained("tuba", "Brass/Tuba/sus", rf"Tuba3_sus_{N}_v(?P<dyn>\d)_rr1_Mid\.wav$", {"1": 0, "2": 1, "3": 2}, THREE),
+    # 打击乐（无音高的按 C4 一格）
+    "snare_drum": struck("snare_drum", "vcsl", "Membranophones/Struck Membranophones/Snare Drum, Modern 1",
+                         r"Snare2_HitSN_v(?P<dyn>\d)_rr1_Mid\.wav$", {"3": 0, "6": 1, "9": 2}, THREE, 1.5, label=60),
+    "bass_drum": struck("bass_drum", "vcsl", "Membranophones/Struck Membranophones/Bass Drum 2",
+                        r"bassdrum_hit_(?P<dyn>pp|mp|mf|ff)1?\.wav$", {"pp": 0, "mp": 1, "mf": 2, "ff": 3},
+                        [(1, 40), (41, 72), (73, 104), (105, 127)], 4.0, label=60),
+    "clash_cymbals": struck("clash_cymbals", "vcsl", "Idiophones/Struck Idiophones/Clash Cymbals 1",
+                            r"cymbal_crash1_(?P<dyn>mp|mf|ff)\d\.wav$", {"mp": 0, "mf": 1, "ff": 2}, THREE, 6.0, label=60),
+    "suspended_cymbal": struck("suspended_cymbal", "vcsl", "Idiophones/Struck Idiophones/Suspended Cymbal 1",
+                               r"susCymb1_hit_(?P<dyn>pp|mp|f|fff)1\.wav$", {"pp": 0, "mp": 1, "f": 2, "fff": 3},
+                               [(1, 40), (41, 72), (73, 104), (105, 127)], 6.0, label=60),
+    "triangle": struck("triangle", "vcsl", "Idiophones/Struck Idiophones/Triangles", r"Triangle1_Hit_v(?P<dyn>\d)_rr1_Mid\.wav$",
+                       {"1": 0, "2": 1}, TWO, 4.0, label=60),
+    # 越南筝（Đàn tranh）：两个库里唯一的东亚弹拨乐器，可做筝 / 古筝的底子
+    "dan_tranh": struck("dan_tranh", "vcsl", "Chordophones/Zithers/Dan Tranh/Normal", rf"^{N}_(?P<dyn>mf|ff)_1\.wav$",
+                        {"mf": 0, "ff": 1}, TWO, 5.0),
+}
 def main() -> None:
     global FFMPEG
     ap = argparse.ArgumentParser()
@@ -922,9 +1073,26 @@ def main() -> None:
     ap.add_argument("--ffmpeg", default="ffmpeg")
     ap.add_argument("--report", action="store_true")
     ap.add_argument("--demo", type=Path)
+    ap.add_argument("--reserve", type=Path, help="把以后备用的乐器做到这个目录（不写进模组），列出体积并渲染试听")
     args = ap.parse_args()
     FFMPEG = args.ffmpeg
     cache = Cache(args.cache)
+    if args.reserve:
+        global ASSETS
+        ASSETS = args.reserve / "assets/logos_dimension"
+        rows = []
+        for kind in args.only or list(RESERVES):
+            spec = RESERVES[kind]
+            used = build(spec, cache, True, lambda m: print(m, flush=True))
+            demo(spec, args.reserve / "demo")
+            size = sum(f.stat().st_size for f in (ASSETS / "sounds/instrument" / kind).glob("*.ogg"))
+            seconds = sum(len(s.audio) for s in used) / SR
+            rows.append((kind, len(used), len(spec.layers), name_of(spec.low), name_of(spec.high), seconds, size))
+        print("\nkind               zones layers range        seconds   size")
+        for r in rows:
+            print(f"{r[0]:18s} {r[1]:5d} {r[2]:6d} {r[3]:>4s}-{r[4]:<5s} {r[5]:9.0f} {r[6] / 1e6:6.2f} MB")
+        print(f"total {sum(r[6] for r in rows) / 1e6:.1f} MB, {sum(r[5] for r in rows):.0f} s of audio")
+        return
     kinds = args.only or list(SPECS)
 
     def log(msg: str) -> None:

@@ -32,7 +32,8 @@ import org.jspecify.annotations.Nullable;
 public class MusicStandBlock extends InstrumentBlock {
     public enum Holds implements StringRepresentable {
         NONE("none", null), VIOLIN("violin", InstrumentKind.VIOLIN), FLUTE("flute", InstrumentKind.FLUTE),
-        TRUMPET("trumpet", InstrumentKind.TRUMPET);
+        TRUMPET("trumpet", InstrumentKind.TRUMPET), VIOLA("viola", InstrumentKind.VIOLA), OBOE("oboe", InstrumentKind.OBOE),
+        BASSOON("bassoon", InstrumentKind.BASSOON);
 
         private final String name;
         private final @Nullable InstrumentKind kind;

@@ -35,6 +35,51 @@
         "class": "dev/logos/dimension/client/music/HandheldPoses",
         "field": "TRUMPET"
       }
+    },
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "LOGOS_DIMENSION_VIOLA",
+      "constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {
+        "class": "dev/logos/dimension/client/music/HandheldPoses",
+        "field": "VIOLA"
+      }
+    },
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "LOGOS_DIMENSION_OBOE",
+      "constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {
+        "class": "dev/logos/dimension/client/music/HandheldPoses",
+        "field": "OBOE"
+      }
+    },
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "LOGOS_DIMENSION_BASSOON",
+      "constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {
+        "class": "dev/logos/dimension/client/music/HandheldPoses",
+        "field": "BASSOON"
+      }
+    },
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "LOGOS_DIMENSION_CELLO",
+      "constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {
+        "class": "dev/logos/dimension/client/music/HandheldPoses",
+        "field": "CELLO"
+      }
+    },
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "LOGOS_DIMENSION_DOUBLE_BASS",
+      "constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {
+        "class": "dev/logos/dimension/client/music/HandheldPoses",
+        "field": "DOUBLE_BASS"
+      }
     }
   ]
 }

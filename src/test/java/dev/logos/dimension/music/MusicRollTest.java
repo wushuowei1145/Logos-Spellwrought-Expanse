@@ -92,4 +92,33 @@ class MusicRollTest {
         // 小提琴到 E7 为止：G7 往下挪一个八度
         assertEquals(91, InstrumentKind.VIOLIN.fold(103));
     }
+
+    /**
+     * #243：纸带按声部整体移八度、保留音程，不逐音折叠——钟琴放 C3 的大调音阶，七个音仍然一个比一个高
+     * （以前 C–F 被抬到 C6–F6、G–B 留在 G5–B5，fa→sol 往下跳了十度）。
+     */
+    @Test void wholePartsMoveByOctavesToFitTheInstrument() {
+        int[] scale = {48, 50, 52, 53, 55, 57, 59};
+        List<MusicRoll.Event> ev = new ArrayList<>();
+        for (int i = 0; i < scale.length; i++) ev.add(MusicRoll.Event.note(i * 250, 0, scale[i], 90, 240));
+        for (int i = 0; i < 4; i++) ev.add(MusicRoll.Event.note(i * 250, 1, 84 + i, 90, 240));
+        MusicRoll roll = new MusicRoll("音阶", "测试", 12000, 4, 4,
+            List.of(new MusicRoll.Part("一", 0), new MusicRoll.Part("二", 0)), ev);
+        InstrumentKind glock = InstrumentKind.GLOCKENSPIEL;
+        int[] shifts = roll.octaveShifts(glock.low(), glock.high());
+        assertEquals(36, shifts[0], "the C3 scale moves up three octaves as a whole");
+        assertEquals(0, shifts[1], "a part that already fits stays where it is");
+        int last = -1;
+        for (int p : scale) {
+            int sounding = glock.fold(p + shifts[0]);
+            assertEquals(p + 36, sounding, "no note is folded on its own");
+            assertTrue(sounding > last, "the scale keeps rising");
+            last = sounding;
+        }
+        // 声部比乐器音域还宽（定音鼓只有 D2–A3）：取能弹到的音最多的那一挪，一样多时挪得少的
+        List<MusicRoll.Event> wide = new ArrayList<>();
+        for (int p = 40; p <= 90; p++) wide.add(MusicRoll.Event.note((p - 40) * 100, 0, p, 90, 90));
+        MusicRoll w = new MusicRoll("宽", "测试", 12000, 4, 4, List.of(new MusicRoll.Part("一", 0)), wide);
+        assertEquals(-12, w.octaveShifts(InstrumentKind.TIMPANI.low(), InstrumentKind.TIMPANI.high())[0]);
+    }
 }
