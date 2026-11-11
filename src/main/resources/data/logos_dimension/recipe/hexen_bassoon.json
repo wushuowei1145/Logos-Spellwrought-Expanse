@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "  R",
+    "PIP",
+    "PP "
+  ],
+  "key": {
+    "R": "minecraft:sugar_cane",
+    "P": "minecraft:mangrove_planks",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "logos_dimension:hexen_bassoon",
+    "count": 1
+  }
+}

@@ -8,13 +8,24 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 
 /**
- * 一件乐器的采样表：assets/logos_dimension/instruments/&lt;乐器&gt;.json，由 tools/instrument_sources.py 生成。
+ * 一件乐器的采样表：assets/logos_dimension/instruments/&lt;乐器&gt;.json。模组本体里是合成音源
+ * （tools/instrument_samples.py），「音乐厅音源」资源包里同名的表换成录音（tools/instrument_sources.py）。
  * 每个区是一个采样文件，管一段音高、一段力度，记着它的实际音高（含音分）、增益、力度曲线；
  * 持续音（弓弦、管乐）另有循环点，大键琴另有松键声。来源与许可见 docs/INSTRUMENT_SAMPLES.md。
  *
+ * @param format 表的格式版本；比 {@link #FORMAT} 新的表读不懂，跳过它用下一层（通常是模组本体的合成音源）
+ * @param quality recorded（资源包的录音）或 synth（本体合成）
  * @param range 方块乐器的可闻距离（格）；手持乐器另按广播距离算
  */
-public record SampleMap(String source, int range, List<Zone> zones) {
+public record SampleMap(int format, String quality, String source, int range, List<Zone> zones) {
+    /** 这个版本的模组读得懂的采样表格式。 */
+    public static final int FORMAT = 1;
+
+    /** 是不是资源包里的录音音源。 */
+    public boolean recorded() {
+        return "recorded".equals(quality);
+    }
+
     /**
      * @param file 声音文件（sounds/ 下、不带 .ogg，例如 instrument/grand_piano/60_2）
      * @param key 采样的实际音高（MIDI，带小数的音分）
@@ -80,7 +91,9 @@ public record SampleMap(String source, int range, List<Zone> zones) {
                 z.has("releaseSound") ? z.get("releaseSound").getAsString() : null,
                 z.has("releaseGain") ? z.get("releaseGain").getAsFloat() : 0f));
         }
-        return new SampleMap(json.has("source") ? json.get("source").getAsString() : "",
+        return new SampleMap(json.has("format") ? json.get("format").getAsInt() : 1,
+            json.has("quality") ? json.get("quality").getAsString() : "synth",
+            json.has("source") ? json.get("source").getAsString() : "",
             json.has("range") ? json.get("range").getAsInt() : 32, List.copyOf(zones));
     }
 }

@@ -1,0 +1,92 @@
+{
+ "format": 1,
+ "quality": "synth",
+ "source": "synthesized by tools/instrument_samples.py",
+ "range": 48,
+ "zones": [
+  {
+   "file": "instrument/timpani/s38",
+   "key": 38.0,
+   "lo": 38,
+   "hi": 39,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.6124,
+   "curve": 1.4,
+   "frames": 198450,
+   "release": 0.0
+  },
+  {
+   "file": "instrument/timpani/s41",
+   "key": 41.0,
+   "lo": 40,
+   "hi": 42,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.4168,
+   "curve": 1.4,
+   "frames": 198450,
+   "release": 0.0
+  },
+  {
+   "file": "instrument/timpani/s44",
+   "key": 44.0,
+   "lo": 43,
+   "hi": 45,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.4243,
+   "curve": 1.4,
+   "frames": 198450,
+   "release": 0.0
+  },
+  {
+   "file": "instrument/timpani/s47",
+   "key": 47.0,
+   "lo": 46,
+   "hi": 48,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3799,
+   "curve": 1.4,
+   "frames": 198450,
+   "release": 0.0
+  },
+  {
+   "file": "instrument/timpani/s50",
+   "key": 50.0,
+   "lo": 49,
+   "hi": 51,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.4492,
+   "curve": 1.4,
+   "frames": 198450,
+   "release": 0.0
+  },
+  {
+   "file": "instrument/timpani/s53",
+   "key": 53.0,
+   "lo": 52,
+   "hi": 54,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3552,
+   "curve": 1.4,
+   "frames": 198450,
+   "release": 0.0
+  },
+  {
+   "file": "instrument/timpani/s56",
+   "key": 56.0,
+   "lo": 55,
+   "hi": 57,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.413,
+   "curve": 1.4,
+   "frames": 198450,
+   "release": 0.0
+  }
+ ]
+}

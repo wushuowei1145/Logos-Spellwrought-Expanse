@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " PS",
+    "PNP",
+    "SP "
+  ],
+  "key": {
+    "P": "minecraft:jungle_planks",
+    "S": "minecraft:string",
+    "N": "minecraft:note_block"
+  },
+  "result": {
+    "id": "logos_dimension:hexen_cello",
+    "count": 1
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "logos_dimension:block/hexen_timpani"
+    },
+    "facing=east": {
+      "model": "logos_dimension:block/hexen_timpani",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "logos_dimension:block/hexen_timpani",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "logos_dimension:block/hexen_timpani",
+      "y": 270
+    }
+  }
+}

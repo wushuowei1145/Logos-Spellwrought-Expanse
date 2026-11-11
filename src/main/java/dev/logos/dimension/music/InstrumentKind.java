@@ -28,7 +28,20 @@ public enum InstrumentKind {
     /** 长笛（手持）：C4–C7，带揉音的长音。 */
     FLUTE("flute", "hexen_flute", 60, 96, 40, true, true, false),
     /** 小号（手持，挂魔女之森王室旗）：F♯3–C6，直音，弱 / 强两层。 */
-    TRUMPET("trumpet", "hexen_trumpet", 54, 84, 56, true, true, false);
+    TRUMPET("trumpet", "hexen_trumpet", 54, 84, 56, true, true, false),
+    // 以下第三批，排在最后（网络包按序号传乐器种类，不能插在中间）
+    /** 中提琴（手持）：C3–E6，比小提琴大一圈、声音更暗更温暖。 */
+    VIOLA("viola", "hexen_viola", 48, 88, 40, true, true, false),
+    /** 大提琴（方块，坐着拉）：C2–A5。 */
+    CELLO("cello", "hexen_cello", 36, 81, 40, true, true, false),
+    /** 低音提琴（方块，坐在高凳上拉）：E1–D4。 */
+    DOUBLE_BASS("double_bass", "hexen_double_bass", 28, 62, 48, true, true, false),
+    /** 双簧管（手持）：B♭3–G♯6，带鼻音的清亮长音。 */
+    OBOE("oboe", "hexen_oboe", 58, 92, 40, true, true, false),
+    /** 巴松（大管，手持）：B♭1–E5，木管乐器里最低沉的。 */
+    BASSOON("bassoon", "hexen_bassoon", 34, 76, 40, true, true, false),
+    /** 定音鼓（方块）：D2–A3，铜鼓腔、皮槌，敲响后余音不止。 */
+    TIMPANI("timpani", "hexen_timpani", 38, 57, 64, false, true, false);
 
     private final String id;
     private final int low;
@@ -66,11 +79,16 @@ public enum InstrumentKind {
     /** 声音由客户端现场合成（只有管风琴），没有采样表。 */
     public boolean synthesized() { return this == PIPE_ORGAN; }
     /** 拿在手上演奏的乐器（物品），也能放在乐谱架上。 */
-    public boolean handheld() { return this == VIOLIN || this == FLUTE || this == TRUMPET; }
+    public boolean handheld() { return this == VIOLIN || this == FLUTE || this == TRUMPET || this == VIOLA || this == OBOE || this == BASSOON; }
+    /** 坐在乐器后面的凳子上演奏的方块乐器（大提琴、低音提琴）：长音循环，有坐姿和琴弓。 */
+    public boolean seated() { return this == CELLO || this == DOUBLE_BASS; }
     /** 乐器名字的翻译键：手持乐器是物品名，其余是方块名。 */
     public String nameKey() { return (handheld() ? "item.logos_dimension." : "block.logos_dimension.") + blockId; }
 
-    /** 超出音域的音按八度移进来。 */
+    /**
+     * 超出音域的音按八度移进来。只作最后的退路：纸带先整个声部移八度（{@link MusicRoll#octaveShifts}），
+     * 声部比乐器音域还宽时剩下的个别音才用它；编辑器里点音试听也用它。实时演奏不折叠，音域外的键不出声（#243）。
+     */
     public int fold(int pitch) {
         while (pitch < low) pitch += 12;
         while (pitch > high) pitch -= 12;

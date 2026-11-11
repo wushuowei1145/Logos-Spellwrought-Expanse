@@ -1,165 +1,215 @@
 {
- "source": "VS Chamber Orchestra: Community Edition (CC0 1.0) sgossner/VSCO-2-CE@440300901dfe",
+ "format": 1,
+ "quality": "synth",
+ "source": "synthesized by tools/instrument_samples.py",
  "range": 32,
  "zones": [
   {
-   "file": "instrument/flute/60_0",
-   "key": 59.958,
+   "file": "instrument/flute/s60",
+   "key": 60.003,
    "lo": 60,
    "hi": 61,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.2722,
+   "gain": 0.3324,
    "curve": 1.2,
-   "frames": 150355,
+   "frames": 56448,
    "release": 0.15,
    "loop": [
-    82026,
-    150355
+    3528,
+    56448
    ]
   },
   {
-   "file": "instrument/flute/64_0",
-   "key": 63.965,
+   "file": "instrument/flute/s63",
+   "key": 62.984,
    "lo": 62,
-   "hi": 66,
+   "hi": 64,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.2482,
+   "gain": 0.3201,
    "curve": 1.2,
-   "frames": 139670,
+   "frames": 56448,
    "release": 0.15,
    "loop": [
-    49392,
-    139670
+    3528,
+    56448
    ]
   },
   {
-   "file": "instrument/flute/69_0",
-   "key": 69.017,
-   "lo": 67,
+   "file": "instrument/flute/s66",
+   "key": 66.0,
+   "lo": 65,
+   "hi": 67,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3161,
+   "curve": 1.2,
+   "frames": 56448,
+   "release": 0.15,
+   "loop": [
+    3528,
+    56448
+   ]
+  },
+  {
+   "file": "instrument/flute/s69",
+   "key": 69.0,
+   "lo": 68,
    "hi": 70,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.354,
+   "gain": 0.3014,
    "curve": 1.2,
-   "frames": 132243,
+   "frames": 56448,
    "release": 0.15,
    "loop": [
-    79380,
-    132243
+    3528,
+    56448
    ]
   },
   {
-   "file": "instrument/flute/72_0",
-   "key": 72.014,
+   "file": "instrument/flute/s72",
+   "key": 72.003,
    "lo": 71,
-   "hi": 74,
+   "hi": 73,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.2806,
+   "gain": 0.2827,
    "curve": 1.2,
-   "frames": 111543,
+   "frames": 56448,
    "release": 0.15,
    "loop": [
-    56448,
-    111543
+    3528,
+    56448
    ]
   },
   {
-   "file": "instrument/flute/76_0",
-   "key": 75.992,
-   "lo": 75,
-   "hi": 78,
+   "file": "instrument/flute/s75",
+   "key": 75.007,
+   "lo": 74,
+   "hi": 76,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.2656,
+   "gain": 0.3067,
    "curve": 1.2,
-   "frames": 129694,
+   "frames": 56448,
    "release": 0.15,
    "loop": [
-    54684,
-    129694
+    3528,
+    56448
    ]
   },
   {
-   "file": "instrument/flute/81_0",
-   "key": 81.033,
-   "lo": 79,
+   "file": "instrument/flute/s78",
+   "key": 78.0,
+   "lo": 77,
+   "hi": 79,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2548,
+   "curve": 1.2,
+   "frames": 56448,
+   "release": 0.15,
+   "loop": [
+    3528,
+    56448
+   ]
+  },
+  {
+   "file": "instrument/flute/s81",
+   "key": 81.0,
+   "lo": 80,
    "hi": 82,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.3353,
+   "gain": 0.2841,
    "curve": 1.2,
-   "frames": 112059,
+   "frames": 56448,
    "release": 0.15,
    "loop": [
-    56448,
-    112059
+    3528,
+    56448
    ]
   },
   {
-   "file": "instrument/flute/84_0",
-   "key": 83.909,
+   "file": "instrument/flute/s84",
+   "key": 84.003,
    "lo": 83,
    "hi": 85,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.4028,
+   "gain": 0.2719,
    "curve": 1.2,
-   "frames": 111163,
+   "frames": 56448,
    "release": 0.15,
    "loop": [
-    58212,
-    111163
+    3528,
+    56448
    ]
   },
   {
-   "file": "instrument/flute/88_0",
-   "key": 88.031,
+   "file": "instrument/flute/s87",
+   "key": 86.995,
    "lo": 86,
-   "hi": 90,
+   "hi": 88,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.4419,
+   "gain": 0.2605,
    "curve": 1.2,
-   "frames": 126141,
+   "frames": 56448,
    "release": 0.15,
    "loop": [
-    29106,
-    126141
+    3528,
+    56448
    ]
   },
   {
-   "file": "instrument/flute/93_0",
-   "key": 92.916,
-   "lo": 91,
+   "file": "instrument/flute/s90",
+   "key": 90.0,
+   "lo": 89,
+   "hi": 91,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2061,
+   "curve": 1.2,
+   "frames": 56448,
+   "release": 0.15,
+   "loop": [
+    3528,
+    56448
+   ]
+  },
+  {
+   "file": "instrument/flute/s93",
+   "key": 93.0,
+   "lo": 92,
    "hi": 94,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.6074,
+   "gain": 0.1937,
    "curve": 1.2,
-   "frames": 183895,
+   "frames": 56448,
    "release": 0.15,
    "loop": [
-    119070,
-    183895
+    3528,
+    56448
    ]
   },
   {
-   "file": "instrument/flute/96_0",
-   "key": 96.016,
+   "file": "instrument/flute/s96",
+   "key": 96.003,
    "lo": 95,
    "hi": 96,
    "vlo": 1,
    "vhi": 127,
-   "gain": 0.4195,
+   "gain": 0.189,
    "curve": 1.2,
-   "frames": 166255,
+   "frames": 56448,
    "release": 0.15,
    "loop": [
-    27342,
-    166255
+    3528,
+    56448
    ]
   }
  ]

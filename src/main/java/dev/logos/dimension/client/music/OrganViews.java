@@ -170,6 +170,38 @@ public abstract class OrganViews implements UIScenario {
         }
     }
 
+    /**
+     * #243 之后的回归：换资源包、F3+T、换音频设备都会重启声音引擎（OpenAL 上下文换新）。以前管风琴自己留着旧上下文的缓冲，
+     * 重启前按过的键之后都不出声。这里按一个键、重启声音引擎、再按同一个键，核对它还在响。
+     */
+    @LDLRegisterClient(name = "organ_reload_ui", group = "organ", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class Reload extends OrganViews {
+        @Override
+        public void define(ScenarioBuilder s) {
+            stage(s, 0.0, 1.0, -3.0, 180f, 10f, false)
+                .openScreen("open the organ", ctx -> new InstrumentScreen(CONSOLE))
+                .waitUntil("the mix is ready", ctx -> OrganMixer.ready(clientConsole().effectiveStops()) != null)
+                .ticks(5)
+                .keyDown('Z')
+                .ticks(20)
+                .check("the key sounds before the reload", ctx -> VoiceBank.sounding(MusicClient.liveKey(CONSOLE)) >= 1)
+                .keyUp('Z')
+                .ticks(60)
+                .step("restart the sound engine", ctx -> {
+                    Minecraft.getInstance().setScreen(null);
+                    Minecraft.getInstance().getSoundManager().reload();
+                })
+                .ticks(40)
+                .openScreen("open the organ again", ctx -> new InstrumentScreen(CONSOLE))
+                .ticks(5)
+                .keyDown('Z')
+                .ticks(20)
+                .check("the same key still sounds after the sound engine restarted", ctx -> VoiceBank.sounding(MusicClient.liveKey(CONSOLE)) >= 1)
+                .keyUp('Z')
+                .teardown("close", ctx -> Minecraft.getInstance().setScreen(null));
+        }
+    }
+
     @LDLRegisterClient(name = "organ_play_ui", group = "organ", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
     public static class Play extends OrganViews {
         @Override

@@ -3,6 +3,7 @@ package dev.logos.dimension.client.music;
 import dev.logos.dimension.music.InstrumentKind;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
@@ -15,8 +16,8 @@ import org.jspecify.annotations.Nullable;
  * 姿势（{@link HandheldPoses}）让双臂伸向这里给的两个手位，乐器层按同一份摆放画乐器，手就总落在乐器上。
  */
 final class HeldRig {
-    /** 乐器（和小提琴的弓）从「居中的物品像素」到根坐标像素的变换，以及惯用手、非惯用手该到的位置。 */
-    record Place(Matrix4f instrument, @Nullable Matrix4f bow, Vector3f mainHand, Vector3f offHand) {}
+    /** 乐器（和弓）从「居中的物品像素」到根坐标像素的变换，以及惯用手、非惯用手该到的位置；坐着拉的乐器是方块，instrument 为 null。 */
+    record Place(@Nullable Matrix4f instrument, @Nullable Matrix4f bow, Vector3f mainHand, Vector3f offHand) {}
 
     private static final float DEG = (float) (Math.PI / 180);
     /** 弓的物品坐标到琴的物品坐标：弓的 X（弓毛一侧）朝琴背、Y（弓尖）沿琴的横向、Z 沿琴身。 */
@@ -33,10 +34,15 @@ final class HeldRig {
      */
     static Place place(InstrumentKind kind, HumanoidModel<?> model, boolean crouching, boolean ahead, boolean leftHanded, float t, float move) {
         boolean crouch = crouching && ahead;
+        Matrix4f body = frame(model.body, crouch ? 3.2f : 0, crouch ? 0.5f : model.body.xRot);
+        Matrix4f head = frame(model.head, crouch ? 4.2f : 0, model.head.xRot);
         return switch (kind) {
-            case VIOLIN -> violin(frame(model.body, crouch ? 3.2f : 0, crouch ? 0.5f : model.body.xRot), leftHanded, t, move);
-            case FLUTE -> flute(frame(model.head, crouch ? 4.2f : 0, model.head.xRot), leftHanded, t, move);
-            default -> trumpet(frame(model.head, crouch ? 4.2f : 0, model.head.xRot), leftHanded, t, move);
+            case VIOLIN -> bowedUnderChin(body, leftHanded, t, move, 0.65f, new Vector3f(2.5f, 0.5f, -4.2f));
+            case VIOLA -> bowedUnderChin(body, leftHanded, t, move, 0.75f, new Vector3f(2.8f, 0.9f, -4.3f));
+            case FLUTE -> flute(head, leftHanded, t, move);
+            case OBOE -> oboe(head, leftHanded, t, move);
+            case BASSOON -> bassoon(body, leftHanded, t, move);
+            default -> trumpet(head, leftHanded, t, move);
         };
     }
 
@@ -63,10 +69,11 @@ final class HeldRig {
         return frame.transformPosition(v);
     }
 
-    private static Place violin(Matrix4f body, boolean mirror, float t, float move) {
+    /** 小提琴、中提琴（中提琴大一圈，同一个模型放大）。 */
+    private static Place bowedUnderChin(Matrix4f body, boolean mirror, float t, float move, float scale, Vector3f chin) {
         // 琴身从下巴往前、往非惯用手一侧斜出 40°，琴头略低，琴面朝惯用手一侧翻 15°（迎着弓）；腮托那一端贴在下巴左下
         Matrix4f rot = new Matrix4f().rotateY(-40 * DEG).rotateX(10 * DEG).rotateX(-90 * DEG).rotateY(15 * DEG);
-        Matrix4f violin = local(new Vector3f(2.5f, 0.5f, -4.2f), rot, 0.65f, 8, 1, 9);
+        Matrix4f violin = local(chin, rot, scale, 8, 1, 9);
         // 弓毛搭在琴马和指板之间的弦上，弓杆横过琴身，弓根在惯用手一侧；停着时搭在靠弓尖的一段（手不挡琴），在弹时来回拉
         float along = 10.5f + 3.5f * move * (float) Math.sin(t * 0.3f);
         Vector3f contact = violin.transformPosition(new Vector3f(0, 5 - 8, 6.4f - 8));
@@ -84,6 +91,110 @@ final class HeldRig {
         return new Place(world(head, flute, mirror, FLIP_Z), null,
             point(head, flute, mirror, 11.5f, 5.3f, 8),     // 惯用手在笛尾那一段的下面
             point(head, flute, mirror, 6.5f, 5.3f, 8));     // 非惯用手靠近吹孔
+    }
+
+    /** 双簧管：哨片含在嘴里，管身朝前下方斜出（与身体约成 40°），两手一上一下扶着管身。 */
+    private static Place oboe(Matrix4f head, boolean mirror, float t, float move) {
+        float a = (50 + 1.5f * move * (float) Math.sin(t * 0.15f)) * DEG;
+        float sa = (float) Math.sin(a), ca = (float) Math.cos(a);
+        // 物品 +Y（哨片一头）朝后上、-Y（喇叭口）朝前下；按键那面（-Z）朝前上；X 朝身体右侧
+        Matrix4f rot = new Matrix4f(-1, 0, 0, 0, 0, -sa, ca, 0, 0, ca, sa, 0, 0, 0, 0, 1);
+        Matrix4f oboe = local(new Vector3f(0, -1.6f, -4.3f), rot, 0.72f, 8, 15.6f, 8);
+        return new Place(world(head, oboe, mirror, FLIP_X), null,
+            point(head, oboe, mirror, 8, 5, 10.8f),          // 惯用手在下半段
+            point(head, oboe, mirror, 8, 11, 10.8f));        // 非惯用手在上半段
+    }
+
+    /**
+     * 巴松管：斜挎在身前，管靴在惯用手一侧的胯前，管身离竖直 30°、喇叭口越过非惯用手一侧的肩膀；
+     * 嘴边那一段管身在脸的外侧，弯管从那里伸到嘴里（哨片尖 = tools/instrument_art.py 的 BASSOON_REED）。
+     */
+    private static Place bassoon(Matrix4f body, boolean mirror, float t, float move) {
+        float sway = 1.5f * DEG * move * (float) Math.sin(t * 0.12f);
+        Vector3f up = new Vector3f(0.5f, -0.866f, 0).rotateZ(sway).normalize();
+        Vector3f back = new Vector3f(0, 0, 1);
+        Vector3f side = new Vector3f(up).cross(back).normalize();
+        // 物品 X、Y、Z 依次落到 side、up（管身往喇叭口）、back（朝演奏者）
+        Matrix4f rot = new Matrix4f(side.x, side.y, side.z, 0, up.x, up.y, up.z, 0, back.x, back.y, back.z, 0, 0, 0, 0, 1);
+        Matrix4f bassoon = local(new Vector3f(0, -1.8f, -4.4f), rot, 0.9f, 12.33f, 12.1f, 12.5f);
+        return new Place(world(body, bassoon, mirror, FLIP_X), null,
+            point(body, bassoon, mirror, 9.4f, 0.5f, 10.6f),  // 惯用手从外侧托着管靴（托手架那里）
+            point(body, bassoon, mirror, 6.6f, 7.5f, 10.6f)); // 非惯用手在翼管靠里的一侧
+    }
+
+    /**
+     * 坐着（大提琴）或站着（低音提琴）拉的琴在朝北放置的方块模型里的摆放，与 tools/instrument_art.py 的 SEATED 是同一组数：
+     * 琴按竖直、正面朝北画在自己的坐标里（琴脚尖在原点，y 沿琴身向上，x 向东，z 朝琴背），先后仰 lean°（琴头朝演奏者）、
+     * 再向左倾 tilt°（琴头朝西），琴脚尖放在 endpin（方块像素）。contact 是弓毛压在弦上的点；左手沿指板与琴颈中间那条线
+     * （z = neckZ，y 在 neckLow–neckHigh）从琴枕往下，找第一个直臂够得着的位置。
+     */
+    private record Layout(Vector3f endpin, float lean, float tilt, Vector3f contact, float neckZ, float neckLow, float neckHigh, float bowScale) {}
+
+    private static final Layout CELLO = new Layout(new Vector3f(8.8f, 0, 2.1f), 25, 16, new Vector3f(0, 11.5f, -2.5f), -1.0f, 12.5f, 21.5f, 0.85f);
+    private static final Layout BASS = new Layout(new Vector3f(7, 0, 3.2f), 14, 10, new Vector3f(0, 13.6f, -3.4f), -1.5f, 15.0f, 26.5f, 0.8f);
+    /** 手臂从肩上的支点到手心（模型像素）：原版手臂长 12，手心在末端往上一点。 */
+    private static final float GRIP = 9;
+
+    /**
+     * 坐着（大提琴）或站着（低音提琴）演奏的方块乐器：乐器是方块模型、不跟着人动，这里只算琴弓和两只手。
+     * 坐标先按朝北放置的方块模型写，再换到玩家模型的根坐标：演奏者面朝北、站在 {@link #seatFeet} 处，
+     * 玩家模型整体缩小到 15/16，模型的 y 从脖子往下量（脚在 +24）。
+     * 原版手臂是直的：右手瞄准弓根该在的地方，手实际到哪弓根就在哪，弓总从琴弦上的 contact 那一点过；
+     * 左手按在指板上一臂远的位置。
+     */
+    static Place seated(InstrumentKind kind, HumanoidModel<?> model, float t, float move) {
+        Layout l = kind == InstrumentKind.DOUBLE_BASS ? BASS : CELLO;
+        Vector3f feet = seatFeet(kind);
+        Matrix3f r = new Matrix3f().rotationZYX(l.tilt() * DEG, 0, l.lean() * DEG);
+        Vector3f contact = toModel(onInstrument(l, r, l.contact()), feet);
+        Vector3f right = toModelDir(r.transform(new Vector3f(1, 0, 0)));   // 沿琴的横向朝演奏者右手边（弓根一侧）
+        Vector3f hair = toModelDir(r.transform(new Vector3f(0, 0, 1)));    // 弓毛朝着琴弦（琴背的方向）
+        // 在弹时弓沿弓杆来回拉
+        float along = 10.5f + 3.5f * move * (float) Math.sin(t * 0.3f);
+        float bowScale = l.bowScale() / MODEL_SCALE;
+        Vector3f target = new Vector3f(right).mul((along - 1.8f) * bowScale).add(contact);
+        Vector3f shoulder = new Vector3f(model.rightArm.x - 1, model.rightArm.y, model.rightArm.z);
+        Vector3f grip = new Vector3f(target).sub(shoulder).normalize().mul(GRIP).add(shoulder);
+        Vector3f stick = new Vector3f(contact).sub(grip).normalize();                       // 弓根 → 弓尖
+        Vector3f face = new Vector3f(hair).sub(new Vector3f(stick).mul(hair.dot(stick))).normalize();
+        Vector3f third = new Vector3f(face).cross(stick);
+        Matrix4f rot = new Matrix4f(face.x, face.y, face.z, 0, stick.x, stick.y, stick.z, 0, third.x, third.y, third.z, 0, 0, 0, 0, 1);
+        Matrix4f bow = local(grip, rot, bowScale, 8.1f, 1.8f, 8);
+        Vector3f leftShoulder = new Vector3f(model.leftArm.x + 1, model.leftArm.y, model.leftArm.z);
+        return new Place(null, bow, target, neckHand(l, r, feet, leftShoulder));
+    }
+
+    /** 左手：沿指板从琴枕往下，第一个离肩正好一臂远的点；整条指板都够不着就按在最下端。 */
+    private static Vector3f neckHand(Layout l, Matrix3f r, Vector3f feet, Vector3f shoulder) {
+        Vector3f p = new Vector3f();
+        for (float y = l.neckHigh(); y >= l.neckLow(); y -= 0.25f) {
+            p = toModel(onInstrument(l, r, new Vector3f(0, y, l.neckZ())), feet);
+            if (p.distance(shoulder) >= GRIP) return p;
+        }
+        return p;
+    }
+
+    private static Vector3f onInstrument(Layout l, Matrix3f r, Vector3f local) {
+        return r.transform(new Vector3f(local)).add(l.endpin());
+    }
+
+    /** 方块模型里的方向 → 玩家模型根坐标里的方向。 */
+    private static Vector3f toModelDir(Vector3f block) {
+        return new Vector3f(-block.x, -block.y, block.z);
+    }
+
+    /** 玩家模型相对世界缩小的比例（原版画玩家时 scale 0.9375）。 */
+    static final float MODEL_SCALE = 0.9375f;
+
+    /** 演奏者双脚在方块模型里的位置（像素），见 {@link dev.logos.dimension.music.SeatedInstrumentBlock#feet}。 */
+    static Vector3f seatFeet(InstrumentKind kind) {
+        var f = dev.logos.dimension.music.SeatedInstrumentBlock.feet(kind);
+        return new Vector3f((float) f.x, (float) f.y, (float) f.z);
+    }
+
+    /** 方块模型坐标（像素）→ 玩家模型根坐标（像素）。 */
+    static Vector3f toModel(Vector3f block, Vector3f feet) {
+        return new Vector3f(-(block.x - feet.x) / MODEL_SCALE, 24 - (block.y - feet.y) / MODEL_SCALE, (block.z - feet.z) / MODEL_SCALE);
     }
 
     private static Place trumpet(Matrix4f head, boolean mirror, float t, float move) {

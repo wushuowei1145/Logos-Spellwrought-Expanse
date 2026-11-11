@@ -1,0 +1,488 @@
+{
+ "format": 1,
+ "quality": "recorded",
+ "source": "VS Chamber Orchestra: Community Edition (CC0 1.0) sgossner/VSCO-2-CE@440300901dfe",
+ "range": 32,
+ "zones": [
+  {
+   "file": "instrument/violin/55_0",
+   "key": 54.97,
+   "lo": 55,
+   "hi": 55,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.1765,
+   "curve": 1.4,
+   "frames": 129975,
+   "release": 0.2,
+   "loop": [
+    74970,
+    129975
+   ]
+  },
+  {
+   "file": "instrument/violin/57_0",
+   "key": 57.004,
+   "lo": 56,
+   "hi": 58,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2634,
+   "curve": 1.4,
+   "frames": 137045,
+   "release": 0.2,
+   "loop": [
+    68796,
+    137045
+   ]
+  },
+  {
+   "file": "instrument/violin/60_0",
+   "key": 60.233,
+   "lo": 59,
+   "hi": 62,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2169,
+   "curve": 1.4,
+   "frames": 151619,
+   "release": 0.2,
+   "loop": [
+    93492,
+    151619
+   ]
+  },
+  {
+   "file": "instrument/violin/64_0",
+   "key": 64.061,
+   "lo": 63,
+   "hi": 65,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2489,
+   "curve": 1.4,
+   "frames": 143874,
+   "release": 0.2,
+   "loop": [
+    86436,
+    143874
+   ]
+  },
+  {
+   "file": "instrument/violin/67_0",
+   "key": 67.01,
+   "lo": 66,
+   "hi": 68,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2621,
+   "curve": 1.4,
+   "frames": 147305,
+   "release": 0.2,
+   "loop": [
+    81144,
+    147305
+   ]
+  },
+  {
+   "file": "instrument/violin/69_0",
+   "key": 68.997,
+   "lo": 69,
+   "hi": 70,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2174,
+   "curve": 1.4,
+   "frames": 141100,
+   "release": 0.2,
+   "loop": [
+    82908,
+    141100
+   ]
+  },
+  {
+   "file": "instrument/violin/72_0",
+   "key": 71.969,
+   "lo": 71,
+   "hi": 74,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.1695,
+   "curve": 1.4,
+   "frames": 121637,
+   "release": 0.2,
+   "loop": [
+    63504,
+    121637
+   ]
+  },
+  {
+   "file": "instrument/violin/76_0",
+   "key": 76.046,
+   "lo": 75,
+   "hi": 77,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2723,
+   "curve": 1.4,
+   "frames": 139344,
+   "release": 0.2,
+   "loop": [
+    51156,
+    139344
+   ]
+  },
+  {
+   "file": "instrument/violin/79_0",
+   "key": 79.02,
+   "lo": 78,
+   "hi": 79,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2065,
+   "curve": 1.4,
+   "frames": 168073,
+   "release": 0.2,
+   "loop": [
+    108486,
+    168073
+   ]
+  },
+  {
+   "file": "instrument/violin/81_0",
+   "key": 80.933,
+   "lo": 80,
+   "hi": 82,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.1982,
+   "curve": 1.4,
+   "frames": 149903,
+   "release": 0.2,
+   "loop": [
+    91728,
+    149903
+   ]
+  },
+  {
+   "file": "instrument/violin/84_0",
+   "key": 83.957,
+   "lo": 83,
+   "hi": 86,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2283,
+   "curve": 1.4,
+   "frames": 124380,
+   "release": 0.2,
+   "loop": [
+    50274,
+    124380
+   ]
+  },
+  {
+   "file": "instrument/violin/88_0",
+   "key": 88.136,
+   "lo": 87,
+   "hi": 89,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2188,
+   "curve": 1.4,
+   "frames": 131415,
+   "release": 0.2,
+   "loop": [
+    57330,
+    131415
+   ]
+  },
+  {
+   "file": "instrument/violin/91_0",
+   "key": 90.977,
+   "lo": 90,
+   "hi": 91,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2081,
+   "curve": 1.4,
+   "frames": 142888,
+   "release": 0.2,
+   "loop": [
+    45864,
+    142888
+   ]
+  },
+  {
+   "file": "instrument/violin/93_0",
+   "key": 92.94,
+   "lo": 92,
+   "hi": 94,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.1701,
+   "curve": 1.4,
+   "frames": 143790,
+   "release": 0.2,
+   "loop": [
+    73206,
+    143790
+   ]
+  },
+  {
+   "file": "instrument/violin/96_0",
+   "key": 96.068,
+   "lo": 95,
+   "hi": 100,
+   "vlo": 1,
+   "vhi": 79,
+   "gain": 0.2149,
+   "curve": 1.4,
+   "frames": 111132,
+   "release": 0.2,
+   "loop": [
+    49392,
+    111132
+   ]
+  },
+  {
+   "file": "instrument/violin/55_1",
+   "key": 54.957,
+   "lo": 55,
+   "hi": 55,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.4071,
+   "curve": 1.4,
+   "frames": 84644,
+   "release": 0.2,
+   "loop": [
+    22932,
+    84644
+   ]
+  },
+  {
+   "file": "instrument/violin/57_1",
+   "key": 56.988,
+   "lo": 56,
+   "hi": 58,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.4581,
+   "curve": 1.4,
+   "frames": 135903,
+   "release": 0.2,
+   "loop": [
+    52038,
+    135903
+   ]
+  },
+  {
+   "file": "instrument/violin/60_1",
+   "key": 59.887,
+   "lo": 59,
+   "hi": 61,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.5074,
+   "curve": 1.4,
+   "frames": 129748,
+   "release": 0.2,
+   "loop": [
+    69678,
+    129748
+   ]
+  },
+  {
+   "file": "instrument/violin/64_1",
+   "key": 64.034,
+   "lo": 62,
+   "hi": 65,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.5675,
+   "curve": 1.4,
+   "frames": 126224,
+   "release": 0.2,
+   "loop": [
+    73206,
+    126224
+   ]
+  },
+  {
+   "file": "instrument/violin/67_1",
+   "key": 67.037,
+   "lo": 66,
+   "hi": 68,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.444,
+   "curve": 1.4,
+   "frames": 138584,
+   "release": 0.2,
+   "loop": [
+    27342,
+    138584
+   ]
+  },
+  {
+   "file": "instrument/violin/69_1",
+   "key": 69.218,
+   "lo": 69,
+   "hi": 70,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.5811,
+   "curve": 1.4,
+   "frames": 117356,
+   "release": 0.2,
+   "loop": [
+    50274,
+    117356
+   ]
+  },
+  {
+   "file": "instrument/violin/72_1",
+   "key": 71.985,
+   "lo": 71,
+   "hi": 74,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.3895,
+   "curve": 1.4,
+   "frames": 87757,
+   "release": 0.2,
+   "loop": [
+    29106,
+    87757
+   ]
+  },
+  {
+   "file": "instrument/violin/76_1",
+   "key": 76.197,
+   "lo": 75,
+   "hi": 77,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.4625,
+   "curve": 1.4,
+   "frames": 170234,
+   "release": 0.2,
+   "loop": [
+    43218,
+    170234
+   ]
+  },
+  {
+   "file": "instrument/violin/79_1",
+   "key": 79.035,
+   "lo": 78,
+   "hi": 79,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.4599,
+   "curve": 1.4,
+   "frames": 103169,
+   "release": 0.2,
+   "loop": [
+    41454,
+    103169
+   ]
+  },
+  {
+   "file": "instrument/violin/81_1",
+   "key": 80.939,
+   "lo": 80,
+   "hi": 82,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.5147,
+   "curve": 1.4,
+   "frames": 133163,
+   "release": 0.2,
+   "loop": [
+    66150,
+    133163
+   ]
+  },
+  {
+   "file": "instrument/violin/84_1",
+   "key": 83.912,
+   "lo": 83,
+   "hi": 85,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.4797,
+   "curve": 1.4,
+   "frames": 115576,
+   "release": 0.2,
+   "loop": [
+    40572,
+    115576
+   ]
+  },
+  {
+   "file": "instrument/violin/88_1",
+   "key": 88.057,
+   "lo": 86,
+   "hi": 89,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.4375,
+   "curve": 1.4,
+   "frames": 165799,
+   "release": 0.2,
+   "loop": [
+    110250,
+    165799
+   ]
+  },
+  {
+   "file": "instrument/violin/91_1",
+   "key": 91.002,
+   "lo": 90,
+   "hi": 92,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.3772,
+   "curve": 1.4,
+   "frames": 127889,
+   "release": 0.2,
+   "loop": [
+    64386,
+    127889
+   ]
+  },
+  {
+   "file": "instrument/violin/93_1",
+   "key": 93.152,
+   "lo": 93,
+   "hi": 94,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.4479,
+   "curve": 1.4,
+   "frames": 160059,
+   "release": 0.2,
+   "loop": [
+    100548,
+    160059
+   ]
+  },
+  {
+   "file": "instrument/violin/96_1",
+   "key": 96.026,
+   "lo": 95,
+   "hi": 100,
+   "vlo": 80,
+   "vhi": 127,
+   "gain": 0.3696,
+   "curve": 1.4,
+   "frames": 108499,
+   "release": 0.2,
+   "loop": [
+    55566,
+    108499
+   ]
+  }
+ ]
+}

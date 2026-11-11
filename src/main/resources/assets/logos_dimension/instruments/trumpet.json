@@ -1,325 +1,183 @@
 {
- "source": "VS Chamber Orchestra: Community Edition (CC0 1.0) sgossner/VSCO-2-CE@440300901dfe",
+ "format": 1,
+ "quality": "synth",
+ "source": "synthesized by tools/instrument_samples.py",
  "range": 32,
  "zones": [
   {
-   "file": "instrument/trumpet/53_0",
-   "key": 53.031,
+   "file": "instrument/trumpet/s54",
+   "key": 54.0,
    "lo": 54,
    "hi": 55,
    "vlo": 1,
-   "vhi": 84,
-   "gain": 0.5044,
+   "vhi": 127,
+   "gain": 0.3139,
    "curve": 1.4,
-   "frames": 143459,
+   "frames": 54684,
    "release": 0.12,
    "loop": [
-    83790,
-    143459
+    1764,
+    54684
    ]
   },
   {
-   "file": "instrument/trumpet/57_0",
-   "key": 57.007,
+   "file": "instrument/trumpet/s57",
+   "key": 57.0,
    "lo": 56,
    "hi": 58,
    "vlo": 1,
-   "vhi": 84,
-   "gain": 0.4546,
+   "vhi": 127,
+   "gain": 0.3622,
    "curve": 1.4,
-   "frames": 172734,
+   "frames": 54684,
    "release": 0.12,
    "loop": [
-    84672,
-    172734
+    1764,
+    54684
    ]
   },
   {
-   "file": "instrument/trumpet/60_0",
-   "key": 59.928,
+   "file": "instrument/trumpet/s60",
+   "key": 60.003,
    "lo": 59,
    "hi": 61,
    "vlo": 1,
-   "vhi": 84,
-   "gain": 0.3259,
+   "vhi": 127,
+   "gain": 0.4065,
    "curve": 1.4,
-   "frames": 126157,
+   "frames": 54684,
    "release": 0.12,
    "loop": [
-    73206,
-    126157
+    1764,
+    54684
    ]
   },
   {
-   "file": "instrument/trumpet/63_0",
+   "file": "instrument/trumpet/s63",
    "key": 62.984,
    "lo": 62,
-   "hi": 65,
+   "hi": 64,
    "vlo": 1,
-   "vhi": 84,
-   "gain": 0.2457,
+   "vhi": 127,
+   "gain": 0.4264,
    "curve": 1.4,
-   "frames": 121702,
+   "frames": 54684,
    "release": 0.12,
    "loop": [
-    24696,
-    121702
+    1764,
+    54684
    ]
   },
   {
-   "file": "instrument/trumpet/67_0",
-   "key": 67.075,
-   "lo": 66,
-   "hi": 68,
+   "file": "instrument/trumpet/s66",
+   "key": 66.0,
+   "lo": 65,
+   "hi": 67,
    "vlo": 1,
-   "vhi": 84,
-   "gain": 0.2918,
+   "vhi": 127,
+   "gain": 0.3997,
    "curve": 1.4,
-   "frames": 125671,
+   "frames": 54684,
    "release": 0.12,
    "loop": [
-    66150,
-    125671
+    1764,
+    54684
    ]
   },
   {
-   "file": "instrument/trumpet/70_0",
-   "key": 69.945,
-   "lo": 69,
-   "hi": 71,
+   "file": "instrument/trumpet/s69",
+   "key": 69.0,
+   "lo": 68,
+   "hi": 70,
    "vlo": 1,
-   "vhi": 84,
-   "gain": 0.4002,
+   "vhi": 127,
+   "gain": 0.2776,
    "curve": 1.4,
-   "frames": 126916,
+   "frames": 54684,
    "release": 0.12,
    "loop": [
-    47628,
-    126916
+    1764,
+    54684
    ]
   },
   {
-   "file": "instrument/trumpet/74_0",
-   "key": 74.007,
-   "lo": 72,
-   "hi": 75,
+   "file": "instrument/trumpet/s72",
+   "key": 72.003,
+   "lo": 71,
+   "hi": 73,
    "vlo": 1,
-   "vhi": 84,
-   "gain": 0.5156,
+   "vhi": 127,
+   "gain": 0.3342,
    "curve": 1.4,
-   "frames": 95710,
+   "frames": 54684,
    "release": 0.12,
    "loop": [
-    22932,
-    95710
+    1764,
+    54684
    ]
   },
   {
-   "file": "instrument/trumpet/77_0",
-   "key": 76.97,
-   "lo": 76,
-   "hi": 78,
+   "file": "instrument/trumpet/s75",
+   "key": 75.007,
+   "lo": 74,
+   "hi": 76,
    "vlo": 1,
-   "vhi": 84,
-   "gain": 0.395,
+   "vhi": 127,
+   "gain": 0.3529,
    "curve": 1.4,
-   "frames": 146474,
+   "frames": 54684,
    "release": 0.12,
    "loop": [
-    53802,
-    146474
+    1764,
+    54684
    ]
   },
   {
-   "file": "instrument/trumpet/81_0",
-   "key": 80.94,
-   "lo": 79,
+   "file": "instrument/trumpet/s78",
+   "key": 78.0,
+   "lo": 77,
+   "hi": 79,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3053,
+   "curve": 1.4,
+   "frames": 54684,
+   "release": 0.12,
+   "loop": [
+    1764,
+    54684
+   ]
+  },
+  {
+   "file": "instrument/trumpet/s81",
+   "key": 81.0,
+   "lo": 80,
    "hi": 82,
    "vlo": 1,
-   "vhi": 84,
-   "gain": 0.4363,
+   "vhi": 127,
+   "gain": 0.3859,
    "curve": 1.4,
-   "frames": 149950,
+   "frames": 54684,
    "release": 0.12,
    "loop": [
-    35280,
-    149950
+    1764,
+    54684
    ]
   },
   {
-   "file": "instrument/trumpet/84_0",
-   "key": 84.009,
+   "file": "instrument/trumpet/s84",
+   "key": 84.003,
    "lo": 83,
    "hi": 84,
    "vlo": 1,
-   "vhi": 84,
-   "gain": 0.5365,
-   "curve": 1.4,
-   "frames": 106686,
-   "release": 0.12,
-   "loop": [
-    53802,
-    106686
-   ]
-  },
-  {
-   "file": "instrument/trumpet/53_1",
-   "key": 52.957,
-   "lo": 54,
-   "hi": 54,
-   "vlo": 85,
    "vhi": 127,
-   "gain": 0.867,
+   "gain": 0.2251,
    "curve": 1.4,
-   "frames": 120435,
+   "frames": 54684,
    "release": 0.12,
    "loop": [
-    60858,
-    120435
-   ]
-  },
-  {
-   "file": "instrument/trumpet/57_1",
-   "key": 56.951,
-   "lo": 55,
-   "hi": 58,
-   "vlo": 85,
-   "vhi": 127,
-   "gain": 0.6135,
-   "curve": 1.4,
-   "frames": 195931,
-   "release": 0.12,
-   "loop": [
-    134064,
-    195931
-   ]
-  },
-  {
-   "file": "instrument/trumpet/60_1",
-   "key": 59.992,
-   "lo": 59,
-   "hi": 61,
-   "vlo": 85,
-   "vhi": 127,
-   "gain": 0.5584,
-   "curve": 1.4,
-   "frames": 197868,
-   "release": 0.12,
-   "loop": [
-    129654,
-    197868
-   ]
-  },
-  {
-   "file": "instrument/trumpet/63_1",
-   "key": 62.976,
-   "lo": 62,
-   "hi": 65,
-   "vlo": 85,
-   "vhi": 127,
-   "gain": 0.6285,
-   "curve": 1.4,
-   "frames": 133106,
-   "release": 0.12,
-   "loop": [
-    27342,
-    133106
-   ]
-  },
-  {
-   "file": "instrument/trumpet/67_1",
-   "key": 67.062,
-   "lo": 66,
-   "hi": 68,
-   "vlo": 85,
-   "vhi": 127,
-   "gain": 0.5715,
-   "curve": 1.4,
-   "frames": 135918,
-   "release": 0.12,
-   "loop": [
-    82908,
-    135918
-   ]
-  },
-  {
-   "file": "instrument/trumpet/70_1",
-   "key": 69.995,
-   "lo": 69,
-   "hi": 72,
-   "vlo": 85,
-   "vhi": 127,
-   "gain": 0.6179,
-   "curve": 1.4,
-   "frames": 107166,
-   "release": 0.12,
-   "loop": [
-    25578,
-    107166
-   ]
-  },
-  {
-   "file": "instrument/trumpet/74_1",
-   "key": 74.026,
-   "lo": 73,
-   "hi": 75,
-   "vlo": 85,
-   "vhi": 127,
-   "gain": 0.4601,
-   "curve": 1.4,
-   "frames": 92177,
-   "release": 0.12,
-   "loop": [
-    32634,
-    92177
-   ]
-  },
-  {
-   "file": "instrument/trumpet/77_1",
-   "key": 76.961,
-   "lo": 76,
-   "hi": 78,
-   "vlo": 85,
-   "vhi": 127,
-   "gain": 0.5622,
-   "curve": 1.4,
-   "frames": 198951,
-   "release": 0.12,
-   "loop": [
-    86436,
-    198951
-   ]
-  },
-  {
-   "file": "instrument/trumpet/81_1",
-   "key": 80.992,
-   "lo": 79,
-   "hi": 82,
-   "vlo": 85,
-   "vhi": 127,
-   "gain": 0.6497,
-   "curve": 1.4,
-   "frames": 126586,
-   "release": 0.12,
-   "loop": [
-    44982,
-    126586
-   ]
-  },
-  {
-   "file": "instrument/trumpet/84_1",
-   "key": 83.948,
-   "lo": 83,
-   "hi": 84,
-   "vlo": 85,
-   "vhi": 127,
-   "gain": 0.8458,
-   "curve": 1.4,
-   "frames": 171978,
-   "release": 0.12,
-   "loop": [
-    97020,
-    171978
+    1764,
+    54684
    ]
   }
  ]

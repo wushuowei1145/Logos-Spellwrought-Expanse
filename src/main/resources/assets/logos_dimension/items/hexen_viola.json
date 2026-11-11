@@ -1,0 +1,14 @@
+{
+  "model": {
+    "type": "minecraft:condition",
+    "property": "minecraft:using_item",
+    "on_true": {
+      "type": "minecraft:model",
+      "model": "logos_dimension:item/hexen_viola_playing"
+    },
+    "on_false": {
+      "type": "minecraft:model",
+      "model": "logos_dimension:item/hexen_viola"
+    }
+  }
+}

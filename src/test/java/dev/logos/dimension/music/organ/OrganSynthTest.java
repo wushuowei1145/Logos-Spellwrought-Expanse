@@ -32,6 +32,46 @@ class OrganSynthTest {
         }
     }
 
+    /**
+     * #243：几排管落在同一频率上的分音（晨祷里 8′ 主音栓的二次泛音和 4′ 长笛的基音）在每个琴键上都以同样的相位叠加，
+     * 8′ 基音和它上方八度的强弱比在相邻两个采样之间只缓缓变化，不会一会儿加强一会儿抵消（以前各采样随机相位，
+     * 最强的分音在相邻采样间换来换去，听起来像突然低了八度）。
+     */
+    @Test void octavePartialStaysBalancedAcrossKeys() {
+        // 全奏带混合音栓：它的几排在超过约 4 kHz 处按八度折回（C6 起 2′ 那排落到八度上、C7 落到同度上），
+        // 那两处本来就会变，同真的混合音栓一样；只核对折回之前
+        for (OrganStop.Preset preset : new OrganStop.Preset[]{OrganStop.Preset.MATINS, OrganStop.Preset.CHORUS, OrganStop.Preset.PLENUM}) {
+            int top = preset == OrganStop.Preset.PLENUM ? 81 : OrganSynth.HIGH;
+            double prev = Double.NaN, worst = 0;
+            int where = -1;
+            StringBuilder trace = new StringBuilder();
+            for (OrganSynth.Sample s : OrganSynth.render(preset.mask())) {
+                if (s.note() > top) break;
+                short[] p = s.pcm();
+                int bin = (int) Math.round(s.hz() * p.length / OrganSynth.RATE);
+                double ratio = 20 * Math.log10(magnitude(p, 2 * bin) / magnitude(p, bin));
+                trace.append(String.format(" %d:%.1f", s.note(), ratio));
+                if (!Double.isNaN(prev) && Math.abs(ratio - prev) > worst) {
+                    worst = Math.abs(ratio - prev);
+                    where = s.note();
+                }
+                prev = ratio;
+            }
+            assertTrue(worst < 3.0, preset.id() + ": octave-to-fundamental balance jumps " + worst + " dB at note " + where + trace);
+        }
+    }
+
+    /** 循环段里整数个周期的频率：直接算那一格的 DFT。 */
+    private static double magnitude(short[] p, int bin) {
+        double re = 0, im = 0;
+        for (int n = 0; n < p.length; n++) {
+            double w = 2 * Math.PI * (double) bin * n / p.length;
+            re += p[n] * Math.cos(w);
+            im += p[n] * Math.sin(w);
+        }
+        return Math.sqrt(re * re + im * im) + 1e-9;
+    }
+
     /** 基音在频谱里：用 DFT 量一下 8′ 长笛的最强频率。 */
     @Test void fluteSoundsAtItsPitch() {
         OrganSynth.Sample s = OrganSynth.render(60, OrganStop.FLUTE_8.bit());

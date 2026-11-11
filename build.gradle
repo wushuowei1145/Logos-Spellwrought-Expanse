@@ -65,7 +65,12 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-tasks.named('test', Test) { useJUnitPlatform(); testLogging { events 'passed', 'failed' } }
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    testLogging { events 'passed', 'failed' }
+    // SampleMapTest 核对「音乐厅音源」资源包；测试 JVM 的工作目录不是项目根目录，路径从这里传
+    systemProperty 'logos_dimension.concert_hall_pack', file('resourcepacks/concert_hall').absolutePath
+}
 // 测试 JVM 的工作目录由模组测试器决定；通过测试资源读取预设，避免依赖当前目录。
 tasks.named('processTestResources') {
     from('gametest-packs/crucible/data/minecraft/worldgen/world_preset/flat.json') {
@@ -74,6 +79,18 @@ tasks.named('processTestResources') {
     }
 }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+// 「音乐厅音源」资源包：乐器的录音采样不进模组的 jar（本体只带合成音源），单独打成 zip 发布，装上即换成录音。
+// 见 docs/INSTRUMENT_SAMPLES.md。./gradlew concertHallPack → build/libs/<mod_id>-concert_hall-<版本>.zip
+tasks.register('concertHallPack', Zip) {
+    group = 'build'
+    description = 'Zips resourcepacks/concert_hall, the recorded instrument samples, as a separate resource pack.'
+    from 'resourcepacks/concert_hall'
+    archiveFileName = "${mod_id}-concert_hall-${version}.zip"
+    destinationDirectory = layout.buildDirectory.dir('libs')
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
 
 if (file('gradle/ldlib2-uitest.gradle').exists()) {
     apply from: 'gradle/ldlib2-uitest.gradle'

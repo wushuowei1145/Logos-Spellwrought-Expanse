@@ -1,5 +1,39 @@
 # 首版验证记录
 
+## 合奏哑音、管风琴不出声与音高错乱（#243）
+
+2026-11-11：同在分支 `feat/concert-hall`（未提交），接着上一节。原因和改法见 [docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md) 第 17 节。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 全量 **360/361**，唯一失败的仍是 main 上就缺的 zh_cn `item.logos_dimension.fuda_desk`。新增 `MusicRollTest.wholePartsMoveByOctavesToFitTheInstrument`、`KeyLayoutTest` 2/2、`OrganSynthTest.octavePartialStaysBalancedAcrossKeys`（把相位换回随机时失败：晨祷相邻采样间差 23 dB；现在 < 3 dB） |
+| 音高 | `tools/instrument_audit.py`：两层 29 项全部干净（取区都在 4 个半音以内，采样音准最大 20 音分） |
+| 世界测试 | `instrument_*` **8/8**（服务端播放时钟改成真实时间后重跑） |
+| 实际客户端 | **10/10、49/49 检查**：新增 `ensemble_resync_ui`（偏 0.4 秒的心跳不再掐掉大提琴的长音，偏 5 秒才重新定位）、`organ_reload_ui`（重启声音引擎后同一个管风琴键仍在响；把重启时丢缓冲那一行注释掉再跑，这一项失败——就是试玩时的现象），回归 `orchestra_seated_ui`、`orchestra_handheld_ui`、`concert_hall_pack_ui`、`handheld_play_ui`、`instrument_play_ui`、`mallet_instrument_play`、`midi_keyboard_ui`、`organ_play_ui` |
+| 未验证 | 服务端真的卡顿、真的多人合奏没有试；心跳偏差和声音引擎重启是在测试里模拟的。音色仍需人工试听 |
+
+## 音乐厅音源资源包与第六轮乐器
+
+2026-11-11：分支 `feat/concert-hall`，基于 main `4a1cbccd`（#242），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/INSTRUMENT_SAMPLES.md](docs/INSTRUMENT_SAMPLES.md)、[docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md) 第 16 节。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 全量 **356/357**，唯一失败的仍是 main 上就缺的 zh_cn `item.logos_dimension.fuda_desk`；新物品、方块、实体的名字都齐。`SampleMapTest` 4/4 改成两层：模组本体 15 件采样乐器都有合成的表（synth），资源包 14 件录音（recorded，没有钢片琴）、`pack.mcmeta` 格式 84、带 `NOTICE.txt`；音域内每个音、每个力度都有正好覆盖的区，变调 ≤ 4 个半音，音量在 (0, 1]，只有弓弦、管乐循环 |
+| 生成脚本 | 录音：14 件全部重做（表里加了 `format`、`quality`），新六件八度按 VSCO 的 SFZ，只取实测音分；低音提琴最低四个音基音太弱、量成低八度（按 SFZ 纠正，音分照用）；换层响度差钢琴 0.34 dB、竖琴 1.89、巴松管 1.97、其余 ≤ 1.13 dB；资源包 ogg 共 22.5 MB。合成：15 件共 3.43 MB，钢琴为不超满幅整体降 1.3 dB |
+| 世界测试 | `instrument_*` **8/8**（新增 `instrument_seated_strings`：大提琴两格高、右键坐上、双脚正落在座位处、座位朝琴、有人坐着不多出座位、低音提琴两格高、定音鼓有方块实体、拆琴后座位消失人站起来；`instrument_music_stand` 加了三件新手持乐器），`creative_tabs_cover_items` **1/1** |
+| 实际客户端 | 最后一轮新场景 `orchestra_views`、`orchestra_handheld_ui`、`orchestra_seated_ui`、`concert_hall_pack_ui` 加回归 `handheld_play_ui`：**5/5、34/34 检查**；回归 `music_stand_views`、`mallet_instrument_play`、`instrument_play_ui` 在前一轮（6/6、26/26 检查）通过。资源包场景把仓库里的 `resourcepacks/concert_hall` 装进测试客户端、启用：14 件读到录音、钢片琴仍合成，小提琴演奏条写「Sound: recorded」，卸下后全部回到合成。截图人工看过：坐姿、弓、左手、琴颈在头旁、乐谱架三种摆法、物品栏图标 |
+| 改过的问题 | 玩家骑乘时自带 0.6 格挂点，座位起初会把人按进地里 0.6 格（改成座位位置 = 双脚）；英文的「Sound: concert hall recordings」在演奏条上和音域文字重叠（缩短，并在挤不下时挪到提示行）；第一人称巴松管的弯管朝外（改成同第三人称的摆法）；`SampleMapTest` 在测试 JVM 里找不到资源包目录（由 build.gradle 传路径） |
+| 未验证 | 音色只能人工试听（试听在仓库外 `builds/concert-hall-2026-11-11/demo/recorded`、`demo/synth`）；双簧管第一人称大半被演奏条挡住；多人、专用服务器、光影包没测；座位不存盘 |
+
+```text
+uv run --no-project --with numpy --with scipy python tools/instrument_samples.py --ffmpeg <ffmpeg> --demo <试听目录>/synth
+uv run --no-project --with numpy --with scipy python tools/instrument_sources.py --cache <下载目录> --ffmpeg <ffmpeg> --demo <试听目录>/recorded
+uv run --no-project --with pillow python tools/instrument_art.py
+./gradlew test -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:instrument_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=orchestra_views,orchestra_handheld_ui,orchestra_seated_ui,concert_hall_pack_ui,handheld_play_ui" -PldTestHeadless -PldTestWindow=1280x720
+./gradlew concertHallPack
+```
 ## 乐器换用录音采样
 
 2026-11-11：分支 `feat/recorded-samples`，基于 main `7a98e0e0`（#241），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/INSTRUMENT_SAMPLES.md](docs/INSTRUMENT_SAMPLES.md)、[docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md) 第 15 节。

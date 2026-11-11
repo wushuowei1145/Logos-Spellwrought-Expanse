@@ -60,29 +60,29 @@ public final class OrganSynth {
         for (OrganStop stop : OrganStop.values()) {
             if (!stop.in(mask)) continue;
             switch (stop) {
-                case FLUTE_8 -> rank(mix, 2 * c, len, stopped(), 0.8, rng);
-                case FLUTE_4 -> rank(mix, 4 * c, len, new double[]{1, 0.12, 0.05, 0.02}, 0.5, rng);
-                case BOURDON_16 -> rank(mix, c, len, stopped(), 0.7, rng);
-                case PRINCIPAL_8 -> rank(mix, 2 * c, len, principal(f0), 1.0, rng);
-                case OCTAVE_4 -> rank(mix, 4 * c, len, principal(f0 * 2), 0.7, rng);
-                case FIFTEENTH_2 -> rank(mix, 8 * c, len, principal(f0 * 4), 0.5, rng);
+                case FLUTE_8 -> rank(mix, 2 * c, len, stopped(), 0.8, c);
+                case FLUTE_4 -> rank(mix, 4 * c, len, new double[]{1, 0.12, 0.05, 0.02}, 0.5, c);
+                case BOURDON_16 -> rank(mix, c, len, stopped(), 0.7, c);
+                case PRINCIPAL_8 -> rank(mix, 2 * c, len, principal(f0), 1.0, c);
+                case OCTAVE_4 -> rank(mix, 4 * c, len, principal(f0 * 2), 0.7, c);
+                case FIFTEENTH_2 -> rank(mix, 8 * c, len, principal(f0 * 4), 0.5, c);
                 case MIXTURE -> {
                     // 四排：2′、1⅓′、1′、⅔′（8′ 基音的 4、6、8、12 倍）；超过约 4 kHz 的一排按八度折回
                     for (int mult : new int[]{4, 6, 8, 12}) {
                         double m = mult;
                         while (m * f0 > 4000 && m >= 2) m /= 2;
                         int cycles = (int) Math.round(2 * c * m);
-                        rank(mix, cycles, len, new double[]{1, 0.4, 0.2, 0.1, 0.05}, 0.55 / 4 * (mult == 4 ? 1.4 : 1), rng);
+                        rank(mix, cycles, len, new double[]{1, 0.4, 0.2, 0.1, 0.05}, 0.55 / 4 * (mult == 4 ? 1.4 : 1), c);
                     }
                 }
                 case CELESTE_8 -> {
                     // 一对细弦音：一支准、一支多 j 个周期（约 j Hz 的慢拍）
                     int j = note < 48 ? 1 : 2;
-                    rank(mix, 2 * c, len, string(f0), 0.35, rng);
-                    rank(mix, 2 * c + j, len, string(f0), 0.35, rng);
+                    rank(mix, 2 * c, len, string(f0), 0.35, c);
+                    rank(mix, 2 * c + j, len, string(f0), 0.35, c);
                 }
-                case TRUMPET_8 -> rank(mix, 2 * c, len, trumpet(f0), 0.9, rng);
-                case OBOE_8 -> rank(mix, 2 * c, len, oboe(f0), 0.7, rng);
+                case TRUMPET_8 -> rank(mix, 2 * c, len, trumpet(f0), 0.9, c);
+                case OBOE_8 -> rank(mix, 2 * c, len, oboe(f0), 0.7, c);
             }
         }
         // 很轻的风声：本身就是循环段里的一段噪声，接缝处听不出来
@@ -102,8 +102,12 @@ public final class OrganSynth {
     /**
      * 叠加一排管：基音在循环段里 cycles 个周期，第 k 个分音 k·cycles 个周期；amps[k-1] 是第 k 个分音的强弱。
      * 用二阶递推（s[n] = 2cos(w)·s[n-1] − s[n-2]）生成正弦，比逐点调用 sin 快一个数量级。
+     *
+     * <p>初相位只由分音相对 16′ 基音（base 个周期）的倍数决定，不随琴键、不随音栓组合变：几排管落在同一频率上的分音
+     * （8′ 的二次泛音和 4′ 的基音、混合音栓和主音栓）在每个琴键上都以同样的相位叠加。以前每个采样各取随机相位，
+     * 相邻两个采样里同频分音一会儿加强一会儿抵消，音色、甚至听感上的高低在键盘上忽变（#243）。
      */
-    private static void rank(double[] mix, int cycles, int len, double[] amps, double level, SplittableRandom rng) {
+    private static void rank(double[] mix, int cycles, int len, double[] amps, double level, int base) {
         double norm = 0;
         for (double a : amps) norm += a * a;
         norm = level / Math.sqrt(norm);
@@ -116,7 +120,9 @@ public final class OrganSynth {
             // 高频渐弱，免得接近奈奎斯特的分音发刺
             a *= 1.0 / (1.0 + Math.pow(freq / 9000.0, 4));
             double w = 2 * Math.PI * cyc / len;
-            double phase = rng.nextDouble() * 2 * Math.PI;
+            // 黄金分割散开各倍数的相位（波形不会尖峰过高），同一倍数永远同一相位
+            double h = (double) cyc / base;
+            double phase = 2 * Math.PI * ((h * 0.6180339887498949) % 1.0);
             double c2 = 2 * Math.cos(w);
             double s1 = Math.sin(phase - w), s0 = Math.sin(phase);
             for (int n = 0; n < len; n++) {

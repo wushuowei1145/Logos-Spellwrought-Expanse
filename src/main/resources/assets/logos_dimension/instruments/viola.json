@@ -1,0 +1,232 @@
+{
+ "format": 1,
+ "quality": "synth",
+ "source": "synthesized by tools/instrument_samples.py",
+ "range": 32,
+ "zones": [
+  {
+   "file": "instrument/viola/s48",
+   "key": 48.003,
+   "lo": 48,
+   "hi": 49,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.4481,
+   "curve": 1.4,
+   "frames": 58653,
+   "release": 0.2,
+   "loop": [
+    5733,
+    58653
+   ]
+  },
+  {
+   "file": "instrument/viola/s51",
+   "key": 51.03,
+   "lo": 50,
+   "hi": 52,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3089,
+   "curve": 1.4,
+   "frames": 58653,
+   "release": 0.2,
+   "loop": [
+    5733,
+    58653
+   ]
+  },
+  {
+   "file": "instrument/viola/s54",
+   "key": 54.0,
+   "lo": 53,
+   "hi": 55,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.322,
+   "curve": 1.4,
+   "frames": 58653,
+   "release": 0.2,
+   "loop": [
+    5733,
+    58653
+   ]
+  },
+  {
+   "file": "instrument/viola/s57",
+   "key": 57.0,
+   "lo": 56,
+   "hi": 58,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3723,
+   "curve": 1.4,
+   "frames": 58653,
+   "release": 0.2,
+   "loop": [
+    5733,
+    58653
+   ]
+  },
+  {
+   "file": "instrument/viola/s60",
+   "key": 60.003,
+   "lo": 59,
+   "hi": 61,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3446,
+   "curve": 1.4,
+   "frames": 58653,
+   "release": 0.2,
+   "loop": [
+    5733,
+    58653
+   ]
+  },
+  {
+   "file": "instrument/viola/s63",
+   "key": 62.984,
+   "lo": 62,
+   "hi": 64,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3367,
+   "curve": 1.4,
+   "frames": 58653,
+   "release": 0.2,
+   "loop": [
+    5733,
+    58653
+   ]
+  },
+  {
+   "file": "instrument/viola/s66",
+   "key": 66.0,
+   "lo": 65,
+   "hi": 67,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2934,
+   "curve": 1.4,
+   "frames": 58653,
+   "release": 0.2,
+   "loop": [
+    5733,
+    58653
+   ]
+  },
+  {
+   "file": "instrument/viola/s69",
+   "key": 69.0,
+   "lo": 68,
+   "hi": 70,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3348,
+   "curve": 1.4,
+   "frames": 58653,
+   "release": 0.2,
+   "loop": [
+    5733,
+    58653
+   ]
+  },
+  {
+   "file": "instrument/viola/s72",
+   "key": 72.003,
+   "lo": 71,
+   "hi": 73,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2723,
+   "curve": 1.4,
+   "frames": 58653,
+   "release": 0.2,
+   "loop": [
+    5733,
+    58653
+   ]
+  },
+  {
+   "file": "instrument/viola/s75",
+   "key": 75.007,
+   "lo": 74,
+   "hi": 76,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3028,
+   "curve": 1.4,
+   "frames": 58653,
+   "release": 0.2,
+   "loop": [
+    5733,
+    58653
+   ]
+  },
+  {
+   "file": "instrument/viola/s78",
+   "key": 78.0,
+   "lo": 77,
+   "hi": 79,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2225,
+   "curve": 1.4,
+   "frames": 58653,
+   "release": 0.2,
+   "loop": [
+    5733,
+    58653
+   ]
+  },
+  {
+   "file": "instrument/viola/s81",
+   "key": 81.0,
+   "lo": 80,
+   "hi": 82,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3237,
+   "curve": 1.4,
+   "frames": 58653,
+   "release": 0.2,
+   "loop": [
+    5733,
+    58653
+   ]
+  },
+  {
+   "file": "instrument/viola/s84",
+   "key": 84.003,
+   "lo": 83,
+   "hi": 85,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.289,
+   "curve": 1.4,
+   "frames": 58653,
+   "release": 0.2,
+   "loop": [
+    5733,
+    58653
+   ]
+  },
+  {
+   "file": "instrument/viola/s87",
+   "key": 86.995,
+   "lo": 86,
+   "hi": 88,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2712,
+   "curve": 1.4,
+   "frames": 58653,
+   "release": 0.2,
+   "loop": [
+    5733,
+    58653
+   ]
+  }
+ ]
+}

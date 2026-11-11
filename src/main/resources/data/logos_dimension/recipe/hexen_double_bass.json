@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " PS",
+    "PNP",
+    "PPS"
+  ],
+  "key": {
+    "P": "minecraft:dark_oak_planks",
+    "S": "minecraft:string",
+    "N": "minecraft:note_block"
+  },
+  "result": {
+    "id": "logos_dimension:hexen_double_bass",
+    "count": 1
+  }
+}

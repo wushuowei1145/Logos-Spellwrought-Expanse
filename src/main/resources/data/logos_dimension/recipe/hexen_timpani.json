@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "LLL",
+    "CNC",
+    "C C"
+  ],
+  "key": {
+    "L": "minecraft:leather",
+    "C": "minecraft:copper_ingot",
+    "N": "minecraft:note_block"
+  },
+  "result": {
+    "id": "logos_dimension:hexen_timpani",
+    "count": 1
+  }
+}

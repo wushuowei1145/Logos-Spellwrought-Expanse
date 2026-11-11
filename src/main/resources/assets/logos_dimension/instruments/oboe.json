@@ -1,0 +1,200 @@
+{
+ "format": 1,
+ "quality": "synth",
+ "source": "synthesized by tools/instrument_samples.py",
+ "range": 32,
+ "zones": [
+  {
+   "file": "instrument/oboe/s58",
+   "key": 58.019,
+   "lo": 58,
+   "hi": 59,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.283,
+   "curve": 1.2,
+   "frames": 55125,
+   "release": 0.12,
+   "loop": [
+    2205,
+    55125
+   ]
+  },
+  {
+   "file": "instrument/oboe/s61",
+   "key": 61.02,
+   "lo": 60,
+   "hi": 62,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.3243,
+   "curve": 1.2,
+   "frames": 55125,
+   "release": 0.12,
+   "loop": [
+    2205,
+    55125
+   ]
+  },
+  {
+   "file": "instrument/oboe/s64",
+   "key": 64.02,
+   "lo": 63,
+   "hi": 65,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2982,
+   "curve": 1.2,
+   "frames": 55125,
+   "release": 0.12,
+   "loop": [
+    2205,
+    55125
+   ]
+  },
+  {
+   "file": "instrument/oboe/s67",
+   "key": 66.985,
+   "lo": 66,
+   "hi": 68,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2525,
+   "curve": 1.2,
+   "frames": 55125,
+   "release": 0.12,
+   "loop": [
+    2205,
+    55125
+   ]
+  },
+  {
+   "file": "instrument/oboe/s70",
+   "key": 69.988,
+   "lo": 69,
+   "hi": 71,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2889,
+   "curve": 1.2,
+   "frames": 55125,
+   "release": 0.12,
+   "loop": [
+    2205,
+    55125
+   ]
+  },
+  {
+   "file": "instrument/oboe/s73",
+   "key": 72.994,
+   "lo": 72,
+   "hi": 74,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2566,
+   "curve": 1.2,
+   "frames": 55125,
+   "release": 0.12,
+   "loop": [
+    2205,
+    55125
+   ]
+  },
+  {
+   "file": "instrument/oboe/s76",
+   "key": 75.998,
+   "lo": 75,
+   "hi": 77,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2017,
+   "curve": 1.2,
+   "frames": 55125,
+   "release": 0.12,
+   "loop": [
+    2205,
+    55125
+   ]
+  },
+  {
+   "file": "instrument/oboe/s79",
+   "key": 79.004,
+   "lo": 78,
+   "hi": 80,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2385,
+   "curve": 1.2,
+   "frames": 55125,
+   "release": 0.12,
+   "loop": [
+    2205,
+    55125
+   ]
+  },
+  {
+   "file": "instrument/oboe/s82",
+   "key": 82.003,
+   "lo": 81,
+   "hi": 83,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2272,
+   "curve": 1.2,
+   "frames": 55125,
+   "release": 0.12,
+   "loop": [
+    2205,
+    55125
+   ]
+  },
+  {
+   "file": "instrument/oboe/s85",
+   "key": 84.994,
+   "lo": 84,
+   "hi": 86,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2101,
+   "curve": 1.2,
+   "frames": 55125,
+   "release": 0.12,
+   "loop": [
+    2205,
+    55125
+   ]
+  },
+  {
+   "file": "instrument/oboe/s88",
+   "key": 87.998,
+   "lo": 87,
+   "hi": 89,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.2189,
+   "curve": 1.2,
+   "frames": 55125,
+   "release": 0.12,
+   "loop": [
+    2205,
+    55125
+   ]
+  },
+  {
+   "file": "instrument/oboe/s91",
+   "key": 91.004,
+   "lo": 90,
+   "hi": 92,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.1937,
+   "curve": 1.2,
+   "frames": 55125,
+   "release": 0.12,
+   "loop": [
+    2205,
+    55125
+   ]
+  }
+ ]
+}

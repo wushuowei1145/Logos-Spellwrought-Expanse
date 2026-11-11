@@ -5,11 +5,15 @@ import dev.logos.dimension.music.ConcertHarpBlock;
 import dev.logos.dimension.music.GrandPianoBlock;
 import dev.logos.dimension.music.InstrumentBlock;
 import dev.logos.dimension.music.InstrumentBlockEntity;
+import dev.logos.dimension.music.InstrumentKind;
+import dev.logos.dimension.music.InstrumentSeat;
 import dev.logos.dimension.music.Instruments;
 import dev.logos.dimension.music.MusicRoll;
+import dev.logos.dimension.music.MusicStandBlock;
 import dev.logos.dimension.music.RollCopyRecipe;
 import dev.logos.dimension.music.RollInfo;
 import dev.logos.dimension.music.RollStore;
+import dev.logos.dimension.music.SeatedInstrumentBlock;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,14 +30,19 @@ import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -41,6 +50,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 /**
  * 魔女之森乐器：钢琴 2×2、竖琴两格高，拆任意一块整体拆掉、只掉一件乐器和槽里的纸带；
  * 纸带复制配方；纸带内容存档读写与临时纸带；红石上升沿开始播放、「信号停止时停止」。
+ * 大提琴、低音提琴：空手右键坐（站）到琴后的座位上，座位不重复、随琴消失；乐谱架认得中提琴、双簧管、巴松管。
  */
 public final class InstrumentGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS = DeferredRegister.create(Registries.TEST_FUNCTION, LogosDimension.ID);
@@ -54,6 +64,7 @@ public final class InstrumentGameTests {
         tests.put("instrument_redstone_starts", InstrumentGameTests::redstoneStarts);
         tests.put("instrument_new_shapes_break_whole", InstrumentGameTests::newShapesBreakWhole);
         tests.put("instrument_music_stand", InstrumentGameTests::musicStand);
+        tests.put("instrument_seated_strings", InstrumentGameTests::seatedStrings);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -233,6 +244,10 @@ public final class InstrumentGameTests {
         h.assertTrue(!be.playable() && !be.play(), "an empty stand cannot play");
         h.assertTrue(Instruments.heldKind(new ItemStack(Instruments.VIOLIN.get())) == dev.logos.dimension.music.InstrumentKind.VIOLIN, "violin item kind");
         h.assertTrue(Instruments.heldKind(new ItemStack(Instruments.BLANK_ROLL.get())) == null, "a roll is not an instrument");
+        for (Item item : List.of(Instruments.VIOLA.get(), Instruments.OBOE.get(), Instruments.BASSOON.get())) {
+            InstrumentKind kind = Instruments.heldKind(new ItemStack(item));
+            h.assertTrue(kind != null && MusicStandBlock.Holds.of(kind).kind() == kind, item + " has its own look on the stand");
+        }
         // 与拿着小提琴右键架子做的事相同
         be.setInstrument(new ItemStack(Instruments.VIOLIN.get()));
         level.setBlockAndUpdate(pos, level.getBlockState(pos).setValue(dev.logos.dimension.music.MusicStandBlock.HOLDS,
@@ -252,6 +267,47 @@ public final class InstrumentGameTests {
         h.assertTrue(dropped(level, pos, Instruments.MUSIC_ROLL_ITEM.get()) == 1, "the roll drops");
         h.assertTrue(dropped(level, pos, Instruments.MUSIC_STAND_ITEM.get().asItem()) == 1, "the stand drops");
         h.succeed();
+    }
+
+    /**
+     * 大提琴两格高：空手右键（上半格也行）坐到琴后的座位上，双脚正落在座位处，身体朝着琴；有人坐着时别人再右键不会多出座位。
+     * 低音提琴的人站在地上；定音鼓一格。拆掉大提琴：整把拆掉、只掉一件，座位随后消失，人站起来。
+     */
+    private static void seatedStrings(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos cello = h.absolutePos(new BlockPos(2, 1, 2));
+        place(level, cello, Instruments.CELLO.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.SOUTH));
+        h.assertTrue(level.getBlockState(cello.above()).is(Instruments.CELLO.get()), "the cello is two tall");
+        Player first = h.makeMockPlayer(GameType.SURVIVAL);
+        first.snapTo(cello.getX() + 0.5, cello.getY(), cello.getZ() + 2.5);
+        BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(cello), Direction.SOUTH, cello, false);
+        level.getBlockState(cello.above()).useWithoutItem(level, first, hit.withPosition(cello.above()));
+        if (!(first.getVehicle() instanceof InstrumentSeat seat)) throw new AssertionError("right-clicking the cello seats the player");
+        h.assertTrue(seat.instrument().equals(cello) && seat.kind() == InstrumentKind.CELLO, "the seat belongs to the cello");
+        Vec3 at = SeatedInstrumentBlock.seatPosition(cello, Direction.SOUTH, InstrumentKind.CELLO);
+        seat.positionRider(first);
+        h.assertTrue(first.position().distanceTo(at) < 1e-4, "the player's feet are on the seat: " + first.position() + " vs " + at);
+        h.assertTrue(Math.abs(Mth.wrapDegrees(seat.getYRot() - Direction.SOUTH.toYRot())) < 1e-3, "the seat faces the way the cello faces");
+        h.assertTrue(at.z < cello.getZ() + 0.5, "the player sits behind a south-facing cello");
+        Player second = h.makeMockPlayer(GameType.SURVIVAL);
+        level.getBlockState(cello).useWithoutItem(level, second, hit);
+        h.assertTrue(second.getVehicle() == null && level.getEntitiesOfClass(InstrumentSeat.class, new AABB(cello).inflate(3)).size() == 1,
+            "a taken seat is not doubled");
+        BlockPos bass = h.absolutePos(new BlockPos(5, 1, 2));
+        place(level, bass, Instruments.DOUBLE_BASS.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.EAST));
+        h.assertTrue(level.getBlockState(bass.above()).is(Instruments.DOUBLE_BASS.get()), "the double bass is two tall");
+        h.assertTrue(SeatedInstrumentBlock.feet(InstrumentKind.DOUBLE_BASS).y == 0, "the bass player stands on the floor");
+        BlockPos timpani = h.absolutePos(new BlockPos(2, 1, 5));
+        place(level, timpani, Instruments.TIMPANI.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.SOUTH));
+        h.assertTrue(level.getBlockEntity(timpani) instanceof InstrumentBlockEntity be && be.kind() == InstrumentKind.TIMPANI, "the timpani has its entity");
+        level.destroyBlock(cello.above(), true);
+        h.assertTrue(level.getBlockState(cello).isAir(), "the cello goes as a whole");
+        h.assertTrue(dropped(level, cello, Instruments.CELLO_ITEM.get().asItem()) == 1, "one cello drops");
+        // 座位在自己下一次 tick 时发现琴没了（测试区的区块刚强制加载，实体开始 tick 可能要晚几刻）
+        h.succeedWhen(() -> {
+            h.assertTrue(level.getEntitiesOfClass(InstrumentSeat.class, new AABB(cello).inflate(3)).isEmpty(), "the seat goes with the cello");
+            h.assertTrue(first.getVehicle() == null, "the player stands up");
+        });
     }
 
     private InstrumentGameTests() {}

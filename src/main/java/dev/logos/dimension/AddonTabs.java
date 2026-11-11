@@ -104,6 +104,7 @@ public final class AddonTabs {
             "starbloom_grand_piano", "hexen_concert_harp",
             "hexen_organ_console", "organ_wind_chest", "organ_tin_pipe", "organ_wood_pipe", "organ_trumpet_pipe",
             "hexen_harpsichord", "hexen_celesta", "hexen_glockenspiel", "hexen_tubular_bells",
+            "hexen_cello", "hexen_double_bass", "hexen_timpani",
             "hexen_music_stand",
             // 运镜的测试方块
             "camera_test_block"));
@@ -111,7 +112,7 @@ public final class AddonTabs {
     /** 道具：画具、绘马与签纸、空白霊符、白梅的形代、空白纸带。 */
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TOOLS = tab("tools", FUNCTIONAL, "paint_brush", out -> {
         ids(out, "paint_brush", "paint_palette", "journey_ema", "journey_omikuji", "shiraume_katashiro", "blank_music_roll",
-            "hexen_violin", "hexen_flute", "hexen_trumpet");
+            "hexen_violin", "hexen_viola", "hexen_flute", "hexen_oboe", "hexen_bassoon", "hexen_trumpet");
         Reifu.REIFU.values().forEach(r -> out.accept(r.blank().get()));
     });
 
