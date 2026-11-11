@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "logos_dimension:block/taixuan_brass_ridge_slab"
+    },
+    "type=top": {
+      "model": "logos_dimension:block/taixuan_brass_ridge_slab_top"
+    },
+    "type=double": {
+      "model": "logos_dimension:block/taixuan_brass_ridge_double"
+    }
+  }
+}

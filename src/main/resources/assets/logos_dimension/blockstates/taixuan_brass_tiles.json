@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "logos_dimension:block/taixuan_brass_tiles_x"
+    },
+    "axis=y": {
+      "model": "logos_dimension:block/taixuan_brass_tiles_z"
+    },
+    "axis=z": {
+      "model": "logos_dimension:block/taixuan_brass_tiles_z"
+    }
+  }
+}

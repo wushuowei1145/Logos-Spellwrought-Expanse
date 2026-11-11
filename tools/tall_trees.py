@@ -19,7 +19,7 @@ with zipfile.ZipFile(ROOT.parent/'LogosParent-current/build/moddev/artifacts/min
         write(D/'worldgen/placed_feature'/f'{name}.json',{'feature':'logos_dimension:'+name,'placement':[
             {'type':'minecraft:rarity_filter','chance':3},{'type':'minecraft:in_square'},
             {'type':'minecraft:surface_water_depth_filter','max_water_depth':0},
-            {'type':'minecraft:heightmap','heightmap':'OCEAN_FLOOR_WG'},
+            {'type':'minecraft:heightmap','heightmap':'OCEAN_FLOOR'},
             {'type':'minecraft:block_predicate_filter','predicate':{'type':'minecraft:matching_block_tag','offset':[0,-1,0],'tag':'minecraft:dirt'}},
             {'type':'minecraft:biome'}]})
         p=D/'worldgen/biome'/f'{bid}.json';b=json.loads(p.read_text(encoding='utf-8'));features=b['features'][9]

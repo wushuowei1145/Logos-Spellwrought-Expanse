@@ -1,0 +1,16 @@
+{
+  "name": "logos_dimension:taixuan/tile_0_7_1",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "logos_dimension:taixuan/tile_0_7_1",
+        "processors": "logos_dimension:taixuan_preserve",
+        "override_liquid_settings": "ignore_waterlogging",
+        "projection": "rigid"
+      }
+    }
+  ]
+}
