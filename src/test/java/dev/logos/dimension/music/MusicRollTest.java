@@ -33,6 +33,29 @@ class MusicRollTest {
         assertEquals(MusicRoll.hash(bytes), MusicRoll.hash(back.encode()));
     }
 
+    private static MusicRoll withTempos(MusicRoll base, List<MusicRoll.Tempo> tempos) {
+        return new MusicRoll(base.title(), base.author(), base.bpmX100(), base.beatsPerBar(), base.beatUnit(), base.parts(), base.events(), tempos);
+    }
+
+    @Test void tempoAndMeterChangesRoundTrip() throws Exception {
+        MusicRoll roll = withTempos(sample(), List.of(new MusicRoll.Tempo(4000, 9000, 3, 4), new MusicRoll.Tempo(1000, 6000, 6, 8)));
+        byte[] bytes = roll.encode();
+        MusicRoll back = MusicRoll.decode(bytes);
+        assertEquals(List.of(new MusicRoll.Tempo(1000, 6000, 6, 8), new MusicRoll.Tempo(4000, 9000, 3, 4)), back.tempos(), "sorted by time");
+        assertEquals(roll.events(), back.events());
+        assertArrayEquals(bytes, back.encode());
+        assertEquals(back.tempos(), back.withMeta("新标题", "").tempos());
+    }
+
+    @Test void rollsWithoutTempoChangesKeepTheOldBytes() throws Exception {
+        byte[] old = sample().encode();
+        assertArrayEquals(old, withTempos(sample(), List.of()).encode());
+        assertTrue(MusicRoll.decode(old).tempos().isEmpty());
+        byte[] longer = withTempos(sample(), List.of(new MusicRoll.Tempo(1000, 6000, 3, 4))).encode();
+        assertArrayEquals(old, java.util.Arrays.copyOf(longer, old.length), "the tempo section is only appended");
+        assertEquals('T', longer[old.length]);
+    }
+
     @Test void sortsEventsByTime() {
         MusicRoll roll = new MusicRoll("", "", 12000, 4, 4, List.of(),
             List.of(MusicRoll.Event.note(900, 0, 62, 90, 10), MusicRoll.Event.note(100, 0, 60, 90, 10)));

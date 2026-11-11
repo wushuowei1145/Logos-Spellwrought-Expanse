@@ -1,0 +1,58 @@
+{
+  "variants": {
+    "facing=north,score=false,side=false": {
+      "model": "logos_dimension:block/hexen_podium"
+    },
+    "facing=north,score=true,side=false": {
+      "model": "logos_dimension:block/hexen_podium_score"
+    },
+    "facing=north,score=false,side=true": {
+      "model": "logos_dimension:block/hexen_podium_part"
+    },
+    "facing=north,score=true,side=true": {
+      "model": "logos_dimension:block/hexen_podium_part"
+    },
+    "facing=east,score=false,side=false": {
+      "model": "logos_dimension:block/hexen_podium",
+      "y": 90
+    },
+    "facing=east,score=true,side=false": {
+      "model": "logos_dimension:block/hexen_podium_score",
+      "y": 90
+    },
+    "facing=east,score=false,side=true": {
+      "model": "logos_dimension:block/hexen_podium_part"
+    },
+    "facing=east,score=true,side=true": {
+      "model": "logos_dimension:block/hexen_podium_part"
+    },
+    "facing=south,score=false,side=false": {
+      "model": "logos_dimension:block/hexen_podium",
+      "y": 180
+    },
+    "facing=south,score=true,side=false": {
+      "model": "logos_dimension:block/hexen_podium_score",
+      "y": 180
+    },
+    "facing=south,score=false,side=true": {
+      "model": "logos_dimension:block/hexen_podium_part"
+    },
+    "facing=south,score=true,side=true": {
+      "model": "logos_dimension:block/hexen_podium_part"
+    },
+    "facing=west,score=false,side=false": {
+      "model": "logos_dimension:block/hexen_podium",
+      "y": 270
+    },
+    "facing=west,score=true,side=false": {
+      "model": "logos_dimension:block/hexen_podium_score",
+      "y": 270
+    },
+    "facing=west,score=false,side=true": {
+      "model": "logos_dimension:block/hexen_podium_part"
+    },
+    "facing=west,score=true,side=true": {
+      "model": "logos_dimension:block/hexen_podium_part"
+    }
+  }
+}

@@ -119,6 +119,8 @@ public class MusicStandBlock extends InstrumentBlock {
         ItemStack old = be.takeInstrument();
         be.setInstrument(stack.copyWithCount(1));
         level.setBlock(pos, state.setValue(HOLDS, Holds.of(kind)), Block.UPDATE_ALL);
+        // 在乐团里：按换上的乐器重新分声部
+        dev.logos.dimension.music.orchestra.PodiumBlockEntity.memberChanged(level, be.orchestra(), pos, false);
         if (!player.getAbilities().instabuild) stack.shrink(1);
         if (!old.isEmpty() && !player.getInventory().add(old)) player.drop(old, false);
         return InteractionResult.SUCCESS;
@@ -137,6 +139,8 @@ public class MusicStandBlock extends InstrumentBlock {
             if (!level.isClientSide() && level.getBlockEntity(pos) instanceof InstrumentBlockEntity be) {
                 ItemStack out = be.takeInstrument();
                 level.setBlock(pos, state.setValue(HOLDS, Holds.NONE), Block.UPDATE_ALL);
+                // 乐器拿走了：退出乐团
+                dev.logos.dimension.music.orchestra.PodiumBlockEntity.memberChanged(level, be.orchestra(), pos, false);
                 if (!out.isEmpty() && !player.getInventory().add(out)) player.drop(out, false);
             }
             return InteractionResult.SUCCESS;

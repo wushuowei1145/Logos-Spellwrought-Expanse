@@ -56,6 +56,7 @@ public final class SampleMaps {
         OrganMixer.engineReloaded();
         VoiceBank.engineReloaded();
         MusicClient.engineReloaded();
+        Conducting.engineReloaded();
     }
 
     static void load(ResourceManager resources) {
@@ -127,14 +128,14 @@ public final class SampleMaps {
      * 放纸带前先把这卷纸带要用到的采样解码好（按各声部的移调、力度挑区）：合奏一开始十几件乐器同时要读采样，
      * 等到弹的那一刻才解码，短音会晚到、甚至松开时还没响。
      */
-    static void prewarm(InstrumentKind kind, dev.logos.dimension.music.MusicRoll roll, int[] shifts) {
+    static void prewarm(InstrumentKind kind, dev.logos.dimension.music.MusicRoll roll, int[] shifts, int partMask) {
         SampleMap map = MAPS.get(kind);
         if (map == null) return;
         var engine = ((SoundManagerAccess) Minecraft.getInstance().getSoundManager()).logos_dimension$engine();
         var buffers = ((SoundEngineAccess) engine).logos_dimension$buffers();
         java.util.Set<String> files = new java.util.HashSet<>();
         for (var e : roll.events()) {
-            if (e.type() != dev.logos.dimension.music.MusicRoll.NOTE) continue;
+            if (e.type() != dev.logos.dimension.music.MusicRoll.NOTE || (partMask & (1 << e.part())) == 0) continue;
             int pitch = kind.fold(e.pitch() + shifts[e.part()]);
             SampleMap.Zone z = map.pick(pitch, kind.velocitySensitive() ? e.velocity() : 100);
             if (z == null || !files.add(z.file())) continue;

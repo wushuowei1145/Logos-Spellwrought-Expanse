@@ -80,6 +80,15 @@
         "class": "dev/logos/dimension/client/music/HandheldPoses",
         "field": "DOUBLE_BASS"
       }
+    },
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "LOGOS_DIMENSION_CONDUCT",
+      "constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {
+        "class": "dev/logos/dimension/client/music/ConductingPoses",
+        "field": "CONDUCT"
+      }
     }
   ]
 }

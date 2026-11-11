@@ -56,6 +56,10 @@ public class InstrumentBlockEntity extends BlockEntity {
      */
     private long startNanos;
     private int startOffsetMs;
+    /** 属于哪座指挥台的乐团（存盘；一件乐器只属于一个乐团）。 */
+    private @Nullable BlockPos orchestra;
+    /** 乐团正在演奏、这件乐器跟着那座指挥台时不为空：自己的纸带、红石暂时不起作用（不存盘）。 */
+    private @Nullable BlockPos conductedBy;
     private int pausedAt = -1;
 
     public InstrumentBlockEntity(BlockPos pos, BlockState state) {
@@ -204,9 +208,27 @@ public class InstrumentBlockEntity extends BlockEntity {
         return startOffsetMs + (int) Math.min(Integer.MAX_VALUE / 2, (System.nanoTime() - startNanos) / 1_000_000L);
     }
 
-    /** 播放纸带槽里的纸带；暂停中则从暂停处继续。 */
+    public @Nullable BlockPos orchestra() {
+        return orchestra;
+    }
+
+    public void setOrchestra(@Nullable BlockPos podium) {
+        orchestra = podium == null ? null : podium.immutable();
+        setChanged();
+        if (level != null && !level.isClientSide()) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+    }
+
+    public @Nullable BlockPos conductedBy() {
+        return conductedBy;
+    }
+
+    public void setConducted(@Nullable BlockPos podium) {
+        conductedBy = podium == null ? null : podium.immutable();
+    }
+
+    /** 播放纸带槽里的纸带；暂停中则从暂停处继续。跟着乐团演奏时不放自己的纸带。 */
     public boolean play() {
-        if (level == null || !playable()) return false;
+        if (level == null || !playable() || conductedBy != null) return false;
         if (playing != null && pausedAt >= 0) {
             startOffsetMs = pausedAt;
             startTick = level.getGameTime();
@@ -312,6 +334,8 @@ public class InstrumentBlockEntity extends BlockEntity {
         if (playing != null && playingTemporary) RollStore.dropTemporary(playing);
         playing = null;
         if (level instanceof ServerLevel) broadcast();
+        // 乐团里的乐器被拆了：退出乐团
+        if (level != null) dev.logos.dimension.music.orchestra.PodiumBlockEntity.memberChanged(level, orchestra, worldPosition, true);
         super.preRemoveSideEffects(pos, state);
     }
 
@@ -328,6 +352,7 @@ public class InstrumentBlockEntity extends BlockEntity {
         performer = input.read("performer", UUIDUtil.CODEC).orElse(null);
         stops = input.read("stops", Codec.INT).orElse(dev.logos.dimension.music.organ.OrganStop.ALWAYS);
         reverbMode = input.read("reverb", Codec.INT).orElse(0);
+        orchestra = input.read("orchestra", Codec.LONG).map(BlockPos::of).orElse(null);
         organ = null;
     }
 
@@ -339,6 +364,7 @@ public class InstrumentBlockEntity extends BlockEntity {
         output.store("part_mask", Codec.INT, partMask);
         output.store("stop_with_signal", Codec.BOOL, stopWithSignal);
         output.store("powered", Codec.BOOL, powered);
+        if (orchestra != null) output.store("orchestra", Codec.LONG, orchestra.asLong());
         if (kind() == InstrumentKind.PIPE_ORGAN) {
             output.store("stops", Codec.INT, stops);
             output.store("reverb", Codec.INT, reverbMode);

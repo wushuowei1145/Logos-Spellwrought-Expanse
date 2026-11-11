@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " L ",
+    "PGP",
+    "PPP"
+  ],
+  "key": {
+    "L": "minecraft:lectern",
+    "G": "minecraft:gold_ingot",
+    "P": "minecraft:dark_oak_planks"
+  },
+  "result": {
+    "id": "logos_dimension:hexen_podium",
+    "count": 1
+  }
+}

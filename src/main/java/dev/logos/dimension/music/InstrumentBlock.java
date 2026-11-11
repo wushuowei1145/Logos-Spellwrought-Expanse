@@ -90,6 +90,14 @@ public abstract class InstrumentBlock extends Block implements EntityBlock {
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                           InteractionHand hand, BlockHitResult hit) {
+        if (stack.is(dev.logos.dimension.music.orchestra.Orchestra.BATON.get())) {
+            // 指挥棒：把这件乐器加进（或移出）指挥棒绑定的那个乐团
+            if (!level.isClientSide()) {
+                dev.logos.dimension.music.orchestra.Orchestra.batonOnInstrument(stack, (net.minecraft.server.level.ServerLevel) level,
+                    mainPos(state, pos), player);
+            }
+            return InteractionResult.SUCCESS;
+        }
         if (!Instruments.isRoll(stack)) return InteractionResult.TRY_WITH_EMPTY_HAND;
         if (level.isClientSide()) return InteractionResult.SUCCESS;
         if (!(level.getBlockEntity(mainPos(state, pos)) instanceof InstrumentBlockEntity be)) return InteractionResult.PASS;
