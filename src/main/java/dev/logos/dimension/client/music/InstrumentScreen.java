@@ -90,6 +90,8 @@ public class InstrumentScreen extends Screen implements MidiKeyboard.Target {
         recordButton = null;
         int right = x0 + W - PAD;
         boolean organ = kind() == InstrumentKind.PIPE_ORGAN;
+        // 先把当前力度那一层的采样解码好（钢琴一层 30 个），第一下不慢半拍
+        if (!organ) SampleMaps.prewarm(kind(), velocity);
         int tx = right - (organ ? 156 : 104);
         addRenderableWidget(Button.builder(tr("tab_play"), b -> page(PLAY)).bounds(tx, y0 + 20, 50, 16).build()).active = page != PLAY;
         if (organ) {

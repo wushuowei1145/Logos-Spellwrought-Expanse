@@ -57,7 +57,7 @@ public final class MusicClient {
 
     /** 拿在手上的乐器右键：打开屏幕底部的演奏条。 */
     public static void openHandheld(InstrumentKind kind, net.minecraft.world.InteractionHand hand) {
-        HeldMixer.prewarm(kind);
+        SampleMaps.prewarm(kind, -1);
         Minecraft.getInstance().setScreen(new HandheldScreen(kind, hand));
     }
 
@@ -117,7 +117,6 @@ public final class MusicClient {
         VoiceBank.clear();
         OrganMixer.clear();
         OrganRoom.clear();
-        HeldMixer.clear();
         HELD_BATCH.clear();
         LAST_HELD_NOTE.clear();
     }
@@ -217,7 +216,7 @@ public final class MusicClient {
         var level = Minecraft.getInstance().level;
         var who = level == null ? null : level.getEntity(p.entity());
         if (!kind.handheld() || who == null) return;
-        HeldMixer.prewarm(kind);
+        SampleMaps.prewarm(kind, -1);
         long base = System.nanoTime() + LISTEN_DELAY_NS;
         for (MusicPayloads.LiveNote n : p.notes()) {
             long when = base + n.offsetMs() * 1_000_000L;
@@ -238,14 +237,14 @@ public final class MusicClient {
         return t != null && System.nanoTime() - t < 600_000_000L;
     }
 
-    /** 自己和附近的人手上拿着手持乐器时，预先合成它的声音，免得第一个音卡一下。 */
+    /** 自己和附近的人手上拿着手持乐器时，先把它的采样解码好，免得第一个音慢半拍。 */
     private static void prewarmHeld() {
         var level = Minecraft.getInstance().level;
         if (level == null || level.getGameTime() % 20 != 0) return;
         for (var player : level.players()) {
             for (var stack : List.of(player.getMainHandItem(), player.getOffhandItem())) {
                 InstrumentKind kind = dev.logos.dimension.music.Instruments.heldKind(stack);
-                if (kind != null) HeldMixer.prewarm(kind);
+                if (kind != null) SampleMaps.prewarm(kind, -1);
             }
         }
     }
@@ -448,7 +447,7 @@ public final class MusicClient {
             TRACKS.put(pos, t);
             prewarmOrgan(pos);
             InstrumentKind k = kindAt(pos);
-            if (k != null && k.handheld()) HeldMixer.prewarm(k);
+            if (k != null && k.handheld()) SampleMaps.prewarm(k, -1);
             t.playing = false;
         }
         t.partMask = p.partMask();

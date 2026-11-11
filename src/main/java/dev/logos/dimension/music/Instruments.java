@@ -17,7 +17,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.Permissions;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -53,7 +52,6 @@ public final class Instruments {
         DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, LogosDimension.ID);
     private static final DeferredRegister<RecipeSerializer<?>> RECIPES =
         DeferredRegister.create(Registries.RECIPE_SERIALIZER, LogosDimension.ID);
-    private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, LogosDimension.ID);
 
     /** 演奏者离乐器中心多远以内才能弹、才能操作纸带。 */
     public static final double REACH = 8.0;
@@ -137,21 +135,10 @@ public final class Instruments {
     public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<RollCopyRecipe>> ROLL_COPY =
         RECIPES.register("music_roll_copy", () -> RollCopyRecipe.SERIALIZER);
 
-    static {
-        for (InstrumentKind kind : InstrumentKind.values()) {
-            if (kind.synthesized()) continue;
-            for (int s : kind.samples()) {
-                var id = kind.soundId(s);
-                SOUNDS.register(id.getPath(), () -> SoundEvent.createVariableRangeEvent(id));
-            }
-        }
-    }
-
     public static void register(IEventBus bus) {
         BLOCK_ENTITIES.register(bus);
         COMPONENTS.register(bus);
         RECIPES.register(bus);
-        SOUNDS.register(bus);
         bus.addListener(Instruments::payloads);
         NeoForge.EVENT_BUS.addListener((ServerStartedEvent e) -> RollStore.open(e.getServer()));
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> {

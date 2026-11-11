@@ -1,5 +1,24 @@
 # 首版验证记录
 
+## 乐器换用录音采样
+
+2026-11-11：分支 `feat/recorded-samples`，基于 main `7a98e0e0`（#241），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/INSTRUMENT_SAMPLES.md](docs/INSTRUMENT_SAMPLES.md)、[docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md) 第 15 节。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 全量 **350/351**，唯一失败的仍是 main 上就缺的 `item.logos_dimension.fuda_desk`。新增 `SampleMapTest` 4/4（音域内每个音、每个力度都有正好覆盖的区，变调 ≤ 4 个半音，音量在 (0, 1]；文件、循环点、松键声都在；只有手持乐器循环；区的选取与音量公式）；删去 `HeldSynthTest`（合成器已去掉） |
+| 生成脚本 | 每个采样实测八度与预期一致（钢琴最低几层的 C1 基音太弱、量成低八度，钢琴本来就用调律表，不受影响）；钢琴 C8 实测比调律表高约 60 音分，高音区改用实测；换层响度差钢琴 ≤ 0.34 dB、竖琴一个音 1.9 dB、其余 < 1 dB；同样的输入重跑，ogg 与采样表字节不变 |
+| 循环接缝 | 60 个循环区解码后检查：绕回那一步 ≤ 两边第 99 百分位一步的 1.16 倍；解码长度都盖过循环终点 |
+| 试听渲染 | 九件乐器的音阶实测音准 ±5 音分内（音头揉弦处最多 14 音分），峰值、响度正常 |
+| 世界测试 | `instrument_*` **7/7**、`organ_*` 4/4、`creative_tabs_cover_items` 1/1 |
+| 实际客户端 | 乐器相关的 11 个场景 **11/11、27/27 检查**；`handheld_play_ui` 新增：按住长笛一个音 7 秒（比采样长）仍在响、OpenAL 上设了循环点，松开后停下 |
+| 未验证 | 音色只能人工试听（试听在仓库外 `builds/recorded-samples-2026-11-11/demo`）；多人、专用服务器、光影包没测；OpenAL 不支持循环点的声卡驱动上只会打日志、长音到采样结束为止（没有这样的环境可测） |
+
+```text
+uv run --no-project --with numpy --with scipy python tools/instrument_sources.py --cache <下载目录> --ffmpeg <ffmpeg> --demo <试听目录>
+./gradlew test -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=instrument_play_ui,mallet_instrument_play,handheld_play_ui,organ_play_ui" -PldTestHeadless -PldTestWindow=1280x720
+```
 ## 太玄灵境重做：删去城池，浮空宗门、深渊、链台与镇渊柱
 
 2026-11-11：分支 `feat/taixuan-sanctuary`（#218），先在 `feat/cloud-peaks` `f69f90f7`（#233）上做，#233 以 `0e9ec038` 压缩合并以后 rebase 到 main `7a98e0e0`（#241）。rebase 前 Logos 用 page-variants 的 jar（Logos #422）；rebase 后 main 的白梅同伴要 Logos #423，改用 `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`（含 #422、#423）。Java 25。改动和原因见 [太玄灵境](docs/TAIXUAN.md)。

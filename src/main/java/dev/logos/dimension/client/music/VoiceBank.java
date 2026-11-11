@@ -3,6 +3,7 @@ package dev.logos.dimension.client.music;
 import dev.logos.dimension.ClientConfig;
 import dev.logos.dimension.music.InstrumentBlockEntity;
 import dev.logos.dimension.music.InstrumentKind;
+import dev.logos.dimension.music.SampleMap;
 import dev.logos.dimension.music.organ.OrganSynth;
 import dev.logos.dimension.music.organ.RoomAcoustics;
 import java.util.ArrayList;
@@ -26,8 +27,10 @@ import org.jspecify.annotations.Nullable;
 /**
  * 乐器的发声：
  * <ul>
- *   <li>钢琴、竖琴：每个音从最近的采样变调播放（{@link InstrumentKind#sampleFor}），松键时在约 150 ms 内淡出；
- *       钢琴踩下延音踏板时松键不止音，竖琴的弦拨响后自然衰减。</li>
+ *   <li>采样乐器（钢琴、竖琴、钟琴、钢片琴、管钟、大键琴、手持乐器）：按采样表（{@link SampleMaps}）取这个音高、
+ *       这个力度的那个采样变调播放，音量随力度；持续音的采样带循环点，按住多久响多久。会止音的乐器松键时
+ *       按这个采样的松键时间淡出（钢琴低音长、高音短），大键琴另放一下拨子落回的声音；钢琴踩下延音踏板时不止音，
+ *       竖琴、钟琴、管钟的声音拨响或敲响后自然衰减。</li>
  *   <li>管风琴：按当前音栓组合的循环段（{@link OrganMixer}）按住多久响多久，起音 3 tick 推上来，松键淡出，
  *       室内时补一段混响尾音；按着音时换了音栓，已按住的音交叉淡入新组合（{@link #tickOrgans}）。</li>
  * </ul>
@@ -50,9 +53,17 @@ final class VoiceBank {
         /** 管风琴：用的哪一代组合（0 表示不是管风琴）。 */
         final int gen;
         final boolean tail;
+        /** 采样乐器：用的哪个采样区（松键时间、松键声、力度对应的音量）；管风琴为 null。 */
+        final SampleMap.@Nullable Zone zone;
+        final int velocity;
         boolean held = true;
+        boolean damped;
 
         Voice(NoteSound sound, int pitch, int part, long started, int gen, boolean tail) {
+            this(sound, pitch, part, started, gen, tail, null, 0);
+        }
+
+        Voice(NoteSound sound, int pitch, int part, long started, int gen, boolean tail, SampleMap.@Nullable Zone zone, int velocity) {
             this.sound = sound;
             this.pitch = pitch;
             this.part = part;
@@ -60,6 +71,8 @@ final class VoiceBank {
             this.gen = gen;
             this.tail = tail;
             this.held = !tail;
+            this.zone = zone;
+            this.velocity = velocity;
         }
 
         /** 采样自然放完时声音引擎直接把它移走，不再调用 tick，所以还要问一下声音引擎它是否还在。 */
@@ -145,20 +158,23 @@ final class VoiceBank {
             } else if (age <= attackTicks) {
                 volume = target * (age + 1f) / (attackTicks + 1f);
             }
-            // 钢琴、竖琴的采样最长约 6.5 秒，到点后声音引擎自己会结束，这里只是保险；循环的管风琴不限时
-            if (!looping && age > 20 * 8) {
+            // 不循环的采样放完时声音引擎自己会结束（钢琴低音最长约 12 秒），这里只是保险；循环的不限时
+            if (!looping && age > 20 * 40) {
                 finished = true;
                 stop();
             }
         }
     }
 
-    /** 管风琴的声音：数据不在资源里，而是 {@link OrganMixer} 现做的循环段或尾音。 */
-    static final class OrganSound extends NoteSound {
+    /**
+     * 不经 sounds.json、直接指向一个声音文件的声音：采样表里的 ogg，或管风琴在内存里现做的循环段、尾音
+     * （{@link OrganMixer}）。可闻距离和字幕在这里给。
+     */
+    static final class DirectSound extends NoteSound {
         private final Identifier buffer;
         private final int range;
 
-        OrganSound(Identifier buffer, float pitch, float volume, Vec3 at, int range, int attackTicks, boolean loop) {
+        DirectSound(Identifier buffer, float pitch, float volume, Vec3 at, int range, int attackTicks, boolean loop) {
             super(event(buffer), pitch, volume, at, attackTicks, loop);
             this.buffer = buffer;
             this.range = range;
@@ -166,7 +182,7 @@ final class VoiceBank {
 
         private String subtitle = "subtitles.logos_dimension.instrument.pipe_organ";
 
-        OrganSound subtitle(String key) {
+        DirectSound subtitle(String key) {
             this.subtitle = key;
             return this;
         }
@@ -254,38 +270,32 @@ final class VoiceBank {
         makeRoom(s);
         NoteSound sound;
         int gen = 0;
+        SampleMap.Zone zone = null;
+        int vel = velocity;
         if (kind == InstrumentKind.PIPE_ORGAN) {
             InstrumentBlockEntity be = organAt(pos);
             if (be == null) return;
             OrganMixer.Mix mix = OrganMixer.now(be.effectiveStops());
             gen = mix.gen;
             sound = organSound(mix, be, pitch, false, 3);
-        } else if (kind.handheld()) {
-            // 手持乐器：按力度选轻 / 重一层的循环段，开头叠一下弓擦、气流或铜管的冲
-            int layer = dev.logos.dimension.music.held.HeldSynth.layer(velocity);
-            var samples = HeldMixer.now(kind, layer);
-            var sample = samples[dev.logos.dimension.music.held.HeldSynth.index(kind, pitch)];
-            float volume = (float) Math.pow(Math.max(1, Math.min(127, velocity)) / 127.0, 1.2) * (layer == 0 ? 0.9f : 1f);
-            int range = Math.min(48, kind.broadcastRange() - 8);
-            String subtitle = "subtitles.logos_dimension.instrument." + kind.id();
-            OrganSound loop = new OrganSound(HeldMixer.loop(kind, layer, pitch), dev.logos.dimension.music.held.HeldSynth.ratio(sample, pitch),
-                volume, at, range, kind == InstrumentKind.VIOLIN ? 3 : 2, true).subtitle(subtitle);
-            OrganSound onset = new OrganSound(HeldMixer.attack(kind), 1f, volume * 0.45f, at, range, 0, false).subtitle(subtitle);
-            loop.follow = s.follow;
-            onset.follow = s.follow;
-            Minecraft.getInstance().getSoundManager().play(onset);
-            sound = loop;
         } else {
             // 大键琴不分力度：一律按中强
-            int v = kind.velocitySensitive() ? velocity : 100;
-            float volume = (float) Math.pow(Math.max(1, Math.min(127, v)) / 127.0, 1.6);
-            sound = new NoteSound(event(kind.soundId(kind.sampleFor(pitch))), kind.pitchRatio(pitch), volume, at, 0, false);
+            vel = kind.velocitySensitive() ? velocity : 100;
+            SampleMap map = SampleMaps.get(kind);
+            zone = map == null ? null : map.pick(pitch, vel);
+            if (zone == null) return;
+            // 手持乐器跟着人走，可闻距离按转发范围；方块乐器按采样表
+            int range = kind.handheld() ? Math.min(48, kind.broadcastRange() - 8) : map.range();
+            DirectSound note = new DirectSound(SampleMaps.sound(zone.file()), zone.ratio(pitch), zone.volume(vel), at, range, 0, zone.loops())
+                .subtitle("subtitles.logos_dimension.instrument." + kind.id());
+            note.follow = s.follow;
+            sound = note;
         }
         Minecraft.getInstance().getSoundManager().play(sound);
-        s.voices.add(new Voice(sound, pitch, part, System.nanoTime(), gen, false));
+        s.voices.add(new Voice(sound, pitch, part, System.nanoTime(), gen, false, zone, vel));
     }
 
-    private static OrganSound organSound(OrganMixer.Mix mix, InstrumentBlockEntity be, int pitch, boolean tail, int attack) {
+    private static DirectSound organSound(OrganMixer.Mix mix, InstrumentBlockEntity be, int pitch, boolean tail, int attack) {
         OrganSynth.Sample sample = mix.sample(pitch);
         var o = be.organ();
         int range = o == null ? 16 : o.range();
@@ -294,9 +304,9 @@ final class VoiceBank {
         if (tail) {
             RoomAcoustics.Reverb r = OrganRoom.reverb(be.getBlockPos(), be);
             float wet = (float) (0.3 + 0.15 * Math.min(1, r.seconds() / 3));
-            return new OrganSound(mix.tail(pitch, r), OrganSynth.ratio(sample, pitch), base * wet, at, range, 0, false);
+            return new DirectSound(mix.tail(pitch, r), OrganSynth.ratio(sample, pitch), base * wet, at, range, 0, false);
         }
-        return new OrganSound(mix.loop(pitch), OrganSynth.ratio(sample, pitch), base * 0.9f, at, range, attack, true);
+        return new DirectSound(mix.loop(pitch), OrganSynth.ratio(sample, pitch), base * 0.9f, at, range, attack, true);
     }
 
     /** 松开一个管风琴的音：淡出，室内时补尾音（同一个音的旧尾音先止住）。 */
@@ -316,7 +326,7 @@ final class VoiceBank {
         }
         if (tails >= MAX_TAILS) return;
         makeRoom(s);
-        OrganSound tail = organSound(mix, be, v.pitch, true, 0);
+        DirectSound tail = organSound(mix, be, v.pitch, true, 0);
         Minecraft.getInstance().getSoundManager().play(tail);
         s.voices.add(new Voice(tail, v.pitch, v.part, System.nanoTime(), mix.gen, true));
     }
@@ -332,8 +342,29 @@ final class VoiceBank {
                 continue;
             }
             v.held = false;
-            if (s.kind.dampsOnRelease() && !s.pedal(part)) v.sound.release(0.45f);
+            if (s.kind.dampsOnRelease() && !s.pedal(part)) damp(s, v);
         }
+    }
+
+    /** 每 tick 乘的倍数：seconds 秒后降到 -40 dB。 */
+    private static float perTick(float seconds) {
+        return (float) Math.pow(10.0, -2.0 / (Math.max(0.05f, seconds) * 20.0));
+    }
+
+    /** 止音：按这个采样的松键时间淡出；大键琴另放一下拨子落回的声音（拨弦后多久松键都会有）。 */
+    private static void damp(Source s, Voice v) {
+        if (v.damped) return;
+        v.damped = true;
+        float seconds = v.zone != null && v.zone.release() > 0 ? v.zone.release() : 0.15f;
+        v.sound.release(perTick(seconds));
+        SampleMap.Zone z = v.zone;
+        if (z == null || z.releaseSound() == null) return;
+        SampleMap map = SampleMaps.get(s.kind);
+        float touch = z.gain() > 0 ? z.volume(v.velocity) / z.gain() : 1f;
+        DirectSound release = new DirectSound(SampleMaps.sound(z.releaseSound()), z.ratio(v.pitch), Math.min(1f, z.releaseGain() * touch),
+            s.at, map == null ? 24 : map.range(), 0, false).subtitle("subtitles.logos_dimension.instrument." + s.kind.id());
+        release.follow = s.follow;
+        Minecraft.getInstance().getSoundManager().play(release);
     }
 
     static void pedal(String key, InstrumentKind kind, BlockPos pos, Vec3 at, int part, boolean down) {
@@ -347,7 +378,7 @@ final class VoiceBank {
         s.pedalMask &= ~(1 << part);
         if (!s.kind.dampsOnRelease()) return;
         for (Voice v : s.voices) {
-            if (v.part == part && !v.held) v.sound.release(0.45f);
+            if (v.part == part && !v.held && !v.tail) damp(s, v);
         }
     }
 
@@ -366,7 +397,7 @@ final class VoiceBank {
                 if (!v.held || v.tail || v.gen == mix.gen || !v.alive()) continue;
                 v.held = false;
                 v.sound.release(0.6f);
-                OrganSound fresh = organSound(mix, be, v.pitch, false, 2);
+                DirectSound fresh = organSound(mix, be, v.pitch, false, 2);
                 Minecraft.getInstance().getSoundManager().play(fresh);
                 s.voices.add(new Voice(fresh, v.pitch, v.part, System.nanoTime(), mix.gen, false));
             }

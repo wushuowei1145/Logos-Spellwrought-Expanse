@@ -1,0 +1,47 @@
+Instrument samples used by Logos: The Alchemical Crucible (logos_dimension)
+本模组乐器使用的第三方录音采样
+
+The files under assets/logos_dimension/sounds/instrument/ (except celesta/, which is synthesized by this mod)
+are derived from the sample libraries below. They are not covered by this mod's "All Rights Reserved" license.
+assets/logos_dimension/sounds/instrument/ 下的文件（celesta/ 除外，钢片琴是本模组自己合成的）取自下列采样库，
+不适用本模组的「保留所有权利」协议。
+
+Changes / 修改:
+  Mixed down to mono, resampled to 44.1 kHz, silence before the attack trimmed, decaying notes cut and faded
+  out, loop points and loop crossfades added to sustained notes, levels adjusted, re-encoded as Ogg Vorbis.
+  Only some notes and velocity layers are used. See docs/INSTRUMENT_SAMPLES.md and tools/instrument_sources.py
+  in the source repository.
+  混成单声道、重采样到 44.1 kHz、切掉起音前的静音、衰减的音截短并淡出、持续音加了循环点与交叉淡化、调整了音量，
+  重新编码为 Ogg Vorbis；只用了一部分音与力度层。做法见源码仓库的 docs/INSTRUMENT_SAMPLES.md 与 tools/instrument_sources.py。
+
+----------------------------------------------------------------------------------------------------
+Salamander Grand Piano V3  (grand_piano/)
+  Author / 作者: Alexander Holm
+  SFZ and FLAC edition / SFZ 与 FLAC 版: kinwie, sfzinstruments
+    https://github.com/sfzinstruments/SalamanderGrandPiano (commit 3382bf9496bba2486f5ab0de55a264d1dfc38404)
+  Retuning values / 重新调律: Markus Fiedler
+  Original / 原始发布: https://archive.org/details/SalamanderGrandPianoV3
+  License / 协议: Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+    https://creativecommons.org/licenses/by/3.0/
+  This mod's piano samples are an adaptation of the work above, derived from the sfzinstruments edition.
+  本模组的钢琴采样是上述作品的改编，取自 sfzinstruments 的版本。
+
+----------------------------------------------------------------------------------------------------
+VS Chamber Orchestra: Community Edition (VSCO 2 CE)  (violin/, flute/, trumpet/)
+  Versilian Studios: recorded by Sam Gossner and Simon Dalzell, sample cutting by Elan Hickler
+  https://github.com/sgossner/VSCO-2-CE (commit 440300901dfe9275fd84e0b7763af1f8443ae62e)
+  License / 协议: CC0 1.0 Universal (public domain dedication) https://creativecommons.org/publicdomain/zero/1.0/
+  Credit is not required by the license; it is given here with thanks.
+  协议不要求署名，这里致谢。
+
+----------------------------------------------------------------------------------------------------
+Versilian Community Sample Library (VCSL)  (concert_harp/, glockenspiel/, tubular_bells/, harpsichord/)
+  Versilian Studios and contributors
+  https://github.com/sgossner/VCSL (commit c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e)
+  License / 协议: CC0 1.0 Universal (public domain dedication) https://creativecommons.org/publicdomain/zero/1.0/
+  Credit is not required by the license; it is given here with thanks.
+  协议不要求署名，这里致谢。
+
+Disclaimer / 免责:
+  The material is provided as-is, without warranties of any kind. The original authors do not endorse this mod.
+  素材按原样提供，原作者不提供任何担保，也不为本模组背书。

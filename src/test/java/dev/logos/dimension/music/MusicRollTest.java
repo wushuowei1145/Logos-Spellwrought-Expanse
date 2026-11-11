@@ -82,43 +82,14 @@ class MusicRollTest {
     }
 
     /** 每种用采样的乐器：音域内每个音取到的采样都在 ±1 半音内，而且采样文件和声音事件都在。 */
-    @Test void everySampledKindHasItsSamples() throws Exception {
-        String sounds;
-        try (var in = MusicRollTest.class.getResourceAsStream("/assets/logos_dimension/sounds.json")) {
-            assertNotNull(in, "sounds.json on the classpath");
-            sounds = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-        }
-        for (InstrumentKind kind : InstrumentKind.values()) {
-            if (kind.synthesized()) continue;
-            java.util.Set<Integer> samples = new java.util.HashSet<>();
-            kind.samples().forEach(samples::add);
-            for (int p = kind.low(); p <= kind.high(); p++) {
-                int s = kind.sampleFor(p);
-                assertTrue(samples.contains(s) && Math.abs(p - s) <= 1, kind + " " + p + " -> " + s);
-            }
-            for (int s : samples) {
-                String file = "/assets/logos_dimension/sounds/instrument/" + kind.id() + "/s" + s + ".ogg";
-                assertNotNull(MusicRollTest.class.getResource(file), "missing " + file);
-                assertTrue(sounds.contains("\"instrument." + kind.id() + ".s" + s + "\""), "sounds.json lacks " + kind.id() + " s" + s);
-            }
-        }
-        assertFalse(InstrumentKind.HARPSICHORD.velocitySensitive(), "harpsichords do not respond to touch");
-        assertTrue(InstrumentKind.CELESTA.usesPedal() && !InstrumentKind.GLOCKENSPIEL.usesPedal());
-    }
-
     @Test void foldsNotesIntoEachInstrument() {
         assertEquals(24, InstrumentKind.CONCERT_HARP.fold(12));
         assertEquals(103 - 12 + 1, InstrumentKind.CONCERT_HARP.fold(104));
         assertEquals(21, InstrumentKind.GRAND_PIANO.fold(21));
         assertEquals(108, InstrumentKind.GRAND_PIANO.fold(108));
-        for (int p = 21; p <= 108; p++) {
-            int s = InstrumentKind.GRAND_PIANO.sampleFor(p);
-            assertTrue(Math.abs(p - s) <= 1, "piano " + p + " -> " + s);
-            assertEquals(0, (s - 21) % 3);
-        }
-        for (int p = 24; p <= 103; p++) {
-            int s = InstrumentKind.CONCERT_HARP.sampleFor(p);
-            assertTrue(Math.abs(p - s) <= 1 && s <= 102, "harp " + p + " -> " + s);
-        }
+        // 管钟只有 B3–G5：低一个八度的音挪上来
+        assertEquals(60, InstrumentKind.TUBULAR_BELLS.fold(48));
+        // 小提琴到 E7 为止：G7 往下挪一个八度
+        assertEquals(91, InstrumentKind.VIOLIN.fold(103));
     }
 }
