@@ -145,7 +145,7 @@ def outside_island():
 
 def placed(name,feature,count,height='MOTION_BLOCKING_NO_LEAVES'):
     modifiers=[{'type':'minecraft:count','count':count},{'type':'minecraft:in_square'}]
-    if height=='OCEAN_FLOOR_WG':modifiers.append({'type':'minecraft:surface_water_depth_filter','max_water_depth':0})
+    if height in ('OCEAN_FLOOR_WG','OCEAN_FLOOR'):modifiers.append({'type':'minecraft:surface_water_depth_filter','max_water_depth':0})
     modifiers.extend([{'type':'minecraft:heightmap','heightmap':height},outside_island(),{'type':'minecraft:biome'}])
     write(D/'worldgen/placed_feature'/f'{name}.json',{'feature':'logos_dimension:'+feature,'placement':modifiers})
 def plant_feature(name,entries,count):
@@ -313,7 +313,7 @@ for bid in ids:
             config['trunk_placer']['base_height']=9 if bid in conifers else 8 if bid in forests else 5
         config['trunk_provider']=provider('logos_dimension:'+bid+'_log',axis='y')
         if config['foliage_placer']['type']=='minecraft:blob_foliage_placer':config['foliage_placer']['radius']=3
-        configured('trees_'+bid,tree);placed('trees_'+bid,'trees_'+bid,12 if bid in forests else 0 if bid in glades else 1,'OCEAN_FLOOR_WG')
+        configured('trees_'+bid,tree);placed('trees_'+bid,'trees_'+bid,12 if bid in forests else 0 if bid in glades else 1,'OCEAN_FLOOR')
         features[9]=['logos_dimension:trees_'+bid,'logos_dimension:'+(bid+'_floor' if bid in FOREST_FLOORS or bid in PLAINS_FLOORS else 'meadow_floor')]
         if bid in forests:features[9].append('logos_dimension:fallen_tree_'+bid)
         # 蘑菇：按群系各自分配（食用常见、有毒稀有）。

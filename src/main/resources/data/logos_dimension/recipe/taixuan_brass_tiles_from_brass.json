@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": "logos_dimension:taixuan_brass_block",
+  "result": {
+    "id": "logos_dimension:taixuan_brass_tiles",
+    "count": 2
+  }
+}

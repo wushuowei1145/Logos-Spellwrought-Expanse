@@ -49,6 +49,8 @@ public final class LogosDimension {
         dev.logos.dimension.instance.CauldronBinding.register(bus);
         dev.logos.dimension.cloudsea.CloudseaBlocks.init();
         dev.logos.dimension.elven.ElvenBlocks.init();
+        dev.logos.dimension.taixuan.TaixuanBlocks.init();
+        dev.logos.dimension.taixuan.Taixuan.register(bus);
         dev.logos.dimension.gate.Gate.register(bus);
         dev.logos.dimension.dawnvow.Dawnvow.register(bus);
         dev.logos.dimension.dawnvow.DawnvowCharge.register(bus);
@@ -96,6 +98,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.TallTreeGameTests.register(bus);
         dev.logos.dimension.gametest.SettlementGameTests.register(bus);
         dev.logos.dimension.gametest.ElvenForestGameTests.register(bus);
+        dev.logos.dimension.gametest.TaixuanGameTests.register(bus);
         dev.logos.dimension.gametest.FallenLogGameTests.register(bus);
         dev.logos.dimension.gametest.MushroomGameTests.register(bus);
         dev.logos.dimension.gametest.TurfGameTests.register(bus);
