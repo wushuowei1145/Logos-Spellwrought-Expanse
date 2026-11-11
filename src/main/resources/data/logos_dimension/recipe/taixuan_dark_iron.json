@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "ICI",
+    "CIC",
+    "ICI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "C": "minecraft:coal"
+  },
+  "result": {
+    "id": "logos_dimension:taixuan_dark_iron",
+    "count": 4
+  }
+}

@@ -1447,9 +1447,20 @@
   "message.logos_dimension.instrument.need_instrument": "先拿着一件手持乐器右键乐谱架，把它放上去",
   "screen.logos_dimension.instrument.held_status": "起始 %s · 力度 %s · 音域 %s",
   "screen.logos_dimension.instrument.held_hint": "两排字母弹奏  ←→ 换八度  ↑↓ 力度  Esc 收起",
-  "biome.logos_dimension.taixuan_vale": "太玄灵境",
   "block.logos_dimension.taixuan_lattice_window": "徽式花格窗",
   "block.logos_dimension.taixuan_carved_brick": "云纹砖雕",
   "item.logos_dimension.taixuan_lattice_window": "徽式花格窗",
-  "item.logos_dimension.taixuan_carved_brick": "云纹砖雕"
+  "item.logos_dimension.taixuan_carved_brick": "云纹砖雕",
+  "block.logos_dimension.taixuan_brass_tiles": "黄铜筒瓦",
+  "item.logos_dimension.taixuan_brass_tiles": "黄铜筒瓦",
+  "block.logos_dimension.taixuan_brass_tile_stairs": "黄铜筒瓦楼梯",
+  "item.logos_dimension.taixuan_brass_tile_stairs": "黄铜筒瓦楼梯",
+  "block.logos_dimension.taixuan_brass_ridge_slab": "黄铜脊瓦台阶",
+  "item.logos_dimension.taixuan_brass_ridge_slab": "黄铜脊瓦台阶",
+  "block.logos_dimension.taixuan_brass_block": "黄铜块",
+  "item.logos_dimension.taixuan_brass_block": "黄铜块",
+  "block.logos_dimension.taixuan_dark_iron": "玄铁块",
+  "item.logos_dimension.taixuan_dark_iron": "玄铁块",
+  "block.logos_dimension.taixuan_abyss_mist": "渊雾",
+  "item.logos_dimension.taixuan_abyss_mist": "渊雾"
 }

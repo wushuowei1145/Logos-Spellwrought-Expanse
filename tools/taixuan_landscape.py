@@ -1,8 +1,8 @@
 """崖松、竹庭、山花、水潭和垂藤，按实际土壤和岩台高度拼装。"""
 import math
 import random
-from taixuan_kit import B, Canvas
-from taixuan_terrain import at, ground, FLOOR
+from taixuan_kit import B, Canvas, AIR
+from taixuan_terrain import at, ground
 
 LEAF=B('spruce_leaves',distance=1,persistent=True,waterlogged=False)
 LOG=B('spruce_log',axis='y')
@@ -36,6 +36,38 @@ def pine(c,x,y,z,seed=0,height=12):
                 for dy in range(2 if abs(dx)+abs(dz)<radius else 1):
                     p=(tip[0]+dx,tip[1]+dy,tip[2]+dz)
                     if free(c,*p):c.set(*p,LEAF)
+    return [x,y,z]
+
+
+def camphor(c,x,y,z,seed=0):
+    """南市的老樟树：石栏树池里的粗干，三四根斜枝托起一团宽圆的树冠（持久树叶，不会衰败）。"""
+    rng=random.Random(seed)
+    leaf=B('oak_leaves',distance=1,persistent=True,waterlogged=False)
+    bloom=B('flowering_azalea_leaves',distance=1,persistent=True,waterlogged=False)
+    # 树池：一圈石栏，里面是草和土
+    for dx in range(-2,3):
+        for dz in range(-2,3):
+            if max(abs(dx),abs(dz))==2:
+                c.set(x+dx,y,z+dz,B('polished_andesite'))
+                c.set(x+dx,y+1,z+dz,B('stone_brick_slab',type='bottom',waterlogged=False))
+            else:
+                c.set(x+dx,y-1,z+dz,B('dirt'));c.set(x+dx,y,z+dz,B('grass_block',snowy=False))
+    trunk=B('oak_log',axis='y')
+    for k in range(1,7):c.set(x,y+k,z,trunk)
+    tips=[]
+    for i in range(4):
+        angle=i*math.tau/4+rng.uniform(-.4,.4)
+        tip=(x+round(math.cos(angle)*3),y+6+rng.randint(1,2),z+round(math.sin(angle)*3))
+        segment(c,(x,y+5,z),tip,B('oak_log',axis='x' if abs(tip[0]-x)>=abs(tip[2]-z) else 'z'),replace=True)
+        tips.append(tip)
+    tips.append((x,y+8,z))
+    for tx,ty,tz in tips:
+        for dx in range(-3,4):
+            for dy in range(-1,3):
+                for dz in range(-3,4):
+                    if dx*dx+dz*dz+(dy*1.6)**2>11:continue
+                    p=(tx+dx,ty+dy,tz+dz)
+                    if free(c,*p):c.set(*p,bloom if (p[0]*7+p[1]*3+p[2]*5)%9==0 else leaf)
     return [x,y,z]
 
 
@@ -97,14 +129,55 @@ def vines(c,islands):
     return count
 
 
-def build(c,islands):
+def pond_spot(c,spec,near,landmarks,rx=4,rz=6):
+    """在这座浮峰上找一块放得下水潭的草地：椭圆、四邻岸边和外面再一圈都是草方块，高度和中心差不超过一格
+    （池岸从池底封到水面，高一格低一格都漏不了水），上面空着，离殿阁包围盒至少 2 格；从 near 由近到远找。找不到返回 None。"""
+    surface=spec['surface']
+    def free_of_buildings(x,z):
+        return all(not (l['origin'][0]-2<=x<=l['origin'][0]+l['size'][0]+2 and l['origin'][2]-2<=z<=l['origin'][2]+l['size'][2]+2) for l in landmarks)
+    for (x,z) in sorted(surface,key=lambda p:(p[0]-near[0])**2+(p[1]-near[1])**2):
+        y=surface[x,z];ok=True
+        for dx in range(-rx-2,rx+3):
+            for dz in range(-rz-2,rz+3):
+                if (dx/(rx+2))**2+(dz/(rz+2))**2>1.05:continue
+                h=surface.get((x+dx,z+dz))
+                if h is None or abs(h-y)>1:ok=False;break
+                s=c.get(x+dx,h,z+dz)
+                if not s or s['Name']!='minecraft:grass_block' or not free(c,x+dx,h+1,z+dz) or not free_of_buildings(x+dx,z+dz):
+                    ok=False;break
+            if not ok:break
+        if ok:return x,y,z
+    return None
+
+
+def build(c,islands,landmarks=()):
+    """各浮峰上的崖松、竹丛、灌木、垂藤和卫峰上的水潭。落进深渊的瀑布在 taixuan_abyss 里画。"""
     pines=[];bamboos=0;gardens=[]
-    for i,(xx,north,altitude) in enumerate([(-98,25,218),(108,85,217),(-192,44,249),(-49,-121,188),(217,127,269),(125,-77,201),(-72,132,218),(49,138,218)]):
+    # 水潭先放（崖松、竹丛、灌木都会占掉草地上面那格）：原来卫峰上的位置现在被演武殿占了。先在卫峰上就近找，横竖两个方向、大小两档都试；
+    # 卫峰放不下就依次试别的侧峰
+    x,_,z=at(108,217,68)
+    order=[s for s in islands if s['seed']==68]+[s for s in islands if s['seed'] not in (68,17)]
+    spot=None
+    for spec in order:
+        for size in ((4,6),(6,4),(3,5),(5,3)):
+            spot=pond_spot(c,spec,(x,z) if spec['seed']==68 else (spec['center'][0],spec['center'][2]),landmarks,*size)
+            if spot:break
+        if spot:break
+    if spot is not None:
+        px,py,pz=spot
+        gardens.append(pond(c,px,py+1,pz,*size))
+        x,y,z=px,py,pz
+        for step in range(1,9):
+            xx,zz=x-step,z+step//2
+            gy=ground(c,xx,zz)
+            if gy is not None and free(c,xx,gy+1,zz):c.set(xx,gy+1,zz,B('smooth_stone_slab',type='bottom',waterlogged=False))
+    # 主岛四棵、卫峰一棵、藏经峰、山门峰、东殿峰各一棵
+    for i,(xx,north,altitude) in enumerate([(-98,25,218),(104,95,217),(-200,20,249),(-30,-140,188),(190,70,269),(60,-10,218),(-72,132,218),(49,138,218)]):
         x,_,z=at(xx,altitude,north);y=ground(c,x,z)
         if y is not None:
             p=pine(c,x,y,z,51+i,12 if i<6 else 9)
             if p:pines.append(p)
-    for i,(xx,north,altitude) in enumerate([(-83,-2,218),(82,10,218),(-198,58,249),(204,144,269),(100,82,217)]):
+    for i,(xx,north,altitude) in enumerate([(-83,-2,218),(82,10,218),(-195,60,249),(185,30,269),(100,82,217)]):
         x,_,z=at(xx,altitude,north);y=ground(c,x,z)
         if y is not None:bamboos+=bamboo(c,x,y,z,170+i)
     for spec in islands:
@@ -113,19 +186,4 @@ def build(c,islands):
             if rng.random()>.018:continue
             y=ground(c,x,z)
             if y is not None:shrub(c,x,y,z,seed=x*19+z)
-    x,_,z=at(108,217,68);y=ground(c,x,z)
-    if y is not None:
-        gardens.append(pond(c,x,y+1,z))
-        for step in range(1,9):
-            xx,zz=x-step,z+step//2
-            gy=ground(c,xx,zz)
-            if gy is not None and free(c,xx,gy+1,zz):c.set(xx,gy+1,zz,B('smooth_stone_slab',type='bottom',waterlogged=False))
-    # 瀑布单独落向东侧预留水院，避免园林水潭漏水淹到下方屋顶。
-    east=next(s for s in islands if s['seed']==32)
-    x,z=max(east['surface'],key=lambda p:p[0]);y=ground(c,x,z)
-    waterfall=None
-    if y is not None:
-        for dx,dz in ((-1,0),(0,-1),(0,1)):c.set(x+dx,y,z+dz,B('mossy_cobblestone'))
-        c.set(x,y-1,z,B('stone'));c.set(x,y,z,B('water',level=0));waterfall=[x,y,z]
-        gardens.append(pond(c,x+1,FLOOR+1,z,5,7))
-    return {'pines':pines,'bamboo_stalks':bamboos,'ponds':gardens,'vine_blocks':vines(c,islands),'waterfall_source':waterfall}
+    return {'pines':pines,'bamboo_stalks':bamboos,'ponds':gardens,'vine_blocks':vines(c,islands)}

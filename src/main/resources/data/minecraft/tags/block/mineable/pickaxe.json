@@ -36,6 +36,11 @@
     "logos_dimension:journey_stepping_stone",
     "logos_dimension:journey_shrine_hokora",
     "logos_dimension:dawnvow_stone_empty",
-    "logos_dimension:taixuan_carved_brick"
+    "logos_dimension:taixuan_carved_brick",
+    "logos_dimension:taixuan_brass_tiles",
+    "logos_dimension:taixuan_brass_tile_stairs",
+    "logos_dimension:taixuan_brass_ridge_slab",
+    "logos_dimension:taixuan_brass_block",
+    "logos_dimension:taixuan_dark_iron"
   ]
 }

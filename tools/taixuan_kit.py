@@ -11,18 +11,24 @@ BEAM_X = B('stripped_dark_oak_log', axis='x')
 BEAM_Z = B('stripped_dark_oak_log', axis='z')
 PLANK = B('dark_oak_planks')
 PLASTER = L('journey_white_plaster')
-TILE = B('waxed_cut_copper')
+# 宗门屋面用黄铜筒瓦（原版铜块太红）；瓦块按轴放，瓦垄顺坡：南北两坡 z，东西两坡 x
+TILE = L('taixuan_brass_tiles', axis='z')
 GREY = L('journey_kawara_roof')
-GOLD = B('yellow_terracotta')
+GOLD = L('taixuan_brass_block')
+
+
+def tile(axis='z'):
+    return L('taixuan_brass_tiles', axis=axis)
 
 
 def stairs(facing, city=False, half='bottom'):
-    return (L if city else B)('journey_kawara_stairs' if city else 'waxed_cut_copper_stairs',
-             facing=facing, half=half, shape='straight', waterlogged=False)
+    if city:return L('journey_kawara_stairs', facing=facing, half=half, shape='straight', waterlogged=False)
+    return L('taixuan_brass_tile_stairs', facing=facing, half=half, shape='straight', waterlogged=False)
 
 
 def slab(city=False, kind='bottom'):
-    return (L if city else B)('journey_kawara_slab' if city else 'waxed_cut_copper_slab', type=kind, waterlogged=False)
+    if city:return L('journey_kawara_slab', type=kind, waterlogged=False)
+    return L('taixuan_brass_ridge_slab', type=kind, waterlogged=False)
 
 
 def pillar(c, x, y, z, height):
@@ -72,8 +78,10 @@ def roof(c, x, y, z, w, d, city=False, ring=False, eave=2):
             if edge==0:
                 facing='south' if zz==zmin else 'north' if zz==zmax else 'east' if xx==xmin else 'west'
                 state=stairs(facing,city,half='top')
-            elif (xx+zz)%3==0:state=slab(city,'double')
-            else:state=GREY if city else TILE
+            elif city:state=slab(city,'double') if (xx+zz)%3==0 else GREY
+            else:
+                # 离屋脊的距离由南北向决定的是南北两坡，瓦垄南北走；否则是东西两坡
+                state=tile('z' if abs(zz-cz)>=abs(xx-cx)-ridge else 'x')
             c.set(xx,yy,zz,state);max_y=max(max_y,yy)
             if yy>y:c.set(xx,yy-1,zz,PLANK)
     if not ring:
@@ -115,35 +123,77 @@ def stair_run(c,x,y,z,width,length,rise):
         for xx in (x-1,x+width):c.set(xx,y+level+1,z-step,B('smooth_sandstone_slab',type='top',waterlogged=False))
 
 
-def bridge(c,a,b,width=3,arch=2):
+def bridge(c,a,b,width=3,arch=2,trace=None):
+    """石桥；trace 是列表时把桥面中线每一格（脚下那格）记进去，给模板审计和世界测试检查能不能走。
+
+    先画桥面和栏板，最后把所有桥面和头顶三格再铺一遍：折桥拐角处一段的栏板会压到另一段的桥面上。"""
+    decks=[];corners=[]
+    _bridge(c,a,b,width,arch,trace,decks,corners)
+    laid={}
+    for x,y,z,state in decks:laid[x,z]=y
+    h=width//2;w=h+1
+    for x,y,z in corners:
+        for u in range(-h,h+1):
+            for v in range(-h,h+1):
+                if (x+u,z+v) not in laid:decks.append((x+u,y,z+v,WHITE));laid[x+u,z+v]=y
+    for x,y,z,state in decks:
+        c.set(x,y-1,z,STONE);c.set(x,y,z,state);c.clear(x,y+1,z,x,y+3,z)
+    # 拐角平台外圈补上栏板（两段桥面进出的格子已经是桥面，不会被挡）
+    for x,y,z in corners:
+        for u in range(-w,w+1):
+            for v in range(-w,w+1):
+                if max(abs(u),abs(v))!=w or (x+u,z+v) in laid:continue
+                c.set(x+u,y,z+v,STONE);c.set(x+u,y+1,z+v,B('smooth_sandstone_slab',type='top',waterlogged=False))
+
+
+def _toward(s,e,n,y):
+    """从 s 往 e 走 n 格（按主轴步进，和 _bridge 取格方式一样）的位置，高度给定。"""
+    dx,dz=e[0]-s[0],e[2]-s[2]
+    steps=max(abs(dx),abs(dz),1);t=min(1,n/steps)
+    return (round(s[0]+dx*t),y,round(s[2]+dz*t))
+
+
+def _bridge(c,a,b,width,arch,trace,decks,corners,skip_first=False):
     dx,dz=b[0]-a[0],b[2]-a[2]
     steps=max(abs(dx),abs(dz),1)
     transverse=(0,1) if abs(dx)>=abs(dz) else (1,0)
     if abs(b[1]-a[1])+math.pi*arch>steps:
-        # 高差过大时折桥延长行程，防止相邻楼梯一次升两格而无法步行。
-        offset=max(6,math.ceil((abs(b[1]-a[1])/.7-steps)/2)+3)
+        # 高差过大时折成“匚”字形延长行程，防止相邻楼梯一次升两格而无法步行。
+        # 两个拐角各留一块平台：进出拐角的各 w 格是平的，两段桥面在拐角处同高，不会上下叠在一起。
+        w=width//2+1
+        run=abs(b[1]-a[1])/.75+4*w
+        offset=max(6+w,math.ceil((run-steps)/2))
         sign=-1 if (a[2] if transverse[1] else a[0])<126 else 1
-        p=(a[0]+transverse[0]*offset*sign,0,a[2]+transverse[1]*offset*sign)
-        q=(b[0]+transverse[0]*offset*sign,0,b[2]+transverse[1]*offset*sign)
-        total=steps+2*offset
-        p=(p[0],round(a[1]+(b[1]-a[1])*offset/total),p[2])
-        q=(q[0],round(a[1]+(b[1]-a[1])*(offset+steps)/total),q[2])
-        bridge(c,a,p,width,0);bridge(c,p,q,width,0);bridge(c,q,b,width,0)
+        ox,oz=transverse[0]*sign,transverse[1]*sign
+        runs=(offset-w,max(0,steps-2*w),offset-w);total=sum(runs)
+        y1=round(a[1]+(b[1]-a[1])*runs[0]/total)
+        y2=round(a[1]+(b[1]-a[1])*(runs[0]+runs[1])/total)
+        P=(a[0]+ox*offset,y1,a[2]+oz*offset);Q=(b[0]+ox*offset,y2,b[2]+oz*offset)
+        a1=_toward(a,P,offset-w,y1)
+        b1=_toward(P,Q,w,y1);b2=_toward(P,Q,steps-w,y2)
+        c1=_toward(Q,b,w,y2)
+        # 后面几段的第一格就是上一段的最后一格（可能是楼梯），不再重画
+        first=skip_first
+        for s0,e0 in ((a,a1),(a1,P),(P,b1),(b1,b2),(b2,Q),(Q,c1),(c1,b)):
+            if (s0[0],s0[2])==(e0[0],e0[2]):continue
+            _bridge(c,s0,e0,width,0,trace,decks,corners,first);first=True
+        corners.extend([P,Q])
         return
     last_y=a[1]
-    for i in range(steps+1):
+    for i in range(1 if skip_first else 0,steps+1):
         t=i/steps
         x,z=round(a[0]+dx*t),round(a[2]+dz*t)
         y=round(a[1]+(b[1]-a[1])*t+math.sin(t*math.pi)*arch)
         for k in range(-width//2+1,width//2+1):
             xx,zz=x+transverse[0]*k,z+transverse[1]*k
-            c.set(xx,y-1,zz,STONE)
             if y!=last_y:
                 facing=('east' if dx>0 else 'west') if abs(dx)>=abs(dz) else ('south' if dz>0 else 'north')
                 if y<last_y:facing={'north':'south','south':'north','east':'west','west':'east'}[facing]
-                c.set(xx,y,zz,B('smooth_sandstone_stairs',facing=facing,half='bottom',shape='straight',waterlogged=False))
-            else:c.set(xx,y,zz,WHITE)
-            c.clear(xx,y+1,zz,xx,y+3,zz)
+                state=B('smooth_sandstone_stairs',facing=facing,half='bottom',shape='straight',waterlogged=False)
+            else:state=WHITE
+            c.set(xx,y-1,zz,STONE);c.set(xx,y,zz,state);c.clear(xx,y+1,zz,xx,y+3,zz)
+            decks.append((xx,y,zz,state))
+        if trace is not None:trace.append([x,y,z])
         for side in (-1,1):
             xx,zz=x+transverse[0]*side*(width//2+1),z+transverse[1]*side*(width//2+1)
             c.set(xx,y,zz,STONE)

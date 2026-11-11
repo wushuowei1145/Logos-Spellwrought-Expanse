@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "CGC",
+    "GCG",
+    "CGC"
+  ],
+  "key": {
+    "C": "minecraft:copper_ingot",
+    "G": "minecraft:gold_nugget"
+  },
+  "result": {
+    "id": "logos_dimension:taixuan_brass_block",
+    "count": 4
+  }
+}

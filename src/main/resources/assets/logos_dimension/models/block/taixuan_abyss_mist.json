@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "render_type": "neoforge:translucent",
+  "ambientocclusion": false,
+  "textures": {
+    "all": "logos_dimension:block/taixuan_abyss_mist"
+  }
+}

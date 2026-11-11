@@ -1,8 +1,6 @@
 {
-  "type": "minecraft:jigsaw",
-  "biomes": [
-    "logos_dimension:taixuan_vale"
-  ],
+  "type": "logos_dimension:taixuan_sanctuary",
+  "biomes": "#logos_dimension:has_structure/taixuan_sanctuary",
   "step": "surface_structures",
   "terrain_adaptation": "none",
   "spawn_overrides": {
@@ -13,18 +11,77 @@
     "creature": {
       "bounding_box": "full",
       "spawns": []
+    },
+    "ambient": {
+      "bounding_box": "full",
+      "spawns": []
+    },
+    "underground_water_creature": {
+      "bounding_box": "full",
+      "spawns": []
+    },
+    "water_creature": {
+      "bounding_box": "full",
+      "spawns": []
+    },
+    "water_ambient": {
+      "bounding_box": "full",
+      "spawns": []
+    },
+    "axolotls": {
+      "bounding_box": "full",
+      "spawns": []
     }
   },
-  "start_pool": "logos_dimension:taixuan/tile_4_0_4",
-  "start_jigsaw_name": "logos_dimension:taixuan_anchor",
-  "size": 19,
-  "start_height": {
-    "absolute": -1
+  "layout": {
+    "biomes": "#logos_dimension:has_structure/taixuan_sanctuary",
+    "step": "surface_structures",
+    "terrain_adaptation": "none",
+    "spawn_overrides": {
+      "monster": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "underground_water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_creature": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "water_ambient": {
+        "bounding_box": "full",
+        "spawns": []
+      },
+      "axolotls": {
+        "bounding_box": "full",
+        "spawns": []
+      }
+    },
+    "start_pool": "logos_dimension:taixuan/tile_4_5_4",
+    "start_jigsaw_name": "logos_dimension:taixuan_anchor",
+    "size": 20,
+    "start_height": {
+      "absolute": 121
+    },
+    "max_distance_from_center": {
+      "horizontal": 128,
+      "vertical": 256
+    },
+    "use_expansion_hack": false
   },
-  "project_start_to_heightmap": "WORLD_SURFACE_WG",
-  "max_distance_from_center": {
-    "horizontal": 128,
-    "vertical": 256
-  },
-  "use_expansion_hack": false
+  "biome_radius": 112,
+  "rim_radius": 72,
+  "rim_min_height": 80,
+  "outer_misses": 2,
+  "rim_misses": 3
 }

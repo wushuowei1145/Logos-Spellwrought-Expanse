@@ -8431,7 +8431,7 @@
           }
         },
         {
-          "biome": "logos_dimension:taixuan_vale",
+          "biome": "logos_dimension:cloudsea_sunlit_glade",
           "parameters": {
             "temperature": 0,
             "humidity": -0.4,
@@ -8611,7 +8611,7 @@
           }
         },
         {
-          "biome": "logos_dimension:taixuan_vale",
+          "biome": "logos_dimension:cloudsea_sunlit_glade",
           "parameters": {
             "temperature": 0,
             "humidity": -0.4,
@@ -9151,7 +9151,7 @@
           }
         },
         {
-          "biome": "logos_dimension:taixuan_vale",
+          "biome": "logos_dimension:cloudsea_sunlit_glade",
           "parameters": {
             "temperature": 0,
             "humidity": 0,
@@ -9331,7 +9331,7 @@
           }
         },
         {
-          "biome": "logos_dimension:taixuan_vale",
+          "biome": "logos_dimension:cloudsea_sunlit_glade",
           "parameters": {
             "temperature": 0,
             "humidity": 0,
@@ -12031,7 +12031,7 @@
           }
         },
         {
-          "biome": "logos_dimension:taixuan_vale",
+          "biome": "logos_dimension:cloudsea_sunlit_glade",
           "parameters": {
             "temperature": 0.4,
             "humidity": -0.4,
@@ -12211,7 +12211,7 @@
           }
         },
         {
-          "biome": "logos_dimension:taixuan_vale",
+          "biome": "logos_dimension:cloudsea_sunlit_glade",
           "parameters": {
             "temperature": 0.4,
             "humidity": -0.4,
@@ -12751,7 +12751,7 @@
           }
         },
         {
-          "biome": "logos_dimension:taixuan_vale",
+          "biome": "logos_dimension:cloudsea_sunlit_glade",
           "parameters": {
             "temperature": 0.4,
             "humidity": 0,
@@ -12931,7 +12931,7 @@
           }
         },
         {
-          "biome": "logos_dimension:taixuan_vale",
+          "biome": "logos_dimension:cloudsea_sunlit_glade",
           "parameters": {
             "temperature": 0.4,
             "humidity": 0,
@@ -15631,7 +15631,7 @@
           }
         },
         {
-          "biome": "logos_dimension:taixuan_vale",
+          "biome": "logos_dimension:cloudsea_sunlit_glade",
           "parameters": {
             "temperature": 0.8,
             "humidity": -0.4,
@@ -15811,7 +15811,7 @@
           }
         },
         {
-          "biome": "logos_dimension:taixuan_vale",
+          "biome": "logos_dimension:cloudsea_sunlit_glade",
           "parameters": {
             "temperature": 0.8,
             "humidity": -0.4,
@@ -16351,7 +16351,7 @@
           }
         },
         {
-          "biome": "logos_dimension:taixuan_vale",
+          "biome": "logos_dimension:cloudsea_sunlit_glade",
           "parameters": {
             "temperature": 0.8,
             "humidity": 0,
@@ -16531,7 +16531,7 @@
           }
         },
         {
-          "biome": "logos_dimension:taixuan_vale",
+          "biome": "logos_dimension:cloudsea_sunlit_glade",
           "parameters": {
             "temperature": 0.8,
             "humidity": 0,

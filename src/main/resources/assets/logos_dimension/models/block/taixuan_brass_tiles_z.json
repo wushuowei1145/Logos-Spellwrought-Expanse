@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "logos_dimension:block/taixuan_brass_tiles_ns",
+    "down": "logos_dimension:block/taixuan_brass_block",
+    "north": "logos_dimension:block/taixuan_brass_tile_ends",
+    "south": "logos_dimension:block/taixuan_brass_tile_ends",
+    "east": "logos_dimension:block/taixuan_brass_ridge",
+    "west": "logos_dimension:block/taixuan_brass_ridge",
+    "particle": "logos_dimension:block/taixuan_brass_tiles_ns"
+  }
+}

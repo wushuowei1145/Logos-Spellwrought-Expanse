@@ -1447,9 +1447,20 @@
   "message.logos_dimension.instrument.need_instrument": "Use a handheld instrument on the stand to put it there first",
   "screen.logos_dimension.instrument.held_status": "From %s · velocity %s · range %s",
   "screen.logos_dimension.instrument.held_hint": "Two letter rows play  ←→ octave  ↑↓ velocity  Esc put away",
-  "biome.logos_dimension.taixuan_vale": "Taixuan Vale",
   "block.logos_dimension.taixuan_lattice_window": "Hui Lattice Window",
   "block.logos_dimension.taixuan_carved_brick": "Cloud-Carved Brick",
   "item.logos_dimension.taixuan_lattice_window": "Hui Lattice Window",
-  "item.logos_dimension.taixuan_carved_brick": "Cloud-Carved Brick"
+  "item.logos_dimension.taixuan_carved_brick": "Cloud-Carved Brick",
+  "block.logos_dimension.taixuan_brass_tiles": "Brass Roof Tiles",
+  "item.logos_dimension.taixuan_brass_tiles": "Brass Roof Tiles",
+  "block.logos_dimension.taixuan_brass_tile_stairs": "Brass Roof Tile Stairs",
+  "item.logos_dimension.taixuan_brass_tile_stairs": "Brass Roof Tile Stairs",
+  "block.logos_dimension.taixuan_brass_ridge_slab": "Brass Ridge Slab",
+  "item.logos_dimension.taixuan_brass_ridge_slab": "Brass Ridge Slab",
+  "block.logos_dimension.taixuan_brass_block": "Block of Brass",
+  "item.logos_dimension.taixuan_brass_block": "Block of Brass",
+  "block.logos_dimension.taixuan_dark_iron": "Block of Dark Iron",
+  "item.logos_dimension.taixuan_dark_iron": "Block of Dark Iron",
+  "block.logos_dimension.taixuan_abyss_mist": "Abyss Mist",
+  "item.logos_dimension.taixuan_abyss_mist": "Abyss Mist"
 }
