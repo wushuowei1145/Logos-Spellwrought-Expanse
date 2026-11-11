@@ -1435,5 +1435,16 @@
   "subtitles.logos_dimension.instrument.tubular_bells": "管钟声",
   "block.logos_dimension.hexen_harpsichord": "大键琴",
   "item.logos_dimension.hexen_harpsichord": "大键琴",
-  "subtitles.logos_dimension.instrument.harpsichord": "大键琴声"
+  "subtitles.logos_dimension.instrument.harpsichord": "大键琴声",
+  "item.logos_dimension.hexen_violin": "小提琴",
+  "item.logos_dimension.hexen_flute": "长笛",
+  "item.logos_dimension.hexen_trumpet": "王室小号",
+  "block.logos_dimension.hexen_music_stand": "乐谱架",
+  "item.logos_dimension.hexen_music_stand": "乐谱架",
+  "subtitles.logos_dimension.instrument.violin": "小提琴声",
+  "subtitles.logos_dimension.instrument.flute": "长笛声",
+  "subtitles.logos_dimension.instrument.trumpet": "小号声",
+  "message.logos_dimension.instrument.need_instrument": "先拿着一件手持乐器右键乐谱架，把它放上去",
+  "screen.logos_dimension.instrument.held_status": "起始 %s · 力度 %s · 音域 %s",
+  "screen.logos_dimension.instrument.held_hint": "两排字母弹奏  ←→ 换八度  ↑↓ 力度  Esc 收起"
 }

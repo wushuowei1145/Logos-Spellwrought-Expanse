@@ -1435,5 +1435,16 @@
   "subtitles.logos_dimension.instrument.tubular_bells": "Tubular bells toll",
   "block.logos_dimension.hexen_harpsichord": "Harpsichord",
   "item.logos_dimension.hexen_harpsichord": "Harpsichord",
-  "subtitles.logos_dimension.instrument.harpsichord": "Harpsichord plays"
+  "subtitles.logos_dimension.instrument.harpsichord": "Harpsichord plays",
+  "item.logos_dimension.hexen_violin": "Violin",
+  "item.logos_dimension.hexen_flute": "Flute",
+  "item.logos_dimension.hexen_trumpet": "Royal Trumpet",
+  "block.logos_dimension.hexen_music_stand": "Music Stand",
+  "item.logos_dimension.hexen_music_stand": "Music Stand",
+  "subtitles.logos_dimension.instrument.violin": "Violin plays",
+  "subtitles.logos_dimension.instrument.flute": "Flute plays",
+  "subtitles.logos_dimension.instrument.trumpet": "Trumpet plays",
+  "message.logos_dimension.instrument.need_instrument": "Use a handheld instrument on the stand to put it there first",
+  "screen.logos_dimension.instrument.held_status": "From %s · velocity %s · range %s",
+  "screen.logos_dimension.instrument.held_hint": "Two letter rows play  ←→ octave  ↑↓ velocity  Esc put away"
 }

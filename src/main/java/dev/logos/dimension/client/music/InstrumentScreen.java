@@ -126,7 +126,7 @@ public class InstrumentScreen extends Screen implements MidiKeyboard.Target {
     }
 
     private String nameKey() {
-        return "block.logos_dimension." + kind().blockId();
+        return kind().nameKey();
     }
 
     // —— 音栓页（管风琴）——

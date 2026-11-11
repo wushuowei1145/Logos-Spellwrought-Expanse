@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PPP",
+    " S ",
+    "SSS"
+  ],
+  "key": {
+    "P": "minecraft:dark_oak_planks",
+    "S": "minecraft:stick"
+  },
+  "result": {
+    "id": "logos_dimension:hexen_music_stand",
+    "count": 1
+  }
+}

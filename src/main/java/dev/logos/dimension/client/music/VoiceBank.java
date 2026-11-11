@@ -75,6 +75,8 @@ final class VoiceBank {
         Vec3 at;
         final List<Voice> voices = new ArrayList<>();
         int pedalMask;
+        /** 手持乐器：声音跟着这个实体走（-1 表示不跟）。 */
+        int follow = -1;
 
         Source(InstrumentKind kind, BlockPos pos, Vec3 at) {
             this.kind = kind;
@@ -95,6 +97,8 @@ final class VoiceBank {
         private final int attackTicks;
         private int age;
         boolean finished;
+        /** 跟着走的实体（拿在手上的乐器），-1 表示固定在原处。 */
+        int follow = -1;
 
         NoteSound(SoundEvent event, float pitch, float volume, Vec3 at, int attackTicks, boolean loop) {
             super(event, SoundSource.RECORDS, SoundInstance.createUnseededRandom());
@@ -123,6 +127,15 @@ final class VoiceBank {
         @Override
         public void tick() {
             age++;
+            if (follow >= 0 && Minecraft.getInstance().level != null) {
+                var e = Minecraft.getInstance().level.getEntity(follow);
+                if (e != null) {
+                    // 乐器在胸口到嘴边的高度
+                    this.x = e.getX();
+                    this.y = e.getY() + e.getBbHeight() * 0.8;
+                    this.z = e.getZ();
+                }
+            }
             if (releasing) {
                 volume *= fade;
                 if (volume < 0.01f) {
@@ -151,10 +164,17 @@ final class VoiceBank {
             this.range = range;
         }
 
+        private String subtitle = "subtitles.logos_dimension.instrument.pipe_organ";
+
+        OrganSound subtitle(String key) {
+            this.subtitle = key;
+            return this;
+        }
+
         @Override
         public @Nullable WeighedSoundEvents resolve(SoundManager manager) {
             this.sound = new Sound(buffer, ConstantFloat.of(1f), ConstantFloat.of(1f), 1, Sound.Type.FILE, false, false, range);
-            return new WeighedSoundEvents(buffer, "subtitles.logos_dimension.instrument.pipe_organ");
+            return new WeighedSoundEvents(buffer, subtitle);
         }
     }
 
@@ -214,6 +234,13 @@ final class VoiceBank {
         return level != null && level.getBlockEntity(pos) instanceof InstrumentBlockEntity be ? be : null;
     }
 
+    /** 拿在手上的乐器：声源跟着实体走。 */
+    static void noteOnHeld(String key, InstrumentKind kind, int entity, Vec3 at, int pitch, int velocity) {
+        Source s = source(key, kind, BlockPos.ZERO, at);
+        s.follow = entity;
+        noteOn(key, kind, BlockPos.ZERO, at, pitch, velocity, 0);
+    }
+
     static void noteOn(String key, InstrumentKind kind, BlockPos pos, Vec3 at, int pitch, int velocity, int part) {
         Source s = source(key, kind, pos, at);
         pitch = kind.fold(pitch);
@@ -233,6 +260,21 @@ final class VoiceBank {
             OrganMixer.Mix mix = OrganMixer.now(be.effectiveStops());
             gen = mix.gen;
             sound = organSound(mix, be, pitch, false, 3);
+        } else if (kind.handheld()) {
+            // 手持乐器：按力度选轻 / 重一层的循环段，开头叠一下弓擦、气流或铜管的冲
+            int layer = dev.logos.dimension.music.held.HeldSynth.layer(velocity);
+            var samples = HeldMixer.now(kind, layer);
+            var sample = samples[dev.logos.dimension.music.held.HeldSynth.index(kind, pitch)];
+            float volume = (float) Math.pow(Math.max(1, Math.min(127, velocity)) / 127.0, 1.2) * (layer == 0 ? 0.9f : 1f);
+            int range = Math.min(48, kind.broadcastRange() - 8);
+            String subtitle = "subtitles.logos_dimension.instrument." + kind.id();
+            OrganSound loop = new OrganSound(HeldMixer.loop(kind, layer, pitch), dev.logos.dimension.music.held.HeldSynth.ratio(sample, pitch),
+                volume, at, range, kind == InstrumentKind.VIOLIN ? 3 : 2, true).subtitle(subtitle);
+            OrganSound onset = new OrganSound(HeldMixer.attack(kind), 1f, volume * 0.45f, at, range, 0, false).subtitle(subtitle);
+            loop.follow = s.follow;
+            onset.follow = s.follow;
+            Minecraft.getInstance().getSoundManager().play(onset);
+            sound = loop;
         } else {
             // 大键琴不分力度：一律按中强
             int v = kind.velocitySensitive() ? velocity : 100;

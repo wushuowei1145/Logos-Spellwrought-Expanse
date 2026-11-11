@@ -72,6 +72,29 @@ public final class MusicPayloads {
         @Override public Type<LiveNotesOut> type() { return TYPE; }
     }
 
+    /**
+     * 拿在手上的乐器 → 服务端：这一 tick 弹的音；allOff 表示收起乐器（关掉演奏条）。
+     * kind 是 {@link InstrumentKind} 的序号，服务端核对玩家手上确实拿着这种乐器。
+     */
+    public record HeldNotes(int kind, boolean allOff, List<LiveNote> notes) implements CustomPacketPayload {
+        public static final Type<HeldNotes> TYPE = new Type<>(LogosDimension.id("held_notes"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, HeldNotes> CODEC = StreamCodec.of(
+            (b, p) -> { b.writeVarInt(p.kind); b.writeBoolean(p.allOff); writeNotes(b, p.notes); },
+            b -> new HeldNotes(b.readVarInt(), b.readBoolean(), readNotes(b)));
+
+        @Override public Type<HeldNotes> type() { return TYPE; }
+    }
+
+    /** 服务端 → 附近的听众：某个玩家手上乐器弹的一批音（声音跟着这个实体走）。 */
+    public record HeldNotesOut(int entity, int kind, boolean allOff, List<LiveNote> notes) implements CustomPacketPayload {
+        public static final Type<HeldNotesOut> TYPE = new Type<>(LogosDimension.id("held_notes_out"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, HeldNotesOut> CODEC = StreamCodec.of(
+            (b, p) -> { b.writeVarInt(p.entity); b.writeVarInt(p.kind); b.writeBoolean(p.allOff); writeNotes(b, p.notes); },
+            b -> new HeldNotesOut(b.readVarInt(), b.readVarInt(), b.readBoolean(), readNotes(b)));
+
+        @Override public Type<HeldNotesOut> type() { return TYPE; }
+    }
+
     /** 演奏界面上的操作。 */
     public record Control(BlockPos pos, int action, int arg) implements CustomPacketPayload {
         public static final int CLAIM = 0, RELEASE = 1, PLAY = 2, PAUSE = 3, STOP = 4, EJECT = 5, PART_MASK = 6, SIGNAL_MODE = 7;

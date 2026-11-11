@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=north,holds=none": {
+      "model": "logos_dimension:block/hexen_music_stand_none"
+    },
+    "facing=north,holds=violin": {
+      "model": "logos_dimension:block/hexen_music_stand_violin"
+    },
+    "facing=north,holds=flute": {
+      "model": "logos_dimension:block/hexen_music_stand_flute"
+    },
+    "facing=north,holds=trumpet": {
+      "model": "logos_dimension:block/hexen_music_stand_trumpet"
+    },
+    "facing=east,holds=none": {
+      "model": "logos_dimension:block/hexen_music_stand_none",
+      "y": 90
+    },
+    "facing=east,holds=violin": {
+      "model": "logos_dimension:block/hexen_music_stand_violin",
+      "y": 90
+    },
+    "facing=east,holds=flute": {
+      "model": "logos_dimension:block/hexen_music_stand_flute",
+      "y": 90
+    },
+    "facing=east,holds=trumpet": {
+      "model": "logos_dimension:block/hexen_music_stand_trumpet",
+      "y": 90
+    },
+    "facing=south,holds=none": {
+      "model": "logos_dimension:block/hexen_music_stand_none",
+      "y": 180
+    },
+    "facing=south,holds=violin": {
+      "model": "logos_dimension:block/hexen_music_stand_violin",
+      "y": 180
+    },
+    "facing=south,holds=flute": {
+      "model": "logos_dimension:block/hexen_music_stand_flute",
+      "y": 180
+    },
+    "facing=south,holds=trumpet": {
+      "model": "logos_dimension:block/hexen_music_stand_trumpet",
+      "y": 180
+    },
+    "facing=west,holds=none": {
+      "model": "logos_dimension:block/hexen_music_stand_none",
+      "y": 270
+    },
+    "facing=west,holds=violin": {
+      "model": "logos_dimension:block/hexen_music_stand_violin",
+      "y": 270
+    },
+    "facing=west,holds=flute": {
+      "model": "logos_dimension:block/hexen_music_stand_flute",
+      "y": 270
+    },
+    "facing=west,holds=trumpet": {
+      "model": "logos_dimension:block/hexen_music_stand_trumpet",
+      "y": 270
+    }
+  }
+}

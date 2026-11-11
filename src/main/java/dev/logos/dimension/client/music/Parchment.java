@@ -19,7 +19,12 @@ final class Parchment {
     private Parchment() {}
 
     static void draw(GuiGraphicsExtractor g, int x, int y, int w, int h) {
-        int corner = Math.min(40, Math.min(w, h) / 2);
+        draw(g, x, y, w, h, 40);
+    }
+
+    /** frame：四角最大边长；小一些框就细一些（手持乐器的演奏条用）。 */
+    static void draw(GuiGraphicsExtractor g, int x, int y, int w, int h, int frame) {
+        int corner = Math.min(frame, Math.min(w, h) / 2);
         int[] dx = {x, x + corner, x + w - corner, x + w};
         int[] dy = {y, y + corner, y + h - corner, y + h};
         for (int row = 0; row < 3; row++) {

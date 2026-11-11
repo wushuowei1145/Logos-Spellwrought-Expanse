@@ -55,11 +55,17 @@ public final class MusicClient {
         Minecraft.getInstance().setScreen(new InstrumentScreen(main));
     }
 
+    /** 拿在手上的乐器右键：打开屏幕底部的演奏条。 */
+    public static void openHandheld(InstrumentKind kind, net.minecraft.world.InteractionHand hand) {
+        HeldMixer.prewarm(kind);
+        Minecraft.getInstance().setScreen(new HandheldScreen(kind, hand));
+    }
+
     static @Nullable InstrumentKind kindAt(BlockPos pos) {
         var level = Minecraft.getInstance().level;
         if (level == null) return null;
         BlockState state = level.getBlockState(pos);
-        return state.getBlock() instanceof InstrumentBlock b ? b.kind() : null;
+        return state.getBlock() instanceof InstrumentBlock b ? b.kind(state) : null;
     }
 
     static Vec3 centerAt(BlockPos pos) {
@@ -95,6 +101,7 @@ public final class MusicClient {
         event.register(MusicPayloads.LiveNotesOut.TYPE, (p, c) -> c.enqueueWork(() -> heard(p)));
         event.register(MusicPayloads.Playback.TYPE, (p, c) -> c.enqueueWork(() -> playback(p)));
         event.register(MusicPayloads.RollData.TYPE, (p, c) -> c.enqueueWork(() -> rollData(p)));
+        event.register(MusicPayloads.HeldNotesOut.TYPE, (p, c) -> c.enqueueWork(() -> heardHeld(p)));
     }
 
     @SubscribeEvent
@@ -110,6 +117,9 @@ public final class MusicClient {
         VoiceBank.clear();
         OrganMixer.clear();
         OrganRoom.clear();
+        HeldMixer.clear();
+        HELD_BATCH.clear();
+        LAST_HELD_NOTE.clear();
     }
 
     // —— 定时 ——
@@ -143,7 +153,101 @@ public final class MusicClient {
     @SubscribeEvent
     static void tick(ClientTickEvent.Post event) {
         flushLive();
+        flushHeld();
         VoiceBank.tickOrgans();
+        prewarmHeld();
+    }
+
+    // —— 手持乐器 ——
+
+    private static @Nullable InstrumentKind heldKind;
+    private static long heldBatchStart;
+    private static final List<MusicPayloads.LiveNote> HELD_BATCH = new ArrayList<>();
+    /** 每个实体最近一次手持乐器发声的时刻（给演奏姿势用：有音时才运弓）。 */
+    private static final Map<Integer, Long> LAST_HELD_NOTE = new HashMap<>();
+
+    static String heldKey(int entity) {
+        return "held:" + entity;
+    }
+
+    /** 自己拿在手上弹下（velocity &gt; 0）或松开一个音：本地立刻发声（声音跟着自己），攒成一批发给服务端。 */
+    static void localHeld(InstrumentKind kind, int pitch, int velocity, long nanos) {
+        var me = Minecraft.getInstance().player;
+        if (me == null) return;
+        String key = heldKey(me.getId());
+        if (velocity > 0) VoiceBank.noteOnHeld(key, kind, me.getId(), me.position(), pitch, velocity);
+        else VoiceBank.noteOff(key, pitch, 0);
+        LAST_HELD_NOTE.put(me.getId(), nanos);
+        if (heldKind != null && heldKind != kind) flushHeld();
+        if (HELD_BATCH.isEmpty()) {
+            heldKind = kind;
+            heldBatchStart = nanos;
+        }
+        HELD_BATCH.add(new MusicPayloads.LiveNote((int) Math.max(0, Math.min(1000, (nanos - heldBatchStart) / 1_000_000L)), pitch, velocity));
+        if (HELD_BATCH.size() >= MusicPayloads.MAX_BATCH) flushHeld();
+    }
+
+    /** 收起乐器：本地全部松开，告诉服务端让附近的人那里也松开。 */
+    static void localHeldOff(InstrumentKind kind) {
+        flushHeld();
+        var me = Minecraft.getInstance().player;
+        if (me != null) VoiceBank.allOff(heldKey(me.getId()));
+        if (Minecraft.getInstance().getConnection() != null) {
+            ClientPacketDistributor.sendToServer(new MusicPayloads.HeldNotes(kind.ordinal(), true, List.of()));
+        }
+    }
+
+    private static void flushHeld() {
+        if (HELD_BATCH.isEmpty() || heldKind == null) return;
+        if (Minecraft.getInstance().getConnection() != null) {
+            ClientPacketDistributor.sendToServer(new MusicPayloads.HeldNotes(heldKind.ordinal(), false, List.copyOf(HELD_BATCH)));
+        }
+        HELD_BATCH.clear();
+    }
+
+    /** 收到别人手上乐器的一批音（场景测试也直接调）。 */
+    static void heardHeld(MusicPayloads.HeldNotesOut p) {
+        String key = heldKey(p.entity());
+        if (p.allOff()) {
+            VoiceBank.allOff(key);
+            return;
+        }
+        if (p.kind() < 0 || p.kind() >= InstrumentKind.values().length) return;
+        InstrumentKind kind = InstrumentKind.values()[p.kind()];
+        var level = Minecraft.getInstance().level;
+        var who = level == null ? null : level.getEntity(p.entity());
+        if (!kind.handheld() || who == null) return;
+        HeldMixer.prewarm(kind);
+        long base = System.nanoTime() + LISTEN_DELAY_NS;
+        for (MusicPayloads.LiveNote n : p.notes()) {
+            long when = base + n.offsetMs() * 1_000_000L;
+            if (n.velocity() > 0) {
+                at(when, () -> {
+                    LAST_HELD_NOTE.put(p.entity(), System.nanoTime());
+                    VoiceBank.noteOnHeld(key, kind, p.entity(), who.position(), n.pitch(), n.velocity());
+                });
+            } else {
+                at(when, () -> VoiceBank.noteOff(key, n.pitch(), 0));
+            }
+        }
+    }
+
+    /** 这个实体最近 0.6 秒里有没有用手持乐器发声（演奏姿势里运弓、吹奏的起伏用）。 */
+    public static boolean recentlyPlayed(int entity) {
+        Long t = LAST_HELD_NOTE.get(entity);
+        return t != null && System.nanoTime() - t < 600_000_000L;
+    }
+
+    /** 自己和附近的人手上拿着手持乐器时，预先合成它的声音，免得第一个音卡一下。 */
+    private static void prewarmHeld() {
+        var level = Minecraft.getInstance().level;
+        if (level == null || level.getGameTime() % 20 != 0) return;
+        for (var player : level.players()) {
+            for (var stack : List.of(player.getMainHandItem(), player.getOffhandItem())) {
+                InstrumentKind kind = dev.logos.dimension.music.Instruments.heldKind(stack);
+                if (kind != null) HeldMixer.prewarm(kind);
+            }
+        }
     }
 
     // —— 实时演奏：发送 ——
@@ -343,6 +447,8 @@ public final class MusicClient {
             t.roll = roll(p.roll());
             TRACKS.put(pos, t);
             prewarmOrgan(pos);
+            InstrumentKind k = kindAt(pos);
+            if (k != null && k.handheld()) HeldMixer.prewarm(k);
             t.playing = false;
         }
         t.partMask = p.partMask();

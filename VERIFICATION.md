@@ -1,5 +1,22 @@
 # 首版验证记录
 
+## 手持乐器与乐谱架：小提琴、长笛、王室小号
+
+2026-11-11：分支 `feat/handheld-instruments`，基于 main `a8540e68`（#240），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md) 第 14 节。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 全量 **352/353**，唯一失败的仍是 main 上就缺的 `item.logos_dimension.fuda_desk`。新增 `HeldSynthTest`：循环接缝连续、音准误差 < 0.1 音分、长笛音高、响的一层高次谐波更多、起音淡入、三件都是手持且运行时合成 |
+| 世界测试 | `instrument_*` **7/7**（新增 `instrument_music_stand`：空架子不能演奏；放上小提琴后方块状态与乐器种类都是小提琴；装纸带、红石启动；拆掉时小提琴、纸带、架子各掉一件）；`creative_tabs_cover_items` 1/1 |
+| 实际客户端 | 新增 `music_stand_views`、`handheld_play_ui`，连同钢琴、管风琴、第二批方块乐器、电子琴共 **7/7、21/21 检查**：三件乐器各举起来按三个键，本地 ≥3 路在响、跟着自己，关掉演奏条后放下；模拟另一人手上小提琴的一批音在那人位置响 ≥2 路，收起时全部停下 |
+| 截图人工看过 | 四个乐谱架正面、侧面、小提琴近景；三件乐器第一人称、斜前方左右、侧面。改过：小号架子起初是缺模型的方块（旗子贴图在物品图集，方块模型用不了，移到方块贴图）；架子上的小提琴太大（缩到 0.72）；演奏时只抬了一只手、乐器飘在头上（改为玩家层按 `HeldRig` 把乐器画在下巴、嘴边，双臂指向乐器上的手位）；演奏条的字压在框上、条太高挡住人（框改细、条改矮）；第一人称乐器被演奏条挡住、小提琴琴头朝错方向（抬高、重算转角，弓横搭在弦上） |
+| 未验证 | 音色只能人工试听（`builds/handheld-instruments-2026-11-11/demo`）；两个真实客户端、专用服务器、光影包没测 |
+
+```text
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:instrument_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=music_stand_views,handheld_play_ui" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 第二批方块乐器：钟琴、钢片琴、管钟、大键琴
 
 2026-11-11：分支 `feat/mallet-instruments`，基于 main `6a1642be`（#239），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md) 第 13 节。

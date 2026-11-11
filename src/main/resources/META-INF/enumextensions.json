@@ -8,6 +8,33 @@
         "class": "dev/logos/dimension/client/vfx/RailgunClient",
         "field": "POSE"
       }
+    },
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "LOGOS_DIMENSION_VIOLIN",
+      "constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {
+        "class": "dev/logos/dimension/client/music/HandheldPoses",
+        "field": "VIOLIN"
+      }
+    },
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "LOGOS_DIMENSION_FLUTE",
+      "constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {
+        "class": "dev/logos/dimension/client/music/HandheldPoses",
+        "field": "FLUTE"
+      }
+    },
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "LOGOS_DIMENSION_TRUMPET",
+      "constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {
+        "class": "dev/logos/dimension/client/music/HandheldPoses",
+        "field": "TRUMPET"
+      }
     }
   ]
 }
