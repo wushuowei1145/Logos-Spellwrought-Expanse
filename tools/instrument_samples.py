@@ -1,19 +1,19 @@
-"""魔女之森乐器的采样：星辰花三角钢琴、灵猫竖琴，以及钟琴、钢片琴、管钟、大键琴，全部用代码合成（不用录音素材）。
+"""钢片琴的采样：用代码合成（两个公开采样库 VCSL、VSCO 2 CE 都没有钢片琴）。
 
     uv run --no-project --with numpy python tools/instrument_samples.py --ffmpeg <ffmpeg 路径> [--demo <试听目录>]
+    然后 uv run --no-project --with numpy --with scipy python tools/instrument_sources.py --cache <下载目录> --only celesta
+    写钢片琴的采样表（量响度、定增益）。
+
+其他乐器（钢琴、竖琴、钟琴、管钟、大键琴、小提琴、长笛、小号）改用录音采样，见 tools/instrument_sources.py；
+它们原来的合成代码在 git 历史里（#240 及以前）。
 
 做法：
 - 每隔小三度（3 个半音）合成一个采样，游戏里取最近的采样变调，变调不超过 ±1 个半音。
-- 两种乐器都用「模态合成」：一个音 = 若干个分音（正弦）各自按指数衰减，再加上起音的噪声、
-  共鸣箱的频响和很短的房间混响。
-  - 钢琴：每个音 1–3 根弦（略微失谐，产生钢琴特有的拍音）；分音带非谐性（高分音偏高）；
-    双段衰减（先快后慢）；琴槌击弦位置决定分音的强弱；起音有一点琴槌的木头声。
-  - 竖琴：几乎谐和的分音；拨弦位置靠近中间，音色圆润；衰减比钢琴快，高音更短；起音有指腹拨弦的轻响。
-- 输出单声道 44.1 kHz OGG（ffmpeg 的 libvorbis），写到 assets/logos_dimension/sounds/instrument/<乐器>/s<音高>.ogg，
-  并在 sounds.json 里写 instrument.<乐器>.s<音高> 声音事件（只改 instrument.* 这些键，其他声音不动）。
+- 模态合成：一个音 = 若干个分音（正弦）各自按指数衰减；钢片的分音比，毛毡琴槌的软起音，木共鸣箱托住基音。
+- 输出单声道 44.1 kHz OGG（ffmpeg 的 libvorbis），写到 assets/logos_dimension/sounds/instrument/celesta/s<音高>.ogg。
 - 随机数种子固定，重复运行得到相同的波形。
 
---demo 会把每种乐器的音阶和几个和弦另存成 ogg，方便不进游戏先听听音色。
+--demo 会把音阶和几个和弦另存成 ogg，方便不进游戏先听听音色。
 """
 import argparse
 import json
@@ -31,13 +31,7 @@ ASSETS = ROOT / "src/main/resources/assets/logos_dimension"
 
 # 乐器：采样音高范围（含两端，步长 3）、可闻距离、采样时长
 INSTRUMENTS = {
-    "grand_piano": {"low": 21, "high": 108, "range": 32, "demo": 48},
-    "concert_harp": {"low": 24, "high": 102, "range": 24, "demo": 55, "strum": True},
-    # 第二批：钟琴、钢片琴、管钟、大键琴（low/high 是采样的范围，见 InstrumentKind）
-    "glockenspiel": {"low": 78, "high": 108, "range": 24, "demo": 84, "strum": True},
     "celesta": {"low": 60, "high": 108, "range": 24, "demo": 72},
-    "tubular_bells": {"low": 54, "high": 84, "range": 48, "demo": 60, "strum": True},
-    "harpsichord": {"low": 29, "high": 89, "range": 28, "demo": 48},
 }
 
 
@@ -96,80 +90,6 @@ def finish(signal, fade_s=0.25):
     return signal
 
 
-def piano(midi, rng):
-    f0 = freq(midi)
-    pos = (midi - 21) / 87.0
-    duration = lerp(6.5, 2.2, pos ** 0.8)
-    n = int(RATE * duration)
-    t = np.arange(n) / RATE
-    strings = 1 if midi < 32 else 2 if midi < 44 else 3
-    detune_cents = [0.0, 0.9, -0.7][:strings]
-    inharm = 10 ** (-3.9 + 2.0 * pos)          # 非谐性系数 B：低音 ~1e-4，高音 ~1e-2
-    strike = 1.0 / 7.6                          # 击弦点在弦长 1/7.6 处
-    t60 = lerp(16.0, 1.4, pos ** 0.75)          # 基音 60 dB 衰减时间
-    out = np.zeros(n)
-    max_partials = 70
-    for k in range(1, max_partials + 1):
-        fk = k * f0 * np.sqrt(1.0 + inharm * k * k)
-        if fk > RATE * 0.45:
-            break
-        amp = abs(np.sin(np.pi * k * strike)) / k ** 0.85
-        amp /= 1.0 + (fk / 3800.0) ** 2           # 琴槌毛毡吃掉的高频
-        if k == 1 and midi < 40:
-            amp *= 0.7                           # 低音的基音本来就弱，泛音撑起音高
-        tk = t60 / (1.0 + (fk / 900.0) ** 1.3)   # 高分音衰减快
-        fast, slow = tk * 0.22, tk
-        env = 0.68 * np.exp(-6.9 * t / fast) + 0.32 * np.exp(-6.9 * t / slow)
-        for d in detune_cents:
-            phase = rng.uniform(0, 2 * np.pi)
-            out += amp * env * np.sin(2 * np.pi * fk * 2 ** (d / 1200.0) * t + phase) / strings
-    # 琴槌的木头声与键盘的轻响：按弦振动的响度定比例，高音的弦声小，击键声也跟着小
-    out /= head_rms(out)
-    knock = noise_burst(rng, int(RATE * 0.08), 300.0, 3500.0, 0.010)
-    out[: len(knock)] += knock / (np.max(np.abs(knock)) + 1e-9) * lerp(0.35, 0.15, pos)
-    thump_t = t[: int(RATE * 0.12)]
-    out[: len(thump_t)] += lerp(0.30, 0.0, pos * 1.4) * np.sin(2 * np.pi * 70.0 * thump_t) * np.exp(-thump_t / 0.025)
-    # 音板与琴箱：中低频温暖、2–4 kHz 略亮
-    out = spectral_shape(out, lambda f: peak(f, 180.0, 1.2, 2.0) * peak(f, 2800.0, 1.5, 1.5)
-                         * (1.0 / (1.0 + (f / 9000.0) ** 4)))
-    out = room(out, rng, length=0.6, wet=0.12)
-    return finish(out, fade_s=min(0.6, duration * 0.2))
-
-
-def harp(midi, rng):
-    f0 = freq(midi)
-    pos = (midi - 24) / 78.0
-    duration = lerp(5.0, 1.6, pos ** 0.8)
-    n = int(RATE * duration)
-    t = np.arange(n) / RATE
-    pluck = lerp(0.42, 0.30, pos)              # 拨弦点靠近弦中央，音色圆
-    t60 = lerp(7.5, 1.0, pos ** 0.7)
-    inharm = 2e-6 + 3e-5 * pos
-    out = np.zeros(n)
-    for k in range(1, 40):
-        fk = k * f0 * np.sqrt(1.0 + inharm * k * k)
-        if fk > RATE * 0.42:
-            break
-        # 三角形初始形变的傅里叶系数（~1/k²），手指的软肉再滤掉一点高频
-        amp = abs(np.sin(np.pi * k * pluck)) / (k ** 1.7)
-        amp /= 1.0 + (fk / 2600.0) ** 2
-        tk = t60 / (1.0 + (fk / 650.0) ** 1.5)
-        env = np.exp(-6.9 * t / tk)
-        # 极轻微的音高下滑（拨弦后张力回落），让声音更自然
-        glide = 1.0 + 0.0009 * np.exp(-t / 0.08)
-        phase = rng.uniform(0, 2 * np.pi)
-        out += amp * env * np.sin(2 * np.pi * fk * glide * t + phase)
-    # 起音：手指离弦的轻响
-    out /= head_rms(out)
-    pick = noise_burst(rng, int(RATE * 0.03), 1200.0, 6000.0, 0.004)
-    out[: len(pick)] += pick / (np.max(np.abs(pick)) + 1e-9) * 0.12
-    # 云杉共鸣箱：低频鼓起、中频一个木头的共振、高频收得早
-    out = spectral_shape(out, lambda f: peak(f, 140.0, 1.0, 3.0) * peak(f, 480.0, 2.0, 2.0)
-                         * peak(f, 1500.0, 1.8, -1.5) * (1.0 / (1.0 + (f / 7000.0) ** 4)))
-    out = room(out, rng, length=0.7, wet=0.14, damp=4000.0)
-    return finish(out, fade_s=min(0.5, duration * 0.2))
-
-
 def modal(midi, rng, modes, t60, duration, detune_hz=0.0):
     """敲击类乐器的模态合成：modes 是 (频率倍数, 强弱, 衰减倍数)；detune_hz 不为 0 时每个模态拆成两支，拍出微微的颤动。"""
     f0 = freq(midi)
@@ -195,19 +115,6 @@ def strike(rng, lo, hi, decay_s, level, length=0.06):
     return burst / (np.max(np.abs(burst)) + 1e-9) * level
 
 
-def glockenspiel(midi, rng):
-    """钟琴：钢条的自由振动模态（1 : 2.756 : 5.404 : 8.933），硬槌敲出很亮的一下，余音清脆。"""
-    pos = (midi - 78) / 30.0
-    duration = lerp(4.0, 2.4, pos)
-    out, t = modal(midi, rng, [(1.0, 1.0, 1.0), (2.756, 0.28, 0.35), (5.404, 0.12, 0.18), (8.933, 0.05, 0.1)],
-                   lerp(3.6, 2.0, pos), duration)
-    out /= head_rms(out)
-    hit = strike(rng, 2000.0, 9000.0, 0.003, 0.35)
-    out[: len(hit)] += hit
-    out = room(out, rng, length=0.5, wet=0.10, damp=7000.0)
-    return finish(out, fade_s=0.4)
-
-
 def celesta(midi, rng):
     """钢片琴：毛毡琴槌敲钢片，下面的木共鸣箱让基音特别饱满，上方模态很快消失，声音甜而轻。"""
     pos = (midi - 60) / 48.0
@@ -224,54 +131,7 @@ def celesta(midi, rng):
     return finish(out, fade_s=0.4)
 
 
-def tubular_bells(midi, rng):
-    """管钟：铜管被皮槌敲响，近似谐和的高次模态让音高听得清，余音很长、带一点拍频的颤动，像教堂的钟。"""
-    pos = (midi - 54) / 30.0
-    duration = lerp(8.0, 6.0, pos)
-    out, t = modal(midi, rng, [(1.0, 1.0, 1.0), (2.0, 0.55, 0.8), (3.0, 0.35, 0.6), (4.17, 0.25, 0.5),
-                               (5.43, 0.18, 0.4), (6.8, 0.10, 0.3), (8.4, 0.05, 0.2)],
-                   lerp(9.0, 6.0, pos), duration, detune_hz=0.35)
-    out /= head_rms(out)
-    hit = strike(rng, 1000.0, 6000.0, 0.005, 0.30)
-    out[: len(hit)] += hit
-    out = room(out, rng, length=0.9, wet=0.16, damp=5000.0)
-    return finish(out, fade_s=0.8)
-
-
-def harpsichord(midi, rng):
-    """大键琴：羽管在靠近弦端的地方拨弦，泛音很多、音色明亮带一点金属感；8′ 与 4′ 两组弦叠在一起。"""
-    f0 = freq(midi)
-    pos = (midi - 29) / 60.0
-    duration = lerp(6.0, 2.2, pos)
-    n = int(RATE * duration)
-    t = np.arange(n) / RATE
-    t60 = lerp(9.0, 2.2, pos)
-    inharm = 10 ** (-5 + 1.2 * pos)
-    out = np.zeros(n)
-    for octave, level, pluck in ((1.0, 1.0, 0.11), (2.0, 0.25, 0.13)):
-        for k in range(1, 70):
-            fk = k * f0 * octave * np.sqrt(1 + inharm * k * k)
-            if fk > RATE * 0.45:
-                break
-            amp = abs(np.sin(np.pi * k * pluck)) / k ** 0.95
-            if k == 1 and octave == 1.0:
-                amp *= 1.4          # 共鸣板托住基音，免得音高被听成高八度
-            amp /= 1.0 + (fk / 8000.0) ** 2
-            tk = t60 / (1.0 + (fk / 1500.0) ** 1.2)
-            env = np.exp(-6.9 * t / tk)
-            detune = 2 ** (0.6 / 1200) if octave > 1 else 1.0
-            out += level * amp * env * np.sin(2 * np.pi * fk * detune * t + rng.uniform(0, 2 * np.pi))
-    out /= head_rms(out)
-    pick = strike(rng, 2000.0, 7000.0, 0.004, 0.22)
-    out[: len(pick)] += pick
-    out = spectral_shape(out, lambda f: peak(f, 220.0, 1.2, 2.0) * peak(f, 1200.0, 1.5, 1.5)
-                         * (1.0 / (1.0 + (f / 10000.0) ** 4)))
-    out = room(out, rng, length=0.5, wet=0.10)
-    return finish(out, fade_s=min(0.5, duration * 0.2))
-
-
-SYNTHS = {"grand_piano": piano, "concert_harp": harp, "glockenspiel": glockenspiel, "celesta": celesta,
-          "tubular_bells": tubular_bells, "harpsichord": harpsichord}
+SYNTHS = {"celesta": celesta}
 
 
 def normalize(signal, midi, low, high):
@@ -359,21 +219,12 @@ def demo(name, samples, notes, out_dir, ffmpeg, tmp):
     to_ogg(ffmpeg, wav, out_dir / f"demo_{name}.ogg")
 
 
-def update_sounds_json(events):
-    path = ASSETS / "sounds.json"
-    data = json.loads(path.read_text(encoding="utf-8"))
-    data = {k: v for k, v in data.items() if not k.startswith("instrument.")}
-    data.update(events)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ffmpeg", required=True, help="带 libvorbis 的 ffmpeg")
     parser.add_argument("--demo", type=Path, help="把试听用的音阶与和弦另存到这个目录")
     parser.add_argument("--only", choices=list(INSTRUMENTS), help="只生成一种乐器")
     args = parser.parse_args()
-    events = {}
     with tempfile.TemporaryDirectory() as tmp:
         for name, spec in INSTRUMENTS.items():
             notes = sample_notes(spec)
@@ -389,15 +240,9 @@ def main():
                     write_wav(wav, sig)
                     to_ogg(args.ffmpeg, wav, out_dir / f"s{m}.ogg")
                     print(f"{name} s{m} ({freq(m):.1f} Hz, {len(sig) / RATE:.1f} s)")
-                events[f"instrument.{name}.s{m}"] = {
-                    "subtitle": f"subtitles.logos_dimension.instrument.{name}",
-                    "sounds": [{"name": f"logos_dimension:instrument/{name}/s{m}",
-                                "attenuation_distance": spec["range"], "preload": True}],
-                }
             if args.demo and samples:
                 demo(name, samples, notes, args.demo, args.ffmpeg, tmp)
-    update_sounds_json(events)
-    print(f"sounds.json: {len(events)} instrument events")
+    print("now run tools/instrument_sources.py --only celesta to refresh its sample map")
 
 
 if __name__ == "__main__":

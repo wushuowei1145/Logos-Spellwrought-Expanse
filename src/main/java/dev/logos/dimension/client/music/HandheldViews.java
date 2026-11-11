@@ -185,6 +185,26 @@ public abstract class HandheldViews implements UIScenario {
             b = hold(b, "violin", Instruments.VIOLIN.get());
             b = hold(b, "flute", Instruments.FLUTE.get());
             b = hold(b, "trumpet", Instruments.TRUMPET.get());
+            // 按住一个长笛的音 7 秒：采样最长约 5 秒，靠循环点一直响下去
+            b = b.server("hold the flute again", ctx -> {
+                    ctx.player().getInventory().setItem(0, new ItemStack(Instruments.FLUTE.get()));
+                    ctx.player().getInventory().setSelectedSlot(0);
+                })
+                .ticks(5)
+                .step("raise the flute again", ctx -> {
+                    var mc = Minecraft.getInstance();
+                    mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+                })
+                .waitUntil("flute play bar opens again", ctx -> Minecraft.getInstance().screen instanceof HandheldScreen)
+                .keyDown('C')
+                .ticks(140)
+                .check("a held note outlasts its sample by looping", ctx ->
+                    VoiceBank.sounding(MusicClient.heldKey(Minecraft.getInstance().player.getId())) >= 1 && LoopedSoundBuffer.appliedCount() > 0)
+                .keyUp('C')
+                .ticks(10)
+                .check("and stops when let go", ctx -> VoiceBank.sounding(MusicClient.heldKey(Minecraft.getInstance().player.getId())) == 0)
+                .step("put the flute away again", ctx -> Minecraft.getInstance().setScreen(null))
+                .ticks(4);
             b.server("another player with a violin", ctx -> {
                     var stand = EntityType.ARMOR_STAND.create(ctx.server().overworld(), net.minecraft.world.entity.EntitySpawnReason.COMMAND);
                     stand.setPos(ORIGIN.getX() - 2, GROUND + 1, ORIGIN.getZ() + 3);

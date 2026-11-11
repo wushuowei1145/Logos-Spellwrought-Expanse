@@ -42,7 +42,10 @@
 - 采样格式：单声道 OGG，44.1 kHz；钢琴每个约 4–6 秒（自然衰减），竖琴约 3–4 秒。估计钢琴 ~2.5 MB、竖琴 ~1.2 MB。
 - 注册方式：`sounds.json` 里每个采样一个声音事件，例如 `instrument.grand_piano.s21`（`s` 后面是采样的 MIDI 音高）；用 `SoundEvent.createFixedRangeEvent` 固定可闻距离（钢琴 32 格、竖琴 24 格）。声音分类用原版「唱片机/音符盒」（`RECORDS`），玩家可以用原版音量滑块调整。
 
-### 3.3 采样从哪来（待定）
+### 3.3 采样从哪来
+
+> **2026-11-11 起改用录音采样**（维护者试玩后决定，见第 15 节和 [乐器采样](INSTRUMENT_SAMPLES.md)）：钢琴用 Salamander Grand Piano，
+> 其余乐器用 VCSL、VSCO 2 CE；两个库都没有的钢片琴仍合成，管风琴仍按音栓现场合成。下面是最初的讨论。
 
 这是第一个需要维护者决定的地方：
 
@@ -53,7 +56,7 @@
 ### 3.4 播放一个音
 
 - 客户端为每个音生成一个可更新的声音实例（`TickableSoundInstance`）：按下时播放，松开时在 ~100 ms 内把音量降到 0 再停止（直接停会有爆音）。钢琴踩下延音踏板时松键不停音。
-- 力度（1–127）映射到音量，曲线 `(v/127)^1.6`。
+- 力度（1–127）映射到音量，曲线 `(v/127)^1.6`。（换成录音采样后：力度先选力度层，再按采样表的曲线定音量，见第 15 节。）
 - **复音上限**：每台乐器最多 32 个同时发声的音，全局最多 96 个；超出时先停掉「已松开、最旧」的音。原版普通声道池约 247 个，要给游戏的其他声音留余量。上限写进客户端配置。
 
 ## 4. 实时演奏
@@ -262,7 +265,8 @@
 | `client/music/VoiceBank` | 多采样发声、松键淡出、延音踏板、复音上限 |
 | `client/music/MusicClient` | 实时演奏收发、纸带播放时钟、纸带缓存、录制、上传、试听 |
 | `client/music/InstrumentScreen`、`RollEditorScreen`、`MidiImportScreen`、`MidiLibrary`、`KeyLayout` | 界面、键位、MIDI 文件夹 |
-| `tools/instrument_samples.py` | 合成采样并写 `sounds.json` 的 `instrument.*` 键 |
+| `tools/instrument_sources.py` | 下载录音采样、做成 ogg、写采样表 `instruments/<乐器>.json`（第 15 节） |
+| `tools/instrument_samples.py` | 合成钢片琴的采样（两个采样库都没有钢片琴） |
 | `tools/instrument_art.py` | 模型、方块状态、掉落、配方、四张新贴图 |
 
 设置：服务端 `[instruments] allowRollUpload`、`uploadsPerMinute`；客户端 `instrumentVoices`、`instrumentTotalVoices`、`instrumentKeys`。
@@ -270,18 +274,19 @@
 ### 11.3 维护
 
 ```text
-uv run --no-project --with numpy python tools/instrument_samples.py --ffmpeg <带 libvorbis 的 ffmpeg> [--demo <试听目录>]
+uv run --no-project --with numpy --with scipy python tools/instrument_sources.py --cache <下载目录> --ffmpeg <带 libvorbis 的 ffmpeg> [--demo <试听目录>]
+uv run --no-project --with numpy python tools/instrument_samples.py --ffmpeg <带 libvorbis 的 ffmpeg>   # 只有钢片琴
 uv run --no-project --with pillow python tools/instrument_art.py
 ./gradlew test --tests "dev.logos.dimension.music.*" -PlogosJar=...
 ./gradlew runGameTestServer -PlogosJar=... "-PdimensionTests=logos_dimension:instrument_*"
 ./gradlew runClient -PlogosJar=... "-PldTest=instrument_views,instrument_play_ui,roll_editor_ui,midi_import_ui" -PldTestHeadless -PldTestWindow=1280x720
 ```
 
-两个脚本的输出都是固定的（随机种子固定），重复运行不会改动文件。采样合成参数（衰减时间、非谐性、击弦点、共鸣峰）在 `piano()`、`harp()` 里，改音色只动那里。
+脚本的输出都是固定的（下载钉在固定提交上、合成的随机种子固定、ogg 用固定流序号编码），重复运行不会改动文件。
 
 ### 11.4 还没验证的
 
-- 音色只能人工试听：合成的钢琴可能带一点电子味（见 3.3），需要维护者在游戏里听一听。
+- 音色只能人工试听（2026-11-11 换成录音采样，见第 15 节）。
 - 多人同步只在单人存档（内置服务端）里跑过；两个客户端连同一个服务器的实际延迟、心跳修正还没有人工试过。
 - 专用服务器：乐器的客户端类只经静态入口调用，按以往的做法没有在服务端加载客户端类，但还没有在原版专用服务器 jar 上启动验证。
 - 光影包（Iris + Photon）下的模型外观没有截图验证。
@@ -319,13 +324,13 @@ uv run --no-project --with pillow python tools/instrument_art.py
 |---|---|---|---|
 | 钟琴 `hexen_glockenspiel` | G5–C8 | 一格，钢条琴框架在支架上，旁边搁两支琴槌 | 钢条的自由振动模态（1 : 2.756 : 5.404 : 8.933），硬槌敲出很亮的一下，没有制音、自然衰减 |
 | 钢片琴 `hexen_celesta` | C4–C8 | 一格，小立柜：键盘、大理石纹面板、正面镶嵌板、踏板 | 毛毡琴槌敲钢片，木共鸣箱托住基音，甜而轻；有制音与延音踏板，同钢琴 |
-| 管钟 `hexen_tubular_bells` | G3–C6 | 两格高，胡桃木架挂八根铜管，顶上星辰花牌饰 | 近似谐和的高次模态让音高听得清，上方模态带一点拍频的颤动，余音 6–9 秒，松手不止 |
+| 管钟 `hexen_tubular_bells` | B3–G5（换录音后，原为 G3–C6） | 两格高，胡桃木架挂八根铜管，顶上星辰花牌饰 | 近似谐和的高次模态让音高听得清，上方模态带一点拍频的颤动，余音 6–9 秒，松手不止 |
 | 大键琴 `hexen_harpsichord` | F1–F6 | 一宽两深，两层手键盘，白漆琴身、琴盖内侧星辰花镶嵌、音板上金色玫瑰花窗 | 羽管在靠近弦端处拨弦，泛音很多，8′ 与 4′ 两组弦；**不感力度**（按得轻重一样响），松键制音落下，没有踏板 |
 
 - 合成：钟琴 = 铁锭 ×4 + 音符盒 + 木棍 ×2（`I I / INI / S S`）；钢片琴 = 铁锭 ×3 + 音符盒 + 深色橡木板 ×4（`III / PNP / P P`）；管钟 = 铜锭 ×5 + 音符盒 + 深色橡木板 ×2（`CCC / CNC / P P`）；大键琴 = 石英块 ×3 + 线 ×2 + 音符盒 + 深色橡木板 ×2（`QQQ / SNS / P P`）。都在功能方块页。
-- 采样同样由 `tools/instrument_samples.py` 合成（钟琴 11、钢片琴 17、管钟 11、大键琴 21 个），每隔小三度一个，变调不超过 ±1 半音。
+- 采样最初由 `tools/instrument_samples.py` 合成；2026-11-11 起钟琴、管钟、大键琴改用录音采样（第 15 节），钢片琴仍合成（17 个，每隔小三度一个）。
 - `InstrumentKind` 新增 `blockId`、`velocitySensitive`（大键琴、管风琴为否）、`usesPedal`（钢琴、钢片琴为是，其余乐器不理会延音踏板事件）。方块形状：一格的 `SingleInstrumentBlock`，两格高的 `TallInstrumentBlock`（竖琴也改用它），一宽两深的 `LongInstrumentBlock`。
-- 重新生成某一种乐器的采样时用 `--only <乐器>`：Vorbis 每次编码的流序号不同，全部重跑会让钢琴、竖琴的 ogg 也变（声音不变）。
+- 重新生成钢片琴的采样后，再跑一次 `tools/instrument_sources.py --only celesta` 更新它的采样表（量响度、定增益）。
 
 ## 14. 手持乐器与乐谱架：小提琴、长笛、王室小号
 
@@ -339,9 +344,9 @@ uv run --no-project --with pillow python tools/instrument_art.py
 
 | 物品 | 音域 | 声音 | 合成 |
 |---|---|---|---|
-| 小提琴 `hexen_violin` | G3–G7 | 弓弦的锯齿状谐波，琴身几处共鸣峰，揉弦（音高、音量一起轻颤），起音一下擦弦声 | 丛林木板 ×3 + 线 ×3（` PS / PSP / SP `） |
-| 长笛 `hexen_flute` | C4–C7 | 基音为主、带气声，起音一口气 | 铁锭 ×3 斜放 |
-| 王室小号 `hexen_trumpet` | F♯3–C6 | 铜管，吹得越响越亮（大力度那一层高次谐波多），起音的唇音 | 金锭 ×5 + 蓝色羊毛（`  G / GGG / WG `） |
+| 小提琴 `hexen_violin` | G3–E7（换录音后，原为 G3–G7） | 独奏小提琴揉弦的长弓（录音，p / f 两层） | 丛林木板 ×3 + 线 ×3（` PS / PSP / SP `） |
+| 长笛 `hexen_flute` | C4–C7 | 带揉音的长音（录音） | 铁锭 ×3 斜放 |
+| 王室小号 `hexen_trumpet` | F♯3–C6 | 直音长音（录音，弱 / 强两层，越响越亮） | 金锭 ×5 + 蓝色羊毛（`  G / GGG / WG `） |
 | 乐谱架 `hexen_music_stand` | — | — | 深色橡木板 ×3 + 木棍 ×4（`PPP /  S  / SSS`） |
 
 - 演奏姿势（第三人称，别人看到的一样）：小提琴夹在下巴下、搁在非惯用手一侧的肩上，非惯用手托着琴颈，惯用手横着运弓（在弹时弓来回拉）；长笛横在嘴边、伸向惯用手一侧；小号举在嘴前，王室旗垂在导管下。左手惯用时整幅左右镜像。演奏时两只手原来拿的东西不画。第一人称看到举到下巴、嘴边的乐器，露在演奏条上面（小提琴的弓横搭在弦上）。
@@ -350,7 +355,7 @@ uv run --no-project --with pillow python tools/instrument_art.py
 
 ### 14.2 实现
 
-- 声音：`music/held/HeldSynth`（纯 Java）在客户端运行时合成，不带 ogg。每个音一段 0.8 秒的无缝循环（载波、揉弦都取整数个周期，接缝处相位连续），力度分两层（≥ 88 用响的那层），另加一段 0.12 秒的起音噪声。`client/music/HeldMixer` 按需合成、缓存，经管风琴已有的 `OrganBufferMixin` 以 `sounds/held_runtime/...` 的名字交给声音引擎；附近有人拿着手持乐器时提前合成。
+- 声音：第一版在客户端现场合成（`HeldSynth`，带一段起音噪声，试玩时听起来像一下鼓声）；2026-11-11 起换成录音采样，循环点让按住的音一直响下去，见第 15 节。附近有人拿着手持乐器、或打开演奏条时，先把它的采样解码好。
 - 同步：`MusicPayloads.HeldNotes`（客户端 → 服务端，一批音）→ 服务端核对手上确实拿着这件乐器、限速、清理 → `HeldNotesOut` 发给附近的人（按乐器的广播距离）。收到的一批同实时演奏一样延后 100 毫秒、按批内偏移排开；声音每 tick 跟到演奏者身上。
 - 物品：`HandheldInstrumentItem`（「使用中」不限时、动画为 NONE），右键时客户端打开 `HandheldScreen`。「使用中」本来就同步给附近的人，姿势不用另发包。
 - 姿势与画法：`HandheldPoses` 经 NeoForge 的枚举扩展加三个 `ArmPose`（`META-INF/enumextensions.json`），只在「使用中」生效。`HeldRig` 算出乐器的位置（小提琴跟着身体，长笛、小号跟着头）和两只手该到的位置；姿势里两只手臂直接指向手位（蹲下时原版在这之后才加的偏移先算进去），玩家层按同一份位置画乐器（`items/held/` 下的四个物品定义，只供渲染、不是物品，模型不带显示变换），所以手总落在乐器上。
@@ -358,6 +363,20 @@ uv run --no-project --with pillow python tools/instrument_art.py
 
 ### 14.3 验证与限制
 
-- 单元：`HeldSynthTest`（循环无缝、音准误差 < 0.1 音分、长笛音高、响的一层更亮、起音淡入）。世界测试：`instrument_music_stand`（空架子不能演奏；放上小提琴后成为小提琴；装纸带、红石启动；拆掉时三样各掉一件）。客户端：`music_stand_views`（四个架子正面、侧面、小提琴近景）、`handheld_play_ui`（三件乐器各举起来按三个键：本地 ≥3 路在响、跟着自己；第一人称、斜前方左右、侧面各一张截图；关掉演奏条后放下；模拟另一人手上小提琴的一批音，在那人的位置响、收起时停下）。
+- 单元：`SampleMapTest`（换录音后取代 `HeldSynthTest`，见第 15 节）。世界测试：`instrument_music_stand`（空架子不能演奏；放上小提琴后成为小提琴；装纸带、红石启动；拆掉时三样各掉一件）。客户端：`music_stand_views`（四个架子正面、侧面、小提琴近景）、`handheld_play_ui`（三件乐器各举起来按三个键：本地 ≥3 路在响、跟着自己；第一人称、斜前方左右、侧面各一张截图；关掉演奏条后放下；模拟另一人手上小提琴的一批音，在那人的位置响、收起时停下）。
 - 多人只用模拟的一批音验证过；两个真实客户端、专用服务器没测。音色只能人工试听。
 - 以后：手持乐器跟着纸带合奏的节拍弹（显示节拍）；弯音轮、调制轮（滑音、揉弦深浅）；更多手持乐器（大提琴要坐着、单簧管、圆号）。
+
+## 15. 换用录音采样（2026-11-11）
+
+维护者试玩手持乐器时听到每个音开头有一下像鼓的声音（合成时叠的起音噪声），决定趁此把音源换成公开采样库的录音。
+来源、许可、每件乐器用了什么、怎么处理、以后备用的乐器，都在 [乐器采样](INSTRUMENT_SAMPLES.md)。要点：
+
+- 钢琴：Salamander Grand Piano（Yamaha C5，CC BY 3.0，**须署名**，见 `CREDITS.md` 与发布包里的 `licenses/instrument_samples/NOTICE.txt`），30 个音 × 5 层力度。
+- 竖琴、钟琴、管钟、大键琴：VCSL（CC0）；小提琴、长笛、小号：VSCO 2 CE（CC0）。钢片琴两个库都没有，仍合成；管风琴仍按音栓现场合成。
+- 力度先选力度层（音色不同），再定音量；各层在交界处一样响，换层时只换音色。
+- 小提琴、长笛、小号的长音用循环点（OpenAL 的 `AL_SOFT_loop_points`）一直响下去，没有合成时那一下起音噪声；松键淡出。
+- 大键琴松键时有拨子落回的一下；钢琴松键时低音淡出慢、高音快。
+- 音域变了两处：管钟 B3–G5（真实管钟 C4–F5），小提琴到 E7；超出的音按八度挪进来。
+- 采样不再写进 `sounds.json`，按采样表直接播放，弹到才读进内存。
+

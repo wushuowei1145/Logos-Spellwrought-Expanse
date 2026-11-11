@@ -41,6 +41,20 @@ NPC 的骨骼命名、动画名、动画控制器结构与优先级、手部条�
 
 黑钢长剑的剑身符文使用 Minecraft 26.1.2 原版附魔台粒子 `sga_l/o/g/o/s`，来源为本地客户端资源；这些字形属于 Mojang/Microsoft。两把长剑及其剑鞘和动作使用用户审定的自制素材，没有借用车万女仆动作。详见 [双手长剑](docs/LONGSWORDS.md)。
 
+## 乐器采样
+
+`assets/logos_dimension/sounds/instrument/` 下的录音采样（钢片琴除外，钢片琴是自己合成的）取自下面三个采样库，
+由 `tools/instrument_sources.py` 从固定提交下载、改编（混成单声道、重采样、切头截尾、加循环点、调整音量、重新编码）。
+发布包内的协议说明见 `licenses/instrument_samples/NOTICE.txt`，做法见 [乐器采样](docs/INSTRUMENT_SAMPLES.md)。
+
+| 乐器 | 来源 | 作者 | 协议 |
+|---|---|---|---|
+| 星辰花三角钢琴 | [Salamander Grand Piano V3](https://github.com/sfzinstruments/SalamanderGrandPiano)（提交 `3382bf94`，原始发布 <https://archive.org/details/SalamanderGrandPianoV3>） | Alexander Holm；SFZ / FLAC 版 kinwie（sfzinstruments）；重新调律 Markus Fiedler | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)，**须署名**；本模组的钢琴采样是它的改编 |
+| 小提琴、长笛、小号 | [VS Chamber Orchestra: Community Edition](https://github.com/sgossner/VSCO-2-CE)（提交 `44030090`） | Versilian Studios（Sam Gossner、Simon Dalzell 录音，Elan Hickler 切采样） | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)，不要求署名，这里致谢 |
+| 灵猫竖琴、钟琴、管钟、大键琴 | [Versilian Community Sample Library](https://github.com/sgossner/VCSL)（提交 `c1ea7bcc`） | Versilian Studios 及贡献者 | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)，不要求署名，这里致谢 |
+
+转载、整合包、二次修改时保留 Salamander 的署名与协议链接（`licenses/instrument_samples/NOTICE.txt`）。
+
 ## 本模组使用借用素材的限制
 
 - **非商业**：本模组不能收费、付费抢先体验，或以借用素材牟利。需要商用时，先取得车万女仆作者的许可，或换成自制动画。
