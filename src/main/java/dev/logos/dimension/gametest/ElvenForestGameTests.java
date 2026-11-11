@@ -111,12 +111,14 @@ public final class ElvenForestGameTests {
         }
         long unsupported=tree.start().getPieces().stream().filter(p->p instanceof PoolElementStructurePiece q&&q.getElement() instanceof FeaturePoolElement).map(p->((PoolElementStructurePiece)p).getPosition().below(2)).filter(p->!l.getBlockState(p).isSolid()).count();
         h.assertTrue(unsupported==0,"根部仍有悬空支点："+unsupported);
-        h.succeedWhen(()->{
+        // 光照在后台线程排队，全套测试时排在别的测试生成区块的活后面；6000 刻空跑只要一两秒，光还没传开就超时了。
+        // RealTimeWait 让每刻没亮够时多睡 10 毫秒，时限至少一分钟真实时间
+        h.succeedWhen(RealTimeWait.paced(()->{
             int min=15;
             for(int x:new int[]{-4,0,4})for(int z:new int[]{-4,0,4}){int light=l.getBrightness(LightLayer.BLOCK,tree.pos(x,3,z));min=Math.min(min,light);h.assertTrue(light>=8,"树心中央方块光照不足："+light);}
             System.out.println("ELVEN_ROOM center="+tree.center()+" min_block_light="+min+" unsupported_roots="+unsupported);
             for(int x=cx-1;x<=cx+1;x++)for(int z=cz-1;z<=cz+1;z++)l.setChunkForced(x,z,false);
-        });
+        }));
     }
     private static void bookshelf(GameTestHelper h){
         var l=level(h);var pos=new BlockPos(19000,280,15000);l.setBlock(pos.below(),Blocks.STONE.defaultBlockState(),Block.UPDATE_ALL);l.setBlock(pos,Blocks.AIR.defaultBlockState(),Block.UPDATE_ALL);l.setBlock(pos.above(),Blocks.AIR.defaultBlockState(),Block.UPDATE_ALL);
