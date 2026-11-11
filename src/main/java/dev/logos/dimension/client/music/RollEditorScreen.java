@@ -103,7 +103,7 @@ public class RollEditorScreen extends Screen {
     }
 
     private String kindName() {
-        return Component.translatable("block.logos_dimension." + kind().blockId()).getString();
+        return Component.translatable(kind().nameKey()).getString();
     }
 
     private static Component tr(String key, Object... args) {

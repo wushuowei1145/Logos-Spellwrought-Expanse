@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "  G",
+    "GGG",
+    "WG "
+  ],
+  "key": {
+    "G": "minecraft:gold_ingot",
+    "W": "minecraft:blue_wool"
+  },
+  "result": {
+    "id": "logos_dimension:hexen_trumpet",
+    "count": 1
+  }
+}

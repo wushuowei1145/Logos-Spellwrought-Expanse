@@ -110,12 +110,26 @@ public final class Instruments {
     public static final DeferredItem<?> TUBULAR_BELLS_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_tubular_bells", TUBULAR_BELLS);
     public static final DeferredItem<?> HARPSICHORD_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_harpsichord", HARPSICHORD);
 
+    /** 手持乐器：小提琴、长笛、小号（挂魔女之森王室旗）。 */
+    public static final DeferredItem<HandheldInstrumentItem> VIOLIN = DimensionBlocks.ITEMS.registerItem("hexen_violin",
+        p -> new HandheldInstrumentItem(InstrumentKind.VIOLIN, p.stacksTo(1)));
+    public static final DeferredItem<HandheldInstrumentItem> FLUTE = DimensionBlocks.ITEMS.registerItem("hexen_flute",
+        p -> new HandheldInstrumentItem(InstrumentKind.FLUTE, p.stacksTo(1)));
+    public static final DeferredItem<HandheldInstrumentItem> TRUMPET = DimensionBlocks.ITEMS.registerItem("hexen_trumpet",
+        p -> new HandheldInstrumentItem(InstrumentKind.TRUMPET, p.stacksTo(1)));
+
+    /** 乐谱架：放一件手持乐器和一卷纸带，就像方块乐器一样受红石控制。 */
+    public static final DeferredBlock<MusicStandBlock> MUSIC_STAND = DimensionBlocks.BLOCKS.registerBlock(
+        "hexen_music_stand", MusicStandBlock::new,
+        p -> p.mapColor(MapColor.COLOR_BROWN).strength(1.0f).sound(SoundType.WOOD).noOcclusion());
+    public static final DeferredItem<?> MUSIC_STAND_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_music_stand", MUSIC_STAND);
+
     public static final DeferredItem<Item> BLANK_ROLL = DimensionBlocks.ITEMS.registerItem("blank_music_roll", p -> new Item(p.stacksTo(16)));
     public static final DeferredItem<Item> MUSIC_ROLL_ITEM = DimensionBlocks.ITEMS.registerItem("music_roll", p -> new MusicRollItem(p.stacksTo(1)));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<InstrumentBlockEntity>> INSTRUMENT_ENTITY =
         BLOCK_ENTITIES.register("instrument", () -> new BlockEntityType<>(InstrumentBlockEntity::new, GRAND_PIANO.get(), CONCERT_HARP.get(), ORGAN_CONSOLE.get(),
-            GLOCKENSPIEL.get(), CELESTA.get(), TUBULAR_BELLS.get(), HARPSICHORD.get()));
+            GLOCKENSPIEL.get(), CELESTA.get(), TUBULAR_BELLS.get(), HARPSICHORD.get(), MUSIC_STAND.get()));
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<RollInfo>> MUSIC_ROLL =
         COMPONENTS.registerComponentType("music_roll", b -> b.persistent(RollInfo.CODEC).networkSynchronized(RollInfo.STREAM_CODEC));
@@ -161,6 +175,8 @@ public final class Instruments {
         var r = event.registrar("1");
         r.playToServer(MusicPayloads.LiveNotes.TYPE, MusicPayloads.LiveNotes.CODEC, (p, c) -> c.enqueueWork(() -> live(p, c)));
         r.playToServer(MusicPayloads.Control.TYPE, MusicPayloads.Control.CODEC, (p, c) -> c.enqueueWork(() -> control(p, c)));
+        r.playToServer(MusicPayloads.HeldNotes.TYPE, MusicPayloads.HeldNotes.CODEC, (p, c) -> c.enqueueWork(() -> held(p, c)));
+        r.playToClient(MusicPayloads.HeldNotesOut.TYPE, MusicPayloads.HeldNotesOut.CODEC);
         r.playToServer(MusicPayloads.RollRequest.TYPE, MusicPayloads.RollRequest.CODEC, (p, c) -> c.enqueueWork(() -> request(p, c)));
         r.playToServer(MusicPayloads.Upload.TYPE, MusicPayloads.Upload.CODEC, (p, c) -> c.enqueueWork(() -> upload(p, c)));
         r.playToClient(MusicPayloads.LiveNotesOut.TYPE, MusicPayloads.LiveNotesOut.CODEC);
@@ -212,6 +228,30 @@ public final class Instruments {
             new MusicPayloads.LiveNotesOut(be.getBlockPos(), player.getId(), false, clean));
     }
 
+    /** 手持乐器的种类对应的物品。 */
+    public static @Nullable InstrumentKind heldKind(ItemStack stack) {
+        return stack.getItem() instanceof HandheldInstrumentItem item ? item.kind() : null;
+    }
+
+    /** 拿在手上的乐器弹的音：核对手上真拿着这种乐器，限速，转发给附近的人（声音跟着这个玩家）。 */
+    private static void held(MusicPayloads.HeldNotes p, IPayloadContext c) {
+        if (!(c.player() instanceof ServerPlayer player)) return;
+        if (p.kind() < 0 || p.kind() >= InstrumentKind.values().length) return;
+        InstrumentKind kind = InstrumentKind.values()[p.kind()];
+        if (!kind.handheld() || (heldKind(player.getMainHandItem()) != kind && heldKind(player.getOffhandItem()) != kind)) return;
+        List<MusicPayloads.LiveNote> clean = new ArrayList<>(p.notes().size());
+        if (!p.allOff()) {
+            if (p.notes().isEmpty() || !take(player, p.notes().size(), player.level().getGameTime())) return;
+            for (MusicPayloads.LiveNote n : p.notes()) {
+                if (n.pitch() > 127 || n.velocity() > 127) continue;
+                clean.add(new MusicPayloads.LiveNote(Math.min(1000, n.offsetMs()), n.pitch(), n.velocity()));
+            }
+            if (clean.isEmpty()) return;
+        }
+        PacketDistributor.sendToPlayersNear((ServerLevel) player.level(), player, player.getX(), player.getY(), player.getZ(),
+            kind.broadcastRange(), new MusicPayloads.HeldNotesOut(player.getId(), kind.ordinal(), p.allOff(), clean));
+    }
+
     /** 演奏者离开：让附近的人那里全部松开。 */
     static void release(InstrumentBlockEntity be, @Nullable ServerPlayer player) {
         be.setPerformer(null);
@@ -230,6 +270,10 @@ public final class Instruments {
         if (be == null) return;
         switch (p.action()) {
             case MusicPayloads.Control.CLAIM -> {
+                if (!be.playable()) {
+                    tell(player, "need_instrument");
+                    return;
+                }
                 UUID current = be.performer();
                 if (current == null || current.equals(player.getUUID())) {
                     be.setPerformer(player.getUUID());

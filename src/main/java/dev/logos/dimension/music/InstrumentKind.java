@@ -24,7 +24,13 @@ public enum InstrumentKind {
     /** 管钟：G3–C6，铜管挂在架上，敲响后余音很长，松手不止。 */
     TUBULAR_BELLS("tubular_bells", "hexen_tubular_bells", 55, 84, 54, 84, 64, false, true, false),
     /** 大键琴：F1–F6，羽管拨弦，不分轻重（琴本身不感力度），松键时制音落下；没有踏板。 */
-    HARPSICHORD("harpsichord", "hexen_harpsichord", 29, 89, 29, 89, 40, true, false, false);
+    HARPSICHORD("harpsichord", "hexen_harpsichord", 29, 89, 29, 89, 40, true, false, false),
+    /** 小提琴（手持）：G3–G7，运弓的长音，揉弦做进循环段；声音由客户端合成（{@link dev.logos.dimension.music.held.HeldSynth}）。 */
+    VIOLIN("violin", "hexen_violin", 55, 103, 55, 103, 40, true, true, false),
+    /** 长笛（手持）：C4–C7，带气声的长音。 */
+    FLUTE("flute", "hexen_flute", 60, 96, 60, 96, 40, true, true, false),
+    /** 小号（手持，挂魔女之森王室旗）：F♯3–C6，明亮的铜管长音。 */
+    TRUMPET("trumpet", "hexen_trumpet", 54, 84, 54, 84, 56, true, true, false);
 
     public static final int SAMPLE_STEP = 3;
 
@@ -65,8 +71,12 @@ public enum InstrumentKind {
     public boolean velocitySensitive() { return velocitySensitive; }
     /** 延音踏板对它有没有用：钢琴、钢片琴有；其余乐器收到踏板事件时不理会。 */
     public boolean usesPedal() { return usesPedal; }
-    /** 声音由客户端现场合成（管风琴），不注册声音事件、没有 ogg。 */
-    public boolean synthesized() { return this == PIPE_ORGAN; }
+    /** 声音由客户端现场合成（管风琴与手持乐器），不注册声音事件、没有 ogg。 */
+    public boolean synthesized() { return this == PIPE_ORGAN || handheld(); }
+    /** 拿在手上演奏的乐器（物品），也能放在乐谱架上。 */
+    public boolean handheld() { return this == VIOLIN || this == FLUTE || this == TRUMPET; }
+    /** 乐器名字的翻译键：手持乐器是物品名，其余是方块名。 */
+    public String nameKey() { return (handheld() ? "item.logos_dimension." : "block.logos_dimension.") + blockId; }
 
     /** 超出音域的音按八度移进来。 */
     public int fold(int pitch) {

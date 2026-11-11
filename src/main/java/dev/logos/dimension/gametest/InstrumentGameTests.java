@@ -53,6 +53,7 @@ public final class InstrumentGameTests {
         tests.put("instrument_roll_store", InstrumentGameTests::rollStore);
         tests.put("instrument_redstone_starts", InstrumentGameTests::redstoneStarts);
         tests.put("instrument_new_shapes_break_whole", InstrumentGameTests::newShapesBreakWhole);
+        tests.put("instrument_music_stand", InstrumentGameTests::musicStand);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -217,6 +218,39 @@ public final class InstrumentGameTests {
         h.assertTrue(level.getBlockState(c).isAir(), "harpsichord goes as a whole");
         h.assertTrue(dropped(level, b, Instruments.TUBULAR_BELLS_ITEM.get().asItem()) == 1, "one set of bells drops");
         h.assertTrue(dropped(level, c, Instruments.HARPSICHORD_ITEM.get().asItem()) == 1, "one harpsichord drops");
+        h.succeed();
+    }
+
+    /**
+     * 乐谱架：空着时不能演奏；放上小提琴后方块状态显示小提琴、成为小提琴；装纸带、红石启动；
+     * 拆掉时乐器、纸带、架子各掉一件。
+     */
+    private static void musicStand(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos pos = h.absolutePos(new BlockPos(2, 1, 2));
+        place(level, pos, Instruments.MUSIC_STAND.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.SOUTH));
+        if (!(level.getBlockEntity(pos) instanceof InstrumentBlockEntity be)) throw new AssertionError("no stand entity");
+        h.assertTrue(!be.playable() && !be.play(), "an empty stand cannot play");
+        h.assertTrue(Instruments.heldKind(new ItemStack(Instruments.VIOLIN.get())) == dev.logos.dimension.music.InstrumentKind.VIOLIN, "violin item kind");
+        h.assertTrue(Instruments.heldKind(new ItemStack(Instruments.BLANK_ROLL.get())) == null, "a roll is not an instrument");
+        // 与拿着小提琴右键架子做的事相同
+        be.setInstrument(new ItemStack(Instruments.VIOLIN.get()));
+        level.setBlockAndUpdate(pos, level.getBlockState(pos).setValue(dev.logos.dimension.music.MusicStandBlock.HOLDS,
+            dev.logos.dimension.music.MusicStandBlock.Holds.VIOLIN));
+        h.assertTrue(be.playable() && be.kind() == dev.logos.dimension.music.InstrumentKind.VIOLIN, "the stand is now a violin");
+        try {
+            MusicRoll roll = scale();
+            be.setRoll(punched(roll.encode(), roll));
+        } catch (Exception e) {
+            throw new AssertionError(e);
+        }
+        level.setBlockAndUpdate(pos.west(), Blocks.REDSTONE_BLOCK.defaultBlockState());
+        h.assertTrue(be.isPlaying(), "redstone starts the stand like any instrument");
+        level.setBlockAndUpdate(pos.west(), Blocks.AIR.defaultBlockState());
+        level.destroyBlock(pos, true);
+        h.assertTrue(dropped(level, pos, Instruments.VIOLIN.get()) == 1, "the violin drops");
+        h.assertTrue(dropped(level, pos, Instruments.MUSIC_ROLL_ITEM.get()) == 1, "the roll drops");
+        h.assertTrue(dropped(level, pos, Instruments.MUSIC_STAND_ITEM.get().asItem()) == 1, "the stand drops");
         h.succeed();
     }
 

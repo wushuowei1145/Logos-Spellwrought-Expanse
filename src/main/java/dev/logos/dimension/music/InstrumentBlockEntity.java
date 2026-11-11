@@ -58,7 +58,36 @@ public class InstrumentBlockEntity extends BlockEntity {
     }
 
     public InstrumentKind kind() {
-        return getBlockState().getBlock() instanceof InstrumentBlock b ? b.kind() : InstrumentKind.GRAND_PIANO;
+        if (!(getBlockState().getBlock() instanceof InstrumentBlock b)) return InstrumentKind.GRAND_PIANO;
+        InstrumentKind k = b.kind(getBlockState());
+        return k == null ? b.kind() : k;
+    }
+
+    /** 能不能演奏：乐谱架空着时不能。 */
+    public boolean playable() {
+        return !(getBlockState().getBlock() instanceof InstrumentBlock b) || b.kind(getBlockState()) != null;
+    }
+
+    /** 乐谱架上的手持乐器（其他乐器为空）。 */
+    private ItemStack instrument = ItemStack.EMPTY;
+
+    public ItemStack instrument() {
+        return instrument;
+    }
+
+    public void setInstrument(ItemStack stack) {
+        stopPlayback();
+        instrument = stack.copyWithCount(Math.min(1, stack.getCount()));
+        changed();
+    }
+
+    public ItemStack takeInstrument() {
+        ItemStack out = instrument;
+        instrument = ItemStack.EMPTY;
+        stopPlayback();
+        if (performer != null) Instruments.release(this, null);
+        changed();
+        return out;
     }
 
     public ItemStack roll() { return roll; }
@@ -172,7 +201,7 @@ public class InstrumentBlockEntity extends BlockEntity {
 
     /** 播放纸带槽里的纸带；暂停中则从暂停处继续。 */
     public boolean play() {
-        if (level == null) return false;
+        if (level == null || !playable()) return false;
         if (playing != null && pausedAt >= 0) {
             startOffsetMs = pausedAt;
             startTick = level.getGameTime();
@@ -269,6 +298,10 @@ public class InstrumentBlockEntity extends BlockEntity {
             Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, roll);
             roll = ItemStack.EMPTY;
         }
+        if (level != null && !instrument.isEmpty()) {
+            Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, instrument);
+            instrument = ItemStack.EMPTY;
+        }
         if (playing != null && playingTemporary) RollStore.dropTemporary(playing);
         playing = null;
         if (level instanceof ServerLevel) broadcast();
@@ -281,6 +314,7 @@ public class InstrumentBlockEntity extends BlockEntity {
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
         roll = input.read("roll", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY);
+        instrument = input.read("instrument", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY);
         partMask = input.read("part_mask", Codec.INT).orElse(0xFFFF);
         stopWithSignal = input.read("stop_with_signal", Codec.BOOL).orElse(false);
         powered = input.read("powered", Codec.BOOL).orElse(false);
@@ -294,6 +328,7 @@ public class InstrumentBlockEntity extends BlockEntity {
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
         if (!roll.isEmpty()) output.store("roll", ItemStack.OPTIONAL_CODEC, roll);
+        if (!instrument.isEmpty()) output.store("instrument", ItemStack.OPTIONAL_CODEC, instrument);
         output.store("part_mask", Codec.INT, partMask);
         output.store("stop_with_signal", Codec.BOOL, stopWithSignal);
         output.store("powered", Codec.BOOL, powered);

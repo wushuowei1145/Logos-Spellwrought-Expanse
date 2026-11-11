@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "  I",
+    " I ",
+    "I  "
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "logos_dimension:hexen_flute",
+    "count": 1
+  }
+}

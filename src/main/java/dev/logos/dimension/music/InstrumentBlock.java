@@ -34,6 +34,11 @@ public abstract class InstrumentBlock extends Block implements EntityBlock {
 
     public abstract InstrumentKind kind();
 
+    /** 这一格此刻是什么乐器：大多数方块固定不变；乐谱架看放着什么，空着时为 null。 */
+    public @Nullable InstrumentKind kind(BlockState state) {
+        return kind();
+    }
+
     public abstract boolean isMain(BlockState state);
 
     /** 这一块所属乐器的主块位置。 */
