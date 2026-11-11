@@ -1,0 +1,31 @@
+{
+  "variants": {
+    "facing=north,half=lower": {
+      "model": "logos_dimension:block/hexen_tubular_bells"
+    },
+    "facing=north,half=upper": {
+      "model": "logos_dimension:block/hexen_tubular_bells_part"
+    },
+    "facing=east,half=lower": {
+      "model": "logos_dimension:block/hexen_tubular_bells",
+      "y": 90
+    },
+    "facing=east,half=upper": {
+      "model": "logos_dimension:block/hexen_tubular_bells_part"
+    },
+    "facing=south,half=lower": {
+      "model": "logos_dimension:block/hexen_tubular_bells",
+      "y": 180
+    },
+    "facing=south,half=upper": {
+      "model": "logos_dimension:block/hexen_tubular_bells_part"
+    },
+    "facing=west,half=lower": {
+      "model": "logos_dimension:block/hexen_tubular_bells",
+      "y": 270
+    },
+    "facing=west,half=upper": {
+      "model": "logos_dimension:block/hexen_tubular_bells_part"
+    }
+  }
+}

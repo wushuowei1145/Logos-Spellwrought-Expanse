@@ -1,4 +1,4 @@
-"""魔女之森乐器的采样：星辰花三角钢琴与灵猫竖琴，全部用代码合成（不用录音素材）。
+"""魔女之森乐器的采样：星辰花三角钢琴、灵猫竖琴，以及钟琴、钢片琴、管钟、大键琴，全部用代码合成（不用录音素材）。
 
     uv run --no-project --with numpy python tools/instrument_samples.py --ffmpeg <ffmpeg 路径> [--demo <试听目录>]
 
@@ -31,8 +31,13 @@ ASSETS = ROOT / "src/main/resources/assets/logos_dimension"
 
 # 乐器：采样音高范围（含两端，步长 3）、可闻距离、采样时长
 INSTRUMENTS = {
-    "grand_piano": {"low": 21, "high": 108, "range": 32},
-    "concert_harp": {"low": 24, "high": 102, "range": 24},
+    "grand_piano": {"low": 21, "high": 108, "range": 32, "demo": 48},
+    "concert_harp": {"low": 24, "high": 102, "range": 24, "demo": 55, "strum": True},
+    # 第二批：钟琴、钢片琴、管钟、大键琴（low/high 是采样的范围，见 InstrumentKind）
+    "glockenspiel": {"low": 78, "high": 108, "range": 24, "demo": 84, "strum": True},
+    "celesta": {"low": 60, "high": 108, "range": 24, "demo": 72},
+    "tubular_bells": {"low": 54, "high": 84, "range": 48, "demo": 60, "strum": True},
+    "harpsichord": {"low": 29, "high": 89, "range": 28, "demo": 48},
 }
 
 
@@ -165,7 +170,108 @@ def harp(midi, rng):
     return finish(out, fade_s=min(0.5, duration * 0.2))
 
 
-SYNTHS = {"grand_piano": piano, "concert_harp": harp}
+def modal(midi, rng, modes, t60, duration, detune_hz=0.0):
+    """敲击类乐器的模态合成：modes 是 (频率倍数, 强弱, 衰减倍数)；detune_hz 不为 0 时每个模态拆成两支，拍出微微的颤动。"""
+    f0 = freq(midi)
+    n = int(RATE * duration)
+    t = np.arange(n) / RATE
+    out = np.zeros(n)
+    for ratio, amp, decay in modes:
+        f = f0 * ratio
+        if f > RATE * 0.45:
+            continue
+        env = np.exp(-6.9 * t / (t60 * decay))
+        # 基音保持一支，上方的模态才拆成两支拍出颤动（基音也拆的话两支会互相抵消，音高听起来往上跳）
+        if detune_hz and ratio > 1.5:
+            for d in (-detune_hz / 2, detune_hz / 2):
+                out += amp * 0.5 * env * np.sin(2 * np.pi * (f + d) * t + rng.uniform(0, 2 * np.pi))
+        else:
+            out += amp * env * np.sin(2 * np.pi * f * t + rng.uniform(0, 2 * np.pi))
+    return out, t
+
+
+def strike(rng, lo, hi, decay_s, level, length=0.06):
+    burst = noise_burst(rng, int(RATE * length), lo, hi, decay_s)
+    return burst / (np.max(np.abs(burst)) + 1e-9) * level
+
+
+def glockenspiel(midi, rng):
+    """钟琴：钢条的自由振动模态（1 : 2.756 : 5.404 : 8.933），硬槌敲出很亮的一下，余音清脆。"""
+    pos = (midi - 78) / 30.0
+    duration = lerp(4.0, 2.4, pos)
+    out, t = modal(midi, rng, [(1.0, 1.0, 1.0), (2.756, 0.28, 0.35), (5.404, 0.12, 0.18), (8.933, 0.05, 0.1)],
+                   lerp(3.6, 2.0, pos), duration)
+    out /= head_rms(out)
+    hit = strike(rng, 2000.0, 9000.0, 0.003, 0.35)
+    out[: len(hit)] += hit
+    out = room(out, rng, length=0.5, wet=0.10, damp=7000.0)
+    return finish(out, fade_s=0.4)
+
+
+def celesta(midi, rng):
+    """钢片琴：毛毡琴槌敲钢片，下面的木共鸣箱让基音特别饱满，上方模态很快消失，声音甜而轻。"""
+    pos = (midi - 60) / 48.0
+    duration = lerp(3.6, 1.8, pos)
+    out, t = modal(midi, rng, [(1.0, 1.0, 1.0), (2.0, 0.08, 0.5), (2.76, 0.07, 0.25), (4.0, 0.16, 0.3), (5.4, 0.05, 0.15)],
+                   lerp(3.0, 1.3, pos), duration)
+    attack = np.minimum(1.0, t / 0.003)
+    out *= attack
+    out /= head_rms(out)
+    hit = strike(rng, 500.0, 3000.0, 0.006, 0.14)
+    out[: len(hit)] += hit
+    out = spectral_shape(out, lambda f: peak(f, 320.0, 1.2, 2.5) * (1.0 / (1.0 + (f / 9000.0) ** 4)))
+    out = room(out, rng, length=0.5, wet=0.12)
+    return finish(out, fade_s=0.4)
+
+
+def tubular_bells(midi, rng):
+    """管钟：铜管被皮槌敲响，近似谐和的高次模态让音高听得清，余音很长、带一点拍频的颤动，像教堂的钟。"""
+    pos = (midi - 54) / 30.0
+    duration = lerp(8.0, 6.0, pos)
+    out, t = modal(midi, rng, [(1.0, 1.0, 1.0), (2.0, 0.55, 0.8), (3.0, 0.35, 0.6), (4.17, 0.25, 0.5),
+                               (5.43, 0.18, 0.4), (6.8, 0.10, 0.3), (8.4, 0.05, 0.2)],
+                   lerp(9.0, 6.0, pos), duration, detune_hz=0.35)
+    out /= head_rms(out)
+    hit = strike(rng, 1000.0, 6000.0, 0.005, 0.30)
+    out[: len(hit)] += hit
+    out = room(out, rng, length=0.9, wet=0.16, damp=5000.0)
+    return finish(out, fade_s=0.8)
+
+
+def harpsichord(midi, rng):
+    """大键琴：羽管在靠近弦端的地方拨弦，泛音很多、音色明亮带一点金属感；8′ 与 4′ 两组弦叠在一起。"""
+    f0 = freq(midi)
+    pos = (midi - 29) / 60.0
+    duration = lerp(6.0, 2.2, pos)
+    n = int(RATE * duration)
+    t = np.arange(n) / RATE
+    t60 = lerp(9.0, 2.2, pos)
+    inharm = 10 ** (-5 + 1.2 * pos)
+    out = np.zeros(n)
+    for octave, level, pluck in ((1.0, 1.0, 0.11), (2.0, 0.25, 0.13)):
+        for k in range(1, 70):
+            fk = k * f0 * octave * np.sqrt(1 + inharm * k * k)
+            if fk > RATE * 0.45:
+                break
+            amp = abs(np.sin(np.pi * k * pluck)) / k ** 0.95
+            if k == 1 and octave == 1.0:
+                amp *= 1.4          # 共鸣板托住基音，免得音高被听成高八度
+            amp /= 1.0 + (fk / 8000.0) ** 2
+            tk = t60 / (1.0 + (fk / 1500.0) ** 1.2)
+            env = np.exp(-6.9 * t / tk)
+            detune = 2 ** (0.6 / 1200) if octave > 1 else 1.0
+            out += level * amp * env * np.sin(2 * np.pi * fk * detune * t + rng.uniform(0, 2 * np.pi))
+    out /= head_rms(out)
+    pick = strike(rng, 2000.0, 7000.0, 0.004, 0.22)
+    out[: len(pick)] += pick
+    out = spectral_shape(out, lambda f: peak(f, 220.0, 1.2, 2.0) * peak(f, 1200.0, 1.5, 1.5)
+                         * (1.0 / (1.0 + (f / 10000.0) ** 4)))
+    out = room(out, rng, length=0.5, wet=0.10)
+    return finish(out, fade_s=min(0.5, duration * 0.2))
+
+
+SYNTHS = {"grand_piano": piano, "concert_harp": harp, "glockenspiel": glockenspiel, "celesta": celesta,
+          "tubular_bells": tubular_bells, "harpsichord": harpsichord}
 
 
 def normalize(signal, midi, low, high):
@@ -215,7 +321,9 @@ def demo(name, samples, notes, out_dir, ffmpeg, tmp):
     """音阶（C 大调两个八度）+ 三个和弦，按游戏里的取样规则拼出来。"""
     events = []
     scale = [0, 2, 4, 5, 7, 9, 11]
-    start = 48 if name == "grand_piano" else 55
+    spec = INSTRUMENTS[name]
+    start = spec["demo"]
+    strum = spec.get("strum", False)
     time = 0.0
     for octave in range(2):
         for s in scale:
@@ -223,11 +331,14 @@ def demo(name, samples, notes, out_dir, ffmpeg, tmp):
             time += 0.28
     events.append((time, start + 24, 1.2))
     time += 1.0
+    # 和弦按八度挪进这件乐器的音域；拨弦和敲击的乐器从低到高轻轻琶音
+    shift = 12 if name == "concert_harp" else 0
+    while 41 + shift < spec["low"]:
+        shift += 12
     for chord in ([48, 52, 55, 60, 64], [45, 52, 57, 60, 64], [41, 48, 53, 57, 60, 65]):
         for i, m in enumerate(chord):
-            # 竖琴的和弦从低到高轻轻琶音
-            offset = i * 0.06 if name == "concert_harp" else 0.0
-            events.append((time + offset, m + (12 if name == "concert_harp" else 0), 1.8))
+            offset = i * 0.06 if strum else 0.0
+            events.append((time + offset, min(spec["high"], m + shift), 1.8))
         time += 1.9
     total = int(RATE * (time + 3.0))
     mix = np.zeros(total)

@@ -1423,5 +1423,17 @@
   "screen.logos_dimension.instrument.midi_no_devices": "No MIDI input found: connect the keyboard over USB, then refresh",
   "screen.logos_dimension.instrument.midi_test_none": "Try it: press a key on the keyboard (%s messages so far)",
   "screen.logos_dimension.instrument.midi_test": "Try it: %s messages, last key %s at velocity %s",
-  "screen.logos_dimension.instrument.midi_hint": "While an instrument's Play page is open, the keyboard plays that instrument"
+  "screen.logos_dimension.instrument.midi_hint": "While an instrument's Play page is open, the keyboard plays that instrument",
+  "block.logos_dimension.hexen_glockenspiel": "Glockenspiel",
+  "item.logos_dimension.hexen_glockenspiel": "Glockenspiel",
+  "subtitles.logos_dimension.instrument.glockenspiel": "Glockenspiel rings",
+  "block.logos_dimension.hexen_celesta": "Celesta",
+  "item.logos_dimension.hexen_celesta": "Celesta",
+  "subtitles.logos_dimension.instrument.celesta": "Celesta chimes",
+  "block.logos_dimension.hexen_tubular_bells": "Tubular Bells",
+  "item.logos_dimension.hexen_tubular_bells": "Tubular Bells",
+  "subtitles.logos_dimension.instrument.tubular_bells": "Tubular bells toll",
+  "block.logos_dimension.hexen_harpsichord": "Harpsichord",
+  "item.logos_dimension.hexen_harpsichord": "Harpsichord",
+  "subtitles.logos_dimension.instrument.harpsichord": "Harpsichord plays"
 }

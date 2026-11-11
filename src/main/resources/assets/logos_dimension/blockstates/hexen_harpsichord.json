@@ -1,0 +1,31 @@
+{
+  "variants": {
+    "facing=north,tail=false": {
+      "model": "logos_dimension:block/hexen_harpsichord"
+    },
+    "facing=north,tail=true": {
+      "model": "logos_dimension:block/hexen_harpsichord_part"
+    },
+    "facing=east,tail=false": {
+      "model": "logos_dimension:block/hexen_harpsichord",
+      "y": 90
+    },
+    "facing=east,tail=true": {
+      "model": "logos_dimension:block/hexen_harpsichord_part"
+    },
+    "facing=south,tail=false": {
+      "model": "logos_dimension:block/hexen_harpsichord",
+      "y": 180
+    },
+    "facing=south,tail=true": {
+      "model": "logos_dimension:block/hexen_harpsichord_part"
+    },
+    "facing=west,tail=false": {
+      "model": "logos_dimension:block/hexen_harpsichord",
+      "y": 270
+    },
+    "facing=west,tail=true": {
+      "model": "logos_dimension:block/hexen_harpsichord_part"
+    }
+  }
+}

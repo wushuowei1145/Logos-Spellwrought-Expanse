@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "logos_dimension:block/hexen_celesta"
+    },
+    "facing=east": {
+      "model": "logos_dimension:block/hexen_celesta",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "logos_dimension:block/hexen_celesta",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "logos_dimension:block/hexen_celesta",
+      "y": 270
+    }
+  }
+}

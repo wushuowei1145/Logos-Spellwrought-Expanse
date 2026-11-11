@@ -126,11 +126,7 @@ public class InstrumentScreen extends Screen implements MidiKeyboard.Target {
     }
 
     private String nameKey() {
-        return "block.logos_dimension." + switch (kind()) {
-            case GRAND_PIANO -> "starbloom_grand_piano";
-            case CONCERT_HARP -> "hexen_concert_harp";
-            case PIPE_ORGAN -> "hexen_organ_console";
-        };
+        return "block.logos_dimension." + kind().blockId();
     }
 
     // —— 音栓页（管风琴）——

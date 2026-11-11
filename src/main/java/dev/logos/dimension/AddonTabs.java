@@ -97,6 +97,7 @@ public final class AddonTabs {
             // 魔女之森的乐器
             "starbloom_grand_piano", "hexen_concert_harp",
             "hexen_organ_console", "organ_wind_chest", "organ_tin_pipe", "organ_wood_pipe", "organ_trumpet_pipe",
+            "hexen_harpsichord", "hexen_celesta", "hexen_glockenspiel", "hexen_tubular_bells",
             // 运镜的测试方块
             "camera_test_block"));
 

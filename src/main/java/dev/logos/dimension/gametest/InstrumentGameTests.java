@@ -52,6 +52,7 @@ public final class InstrumentGameTests {
         tests.put("instrument_roll_copy", InstrumentGameTests::rollCopy);
         tests.put("instrument_roll_store", InstrumentGameTests::rollStore);
         tests.put("instrument_redstone_starts", InstrumentGameTests::redstoneStarts);
+        tests.put("instrument_new_shapes_break_whole", InstrumentGameTests::newShapesBreakWhole);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -190,6 +191,32 @@ public final class InstrumentGameTests {
         // 上半格旁边的信号也算
         level.setBlockAndUpdate(main.above().east(), Blocks.REDSTONE_BLOCK.defaultBlockState());
         h.assertTrue(be.isPlaying(), "a signal next to the upper half starts it too");
+        h.succeed();
+    }
+
+    /** 第二批：钟琴、钢片琴一格；管钟两格高；大键琴一宽两深，拆琴尾整架拆掉、只掉一架。 */
+    private static void newShapesBreakWhole(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos a = h.absolutePos(new BlockPos(1, 1, 1));
+        place(level, a, Instruments.GLOCKENSPIEL.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.SOUTH));
+        h.assertTrue(level.getBlockEntity(a) instanceof InstrumentBlockEntity be && be.kind() == dev.logos.dimension.music.InstrumentKind.GLOCKENSPIEL,
+            "glockenspiel has its entity");
+        BlockPos b = h.absolutePos(new BlockPos(3, 1, 1));
+        place(level, b, Instruments.TUBULAR_BELLS.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.SOUTH));
+        h.assertTrue(level.getBlockState(b.above()).is(Instruments.TUBULAR_BELLS.get()), "tubular bells are two tall");
+        level.destroyBlock(b.above(), true);
+        h.assertTrue(level.getBlockState(b).isAir(), "bells go as a whole");
+        BlockPos c = h.absolutePos(new BlockPos(5, 1, 1));
+        BlockState harpsichord = place(level, c, Instruments.HARPSICHORD.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.NORTH));
+        BlockPos tail = c.south();
+        h.assertTrue(level.getBlockState(tail).is(Instruments.HARPSICHORD.get())
+            && level.getBlockState(tail).getValue(dev.logos.dimension.music.LongInstrumentBlock.TAIL), "harpsichord tail behind the keyboard");
+        h.assertTrue(Instruments.HARPSICHORD.get().mainPos(level.getBlockState(tail), tail).equals(c), "tail finds the main block");
+        h.assertTrue(level.getBlockEntity(tail) == null, "only the main block has an entity");
+        level.destroyBlock(tail, true);
+        h.assertTrue(level.getBlockState(c).isAir(), "harpsichord goes as a whole");
+        h.assertTrue(dropped(level, b, Instruments.TUBULAR_BELLS_ITEM.get().asItem()) == 1, "one set of bells drops");
+        h.assertTrue(dropped(level, c, Instruments.HARPSICHORD_ITEM.get().asItem()) == 1, "one harpsichord drops");
         h.succeed();
     }
 
