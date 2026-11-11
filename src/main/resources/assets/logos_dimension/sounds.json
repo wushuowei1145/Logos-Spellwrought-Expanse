@@ -748,5 +748,605 @@
         "preload": true
       }
     ]
+  },
+  "instrument.glockenspiel.s78": {
+    "subtitle": "subtitles.logos_dimension.instrument.glockenspiel",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/glockenspiel/s78",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.glockenspiel.s81": {
+    "subtitle": "subtitles.logos_dimension.instrument.glockenspiel",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/glockenspiel/s81",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.glockenspiel.s84": {
+    "subtitle": "subtitles.logos_dimension.instrument.glockenspiel",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/glockenspiel/s84",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.glockenspiel.s87": {
+    "subtitle": "subtitles.logos_dimension.instrument.glockenspiel",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/glockenspiel/s87",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.glockenspiel.s90": {
+    "subtitle": "subtitles.logos_dimension.instrument.glockenspiel",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/glockenspiel/s90",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.glockenspiel.s93": {
+    "subtitle": "subtitles.logos_dimension.instrument.glockenspiel",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/glockenspiel/s93",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.glockenspiel.s96": {
+    "subtitle": "subtitles.logos_dimension.instrument.glockenspiel",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/glockenspiel/s96",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.glockenspiel.s99": {
+    "subtitle": "subtitles.logos_dimension.instrument.glockenspiel",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/glockenspiel/s99",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.glockenspiel.s102": {
+    "subtitle": "subtitles.logos_dimension.instrument.glockenspiel",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/glockenspiel/s102",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.glockenspiel.s105": {
+    "subtitle": "subtitles.logos_dimension.instrument.glockenspiel",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/glockenspiel/s105",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.glockenspiel.s108": {
+    "subtitle": "subtitles.logos_dimension.instrument.glockenspiel",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/glockenspiel/s108",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.celesta.s60": {
+    "subtitle": "subtitles.logos_dimension.instrument.celesta",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/celesta/s60",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.celesta.s63": {
+    "subtitle": "subtitles.logos_dimension.instrument.celesta",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/celesta/s63",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.celesta.s66": {
+    "subtitle": "subtitles.logos_dimension.instrument.celesta",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/celesta/s66",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.celesta.s69": {
+    "subtitle": "subtitles.logos_dimension.instrument.celesta",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/celesta/s69",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.celesta.s72": {
+    "subtitle": "subtitles.logos_dimension.instrument.celesta",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/celesta/s72",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.celesta.s75": {
+    "subtitle": "subtitles.logos_dimension.instrument.celesta",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/celesta/s75",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.celesta.s78": {
+    "subtitle": "subtitles.logos_dimension.instrument.celesta",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/celesta/s78",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.celesta.s81": {
+    "subtitle": "subtitles.logos_dimension.instrument.celesta",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/celesta/s81",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.celesta.s84": {
+    "subtitle": "subtitles.logos_dimension.instrument.celesta",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/celesta/s84",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.celesta.s87": {
+    "subtitle": "subtitles.logos_dimension.instrument.celesta",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/celesta/s87",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.celesta.s90": {
+    "subtitle": "subtitles.logos_dimension.instrument.celesta",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/celesta/s90",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.celesta.s93": {
+    "subtitle": "subtitles.logos_dimension.instrument.celesta",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/celesta/s93",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.celesta.s96": {
+    "subtitle": "subtitles.logos_dimension.instrument.celesta",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/celesta/s96",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.celesta.s99": {
+    "subtitle": "subtitles.logos_dimension.instrument.celesta",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/celesta/s99",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.celesta.s102": {
+    "subtitle": "subtitles.logos_dimension.instrument.celesta",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/celesta/s102",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.celesta.s105": {
+    "subtitle": "subtitles.logos_dimension.instrument.celesta",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/celesta/s105",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.celesta.s108": {
+    "subtitle": "subtitles.logos_dimension.instrument.celesta",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/celesta/s108",
+        "attenuation_distance": 24,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.tubular_bells.s54": {
+    "subtitle": "subtitles.logos_dimension.instrument.tubular_bells",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/tubular_bells/s54",
+        "attenuation_distance": 48,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.tubular_bells.s57": {
+    "subtitle": "subtitles.logos_dimension.instrument.tubular_bells",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/tubular_bells/s57",
+        "attenuation_distance": 48,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.tubular_bells.s60": {
+    "subtitle": "subtitles.logos_dimension.instrument.tubular_bells",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/tubular_bells/s60",
+        "attenuation_distance": 48,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.tubular_bells.s63": {
+    "subtitle": "subtitles.logos_dimension.instrument.tubular_bells",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/tubular_bells/s63",
+        "attenuation_distance": 48,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.tubular_bells.s66": {
+    "subtitle": "subtitles.logos_dimension.instrument.tubular_bells",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/tubular_bells/s66",
+        "attenuation_distance": 48,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.tubular_bells.s69": {
+    "subtitle": "subtitles.logos_dimension.instrument.tubular_bells",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/tubular_bells/s69",
+        "attenuation_distance": 48,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.tubular_bells.s72": {
+    "subtitle": "subtitles.logos_dimension.instrument.tubular_bells",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/tubular_bells/s72",
+        "attenuation_distance": 48,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.tubular_bells.s75": {
+    "subtitle": "subtitles.logos_dimension.instrument.tubular_bells",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/tubular_bells/s75",
+        "attenuation_distance": 48,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.tubular_bells.s78": {
+    "subtitle": "subtitles.logos_dimension.instrument.tubular_bells",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/tubular_bells/s78",
+        "attenuation_distance": 48,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.tubular_bells.s81": {
+    "subtitle": "subtitles.logos_dimension.instrument.tubular_bells",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/tubular_bells/s81",
+        "attenuation_distance": 48,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.tubular_bells.s84": {
+    "subtitle": "subtitles.logos_dimension.instrument.tubular_bells",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/tubular_bells/s84",
+        "attenuation_distance": 48,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s29": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s29",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s32": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s32",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s35": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s35",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s38": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s38",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s41": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s41",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s44": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s44",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s47": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s47",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s50": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s50",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s53": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s53",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s56": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s56",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s59": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s59",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s62": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s62",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s65": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s65",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s68": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s68",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s71": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s71",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s74": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s74",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s77": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s77",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s80": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s80",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s83": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s83",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s86": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s86",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
+  },
+  "instrument.harpsichord.s89": {
+    "subtitle": "subtitles.logos_dimension.instrument.harpsichord",
+    "sounds": [
+      {
+        "name": "logos_dimension:instrument/harpsichord/s89",
+        "attenuation_distance": 28,
+        "preload": true
+      }
+    ]
   }
 }

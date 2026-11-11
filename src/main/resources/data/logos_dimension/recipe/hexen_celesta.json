@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "III",
+    "PNP",
+    "P P"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "N": "minecraft:note_block",
+    "P": "minecraft:dark_oak_planks"
+  },
+  "result": {
+    "id": "logos_dimension:hexen_celesta",
+    "count": 1
+  }
+}

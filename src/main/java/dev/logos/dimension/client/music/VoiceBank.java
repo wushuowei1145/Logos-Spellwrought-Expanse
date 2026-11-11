@@ -234,7 +234,9 @@ final class VoiceBank {
             gen = mix.gen;
             sound = organSound(mix, be, pitch, false, 3);
         } else {
-            float volume = (float) Math.pow(Math.max(1, Math.min(127, velocity)) / 127.0, 1.6);
+            // 大键琴不分力度：一律按中强
+            int v = kind.velocitySensitive() ? velocity : 100;
+            float volume = (float) Math.pow(Math.max(1, Math.min(127, v)) / 127.0, 1.6);
             sound = new NoteSound(event(kind.soundId(kind.sampleFor(pitch))), kind.pitchRatio(pitch), volume, at, 0, false);
         }
         Minecraft.getInstance().getSoundManager().play(sound);
@@ -293,8 +295,8 @@ final class VoiceBank {
     }
 
     static void pedal(String key, InstrumentKind kind, BlockPos pos, Vec3 at, int part, boolean down) {
-        // 管风琴没有延音踏板
-        if (kind == InstrumentKind.PIPE_ORGAN) return;
+        // 管风琴、大键琴、钟琴等没有延音踏板（竖琴、管钟本来就不止音）
+        if (!kind.usesPedal()) return;
         Source s = source(key, kind, pos, at);
         if (down) {
             s.pedalMask |= 1 << part;

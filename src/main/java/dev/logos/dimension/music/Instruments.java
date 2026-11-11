@@ -81,6 +81,21 @@ public final class Instruments {
         "organ_trumpet_pipe", dev.logos.dimension.music.organ.OrganTrumpetBlock::new,
         p -> p.mapColor(MapColor.GOLD).strength(2.0f).sound(SoundType.COPPER).noOcclusion());
 
+    /** 第二批：钟琴、钢片琴（一格）、管钟（两格高）、大键琴（一宽两深）。 */
+    public static final DeferredBlock<SingleInstrumentBlock> GLOCKENSPIEL = DimensionBlocks.BLOCKS.registerBlock(
+        "hexen_glockenspiel", p -> new SingleInstrumentBlock(p, InstrumentKind.GLOCKENSPIEL, net.minecraft.world.level.block.Block.box(1, 0, 3, 15, 12, 13)),
+        p -> p.mapColor(MapColor.METAL).strength(1.5f).sound(SoundType.METAL).noOcclusion().pushReaction(PushReaction.BLOCK));
+    public static final DeferredBlock<SingleInstrumentBlock> CELESTA = DimensionBlocks.BLOCKS.registerBlock(
+        "hexen_celesta", p -> new SingleInstrumentBlock(p, InstrumentKind.CELESTA, net.minecraft.world.level.block.Block.box(0, 0, 2, 16, 15, 16)),
+        p -> p.mapColor(MapColor.COLOR_BROWN).strength(2.0f).sound(SoundType.WOOD).noOcclusion().pushReaction(PushReaction.BLOCK));
+    public static final DeferredBlock<TallInstrumentBlock> TUBULAR_BELLS = DimensionBlocks.BLOCKS.registerBlock(
+        "hexen_tubular_bells", p -> new TallInstrumentBlock(p, InstrumentKind.TUBULAR_BELLS, net.minecraft.world.level.block.Block.box(1, 0, 5, 15, 16, 11)),
+        p -> p.mapColor(MapColor.GOLD).strength(2.0f).sound(SoundType.COPPER).noOcclusion().pushReaction(PushReaction.BLOCK));
+    public static final DeferredBlock<LongInstrumentBlock> HARPSICHORD = DimensionBlocks.BLOCKS.registerBlock(
+        "hexen_harpsichord", p -> new LongInstrumentBlock(p, InstrumentKind.HARPSICHORD,
+            net.minecraft.world.level.block.Block.box(1, 0, 0, 15, 15, 16), net.minecraft.world.level.block.Block.box(2, 0, 0, 14, 15, 14)),
+        p -> p.mapColor(MapColor.QUARTZ).strength(2.5f).sound(SoundType.WOOD).noOcclusion().pushReaction(PushReaction.BLOCK));
+
     public static final DeferredItem<?> GRAND_PIANO_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("starbloom_grand_piano", GRAND_PIANO);
     public static final DeferredItem<?> CONCERT_HARP_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_concert_harp", CONCERT_HARP);
 
@@ -90,11 +105,17 @@ public final class Instruments {
     public static final DeferredItem<?> ORGAN_WOOD_PIPE_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("organ_wood_pipe", ORGAN_WOOD_PIPE);
     public static final DeferredItem<?> ORGAN_TRUMPET_PIPE_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("organ_trumpet_pipe", ORGAN_TRUMPET_PIPE);
 
+    public static final DeferredItem<?> GLOCKENSPIEL_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_glockenspiel", GLOCKENSPIEL);
+    public static final DeferredItem<?> CELESTA_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_celesta", CELESTA);
+    public static final DeferredItem<?> TUBULAR_BELLS_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_tubular_bells", TUBULAR_BELLS);
+    public static final DeferredItem<?> HARPSICHORD_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_harpsichord", HARPSICHORD);
+
     public static final DeferredItem<Item> BLANK_ROLL = DimensionBlocks.ITEMS.registerItem("blank_music_roll", p -> new Item(p.stacksTo(16)));
     public static final DeferredItem<Item> MUSIC_ROLL_ITEM = DimensionBlocks.ITEMS.registerItem("music_roll", p -> new MusicRollItem(p.stacksTo(1)));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<InstrumentBlockEntity>> INSTRUMENT_ENTITY =
-        BLOCK_ENTITIES.register("instrument", () -> new BlockEntityType<>(InstrumentBlockEntity::new, GRAND_PIANO.get(), CONCERT_HARP.get(), ORGAN_CONSOLE.get()));
+        BLOCK_ENTITIES.register("instrument", () -> new BlockEntityType<>(InstrumentBlockEntity::new, GRAND_PIANO.get(), CONCERT_HARP.get(), ORGAN_CONSOLE.get(),
+            GLOCKENSPIEL.get(), CELESTA.get(), TUBULAR_BELLS.get(), HARPSICHORD.get()));
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<RollInfo>> MUSIC_ROLL =
         COMPONENTS.registerComponentType("music_roll", b -> b.persistent(RollInfo.CODEC).networkSynchronized(RollInfo.STREAM_CODEC));

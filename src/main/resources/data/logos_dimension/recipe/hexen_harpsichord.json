@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "QQQ",
+    "SNS",
+    "P P"
+  ],
+  "key": {
+    "Q": "minecraft:quartz_block",
+    "S": "minecraft:string",
+    "N": "minecraft:note_block",
+    "P": "minecraft:dark_oak_planks"
+  },
+  "result": {
+    "id": "logos_dimension:hexen_harpsichord",
+    "count": 1
+  }
+}

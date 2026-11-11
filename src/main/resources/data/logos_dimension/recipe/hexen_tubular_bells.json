@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CCC",
+    "CNC",
+    "P P"
+  ],
+  "key": {
+    "C": "minecraft:copper_ingot",
+    "N": "minecraft:note_block",
+    "P": "minecraft:dark_oak_planks"
+  },
+  "result": {
+    "id": "logos_dimension:hexen_tubular_bells",
+    "count": 1
+  }
+}

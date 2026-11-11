@@ -1423,5 +1423,17 @@
   "screen.logos_dimension.instrument.midi_no_devices": "没有找到 MIDI 输入设备：把电子琴用 USB 接到电脑上，然后点刷新",
   "screen.logos_dimension.instrument.midi_test_none": "试一下：在琴上按一个键（已收到 %s 条消息）",
   "screen.logos_dimension.instrument.midi_test": "试一下：已收到 %s 条消息，最近按下 %s，力度 %s",
-  "screen.logos_dimension.instrument.midi_hint": "打开乐器的演奏页时，琴上弹的音就送给那件乐器"
+  "screen.logos_dimension.instrument.midi_hint": "打开乐器的演奏页时，琴上弹的音就送给那件乐器",
+  "block.logos_dimension.hexen_glockenspiel": "钟琴",
+  "item.logos_dimension.hexen_glockenspiel": "钟琴",
+  "subtitles.logos_dimension.instrument.glockenspiel": "钟琴声",
+  "block.logos_dimension.hexen_celesta": "钢片琴",
+  "item.logos_dimension.hexen_celesta": "钢片琴",
+  "subtitles.logos_dimension.instrument.celesta": "钢片琴声",
+  "block.logos_dimension.hexen_tubular_bells": "管钟",
+  "item.logos_dimension.hexen_tubular_bells": "管钟",
+  "subtitles.logos_dimension.instrument.tubular_bells": "管钟声",
+  "block.logos_dimension.hexen_harpsichord": "大键琴",
+  "item.logos_dimension.hexen_harpsichord": "大键琴",
+  "subtitles.logos_dimension.instrument.harpsichord": "大键琴声"
 }

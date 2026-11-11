@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "I I",
+    "INI",
+    "S S"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "N": "minecraft:note_block",
+    "S": "minecraft:stick"
+  },
+  "result": {
+    "id": "logos_dimension:hexen_glockenspiel",
+    "count": 1
+  }
+}

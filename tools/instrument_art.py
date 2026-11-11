@@ -588,12 +588,201 @@ def organ():
     shaped("organ_trumpet_pipe", ["  G", "GG ", "G  "], {"G": "minecraft:gold_ingot"}, 2)
 
 
+# —— 第二批：钟琴、钢片琴、管钟、大键琴 ——
+# 都按 FACING=north 画（演奏者在北面，z 小的一侧）；钟琴、钢片琴一格，管钟两格高，大键琴一宽两深（z 0–32）。
+
+def glockenspiel_elements():
+    el = []
+    # 支架：两条腿、横撑、脚
+    for x in (2, 13):
+        el.append(box((x, 0, 6), (x + 1, 10, 7), "walnut"))
+        el.append(box((x - 0.5, 0, 4), (x + 1.5, 1, 9), "walnut"))
+    el.append(box((3, 4, 6.2), (13, 5, 6.8), "walnut"))
+    # 琴框与金边、两道毛毡
+    el.append(box((1, 10, 3), (15, 11.5, 13), "walnut"))
+    el.append(box((1, 11.5, 3), (15, 11.8, 3.4), "gold"))
+    el.append(box((1, 11.5, 12.6), (15, 11.8, 13), "gold"))
+    el.append(box((1.6, 11.5, 4.2), (14.4, 11.75, 4.8), "red", faces={"down": None}))
+    el.append(box((1.6, 11.5, 9.6), (14.4, 11.75, 10.2), "red", faces={"down": None}))
+    # 下排白键对应的钢条（左长右短），上排半音钢条略高、隔开两处空位
+    for i in range(9):
+        x = 2.0 + i * 1.37
+        length = 6.6 - i * 0.3
+        el.append(box((x, 11.75, 4.0), (x + 1.0, 12.25, 4.0 + length), "iron", faces={"down": None}))
+    for i in range(8):
+        if i in (2, 6):
+            continue
+        x = 2.0 + i * 1.37 + 0.68
+        length = 3.2 - i * 0.15
+        el.append(box((x, 12.0, 9.4), (x + 0.9, 12.5, 9.4 + length), "iron", faces={"down": None}))
+    # 两支琴槌搁在一侧
+    for dz in (0, 0.9):
+        el.append(box((10.4, 12.3, 11.4 + dz), (14.4, 12.6, 11.7 + dz), "walnut"))
+        el.append(box((14.2, 12.15, 11.25 + dz), (15.0, 12.85, 11.85 + dz), "lacquer"))
+    return el
+
+
+def celesta_elements():
+    el = []
+    # 腿、下柜（正面一块星辰花镶嵌板）、踏板
+    for x in (1, 13.5):
+        el.append(box((x, 0, 3), (x + 1.5, 9, 4.5), "walnut"))
+    el.append(box((0.5, 2, 6), (15.5, 9, 15.5), "walnut"))
+    # 正面一块方形镶嵌板（整张贴图缩成 6×6），后面衬一道金边
+    el.append(box((5, 2.5, 5.85), (11, 8.5, 5.9), "inlay", faces={"south": None, "up": None, "down": None, "east": None, "west": None},
+                  uv={"north": [0, 0, 16, 16]}))
+    el.append(box((4.6, 2.1, 5.9), (11.4, 8.9, 6), "gold", faces={"south": None, "up": None, "down": None, "east": None, "west": None}))
+    el.append(box((7.3, 0.4, 4), (8.7, 1, 6), "gold"))
+    # 键盘
+    el.append(box((1, 9, 2), (15, 10.5, 6.5), "walnut"))
+    el.append(box((1.5, 10.5, 2.2), (14.5, 11.2, 5.8), "white", faces={"up": "keys", "down": None}, uv={"up": [0, 0, 16, 16]}))
+    el.append(box((0.5, 9, 2), (1.5, 12, 6.5), "walnut"))
+    el.append(box((14.5, 9, 2), (15.5, 12, 6.5), "walnut"))
+    # 上柜：大理石纹面板、金色檐口、谱架
+    el.append(box((0.5, 10.5, 6.5), (15.5, 15, 15.5), "walnut"))
+    el.append(box((2, 11.4, 6.4), (14, 14.4, 6.5), "marble", faces={"south": None, "up": None, "down": None, "east": None, "west": None}))
+    el.append(box((0.4, 14.8, 6.3), (15.6, 15.3, 15.6), "gold", faces={"up": "walnut"}))
+    el.append(box((4.5, 15.3, 8.5), (11.5, 16, 9.1), "walnut"))
+    return el
+
+
+def tubular_bells_elements():
+    el = []
+    el.append(box((1, 0.6, 4), (15, 2, 12), "walnut"))
+    for x, z in ((1.4, 4.4), (13.1, 4.4), (1.4, 10.1), (13.1, 10.1)):
+        el.append(box((x, 0, z), (x + 1.5, 0.6, z + 1.5), "gold"))
+    # 两根立柱、顶梁、顶上的星辰花牌饰
+    el.append(box((1, 2, 7), (2.5, 29, 9), "walnut"))
+    el.append(box((13.5, 2, 7), (15, 29, 9), "walnut"))
+    el.append(box((0.5, 28.5, 6.5), (15.5, 30.5, 9.5), "walnut"))
+    el.append(box((0.4, 30.5, 6.4), (15.6, 30.8, 9.6), "gold"))
+    el.append(box((5, 30.8, 7.4), (11, 32, 8.6), "walnut", faces={"north": "inlay"}, uv={"north": [0, 4, 16, 12]}))
+    # 八根铜管：左长右短，挂在顶梁下的小钩上
+    # 圆一点的细管（两块交叉），管与管之间留出缝
+    for i in range(8):
+        x = 3.1 + i * 1.37
+        length = 22 - i * 1.4
+        top = 27.2
+        el.append(box((x, top - length, 7.65), (x + 0.8, top, 8.35), "gold"))
+        el.append(box((x + 0.1, top - length, 7.55), (x + 0.7, top, 8.45), "gold"))
+        el.append(box((x - 0.1, top - 0.7, 7.45), (x + 0.9, top, 8.55), "gold"))
+        el.append(box((x + 0.3, top, 7.9), (x + 0.5, 28.5, 8.1), "iron"))
+    # 搁在底座上的皮槌
+    el.append(box((3, 2, 10), (9, 2.4, 10.4), "walnut"))
+    el.append(box((8.6, 1.8, 9.7), (10.2, 2.8, 10.7), "red"))
+    return el
+
+
+HARPSICHORD_SLICES = [(5, 14, 15), (14, 20, 13.5), (20, 25, 11.5), (25, 29, 9), (29, 31.5, 6)]
+HARPSICHORD_LID = 25.0  # 以左侧直边（x=1）为铰链，右侧弯边抬起
+
+
+def harpsichord_elements():
+    el = []
+    for x, z in ((1.5, 2), (13, 2), (2, 27), (5, 27)):
+        el.append(box((x, 0, z), (x + 1.5, 9, z + 1.5), "walnut"))
+    # 键床、两层手键盘、两侧扶手、谱板
+    el.append(box((1, 9, 0), (15, 11, 5.2), "walnut"))
+    el.append(box((1.5, 11, 0.4), (14.5, 11.7, 3.4), "white", faces={"up": "keys", "down": None}, uv={"up": [0, 0, 16, 16]}))
+    el.append(box((1.5, 11, 3.4), (14.5, 12, 5), "walnut"))
+    el.append(box((1.5, 12, 2.6), (14.5, 12.7, 5), "white", faces={"up": "keys", "down": None}, uv={"up": [0, 0, 16, 16]}))
+    el.append(box((1, 11, 0), (1.5, 13.5, 5.2), "walnut"))
+    el.append(box((14.5, 11, 0), (15, 13.5, 5.2), "walnut"))
+    el.append(box((1.5, 12.7, 5), (14.5, 14, 5.4), "walnut"))
+    el.append(box((1.5, 13.6, 4.9), (14.5, 13.8, 5.0), "gold", faces={"south": None, "down": None}))
+    # 琴身：白漆、金色底边，顶面云杉音板；音板上一枚金色玫瑰花窗与几根琴弦
+    for z0, z1, xr in HARPSICHORD_SLICES:
+        el.append(box((1, 9, z0), (xr, 9.6, z1), "gold"))
+        el.append(box((1, 9.6, z0), (xr, 14.4, z1), "lacquer", faces={"up": "spruce", "down": "walnut"}))
+        el.append(box((xr - 0.6, 14.4, z0), (xr, 15, z1), "lacquer"))
+    el.append(box((1, 14.4, 5), (1.6, 15, 31.5), "lacquer"))
+    el.append(box((1, 14.4, 5), (15, 15, 5.6), "lacquer"))
+    el.append(box((6.5, 14.4, 17), (8.5, 14.5, 19), "gold", faces={"down": None}))
+    for x in (3, 5, 7.5, 10, 12.5):
+        z_end = next((z1 for z0, z1, xr in reversed(HARPSICHORD_SLICES) if xr > x + 0.5), 14)
+        el.append(box((x, 14.45, 6.5), (x + 0.25, 14.65, z_end - 0.8), "iron", faces={"down": None}))
+    # 琴盖：外白漆、内侧星辰花镶嵌，撑开
+    lid = rotation("z", HARPSICHORD_LID, (1, 15, 16))
+    for z0, z1, xr in HARPSICHORD_SLICES:
+        el.append(box((1, 15, z0), (xr, 15.5, z1), "lacquer", faces={"down": "inlay", "north": "gold", "south": "gold",
+                                                                     "east": "gold", "west": "gold"}, rot=lid))
+    stick_x = 12.0
+    rise = (stick_x - 1) * math.tan(math.radians(HARPSICHORD_LID))
+    el.append(box((stick_x, 15, 15.5), (stick_x + 0.5, 15 + rise - 0.3, 16), "walnut"))
+    return el
+
+
+def mallet():
+    blocks = ASSETS / "models/block"
+    items = ASSETS / "models/item"
+    yrot = {"north": 0, "east": 90, "south": 180, "west": 270}
+    specs = {
+        "hexen_glockenspiel": (glockenspiel_elements(), "iron"),
+        "hexen_celesta": (celesta_elements(), "walnut"),
+        "hexen_tubular_bells": (tubular_bells_elements(), "gold"),
+        "hexen_harpsichord": (harpsichord_elements(), "lacquer"),
+    }
+    for name, (el, particle) in specs.items():
+        tex = {k: T[k] for k in used(el)} | {"particle": T[particle]}
+        write(blocks / f"{name}.json", {"ambientocclusion": False, "textures": tex, "elements": el})
+        write(ASSETS / f"items/{name}.json", {"model": {"type": "minecraft:model", "model": f"logos_dimension:item/{name}"}})
+        if name == "hexen_tubular_bells":
+            write(items / f"{name}.json", {"ambientocclusion": False, "textures": tex, "elements": shifted(el, 0, -8, 0),
+                                           "display": display(0.5, ground=0.25, rot_y=200)})
+            write(blocks / f"{name}_part.json", {"textures": {"particle": T[particle]}})
+        elif name == "hexen_harpsichord":
+            write(items / f"{name}.json", {"ambientocclusion": False, "textures": tex, "elements": shifted(el, 0, 0, -8),
+                                           "display": display(0.45, ground=0.22)})
+            write(blocks / f"{name}_part.json", {"textures": {"particle": T[particle]}})
+        else:
+            write(items / f"{name}.json", {"parent": f"logos_dimension:block/{name}"})
+
+    def single(name):
+        return {"variants": {f"facing={f}": ({"model": f"logos_dimension:block/{name}"} | ({"y": y} if y else {}))
+                             for f, y in yrot.items()}}
+    write(ASSETS / "blockstates/hexen_glockenspiel.json", single("hexen_glockenspiel"))
+    write(ASSETS / "blockstates/hexen_celesta.json", single("hexen_celesta"))
+    variants = {}
+    for f, y in yrot.items():
+        for half in ("lower", "upper"):
+            m = "hexen_tubular_bells" if half == "lower" else "hexen_tubular_bells_part"
+            variants[f"facing={f},half={half}"] = {"model": f"logos_dimension:block/{m}"} | ({"y": y} if y and half == "lower" else {})
+    write(ASSETS / "blockstates/hexen_tubular_bells.json", {"variants": variants})
+    variants = {}
+    for f, y in yrot.items():
+        for tail in ("false", "true"):
+            m = "hexen_harpsichord" if tail == "false" else "hexen_harpsichord_part"
+            variants[f"facing={f},tail={tail}"] = {"model": f"logos_dimension:block/{m}"} | ({"y": y} if y and tail == "false" else {})
+    write(ASSETS / "blockstates/hexen_harpsichord.json", {"variants": variants})
+
+    def loot(name, cond=None):
+        conditions = [{"condition": "minecraft:survives_explosion"}]
+        if cond:
+            conditions.append({"condition": "minecraft:block_state_property", "block": f"logos_dimension:{name}", "properties": cond})
+        return {"type": "minecraft:block", "pools": [{"rolls": 1, "conditions": conditions,
+                "entries": [{"type": "minecraft:item", "name": f"logos_dimension:{name}"}]}]}
+    write(DATA / "loot_table/blocks/hexen_glockenspiel.json", loot("hexen_glockenspiel"))
+    write(DATA / "loot_table/blocks/hexen_celesta.json", loot("hexen_celesta"))
+    write(DATA / "loot_table/blocks/hexen_tubular_bells.json", loot("hexen_tubular_bells", {"half": "lower"}))
+    write(DATA / "loot_table/blocks/hexen_harpsichord.json", loot("hexen_harpsichord", {"tail": "false"}))
+
+    def shaped(name, pattern, key):
+        write(DATA / f"recipe/{name}.json", {"type": "minecraft:crafting_shaped", "category": "misc", "pattern": pattern,
+                                             "key": key, "result": {"id": f"logos_dimension:{name}", "count": 1}})
+    shaped("hexen_glockenspiel", ["I I", "INI", "S S"], {"I": "minecraft:iron_ingot", "N": "minecraft:note_block", "S": "minecraft:stick"})
+    shaped("hexen_celesta", ["III", "PNP", "P P"], {"I": "minecraft:iron_ingot", "N": "minecraft:note_block", "P": "minecraft:dark_oak_planks"})
+    shaped("hexen_tubular_bells", ["CCC", "CNC", "P P"], {"C": "minecraft:copper_ingot", "N": "minecraft:note_block", "P": "minecraft:dark_oak_planks"})
+    shaped("hexen_harpsichord", ["QQQ", "SNS", "P P"], {"Q": "minecraft:quartz_block", "S": "minecraft:string", "N": "minecraft:note_block",
+                                                        "P": "minecraft:dark_oak_planks"})
+
+
 def main():
     models()
     blockstates()
     loot_and_recipes()
     art()
     organ()
+    mallet()
     print("instrument art written")
 
 

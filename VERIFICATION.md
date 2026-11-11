@@ -1,5 +1,24 @@
 # 首版验证记录
 
+## 第二批方块乐器：钟琴、钢片琴、管钟、大键琴
+
+2026-11-11：分支 `feat/mallet-instruments`，基于 main `6a1642be`（#239），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md) 第 13 节。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 全量 **347/348**，唯一失败的仍是 main 上就缺的 `item.logos_dimension.fuda_desk`。新增 `MusicRollTest.everySampledKindHasItsSamples`：六种用采样的乐器，音域内每个音取到的采样都在 ±1 半音内，每个采样的 ogg 与 `sounds.json` 条目都在；大键琴不感力度、钢片琴用踏板、钟琴不用 |
+| 采样 | 量过频谱：钟琴 F♯5 最强 740 Hz、C8 4186 Hz；钢片琴 C4 261 Hz；管钟 F♯3 基音 185 Hz 最强（起初基音拆成两支互相抵消，三次模态反而最强，已改为基音保持一支）、A4 440 Hz；大键琴 B2 247 Hz，F4 的二次谐波最强、基音也在（8′+4′ 的大键琴本来如此） |
+| 世界测试 | `instrument_*` **6/6**（新增 `instrument_new_shapes_break_whole`：钟琴一格有方块实体；管钟两格、拆上半整体消失；大键琴琴尾在键盘后面、只有主块有方块实体、拆琴尾整体消失；各只掉一件）；`creative_tabs_cover_items` 1/1 |
+| 实际客户端 | 新增 `mallet_instrument_views`、`mallet_instrument_play`，连同钢琴、管风琴的三组共 **5/5、7/7 检查**：大键琴演奏页按三个键有三路在响、松开后制音落下全部停止 |
+| 截图人工看过 | 一排正面、侧面、钟琴与钢片琴近景、物品栏；改过钢片琴顶面（全金太重，改为胡桃木顶 + 细金边）、正面镶嵌板（被截掉一半，改为方形整张）、管钟铜管（太密像帘子，改细、留缝） |
+| 未验证 | 音色只能人工试听（试听音阶在仓库外 `builds/mallet-instruments-2026-11-11/demo`）；多人、专用服务器、光影包没测 |
+
+```text
+uv run --no-project --with numpy python tools/instrument_samples.py --ffmpeg <ffmpeg> --only glockenspiel
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:instrument_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=mallet_instrument_views,mallet_instrument_play" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 电子琴（MIDI 键盘）输入
 
 2026-11-11：分支 `feat/midi-keyboard`，基于 main `9001a6a0`（#238），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md) 第 12 节。
