@@ -1,5 +1,28 @@
 # 首版验证记录
 
+## 乐团：生物加入合奏（星辰花琴凳）
+
+2026-11-12：分支 `feat/orchestra-musicians`（未提交），基于 main `2ff5bcb8`（#245），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。
+说明见 [docs/ORCHESTRA.md](docs/ORCHESTRA.md) 第 14 节。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 全量 **381/382**，唯一失败的仍是 main 上就缺的 zh_cn `item.logos_dimension.fuda_desk`；琴凳、座位、「空琴凳」的中英文名字都齐 |
+| 生成脚本 | `tools/concert_hall.py`（维护者的音乐厅脚本，拷进本分支后改）`--full-only` 写完整蓝图、`.litematic` 和清单；自检核对每张关联琴凳在乐器的演奏那一面、朝向对；32 件绑定里 18 张琴凳；脚本自己的管风琴 BFS 数到 44 个风箱、206 根音管（共 250 格，上限 256），和游戏里识别的一致 |
+| 世界测试 | 新增 `bench_*` **5/5**，`-PdimensionTestRepeat=8` **40/40**：`bench_links_to_instruments`（钢琴琴键前两格都关联、侧面和背后不关联；竖琴背后关联、对着竖琴正面不关联；钟琴不关联；拆掉钢琴不再关联）、`bench_seats_led_mobs`（拴绳牵着的精灵右键琴凳坐下、拴绳还回来；拿小提琴右键它交给它、原来的弓替它收着；空手拿回、弓还给它；潜行空手右键站起来、座位消失；玩家坐的座位不存盘）、`bench_joins_the_orchestra`（点关联的琴凳加入的是钢琴；空琴凳留在乐团里休息、开始演奏也不去掉；坐上拿小提琴的精灵分到小提琴声部；召集跳过关联的琴凳）、`bench_orchestra_moves_with_the_hall`（整座乐团读到别处时成员和乐器记着的指挥台一起平移；原地读回不变；记着的指挥台不在了时召集附近照样收进来）、`bench_seat_moves_up_to_the_keys`（前面放上钢琴座位挪到琴键前、拆掉挪回）；`organ_*` **4/4**（结构识别加了高一级的风箱和上面的音管：7 个风箱、9 根锡管；换回只往下找的旧代码只有 5 个风箱、这一项失败）；回归 `orchestra_*` **7/7**、`instrument_*` **8/8**、`creative_tabs_cover_items` **1/1** |
+| 实际客户端 | 新场景 `orchestra_hall_ui`：换成琴凳的音乐厅蓝图放进测试世界，指挥台 32 件成员都在；僵尸、骷髅、尸壳、流髑、森林精灵拿着小提琴、中提琴、长笛、双簧管、巴松管、小号坐在各声部，精灵坐在钢琴、钢片琴、竖琴、管风琴前，神狐坐在大键琴前；手拿小提琴的精灵坐在管风琴前弹的是管风琴、琴凳不演奏小提琴；管风琴识别到 44 个风箱、206 根音管；指挥棒开始后僵尸的琴凳在合奏里响、钢琴手的手落到琴键上；玩家坐上空的小提琴凳拿琴、再换到管风琴凳跟着纸带弹。加回归 `handheld_play_ui`、`orchestra_seated_ui`、`orchestra_conduct_ui`、`orchestra_seated_member_ui`、`music_stand_views`、`organ_play_ui`：**7/7、52/52 检查**；之后改了召集和精灵前倾，重跑 `orchestra_conduct_ui` **1/1、20/20**、`orchestra_hall_ui` **1/1、5/5** |
+| 截图人工看过 | 全景；第一、第二小提琴（骷髅、僵尸、尸壳、流髑、精灵琴在下巴下、拉弓）；中提琴、木管；铜管（骷髅、精灵举小号）；钢琴、大键琴（神狐）、钢片琴、竖琴、管风琴前的乐手（背后、正面）；钢琴、钢片琴、管风琴手的侧面近景（手在琴键上）；玩家坐着拉小提琴、弹管风琴 |
+| 改过的问题 | 看截图后改的：关联的琴凳上坐的人离琴键太远（坐的人往乐器那边挪 2.5 像素，手位放在琴键靠外的一段；坐着时前面放上、拆掉乐器会跟着挪）；原版生物坐在键盘前两腿平伸插进琴身（改成往前下方斜伸）；森林精灵手臂短，偏到一边的音够不着、手悬在半空（弹键盘时上身前倾，够不着时左右收回）。自查改的：召集附近会跳过记着的指挥台已经不在的乐器（蓝图转着放下后就收不回来）；坐着的生物已经替它收着一件东西、手里又捡了别的时，再交给它乐器会把手里那件弄丢（改成掉在它脚下）。新的座位测试起初等 2 刻看精灵的位置，测试格子的实体还没开始跑时失败过一次（改成当场摆好再查，重复 8 次 40/40） |
+| 未验证 | 多人、专用服务器；原版怪物、村民在生存里请上琴凳（拴不了，见第 14.6 节）；蓝图旋转着放下后的乐团（只测了平移和召集兜底）；维护者自己的 `feat/concert-hall` 世界生成分块（那边还是旧椅子） |
+
+```text
+uv run --no-project --with pillow --with numpy python tools/concert_hall.py --full-only build/concert_hall/concert_hall.nbt
+./gradlew test -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:bench_*" -PdimensionTestRepeat=8
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:organ_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=orchestra_hall_ui,handheld_play_ui,orchestra_seated_ui,orchestra_conduct_ui,orchestra_seated_member_ui,music_stand_views,organ_play_ui" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 乐团：指挥台、指挥棒与统一演奏（第一版）
 
 2026-11-11：分支 `docs/orchestra`（未提交），基于 main `533c749d`（#244），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。

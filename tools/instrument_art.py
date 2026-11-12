@@ -1672,6 +1672,52 @@ def podium():
                                              "result": {"id": "logos_dimension:hexen_baton", "count": 1}})
 
 
+
+# —— 星辰花琴凳 ——
+
+BENCH_TOP = 10  # 凳面高（像素），同 StarbloomBenchBlock.TOP
+
+
+def bench_elements():
+    """星辰花琴凳（坐的人面朝 −z，凳子前沿朝着要弹的乐器）：四条胡桃木腿配金脚，牙板上一排星辰花，
+    凳框上一圈金线，红丝绒坐垫上三颗金扣。x 1–15、z 3–13，凳面高 BENCH_TOP。"""
+    el = []
+    for x, z in ((2, 4), (12.5, 4), (2, 10.5), (12.5, 10.5)):
+        el.append(box((x, 0.6, z), (x + 1.5, 8.4, z + 1.5), "walnut"))
+        el.append(box((x - 0.2, 0, z - 0.2), (x + 1.7, 0.6, z + 1.7), "gold"))
+    el.append(box((1.5, 6.2, 3.5), (14.5, 8.4, 4.1), "walnut"))
+    el.append(box((1.5, 6.2, 11.9), (14.5, 8.4, 12.5), "walnut"))
+    el.append(box((1.5, 6.2, 4.1), (2.1, 8.4, 11.9), "walnut"))
+    el.append(box((13.9, 6.2, 4.1), (14.5, 8.4, 11.9), "walnut"))
+    for x in (4.2, 7.3, 10.4):
+        el.append(box((x, 6.6, 3.4), (x + 1.4, 8.0, 3.5), "inlay", faces=only("north"), uv={"north": [2, 2, 6, 6]}))
+        el.append(box((x, 6.6, 12.5), (x + 1.4, 8.0, 12.6), "inlay", faces=only("south"), uv={"south": [2, 2, 6, 6]}))
+    el.append(box((1, 8.4, 3), (15, 8.95, 13), "walnut"))
+    el.append(box((1.2, 8.95, 3.2), (14.8, 9.15, 12.8), "gold", faces={"down": None}))
+    el.append(box((1.6, 9.15, 3.6), (14.4, BENCH_TOP, 12.4), "velvet", faces={"down": None}))
+    for x in (4.6, 7.75, 10.9):
+        el.append(box((x, BENCH_TOP, 7.75), (x + 0.5, BENCH_TOP + 0.08, 8.25), "gold", faces={"down": None}))
+    return el
+
+
+def bench():
+    el = bench_elements()
+    check_bounds("starbloom_bench", el)
+    blocks = ASSETS / "models/block"
+    tex = {k: T[k] for k in used(el)} | {"particle": T["walnut"]}
+    write(blocks / "starbloom_bench.json", {"ambientocclusion": False, "textures": tex, "elements": el})
+    write(ASSETS / "models/item/starbloom_bench.json", {"parent": "logos_dimension:block/starbloom_bench", "display": display(0.62, ground=0.3)})
+    write(ASSETS / "items/starbloom_bench.json", {"model": {"type": "minecraft:model", "model": "logos_dimension:item/starbloom_bench"}})
+    yrot = {"north": 0, "east": 90, "south": 180, "west": 270}
+    variants = {}
+    for f, y in yrot.items():
+        for plays in ("none", "violin", "flute", "trumpet", "viola", "oboe", "bassoon"):
+            variants[f"facing={f},plays={plays}"] = {"model": "logos_dimension:block/starbloom_bench"} | ({"y": y} if y else {})
+    write(ASSETS / "blockstates/starbloom_bench.json", {"variants": variants})
+    write(DATA / "loot_table/blocks/starbloom_bench.json", loot("starbloom_bench"))
+    shaped("starbloom_bench", ["RRR", "PGP", "P P"], {"R": "minecraft:red_wool", "P": "minecraft:dark_oak_planks", "G": "minecraft:gold_nugget"})
+
+
 def main():
     models()
     blockstates()
@@ -1682,6 +1728,7 @@ def main():
     handheld()
     orchestra()
     podium()
+    bench()
     png(ROOT / "resourcepacks/concert_hall/pack.png", concert_hall_icon())
     if len(sys.argv) > 1:
         banner_previews(Path(sys.argv[1]))

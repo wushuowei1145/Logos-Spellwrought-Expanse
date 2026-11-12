@@ -241,7 +241,9 @@ final class PodiumScreen extends Screen {
         for (int i = scroll; i < members.size() && i < scroll + rows; i++) {
             BlockPos m = members.get(i);
             InstrumentKind kind = Conducting.kindOf(m);
-            String name = (kind == null ? tr("missing") : Component.translatable(kind.nameKey())).getString();
+            boolean bench = Minecraft.getInstance().level != null
+                && Minecraft.getInstance().level.getBlockState(m).getBlock() instanceof dev.logos.dimension.music.StarbloomBenchBlock;
+            String name = (kind == null ? tr(bench ? "empty_bench" : "missing") : Component.translatable(kind.nameKey())).getString();
             String shown = font.plainSubstrByWidth(name, NAME_W - 6);
             if (shown.length() < name.length()) shown = font.plainSubstrByWidth(name, NAME_W - 6 - font.width("…")) + "…";
             g.text(font, Component.literal(shown), x, y, Parchment.INK, false);

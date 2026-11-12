@@ -494,6 +494,24 @@ final class VoiceBank {
         return false;
     }
 
+    /**
+     * 这件乐器（按位置，不分是谁在弹：纸带、乐团、现场演奏都算）此刻按着的音和刚弹下的音：每项 {音高, 弹下多少毫秒}。
+     * 坐在琴凳上的键盘手、竖琴手按它摆手（{@link MusicianPoses}）。
+     */
+    static List<int[]> notesAt(BlockPos pos) {
+        List<int[]> out = new ArrayList<>();
+        long now = System.nanoTime();
+        for (Source s : SOURCES.values()) {
+            if (!s.pos.equals(pos)) continue;
+            for (Voice v : s.voices) {
+                if (v.tail || !v.alive()) continue;
+                long age = (now - v.started) / 1_000_000L;
+                if (v.held || age < 250) out.add(new int[]{v.pitch, (int) Math.min(Integer.MAX_VALUE, age)});
+            }
+        }
+        return out;
+    }
+
     /** 测试与界面用：这一路还在响的音数（含尾音）。 */
     static int sounding(String key) {
         Source s = SOURCES.get(key);

@@ -352,7 +352,8 @@ public class InstrumentBlockEntity extends BlockEntity {
         performer = input.read("performer", UUIDUtil.CODEC).orElse(null);
         stops = input.read("stops", Codec.INT).orElse(dev.logos.dimension.music.organ.OrganStop.ALWAYS);
         reverbMode = input.read("reverb", Codec.INT).orElse(0);
-        orchestra = input.read("orchestra", Codec.LONG).map(BlockPos::of).orElse(null);
+        BlockPos shift = dev.logos.dimension.music.orchestra.PodiumBlockEntity.shift(input, worldPosition);
+        orchestra = input.read("orchestra", Codec.LONG).map(p -> BlockPos.of(p).offset(shift)).orElse(null);
         organ = null;
     }
 
@@ -364,7 +365,10 @@ public class InstrumentBlockEntity extends BlockEntity {
         output.store("part_mask", Codec.INT, partMask);
         output.store("stop_with_signal", Codec.BOOL, stopWithSignal);
         output.store("powered", Codec.BOOL, powered);
-        if (orchestra != null) output.store("orchestra", Codec.LONG, orchestra.asLong());
+        if (orchestra != null) {
+            output.store("orchestra", Codec.LONG, orchestra.asLong());
+            output.store("origin", Codec.LONG, worldPosition.asLong());
+        }
         if (kind() == InstrumentKind.PIPE_ORGAN) {
             output.store("stops", Codec.INT, stops);
             output.store("reverb", Codec.INT, reverbMode);

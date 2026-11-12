@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 管风琴的结构识别：从演奏台的四格出发，沿相连的风箱找过去（离演奏台最远 24 格），
+ * 管风琴的结构识别：从演奏台的四格出发，沿相连的风箱找过去（上下左右前后都算，风箱可以一级级往上接到高处的管墙；离演奏台最远 24 格），
  * 再数每个风箱正上方叠着的音管（每根最高 32 格），总共最多 256 格。服务端和客户端各自识别，
  * 结果在方块实体里缓存 2 秒（见 {@code InstrumentBlockEntity#organ()}）。
  */
@@ -68,9 +68,8 @@ public record OrganStructure(int chests, int tin, int wood, int reed, Vec3 cente
                 sy += up.getY() + 0.5;
                 sz += up.getZ() + 0.5;
             }
-            for (Direction d : Direction.values()) {
-                if (d != Direction.UP) queue.add(p.relative(d));
-            }
+            // 上面也要找：风箱叠起来往上接（音乐厅里从演奏台升到管墙底座的那一段）；音管不是风箱，找过去也不算
+            for (Direction d : Direction.values()) queue.add(p.relative(d));
         }
         int pipes = tin + wood + reed;
         Vec3 center = pipes == 0 ? consoleCenter : new Vec3(sx / pipes, sy / pipes, sz / pipes);

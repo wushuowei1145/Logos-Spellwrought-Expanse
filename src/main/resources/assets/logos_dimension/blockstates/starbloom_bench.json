@@ -1,0 +1,109 @@
+{
+  "variants": {
+    "facing=north,plays=none": {
+      "model": "logos_dimension:block/starbloom_bench"
+    },
+    "facing=north,plays=violin": {
+      "model": "logos_dimension:block/starbloom_bench"
+    },
+    "facing=north,plays=flute": {
+      "model": "logos_dimension:block/starbloom_bench"
+    },
+    "facing=north,plays=trumpet": {
+      "model": "logos_dimension:block/starbloom_bench"
+    },
+    "facing=north,plays=viola": {
+      "model": "logos_dimension:block/starbloom_bench"
+    },
+    "facing=north,plays=oboe": {
+      "model": "logos_dimension:block/starbloom_bench"
+    },
+    "facing=north,plays=bassoon": {
+      "model": "logos_dimension:block/starbloom_bench"
+    },
+    "facing=east,plays=none": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 90
+    },
+    "facing=east,plays=violin": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 90
+    },
+    "facing=east,plays=flute": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 90
+    },
+    "facing=east,plays=trumpet": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 90
+    },
+    "facing=east,plays=viola": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 90
+    },
+    "facing=east,plays=oboe": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 90
+    },
+    "facing=east,plays=bassoon": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 90
+    },
+    "facing=south,plays=none": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 180
+    },
+    "facing=south,plays=violin": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 180
+    },
+    "facing=south,plays=flute": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 180
+    },
+    "facing=south,plays=trumpet": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 180
+    },
+    "facing=south,plays=viola": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 180
+    },
+    "facing=south,plays=oboe": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 180
+    },
+    "facing=south,plays=bassoon": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 180
+    },
+    "facing=west,plays=none": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 270
+    },
+    "facing=west,plays=violin": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 270
+    },
+    "facing=west,plays=flute": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 270
+    },
+    "facing=west,plays=trumpet": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 270
+    },
+    "facing=west,plays=viola": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 270
+    },
+    "facing=west,plays=oboe": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 270
+    },
+    "facing=west,plays=bassoon": {
+      "model": "logos_dimension:block/starbloom_bench",
+      "y": 270
+    }
+  }
+}

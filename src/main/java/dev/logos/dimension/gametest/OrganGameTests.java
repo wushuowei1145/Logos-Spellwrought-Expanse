@@ -129,14 +129,20 @@ public final class OrganGameTests {
         column(level, chest0.above(), Instruments.ORGAN_TIN_PIPE.get(), 3);
         column(level, chest0.west(1).above(), Instruments.ORGAN_WOOD_PIPE.get(), 2);
         column(level, chest0.west(2).above(), Instruments.ORGAN_TRUMPET_PIPE.get(), 1);
+        // 风箱一级级往上接：北边一格、叠高一格、再往北一格，那里立着两格锡管（同音乐厅从演奏台升到管墙的风道）
+        BlockPos riser = chest0.north();
+        level.setBlockAndUpdate(riser, Instruments.ORGAN_WIND_CHEST.get().defaultBlockState());
+        level.setBlockAndUpdate(riser.above(), Instruments.ORGAN_WIND_CHEST.get().defaultBlockState());
+        level.setBlockAndUpdate(riser.north().above(), Instruments.ORGAN_WIND_CHEST.get().defaultBlockState());
+        column(level, riser.north().above(2), Instruments.ORGAN_TIN_PIPE.get(), 2);
         // 不相连的风箱和音管不算
         BlockPos lonely = main.south(4);
         level.setBlockAndUpdate(lonely, Instruments.ORGAN_WIND_CHEST.get().defaultBlockState());
         column(level, lonely.above(), Instruments.ORGAN_TIN_PIPE.get(), 5);
         OrganStructure o = OrganStructure.scan(level, state, main);
-        h.assertTrue(o.chests() == 4, "four connected chests, got " + o.chests());
-        h.assertTrue(o.tin() == 7 && o.wood() == 2 && o.reed() == 1, "pipes " + o);
-        h.assertTrue(o.range() == 16 + 10, "range grows with pipes: " + o.range());
+        h.assertTrue(o.chests() == 7, "seven connected chests including the raised ones, got " + o.chests());
+        h.assertTrue(o.tin() == 9 && o.wood() == 2 && o.reed() == 1, "pipes " + o);
+        h.assertTrue(o.range() == 16 + 12, "range grows with pipes: " + o.range());
         h.assertTrue(o.availableStops() == OrganStop.ALL, "all families present");
         h.assertTrue(o.center().y > main.getY() + 1.5, "sound comes from the pipes: " + o.center());
         h.succeed();

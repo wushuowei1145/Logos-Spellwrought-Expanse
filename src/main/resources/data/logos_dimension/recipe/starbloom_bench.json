@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "RRR",
+    "PGP",
+    "P P"
+  ],
+  "key": {
+    "R": "minecraft:red_wool",
+    "P": "minecraft:dark_oak_planks",
+    "G": "minecraft:gold_nugget"
+  },
+  "result": {
+    "id": "logos_dimension:starbloom_bench",
+    "count": 1
+  }
+}

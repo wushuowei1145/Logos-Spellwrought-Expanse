@@ -133,6 +133,10 @@ public class PodiumBlockEntity extends BlockEntity {
      * 一件乐器只属于一个乐团：加入这里时从原来的乐团退出。
      */
     public String toggle(BlockPos main) {
+        if (level != null) {
+            BlockPos instrument = dev.logos.dimension.music.StarbloomBenchBlock.linked(level, main);
+            if (instrument != null) main = instrument;
+        }
         if (members.contains(main)) {
             forget(main);
             InstrumentBlockEntity be = instrument(main);
@@ -182,6 +186,17 @@ public class PodiumBlockEntity extends BlockEntity {
         if (p.isPlaying()) p.broadcast();
     }
 
+    /**
+     * 这件乐器真的属于别的乐团：它记着的指挥台还在、并且把它算作成员（那里没加载时当作还在）。
+     * 结构被旋转着放下、只复制了乐器时，记着的位置会指向别处，这样的当作没有乐团、可以召集。
+     */
+    private boolean claimedElsewhere(BlockPos main, InstrumentBlockEntity be) {
+        BlockPos old = be.orchestra();
+        if (old == null || old.equals(worldPosition) || level == null) return false;
+        if (!level.isLoaded(old)) return true;
+        return level.getBlockEntity(old) instanceof PodiumBlockEntity other && other.members.contains(main);
+    }
+
     /** 召集附近：台前方 16 格扇形里的乐器都加进来（满 32 件为止）。返回新加入的件数。 */
     public int gather() {
         if (level == null) return 0;
@@ -194,6 +209,7 @@ public class PodiumBlockEntity extends BlockEntity {
             if (members.size() >= MAX_MEMBERS) break;
             BlockState state = level.getBlockState(p);
             if (!(state.getBlock() instanceof InstrumentBlock b) || !b.isMain(state)) continue;
+            if (dev.logos.dimension.music.StarbloomBenchBlock.linked(level, p, state) != null) continue;
             BlockPos main = p.immutable();
             if (members.contains(main)) continue;
             Vec3 d = Vec3.atCenterOf(main).subtract(at);
@@ -203,8 +219,7 @@ public class PodiumBlockEntity extends BlockEntity {
             if (cos < Math.cos(GATHER_HALF_ANGLE)) continue;
             InstrumentBlockEntity be = instrument(main);
             if (be == null) continue;
-            BlockPos old = be.orchestra();
-            if (old != null && !old.equals(worldPosition)) continue;   // 已经属于别的乐团的不抢
+            if (claimedElsewhere(main, be)) continue;   // 已经属于别的乐团的不抢
             be.setOrchestra(worldPosition);
             members.add(main);
             added++;
@@ -217,7 +232,9 @@ public class PodiumBlockEntity extends BlockEntity {
     void validate() {
         for (BlockPos m : new ArrayList<>(members)) {
             InstrumentBlockEntity be = instrument(m);
-            boolean ok = be != null && be.playable() && be.kind() != null && worldPosition.equals(be.orchestra());
+            boolean bench = level != null && level.getBlockState(m).getBlock() instanceof dev.logos.dimension.music.StarbloomBenchBlock;
+            boolean ok = be != null && worldPosition.equals(be.orchestra())
+                && (bench ? dev.logos.dimension.music.StarbloomBenchBlock.linked(level, m) == null : be.playable() && be.kind() != null);
             if (!ok && (level != null && level.isLoaded(m))) {
                 members.remove(m);
                 masks.remove(m);
@@ -240,8 +257,11 @@ public class PodiumBlockEntity extends BlockEntity {
         List<BlockPos> order = new ArrayList<>();
         for (BlockPos m : members) {
             InstrumentBlockEntity be = instrument(m);
-            InstrumentKind kind = be == null ? null : be.kind();
-            if (kind == null) continue;
+            InstrumentKind kind = be == null || !be.playable() ? null : be.kind();
+            if (kind == null) {
+                if (!locked.contains(m)) masks.put(m, 0);
+                continue;
+            }
             list.add(new OrchestraArranger.Member(kind, seat(m), locked.contains(m) ? masks.getOrDefault(m, 0) : -1));
             order.add(m);
         }
@@ -465,8 +485,10 @@ public class PodiumBlockEntity extends BlockEntity {
         List<Long> ms = input.read("members", Codec.LONG.listOf()).orElse(List.of());
         List<Integer> mk = input.read("masks", Codec.INT.listOf()).orElse(List.of());
         List<Integer> lk = input.read("locked", Codec.INT.listOf()).orElse(List.of());
+        // 整座搬走（结构方块、蓝图、世界生成把乐团放到别处）：成员跟着平移
+        BlockPos shift = shift(input, worldPosition);
         for (int i = 0; i < ms.size() && i < MAX_MEMBERS; i++) {
-            BlockPos m = BlockPos.of(ms.get(i));
+            BlockPos m = BlockPos.of(ms.get(i)).offset(shift);
             members.add(m);
             masks.put(m, i < mk.size() ? mk.get(i) : 0);
             if (i < lk.size() && lk.get(i) != 0) locked.add(m);
@@ -479,9 +501,18 @@ public class PodiumBlockEntity extends BlockEntity {
         powered = input.read("powered", Codec.BOOL).orElse(false);
     }
 
+    /**
+     * 存盘时记着自己在哪（{@code origin}）；读回来的地方不一样（被结构方块、蓝图、世界生成搬到别处）时，返回要平移的量，
+     * 记着的成员、乐团位置都按它平移。没有 origin 的旧存档不平移。只处理平移，不处理旋转。
+     */
+    public static BlockPos shift(ValueInput input, BlockPos here) {
+        return input.read("origin", Codec.LONG).map(o -> here.subtract(BlockPos.of(o))).orElse(BlockPos.ZERO);
+    }
+
     @Override
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
+        output.store("origin", Codec.LONG, worldPosition.asLong());
         if (!score.isEmpty()) output.store("score", ItemStack.OPTIONAL_CODEC, score);
         List<Long> ms = new ArrayList<>();
         List<Integer> mk = new ArrayList<>();
