@@ -120,6 +120,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.EconomyGameTests.register(bus);
         dev.logos.dimension.gametest.RailgunGameTests.register(bus);
         dev.logos.dimension.gametest.ExplosionGameTests.register(bus);
+        dev.logos.dimension.gametest.ExplosionMaidGameTests.register(bus);
         dev.logos.dimension.gametest.GateGameTests.register(bus);
         dev.logos.dimension.gametest.CameraShotGameTests.register(bus);
         dev.logos.dimension.gametest.DissolveGameTests.register(bus);

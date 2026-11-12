@@ -14,7 +14,7 @@ permissions:
 
 env:
   # 本 Mod 编译所依赖的 Logos 提交；需要更新的 Logos 代码时改这一行。
-  LOGOS_REF: ba471315a4688cf95bc2ff147e88ed015707139f
+  LOGOS_REF: aa4168ca623446767818cacff3dcc00c432018af
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

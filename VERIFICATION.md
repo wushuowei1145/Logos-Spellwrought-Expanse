@@ -1,5 +1,15 @@
 # 首版验证记录
 
+## 爆裂魔杖给车万女仆用
+
+2026-11-12：分支 `feat/explosion-staff-maid`，基于 main `8b30538b`。维护者发现最新 Logos 加了车万女仆兼容，但女仆不会用爆裂魔杖：女仆的「施法」模式只读主手法杖上写好的载页、按法杖的注入流量和汇集加速蓄力，爆裂魔杖原来没有载页、两个值都是 0。按维护者的要求，把它当成只有一张载页的法杖，载页里的术式意图是攻击。说明见 [爆裂魔法](docs/EXPLOSION_MAGIC.md) 的「车万女仆」。女仆放的爆裂魔法范围内全灭（包括她自己和主人）、必须注满 6400 才放，都是维护者暂定的。
+
+| 层级 | 结果 |
+| --- | --- |
+| 世界测试 | 不装车万女仆：`explosion_*` **4/4**（新增 `explosion_staff_page`）。装上车万女仆（只放在本地运行目录的 mods 里）：**5/5**，新增 `explosion_maid_casts` 用真的女仆：驯服、施法模式、手拿爆裂魔杖，魔力池 3000 时一点不拿去蓄，回满后对尸壳放出爆裂魔法 |
+| 单元与构建 | `./gradlew test build`：唯一失败的是 main 上就有的 `LangCoverageTest`（zh_cn 缺 `item.logos_dimension.fuda_desk`），和这次无关 |
+| CI | `LOGOS_REF` 从 `ba471315` 改到 Logos main `aa4168ca`（有车万女仆兼容和 `ManaVessels`）。main 现在 CI 编译不过（白梅同伴、霊符用到了新 Logos），改了之后能编译，单元测试仍会卡在上面那一条 |
+| 未验证 | 真实客户端里女仆蓄力和放出的样子（女仆用的是 Logos 的蓄力特效）；女仆施法时 Logos 改了 `CastSpells.begin` 或 `Casting.run` 的情况（注入不上时不崩：女仆会照常放载页上的小魔弹）；多人；没进游戏手动玩过 |
 ## 乐团：玩家拿琴槌、车万女仆演奏姿势
 
 2026-11-12：分支 `feat/orchestra-strikes-maids`（未提交），基于 main `12a69c94`（#248），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`，
