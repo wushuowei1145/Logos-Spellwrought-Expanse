@@ -177,7 +177,7 @@
 | 客户端 | `client/music/Conducting`（乐团播放、手势、选中）、`ConductingPoses`（手臂、第一人称）、`PartOutline` + `shaders/post/part_outline*`、`PodiumScreen` |
 | 乐器那边 | `InstrumentBlockEntity`（`orchestra`、`conductedBy`、拆掉时退出）、`MusicStandBlock`（换乐器时通知）、`InstrumentBlock`（指挥棒右键） |
 | 美术 | `tools/instrument_art.py` 的 `podium()` |
-| 琴凳与生物乐手（第 14、15 节） | `music/StarbloomBenchBlock`、`StarbloomDuetBenchBlock`、`BenchSeat`、`Benches`、`InstrumentPosts`、`InstrumentSeat`；客户端 `StationPoses`（工位、琴槌）；客户端 `client/music/MusicianPoses`（手位、原版人形模型）、`NpcMusician`（车万女仆骨架的两骨 IK）、`mixin/MusicianModelMixin` |
+| 琴凳与生物乐手（第 14–16 节） | `music/StarbloomBenchBlock`、`StarbloomDuetBenchBlock`、`BenchSeat`、`Benches`、`InstrumentPosts`、`InstrumentSeat`；客户端 `StationPoses`（工位、琴槌）；客户端 `client/music/MusicianPoses`（手位、原版人形模型）、`NpcMusician`（车万女仆骨架的两骨 IK）、`mixin/MusicianModelMixin`；车万女仆模组的女仆 `MaidMusicians`（只在有女仆模组的 jar 时编译）、`animation/maid_musician.animation.json` |
 | 测试 | 单元 `BeatMapTest`、`ConductorPatternTest`、`OrchestraArrangerTest`、`MusicRollTest`、`MidiReaderTest`；世界 `orchestra_*`、`bench_*`；客户端 `orchestra_conduct_ui`、`orchestra_seated_member_ui`、`orchestra_hall_ui` |
 
 ## 13. 已定（维护者 2026-11-11）
@@ -284,7 +284,7 @@
 - 大提琴琴后的凳子、低音提琴琴后（站着）、钟琴和管钟前面（站着）是这件乐器的工位。工位上的人或生物就是演奏者，
   骑在看不见的座位（`InstrumentSeat`）上：生物不再走动、不会被刷掉，连同座位一起存盘。
 - **拴绳牵着生物右键乐器**：生物到工位上，拴绳还给玩家；已经有人时不收。**潜行空手右键乐器**：工位上的生物离开（站到工位后面的地面上）。
-  玩家照旧空手右键大提琴、低音提琴坐上去；钟琴、管钟玩家照旧开界面弹。
+  玩家空手右键大提琴、低音提琴、钟琴、管钟就到工位上，同时打开乐器界面（第 16 节）；潜行右键只开界面。
 - 工位的位置按方块朝向转过去：大提琴、低音提琴的人在琴后、和琴朝同一个方向；钟琴、管钟的人在放置时玩家站的那一面（乐器前面一格），
   面朝乐器。那一格要空着、下面有地面。同伴以后找空工位用 `InstrumentPosts.take / occupant / leave`。
 - 乐器照常按总谱、纸带、红石响，工位上的人只是演奏的样子。
@@ -309,3 +309,45 @@
 
 管钟改成朝北（敲管钟的人站在管钟北面、同一级台阶上，面朝指挥）；定音鼓两两并排（x = -5、-4 和 -9、-8），每一对后面一张双人琴凳。
 测试场景让僵尸、精灵、骷髅、尸壳上了大提琴、低音提琴、钟琴、管钟的工位，精灵、僵尸坐在两张定音鼓双人琴凳上。
+
+## 16. 玩家拿琴槌、车万女仆（2026-11-12）
+
+维护者定的：玩家站到钟琴、管钟前，坐到定音鼓后也要有敲的动作；车万女仆（Touhou Little Maid）的女仆坐上琴凳、到工位上也要做出对的姿势，
+在遵守女仆模组开发文档的前提下尽量做。
+
+### 16.1 玩家
+
+- 空手右键钟琴、管钟：站到乐器前面的工位上（同生物，第 15.1 节），同时打开乐器界面；大提琴、低音提琴本来就这样（判断挪到了 `InstrumentBlock`）。
+  潜行右键只开界面；工位上已经有人时只开界面；潜行起身，站到工位后面的地上。
+- 站在工位上、坐在定音鼓后的琴凳上时，玩家和原版人形生物走同一套（`MusicianPoses`）：手臂指向槌头上方往回一点，琴槌由玩家层画在手上，
+  跟着那件乐器此刻在响的音落下（界面里弹的、纸带、指挥台的声部都算，音都记在乐器的方块上）。
+
+### 16.2 站着的工位是另一种实体
+
+低音提琴、钟琴、管钟的工位改用 `standing_post`（同一个 `InstrumentSeat` 类），大提琴仍是 `instrument_seat`：
+别的模组按骑乘的实体分动作时（女仆模组 GeckoLib 模型的 `vehicle#<实体标签>` 动作）分得清坐着和站着。三种座位各有一个同名的实体标签
+（`logos_dimension:bench_seat`、`instrument_seat`、`standing_post`），整合包也可以往里加别的座位。上一轮试玩存档里站着的工位还是旧实体，照常能用。
+
+### 16.3 车万女仆
+
+女仆模组 26.1 版（2.0.0）有两种女仆模型，用的都是它公开的接口（`api` 包）：
+
+- **基岩版模型**（女仆模组自带的模型都是；骨骼 `head`、`body`、`armLeft`、`armRight`、`legLeft`、`legRight`，手臂直、无手肘，同原版）：
+  渲染状态修改器在女仆模组提取完渲染状态后，往这只女仆的动画列表（`IAnimation`，模型包的 JS 动画也是这个接口）末尾加一段：
+  整个人的高度换成琴凳、工位的（女仆模组坐下时往下挪 0.3 格是为它自己的坐垫）、双臂指向手位、腿摆好。手位就是第 14、15 节那一份，
+  换算到女仆模型像素时按模型的 `render_entity_scale`，髋按模型的腿的支点算；手持乐器的下巴、嘴边位置跟着女仆的头和身体。
+  手持乐器、琴弓、琴槌由 `AddMaidLayerEvent.Legacy` 加的一层画（先走一遍根骨骼，同女仆模组的手持物品层），手里原本的东西不画。
+- **GeckoLib 模型**（模型包里 `is_gecko`，如自带的酒狐）：骨骼在女仆模组自己的 GeckoLib 分支里、在别的线程算好，没有公开的办法在那之后改，
+  所以手不跟着音走。用 `DefaultGeckoAnimationEvent` 给所有 GeckoLib 女仆加三段默认动作，按骑着的实体的标签播放（女仆模组先查骑乘的实体，
+  再查它自己的「坐垫」动作）：`vehicle#logos_dimension:bench_seat` 坐着、两手在前面弹；`vehicle#logos_dimension:instrument_seat` 坐着拉大提琴；
+  `vehicle#logos_dimension:standing_post` 站着、两手在前面敲。用标签不用实体 id（`vehicle$...`）：这个快照版按 id 查的那一路
+  把 id 放在按引用比较的集合里，永远对不上（连它自带的 `vehicle$minecraft:player` 也是），按标签查的那一路是好的。模型包自己写了同名动作时用模型包的。按酒狐的身材调的高度，别的模型可能高低差一点。
+  手里的东西照女仆模组的画（拿着小提琴就是手里拿着）。
+- 女仆怎么上琴凳、工位：同别的生物，拴绳牵着右键（女仆骑着东西时女仆模组本来就不让它走动）；把乐器交给它也一样。
+- 编译：女仆模组 26.1 版不在任何 Maven 上，同 Logos 用本地 jar（`libs/touhoulittlemaid.jar` 或 `-Ptlm_jar=<路径>`），没有 jar 时
+  `MaidMusicians`、`MaidHallViews` 不参与编译；运行时只有装了女仆模组的客户端才注册（`LogosDimension` 按类名找）。`-Ptlm` 把它加进开发环境。
+
+### 16.4 没做的
+
+- GeckoLib 女仆的手跟着音走、手里画乐器 / 琴弓 / 琴槌（要改女仆模组的内部类，不在它的公开接口里）。
+- 女仆自己找空琴凳、空工位（同第 14.6 节的同伴）。

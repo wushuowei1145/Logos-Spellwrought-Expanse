@@ -113,6 +113,7 @@ public final class HandheldPoses {
     @SubscribeEvent
     static void renderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(Instruments.SEAT.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
+        event.registerEntityRenderer(Instruments.STANDING_POST.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
         event.registerEntityRenderer(dev.logos.dimension.music.Benches.SEAT.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
     }
 
@@ -135,8 +136,12 @@ public final class HandheldPoses {
     }
 
     private static @Nullable Held held(LivingEntity entity, AvatarRenderState state) {
-        // 坐在星辰花琴凳上：手持乐器、键盘、竖琴都按琴凳那一套来（同原版人形生物、附属 NPC）
-        if (entity.getVehicle() instanceof dev.logos.dimension.music.BenchSeat) return MusicianPoses.prepare(entity, state);
+        // 坐在星辰花琴凳上：手持乐器、键盘、竖琴、定音鼓都按琴凳那一套来（同原版人形生物、附属 NPC）；
+        // 站在钟琴、管钟前的工位上也是（拿槌敲，{@link StationPoses}）
+        if (entity.getVehicle() instanceof dev.logos.dimension.music.BenchSeat
+            || entity.getVehicle() instanceof InstrumentSeat post && post.kind() != null && !post.kind().seated()) {
+            return MusicianPoses.prepare(entity, state);
+        }
         state.setRenderData(MusicianPoses.MUSICIAN, null);
         if (entity.getVehicle() instanceof InstrumentSeat seat && seat.kind() != null) return seated(entity, state, seat);
         if (!entity.isUsingItem() || !(entity.getUseItem().getItem() instanceof HandheldInstrumentItem item)) return null;
@@ -264,6 +269,12 @@ public final class HandheldPoses {
             Held held = state.getRenderData(HELD);
             if (held == null || state.isInvisible) return;
             PlayerModel model = getParentModel();
+            MusicianPoses.Musician m = state.getRenderData(MusicianPoses.MUSICIAN);
+            if (m != null && m.mode() == MusicianPoses.Mode.MALLETS) {
+                // 钟琴、管钟、定音鼓：琴槌画在手上（同原版人形生物）
+                MusicianPoses.drawMallets(pose, collector, light, state.outlineColor, model, m, held.bow());
+                return;
+            }
             HeldRig.Place place = held.kind().seated() ? HeldRig.seated(held.kind(), model, state.ageInTicks, held.move())
                 : HeldRig.place(held.kind(), model, state.isCrouching, false, state.mainArm == HumanoidArm.LEFT, state.ageInTicks, held.move());
             if (held.instrument() != null && place.instrument() != null) draw(pose, collector, light, state, model, place.instrument(), held.instrument());

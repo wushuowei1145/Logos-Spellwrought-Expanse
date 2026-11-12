@@ -96,6 +96,11 @@ public abstract class HallViews implements UIScenario {
     static Mob seat(ServerLevel level, EntityType<? extends Mob> type, BlockPos bench, @Nullable Item instrument, Player giver) {
         Mob mob = type.create(level, EntitySpawnReason.COMMAND);
         if (mob == null) throw new IllegalStateException("cannot create " + type);
+        return seat(level, mob, bench, instrument, giver);
+    }
+
+    static Mob seat(ServerLevel level, Mob mob, BlockPos bench, @Nullable Item instrument, Player giver) {
+        EntityType<?> type = mob.getType();
         mob.snapTo(bench.getX() + 0.5, bench.getY(), bench.getZ() + 0.5, 0, 0);
         mob.setNoAi(true);
         mob.setSilent(true);
@@ -111,6 +116,11 @@ public abstract class HallViews implements UIScenario {
     static Mob post(ServerLevel level, EntityType<? extends Mob> type, BlockPos main) {
         Mob mob = type.create(level, EntitySpawnReason.COMMAND);
         if (mob == null) throw new IllegalStateException("cannot create " + type);
+        return post(level, mob, main);
+    }
+
+    static Mob post(ServerLevel level, Mob mob, BlockPos main) {
+        EntityType<?> type = mob.getType();
         mob.snapTo(main.getX() + 0.5, main.getY(), main.getZ() - 1.5, 0, 0);
         mob.setNoAi(true);
         mob.setSilent(true);
@@ -120,7 +130,7 @@ public abstract class HallViews implements UIScenario {
         return mob;
     }
 
-    private static void placeHall(ServerLevel level) throws IOException {
+    static void placeHall(ServerLevel level) throws IOException {
         Path nbt = blueprint();
         JsonObject manifest = JsonParser.parseString(Files.readString(nbt.resolveSibling("concert_hall.json"))).getAsJsonObject();
         var offset = manifest.getAsJsonArray("offset");
@@ -237,7 +247,39 @@ public abstract class HallViews implements UIScenario {
             .step("back to my eyes", ctx -> Minecraft.getInstance().setCameraEntity(Minecraft.getInstance().player));
     }
 
-    private static MusicianPoses.@Nullable Musician musician(int id) {
+    /**
+     * 从演奏者身边拍一张：front 往他面朝的方向、right 往他右手边、up 往上（格），看着他胸口前一点。
+     * 演奏者朝哪边按他骑着的座位算（座位朝向就是演奏的方向）。
+     */
+    protected static ScenarioBuilder shotOf(ScenarioBuilder s, String name, java.util.function.IntSupplier id, double right, double front, double up) {
+        return s.server("camera for " + name, ctx -> {
+                var level = ctx.server().overworld();
+                Entity who = level.getEntity(id.getAsInt());
+                if (who == null) throw new IllegalStateException("no musician for " + name);
+                float facing = who.getVehicle() != null ? who.getVehicle().getYRot() : who.getYRot();
+                Vec3 fwd = Vec3.directionFromRotation(0, facing), side = new Vec3(-fwd.z, 0, fwd.x);
+                Vec3 target = who.position().add(0, 0.75, 0).add(fwd.scale(0.3));
+                Vec3 eye = who.position().add(fwd.scale(front)).add(side.scale(right)).add(0, up, 0);
+                Vec3 look = target.subtract(eye);
+                var cam = level.getEntity(camera);
+                float yaw = (float) (Mth.atan2(look.z, look.x) * Mth.RAD_TO_DEG) - 90;
+                float pitch = (float) -(Mth.atan2(look.y, look.horizontalDistance()) * Mth.RAD_TO_DEG);
+                cam.snapTo(eye.x, eye.y - cam.getEyeHeight(), eye.z, yaw, pitch);
+                cam.setYHeadRot(yaw);
+            })
+            .ticks(4)
+            .step("look from the camera", ctx -> {
+                var mc = Minecraft.getInstance();
+                mc.options.hideGui = true;
+                mc.options.gamma().set(1.0);
+                mc.setCameraEntity(mc.level.getEntity(camera));
+            })
+            .ticks(3)
+            .screenshot(name)
+            .step("back to my eyes", ctx -> Minecraft.getInstance().setCameraEntity(Minecraft.getInstance().player));
+    }
+
+    static MusicianPoses.@Nullable Musician musician(int id) {
         Entity e = Minecraft.getInstance().level.getEntity(id);
         return e instanceof net.minecraft.world.entity.LivingEntity l ? MusicianPoses.of(l) : null;
     }
@@ -357,6 +399,97 @@ public abstract class HallViews implements UIScenario {
             b.teardownServer("stop playing, stand up", ctx -> {
                 ServerLevel level = ctx.server().overworld();
                 if (InstrumentBlock.entityAt(level, CONSOLE) instanceof InstrumentBlockEntity console) console.stopPlayback();
+                if (level.getBlockEntity(PODIUM) instanceof PodiumBlockEntity be) be.stop();
+                ctx.player().stopRiding();
+            });
+            b.teardown("my own eyes again", ctx -> {
+                var mc = Minecraft.getInstance();
+                mc.setScreen(null);
+                if (mc.player != null) mc.setCameraEntity(mc.player);
+                mc.options.hideGui = false;
+                mc.options.setCameraType(CameraType.FIRST_PERSON);
+            });
+        }
+    }
+
+    static final BlockPos GLOCKENSPIEL = at(-6, 4, -13), TUBULAR_BELLS = at(5, 6, -19), TIMPANI_BENCH_WEST = at(-8, 6, -20);
+
+    /** 让出工位、琴凳：上面的生物下来并消失（给玩家、女仆腾地方）。 */
+    static void vacate(ServerLevel level, BlockPos benchOrPost) {
+        Entity who = level.getBlockState(benchOrPost).getBlock() instanceof StarbloomBenchBlock
+            ? StarbloomBenchBlock.occupant(level, benchOrPost) : dev.logos.dimension.music.InstrumentPosts.occupant(level, benchOrPost);
+        if (who != null) {
+            who.stopRiding();
+            MUSICIANS.remove((Integer) who.getId());
+            who.discard();
+        }
+    }
+
+    /** 开始合奏（总谱放上指挥台、指挥棒开始），工位上的乐器跟着声部响。 */
+    static ScenarioBuilder conduct(ScenarioBuilder b) {
+        return b.server("score on the stand, start with the baton", ctx -> {
+                ServerLevel level = ctx.server().overworld();
+                if (level.getBlockEntity(PODIUM) instanceof PodiumBlockEntity be) {
+                    be.setScore(ConductingViews.punched(ConductingViews.score()));
+                    Orchestra.batonOnPodium(ctx.player().getMainHandItem(), level, PODIUM, ctx.player());
+                }
+            })
+            .waitUntil("the zombie's bench sounds in the ensemble", ctx -> Conducting.sounding(PODIUM, VIOLIN_BENCH) > 0);
+    }
+
+    /** 玩家站到钟琴、管钟前的工位上（空手右键乐器），坐到定音鼓后的双人琴凳上：琴槌画在手上，跟着那件乐器的音敲。 */
+    @LDLRegisterClient(name = "orchestra_player_mallets_ui", group = "instrument", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class PlayerMallets extends HallViews {
+        @Override
+        public void define(ScenarioBuilder s) {
+            ScenarioBuilder b = conduct(stage(s))
+                .server("the skeleton leaves the glockenspiel; I right-click it with an empty hand", ctx -> {
+                    ServerLevel level = ctx.server().overworld();
+                    vacate(level, GLOCKENSPIEL);
+                    ctx.player().getInventory().setSelectedSlot(1);
+                    level.getBlockState(GLOCKENSPIEL).useWithoutItem(level, ctx.player(),
+                        new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(GLOCKENSPIEL), net.minecraft.core.Direction.UP, GLOCKENSPIEL, false));
+                })
+                .waitUntil("I stand at the glockenspiel's post", ctx -> {
+                    var me = Minecraft.getInstance().player;
+                    return me.getVehicle() instanceof dev.logos.dimension.music.InstrumentSeat seat
+                        && seat.getType() == Instruments.STANDING_POST.get() && seat.instrument().equals(GLOCKENSPIEL);
+                })
+                .waitUntil("my two mallets follow the glockenspiel and strike", ctx -> {
+                    var m = MusicianPoses.of(Minecraft.getInstance().player);
+                    return m != null && m.mode() == MusicianPoses.Mode.MALLETS && m.kind() == InstrumentKind.GLOCKENSPIEL && m.standing()
+                        && m.left() != null && m.right() != null && Math.min(m.left().y, m.right().y) < 13.3f;
+                });
+            b = shot(b, "hall_player_glockenspiel", point(-3.9, 6.8, -11.0), point(-5.6, 5.0, -13.3));
+            b = shotOf(b, "hall_player_glockenspiel_side", () -> Minecraft.getInstance().player.getId(), 2.8, 1.3, 1.4);
+            b = b.server("on to the tubular bells", ctx -> {
+                    ServerLevel level = ctx.server().overworld();
+                    ctx.player().stopRiding();
+                    vacate(level, TUBULAR_BELLS);
+                    level.getBlockState(TUBULAR_BELLS).useWithoutItem(level, ctx.player(),
+                        new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(TUBULAR_BELLS), net.minecraft.core.Direction.UP, TUBULAR_BELLS, false));
+                })
+                .waitUntil("my hammer follows the tubular bells", ctx -> {
+                    var m = MusicianPoses.of(Minecraft.getInstance().player);
+                    return m != null && m.mode() == MusicianPoses.Mode.MALLETS && m.kind() == InstrumentKind.TUBULAR_BELLS
+                        && m.right() != null && m.left() == null;
+                });
+            b = shot(b, "hall_player_tubular_bells", point(7.4, 9.2, -22.6), point(5.5, 7.6, -19.6));
+            b = shotOf(b, "hall_player_tubular_bells_side", () -> Minecraft.getInstance().player.getId(), -2.8, 1.6, 1.4);
+            b = b.server("on to the west pair of timpani", ctx -> {
+                    ServerLevel level = ctx.server().overworld();
+                    ctx.player().stopRiding();
+                    vacate(level, TIMPANI_BENCH_WEST);
+                    StarbloomBenchBlock.sit(level, TIMPANI_BENCH_WEST, ctx.player());
+                })
+                .waitUntil("my mallets reach both drums", ctx -> {
+                    var m = MusicianPoses.of(Minecraft.getInstance().player);
+                    return m != null && m.mode() == MusicianPoses.Mode.MALLETS && m.kind() == InstrumentKind.TIMPANI
+                        && m.left() != null && m.right() != null && m.left().x < m.right().x;
+                });
+            b = shot(b, "hall_player_timpani", point(-8.4, 8.8, -15.8), point(-8.4, 7.0, -19.8));
+            b.teardownServer("stop playing, stand up", ctx -> {
+                ServerLevel level = ctx.server().overworld();
                 if (level.getBlockEntity(PODIUM) instanceof PodiumBlockEntity be) be.stop();
                 ctx.player().stopRiding();
             });
