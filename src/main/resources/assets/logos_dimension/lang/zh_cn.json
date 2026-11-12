@@ -1457,6 +1457,8 @@
   "item.logos_dimension.hexen_podium": "指挥台",
   "block.logos_dimension.starbloom_bench": "星辰花琴凳",
   "item.logos_dimension.starbloom_bench": "星辰花琴凳",
+  "block.logos_dimension.starbloom_duet_bench": "星辰花双人琴凳",
+  "item.logos_dimension.starbloom_duet_bench": "星辰花双人琴凳",
   "entity.logos_dimension.bench_seat": "琴凳座位",
   "screen.logos_dimension.podium.empty_bench": "空琴凳",
   "item.logos_dimension.hexen_baton": "指挥棒",

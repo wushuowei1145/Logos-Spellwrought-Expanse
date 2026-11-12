@@ -293,6 +293,12 @@ public final class InstrumentGameTests {
         level.getBlockState(cello).useWithoutItem(level, second, hit);
         h.assertTrue(second.getVehicle() == null && level.getEntitiesOfClass(InstrumentSeat.class, new AABB(cello).inflate(3)).size() == 1,
             "a taken seat is not doubled");
+        // 起身：站在座位后面的地面上，不陷进地里（座位要等原版问完「人放哪」才消失）；再坐回去
+        first.stopRiding();
+        h.assertTrue(Math.abs(first.getY() - cello.getY()) < 1e-6 && first.getZ() < at.z - 0.5,
+            "standing up puts the player on the floor behind the seat: " + first.position());
+        level.getBlockState(cello.above()).useWithoutItem(level, first, hit.withPosition(cello.above()));
+        h.assertTrue(first.getVehicle() instanceof InstrumentSeat, "the player can sit down again right away");
         BlockPos bass = h.absolutePos(new BlockPos(5, 1, 2));
         place(level, bass, Instruments.DOUBLE_BASS.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.EAST));
         h.assertTrue(level.getBlockState(bass.above()).is(Instruments.DOUBLE_BASS.get()), "the double bass is two tall");

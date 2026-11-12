@@ -53,7 +53,9 @@ public class StarbloomBenchBlock extends InstrumentBlock {
     public static final Vec3 FEET = new Vec3(8, -2, 8);
     /** 关联了乐器的琴凳：坐的人往乐器那边挪这么多像素（离琴键近一些，手够得着）。 */
     public static final float LINKED_FORWARD = 2.5f;
-    private static final Map<Direction, VoxelShape> SHAPES = Shapes.rotateHorizontal(Block.box(1, 0, 3, 15, TOP, 13));
+    /** 凳面前沿（像素，琴凳朝北时的 z），与碰撞箱、tools/instrument_art.py 的 bench_elements 一致。 */
+    public static final float FRONT_EDGE = 3;
+    private static final Map<Direction, VoxelShape> SHAPES = Shapes.rotateHorizontal(Block.box(1, 0, FRONT_EDGE, 15, TOP, 13));
 
     public StarbloomBenchBlock(Properties properties) {
         super(properties);
@@ -86,10 +88,29 @@ public class StarbloomBenchBlock extends InstrumentBlock {
         return List.of(main);
     }
 
+    /** 坐的人双脚在主块里左右的位置（像素，琴凳朝北时的 x）：单人琴凳在正中，双人琴凳在两格交界。 */
+    protected float seatX() {
+        return (float) FEET.x;
+    }
+
     /** 声音从坐的人胸口一带发出。 */
     @Override
     protected Vec3 centerOf(BlockState mainState, BlockPos main) {
-        return Vec3.atBottomCenterOf(main).add(0, 1.1, 0);
+        return toWorld(main, mainState.getValue(FACING), new Vec3(seatX(), 0, FEET.z)).add(0, 1.1, 0);
+    }
+
+    /** 琴凳坐标（像素；琴凳朝北：x 向东、y 向上、z 向南，原点在主块西北下角）→ 世界坐标：按琴凳朝向绕主块中心转过去。 */
+    public static Vec3 toWorld(BlockPos main, Direction facing, Vec3 px) {
+        Direction right = facing.getClockWise(), back = facing.getOpposite();
+        double dx = (px.x - 8) / 16, dz = (px.z - 8) / 16;
+        return new Vec3(main.getX() + 0.5 + right.getStepX() * dx + back.getStepX() * dz, main.getY() + px.y / 16,
+            main.getZ() + 0.5 + right.getStepZ() * dx + back.getStepZ() * dz);
+    }
+
+    /** pos 所在琴凳的主块；不是琴凳时原样返回。 */
+    public static BlockPos main(BlockGetter level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        return state.getBlock() instanceof StarbloomBenchBlock b ? b.mainPos(state, pos).immutable() : pos;
     }
 
     @Override
@@ -122,17 +143,23 @@ public class StarbloomBenchBlock extends InstrumentBlock {
         };
     }
 
-    /** 这张琴凳关联的乐器的主块；没有关联时为 null。 */
+    /** 这张琴凳关联的乐器的主块（bench 可以是琴凳的任一格；双人琴凳任一格前面是乐器都算）；没有关联时为 null。 */
     public static @Nullable BlockPos linked(BlockGetter level, BlockPos bench, BlockState benchState) {
-        if (!(benchState.getBlock() instanceof StarbloomBenchBlock)) return null;
-        Direction facing = benchState.getValue(FACING);
-        BlockPos front = bench.relative(facing);
-        BlockState frontState = level.getBlockState(front);
-        if (!(frontState.getBlock() instanceof InstrumentBlock block) || frontState.getBlock() instanceof StarbloomBenchBlock) return null;
-        BlockPos main = block.mainPos(frontState, front);
-        BlockState mainState = main.equals(front) ? frontState : level.getBlockState(main);
-        if (!(mainState.getBlock() instanceof InstrumentBlock)) return null;
-        return performerFacing(block.kind(mainState), mainState) == facing ? main.immutable() : null;
+        if (!(benchState.getBlock() instanceof StarbloomBenchBlock self)) return null;
+        BlockPos seatMain = self.mainPos(benchState, bench);
+        BlockState seatState = seatMain.equals(bench) ? benchState : level.getBlockState(seatMain);
+        if (!(seatState.getBlock() instanceof StarbloomBenchBlock)) return null;
+        Direction facing = seatState.getValue(FACING);
+        for (BlockPos cell : self.cells(seatState, seatMain)) {
+            BlockPos front = cell.relative(facing);
+            BlockState frontState = level.getBlockState(front);
+            if (!(frontState.getBlock() instanceof InstrumentBlock block) || frontState.getBlock() instanceof StarbloomBenchBlock) continue;
+            BlockPos main = block.mainPos(frontState, front);
+            BlockState mainState = main.equals(front) ? frontState : level.getBlockState(main);
+            if (!(mainState.getBlock() instanceof InstrumentBlock)) continue;
+            if (performerFacing(block.kind(mainState), mainState) == facing) return main.immutable();
+        }
+        return null;
     }
 
     public static @Nullable BlockPos linked(BlockGetter level, BlockPos bench) {
@@ -150,8 +177,9 @@ public class StarbloomBenchBlock extends InstrumentBlock {
     // —— 坐 ——
 
     /** 这张琴凳上有人坐着的座位；空着时为 null。 */
-    private static @Nullable BenchSeat seatOf(Level level, BlockPos bench) {
-        for (BenchSeat seat : level.getEntitiesOfClass(BenchSeat.class, new AABB(bench).inflate(0.5))) {
+    private static @Nullable BenchSeat seatOf(Level level, BlockPos pos) {
+        BlockPos bench = main(level, pos);
+        for (BenchSeat seat : level.getEntitiesOfClass(BenchSeat.class, new AABB(bench).inflate(1))) {
             if (seat.bench().equals(bench) && !seat.isRemoved() && !seat.getPassengers().isEmpty()) return seat;
         }
         return null;
@@ -167,31 +195,31 @@ public class StarbloomBenchBlock extends InstrumentBlock {
         return level.getBlockState(bench).getBlock() instanceof StarbloomBenchBlock && occupant(level, bench) == null;
     }
 
-    /** 坐的人的双脚在世界里的位置：凳子中间；关联了乐器时往乐器那边挪 {@link #LINKED_FORWARD}。 */
-    public static Vec3 seatPosition(BlockPos bench, Direction facing, boolean linked) {
-        float forward = linked ? LINKED_FORWARD : 0;
-        return new Vec3(bench.getX() + FEET.x / 16 + facing.getStepX() * forward / 16, bench.getY() + FEET.y / 16,
-            bench.getZ() + FEET.z / 16 + facing.getStepZ() * forward / 16);
+    /** 坐的人的双脚在世界里的位置（main 是琴凳主块）：凳子中间；关联了乐器时往乐器那边挪 {@link #LINKED_FORWARD}。 */
+    public static Vec3 seatPosition(BlockPos main, BlockState mainState, boolean linked) {
+        return toWorld(main, mainState.getValue(FACING), feet(mainState, linked));
     }
 
-    /** 坐的人双脚在琴凳坐标里的位置（像素；琴凳朝北：x 向东、y 向上、z 向南）。 */
-    public static Vec3 feet(boolean linked) {
-        return new Vec3(FEET.x, FEET.y, FEET.z - (linked ? LINKED_FORWARD : 0));
+    /** 坐的人双脚在琴凳坐标里的位置（像素；琴凳朝北：x 向东、y 向上、z 向南，原点在主块西北下角）。 */
+    public static Vec3 feet(BlockState benchState, boolean linked) {
+        float x = benchState.getBlock() instanceof StarbloomBenchBlock b ? b.seatX() : (float) FEET.x;
+        return new Vec3(x, FEET.y, FEET.z - (linked ? LINKED_FORWARD : 0));
     }
 
     /**
      * 让 who 坐到这张琴凳上（服务端）。生物坐下后不再走动、不会被刷掉；同伴以后找到空凳子时也调这里。
      * @return 坐下了为 true（凳子不在、已有人坐时为 false）
      */
-    public static boolean sit(Level level, BlockPos bench, Entity who) {
+    public static boolean sit(Level level, BlockPos pos, Entity who) {
         if (level.isClientSide()) return false;
+        BlockPos bench = main(level, pos);
         BlockState state = level.getBlockState(bench);
         if (!(state.getBlock() instanceof StarbloomBenchBlock) || occupant(level, bench) != null) return false;
         if (who.isPassenger()) who.stopRiding();
         BenchSeat seat = Benches.SEAT.get().create(level, EntitySpawnReason.TRIGGERED);
         if (seat == null) return false;
         Direction facing = state.getValue(FACING);
-        seat.bind(bench, seatPosition(bench, facing, linked(level, bench, state) != null), facing.toYRot());
+        seat.bind(bench, seatPosition(bench, state, linked(level, bench, state) != null), facing.toYRot());
         level.addFreshEntity(seat);
         if (!who.startRiding(seat, true, true)) {
             seat.discard();
@@ -219,13 +247,14 @@ public class StarbloomBenchBlock extends InstrumentBlock {
      * 坐的人也跟着挪：前面放上了关联的乐器就挪到琴键前，拆掉了就挪回凳子中间。
      * 坐下、起身、换手里的东西（座位每半秒查一次）、旁边的方块变了时调用。
      */
-    public static void refresh(Level level, BlockPos bench) {
+    public static void refresh(Level level, BlockPos pos) {
         if (level.isClientSide()) return;
+        BlockPos bench = main(level, pos);
         BlockState state = level.getBlockState(bench);
         if (!(state.getBlock() instanceof StarbloomBenchBlock)) return;
         boolean linked = linked(level, bench, state) != null;
         BenchSeat seat = seatOf(level, bench);
-        if (seat != null) seat.align(seatPosition(bench, state.getValue(FACING), linked), state.getValue(FACING).toYRot());
+        if (seat != null) seat.align(seatPosition(bench, state, linked), state.getValue(FACING).toYRot());
         MusicStandBlock.Holds plays = MusicStandBlock.Holds.NONE;
         if (!linked && seat != null && seat.getFirstPassenger() instanceof LivingEntity who
                 && who.getMainHandItem().getItem() instanceof HandheldInstrumentItem item) {
@@ -244,7 +273,7 @@ public class StarbloomBenchBlock extends InstrumentBlock {
         if (stack.is(Orchestra.BATON.get())) {
             // 指挥棒：关联了乐器的凳子就是那件乐器
             BlockPos instrument = linked(level, pos, state);
-            if (!level.isClientSide()) Orchestra.batonOnInstrument(stack, (ServerLevel) level, instrument != null ? instrument : pos, player);
+            if (!level.isClientSide()) Orchestra.batonOnInstrument(stack, (ServerLevel) level, instrument != null ? instrument : mainPos(state, pos), player);
             return InteractionResult.SUCCESS;
         }
         if (stack.is(Items.LEAD)) {

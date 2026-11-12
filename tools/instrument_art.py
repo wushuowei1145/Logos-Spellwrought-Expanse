@@ -472,6 +472,53 @@ def organ_console_elements():
     return el
 
 
+def organ_console_wide_elements():
+    """3 宽演奏台（FACING=north，x −16–32，主块在中间 x 0–16）：手键盘和脚键盘居中，左右两块放音栓拉钮的侧板，
+    正面三块星辰花镶嵌板、顶上一排中间最高的装饰音管，整台左右对称。旧的 2 宽模型（organ_console_elements）留给旧存档。"""
+    el = []
+    # 脚键盘：胡桃木框 + 琴键贴图，居中
+    el.append(box((-10, 0, 0), (26, 1.2, 5), "walnut"))
+    el.append(box((-9, 1.2, 0.5), (25, 1.8, 4.5), "white", faces={"up": "keys", "down": None}, uv={"up": [0, 0, 16, 16]}))
+    # 下层琴身与金色腰线
+    el.append(box((-16, 0, 5), (32, 12.5, 16), "walnut"))
+    for x in (-12, 4, 20):
+        el.append(box((x, 2.5, 4.8), (x + 8, 10.5, 4.85), "inlay", faces={"south": None, "up": None, "down": None, "east": None, "west": None},
+                      uv={"north": [0, 0, 16, 16]}))
+        el.append(box((x - 0.4, 2.1, 4.85), (x + 8.4, 10.9, 4.95), "gold", faces={"south": None, "up": None, "down": None, "east": None, "west": None}))
+    el.append(box((-16, 12.5, 4.8), (32, 13, 16), "gold"))
+    # 左右音栓侧板，正面各 3 列 × 4 行象牙色拉钮
+    el.append(box((-16, 13, 3.5), (-6, 24, 16), "walnut"))
+    el.append(box((22, 13, 3.5), (32, 24, 16), "walnut"))
+    for x0 in (-14.4, 23.6):
+        for i in range(3):
+            for j in range(4):
+                x, y = x0 + i * 2.6, 14.8 + j * 2.3
+                el.append(box((x, y, 2.7), (x + 1.3, y + 1.3, 3.5), "lacquer", faces={"south": None}))
+    el.append(box((-16, 23.6, 3.3), (-6, 24, 16), "gold"))
+    el.append(box((22, 23.6, 3.3), (32, 24, 16), "gold"))
+    # 下层、上层手键盘
+    el.append(box((-6, 13, 3), (22, 14, 9), "walnut"))
+    el.append(box((-5.5, 14, 3.2), (21.5, 14.8, 8), "white", faces={"up": "keys", "down": None}, uv={"up": [0, 0, 16, 16]}))
+    el.append(box((-6, 15, 6.5), (22, 16, 11), "walnut"))
+    el.append(box((-5.5, 16, 6.7), (21.5, 16.8, 10.5), "white", faces={"up": "keys", "down": None}, uv={"up": [0, 0, 16, 16]}))
+    # 后面板与谱架（居中）
+    el.append(box((-6, 16, 11), (22, 24, 13), "walnut"))
+    tilt = rotation("x", -15, (8, 17, 10.6))
+    el.append(box((2, 17, 10.2), (14, 22.5, 10.8), "walnut", rot=tilt))
+    # 檐口、装饰音管（中间最高）、顶上镶嵌带
+    el.append(box((-16, 24, 11), (32, 25, 16), "walnut"))
+    el.append(box((-16, 24.8, 10.8), (32, 25.2, 16), "gold"))
+    heights = [3, 3.6, 4.2, 4.8, 5.4, 6.1, 6.8, 6.1, 5.4, 4.8, 4.2, 3.6, 3]
+    start = 8 - (12 * 2.95 + 1.8) / 2
+    for i, h in enumerate(heights):
+        x = start + i * 2.95
+        el.append(box((x, 25.2, 12.8), (x + 1.8, 25.2 + h, 14.6), "iron"))
+        el.append(box((x + 0.3, 25.6, 12.7), (x + 1.5, 26.2, 12.8), "black", faces={"south": None, "up": None, "down": None}))
+    el.append(box((-16, 30.6, 12), (32, 32, 16), "walnut", faces={"north": "inlay"}))
+    el.append(box((-16, 30.4, 11.8), (32, 30.7, 16), "gold"))
+    return el
+
+
 def organ_wind_chest_elements():
     return [
         box((0, 0, 0), (16, 15, 16), "inlay", faces={"up": "walnut", "down": "walnut"}),
@@ -527,8 +574,11 @@ def organ():
     tex = {k: T[k] for k in used(con)} | {"particle": T["walnut"]}
     write(blocks / "hexen_organ_console.json", {"ambientocclusion": False, "textures": tex, "elements": con})
     write(blocks / "hexen_organ_console_part.json", {"textures": {"particle": T["walnut"]}})
-    write(items / "hexen_organ_console.json", {"ambientocclusion": False, "textures": tex,
-        "elements": shifted(con, -8, -8, 0), "display": display(0.42, ground=0.2, rot_y=210)})
+    wide = organ_console_wide_elements()
+    wide_tex = {k: T[k] for k in used(wide)} | {"particle": T["walnut"]}
+    write(blocks / "hexen_organ_console_wide.json", {"ambientocclusion": False, "textures": wide_tex, "elements": wide})
+    write(items / "hexen_organ_console.json", {"ambientocclusion": False, "textures": wide_tex,
+        "elements": shifted(wide, 0, -8, 0), "display": display(0.3, ground=0.15, rot_y=210)})
     chest = organ_wind_chest_elements()
     write(blocks / "organ_wind_chest.json", {"textures": {k: T[k] for k in used(chest)} | {"particle": T["walnut"]}, "elements": chest})
     for kind in ("tin", "wood"):
@@ -549,12 +599,14 @@ def organ():
     yrot = {"north": 0, "east": 90, "south": 180, "west": 270}
     variants = {}
     for facing, y in yrot.items():
-        for part in range(4):
-            model = "hexen_organ_console" if part == 0 else "hexen_organ_console_part"
-            v = {"model": f"logos_dimension:block/{model}"}
-            if y and part == 0:
-                v["y"] = y
-            variants[f"facing={facing},part={part}"] = v
+        for part in range(7):
+            for wide in ("true", "false"):
+                main = "hexen_organ_console_wide" if wide == "true" else "hexen_organ_console"
+                model = main if part == 0 else "hexen_organ_console_part"
+                v = {"model": f"logos_dimension:block/{model}"}
+                if y and part == 0:
+                    v["y"] = y
+                variants[f"facing={facing},part={part},wide={wide}"] = v
     write(ASSETS / "blockstates/hexen_organ_console.json", {"variants": variants})
     write(ASSETS / "blockstates/organ_wind_chest.json", {"variants": {"": {"model": "logos_dimension:block/organ_wind_chest"}}})
     for kind in ("tin", "wood"):
@@ -1700,6 +1752,57 @@ def bench_elements():
     return el
 
 
+def duet_bench_elements():
+    """星辰花双人琴凳：两格宽（x 1–31，主块 x 0–16，另一格在 +x，即坐的人右手边），坐的人坐在正中，
+    两格宽的钢琴、管风琴前用。做法同单人琴凳：四条腿配金脚、中间加一根横撑，牙板一排星辰花，红丝绒坐垫上五颗金扣。"""
+    el = []
+    for x, z in ((2, 4), (28.5, 4), (2, 10.5), (28.5, 10.5)):
+        el.append(box((x, 0.6, z), (x + 1.5, 8.4, z + 1.5), "walnut"))
+        el.append(box((x - 0.2, 0, z - 0.2), (x + 1.7, 0.6, z + 1.7), "gold"))
+    el.append(box((3.5, 2.2, 7.2), (28.5, 3.2, 8.2), "walnut"))
+    el.append(box((1.5, 6.2, 3.5), (30.5, 8.4, 4.1), "walnut"))
+    el.append(box((1.5, 6.2, 11.9), (30.5, 8.4, 12.5), "walnut"))
+    el.append(box((1.5, 6.2, 4.1), (2.1, 8.4, 11.9), "walnut"))
+    el.append(box((29.9, 6.2, 4.1), (30.5, 8.4, 11.9), "walnut"))
+    for i in range(7):
+        x = 4.2 + i * 3.75
+        el.append(box((x, 6.6, 3.4), (x + 1.4, 8.0, 3.5), "inlay", faces=only("north"), uv={"north": [2, 2, 6, 6]}))
+        el.append(box((x, 6.6, 12.5), (x + 1.4, 8.0, 12.6), "inlay", faces=only("south"), uv={"south": [2, 2, 6, 6]}))
+    el.append(box((1, 8.4, 3), (31, 8.95, 13), "walnut"))
+    el.append(box((1.2, 8.95, 3.2), (30.8, 9.15, 12.8), "gold", faces={"down": None}))
+    el.append(box((1.6, 9.15, 3.6), (30.4, BENCH_TOP, 12.4), "velvet", faces={"down": None}))
+    for i in range(5):
+        x = 5.6 + i * 5.1
+        el.append(box((x, BENCH_TOP, 7.75), (x + 0.5, BENCH_TOP + 0.08, 8.25), "gold", faces={"down": None}))
+    return el
+
+
+def duet_bench():
+    el = duet_bench_elements()
+    blocks = ASSETS / "models/block"
+    tex = {k: T[k] for k in used(el)} | {"particle": T["walnut"]}
+    write(blocks / "starbloom_duet_bench.json", {"ambientocclusion": False, "textures": tex, "elements": el})
+    write(blocks / "starbloom_duet_bench_part.json", {"textures": {"particle": T["walnut"]}})
+    write(ASSETS / "models/item/starbloom_duet_bench.json", {"ambientocclusion": False, "textures": tex,
+        "elements": shifted(el, -8, 0, 0), "display": display(0.45, ground=0.25)})
+    write(ASSETS / "items/starbloom_duet_bench.json", {"model": {"type": "minecraft:model", "model": "logos_dimension:item/starbloom_duet_bench"}})
+    yrot = {"north": 0, "east": 90, "south": 180, "west": 270}
+    variants = {}
+    for f, y in yrot.items():
+        for plays in ("none", "violin", "flute", "trumpet", "viola", "oboe", "bassoon"):
+            for side in ("false", "true"):
+                model = "starbloom_duet_bench_part" if side == "true" else "starbloom_duet_bench"
+                variants[f"facing={f},plays={plays},side={side}"] = {"model": f"logos_dimension:block/{model}"} | ({"y": y} if y and side == "false" else {})
+    write(ASSETS / "blockstates/starbloom_duet_bench.json", {"variants": variants})
+    write(DATA / "loot_table/blocks/starbloom_duet_bench.json", {"type": "minecraft:block", "pools": [{"rolls": 1, "conditions": [
+        {"condition": "minecraft:survives_explosion"},
+        {"condition": "minecraft:block_state_property", "block": "logos_dimension:starbloom_duet_bench", "properties": {"side": "false"}}],
+        "entries": [{"type": "minecraft:item", "name": "logos_dimension:starbloom_duet_bench"}]}]})
+    write(DATA / "recipe/starbloom_duet_bench.json", {"type": "minecraft:crafting_shapeless", "category": "misc",
+        "ingredients": ["logos_dimension:starbloom_bench", "logos_dimension:starbloom_bench"],
+        "result": {"id": "logos_dimension:starbloom_duet_bench", "count": 1}})
+
+
 def bench():
     el = bench_elements()
     check_bounds("starbloom_bench", el)
@@ -1729,6 +1832,7 @@ def main():
     orchestra()
     podium()
     bench()
+    duet_bench()
     png(ROOT / "resourcepacks/concert_hall/pack.png", concert_hall_icon())
     if len(sys.argv) > 1:
         banner_previews(Path(sys.argv[1]))

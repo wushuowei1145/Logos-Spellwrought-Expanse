@@ -12,6 +12,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
@@ -91,18 +92,29 @@ public final class BenchSeat extends Entity {
 
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
-        // 站起来退到凳子后面，落在地面上
-        Vec3 back = Vec3.directionFromRotation(0, getYRot()).scale(-0.8);
-        return new Vec3(getX() + back.x, Math.floor(getY() + 0.5), getZ() + back.z);
+        return dismountBehind(this, passenger, 0.8);
     }
 
+    /**
+     * 站起来退到座位后面 back 格、落在地面上（座位比地面略低，取它所在方块的地面）；后面站不下（墙、别的凳子）时站到座位所在那格的上面一格。
+     * 大提琴、低音提琴的座位也用这个。
+     */
+    static Vec3 dismountBehind(Entity seat, LivingEntity passenger, double back) {
+        Vec3 step = Vec3.directionFromRotation(0, seat.getYRot()).scale(-back);
+        double floor = Math.floor(seat.getY() + 0.5);
+        Vec3 at = new Vec3(seat.getX() + step.x, floor, seat.getZ() + step.z);
+        if (seat.level().noCollision(passenger, passenger.getDimensions(Pose.STANDING).makeBoundingBox(at))) return at;
+        return new Vec3(seat.getX(), floor + 1, seat.getZ());
+    }
+
+    /**
+     * 不在这里马上消失：原版下车时先移除乘客、再问座位人放哪；座位已经没了的话就把人留在坐着的位置（双脚比地面低），
+     * 人陷进地里。空座位在下一刻的 tick 里消失；琴凳马上按没人坐重算。
+     */
     @Override
     protected void removePassenger(Entity passenger) {
         super.removePassenger(passenger);
-        if (!level().isClientSide() && !isRemoved()) {
-            discard();
-            StarbloomBenchBlock.refresh(level(), bench());
-        }
+        if (!level().isClientSide() && !isRemoved()) StarbloomBenchBlock.refresh(level(), bench());
     }
 
     @Override
