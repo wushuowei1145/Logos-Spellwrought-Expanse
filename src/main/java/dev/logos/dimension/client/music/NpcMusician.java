@@ -11,6 +11,7 @@ import com.geckolib.renderer.base.RenderPassInfo;
 import com.geckolib.renderer.layer.GeoRenderLayer;
 import com.geckolib.renderer.layer.builtin.BlockAndItemGeoLayer;
 import com.mojang.blaze3d.vertex.PoseStack;
+import dev.logos.dimension.music.InstrumentKind;
 import dev.logos.dimension.music.StarbloomBenchBlock;
 import java.util.List;
 import java.util.Map;
@@ -43,11 +44,15 @@ public final class NpcMusician {
     public static final DataTicket<MusicianPoses.Musician> MUSICIAN = DataTicket.create("logos_dimension_musician", MusicianPoses.Musician.class);
     public static final DataTicket<HandheldPoses.Held> HELD = DataTicket.create("logos_dimension_musician_held", HandheldPoses.Held.class);
     public static final DataTicket<Boolean> LEFT_HANDED = DataTicket.create("logos_dimension_musician_left_handed", Boolean.class);
+    /** 工位上拿着的东西：大提琴、低音提琴的弓，或琴槌（{@link StationPoses}）。 */
+    public static final DataTicket<ItemStackRenderState> TOOL = DataTicket.create("logos_dimension_musician_tool", ItemStackRenderState.class);
+    /** 这一帧弓、琴槌在演奏者坐标里的摆放（方块像素），在摆骨骼时算好、画的时候用。 */
+    public static final DataTicket<Tools> TOOL_POSES = DataTicket.create("logos_dimension_musician_tool_poses", Tools.class);
+
+    public record Tools(List<Matrix4f> poses) {}
     private static final float HALF_PI = (float) (Math.PI / 2);
     /** 玩家模型一臂（肩的支点到手心）的像素：同 {@link HeldRig} 的 GRIP。 */
     private static final float PLAYER_REACH = 9;
-    /** 凳面比坐的人双脚高多少个模型单位（12 像素 × 2）。 */
-    private static final float SEAT_UNITS = (float) ((StarbloomBenchBlock.TOP - StarbloomBenchBlock.FEET.y) * 2);
     /** 弹键盘时上身前倾（弧度，绕腰 {@code UpBody}）：车万女仆骨架的手臂只有 7.5 像素左右，坐直了只够得着正前方的琴键。 */
     private static final float KEYS_LEAN = 0.3f;
     /** 弹竖琴时上身略前倾。 */
@@ -83,10 +88,20 @@ public final class NpcMusician {
          * 坐下时整个人挪多少（模型单位，给 {@code Root}）：往上挪到大腿压在凳面上；往前挪到膝盖伸出凳面前沿，小腿垂在凳子前面
          * （这副骨架的大腿比原版短，坐在凳子正中时小腿会插进凳子里）。关联了乐器的琴凳上坐的人已经往前挪过。
          */
-        Vector3f root(boolean linked) {
-            float edge = (float) (StarbloomBenchBlock.FEET.z - StarbloomBenchBlock.FRONT_EDGE) - (linked ? StarbloomBenchBlock.LINKED_FORWARD : 0);
-            float forward = Math.max(0, (edge + KNEE_OVERHANG) * 2 - thigh);
-            return new Vector3f(0, SEAT_UNITS - hip + THIGH_HALF, -forward);
+        Vector3f root(MusicianPoses.Musician m) {
+            if (m.standing()) return new Vector3f();
+            float forward = Math.max(0, (m.edge() + KNEE_OVERHANG) * 2 - thigh);
+            return new Vector3f(0, m.seat() * 2 - hip + THIGH_HALF, -forward);
+        }
+
+        /** 骨架的模型单位（整个人挪到 root 之前）→ 演奏者坐标（方块像素），{@link #bench} 的逆。 */
+        Vector3f station(Vector3f u, Vector3f feet, Vector3f root) {
+            return new Vector3f(feet.x - side * u.x / 2, feet.y + (u.y + root.y) / 2, feet.z + (u.z + root.z) / 2);
+        }
+
+        /** 演奏者坐标（方块像素）→ 实体的模型单位（画弓、琴槌用；不含 root，东西固定在乐器上）。 */
+        Matrix4f stationMatrix(Vector3f feet) {
+            return new Matrix4f().scale(-side * 2, 2, 2).translate(-feet.x, -feet.y, -feet.z);
         }
     }
 
@@ -129,7 +144,12 @@ public final class NpcMusician {
         if (m == null) return;
         state.addGeckolibData(MUSICIAN, m);
         state.addGeckolibData(LEFT_HANDED, entity.getMainArm() == HumanoidArm.LEFT);
-        if (m.mode() == MusicianPoses.Mode.HANDHELD) state.addGeckolibData(HELD, HandheldPoses.heldFor(m.kind(), entity, m.move()));
+        switch (m.mode()) {
+            case HANDHELD -> state.addGeckolibData(HELD, HandheldPoses.heldFor(m.kind(), entity, m.move()));
+            case BOWED -> state.addGeckolibData(TOOL, HandheldPoses.bowFor(m.kind(), entity, m.move()).bow());
+            case MALLETS -> state.addGeckolibData(TOOL, StationPoses.tool(m.kind(), entity));
+            default -> { }
+        }
     }
 
     /** 在动画之后摆骨骼（NpcRenderer.adjustModelBonesForRender 调）：坐下、摆正、两臂够到手位。 */
@@ -138,13 +158,13 @@ public final class NpcMusician {
         if (m == null) return;
         Skeleton sk = skeleton(info.model());
         if (sk == null) return;
-        Vector3f root = sk.root(m.mode() != MusicianPoses.Mode.HANDHELD);
+        Vector3f root = sk.root(m);
         snapshots.ifPresent("Root", s -> s.setTranslation(root.x, root.y, root.z));
         // 躯干摆正（总转角为 0，IK 按静止姿势的支点算）；弹键盘、竖琴时腰往前倾
         float lean = switch (m.mode()) {
             case KEYS -> KEYS_LEAN;
             case HARP -> HARP_LEAN;
-            case HANDHELD -> 0;
+            default -> 0;
         };
         GeoBone waist = lean == 0 ? null : info.model().getBone("UpBody").orElse(null);
         for (String name : List.of("AllBody", "UpBody", "UpperBody", "Arm")) {
@@ -157,15 +177,42 @@ public final class NpcMusician {
         for (String bone : List.of("RightHand", "LeftHand")) {
             snapshots.ifPresent(bone, s -> s.setRotation(0, 0, 0));
         }
-        // 坐下：大腿向前平伸、略分开，小腿垂下
-        sit(snapshots, info.model(), "RightLeg", HALF_PI, -0.1f * sk.side());
-        sit(snapshots, info.model(), "LeftLeg", HALF_PI, 0.1f * sk.side());
-        sit(snapshots, info.model(), "RightLowerLeg", -HALF_PI, 0);
-        sit(snapshots, info.model(), "LeftLowerLeg", -HALF_PI, 0);
+        if (m.standing()) {
+            // 站着（低音提琴、钟琴、管钟）：腿伸直、略分开
+            sit(snapshots, info.model(), "RightLeg", 0, 0);
+            sit(snapshots, info.model(), "LeftLeg", 0, 0);
+            sit(snapshots, info.model(), "RightLowerLeg", 0, 0);
+            sit(snapshots, info.model(), "LeftLowerLeg", 0, 0);
+        } else {
+            // 坐下：大腿向前平伸、略分开（大提琴分得开，两膝夹着琴），小腿垂下
+            float spread = m.mode() == MusicianPoses.Mode.BOWED ? 0.45f : 0.1f;
+            sit(snapshots, info.model(), "RightLeg", HALF_PI, -spread * sk.side());
+            sit(snapshots, info.model(), "LeftLeg", HALF_PI, spread * sk.side());
+            sit(snapshots, info.model(), "RightLowerLeg", -HALF_PI, 0);
+            sit(snapshots, info.model(), "LeftLowerLeg", -HALF_PI, 0);
+        }
+        float t = info.renderState() instanceof LivingEntityRenderState living ? living.ageInTicks : 0;
         Vector3f right, left;
-        if (m.mode() == MusicianPoses.Mode.HANDHELD) {
+        if (m.mode() == MusicianPoses.Mode.BOWED || m.mode() == MusicianPoses.Mode.MALLETS) {
+            // 工位：弓、琴槌固定在乐器上，手到手位（方块像素）；肩换算到同一套坐标，臂长按骨架
+            Vector3f rs = sk.station(sk.rightShoulder(), m.feet(), root), ls = sk.station(sk.leftShoulder(), m.feet(), root);
+            float rReach = REACH * (sk.rightUpper() + sk.rightLower()) / 2, lReach = REACH * (sk.leftUpper() + sk.leftLower()) / 2;
+            List<Matrix4f> tools = new java.util.ArrayList<>();
+            Vector3f rh, lh;
+            if (m.mode() == MusicianPoses.Mode.BOWED) {
+                HeldRig.Place place = HeldRig.seatedBlock(m.kind(), rs, ls, rReach, t, m.move());
+                rh = place.mainHand();
+                lh = place.offHand();
+                if (place.bow() != null) tools.add(place.bow());
+            } else {
+                rh = malletHand(rs, rReach, m.right(), m.kind(), tools);
+                lh = malletHand(ls, lReach, m.left(), m.kind(), tools);
+            }
+            info.renderState().addGeckolibData(TOOL_POSES, new Tools(tools));
+            right = sk.bench(rh, m.feet(), root);
+            left = sk.bench(lh, m.feet(), root);
+        } else if (m.mode() == MusicianPoses.Mode.HANDHELD) {
             boolean leftHanded = info.getOrDefaultGeckolibData(LEFT_HANDED, false);
-            float t = info.renderState() instanceof LivingEntityRenderState living ? living.ageInTicks : 0;
             HeldRig.Place place = HeldRig.place(m.kind(), new Matrix4f(), new Matrix4f(), leftHanded, t, m.move());
             Vector3f main = sk.canonical(place.mainHand()), off = sk.canonical(place.offHand());
             right = leftHanded ? off : main;
@@ -193,6 +240,21 @@ public final class NpcMusician {
         }
         solve(snapshots, sk.rightArm(), sk.rightFore(), sk.rightShoulder(), sk.rightUpper(), sk.rightLower(), right, rightPole);
         solve(snapshots, sk.leftArm(), sk.leftFore(), sk.leftShoulder(), sk.leftUpper(), sk.leftLower(), left, leftPole);
+    }
+
+    /**
+     * 拿槌的手：槌头要落在 target（演奏者坐标），手在肩和槌头的连线上、离槌头一支槌那么远（够不着时伸直、槌放长一些）；
+     * 不拿槌（target 为 null）时手垂在身旁。算好的琴槌摆放加进 tools。
+     */
+    private static Vector3f malletHand(Vector3f shoulder, float reach, @Nullable Vector3f target, InstrumentKind kind, List<Matrix4f> tools) {
+        if (target == null) return new Vector3f(shoulder).add(0, -reach, 0.6f);
+        Vector3f d = new Vector3f(target).sub(shoulder);
+        float dist = d.length();
+        float mallet = (StationPoses.toolHead(kind) - StationPoses.toolGrip(kind)) * 0.75f;
+        float handDist = Math.max(0.35f * reach, Math.min(reach, dist - mallet));
+        Vector3f hand = d.normalize().mul(handDist).add(shoulder);
+        tools.add(HeldRig.along(hand, target, StationPoses.toolGrip(kind), StationPoses.toolHead(kind)));
+        return hand;
     }
 
     /**
@@ -272,17 +334,29 @@ public final class NpcMusician {
         @Override
         public void submitRenderTask(RenderPassInfo<R> info, SubmitNodeCollector collector) {
             MusicianPoses.Musician m = info.getOrDefaultGeckolibData(MUSICIAN, null);
-            HandheldPoses.Held held = info.getOrDefaultGeckolibData(HELD, null);
-            if (m == null || held == null || info.getModelRenderMatrixPose() == null) return;
+            if (m == null || info.getModelRenderMatrixPose() == null) return;
             Skeleton sk = skeleton(info.model());
             if (sk == null) return;
+            if (m.mode() == MusicianPoses.Mode.BOWED || m.mode() == MusicianPoses.Mode.MALLETS) {
+                ItemStackRenderState tool = info.getOrDefaultGeckolibData(TOOL, null);
+                Tools tools = info.getOrDefaultGeckolibData(TOOL_POSES, null);
+                if (tool == null || tools == null) return;
+                PoseStack pose = new PoseStack();
+                pose.last().set(info.getModelRenderMatrixPose());
+                pose.scale(1 / 16f, 1 / 16f, 1 / 16f);
+                pose.mulPose(sk.stationMatrix(m.feet()));
+                for (Matrix4f p : tools.poses()) draw(pose, collector, info.packedLight(), p, tool);
+                return;
+            }
+            HandheldPoses.Held held = info.getOrDefaultGeckolibData(HELD, null);
+            if (held == null) return;
             boolean leftHanded = info.getOrDefaultGeckolibData(LEFT_HANDED, false);
             float t = info.renderState() instanceof LivingEntityRenderState living ? living.ageInTicks : 0;
             HeldRig.Place place = HeldRig.place(held.kind(), new Matrix4f(), new Matrix4f(), leftHanded, t, held.move());
             PoseStack pose = new PoseStack();
             pose.last().set(info.getModelRenderMatrixPose());
             pose.scale(1 / 16f, 1 / 16f, 1 / 16f);
-            Vector3f root = sk.root(m.mode() != MusicianPoses.Mode.HANDHELD);
+            Vector3f root = sk.root(m);
             pose.translate(root.x, root.y, root.z);
             pose.mulPose(sk.canonicalMatrix());
             if (held.instrument() != null && place.instrument() != null) draw(pose, collector, info.packedLight(), place.instrument(), held.instrument());

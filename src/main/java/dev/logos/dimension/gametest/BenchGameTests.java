@@ -67,6 +67,8 @@ public final class BenchGameTests {
         tests.put("bench_orchestra_moves_with_the_hall", BenchGameTests::moves);
         tests.put("bench_seat_moves_up_to_the_keys", BenchGameTests::movesUp);
         tests.put("bench_duet_sits_in_the_middle", BenchGameTests::duet);
+        tests.put("station_posts_by_lead", BenchGameTests::posts);
+        tests.put("station_timpani_benches", BenchGameTests::timpani);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -190,6 +192,74 @@ public final class BenchGameTests {
             if (e.getItem().is(Benches.DUET_ITEM.get().asItem())) dropped += e.getItem().getCount();
         }
         h.assertTrue(dropped == 1, "one duet bench drops, got " + dropped);
+        h.succeed();
+    }
+
+    /**
+     * 工位（docs/ORCHESTRA.md 第 15 节）：拴绳牵着精灵右键大提琴，它坐到琴后的凳子上、拴绳还回来、座位连同它存盘；
+     * 潜行空手右键大提琴让它离开；钟琴的工位在钟琴前面（北面）一格、面朝南站着；已有人的工位不再收人。
+     */
+    private static void posts(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos cello = h.absolutePos(new BlockPos(2, 1, 2));
+        place(level, cello, Instruments.CELLO.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.SOUTH));
+        ForestElf elf = elf(h, new BlockPos(2, 1, 6));
+        Player player = h.makeMockPlayer(GameType.SURVIVAL);
+        player.snapTo(cello.getX() + 0.5, cello.getY(), cello.getZ() + 3.5, 0, 0);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.LEAD));
+        elf.setLeashedTo(player, true);
+        level.getBlockState(cello).useItemOn(player.getMainHandItem(), level, player, InteractionHand.MAIN_HAND, hit(cello));
+        if (!(elf.getVehicle() instanceof dev.logos.dimension.music.InstrumentSeat seat)) throw new AssertionError("the led elf takes the cello's seat");
+        h.assertTrue(!elf.isLeashed() && player.getInventory().countItem(Items.LEAD) == 2, "the lead comes back");
+        h.assertTrue(seat.kind() == InstrumentKind.CELLO && seat.shouldBeSaved(), "the seat is the cello's and is saved with the elf");
+        seat.positionRider(elf);
+        h.assertTrue(elf.position().distanceTo(dev.logos.dimension.music.InstrumentPosts.position(cello, Direction.SOUTH, InstrumentKind.CELLO)) < 1.0e-3,
+            "the elf sits on the cello's stool: " + elf.position());
+        // 已有人：另一只牵着的生物带不上去
+        ForestElf other = elf(h, new BlockPos(4, 1, 6));
+        other.setLeashedTo(player, true);
+        level.getBlockState(cello).useItemOn(player.getMainHandItem(), level, player, InteractionHand.MAIN_HAND, hit(cello));
+        h.assertTrue(other.getVehicle() == null && other.isLeashed(), "a taken post takes no one else");
+        other.dropLeash();
+        // 潜行空手右键：离开
+        player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+        player.setShiftKeyDown(true);
+        level.getBlockState(cello).useWithoutItem(level, player, hit(cello));
+        h.assertTrue(elf.getVehicle() == null, "sneaking with an empty hand sends the elf off the post");
+        player.setShiftKeyDown(false);
+        // 钟琴：站在前面（朝北放置时站在北面），面朝南
+        BlockPos glock = h.absolutePos(new BlockPos(6, 1, 3));
+        place(level, glock, Instruments.GLOCKENSPIEL.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.NORTH));
+        h.assertTrue(dev.logos.dimension.music.InstrumentPosts.take(level, glock, elf), "the elf takes the glockenspiel post");
+        var post = (dev.logos.dimension.music.InstrumentSeat) elf.getVehicle();
+        post.positionRider(elf);
+        h.assertTrue(elf.getZ() < glock.getZ() && Math.abs(elf.getX() - (glock.getX() + 0.5)) < 1.0e-3, "standing north of the glockenspiel: " + elf.position());
+        h.assertTrue(Math.abs(net.minecraft.util.Mth.wrapDegrees(post.getYRot() - Direction.SOUTH.toYRot())) < 1.0e-3, "facing the glockenspiel (south)");
+        h.assertTrue(dev.logos.dimension.music.InstrumentPosts.occupant(level, glock) == elf, "the glockenspiel knows its player");
+        h.succeed();
+    }
+
+    /** 定音鼓：鼓手坐在鼓后（踏板那一面）、和鼓朝同一个方向的琴凳上；双人琴凳在两面并排的鼓后关联两面，单人琴凳一面；鼓手在鼓前不关联。 */
+    private static void timpani(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos left = h.absolutePos(new BlockPos(2, 1, 3)), right = h.absolutePos(new BlockPos(3, 1, 3));
+        for (BlockPos d : List.of(left, right)) {
+            place(level, d, Instruments.TIMPANI.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.SOUTH));
+        }
+        // 鼓朝南：鼓手在北面面朝南；双人琴凳另一格在坐的人右手边（朝南时是西）
+        BlockPos duet = h.absolutePos(new BlockPos(3, 1, 2));
+        place(level, duet, Benches.DUET.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.SOUTH));
+        var both = StarbloomBenchBlock.linkedAll(level, duet);
+        h.assertTrue(both.size() == 2 && right.equals(both.get(0)) && left.equals(both.get(1)), "the duet bench reaches both drums: " + both);
+        h.assertTrue(StarbloomBenchBlock.linkedKind(level, duet) == InstrumentKind.TIMPANI, "linked to timpani");
+        BlockPos single = h.absolutePos(new BlockPos(6, 1, 2));
+        BlockPos drum = h.absolutePos(new BlockPos(6, 1, 3));
+        place(level, drum, Instruments.TIMPANI.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.SOUTH));
+        place(level, single, Benches.BENCH.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.SOUTH));
+        h.assertTrue(drum.equals(StarbloomBenchBlock.linked(level, single)), "a single bench reaches one drum");
+        BlockPos wrong = h.absolutePos(new BlockPos(6, 1, 4));
+        place(level, wrong, Benches.BENCH.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.NORTH));
+        h.assertTrue(StarbloomBenchBlock.linked(level, wrong) == null, "a bench in front of the drum does not link");
         h.succeed();
     }
 

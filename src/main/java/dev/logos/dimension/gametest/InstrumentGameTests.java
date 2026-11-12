@@ -306,14 +306,24 @@ public final class InstrumentGameTests {
         BlockPos timpani = h.absolutePos(new BlockPos(2, 1, 5));
         place(level, timpani, Instruments.TIMPANI.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.SOUTH));
         h.assertTrue(level.getBlockEntity(timpani) instanceof InstrumentBlockEntity be && be.kind() == InstrumentKind.TIMPANI, "the timpani has its entity");
-        level.destroyBlock(cello.above(), true);
-        h.assertTrue(level.getBlockState(cello).isAir(), "the cello goes as a whole");
-        h.assertTrue(dropped(level, cello, Instruments.CELLO_ITEM.get().asItem()) == 1, "one cello drops");
-        // 座位在自己下一次 tick 时发现琴没了（测试区的区块刚强制加载，实体开始 tick 可能要晚几刻）
-        h.succeedWhen(() -> {
-            h.assertTrue(level.getEntitiesOfClass(InstrumentSeat.class, new AABB(cello).inflate(3)).isEmpty(), "the seat goes with the cello");
-            h.assertTrue(first.getVehicle() == null, "the player stands up");
-        });
+        // 座位要在自己的 tick 里发现琴没了：大提琴所在的区块先强制加载、等它进入实体走刻再拆
+        //（测试框架给的格子有时还没走实体刻，座位一刻都不走，见 docs 里 #199、#237 的记录）
+        var chunk = net.minecraft.world.level.ChunkPos.containing(cello);
+        level.setChunkForced(chunk.x(), chunk.z(), true);
+        h.startSequence()
+            .thenWaitUntil(RealTimeWait.paced(() -> h.assertTrue(level.areEntitiesActuallyLoadedAndTicking(chunk), "the cello's chunk ticks entities")))
+            .thenExecute(() -> {
+                level.destroyBlock(cello.above(), true);
+                h.assertTrue(level.getBlockState(cello).isAir(), "the cello goes as a whole");
+                h.assertTrue(dropped(level, cello, Instruments.CELLO_ITEM.get().asItem()) == 1, "one cello drops");
+            })
+            .thenWaitUntil(() -> {
+                var left = level.getEntitiesOfClass(InstrumentSeat.class, new AABB(cello).inflate(3));
+                h.assertTrue(left.isEmpty(), "the seat goes with the cello: " + left.stream().map(e -> e.getPassengers() + " ticks=" + e.tickCount).toList());
+                h.assertTrue(first.getVehicle() == null, "the player stands up");
+            })
+            .thenExecute(() -> level.setChunkForced(chunk.x(), chunk.z(), false))
+            .thenSucceed();
     }
 
     private InstrumentGameTests() {}

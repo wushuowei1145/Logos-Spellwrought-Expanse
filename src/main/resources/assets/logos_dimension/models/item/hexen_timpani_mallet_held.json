@@ -1,0 +1,145 @@
+{
+  "textures": {
+    "felt": "minecraft:block/white_wool",
+    "walnut": "minecraft:block/dark_oak_planks",
+    "particle": "minecraft:block/jungle_planks"
+  },
+  "elements": [
+    {
+      "from": [
+        7.75,
+        0,
+        7.75
+      ],
+      "to": [
+        8.25,
+        10.0,
+        8.25
+      ],
+      "faces": {
+        "north": {
+          "texture": "#walnut",
+          "uv": [
+            7.75,
+            6.0,
+            8.25,
+            16.0
+          ]
+        },
+        "south": {
+          "texture": "#walnut",
+          "uv": [
+            7.75,
+            6.0,
+            8.25,
+            16.0
+          ]
+        },
+        "east": {
+          "texture": "#walnut",
+          "uv": [
+            7.75,
+            6.0,
+            8.25,
+            16.0
+          ]
+        },
+        "west": {
+          "texture": "#walnut",
+          "uv": [
+            7.75,
+            6.0,
+            8.25,
+            16.0
+          ]
+        },
+        "up": {
+          "texture": "#walnut",
+          "uv": [
+            7.75,
+            7.75,
+            8.25,
+            8.25
+          ]
+        },
+        "down": {
+          "texture": "#walnut",
+          "uv": [
+            7.75,
+            7.75,
+            8.25,
+            8.25
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.2,
+        10.0,
+        7.2
+      ],
+      "to": [
+        8.8,
+        11.6,
+        8.8
+      ],
+      "faces": {
+        "north": {
+          "texture": "#felt",
+          "uv": [
+            7.2,
+            4.4,
+            8.8,
+            6.0
+          ]
+        },
+        "south": {
+          "texture": "#felt",
+          "uv": [
+            7.2,
+            4.4,
+            8.8,
+            6.0
+          ]
+        },
+        "east": {
+          "texture": "#felt",
+          "uv": [
+            7.2,
+            4.4,
+            8.8,
+            6.0
+          ]
+        },
+        "west": {
+          "texture": "#felt",
+          "uv": [
+            7.2,
+            4.4,
+            8.8,
+            6.0
+          ]
+        },
+        "up": {
+          "texture": "#felt",
+          "uv": [
+            7.2,
+            7.2,
+            8.8,
+            8.8
+          ]
+        },
+        "down": {
+          "texture": "#felt",
+          "uv": [
+            7.2,
+            7.2,
+            8.8,
+            8.8
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "textures": {
+    "lacquer": "minecraft:block/quartz_block_top",
+    "walnut": "minecraft:block/dark_oak_planks",
+    "particle": "minecraft:block/jungle_planks"
+  },
+  "elements": [
+    {
+      "from": [
+        7.75,
+        0,
+        7.75
+      ],
+      "to": [
+        8.25,
+        10.0,
+        8.25
+      ],
+      "faces": {
+        "north": {
+          "texture": "#walnut",
+          "uv": [
+            7.75,
+            6.0,
+            8.25,
+            16.0
+          ]
+        },
+        "south": {
+          "texture": "#walnut",
+          "uv": [
+            7.75,
+            6.0,
+            8.25,
+            16.0
+          ]
+        },
+        "east": {
+          "texture": "#walnut",
+          "uv": [
+            7.75,
+            6.0,
+            8.25,
+            16.0
+          ]
+        },
+        "west": {
+          "texture": "#walnut",
+          "uv": [
+            7.75,
+            6.0,
+            8.25,
+            16.0
+          ]
+        },
+        "up": {
+          "texture": "#walnut",
+          "uv": [
+            7.75,
+            7.75,
+            8.25,
+            8.25
+          ]
+        },
+        "down": {
+          "texture": "#walnut",
+          "uv": [
+            7.75,
+            7.75,
+            8.25,
+            8.25
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.3,
+        10.0,
+        7.3
+      ],
+      "to": [
+        8.7,
+        11.4,
+        8.7
+      ],
+      "faces": {
+        "north": {
+          "texture": "#lacquer",
+          "uv": [
+            7.3,
+            4.6,
+            8.7,
+            6.0
+          ]
+        },
+        "south": {
+          "texture": "#lacquer",
+          "uv": [
+            7.3,
+            4.6,
+            8.7,
+            6.0
+          ]
+        },
+        "east": {
+          "texture": "#lacquer",
+          "uv": [
+            7.3,
+            4.6,
+            8.7,
+            6.0
+          ]
+        },
+        "west": {
+          "texture": "#lacquer",
+          "uv": [
+            7.3,
+            4.6,
+            8.7,
+            6.0
+          ]
+        },
+        "up": {
+          "texture": "#lacquer",
+          "uv": [
+            7.3,
+            7.3,
+            8.7,
+            8.7
+          ]
+        },
+        "down": {
+          "texture": "#lacquer",
+          "uv": [
+            7.3,
+            7.3,
+            8.7,
+            8.7
+          ]
+        }
+      }
+    }
+  ]
+}

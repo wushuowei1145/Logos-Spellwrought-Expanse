@@ -40,10 +40,12 @@ public final class InstrumentSeat extends Entity {
         return entityData.get(INSTRUMENT);
     }
 
-    /** 这张座位前的乐器（方块不在了返回 null）。 */
+    /** 这个工位的乐器（方块不在了、不是有工位的乐器时返回 null），见 {@link InstrumentPosts}。 */
     public @Nullable InstrumentKind kind() {
         var state = level().getBlockState(instrument());
-        return state.getBlock() instanceof SeatedInstrumentBlock block ? block.kind() : null;
+        if (!(state.getBlock() instanceof InstrumentBlock block) || !block.isMain(state)) return null;
+        InstrumentKind kind = block.kind(state);
+        return InstrumentPosts.has(kind) ? kind : null;
     }
 
     @Override
@@ -52,19 +54,19 @@ public final class InstrumentSeat extends Entity {
     }
 
     @Override
-    protected void readAdditionalSaveData(ValueInput input) {}
-
-    @Override
-    protected void addAdditionalSaveData(ValueOutput output) {}
-
-    // 类型要允许序列化才能被玩家骑乘；临时座位自身不写进区块。
-    @Override
-    public boolean shouldBeSaved() {
-        return false;
+    protected void readAdditionalSaveData(ValueInput input) {
+        input.read("instrument", com.mojang.serialization.Codec.LONG).ifPresent(p -> entityData.set(INSTRUMENT, BlockPos.of(p)));
     }
 
     @Override
-    public boolean save(ValueOutput output) {
+    protected void addAdditionalSaveData(ValueOutput output) {
+        output.store("instrument", com.mojang.serialization.Codec.LONG, instrument().asLong());
+    }
+
+    /** 工位上是生物时连同生物存盘（重进存档还在那里）；空着、坐着玩家时不存。 */
+    @Override
+    public boolean shouldBeSaved() {
+        for (Entity passenger : getPassengers()) if (!(passenger instanceof net.minecraft.world.entity.player.Player)) return super.shouldBeSaved();
         return false;
     }
 

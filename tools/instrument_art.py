@@ -1213,6 +1213,19 @@ def bass_block_elements():
     return el
 
 
+def mallet_elements(head_tex, head_y, head_r):
+    """工位上画在手上的琴槌（items/held/，不是物品）：胡桃木槌杆沿 +Y，握点 (8, 1.5, 8)，槌头中心在 (8, head_y, 8)。
+    钟琴是小白漆槌头，定音鼓是白毡槌头（同乐器模型上搁着的那两支）。"""
+    return [box((7.75, 0, 7.75), (8.25, head_y - head_r, 8.25), "walnut"),
+            box((8 - head_r, head_y - head_r, 8 - head_r), (8 + head_r, head_y + head_r, 8 + head_r), head_tex)]
+
+
+def chime_hammer_elements():
+    """管钟的皮锤：胡桃木锤柄沿 +Y，握点 (8, 1.5, 8)，锤头横在柄端、中心 (8, 9.8, 8)（同管钟底座上搁着的那把）。"""
+    return [box((7.6, 0, 7.6), (8.4, 9.0, 8.4), "walnut"),
+            box((6.2, 9.0, 7.2), (9.8, 10.6, 8.8), "red")]
+
+
 def timpani_elements():
     """定音鼓：铜鼓腔（近似半球）、白鼓皮、铁鼓圈和六根调音拉杆，十字底座带小轮；朝演奏者（南）的一侧是踏板，鼓皮上搁两支毡头槌。"""
     el = []
@@ -1316,7 +1329,10 @@ def handheld():
     # 物品定义放在 items/held/ 里：只供渲染用，不是物品
     held = {"hexen_violin": violin_elements(bow=False), "hexen_flute": flute_elements(), "hexen_trumpet": trumpet_elements(),
             "hexen_viola": viola_elements(bow=False), "hexen_oboe": oboe_elements(), "hexen_bassoon": bassoon_elements(),
-            "hexen_violin_bow": shifted([e for e in violin_elements() if e["from"][0] < 4][:3], 5.2, 0, -1.6)}
+            "hexen_violin_bow": shifted([e for e in violin_elements() if e["from"][0] < 4][:3], 5.2, 0, -1.6),
+            "hexen_glockenspiel_mallet": mallet_elements("lacquer", 10.7, 0.7),
+            "hexen_chime_hammer": chime_hammer_elements(),
+            "hexen_timpani_mallet": mallet_elements("felt", 10.8, 0.8)}
     for name, el in held.items():
         model_name = name if name.endswith("_bow") else f"{name}_held"
         tex = {k: T[k] for k in used(el)} | {"particle": T[particle.get(name, "varnish")]}

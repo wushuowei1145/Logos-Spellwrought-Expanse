@@ -1,0 +1,145 @@
+{
+  "textures": {
+    "red": "minecraft:block/red_concrete",
+    "walnut": "minecraft:block/dark_oak_planks",
+    "particle": "minecraft:block/jungle_planks"
+  },
+  "elements": [
+    {
+      "from": [
+        7.6,
+        0,
+        7.6
+      ],
+      "to": [
+        8.4,
+        9.0,
+        8.4
+      ],
+      "faces": {
+        "north": {
+          "texture": "#walnut",
+          "uv": [
+            7.6,
+            7.0,
+            8.4,
+            16.0
+          ]
+        },
+        "south": {
+          "texture": "#walnut",
+          "uv": [
+            7.6,
+            7.0,
+            8.4,
+            16.0
+          ]
+        },
+        "east": {
+          "texture": "#walnut",
+          "uv": [
+            7.6,
+            7.0,
+            8.4,
+            16.0
+          ]
+        },
+        "west": {
+          "texture": "#walnut",
+          "uv": [
+            7.6,
+            7.0,
+            8.4,
+            16.0
+          ]
+        },
+        "up": {
+          "texture": "#walnut",
+          "uv": [
+            7.6,
+            7.6,
+            8.4,
+            8.4
+          ]
+        },
+        "down": {
+          "texture": "#walnut",
+          "uv": [
+            7.6,
+            7.6,
+            8.4,
+            8.4
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        6.2,
+        9.0,
+        7.2
+      ],
+      "to": [
+        9.8,
+        10.6,
+        8.8
+      ],
+      "faces": {
+        "north": {
+          "texture": "#red",
+          "uv": [
+            6.2,
+            5.4,
+            9.8,
+            7.0
+          ]
+        },
+        "south": {
+          "texture": "#red",
+          "uv": [
+            6.2,
+            5.4,
+            9.8,
+            7.0
+          ]
+        },
+        "east": {
+          "texture": "#red",
+          "uv": [
+            7.2,
+            5.4,
+            8.8,
+            7.0
+          ]
+        },
+        "west": {
+          "texture": "#red",
+          "uv": [
+            7.2,
+            5.4,
+            8.8,
+            7.0
+          ]
+        },
+        "up": {
+          "texture": "#red",
+          "uv": [
+            6.2,
+            7.2,
+            9.8,
+            8.8
+          ]
+        },
+        "down": {
+          "texture": "#red",
+          "uv": [
+            6.2,
+            7.2,
+            9.8,
+            8.8
+          ]
+        }
+      }
+    }
+  ]
+}

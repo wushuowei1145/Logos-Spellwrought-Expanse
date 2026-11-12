@@ -46,21 +46,25 @@ import org.jspecify.annotations.Nullable;
  */
 @EventBusSubscriber(modid = LogosDimension.ID, value = Dist.CLIENT)
 public final class MusicianPoses {
-    public enum Mode { HANDHELD, KEYS, HARP }
+    /** HANDHELD 手持乐器；KEYS 键盘；HARP 竖琴；BOWED 大提琴、低音提琴琴后拉弓；MALLETS 钟琴、管钟、定音鼓拿槌敲（{@link StationPoses}）。 */
+    public enum Mode { HANDHELD, KEYS, HARP, BOWED, MALLETS }
 
     /**
-     * 一位坐着演奏的人此刻的样子。
-     * @param kind 手里的手持乐器，或琴凳关联的键盘 / 竖琴
-     * @param move 手持乐器在响时为 1（弓来回、乐器轻摆）
-     * @param left 键盘、竖琴：左手在琴凳坐标里的位置（像素）；手持乐器时为 null
+     * 一位演奏者此刻的样子。坐标都在「演奏者面朝北」的方块像素里（x 向东、y 向上、z 向南；琴凳上就是琴凳坐标）。
+     * @param kind 手里的手持乐器，或琴凳关联的乐器、工位上的乐器
+     * @param move 手持乐器、拉弓的琴在响时为 1（弓来回、乐器轻摆）
+     * @param left 键盘、竖琴：左手的位置；敲的乐器：左手槌头的位置（像素）；手持乐器、拉弓时为 null，敲的乐器左手不拿槌时也为 null
      * @param right 同上，右手
+     * @param feet 演奏者双脚的位置
+     * @param standing 站着演奏（低音提琴、钟琴、管钟）
+     * @param seat 坐着时凳面比双脚高多少像素；edge 凳面前沿在双脚前多少像素
      */
-    /** feet：坐的人双脚在琴凳坐标里的位置（像素，见 {@link StarbloomBenchBlock#feet}），手位 left/right 也在琴凳坐标里。 */
-    public record Musician(Mode mode, InstrumentKind kind, float move, @Nullable Vector3f left, @Nullable Vector3f right, Vector3f feet) {}
+    public record Musician(Mode mode, InstrumentKind kind, float move, @Nullable Vector3f left, @Nullable Vector3f right, Vector3f feet,
+                           boolean standing, float seat, float edge) {}
 
     static final ContextKey<Musician> MUSICIAN = new ContextKey<>(LogosDimension.id("musician"));
     /** 一位键盘手、竖琴手两只手此刻在键盘上的位置（0 最低音、1 最高音，平滑地移过去）和按下的程度。 */
-    private static final class Hands {
+    static final class Hands {
         float low = 0.3f, high = 0.7f, lowPress, highPress;
         long last;
     }
@@ -73,6 +77,7 @@ public final class MusicianPoses {
 
     /** 这位坐在琴凳上的人此刻怎么演奏；没坐在琴凳上、手里没有乐器又没关联乐器时为 null（只是坐着）。 */
     public static @Nullable Musician of(LivingEntity entity) {
+        if (entity.getVehicle() instanceof dev.logos.dimension.music.InstrumentSeat post) return StationPoses.post(entity, post);
         if (!(entity.getVehicle() instanceof BenchSeat seat)) return null;
         Level level = entity.level();
         BlockPos bench = seat.bench();
@@ -83,18 +88,24 @@ public final class MusicianPoses {
             if (!(entity.getMainHandItem().getItem() instanceof HandheldInstrumentItem item)) return null;
             boolean playing = VoiceBank.recentlyPlayed(bench) || MusicClient.recentlyPlayed(entity.getId())
                 || VoiceBank.holding(MusicClient.heldKey(entity.getId()));
-            return new Musician(Mode.HANDHELD, item.kind(), playing ? 1 : 0, null, null, feet(benchState, false));
+            return new Musician(Mode.HANDHELD, item.kind(), playing ? 1 : 0, null, null, feet(benchState, false), false, SEAT,
+                (float) (StarbloomBenchBlock.FEET.z - StarbloomBenchBlock.FRONT_EDGE));
         }
         BlockState mainState = level.getBlockState(linked);
         if (!(mainState.getBlock() instanceof InstrumentBlock block)) return null;
         InstrumentKind kind = block.kind(mainState);
         if (kind == null) return null;
-        Hands hands = hands(entity.getId(), kind, VoiceBank.notesAt(linked));
-        Direction facing = benchState.getValue(StarbloomBenchBlock.FACING);
         Vector3f feet = feet(benchState, true);
+        if (kind == InstrumentKind.TIMPANI) return StationPoses.timpani(level, bench, feet);
+        Hands hands = hands(entity.getId(), kind, VoiceBank.notesAt(linked), SPLIT);
+        Direction facing = benchState.getValue(StarbloomBenchBlock.FACING);
         Vector3f[] at = kind == InstrumentKind.CONCERT_HARP ? harp(hands, feet) : keys(kind, hands, keySpan(bench, facing, linked, mainState, block, kind), feet);
-        return new Musician(kind == InstrumentKind.CONCERT_HARP ? Mode.HARP : Mode.KEYS, kind, 0, at[0], at[1], feet);
+        return new Musician(kind == InstrumentKind.CONCERT_HARP ? Mode.HARP : Mode.KEYS, kind, 0, at[0], at[1], feet, false, SEAT,
+            (float) (feet.z - StarbloomBenchBlock.FRONT_EDGE));
     }
+
+    /** 琴凳的凳面比坐的人双脚高多少像素。 */
+    private static final float SEAT = (float) (StarbloomBenchBlock.TOP - StarbloomBenchBlock.FEET.y);
 
     private static Vector3f feet(BlockState benchState, boolean linked) {
         var f = StarbloomBenchBlock.feet(benchState, linked);
@@ -102,7 +113,7 @@ public final class MusicianPoses {
     }
 
     /** 两只手在键盘上的位置（0–1）和按下的程度：左手跟着低音、右手跟着高音，平滑移过去；没音时回到各自的半边。 */
-    private static Hands hands(int id, InstrumentKind kind, List<int[]> notes) {
+    static Hands hands(int id, InstrumentKind kind, List<int[]> notes, int split) {
         long now = System.nanoTime();
         Hands h = HANDS.computeIfAbsent(id, k -> new Hands());
         float dt = h.last == 0 ? 1 : Math.min(1, (now - h.last) / 1e9f);
@@ -112,7 +123,7 @@ public final class MusicianPoses {
         for (int[] n : notes) {
             float u = Math.max(0, Math.min(1, (n[0] - kind.low()) / range));
             float press = Math.max(0, 1 - n[1] / 120f);
-            if (n[0] < SPLIT) {
+            if (n[0] < split) {
                 lowSum += u;
                 lowCount++;
                 lowPress = Math.max(lowPress, press);
@@ -180,6 +191,14 @@ public final class MusicianPoses {
             new Vector3f(feet.x + 2.4f, 12 + 8 * h.high, -1.5f + 1.2f * h.highPress)};
     }
 
+    /**
+     * 原版的手臂是直的、没有手肘：槌头要落的点常常比一臂还近，直接指过去手会越过它、槌杆朝外翻。
+     * 所以手臂指向槌头上方 5、往回 3 像素的地方（模型像素：y 向下、z 向后），槌从手里斜着落到槌头的位置。
+     */
+    static Vector3f malletAim(Vector3f head) {
+        return new Vector3f(head.x, head.y - 5, head.z + 3);
+    }
+
     /** 琴凳坐标（像素）→ 人形模型根坐标（像素），以坐的人双脚为准。 */
     static Vector3f benchToModel(Vector3f bench, Vector3f feet) {
         return HeldRig.toModel(bench, feet);
@@ -197,7 +216,12 @@ public final class MusicianPoses {
         if (m == null) return null;
         state.rightHandItemState.clear();
         state.leftHandItemState.clear();
-        return m.mode() == Mode.HANDHELD ? HandheldPoses.heldFor(m.kind(), entity, m.move()) : null;
+        return switch (m.mode()) {
+            case HANDHELD -> HandheldPoses.heldFor(m.kind(), entity, m.move());
+            case BOWED -> HandheldPoses.bowFor(m.kind(), entity, m.move());
+            case MALLETS -> new HandheldPoses.Held(m.kind(), null, StationPoses.tool(m.kind(), entity), 0);
+            default -> null;
+        };
     }
 
     /**
@@ -212,6 +236,34 @@ public final class MusicianPoses {
             HeldRig.Place place = HeldRig.place(m.kind(), model, false, true, leftHanded, state.ageInTicks, m.move());
             HandheldPoses.reach(leftHanded ? model.leftArm : model.rightArm, place.mainHand(), 0, 0, leftHanded ? 1 : -1);
             HandheldPoses.reach(leftHanded ? model.rightArm : model.leftArm, place.offHand(), 0, 0, leftHanded ? -1 : 1);
+        } else if (m.mode() == Mode.BOWED) {
+            // 同玩家坐在大提琴后：右手运弓、左手按琴颈，腿夹着琴（低音提琴站着）
+            HandheldPoses.pose(m.kind(), model, state);
+        } else if (m.mode() == Mode.MALLETS) {
+            for (boolean left : new boolean[]{true, false}) {
+                Vector3f target = left ? m.left() : m.right();
+                var arm = left ? model.leftArm : model.rightArm;
+                if (target == null) {
+                    arm.xRot = 0;
+                    arm.yRot = 0;
+                    arm.zRot = left ? -0.05f : 0.05f;
+                } else {
+                    HandheldPoses.reach(arm, malletAim(benchToModel(target, m.feet())), 0, 0, left ? 1 : -1);
+                }
+            }
+            if (m.standing()) {
+                model.rightLeg.xRot = 0;
+                model.leftLeg.xRot = 0;
+                model.rightLeg.yRot = 0.08f;
+                model.leftLeg.yRot = -0.08f;
+            } else {
+                model.rightLeg.xRot = -0.8f;
+                model.leftLeg.xRot = -0.8f;
+                model.rightLeg.yRot = 0.12f;
+                model.leftLeg.yRot = -0.12f;
+            }
+            model.rightLeg.zRot = 0;
+            model.leftLeg.zRot = 0;
         } else if (m.left() != null && m.right() != null) {
             HandheldPoses.reach(model.leftArm, benchToModel(m.left(), m.feet()), 0, 0, 1);
             HandheldPoses.reach(model.rightArm, benchToModel(m.right(), m.feet()), 0, 0, -1);
@@ -251,7 +303,23 @@ public final class MusicianPoses {
             HandheldPoses.Held held = state.getRenderData(HandheldPoses.HELD);
             if (held == null || state.isInvisible) return;
             M model = getParentModel();
-            HeldRig.Place place = HeldRig.place(held.kind(), model, state.isCrouching, false, state.mainArm == HumanoidArm.LEFT, state.ageInTicks, held.move());
+            Musician m = state.getRenderData(MUSICIAN);
+            if (m != null && m.mode() == Mode.MALLETS) {
+                if (held.bow() == null) return;
+                for (boolean left : new boolean[]{true, false}) {
+                    Vector3f target = left ? m.left() : m.right();
+                    if (target == null) continue;
+                    Vector3f t = benchToModel(target, m.feet());
+                    var arm = left ? model.leftArm : model.rightArm;
+                    Vector3f shoulder = new Vector3f(arm.x + (left ? 1 : -1), arm.y, arm.z);
+                    Vector3f hand = malletAim(t).sub(shoulder).normalize().mul(9).add(shoulder);
+                    HandheldPoses.drawOn(pose, collector, light, state.outlineColor, model,
+                        HeldRig.along(hand, t, StationPoses.toolGrip(m.kind()), StationPoses.toolHead(m.kind())), held.bow());
+                }
+                return;
+            }
+            HeldRig.Place place = held.kind().seated() ? HeldRig.seated(held.kind(), model, state.ageInTicks, held.move())
+                : HeldRig.place(held.kind(), model, state.isCrouching, false, state.mainArm == HumanoidArm.LEFT, state.ageInTicks, held.move());
             if (held.instrument() != null && place.instrument() != null) {
                 HandheldPoses.drawOn(pose, collector, light, state.outlineColor, model, place.instrument(), held.instrument());
             }
