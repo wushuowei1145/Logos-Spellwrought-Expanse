@@ -177,7 +177,7 @@
 | 客户端 | `client/music/Conducting`（乐团播放、手势、选中）、`ConductingPoses`（手臂、第一人称）、`PartOutline` + `shaders/post/part_outline*`、`PodiumScreen` |
 | 乐器那边 | `InstrumentBlockEntity`（`orchestra`、`conductedBy`、拆掉时退出）、`MusicStandBlock`（换乐器时通知）、`InstrumentBlock`（指挥棒右键） |
 | 美术 | `tools/instrument_art.py` 的 `podium()` |
-| 琴凳与生物乐手（第 14 节） | `music/StarbloomBenchBlock`、`BenchSeat`、`Benches`；客户端 `client/music/MusicianPoses`（手位、原版人形模型）、`NpcMusician`（车万女仆骨架的两骨 IK）、`mixin/MusicianModelMixin` |
+| 琴凳与生物乐手（第 14 节） | `music/StarbloomBenchBlock`、`StarbloomDuetBenchBlock`、`BenchSeat`、`Benches`；客户端 `client/music/MusicianPoses`（手位、原版人形模型）、`NpcMusician`（车万女仆骨架的两骨 IK）、`mixin/MusicianModelMixin` |
 | 测试 | 单元 `BeatMapTest`、`ConductorPatternTest`、`OrchestraArrangerTest`、`MusicRollTest`、`MidiReaderTest`；世界 `orchestra_*`、`bench_*`；客户端 `orchestra_conduct_ui`、`orchestra_seated_member_ui`、`orchestra_hall_ui` |
 
 ## 13. 已定（维护者 2026-11-11）
@@ -201,9 +201,14 @@
 - **关联**（`StarbloomBenchBlock.linked`，每次按旁边的方块现算，不存）：正前方一格是要坐着弹的方块乐器，并且琴凳在它的演奏那一面——
   钢琴、大键琴、钢片琴、管风琴演奏台的 `FACING` 朝着弹的人，琴凳要面朝相反方向、挨着它前排的任一格；竖琴同大提琴，人坐在琴后、和琴朝同一个方向。
   钟琴、管钟、定音鼓要拿琴槌，先不关联。
+- **双人琴凳**（`starbloom_duet_bench`，两张琴凳合成一张）：两格宽，另一格在坐的人右手边（`FACING` 顺时针），坐的人坐在两格交界的正中，
+  两格宽的钢琴前用（单人琴凳挨着钢琴的一格坐，手要往一边伸）。关联、坐下、加入乐团同单人琴凳，任一格前面是乐器的演奏那一面就关联；拆任一格整张拆掉、只掉一张。
+  管风琴演奏台改成 3 宽、左右对称（[PIPE_ORGAN.md](PIPE_ORGAN.md)），单人琴凳放在正中那格前面。
 - **关联了**：琴凳和那件乐器是一体的：乐团成员是那件乐器，指挥棒点琴凳等于点那件乐器，召集附近时跳过琴凳；坐上去的就是它的演奏者，
   手里拿什么都不算；那件乐器照常按总谱响（没人坐也响，和以前一样）。坐的人往乐器那边挪 2.5 像素（`LINKED_FORWARD`），手够得着琴键；
   坐着的时候前面放上、拆掉乐器，人也跟着挪过去、挪回凳子中间。
+- 起身：站在座位后面的地面上（后面站不下时站到那格上面一格）。座位要等原版问完「人放哪」才消失，否则人留在坐着的位置，
+  双脚比地面低，会陷进地里一格（大提琴、低音提琴的座位同样修了）。
 - **没关联**：琴凳自己就是乐团里的一个座位，演奏的是坐在上面的人或生物主手里的手持乐器（方块状态 `plays`，客户端据此出声、分声部）；
   没人坐、手里不是乐器时休息（掩码 0），但仍留在乐团里，开始演奏时也不会被去掉，所以可以先排好座位再请人坐。
   坐下、起身、换手里的东西（座位每半秒查一次）、旁边的乐器放上或拆掉时重算并重新分声部。
@@ -241,12 +246,15 @@
   （直臂的原版模型是「指着」，这里是「够到」）。腿坐下（大腿向前、小腿垂下），整个人往下挪到胯落在凳面上，躯干摆正。
   这副骨架的手臂只有 7.5 像素左右，坐直了只够得着正前方的琴键：弹键盘时腰（`UpBody`）往前倾 0.3 弧度（约 17°），竖琴 0.1，
   手位转进前倾的腰的坐标里再解；还够不着时只在左右方向收回到 97% 臂长以内（手仍在琴键、琴弦那一层，跟着音高的方向挪），正前方都够不着才伸直指过去。
-  骨骼缺了就不动（退回原来的动画）。乐器画在同一份手位上，手里原本拿着的不画。
+  这副骨架的大腿比原版短：坐在凳子正中时小腿插进凳子里、离乐谱架也远，所以整个人再往前挪到膝盖伸出凳面前沿、往上抬半条大腿的厚度
+  （关联了乐器的琴凳上人已经往前挪过，就不再挪）。
+  骨骼缺了就不动（退回原来的动画）。乐器画在同一份手位上，手里原本拿着的东西不画（弹键盘、竖琴时也不画）。
 - 别的骨架：只要能把这两种坐标换算到自己的肩和手上，就能用同一份手位。
 
 ### 14.4 音乐厅
 
-`tools/concert_hall.py`（维护者的灵猫大音乐厅）：舞台上的楼梯椅都换成琴凳。钢琴、大键琴、钢片琴、两架竖琴、管风琴前的琴凳和那件乐器关联；
+`tools/concert_hall.py`（维护者的灵猫大音乐厅）：舞台上的楼梯椅都换成琴凳。钢琴、大键琴、钢片琴、两架竖琴、管风琴前的琴凳和那件乐器关联
+（钢琴前是双人琴凳，管风琴是 3 宽演奏台、正中一张琴凳）；
 弦乐、木管、铜管声部的乐谱架只放乐谱，后面的琴凳加入乐团（绑定的 32 件里有 18 张琴凳）；定音鼓手的凳子不加入。脚本的自检核对每张关联琴凳的位置和朝向。
 测试场景只要完整蓝图：`uv run --no-project --with pillow --with numpy python tools/concert_hall.py --full-only build/concert_hall/concert_hall.nbt`
 （同时写同名 `.litematic`；不写分块、世界生成和 builds/）。

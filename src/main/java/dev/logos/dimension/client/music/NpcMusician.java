@@ -54,12 +54,17 @@ public final class NpcMusician {
     private static final float HARP_LEAN = 0.1f;
     /** 键盘、竖琴的手位够不着时左右收回到这个比例的臂长以内（肘留一点弯）。 */
     private static final float REACH = 0.97f;
+    /** 大腿平伸时有一半厚度在支点下面（森林精灵、神狐的大腿厚 3.8 单位）：整个人再抬高这么多，大腿压在凳面上而不是陷进去。 */
+    private static final float THIGH_HALF = 1.9f;
+    /** 膝盖伸出凳面前沿多少像素，小腿垂在凳子前面。 */
+    private static final float KNEE_OVERHANG = 0.75f;
 
     private NpcMusician() {}
 
     /** 骨架上要用到的东西（按模型缓存）。side：角色的左手边在 +X 时为 1。 */
     private record Skeleton(GeoBone rightArm, GeoBone rightFore, GeoBone leftArm, GeoBone leftFore, Vector3f rightShoulder, Vector3f leftShoulder,
-                            float rightUpper, float rightLower, float leftUpper, float leftLower, Vector3f armLine, float scale, float side, float hip) {
+                            float rightUpper, float rightLower, float leftUpper, float leftLower, Vector3f armLine, float scale, float side, float hip,
+                            float thigh) {
         /** 玩家模型根坐标（像素）→ 骨架的模型单位。 */
         Vector3f canonical(Vector3f c) {
             return new Vector3f(armLine.x + side * scale * c.x, armLine.y - scale * (c.y - 2), armLine.z + scale * c.z);
@@ -69,15 +74,19 @@ public final class NpcMusician {
             return new Matrix4f().translate(armLine).scale(side * scale, -scale, scale).translate(0, -2, 0);
         }
 
-        /** 关联了乐器的琴凳坐标（像素）→ 骨架的模型单位（整个人往下挪了 drop 之前的坐标；坐的人往乐器那边挪过）。 */
-        Vector3f bench(Vector3f b, float drop) {
-            var feet = StarbloomBenchBlock.feet(true);
-            return new Vector3f(-side * (b.x - (float) feet.x) * 2, (b.y - (float) feet.y) * 2 - drop, (b.z - (float) feet.z) * 2);
+        /** 关联了乐器的琴凳坐标（像素）→ 骨架的模型单位（整个人挪到 root 之前的坐标；坐的人往乐器那边挪过）。 */
+        Vector3f bench(Vector3f b, Vector3f feet, Vector3f root) {
+            return new Vector3f(-side * (b.x - feet.x) * 2, (b.y - feet.y) * 2 - root.y, (b.z - feet.z) * 2 - root.z);
         }
 
-        /** 坐下时整个人往下挪多少（模型单位）：胯落在凳面上。 */
-        float drop() {
-            return SEAT_UNITS - hip;
+        /**
+         * 坐下时整个人挪多少（模型单位，给 {@code Root}）：往上挪到大腿压在凳面上；往前挪到膝盖伸出凳面前沿，小腿垂在凳子前面
+         * （这副骨架的大腿比原版短，坐在凳子正中时小腿会插进凳子里）。关联了乐器的琴凳上坐的人已经往前挪过。
+         */
+        Vector3f root(boolean linked) {
+            float edge = (float) (StarbloomBenchBlock.FEET.z - StarbloomBenchBlock.FRONT_EDGE) - (linked ? StarbloomBenchBlock.LINKED_FORWARD : 0);
+            float forward = Math.max(0, (edge + KNEE_OVERHANG) * 2 - thigh);
+            return new Vector3f(0, SEAT_UNITS - hip + THIGH_HALF, -forward);
         }
     }
 
@@ -90,15 +99,16 @@ public final class NpcMusician {
     private static Optional<Skeleton> build(BakedGeoModel model) {
         GeoBone rArm = model.getBone("RightArm").orElse(null), rFore = model.getBone("RightForeArm").orElse(null);
         GeoBone lArm = model.getBone("LeftArm").orElse(null), lFore = model.getBone("LeftForeArm").orElse(null);
-        GeoBone leg = model.getBone("LeftLeg").orElse(null);
+        GeoBone leg = model.getBone("LeftLeg").orElse(null), shin = model.getBone("LeftLowerLeg").orElse(null);
         if (rArm == null || rFore == null || lArm == null || lFore == null || leg == null) return Optional.empty();
+        float hip = pivot(leg).y, knee = shin == null ? hip - 6 : pivot(shin).y;
         Vector3f rs = pivot(rArm), ls = pivot(lArm), re = pivot(rFore), le = pivot(lFore);
         Vector3f rg = grip(model, "RightHandLocator", "RightHand", re), lg = grip(model, "LeftHandLocator", "LeftHand", le);
         float ru = rs.distance(re), rl = re.distance(rg), lu = ls.distance(le), ll = le.distance(lg);
         Vector3f line = model.getBone("Arm").map(NpcMusician::pivot).orElse(new Vector3f(rs).add(ls).mul(0.5f));
         float side = Math.signum(ls.x - rs.x);
         return Optional.of(new Skeleton(rArm, rFore, lArm, lFore, rs, ls, ru, rl, lu, ll, line, (ru + rl) / PLAYER_REACH,
-            side == 0 ? 1 : side, pivot(leg).y));
+            side == 0 ? 1 : side, hip, hip - knee));
     }
 
     private static Vector3f pivot(GeoBone bone) {
@@ -128,8 +138,8 @@ public final class NpcMusician {
         if (m == null) return;
         Skeleton sk = skeleton(info.model());
         if (sk == null) return;
-        float drop = sk.drop();
-        snapshots.ifPresent("Root", root -> root.setTranslation(0, drop, 0));
+        Vector3f root = sk.root(m.mode() != MusicianPoses.Mode.HANDHELD);
+        snapshots.ifPresent("Root", s -> s.setTranslation(root.x, root.y, root.z));
         // 躯干摆正（总转角为 0，IK 按静止姿势的支点算）；弹键盘、竖琴时腰往前倾
         float lean = switch (m.mode()) {
             case KEYS -> KEYS_LEAN;
@@ -161,8 +171,8 @@ public final class NpcMusician {
             right = leftHanded ? off : main;
             left = leftHanded ? main : off;
         } else if (m.left() != null && m.right() != null) {
-            right = sk.bench(m.right(), drop);
-            left = sk.bench(m.left(), drop);
+            right = sk.bench(m.right(), m.feet(), root);
+            left = sk.bench(m.left(), m.feet(), root);
         } else {
             return;
         }
@@ -251,7 +261,8 @@ public final class NpcMusician {
         public void addRenderData(T animatable, Void relatedObject, R state, float partialTick) {
             NpcMusician.addRenderData(animatable, state);
             MusicianPoses.Musician m = state.getOrDefaultGeckolibData(MUSICIAN, (MusicianPoses.Musician) null);
-            if (m == null || m.mode() != MusicianPoses.Mode.HANDHELD) return;
+            // 手里原本拿着的东西不画：拉琴时换成手持乐器，弹键盘、竖琴时两只手都在琴上
+            if (m == null) return;
             List<BlockAndItemGeoLayer.RenderData> contents = state.getOrDefaultGeckolibData(BlockAndItemGeoLayer.CONTENTS, (List<BlockAndItemGeoLayer.RenderData>) null);
             if (contents == null) return;
             state.addGeckolibData(BlockAndItemGeoLayer.CONTENTS, contents.stream()
@@ -271,7 +282,8 @@ public final class NpcMusician {
             PoseStack pose = new PoseStack();
             pose.last().set(info.getModelRenderMatrixPose());
             pose.scale(1 / 16f, 1 / 16f, 1 / 16f);
-            pose.translate(0, sk.drop(), 0);
+            Vector3f root = sk.root(m.mode() != MusicianPoses.Mode.HANDHELD);
+            pose.translate(root.x, root.y, root.z);
             pose.mulPose(sk.canonicalMatrix());
             if (held.instrument() != null && place.instrument() != null) draw(pose, collector, info.packedLight(), place.instrument(), held.instrument());
             if (held.bow() != null && place.bow() != null) draw(pose, collector, info.packedLight(), place.bow(), held.bow());

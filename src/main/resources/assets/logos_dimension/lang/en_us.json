@@ -1457,6 +1457,8 @@
   "item.logos_dimension.hexen_podium": "Conductor's Podium",
   "block.logos_dimension.starbloom_bench": "Starbloom Bench",
   "item.logos_dimension.starbloom_bench": "Starbloom Bench",
+  "block.logos_dimension.starbloom_duet_bench": "Starbloom Duet Bench",
+  "item.logos_dimension.starbloom_duet_bench": "Starbloom Duet Bench",
   "entity.logos_dimension.bench_seat": "Bench Seat",
   "screen.logos_dimension.podium.empty_bench": "Empty bench",
   "item.logos_dimension.hexen_baton": "Conductor's Baton",

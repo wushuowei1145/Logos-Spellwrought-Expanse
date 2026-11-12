@@ -113,13 +113,20 @@ class HallBuilder:
         )
 
     def put_bench(self, x: int, y: int, z: int, look_dir: str, role: str = "", bind: bool = False,
-                  seat_for: str | None = None, link: str | None = None):
+                  seat_for: str | None = None, link: str | None = None, duet: bool = False):
         """放置星辰花琴凳：look_dir 为坐的人面朝的方向（即琴凳的 facing）。
         seat_for：手持乐器声部的座位（坐上去的人拿这件乐器演奏），bind 时琴凳本身加入指挥台的乐团；
-        link：正前方要关联的方块乐器（钢琴、大键琴、钢片琴、竖琴、管风琴演奏台），由 verify_and_audit 核对关联规则。"""
-        self.put(x, y, z, "starbloom_bench", facing=look_dir, plays="none")
+        link：正前方要关联的方块乐器（钢琴、大键琴、钢片琴、竖琴、管风琴演奏台），由 verify_and_audit 核对关联规则；
+        duet：星辰花双人琴凳（两格宽，另一格在坐的人右手边即 look_dir 顺时针方向，坐的人坐在两格交界），两格宽的钢琴前用。"""
+        if duet:
+            sx, sz = self._cw(look_dir)
+            self.put(x, y, z, "starbloom_duet_bench", facing=look_dir, plays="none", side="false")
+            self.put(x + sx, y, z + sz, "starbloom_duet_bench", facing=look_dir, plays="none", side="true")
+        else:
+            self.put(x, y, z, "starbloom_bench", facing=look_dir, plays="none")
         self._inst_be(x, y, z, None, bind=bind)
-        self.bench_placements.append({"pos": (x, y, z), "look_dir": look_dir, "role": role, "seat_for": seat_for, "link": link})
+        self.bench_placements.append({"pos": (x, y, z), "look_dir": look_dir, "role": role, "seat_for": seat_for, "link": link,
+                                      "duet": duet})
         if seat_for:
             self.instrument_placements.append(
                 {"kind": f"starbloom_bench[{seat_for}]", "section": role, "pos": [x, y, z], "facing": look_dir, "bound": bind}
@@ -204,13 +211,13 @@ class HallBuilder:
         )
 
     def place_organ_console(self, x: int, y: int, z: int, facing: str, section: str, bind: bool = True):
-        """放置 2×2 管风琴演奏台（part=0..3，全部 10 个音栓默认全开 stops=1023）。"""
+        """放置 3 宽 × 2 高管风琴演奏台（wide=true，主块在下排正中；part 位：1 顺时针一格、2 上一格、4 逆时针一格；
+        全部 10 个音栓默认全开 stops=1023）。"""
         sx, sz = self._cw(facing)
-        for part in range(4):
-            dx = sx if (part & 1) else 0
+        for part in (0, 1, 4, 2, 3, 6):
+            side = 1 if (part & 1) else -1 if (part & 4) else 0
             dy = 1 if (part & 2) else 0
-            dz = sz if (part & 1) else 0
-            self.put(x + dx, y + dy, z + dz, "hexen_organ_console", facing=facing, part=part)
+            self.put(x + side * sx, y + dy, z + side * sz, "hexen_organ_console", facing=facing, part=part, wide="true")
         self._inst_be(x, y, z, {"stops": 1023, "reverb": 0}, bind=bind)
         self.instrument_placements.append(
             {"kind": "hexen_organ_console", "section": section, "pos": [x, y, z], "facing": facing, "bound": bind}
@@ -793,11 +800,10 @@ def build_orchestra_stage(b: HallBuilder):
 def build_pipe_organ(b: HallBuilder):
     """在舞台正北方（Z = -26 .. -20）搭建现实音乐厅布局的五塔交响管风琴与相连风箱。"""
     # 1. 管风琴演奏台：位于第三阶梯正中（X = 0, Y = 6, Z = -20, facing=south），距离指挥台 15.0 格（在 16 格召集扇形内），并绑定至指挥台！
-    #    part=0: (0, 6, -20), part=1: (-1, 6, -20), part=2: (0, 7, -20), part=3: (-1, 7, -20)
+    #    3 宽、左右对称：X = -1..1, Y = 6..7, Z = -20，主块 (0, 6, -20) 在下排正中
     b.place_organ_console(0, 6, -20, "south", "管风琴演奏台 (Organ Console)", bind=True)
-    # 演奏台前的管风琴师坐凳（X = -1..0, Y = 6, Z = -19，管风琴师面朝北看演奏台键盘，靠背在南侧 facing="south"）
+    # 演奏台正中前面的管风琴师琴凳（X = 0, Y = 6, Z = -19，管风琴师面朝北看演奏台键盘）
     b.put_bench(0, 6, -19, look_dir="north", role="管风琴师琴凳", link="hexen_organ_console")
-    b.put_bench(-1, 6, -19, look_dir="north", role="管风琴师琴凳", link="hexen_organ_console")
 
     # 2. 管风琴木质基座柜体（Z = -26 .. -24, X = -14 .. 14, Y = 2 .. 8）
     for x in range(-14, 15):
@@ -887,7 +893,8 @@ def populate_orchestra_instruments(b: HallBuilder):
     #    - 星辰花三角钢琴：主块 (-4, 3, -6)，facing=west（琴键朝西、琴尾向东、琴盖朝南向观众敞开！）
     #    - 大键琴：主块 (-3, 3, -9)，facing=west（琴尾在 (-2, 3, -9)）
     b.place_grand_piano(-4, 3, -6, "west", "独奏星辰花三角钢琴 (Solo Grand Piano)", bind=True)
-    b.put_bench(-5, 3, -6, look_dir="east", role="三角钢琴独奏席", link="starbloom_grand_piano")
+    # 钢琴琴键那一排是 (-4, 3, -6) 和北边的 (-4, 3, -7)：双人琴凳主块 (-5, 3, -7)，另一格在南边 (-5, 3, -6)，钢琴手坐在两格交界
+    b.put_bench(-5, 3, -7, look_dir="east", role="三角钢琴独奏席", link="starbloom_grand_piano", duet=True)
     b.place_harpsichord(-3, 3, -9, "west", "数字低音/独奏大键琴 (Harpsichord)", bind=True)
     b.put_bench(-4, 3, -9, look_dir="east", role="大键琴演奏席", link="hexen_harpsichord")
 
@@ -1056,7 +1063,7 @@ def verify_and_audit(b: HallBuilder) -> dict:
 
     # 5. 完全按照 Java `OrganStructure.scan` 逻辑模拟 BFS，验证管风琴演奏台与全部风箱、音管连通
     console_main = (0, 6, -20)
-    console_cells = [(0, 6, -20), (-1, 6, -20), (0, 7, -20), (-1, 7, -20)]
+    console_cells = [(x, y, -20) for x in (-1, 0, 1) for y in (6, 7)]
     for c in console_cells:
         assert b.cells.get(c, {}).get("Name") == "logos_dimension:hexen_organ_console", f"缺失演奏台格子: {c}"
 
@@ -1116,17 +1123,25 @@ def verify_and_audit(b: HallBuilder) -> dict:
     assert b.bench_placements, "未放置任何星辰花琴凳"
     for bench in b.bench_placements:
         bx, by, bz = bench["pos"]
-        cell = b.cells.get((bx, by, bz), {})
-        assert cell.get("Name") == NS + "starbloom_bench", f"琴凳被覆盖: {bench}"
-        assert cell.get("Properties", {}).get("facing") == bench["look_dir"], f"琴凳朝向错误: {bench}"
+        name = NS + ("starbloom_duet_bench" if bench["duet"] else "starbloom_bench")
+        seats = [(bx, by, bz)]
+        if bench["duet"]:
+            sx, sz = HallBuilder._cw(bench["look_dir"])
+            seats.append((bx + sx, by, bz + sz))
+        for sx, sy, sz in seats:
+            cell = b.cells.get((sx, sy, sz), {})
+            assert cell.get("Name") == name, f"琴凳被覆盖: {bench} at {(sx, sy, sz)}"
+            assert cell.get("Properties", {}).get("facing") == bench["look_dir"], f"琴凳朝向错误: {bench}"
         if not bench["link"]:
             continue
+        # 每一格前面都是那件乐器的琴键一排（双人琴凳两格都对着两格宽的钢琴）
         dx, dz = step[bench["look_dir"]]
-        front = b.cells.get((bx + dx, by, bz + dz), {})
-        assert front.get("Name") == NS + bench["link"], f"琴凳前面不是要关联的乐器: {bench} -> {front}"
-        facing = front.get("Properties", {}).get("facing")
-        expected = bench["look_dir"] if bench["link"] == "hexen_concert_harp" else opposite[bench["look_dir"]]
-        assert facing == expected, f"琴凳不在乐器的演奏那一面: {bench}, instrument facing={facing}, expected={expected}"
+        for sx, sy, sz in seats:
+            front = b.cells.get((sx + dx, sy, sz + dz), {})
+            assert front.get("Name") == NS + bench["link"], f"琴凳前面不是要关联的乐器: {bench} -> {front}"
+            facing = front.get("Properties", {}).get("facing")
+            expected = bench["look_dir"] if bench["link"] == "hexen_concert_harp" else opposite[bench["look_dir"]]
+            assert facing == expected, f"琴凳不在乐器的演奏那一面: {bench}, instrument facing={facing}, expected={expected}"
 
     # 6. 统计全部 15 种乐器与音管数量（验证总可演奏乐器 > 32，且 32 件绑定乐器覆盖全部 15 种可演奏乐器类型）
     counts = Counter(item["kind"] for item in b.instrument_placements)
@@ -1180,7 +1195,8 @@ def verify_and_audit(b: HallBuilder) -> dict:
         "instrument_counts": dict(counts),
         "chair_count": len(b.chair_placements),
         "benches": [
-            {"pos": list(x["pos"]), "facing": x["look_dir"], "role": x["role"], "seat_for": x["seat_for"], "link": x["link"]}
+            {"pos": list(x["pos"]), "facing": x["look_dir"], "role": x["role"], "seat_for": x["seat_for"], "link": x["link"],
+             "duet": x["duet"]}
             for x in b.bench_placements
         ],
         "total_cells": len(b.cells),
