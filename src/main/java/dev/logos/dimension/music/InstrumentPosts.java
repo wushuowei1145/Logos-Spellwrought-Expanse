@@ -88,7 +88,7 @@ public final class InstrumentPosts {
         InstrumentKind kind = block.kind(state);
         if (!has(kind) || occupant(level, main) != null) return false;
         if (who.isPassenger()) who.stopRiding();
-        InstrumentSeat seat = Instruments.SEAT.get().create(level, EntitySpawnReason.TRIGGERED);
+        InstrumentSeat seat = (standing(kind) ? Instruments.STANDING_POST : Instruments.SEAT).get().create(level, EntitySpawnReason.TRIGGERED);
         if (seat == null) return false;
         Direction facing = state.getValue(InstrumentBlock.FACING);
         seat.bind(main, position(main, facing, kind), performerFacing(kind, facing).toYRot());

@@ -85,6 +85,11 @@ public abstract class InstrumentBlock extends Block implements EntityBlock {
             if (!level.isClientSide()) InstrumentPosts.leave(level, main);
             return InteractionResult.SUCCESS;
         }
+        // 空手右键有工位的乐器（大提琴、低音提琴、钟琴、管钟）：到工位上去（已经有人时只开界面），潜行右键只开界面
+        if (!level.isClientSide() && !player.isSecondaryUseActive() && InstrumentPosts.has(kind(level.getBlockState(main)))
+            && !(player.getVehicle() instanceof InstrumentSeat seat && seat.instrument().equals(main))) {
+            InstrumentPosts.take(level, main, player);
+        }
         if (level.isClientSide()) {
             // 界面类只在客户端存在：经静态入口打开，本类不出现任何客户端类型
             dev.logos.dimension.client.music.MusicClient.openInstrument(main);

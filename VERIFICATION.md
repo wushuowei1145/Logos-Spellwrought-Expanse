@@ -1,5 +1,27 @@
 # 首版验证记录
 
+## 乐团：玩家拿琴槌、车万女仆演奏姿势
+
+2026-11-12：分支 `feat/orchestra-strikes-maids`（未提交），基于 main `12a69c94`（#248），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`，
+车万女仆 `touhoulittlemaid-2.0.0-neoforge+mc26.1.2-snapshot.jar`（拷成 `libs/touhoulittlemaid.jar`）。说明见 [docs/ORCHESTRA.md](docs/ORCHESTRA.md) 第 16 节。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 全量 **381/382**，唯一失败的仍是 main 上就缺的 zh_cn `item.logos_dimension.fuda_desk`；新实体 `standing_post` 中英文名字都有 |
+| 编译 | 有女仆模组 jar 时 `MaidMusicians`、`MaidHallViews` 编进去；`-Ptlm_jar=nonexistent.jar` 时两者排除，照样编译通过 |
+| 世界测试 | 新增 `station_player_posts`（潜行右键钟琴只开界面不上工位；空手右键站到钟琴北面的工位上、是 `standing_post`、脚在地面；管钟已有精灵时上不去；大提琴是 `instrument_seat`）：`station_*` **3/3**；回归 `bench_*` **6/6**、`instrument_*` **8/8**、`creative_tabs_cover_items` **1/1** |
+| 实际客户端 | 新场景 `orchestra_player_mallets_ui`（服务端空手右键钟琴、管钟站到工位上，坐到西边那对定音鼓的双人琴凳上；合奏时三处都是拿槌敲的姿势、钟琴两手槌头落到音条上）、`orchestra_maids_ui`（要 `-Ptlm`；默认基岩版女仆坐钢琴、拿小提琴坐空琴凳、大提琴、低音提琴、钟琴、定音鼓，酒狐坐钢片琴、到大提琴和管钟；检查各自的演奏方式、站着的工位是 `standing_post`、基岩版的姿势这一帧真的摆了）。加 `-Ptlm` 回归 `orchestra_hall_ui`、`orchestra_seated_ui`、`orchestra_conduct_ui`、`handheld_play_ui`、`music_stand_views`、`mallet_instrument_play`：**8/8、59/59 检查**；不加 `-Ptlm`（编进了女仆兼容但没装女仆模组）跑 `orchestra_player_mallets_ui`、`mallet_instrument_play` **2/2** |
+| 截图人工看过 | 玩家站在钟琴后两槌落在音条上（正面、侧面）、站在管钟前、坐在定音鼓后两槌各落一面鼓；女仆弹钢琴（侧面，两手在琴键上）、小提琴夹在下巴下拉弓、大提琴坐着拉、低音提琴站着一手琴颈一手弓、钟琴两槌、定音鼓两槌各一面；酒狐坐在钢片琴前两手在前、站在管钟前两手在前、坐在大提琴后；玩家坐着拉大提琴同以前 |
+| 改过的问题 | 酒狐第一次截图坐在地上（女仆模组自己的坐垫动作）：查下来女仆模组这个快照版按实体 id（`vehicle$...`）选骑乘动作那一路把 id 放在按引用比较的集合里，永远对不上；改用实体标签 `vehicle#logos_dimension:...`（同名标签放在 data/logos_dimension/tags/entity_type/），按标签那一路是好的。附属的 `build.gradle` 没有 `localRuntime`，`-Ptlm` 改用 `runtimeOnly` |
+| 未验证 | 多人、专用服务器；别的女仆模型包（只看了自带的博丽灵梦默认模型和酒狐）；玩家在钟琴前用界面现场弹时的槌（场景里用的是指挥台的合奏，音同样记在乐器方块上） |
+
+```text
+cp <女仆模组 jar> libs/touhoulittlemaid.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:station_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar -Ptlm "-PldTest=orchestra_maids_ui,orchestra_player_mallets_ui,orchestra_hall_ui,orchestra_seated_ui" -PldTestHeadless -PldTestWindow=1280x720
+./gradlew compileJava -PlogosJar=/absolute/path/logos-0.6.0.jar -Ptlm_jar=nonexistent.jar
+```
+
 ## 乐团：工位（大提琴、低音提琴、钟琴、管钟、定音鼓）
 
 2026-11-12：分支 `feat/orchestra-stations`（未提交），基于 main `8e1c61fc`（#247），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。

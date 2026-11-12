@@ -2,19 +2,12 @@ package dev.logos.dimension.music;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
  * 坐着拉的弦乐器（大提琴、低音提琴）：两格高，琴后面是演奏者的位置（大提琴有凳子，低音提琴站着拉）。
- * 空手右键：坐到琴后面（{@link InstrumentSeat}）并打开乐器界面；已经有人坐着就只打开界面；潜行右键只打开界面不坐下。
+ * 空手右键：坐到琴后面（{@link InstrumentSeat}，见 {@link InstrumentBlock#useWithoutItem}）并打开乐器界面；已经有人坐着就只打开界面；潜行右键只打开界面不坐下。
  * 潜行起身。没人坐时它和其他方块乐器一样，红石、纸带照常演奏。
  */
 public class SeatedInstrumentBlock extends TallInstrumentBlock {
@@ -43,16 +36,5 @@ public class SeatedInstrumentBlock extends TallInstrumentBlock {
             default -> { rx = dx; rz = dz; }
         }
         return new Vec3(main.getX() + 0.5 + rx, main.getY() + f.y / 16, main.getZ() + 0.5 + rz);
-    }
-
-    @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        BlockPos main = mainPos(state, pos);
-        if (!level.isClientSide() && !player.isSecondaryUseActive()
-            && !(player.getVehicle() instanceof InstrumentSeat seat && seat.instrument().equals(main))) {
-            InstrumentPosts.take(level, main, player);
-        }
-        // 客户端照常打开乐器界面
-        return super.useWithoutItem(state, level, pos, player, hit);
     }
 }

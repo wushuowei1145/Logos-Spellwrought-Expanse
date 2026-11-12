@@ -143,6 +143,14 @@ public final class Instruments {
         ENTITY_TYPES.register("instrument_seat", () -> net.minecraft.world.entity.EntityType.Builder.<InstrumentSeat>of(InstrumentSeat::new,
                 net.minecraft.world.entity.MobCategory.MISC).sized(0.25f, 0.25f).noSummon().clientTrackingRange(10).updateInterval(20)
             .build(net.minecraft.resources.ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("instrument_seat"))));
+    /**
+     * 站着演奏的工位（低音提琴、钟琴、管钟）：和 {@link #SEAT} 同一个类，只是另一种实体，
+     * 别的模组按骑乘的实体分动作时（车万女仆的 GeckoLib 模型 {@code vehicle#...}，标签 data/logos_dimension/tags/entity_type/）能分清坐着和站着。
+     */
+    public static final DeferredHolder<net.minecraft.world.entity.EntityType<?>, net.minecraft.world.entity.EntityType<InstrumentSeat>> STANDING_POST =
+        ENTITY_TYPES.register("standing_post", () -> net.minecraft.world.entity.EntityType.Builder.<InstrumentSeat>of(InstrumentSeat::new,
+                net.minecraft.world.entity.MobCategory.MISC).sized(0.25f, 0.25f).noSummon().clientTrackingRange(10).updateInterval(20)
+            .build(net.minecraft.resources.ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("standing_post"))));
 
     /** 乐谱架：放一件手持乐器和一卷纸带，就像方块乐器一样受红石控制。 */
     public static final DeferredBlock<MusicStandBlock> MUSIC_STAND = DimensionBlocks.BLOCKS.registerBlock(

@@ -42,6 +42,14 @@ ordering="AFTER"
 side="BOTH"
 
 [[dependencies.logos_dimension]]
+modId="touhou_little_maid"
+type="optional"
+reason="女仆坐上星辰花琴凳、乐器工位时的演奏姿势"
+versionRange="[2.0.0,)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.logos_dimension]]
 modId="geckolib"
 type="required"
 reason="NPC 模型渲染（车万女仆骨架规范）"

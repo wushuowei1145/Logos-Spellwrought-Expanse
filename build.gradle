@@ -8,6 +8,14 @@ version = mod_version
 base { archivesName = mod_id }
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
+// 车万女仆是可选的（女仆坐上琴凳、工位时的演奏姿势，docs/ORCHESTRA.md 第 16 节）。26.1 版还没上任何 Maven，
+// 编译时用本地的 jar：-Ptlm_jar=<路径> 或 libs/touhoulittlemaid.jar；没有 jar 时兼容的代码不参与编译，游戏照常（同 Logos）。
+def tlmJar = file(project.findProperty('tlm_jar') ?: 'libs/touhoulittlemaid.jar')
+if (!tlmJar.exists()) {
+    logger.lifecycle("Touhou Little Maid compat left out: no jar at ${tlmJar} (pass -Ptlm_jar=<path>)")
+    sourceSets.main.java { exclude 'dev/logos/dimension/client/music/MaidMusicians.java', 'dev/logos/dimension/client/music/MaidHallViews.java' }
+}
+
 repositories {
     maven { url = 'https://maven.firstdark.dev/snapshots' }
     exclusiveContent {
@@ -61,6 +69,11 @@ dependencies {
     runtimeOnly("com.lowdragmc.kilagraph:kilagraph-neoforge-26.1:${kilagraph_version}") { transitive = false }
     // NPC 渲染器直接使用 GeckoLib 的类；Logos 本身也依赖它，所以玩家不需要另装
     implementation "maven.modrinth:geckolib:${geckolib_version}"
+    // 车万女仆只在编译时用；-Ptlm 把它加进开发环境的运行（测试场景里的女仆）
+    if (tlmJar.exists()) {
+        compileOnly files(tlmJar)
+        if (project.hasProperty('tlm')) runtimeOnly files(tlmJar)
+    }
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

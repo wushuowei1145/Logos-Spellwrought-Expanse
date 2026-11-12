@@ -1511,6 +1511,7 @@
   "subtitles.logos_dimension.instrument.bassoon": "Bassoon plays",
   "subtitles.logos_dimension.instrument.timpani": "Timpani roll",
   "entity.logos_dimension.instrument_seat": "Instrument Seat",
+  "entity.logos_dimension.standing_post": "Standing Post",
   "screen.logos_dimension.instrument.source_recorded": "Sound: recorded",
   "screen.logos_dimension.instrument.source_synth": "Sound: synthesized",
   "message.logos_dimension.instrument.need_instrument": "Use a handheld instrument on the stand to put it there first",
