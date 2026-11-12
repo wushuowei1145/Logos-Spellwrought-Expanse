@@ -74,8 +74,8 @@ public abstract class HallViews implements UIScenario {
 
     static final BlockPos PODIUM = at(-1, 3, -5);
     static final BlockPos CONSOLE = at(0, 6, -20);
-    static final BlockPos PIANO_BENCH = at(-5, 3, -6), VIOLIN_BENCH = at(-11, 3, -8), FREE_VIOLIN = at(-13, 3, -8);
-    static final BlockPos ORGAN_BENCH = at(0, 6, -19), FREE_ORGAN = at(-1, 6, -19);
+    static final BlockPos PIANO_BENCH = at(-5, 3, -7), VIOLIN_BENCH = at(-11, 3, -8), FREE_VIOLIN = at(-13, 3, -8);
+    static final BlockPos ORGAN_BENCH = at(0, 6, -19);
 
     /** 仓库里生成的音乐厅蓝图：从游戏目录往上找 build/concert_hall/concert_hall.nbt。 */
     static Path blueprint() {
@@ -229,9 +229,20 @@ public abstract class HallViews implements UIScenario {
                     var m = musician(violinist);
                     return m != null && m.mode() == MusicianPoses.Mode.HANDHELD && m.kind() == InstrumentKind.VIOLIN;
                 })
+                .check("the zombie faces the music stand in front of its bench", ctx -> {
+                    Entity v = Minecraft.getInstance().level.getEntity(violinist);
+                    if (!(v instanceof net.minecraft.world.entity.LivingEntity l)) return false;
+                    Vec3 toStand = Vec3.atBottomCenterOf(VIOLIN_BENCH.south()).subtract(l.position()).normalize();
+                    return Vec3.directionFromRotation(0, l.yBodyRot).dot(toStand) > 0.9;
+                })
                 .check("the elf at the piano bench is the pianist", ctx -> {
                     var m = musician(pianist);
                     return m != null && m.mode() == MusicianPoses.Mode.KEYS && m.kind() == InstrumentKind.GRAND_PIANO;
+                })
+                .check("the pianist sits where the duet bench's two cells meet, moved up to the keys", ctx -> {
+                    Entity e = Minecraft.getInstance().level.getEntity(pianist);
+                    return e != null && Math.abs(e.getZ() - (PIANO_BENCH.getZ() + 1)) < 1e-3
+                        && Math.abs(e.getX() - (PIANO_BENCH.getX() + 0.5 + StarbloomBenchBlock.LINKED_FORWARD / 16)) < 1e-3;
                 })
                 .check("the organist holds a violin but plays the organ", ctx -> {
                     var m = musician(organist);
@@ -264,7 +275,7 @@ public abstract class HallViews implements UIScenario {
             b = shot(b, "hall_celesta_harp", point(-6.2, 6.4, -11.2), point(-9, 5.5, -14));
             b = shot(b, "hall_organ_elf", point(2.4, 8.6, -16.4), point(0, 7.6, -19.4));
             // 侧面近景：看得见键盘手的手搭在琴键上
-            b = shot(b, "hall_piano_hands", point(-3.3, 5.7, -4.1), point(-4.1, 4.1, -5.6));
+            b = shot(b, "hall_piano_hands", point(-3.3, 5.7, -4.4), point(-4.1, 4.1, -6.1));
             b = shot(b, "hall_celesta_hands", point(-6.5, 6.0, -13.9), point(-7.6, 5.0, -13.2));
             b = shot(b, "hall_organ_hands", point(1.9, 8.0, -17.6), point(0.4, 7.1, -18.9));
             b = b.server("stop, the player sits at a free violin bench with a violin", ctx -> {
@@ -282,7 +293,13 @@ public abstract class HallViews implements UIScenario {
             b = b.server("the player moves to the organ bench; the console plays a roll", ctx -> {
                     ServerLevel level = ctx.server().overworld();
                     ctx.player().stopRiding();
-                    StarbloomBenchBlock.sit(level, FREE_ORGAN, ctx.player());
+                    // 管风琴只有正中一张琴凳：精灵让座
+                    Entity organ = level.getEntity(organist);
+                    if (organ != null) {
+                        organ.stopRiding();
+                        organ.discard();
+                    }
+                    StarbloomBenchBlock.sit(level, ORGAN_BENCH, ctx.player());
                     if (InstrumentBlock.entityAt(level, CONSOLE) instanceof InstrumentBlockEntity console) {
                         console.setRoll(ConductingViews.punched(ConductingViews.score()));
                         console.play();
@@ -292,7 +309,7 @@ public abstract class HallViews implements UIScenario {
                     var m = MusicianPoses.of(Minecraft.getInstance().player);
                     return m != null && m.mode() == MusicianPoses.Mode.KEYS && m.left() != null && m.left().x < m.right().x;
                 });
-            b = shot(b, "hall_player_organ", point(-3.2, 8.6, -16.6), point(-1, 7.6, -19.4));
+            b = shot(b, "hall_player_organ", point(-2.4, 8.6, -16.6), point(0.5, 7.6, -19.4));
             b.teardownServer("stop playing, stand up", ctx -> {
                 ServerLevel level = ctx.server().overworld();
                 if (InstrumentBlock.entityAt(level, CONSOLE) instanceof InstrumentBlockEntity console) console.stopPlayback();

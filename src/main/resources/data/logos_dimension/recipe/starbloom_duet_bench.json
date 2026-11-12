@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "logos_dimension:starbloom_bench",
+    "logos_dimension:starbloom_bench"
+  ],
+  "result": {
+    "id": "logos_dimension:starbloom_duet_bench",
+    "count": 1
+  }
+}

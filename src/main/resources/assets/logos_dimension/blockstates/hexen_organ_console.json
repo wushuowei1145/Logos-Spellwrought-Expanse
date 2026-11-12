@@ -1,54 +1,177 @@
 {
   "variants": {
-    "facing=north,part=0": {
+    "facing=north,part=0,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_wide"
+    },
+    "facing=north,part=0,wide=false": {
       "model": "logos_dimension:block/hexen_organ_console"
     },
-    "facing=north,part=1": {
+    "facing=north,part=1,wide=true": {
       "model": "logos_dimension:block/hexen_organ_console_part"
     },
-    "facing=north,part=2": {
+    "facing=north,part=1,wide=false": {
       "model": "logos_dimension:block/hexen_organ_console_part"
     },
-    "facing=north,part=3": {
+    "facing=north,part=2,wide=true": {
       "model": "logos_dimension:block/hexen_organ_console_part"
     },
-    "facing=east,part=0": {
+    "facing=north,part=2,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=north,part=3,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=north,part=3,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=north,part=4,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=north,part=4,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=north,part=5,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=north,part=5,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=north,part=6,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=north,part=6,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=east,part=0,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_wide",
+      "y": 90
+    },
+    "facing=east,part=0,wide=false": {
       "model": "logos_dimension:block/hexen_organ_console",
       "y": 90
     },
-    "facing=east,part=1": {
+    "facing=east,part=1,wide=true": {
       "model": "logos_dimension:block/hexen_organ_console_part"
     },
-    "facing=east,part=2": {
+    "facing=east,part=1,wide=false": {
       "model": "logos_dimension:block/hexen_organ_console_part"
     },
-    "facing=east,part=3": {
+    "facing=east,part=2,wide=true": {
       "model": "logos_dimension:block/hexen_organ_console_part"
     },
-    "facing=south,part=0": {
+    "facing=east,part=2,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=east,part=3,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=east,part=3,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=east,part=4,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=east,part=4,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=east,part=5,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=east,part=5,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=east,part=6,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=east,part=6,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=south,part=0,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_wide",
+      "y": 180
+    },
+    "facing=south,part=0,wide=false": {
       "model": "logos_dimension:block/hexen_organ_console",
       "y": 180
     },
-    "facing=south,part=1": {
+    "facing=south,part=1,wide=true": {
       "model": "logos_dimension:block/hexen_organ_console_part"
     },
-    "facing=south,part=2": {
+    "facing=south,part=1,wide=false": {
       "model": "logos_dimension:block/hexen_organ_console_part"
     },
-    "facing=south,part=3": {
+    "facing=south,part=2,wide=true": {
       "model": "logos_dimension:block/hexen_organ_console_part"
     },
-    "facing=west,part=0": {
+    "facing=south,part=2,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=south,part=3,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=south,part=3,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=south,part=4,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=south,part=4,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=south,part=5,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=south,part=5,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=south,part=6,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=south,part=6,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=west,part=0,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_wide",
+      "y": 270
+    },
+    "facing=west,part=0,wide=false": {
       "model": "logos_dimension:block/hexen_organ_console",
       "y": 270
     },
-    "facing=west,part=1": {
+    "facing=west,part=1,wide=true": {
       "model": "logos_dimension:block/hexen_organ_console_part"
     },
-    "facing=west,part=2": {
+    "facing=west,part=1,wide=false": {
       "model": "logos_dimension:block/hexen_organ_console_part"
     },
-    "facing=west,part=3": {
+    "facing=west,part=2,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=west,part=2,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=west,part=3,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=west,part=3,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=west,part=4,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=west,part=4,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=west,part=5,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=west,part=5,wide=false": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=west,part=6,wide=true": {
+      "model": "logos_dimension:block/hexen_organ_console_part"
+    },
+    "facing=west,part=6,wide=false": {
       "model": "logos_dimension:block/hexen_organ_console_part"
     }
   }

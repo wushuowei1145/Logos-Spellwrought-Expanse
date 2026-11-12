@@ -91,15 +91,17 @@ public final class InstrumentSeat extends Entity {
 
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
-        // 站起来退到座位后面一点，落在地面上（座位本身可能比地面略低）
-        Vec3 back = Vec3.directionFromRotation(0, getYRot()).scale(-0.7);
-        return new Vec3(getX() + back.x, Math.floor(getY() + 0.5), getZ() + back.z);
+        // 站起来退到座位后面一点，落在地面上（座位本身比地面略低）
+        return BenchSeat.dismountBehind(this, passenger, 0.7);
     }
 
+    /**
+     * 不在这里马上消失：原版下车时先移除乘客、再问座位人放哪；座位已经没了的话就把人留在坐着的位置，
+     * 双脚比地面低 2.25 像素，人陷进地里一格。空座位在下一刻的 tick 里消失。
+     */
     @Override
     protected void removePassenger(Entity passenger) {
         super.removePassenger(passenger);
-        if (!level().isClientSide() && !isRemoved()) discard();
     }
 
     @Override

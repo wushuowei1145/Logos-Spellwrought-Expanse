@@ -105,7 +105,7 @@ public final class AddonTabs {
             "hexen_organ_console", "organ_wind_chest", "organ_tin_pipe", "organ_wood_pipe", "organ_trumpet_pipe",
             "hexen_harpsichord", "hexen_celesta", "hexen_glockenspiel", "hexen_tubular_bells",
             "hexen_cello", "hexen_double_bass", "hexen_timpani",
-            "hexen_music_stand", "hexen_podium", "starbloom_bench",
+            "hexen_music_stand", "hexen_podium", "starbloom_bench", "starbloom_duet_bench",
             // 运镜的测试方块
             "camera_test_block"));
 

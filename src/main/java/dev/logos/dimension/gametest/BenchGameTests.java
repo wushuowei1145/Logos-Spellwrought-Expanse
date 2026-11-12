@@ -66,6 +66,7 @@ public final class BenchGameTests {
         tests.put("bench_joins_the_orchestra", BenchGameTests::joins);
         tests.put("bench_orchestra_moves_with_the_hall", BenchGameTests::moves);
         tests.put("bench_seat_moves_up_to_the_keys", BenchGameTests::movesUp);
+        tests.put("bench_duet_sits_in_the_middle", BenchGameTests::duet);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -160,6 +161,38 @@ public final class BenchGameTests {
         h.succeed();
     }
 
+    /** 双人琴凳：两格、另一格在坐的人右手边；两格宽的钢琴前任一格都关联；从哪一格坐都坐在正中、往琴键挪；拆一格整张拆掉、只掉一张。 */
+    private static void duet(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos piano = h.absolutePos(new BlockPos(2, 1, 3));
+        place(level, piano, Instruments.GRAND_PIANO.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.NORTH));
+        BlockPos main = h.absolutePos(new BlockPos(3, 1, 2));
+        place(level, main, Benches.DUET.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.SOUTH));
+        BlockPos side = main.west();
+        BlockState sideState = level.getBlockState(side);
+        h.assertTrue(sideState.is(Benches.DUET.get()) && sideState.getValue(dev.logos.dimension.music.StarbloomDuetBenchBlock.SIDE),
+            "two wide: the second cell is on the sitter's right");
+        h.assertTrue(piano.equals(StarbloomBenchBlock.linked(level, main)) && piano.equals(StarbloomBenchBlock.linked(level, side)),
+            "either cell links to the two-wide piano");
+        ForestElf elf = elf(h, new BlockPos(2, 1, 6));
+        h.assertTrue(StarbloomBenchBlock.sit(level, side, elf) && elf.getVehicle() instanceof BenchSeat, "sitting down from either cell");
+        BenchSeat ride = (BenchSeat) elf.getVehicle();
+        ride.positionRider(elf);
+        h.assertTrue(Math.abs(elf.getX() - main.getX()) < 1.0e-3, "the elf sits where the two cells meet: x=" + elf.getX() + " vs " + main.getX());
+        h.assertTrue(Math.abs(elf.getZ() - (main.getZ() + 0.5 + StarbloomBenchBlock.LINKED_FORWARD / 16)) < 1.0e-3,
+            "and moves up to the keys: z=" + elf.getZ());
+        h.assertTrue(ride.bench().equals(main) && StarbloomBenchBlock.occupant(level, side) == elf, "the seat belongs to the main cell");
+        elf.stopRiding();
+        level.destroyBlock(side, true);
+        h.assertTrue(level.getBlockState(main).isAir() && level.getBlockState(side).isAir(), "breaking one cell takes the whole bench");
+        int dropped = 0;
+        for (var e : level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, new AABB(main).inflate(3))) {
+            if (e.getItem().is(Benches.DUET_ITEM.get().asItem())) dropped += e.getItem().getCount();
+        }
+        h.assertTrue(dropped == 1, "one duet bench drops, got " + dropped);
+        h.succeed();
+    }
+
     private static void seats(GameTestHelper h) {
         ServerLevel level = h.getLevel();
         BlockPos seat = bench(h, new BlockPos(2, 1, 2), Direction.SOUTH);
@@ -195,13 +228,16 @@ public final class BenchGameTests {
         player.setShiftKeyDown(true);
         level.getBlockState(seat).useWithoutItem(level, player, hit(seat));
         h.assertTrue(elf.getVehicle() == null, "the elf stands up");
-        h.assertTrue(level.getEntitiesOfClass(BenchSeat.class, new AABB(seat).inflate(2)).isEmpty(), "the seat is gone");
+        h.assertTrue(StarbloomBenchBlock.isFree(level, seat), "the bench is free again (the empty seat goes on its next tick)");
         // 玩家自己坐：座位不存盘
         player.setShiftKeyDown(false);
         player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
         level.getBlockState(seat).useWithoutItem(level, player, hit(seat));
         h.assertTrue(player.getVehicle() instanceof BenchSeat s && !s.shouldBeSaved(), "a player's seat is not saved");
+        // 起身：站在凳子后面的地面上，不陷进地里
         player.stopRiding();
+        h.assertTrue(Math.abs(player.getY() - seat.getY()) < 1e-6 && player.getZ() < seat.getZ() + 0.5 - 0.5,
+            "standing up puts the player on the floor behind the bench: " + player.position());
         h.succeed();
     }
 

@@ -39,6 +39,10 @@ public final class Benches {
     public static final DeferredBlock<StarbloomBenchBlock> BENCH = DimensionBlocks.BLOCKS.registerBlock("starbloom_bench", StarbloomBenchBlock::new,
         p -> p.mapColor(MapColor.COLOR_RED).strength(1.0f).sound(SoundType.WOOD).noOcclusion());
     public static final DeferredItem<?> BENCH_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("starbloom_bench", BENCH);
+    /** 双人琴凳：两格宽，坐在正中，两格宽的钢琴前用。 */
+    public static final DeferredBlock<StarbloomDuetBenchBlock> DUET = DimensionBlocks.BLOCKS.registerBlock("starbloom_duet_bench",
+        StarbloomDuetBenchBlock::new, p -> p.mapColor(MapColor.COLOR_RED).strength(1.0f).sound(SoundType.WOOD).noOcclusion());
+    public static final DeferredItem<?> DUET_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("starbloom_duet_bench", DUET);
     public static final DeferredHolder<EntityType<?>, EntityType<BenchSeat>> SEAT = ENTITY_TYPES.register("bench_seat",
         () -> EntityType.Builder.<BenchSeat>of(BenchSeat::new, MobCategory.MISC).sized(0.25f, 0.25f).noSummon().clientTrackingRange(10)
             .updateInterval(20).build(ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("bench_seat"))));

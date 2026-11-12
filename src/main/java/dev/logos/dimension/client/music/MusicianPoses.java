@@ -55,7 +55,8 @@ public final class MusicianPoses {
      * @param left 键盘、竖琴：左手在琴凳坐标里的位置（像素）；手持乐器时为 null
      * @param right 同上，右手
      */
-    public record Musician(Mode mode, InstrumentKind kind, float move, @Nullable Vector3f left, @Nullable Vector3f right) {}
+    /** feet：坐的人双脚在琴凳坐标里的位置（像素，见 {@link StarbloomBenchBlock#feet}），手位 left/right 也在琴凳坐标里。 */
+    public record Musician(Mode mode, InstrumentKind kind, float move, @Nullable Vector3f left, @Nullable Vector3f right, Vector3f feet) {}
 
     static final ContextKey<Musician> MUSICIAN = new ContextKey<>(LogosDimension.id("musician"));
     /** 一位键盘手、竖琴手两只手此刻在键盘上的位置（0 最低音、1 最高音，平滑地移过去）和按下的程度。 */
@@ -82,7 +83,7 @@ public final class MusicianPoses {
             if (!(entity.getMainHandItem().getItem() instanceof HandheldInstrumentItem item)) return null;
             boolean playing = VoiceBank.recentlyPlayed(bench) || MusicClient.recentlyPlayed(entity.getId())
                 || VoiceBank.holding(MusicClient.heldKey(entity.getId()));
-            return new Musician(Mode.HANDHELD, item.kind(), playing ? 1 : 0, null, null);
+            return new Musician(Mode.HANDHELD, item.kind(), playing ? 1 : 0, null, null, feet(benchState, false));
         }
         BlockState mainState = level.getBlockState(linked);
         if (!(mainState.getBlock() instanceof InstrumentBlock block)) return null;
@@ -90,8 +91,14 @@ public final class MusicianPoses {
         if (kind == null) return null;
         Hands hands = hands(entity.getId(), kind, VoiceBank.notesAt(linked));
         Direction facing = benchState.getValue(StarbloomBenchBlock.FACING);
-        Vector3f[] at = kind == InstrumentKind.CONCERT_HARP ? harp(hands) : keys(kind, hands, keySpan(bench, facing, linked, mainState, block, kind));
-        return new Musician(kind == InstrumentKind.CONCERT_HARP ? Mode.HARP : Mode.KEYS, kind, 0, at[0], at[1]);
+        Vector3f feet = feet(benchState, true);
+        Vector3f[] at = kind == InstrumentKind.CONCERT_HARP ? harp(hands, feet) : keys(kind, hands, keySpan(bench, facing, linked, mainState, block, kind), feet);
+        return new Musician(kind == InstrumentKind.CONCERT_HARP ? Mode.HARP : Mode.KEYS, kind, 0, at[0], at[1], feet);
+    }
+
+    private static Vector3f feet(BlockState benchState, boolean linked) {
+        var f = StarbloomBenchBlock.feet(benchState, linked);
+        return new Vector3f((float) f.x, (float) f.y, (float) f.z);
     }
 
     /** 两只手在键盘上的位置（0–1）和按下的程度：左手跟着低音、右手跟着高音，平滑移过去；没音时回到各自的半边。 */
@@ -160,23 +167,22 @@ public final class MusicianPoses {
     }
 
     /** 键盘：手搭在琴键靠外的一段上（离琴凳前沿 1.2 像素），左右按音高，弹下时往下按。手伸得到的范围以内。 */
-    private static Vector3f[] keys(InstrumentKind kind, Hands h, float[] span) {
+    private static Vector3f[] keys(InstrumentKind kind, Hands h, float[] span, Vector3f feet) {
         float y = keyTop(kind) + 1.0f;
-        float xl = Math.max(-4, Math.min(20, span[0] + h.low * (span[1] - span[0])));
-        float xr = Math.max(-4, Math.min(20, span[0] + h.high * (span[1] - span[0])));
+        float xl = Math.max(feet.x - 12, Math.min(feet.x + 12, span[0] + h.low * (span[1] - span[0])));
+        float xr = Math.max(feet.x - 12, Math.min(feet.x + 12, span[0] + h.high * (span[1] - span[0])));
         return new Vector3f[]{new Vector3f(xl, y - 0.9f * h.lowPress, -1.2f), new Vector3f(xr, y - 0.9f * h.highPress, -1.2f)};
     }
 
     /** 竖琴：琴弦平面沿前后方向立在前面一格，两手在琴弦两侧，低音在下；拨弦时手往回一勾。 */
-    private static Vector3f[] harp(Hands h) {
-        return new Vector3f[]{new Vector3f(8 - 2.4f, 12 + 8 * h.low, -1.5f + 1.2f * h.lowPress),
-            new Vector3f(8 + 2.4f, 12 + 8 * h.high, -1.5f + 1.2f * h.highPress)};
+    private static Vector3f[] harp(Hands h, Vector3f feet) {
+        return new Vector3f[]{new Vector3f(feet.x - 2.4f, 12 + 8 * h.low, -1.5f + 1.2f * h.lowPress),
+            new Vector3f(feet.x + 2.4f, 12 + 8 * h.high, -1.5f + 1.2f * h.highPress)};
     }
 
-    /** 关联了乐器的琴凳坐标（像素）→ 人形模型根坐标（像素）：坐的人往乐器那边挪过（{@link StarbloomBenchBlock#feet}）。 */
-    static Vector3f benchToModel(Vector3f bench) {
-        var feet = StarbloomBenchBlock.feet(true);
-        return HeldRig.toModel(bench, new Vector3f((float) feet.x, (float) feet.y, (float) feet.z));
+    /** 琴凳坐标（像素）→ 人形模型根坐标（像素），以坐的人双脚为准。 */
+    static Vector3f benchToModel(Vector3f bench, Vector3f feet) {
+        return HeldRig.toModel(bench, feet);
     }
 
     // —— 原版人形模型（玩家、僵尸、骷髅……）——
@@ -207,8 +213,8 @@ public final class MusicianPoses {
             HandheldPoses.reach(leftHanded ? model.leftArm : model.rightArm, place.mainHand(), 0, 0, leftHanded ? 1 : -1);
             HandheldPoses.reach(leftHanded ? model.rightArm : model.leftArm, place.offHand(), 0, 0, leftHanded ? -1 : 1);
         } else if (m.left() != null && m.right() != null) {
-            HandheldPoses.reach(model.leftArm, benchToModel(m.left()), 0, 0, 1);
-            HandheldPoses.reach(model.rightArm, benchToModel(m.right()), 0, 0, -1);
+            HandheldPoses.reach(model.leftArm, benchToModel(m.left(), m.feet()), 0, 0, 1);
+            HandheldPoses.reach(model.rightArm, benchToModel(m.right(), m.feet()), 0, 0, -1);
             // 原版的腿没有膝盖：坐在乐器前时往前下方斜伸（原版骑乘那样平伸会插进琴身）
             model.rightLeg.xRot = -0.8f;
             model.leftLeg.xRot = -0.8f;

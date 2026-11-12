@@ -85,7 +85,7 @@ public abstract class OrganViews implements UIScenario {
                     }
                 }
                 level.getEntitiesOfClass(ItemEntity.class, new AABB(ORIGIN).inflate(20)).forEach(ItemEntity::discard);
-                BlockState console = Instruments.ORGAN_CONSOLE.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.SOUTH);
+                BlockState console = Instruments.ORGAN_CONSOLE.get().placed(Direction.SOUTH);
                 level.setBlockAndUpdate(CONSOLE, console);
                 console.getBlock().setPlacedBy(level, CONSOLE, console, null, ItemStack.EMPTY);
                 // 风箱一排贴着演奏台背后（北面），东西各伸到墙边

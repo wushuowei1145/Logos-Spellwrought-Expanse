@@ -43,6 +43,7 @@ public final class OrganGameTests {
     public static void register(IEventBus bus) {
         Map<String, Consumer<GameTestHelper>> tests = new LinkedHashMap<>();
         tests.put("organ_console_breaks_whole", OrganGameTests::consoleBreaksWhole);
+        tests.put("organ_legacy_console", OrganGameTests::legacyConsole);
         tests.put("organ_pipe_shapes", OrganGameTests::pipeShapes);
         tests.put("organ_structure_scan", OrganGameTests::structureScan);
         tests.put("organ_stops_need_pipes", OrganGameTests::stopsNeedPipes);
@@ -59,7 +60,7 @@ public final class OrganGameTests {
     }
 
     private static BlockState console(ServerLevel level, BlockPos main, Direction facing) {
-        BlockState state = Instruments.ORGAN_CONSOLE.get().defaultBlockState().setValue(InstrumentBlock.FACING, facing);
+        BlockState state = Instruments.ORGAN_CONSOLE.get().placed(facing);
         level.setBlockAndUpdate(main, state);
         state.getBlock().setPlacedBy(level, main, state, null, ItemStack.EMPTY);
         return state;
@@ -83,19 +84,45 @@ public final class OrganGameTests {
         OrganConsoleBlock block = Instruments.ORGAN_CONSOLE.get();
         List<BlockPos> cells = new ArrayList<>();
         block.cells(state, main).forEach(cells::add);
-        for (int part = 0; part < 4; part++) {
-            BlockState s = level.getBlockState(cells.get(part));
-            h.assertTrue(s.is(block) && s.getValue(OrganConsoleBlock.PART) == part, "part " + part);
-            h.assertTrue(block.mainPos(s, cells.get(part)).equals(main), "part " + part + " finds the main block");
+        h.assertTrue(cells.size() == 6, "three wide, two tall: " + cells.size());
+        for (BlockPos c : cells) {
+            BlockState s = level.getBlockState(c);
+            h.assertTrue(s.is(block) && s.getValue(OrganConsoleBlock.WIDE), "cell " + c);
+            h.assertTrue(block.mainPos(s, c).equals(main), "cell " + c + " finds the main block");
         }
-        h.assertTrue(cells.get(2).equals(main.above()), "part 2 is above the main block");
-        level.destroyBlock(cells.get(3), true);
+        // 键盘朝南：主块在下排正中，东西各一列
+        h.assertTrue(cells.contains(main.east()) && cells.contains(main.west()) && cells.contains(main.above().east())
+            && cells.contains(main.above().west()), "the main block is in the middle of the bottom row");
+        h.assertTrue(InstrumentBlock.center(state, main).x == main.getX() + 0.5, "the sound comes from the middle");
+        level.destroyBlock(main.above().east(), true);
         for (BlockPos c : cells) h.assertTrue(level.getBlockState(c).isAir(), "cell cleared " + c);
         int dropped = 0;
         for (ItemEntity e : level.getEntitiesOfClass(ItemEntity.class, new AABB(main).inflate(4))) {
             if (e.getItem().is(Instruments.ORGAN_CONSOLE_ITEM.get().asItem())) dropped += e.getItem().getCount();
         }
         h.assertTrue(dropped == 1, "drops one console, got " + dropped);
+        h.succeed();
+    }
+
+    /** 旧存档里 2 宽的演奏台（wide=false）照旧：四格、旁边放东西不会把它拆掉、风箱照样识别。 */
+    private static void legacyConsole(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos main = h.absolutePos(new BlockPos(3, 1, 3));
+        OrganConsoleBlock block = Instruments.ORGAN_CONSOLE.get();
+        BlockState state = block.defaultBlockState().setValue(InstrumentBlock.FACING, Direction.SOUTH);
+        h.assertTrue(!state.getValue(OrganConsoleBlock.WIDE), "old saves load as two wide (the default)");
+        level.setBlockAndUpdate(main, state);
+        block.setPlacedBy(level, main, state, null, ItemStack.EMPTY);
+        List<BlockPos> cells = new ArrayList<>();
+        block.cells(state, main).forEach(cells::add);
+        h.assertTrue(cells.size() == 4 && cells.contains(main.west()) && !cells.contains(main.east()), "two wide: " + cells);
+        // 逆时针那边（东）放一个方块：旧演奏台那边本来就没有格子，不该被拆
+        level.setBlockAndUpdate(main.east(), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
+        level.setBlockAndUpdate(main.east(), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+        for (BlockPos c : cells) h.assertTrue(level.getBlockState(c).is(block), "still standing at " + c);
+        level.setBlockAndUpdate(main.north(), Instruments.ORGAN_WIND_CHEST.get().defaultBlockState());
+        column(level, main.north().above(), Instruments.ORGAN_TIN_PIPE.get(), 2);
+        h.assertTrue(OrganStructure.scan(level, state, main).tin() == 2, "pipes are found from the old console");
         h.succeed();
     }
 
