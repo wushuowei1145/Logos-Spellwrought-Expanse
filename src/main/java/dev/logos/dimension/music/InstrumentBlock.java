@@ -80,6 +80,11 @@ public abstract class InstrumentBlock extends Block implements EntityBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         BlockPos main = mainPos(state, pos);
+        // 潜行空手右键：工位上的生物离开（不开界面）
+        if (player.isSecondaryUseActive() && InstrumentPosts.occupant(level, main) instanceof net.minecraft.world.entity.Mob) {
+            if (!level.isClientSide()) InstrumentPosts.leave(level, main);
+            return InteractionResult.SUCCESS;
+        }
         if (level.isClientSide()) {
             // 界面类只在客户端存在：经静态入口打开，本类不出现任何客户端类型
             dev.logos.dimension.client.music.MusicClient.openInstrument(main);
@@ -96,6 +101,11 @@ public abstract class InstrumentBlock extends Block implements EntityBlock {
                 dev.logos.dimension.music.orchestra.Orchestra.batonOnInstrument(stack, (net.minecraft.server.level.ServerLevel) level,
                     mainPos(state, pos), player);
             }
+            return InteractionResult.SUCCESS;
+        }
+        if (stack.is(net.minecraft.world.item.Items.LEAD) && InstrumentPosts.has(kind(level.getBlockState(mainPos(state, pos))))
+                && InstrumentPosts.leadTo(level, mainPos(state, pos), player)) {
+            // 拴绳牵着生物：带到这件乐器的工位上
             return InteractionResult.SUCCESS;
         }
         if (!Instruments.isRoll(stack)) return InteractionResult.TRY_WITH_EMPTY_HAND;

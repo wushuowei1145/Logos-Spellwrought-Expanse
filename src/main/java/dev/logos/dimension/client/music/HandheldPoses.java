@@ -86,6 +86,7 @@ public final class HandheldPoses {
     }
 
     /** 正在演奏的乐器：种类、要画的模型（弓弦乐器另有弓；坐着拉的乐器是方块，instrument 为 null）、最近是否在弹。 */
+    /** bow：弓弦乐器的弓；工位上敲的乐器借这一格放琴槌（{@link StationPoses}）。 */
     record Held(InstrumentKind kind, @Nullable ItemStackRenderState instrument, @Nullable ItemStackRenderState bow, float move) {}
 
     static final ContextKey<Held> HELD = new ContextKey<>(LogosDimension.id("held_instrument"));
@@ -157,6 +158,13 @@ public final class HandheldPoses {
             resolver.updateForLiving(bowState, bow(), ItemDisplayContext.NONE, entity);
         }
         return new Held(kind, body, bowState, move);
+    }
+
+    /** 坐（站）在大提琴、低音提琴后：只有弓要画（乐器是方块）。 */
+    static Held bowFor(InstrumentKind kind, LivingEntity entity, float move) {
+        ItemStackRenderState bowState = new ItemStackRenderState();
+        Minecraft.getInstance().getItemModelResolver().updateForLiving(bowState, bow(), ItemDisplayContext.NONE, entity);
+        return new Held(kind, null, bowState, move);
     }
 
     /** 坐在弦乐器后面：乐器是方块，只画弓；手里原本拿的不画；姿势挂在右臂上（按右手运弓布置，左撇子也一样）。 */

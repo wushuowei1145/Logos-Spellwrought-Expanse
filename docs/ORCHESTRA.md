@@ -177,7 +177,7 @@
 | 客户端 | `client/music/Conducting`（乐团播放、手势、选中）、`ConductingPoses`（手臂、第一人称）、`PartOutline` + `shaders/post/part_outline*`、`PodiumScreen` |
 | 乐器那边 | `InstrumentBlockEntity`（`orchestra`、`conductedBy`、拆掉时退出）、`MusicStandBlock`（换乐器时通知）、`InstrumentBlock`（指挥棒右键） |
 | 美术 | `tools/instrument_art.py` 的 `podium()` |
-| 琴凳与生物乐手（第 14 节） | `music/StarbloomBenchBlock`、`StarbloomDuetBenchBlock`、`BenchSeat`、`Benches`；客户端 `client/music/MusicianPoses`（手位、原版人形模型）、`NpcMusician`（车万女仆骨架的两骨 IK）、`mixin/MusicianModelMixin` |
+| 琴凳与生物乐手（第 14、15 节） | `music/StarbloomBenchBlock`、`StarbloomDuetBenchBlock`、`BenchSeat`、`Benches`、`InstrumentPosts`、`InstrumentSeat`；客户端 `StationPoses`（工位、琴槌）；客户端 `client/music/MusicianPoses`（手位、原版人形模型）、`NpcMusician`（车万女仆骨架的两骨 IK）、`mixin/MusicianModelMixin` |
 | 测试 | 单元 `BeatMapTest`、`ConductorPatternTest`、`OrchestraArrangerTest`、`MusicRollTest`、`MidiReaderTest`；世界 `orchestra_*`、`bench_*`；客户端 `orchestra_conduct_ui`、`orchestra_seated_member_ui`、`orchestra_hall_ui` |
 
 ## 13. 已定（维护者 2026-11-11）
@@ -272,4 +272,40 @@
 
 - 同伴自己找座位、走过去坐下（接口留好了）；B 方案（坐着的玩家接管声部）。
 - 怪物、村民在生存模式里请上琴凳的办法（拴不了）。
-- 钟琴、管钟、定音鼓拿琴槌的动作；关联的琴凳被选中声部时一起描边。
+- 钟琴、管钟、定音鼓拿琴槌的动作（第 15 节做了）；关联的琴凳被选中声部时一起描边。
+
+## 15. 工位：大提琴、低音提琴、钟琴、管钟、定音鼓（2026-11-12）
+
+维护者定的：生物也能到大提琴、低音提琴的位置上演奏；钟琴、管钟、定音鼓的琴槌不做成物品，演奏时画在手上；
+定音鼓用双人琴凳，一张对着两面鼓。
+
+### 15.1 工位（`InstrumentPosts`）
+
+- 大提琴琴后的凳子、低音提琴琴后（站着）、钟琴和管钟前面（站着）是这件乐器的工位。工位上的人或生物就是演奏者，
+  骑在看不见的座位（`InstrumentSeat`）上：生物不再走动、不会被刷掉，连同座位一起存盘。
+- **拴绳牵着生物右键乐器**：生物到工位上，拴绳还给玩家；已经有人时不收。**潜行空手右键乐器**：工位上的生物离开（站到工位后面的地面上）。
+  玩家照旧空手右键大提琴、低音提琴坐上去；钟琴、管钟玩家照旧开界面弹。
+- 工位的位置按方块朝向转过去：大提琴、低音提琴的人在琴后、和琴朝同一个方向；钟琴、管钟的人在放置时玩家站的那一面（乐器前面一格），
+  面朝乐器。那一格要空着、下面有地面。同伴以后找空工位用 `InstrumentPosts.take / occupant / leave`。
+- 乐器照常按总谱、纸带、红石响，工位上的人只是演奏的样子。
+
+### 15.2 定音鼓
+
+- 鼓手坐在鼓后（踏板那一面）、和鼓朝同一个方向的琴凳上，琴凳就和鼓关联（同竖琴）。**双人琴凳**在两面并排的鼓后面，两格各对着一面鼓
+  （`StarbloomBenchBlock.linkedAll`），左手打坐的人左边那面、右手打右边那面；单人琴凳对着一面鼓，两只手一左一右轮流打。
+- 两面鼓各是乐团里的一件乐器（各自的声部），琴凳不算成员。
+
+### 15.3 动作
+
+- 坐标同第 14 节：都写在「演奏者面朝北」的方块像素里，原版人形模型和车万女仆骨架各自换算。
+- **大提琴、低音提琴**：弓和两只手的位置是同一份（`HeldRig.seatedBlock`），肩的位置和手臂长由骨架给出：原版模型的手臂是直的（同玩家），
+  NPC 两骨 IK 够到弓根和琴颈；大提琴坐着、两膝分开夹着琴，低音提琴站着、腿伸直。那件乐器最近在响时弓来回拉。
+- **琴槌**（`items/held/` 下的 `glockenspiel_mallet`、`chime_hammer`、`timpani_mallet`，只供渲染）：钟琴两支小白漆槌，右手敲低音、左手敲高音
+  （从演奏者看低音在右手边，同模型的长短音条）；管钟右手一把皮锤敲管顶靠演奏者的一侧，左手垂着；定音鼓两支毡头槌。
+  一个音落下时槌头贴到音条 / 管顶 / 鼓皮上，约 0.14 秒后抬起 3 像素。原版手臂没有手肘，直接指向槌头会越过它，
+  所以手臂指向槌头上方往回一点，槌从手里斜着落下去；NPC 的手停在离槌头一支槌远的地方。
+
+### 15.4 音乐厅
+
+管钟改成朝北（敲管钟的人站在管钟北面、同一级台阶上，面朝指挥）；定音鼓两两并排（x = -5、-4 和 -9、-8），每一对后面一张双人琴凳。
+测试场景让僵尸、精灵、骷髅、尸壳上了大提琴、低音提琴、钟琴、管钟的工位，精灵、僵尸坐在两张定音鼓双人琴凳上。

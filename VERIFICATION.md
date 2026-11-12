@@ -1,5 +1,26 @@
 # 首版验证记录
 
+## 乐团：工位（大提琴、低音提琴、钟琴、管钟、定音鼓）
+
+2026-11-12：分支 `feat/orchestra-stations`（未提交），基于 main `8e1c61fc`（#247），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。
+说明见 [docs/ORCHESTRA.md](docs/ORCHESTRA.md) 第 15 节。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 全量 **381/382**，唯一失败的仍是 main 上就缺的 zh_cn `item.logos_dimension.fuda_desk` |
+| 世界测试 | 新增 `station_posts_by_lead`（拴绳牵着精灵右键大提琴坐到琴后的凳子上、拴绳还回来、座位连同精灵存盘、位置正对凳子；有人时别的生物带不上去；潜行空手右键让它离开；钟琴的工位在北面一格、面朝南）、`station_timpani_benches`（双人琴凳在两面并排的鼓后关联两面、按格子顺序；单人琴凳一面；鼓前的琴凳不关联）：**2/2**，×8 **16/16**；回归 `bench_*` **6/6**、`orchestra_*` **7/7**、`organ_*` **5/5**、`instrument_*` **8/8**（×4 三轮 32/32）、`creative_tabs_cover_items` **1/1** |
+| 实际客户端 | `orchestra_hall_ui` 加大提琴（僵尸、精灵、骷髅）、低音提琴（精灵、尸壳）、钟琴（骷髅）、管钟（精灵）、两张定音鼓双人琴凳（精灵、僵尸）和三项检查（大提琴拉弓、低音提琴站着；钟琴两手拿槌；定音鼓双人琴凳两面鼓、左右手各一面）；加回归 `handheld_play_ui`、`orchestra_seated_ui`、`orchestra_conduct_ui`、`orchestra_seated_member_ui`、`music_stand_views`、`organ_play_ui`、`organ_reload_ui`、`mallet_instrument_play`：**9/9、62/62 检查** |
+| 截图人工看过 | 大提琴、低音提琴的生物和精灵（弓搭在弦上、站着的低音提琴手）；定音鼓（精灵两手槌各落在一面鼓上；僵尸两支槌从手里落到鼓皮上）；管钟（精灵站在北面）；钟琴（骷髅两支槌斜着落到音条上）；玩家坐着拉大提琴（重构琴弓的算法后同以前） |
+| 改过的问题 | 原版手臂是直的，定音鼓离得近，直接指过去手越过鼓面、槌杆朝外翻（改成指向槌头上方往回一点，槌斜着落下）；`instrument_seated_strings` 这轮在一批测试里 4/4 失败：座位一刻都没走（测试格子还没进入实体走刻），旧代码碰运气通过；改成先强制加载大提琴所在区块、等它走实体刻再拆琴 |
+| 未验证 | 玩家站到钟琴、管钟、定音鼓前的敲击动作（没做，照旧开界面弹）；多人、专用服务器 |
+
+```text
+uv run --no-project --with pillow --with numpy python tools/instrument_art.py
+uv run --no-project --with pillow --with numpy python tools/concert_hall.py --full-only build/concert_hall/concert_hall.nbt
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:station_*" -PdimensionTestRepeat=8
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0.jar "-PldTest=orchestra_hall_ui,orchestra_seated_ui,mallet_instrument_play" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 乐团：生物加入合奏（星辰花琴凳）
 
 2026-11-12：分支 `feat/orchestra-musicians`（未提交），基于 main `2ff5bcb8`（#245），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。

@@ -137,29 +137,51 @@ public class StarbloomBenchBlock extends InstrumentBlock {
         return switch (kind) {
             // 方块乐器的 FACING 朝着放置它的人（琴键那一面）：弹的人面朝相反方向
             case GRAND_PIANO, HARPSICHORD, CELESTA, PIPE_ORGAN -> facing.getOpposite();
-            // 竖琴同大提琴：人坐在琴后、和琴朝同一个方向
-            case CONCERT_HARP -> facing;
+            // 竖琴同大提琴：人坐在琴后、和琴朝同一个方向；定音鼓的踏板朝着鼓手，鼓手坐在鼓后、和鼓朝同一个方向
+            case CONCERT_HARP, TIMPANI -> facing;
             default -> null;
         };
     }
 
-    /** 这张琴凳关联的乐器的主块（bench 可以是琴凳的任一格；双人琴凳任一格前面是乐器都算）；没有关联时为 null。 */
+    /**
+     * 这张琴凳关联的乐器的主块（bench 可以是琴凳的任一格；双人琴凳先看 bench 那一格前面，再看另一格）；没有关联时为 null。
+     * 双人琴凳在两面定音鼓后面时关联两面鼓，见 {@link #linkedAll}。
+     */
     public static @Nullable BlockPos linked(BlockGetter level, BlockPos bench, BlockState benchState) {
         if (!(benchState.getBlock() instanceof StarbloomBenchBlock self)) return null;
         BlockPos seatMain = self.mainPos(benchState, bench);
         BlockState seatState = seatMain.equals(bench) ? benchState : level.getBlockState(seatMain);
         if (!(seatState.getBlock() instanceof StarbloomBenchBlock)) return null;
-        Direction facing = seatState.getValue(FACING);
+        BlockPos own = front(level, bench, seatState.getValue(FACING));
+        if (own != null) return own;
         for (BlockPos cell : self.cells(seatState, seatMain)) {
-            BlockPos front = cell.relative(facing);
-            BlockState frontState = level.getBlockState(front);
-            if (!(frontState.getBlock() instanceof InstrumentBlock block) || frontState.getBlock() instanceof StarbloomBenchBlock) continue;
-            BlockPos main = block.mainPos(frontState, front);
-            BlockState mainState = main.equals(front) ? frontState : level.getBlockState(main);
-            if (!(mainState.getBlock() instanceof InstrumentBlock)) continue;
-            if (performerFacing(block.kind(mainState), mainState) == facing) return main.immutable();
+            BlockPos main = front(level, cell, seatState.getValue(FACING));
+            if (main != null) return main;
         }
         return null;
+    }
+
+    /** 琴凳每一格前面关联的乐器（按格子的顺序：主块、另一格；那一格前面没关联时为 null）。不是琴凳时为空表。 */
+    public static List<@Nullable BlockPos> linkedAll(BlockGetter level, BlockPos bench) {
+        BlockState state = level.getBlockState(bench);
+        if (!(state.getBlock() instanceof StarbloomBenchBlock self)) return List.of();
+        BlockPos seatMain = self.mainPos(state, bench);
+        BlockState seatState = seatMain.equals(bench) ? state : level.getBlockState(seatMain);
+        if (!(seatState.getBlock() instanceof StarbloomBenchBlock)) return List.of();
+        java.util.ArrayList<@Nullable BlockPos> out = new java.util.ArrayList<>();
+        for (BlockPos cell : self.cells(seatState, seatMain)) out.add(front(level, cell, seatState.getValue(FACING)));
+        return out;
+    }
+
+    /** cell 正前方的乐器，琴凳在它的演奏那一面时返回它的主块。 */
+    private static @Nullable BlockPos front(BlockGetter level, BlockPos cell, Direction facing) {
+        BlockPos front = cell.relative(facing);
+        BlockState frontState = level.getBlockState(front);
+        if (!(frontState.getBlock() instanceof InstrumentBlock block) || frontState.getBlock() instanceof StarbloomBenchBlock) return null;
+        BlockPos main = block.mainPos(frontState, front);
+        BlockState mainState = main.equals(front) ? frontState : level.getBlockState(main);
+        if (!(mainState.getBlock() instanceof InstrumentBlock)) return null;
+        return performerFacing(block.kind(mainState), mainState) == facing ? main.immutable() : null;
     }
 
     public static @Nullable BlockPos linked(BlockGetter level, BlockPos bench) {
@@ -309,7 +331,7 @@ public class StarbloomBenchBlock extends InstrumentBlock {
     }
 
     /** 拴在这个玩家手上、离他最近的生物（拴绳能牵到的距离以内）。 */
-    private static @Nullable Mob nearestLed(Player player) {
+    public static @Nullable Mob nearestLed(Player player) {
         Mob best = null;
         double bestDistance = Double.MAX_VALUE;
         for (Leashable leashable : Leashable.leashableLeashedTo(player)) {

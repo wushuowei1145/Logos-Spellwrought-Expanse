@@ -62,7 +62,8 @@ public abstract class HallViews implements UIScenario {
     protected static final BlockPos HALL = new BlockPos(600, GROUND + 4, 600);
     private static int camera = -1;
     private static final List<Integer> MUSICIANS = new ArrayList<>();
-    private static int pianist = -1, violinist = -1, organist = -1;
+    private static int pianist = -1, violinist = -1, organist = -1, cellist = -1, bassist = -1, glockenist = -1, timpanist = -1;
+    static final BlockPos TIMPANI_BENCH = at(-4, 6, -20);
 
     static BlockPos at(int x, int y, int z) {
         return HALL.offset(x, y, z);
@@ -102,6 +103,19 @@ public abstract class HallViews implements UIScenario {
         if (!StarbloomBenchBlock.sit(level, bench, mob)) throw new IllegalStateException("could not seat " + type + " at " + bench);
         if (instrument != null) Benches.give(mob, new ItemStack(instrument), giver);
         StarbloomBenchBlock.refresh(level, bench);
+        MUSICIANS.add(mob.getId());
+        return mob;
+    }
+
+    /** 生物到 main 处乐器的工位上（同拴绳带过去）。 */
+    static Mob post(ServerLevel level, EntityType<? extends Mob> type, BlockPos main) {
+        Mob mob = type.create(level, EntitySpawnReason.COMMAND);
+        if (mob == null) throw new IllegalStateException("cannot create " + type);
+        mob.snapTo(main.getX() + 0.5, main.getY(), main.getZ() - 1.5, 0, 0);
+        mob.setNoAi(true);
+        mob.setSilent(true);
+        level.addFreshEntity(mob);
+        if (!dev.logos.dimension.music.InstrumentPosts.take(level, main, mob)) throw new IllegalStateException("could not post " + type + " at " + main);
         MUSICIANS.add(mob.getId());
         return mob;
     }
@@ -168,6 +182,16 @@ public abstract class HallViews implements UIScenario {
                 seat(level, elf, at(-8, 4, -14), null, me);
                 seat(level, elf, at(-10, 4, -14), null, me);
                 organist = seat(level, elf, ORGAN_BENCH, violin, me).getId();
+                // 工位：大提琴、低音提琴琴后，钟琴、管钟前面；定音鼓后的双人琴凳
+                cellist = post(level, EntityType.ZOMBIE, at(5, 3, -7)).getId();
+                post(level, elf, at(7, 3, -7));
+                post(level, EntityType.SKELETON, at(6, 3, -10));
+                bassist = post(level, elf, at(12, 3, -8)).getId();
+                post(level, EntityType.HUSK, at(12, 3, -11));
+                glockenist = post(level, EntityType.SKELETON, at(-6, 4, -13)).getId();
+                post(level, elf, at(5, 6, -19));
+                timpanist = seat(level, elf, TIMPANI_BENCH, null, me).getId();
+                seat(level, EntityType.ZOMBIE, at(-8, 6, -20), null, me);
                 var cam = EntityType.ARMOR_STAND.create(level, EntitySpawnReason.COMMAND);
                 cam.setInvisible(true);
                 cam.setNoGravity(true);
@@ -244,6 +268,22 @@ public abstract class HallViews implements UIScenario {
                     return e != null && Math.abs(e.getZ() - (PIANO_BENCH.getZ() + 1)) < 1e-3
                         && Math.abs(e.getX() - (PIANO_BENCH.getX() + 0.5 + StarbloomBenchBlock.LINKED_FORWARD / 16)) < 1e-3;
                 })
+                .check("the zombie at the cello bows it, the elf at the double bass stands", ctx -> {
+                    var c = musician(cellist);
+                    var bass = musician(bassist);
+                    return c != null && c.mode() == MusicianPoses.Mode.BOWED && c.kind() == InstrumentKind.CELLO && !c.standing()
+                        && bass != null && bass.mode() == MusicianPoses.Mode.BOWED && bass.kind() == InstrumentKind.DOUBLE_BASS && bass.standing();
+                })
+                .check("the skeleton at the glockenspiel holds two mallets", ctx -> {
+                    var g = musician(glockenist);
+                    return g != null && g.mode() == MusicianPoses.Mode.MALLETS && g.left() != null && g.right() != null && g.standing();
+                })
+                .check("the timpanist's duet bench reaches two drums, one per hand", ctx -> {
+                    var drums = StarbloomBenchBlock.linkedAll(Minecraft.getInstance().level, TIMPANI_BENCH);
+                    var t = musician(timpanist);
+                    return drums.size() == 2 && drums.get(0) != null && drums.get(1) != null && t != null
+                        && t.mode() == MusicianPoses.Mode.MALLETS && t.kind() == InstrumentKind.TIMPANI && t.left().x < t.right().x;
+                })
                 .check("the organist holds a violin but plays the organ", ctx -> {
                     var m = musician(organist);
                     return m != null && m.mode() == MusicianPoses.Mode.KEYS && m.kind() == InstrumentKind.PIPE_ORGAN
@@ -274,6 +314,10 @@ public abstract class HallViews implements UIScenario {
             b = shot(b, "hall_harpsichord_fox", point(-2.2, 5.0, -11.2), point(-4, 4.4, -9));
             b = shot(b, "hall_celesta_harp", point(-6.2, 6.4, -11.2), point(-9, 5.5, -14));
             b = shot(b, "hall_organ_elf", point(2.4, 8.6, -16.4), point(0, 7.6, -19.4));
+            b = shot(b, "hall_cellos_basses", point(4.0, 5.8, -3.6), point(8.5, 4.2, -8.6));
+            b = shot(b, "hall_timpani", point(-6.4, 8.8, -15.6), point(-6.4, 7.0, -19.8));
+            b = shot(b, "hall_tubular_bells", point(7.4, 9.2, -22.6), point(5.5, 7.6, -19.6));
+            b = shot(b, "hall_glockenspiel", point(-3.9, 6.8, -11.0), point(-5.6, 5.0, -13.3));
             // 侧面近景：看得见键盘手的手搭在琴键上
             b = shot(b, "hall_piano_hands", point(-3.3, 5.7, -4.4), point(-4.1, 4.1, -6.1));
             b = shot(b, "hall_celesta_hands", point(-6.5, 6.0, -13.9), point(-7.6, 5.0, -13.2));

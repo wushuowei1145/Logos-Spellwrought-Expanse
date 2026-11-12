@@ -50,18 +50,7 @@ public class SeatedInstrumentBlock extends TallInstrumentBlock {
         BlockPos main = mainPos(state, pos);
         if (!level.isClientSide() && !player.isSecondaryUseActive()
             && !(player.getVehicle() instanceof InstrumentSeat seat && seat.instrument().equals(main))) {
-            boolean taken = !level.getEntitiesOfClass(InstrumentSeat.class, new AABB(main).inflate(2),
-                s -> s.instrument().equals(main) && !s.isRemoved() && !s.getPassengers().isEmpty()).isEmpty();
-            BlockState mainState = level.getBlockState(main);
-            if (!taken && mainState.getBlock() == this) {
-                InstrumentSeat seat = Instruments.SEAT.get().create(level, EntitySpawnReason.TRIGGERED);
-                if (seat != null) {
-                    Direction facing = mainState.getValue(FACING);
-                    seat.bind(main, seatPosition(main, facing, kind()), facing.toYRot());
-                    level.addFreshEntity(seat);
-                    player.startRiding(seat);
-                }
-            }
+            InstrumentPosts.take(level, main, player);
         }
         // 客户端照常打开乐器界面
         return super.useWithoutItem(state, level, pos, player, hit);

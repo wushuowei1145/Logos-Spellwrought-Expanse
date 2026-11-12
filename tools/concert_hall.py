@@ -973,15 +973,17 @@ def populate_orchestra_instruments(b: HallBuilder):
         b.put_bench(x, 5, -17, look_dir="south", role="皇家小号坐席", bind=bind, seat_for="trumpet")
 
     # 9. 第三阶梯（Riser 3, Y = 6, Z = -23 .. -19）：
-    # 9a. 定音鼓声部（舞台左后方：4 台定音鼓，2 台绑定 + 2 台扩充，facing=south 踏板朝北对准鼓手）
-    for x, bind in ((-6, True), (-4, True), (-8, False), (-10, False)):
+    # 9a. 定音鼓声部（舞台左后方：4 台定音鼓两两并排，2 台绑定 + 2 台扩充，facing=south 踏板朝北对准鼓手）。
+    #     每一对鼓后面一张双人琴凳（主块在东、另一格在西），两格各对着一面鼓，坐在正中的鼓手左右手各打一面
+    for x, bind in ((-5, True), (-4, True), (-9, False), (-8, False)):
         b.place_single_instrument(x, 6, -19, "hexen_timpani", "south", "定音鼓组 (Timpani)", bind=bind)
-    b.put_bench(-5, 6, -20, look_dir="south", role="首席定音鼓琴凳")
-    b.put_bench(-9, 6, -20, look_dir="south", role="副定音鼓琴凳")
+    b.put_bench(-4, 6, -20, look_dir="south", role="首席定音鼓琴凳", link="hexen_timpani", duet=True)
+    b.put_bench(-8, 6, -20, look_dir="south", role="副定音鼓琴凳", link="hexen_timpani", duet=True)
 
-    # 9b. 管钟声部（舞台右后方打击乐区：2 架管钟 Tubular Bells，1 架绑定 + 1 架扩充）
-    b.place_tall_instrument(5, 6, -19, "hexen_tubular_bells", "south", "第一管钟 (Tubular Bells I)", bind=True)
-    b.place_tall_instrument(8, 6, -19, "hexen_tubular_bells", "south", "第二管钟 (Tubular Bells II)", bind=False)
+    # 9b. 管钟声部（舞台右后方打击乐区：2 架管钟 Tubular Bells，1 架绑定 + 1 架扩充）。
+    #     facing=north：敲管钟的人站在管钟北面（同一级台阶上）面朝指挥，管钟在他和指挥之间
+    b.place_tall_instrument(5, 6, -19, "hexen_tubular_bells", "north", "第一管钟 (Tubular Bells I)", bind=True)
+    b.place_tall_instrument(8, 6, -19, "hexen_tubular_bells", "north", "第二管钟 (Tubular Bells II)", bind=False)
 
 
 def verify_and_audit(b: HallBuilder) -> dict:
@@ -1140,7 +1142,7 @@ def verify_and_audit(b: HallBuilder) -> dict:
             front = b.cells.get((sx + dx, sy, sz + dz), {})
             assert front.get("Name") == NS + bench["link"], f"琴凳前面不是要关联的乐器: {bench} -> {front}"
             facing = front.get("Properties", {}).get("facing")
-            expected = bench["look_dir"] if bench["link"] == "hexen_concert_harp" else opposite[bench["look_dir"]]
+            expected = bench["look_dir"] if bench["link"] in ("hexen_concert_harp", "hexen_timpani") else opposite[bench["look_dir"]]
             assert facing == expected, f"琴凳不在乐器的演奏那一面: {bench}, instrument facing={facing}, expected={expected}"
 
     # 6. 统计全部 15 种乐器与音管数量（验证总可演奏乐器 > 32，且 32 件绑定乐器覆盖全部 15 种可演奏乐器类型）

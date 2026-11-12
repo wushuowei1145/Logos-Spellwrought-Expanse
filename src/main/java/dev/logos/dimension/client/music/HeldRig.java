@@ -151,44 +151,74 @@ final class HeldRig {
      * 左手按在指板上一臂远的位置。
      */
     static Place seated(InstrumentKind kind, HumanoidModel<?> model, float t, float move) {
-        Layout l = kind == InstrumentKind.DOUBLE_BASS ? BASS : CELLO;
         Vector3f feet = seatFeet(kind);
+        Vector3f right = fromModel(new Vector3f(model.rightArm.x - 1, model.rightArm.y, model.rightArm.z), feet);
+        Vector3f left = fromModel(new Vector3f(model.leftArm.x + 1, model.leftArm.y, model.leftArm.z), feet);
+        Place p = seatedBlock(kind, right, left, GRIP * MODEL_SCALE, t, move);
+        return new Place(null, toModelMatrix(feet).mul(p.bow()), toModel(p.mainHand(), feet), toModel(p.offHand(), feet));
+    }
+
+    /**
+     * 同 {@link #seated}，但都在朝北放置的方块模型坐标（像素）里：肩的位置、手臂长（肩到手心）由骨架给出，
+     * 所以原版人形模型和附属 NPC 的骨架（{@link NpcMusician}）共用。返回的琴弓矩阵把弓的物品像素放到方块像素里。
+     */
+    static Place seatedBlock(InstrumentKind kind, Vector3f rightShoulder, Vector3f leftShoulder, float reach, float t, float move) {
+        Layout l = kind == InstrumentKind.DOUBLE_BASS ? BASS : CELLO;
         Matrix3f r = new Matrix3f().rotationZYX(l.tilt() * DEG, 0, l.lean() * DEG);
-        Vector3f contact = toModel(onInstrument(l, r, l.contact()), feet);
-        Vector3f right = toModelDir(r.transform(new Vector3f(1, 0, 0)));   // 沿琴的横向朝演奏者右手边（弓根一侧）
-        Vector3f hair = toModelDir(r.transform(new Vector3f(0, 0, 1)));    // 弓毛朝着琴弦（琴背的方向）
+        Vector3f contact = onInstrument(l, r, l.contact());
+        Vector3f right = r.transform(new Vector3f(1, 0, 0));    // 沿琴的横向朝演奏者右手边（弓根一侧，方块坐标的东）
+        Vector3f hair = r.transform(new Vector3f(0, 0, 1));     // 弓毛朝着琴弦（琴背的方向）
         // 在弹时弓沿弓杆来回拉
         float along = 10.5f + 3.5f * move * (float) Math.sin(t * 0.3f);
-        float bowScale = l.bowScale() / MODEL_SCALE;
-        Vector3f target = new Vector3f(right).mul((along - 1.8f) * bowScale).add(contact);
-        Vector3f shoulder = new Vector3f(model.rightArm.x - 1, model.rightArm.y, model.rightArm.z);
-        Vector3f grip = new Vector3f(target).sub(shoulder).normalize().mul(GRIP).add(shoulder);
+        Vector3f target = new Vector3f(right).mul((along - 1.8f) * l.bowScale()).add(contact);
+        Vector3f grip = new Vector3f(target).sub(rightShoulder).normalize().mul(reach).add(rightShoulder);
         Vector3f stick = new Vector3f(contact).sub(grip).normalize();                       // 弓根 → 弓尖
         Vector3f face = new Vector3f(hair).sub(new Vector3f(stick).mul(hair.dot(stick))).normalize();
         Vector3f third = new Vector3f(face).cross(stick);
         Matrix4f rot = new Matrix4f(face.x, face.y, face.z, 0, stick.x, stick.y, stick.z, 0, third.x, third.y, third.z, 0, 0, 0, 0, 1);
-        Matrix4f bow = local(grip, rot, bowScale, 8.1f, 1.8f, 8);
-        Vector3f leftShoulder = new Vector3f(model.leftArm.x + 1, model.leftArm.y, model.leftArm.z);
-        return new Place(null, bow, target, neckHand(l, r, feet, leftShoulder));
+        Matrix4f bow = local(grip, rot, l.bowScale(), 8.1f, 1.8f, 8);
+        return new Place(null, bow, target, neckHand(l, r, leftShoulder, reach));
     }
 
-    /** 左手：沿指板从琴枕往下，第一个离肩正好一臂远的点；整条指板都够不着就按在最下端。 */
-    private static Vector3f neckHand(Layout l, Matrix3f r, Vector3f feet, Vector3f shoulder) {
+    /** 方块像素 → 玩家模型根坐标的矩阵（{@link #toModel} 的矩阵形式）。 */
+    static Matrix4f toModelMatrix(Vector3f feet) {
+        return new Matrix4f().translate(0, 24, 0).scale(-1 / MODEL_SCALE, -1 / MODEL_SCALE, 1 / MODEL_SCALE).translate(-feet.x, -feet.y, -feet.z);
+    }
+
+    /** 玩家模型根坐标（像素）→ 方块像素（{@link #toModel} 的逆）。 */
+    static Vector3f fromModel(Vector3f model, Vector3f feet) {
+        return new Vector3f(feet.x - model.x * MODEL_SCALE, feet.y + (24 - model.y) * MODEL_SCALE, feet.z + model.z * MODEL_SCALE);
+    }
+
+    /**
+     * 琴槌、琴锤：模型的握点 (8, grip, 8) 放在 hand，模型 +Y（槌杆）指向 target，按长度缩放到槌头中心（模型 y = head）正好落在 target。
+     * 坐标单位随调用方（方块像素或模型像素）。
+     */
+    static Matrix4f along(Vector3f hand, Vector3f target, float grip, float head) {
+        Vector3f stick = new Vector3f(target).sub(hand);
+        float len = stick.length();
+        if (len < 1e-4f) stick.set(0, -1, 0);
+        else stick.div(len);
+        Vector3f helper = Math.abs(stick.y) > 0.9f ? new Vector3f(1, 0, 0) : new Vector3f(0, 1, 0);
+        Vector3f x = new Vector3f(helper).cross(stick).normalize();
+        Vector3f z = new Vector3f(x).cross(stick).normalize();
+        Matrix4f rot = new Matrix4f(x.x, x.y, x.z, 0, stick.x, stick.y, stick.z, 0, z.x, z.y, z.z, 0, 0, 0, 0, 1);
+        float scale = Math.max(0.5f, Math.min(1.4f, len / (head - grip)));
+        return local(hand, rot, scale, 8, grip, 8);
+    }
+
+    /** 左手：沿指板从琴枕往下，第一个离肩正好一臂远的点；整条指板都够不着就按在最下端（方块像素）。 */
+    private static Vector3f neckHand(Layout l, Matrix3f r, Vector3f shoulder, float reach) {
         Vector3f p = new Vector3f();
         for (float y = l.neckHigh(); y >= l.neckLow(); y -= 0.25f) {
-            p = toModel(onInstrument(l, r, new Vector3f(0, y, l.neckZ())), feet);
-            if (p.distance(shoulder) >= GRIP) return p;
+            p = onInstrument(l, r, new Vector3f(0, y, l.neckZ()));
+            if (p.distance(shoulder) >= reach) return p;
         }
         return p;
     }
 
     private static Vector3f onInstrument(Layout l, Matrix3f r, Vector3f local) {
         return r.transform(new Vector3f(local)).add(l.endpin());
-    }
-
-    /** 方块模型里的方向 → 玩家模型根坐标里的方向。 */
-    private static Vector3f toModelDir(Vector3f block) {
-        return new Vector3f(-block.x, -block.y, block.z);
     }
 
     /** 玩家模型相对世界缩小的比例（原版画玩家时 scale 0.9375）。 */
