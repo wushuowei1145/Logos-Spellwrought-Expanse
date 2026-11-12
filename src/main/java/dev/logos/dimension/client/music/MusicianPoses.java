@@ -292,6 +292,25 @@ public final class MusicianPoses {
         }
     }
 
+    /**
+     * 原版人形模型（玩家、生物）手里的琴槌：手在肩指向 {@link #malletAim} 的那条线上、一臂远（手心离肩 9 像素），
+     * 槌从手里伸到槌头该落的点。
+     */
+    static void drawMallets(PoseStack pose, SubmitNodeCollector collector, int light, int outline, HumanoidModel<?> model, Musician m,
+                            net.minecraft.client.renderer.item.@Nullable ItemStackRenderState tool) {
+        if (tool == null) return;
+        for (boolean left : new boolean[]{true, false}) {
+            Vector3f target = left ? m.left() : m.right();
+            if (target == null) continue;
+            Vector3f t = benchToModel(target, m.feet());
+            var arm = left ? model.leftArm : model.rightArm;
+            Vector3f shoulder = new Vector3f(arm.x + (left ? 1 : -1), arm.y, arm.z);
+            Vector3f hand = malletAim(t).sub(shoulder).normalize().mul(9).add(shoulder);
+            HandheldPoses.drawOn(pose, collector, light, outline, model,
+                HeldRig.along(hand, t, StationPoses.toolGrip(m.kind()), StationPoses.toolHead(m.kind())), tool);
+        }
+    }
+
     /** 原版人形生物手里的乐器（和弓）：画在 {@link HeldRig} 算好的位置上（同玩家的那一层）。 */
     private static final class MobLayer<S extends HumanoidRenderState, M extends HumanoidModel<S>> extends RenderLayer<S, M> {
         MobLayer(RenderLayerParent<S, M> parent) {
@@ -305,17 +324,7 @@ public final class MusicianPoses {
             M model = getParentModel();
             Musician m = state.getRenderData(MUSICIAN);
             if (m != null && m.mode() == Mode.MALLETS) {
-                if (held.bow() == null) return;
-                for (boolean left : new boolean[]{true, false}) {
-                    Vector3f target = left ? m.left() : m.right();
-                    if (target == null) continue;
-                    Vector3f t = benchToModel(target, m.feet());
-                    var arm = left ? model.leftArm : model.rightArm;
-                    Vector3f shoulder = new Vector3f(arm.x + (left ? 1 : -1), arm.y, arm.z);
-                    Vector3f hand = malletAim(t).sub(shoulder).normalize().mul(9).add(shoulder);
-                    HandheldPoses.drawOn(pose, collector, light, state.outlineColor, model,
-                        HeldRig.along(hand, t, StationPoses.toolGrip(m.kind()), StationPoses.toolHead(m.kind())), held.bow());
-                }
+                drawMallets(pose, collector, light, state.outlineColor, model, m, held.bow());
                 return;
             }
             HeldRig.Place place = held.kind().seated() ? HeldRig.seated(held.kind(), model, state.ageInTicks, held.move())

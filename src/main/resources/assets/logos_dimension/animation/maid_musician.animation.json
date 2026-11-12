@@ -1,0 +1,51 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"vehicle#logos_dimension:bench_seat": {
+			"loop": true,
+			"animation_length": 3,
+			"bones": {
+				"Root": {"position": [0, 1.5, 0]},
+				"UpBody": {"rotation": [6, 0, 0]},
+				"Head": {"rotation": [-4, 0, 0]},
+				"LeftArm": {"rotation": ["-32+math.sin(query.anim_time*240)*3", 10, 14]},
+				"LeftForeArm": {"rotation": [-48, 0, 0]},
+				"RightArm": {"rotation": ["-32+math.sin(query.anim_time*240+120)*3", -10, -14]},
+				"RightForeArm": {"rotation": [-48, 0, 0]},
+				"LeftLeg": {"rotation": [-90, -6, 0]},
+				"LeftLowerLeg": {"rotation": [90, 0, 0]},
+				"RightLeg": {"rotation": [-90, 6, 0]},
+				"RightLowerLeg": {"rotation": [90, 0, 0]}
+			}
+		},
+		"vehicle#logos_dimension:instrument_seat": {
+			"loop": true,
+			"animation_length": 2,
+			"bones": {
+				"Root": {"position": [0, -2.5, 0]},
+				"UpBody": {"rotation": [4, 0, 0]},
+				"LeftArm": {"rotation": [-58, 18, 16]},
+				"LeftForeArm": {"rotation": [-42, 0, 0]},
+				"RightArm": {"rotation": [-42, "math.sin(query.anim_time*180)*12-8", -12]},
+				"RightForeArm": {"rotation": ["-38+math.sin(query.anim_time*180)*10", 0, 0]},
+				"LeftLeg": {"rotation": [-80, -24, 0]},
+				"LeftLowerLeg": {"rotation": [80, 0, 0]},
+				"RightLeg": {"rotation": [-80, 20, 0]},
+				"RightLowerLeg": {"rotation": [80, 0, 0]}
+			}
+		},
+		"vehicle#logos_dimension:standing_post": {
+			"loop": true,
+			"animation_length": 1.2,
+			"bones": {
+				"UpBody": {"rotation": [5, 0, 0]},
+				"LeftArm": {"rotation": [-26, 10, 12]},
+				"LeftForeArm": {"rotation": ["-52+math.sin(query.anim_time*300)*8", 0, 0]},
+				"RightArm": {"rotation": [-26, -10, -12]},
+				"RightForeArm": {"rotation": ["-52+math.sin(query.anim_time*300+180)*8", 0, 0]},
+				"LeftLeg": {"rotation": [0, -4, 0]},
+				"RightLeg": {"rotation": [0, 4, 0]}
+			}
+		}
+	}
+}

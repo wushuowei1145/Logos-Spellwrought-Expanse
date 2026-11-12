@@ -69,6 +69,7 @@ public final class BenchGameTests {
         tests.put("bench_duet_sits_in_the_middle", BenchGameTests::duet);
         tests.put("station_posts_by_lead", BenchGameTests::posts);
         tests.put("station_timpani_benches", BenchGameTests::timpani);
+        tests.put("station_player_posts", BenchGameTests::playerPosts);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -236,6 +237,41 @@ public final class BenchGameTests {
         h.assertTrue(elf.getZ() < glock.getZ() && Math.abs(elf.getX() - (glock.getX() + 0.5)) < 1.0e-3, "standing north of the glockenspiel: " + elf.position());
         h.assertTrue(Math.abs(net.minecraft.util.Mth.wrapDegrees(post.getYRot() - Direction.SOUTH.toYRot())) < 1.0e-3, "facing the glockenspiel (south)");
         h.assertTrue(dev.logos.dimension.music.InstrumentPosts.occupant(level, glock) == elf, "the glockenspiel knows its player");
+        h.succeed();
+    }
+
+    /**
+     * 玩家空手右键钟琴、管钟站到前面的工位上（站着的工位是另一种实体 standing_post），右键大提琴坐到琴后（instrument_seat）；
+     * 潜行右键只开界面、不上工位；已经有人时不上；起身后站在地上。
+     */
+    private static void playerPosts(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos glock = h.absolutePos(new BlockPos(2, 1, 3)), bells = h.absolutePos(new BlockPos(5, 1, 3)), cello = h.absolutePos(new BlockPos(8, 1, 3));
+        place(level, glock, Instruments.GLOCKENSPIEL.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.NORTH));
+        place(level, bells, Instruments.TUBULAR_BELLS.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.NORTH));
+        place(level, cello, Instruments.CELLO.get().defaultBlockState().setValue(InstrumentBlock.FACING, Direction.NORTH));
+        Player player = h.makeMockPlayer(GameType.SURVIVAL);
+        player.snapTo(glock.getX() + 0.5, glock.getY(), glock.getZ() - 1.5, 180, 0);
+        player.setShiftKeyDown(true);
+        level.getBlockState(glock).useWithoutItem(level, player, hit(glock));
+        h.assertTrue(player.getVehicle() == null, "sneaking only opens the screen");
+        player.setShiftKeyDown(false);
+        level.getBlockState(glock).useWithoutItem(level, player, hit(glock));
+        if (!(player.getVehicle() instanceof dev.logos.dimension.music.InstrumentSeat post)) throw new AssertionError("an empty hand takes the glockenspiel's post");
+        h.assertTrue(post.getType() == Instruments.STANDING_POST.get() && post.instrument().equals(glock) && post.kind() == InstrumentKind.GLOCKENSPIEL,
+            "the glockenspiel's post is a standing post: " + post.getType());
+        post.positionRider(player);
+        h.assertTrue(player.getZ() < glock.getZ() && Math.abs(player.getY() - glock.getY()) < 1.0e-3, "standing on the floor north of it: " + player.position());
+        // 管钟：另一个人已经在了
+        ForestElf elf = elf(h, new BlockPos(5, 1, 6));
+        h.assertTrue(dev.logos.dimension.music.InstrumentPosts.take(level, bells, elf), "the elf takes the bells");
+        player.stopRiding();
+        level.getBlockState(bells).useWithoutItem(level, player, hit(bells));
+        h.assertTrue(player.getVehicle() == null, "a taken post takes no one else");
+        // 大提琴：坐着的工位
+        level.getBlockState(cello).useWithoutItem(level, player, hit(cello));
+        h.assertTrue(player.getVehicle() instanceof dev.logos.dimension.music.InstrumentSeat seat && seat.getType() == Instruments.SEAT.get()
+            && seat.kind() == InstrumentKind.CELLO, "the cello's post is a seat");
         h.succeed();
     }
 
