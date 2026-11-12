@@ -36,6 +36,14 @@ final class HeldRig {
         boolean crouch = crouching && ahead;
         Matrix4f body = frame(model.body, crouch ? 3.2f : 0, crouch ? 0.5f : model.body.xRot);
         Matrix4f head = frame(model.head, crouch ? 4.2f : 0, model.head.xRot);
+        return place(kind, body, head, leftHanded, t, move);
+    }
+
+    /**
+     * 按身体和头的坐标系（玩家模型根坐标的像素）摆乐器和双手。玩家、原版人形生物用模型的部件；
+     * 附属 NPC 用自己的骨架换算到同一套坐标（{@link NpcMusician}），所以手位、乐器位置都是同一份。
+     */
+    static Place place(InstrumentKind kind, Matrix4f body, Matrix4f head, boolean leftHanded, float t, float move) {
         return switch (kind) {
             case VIOLIN -> bowedUnderChin(body, leftHanded, t, move, 0.65f, new Vector3f(2.5f, 0.5f, -4.2f));
             case VIOLA -> bowedUnderChin(body, leftHanded, t, move, 0.75f, new Vector3f(2.8f, 0.9f, -4.3f));

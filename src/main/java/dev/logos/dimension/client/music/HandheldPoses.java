@@ -112,6 +112,7 @@ public final class HandheldPoses {
     @SubscribeEvent
     static void renderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(Instruments.SEAT.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
+        event.registerEntityRenderer(dev.logos.dimension.music.Benches.SEAT.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
     }
 
     @SubscribeEvent
@@ -133,21 +134,29 @@ public final class HandheldPoses {
     }
 
     private static @Nullable Held held(LivingEntity entity, AvatarRenderState state) {
+        // 坐在星辰花琴凳上：手持乐器、键盘、竖琴都按琴凳那一套来（同原版人形生物、附属 NPC）
+        if (entity.getVehicle() instanceof dev.logos.dimension.music.BenchSeat) return MusicianPoses.prepare(entity, state);
+        state.setRenderData(MusicianPoses.MUSICIAN, null);
         if (entity.getVehicle() instanceof InstrumentSeat seat && seat.kind() != null) return seated(entity, state, seat);
         if (!entity.isUsingItem() || !(entity.getUseItem().getItem() instanceof HandheldInstrumentItem item)) return null;
         // 乐器由下面的层画在下巴、嘴边；两只手原本拿的（包括乐器本身）都不画
         state.rightHandItemState.clear();
         state.leftHandItemState.clear();
+        boolean playing = MusicClient.recentlyPlayed(entity.getId()) || VoiceBank.holding(MusicClient.heldKey(entity.getId()));
+        return heldFor(item.kind(), entity, playing ? 1 : 0);
+    }
+
+    /** 要画的乐器（和弓）的物品状态：模型换成 items/held/ 下拿在手上演奏的那一份。 */
+    static Held heldFor(InstrumentKind kind, LivingEntity entity, float move) {
         var resolver = Minecraft.getInstance().getItemModelResolver();
         ItemStackRenderState body = new ItemStackRenderState();
-        resolver.updateForLiving(body, body(item.kind()), ItemDisplayContext.NONE, entity);
+        resolver.updateForLiving(body, body(kind), ItemDisplayContext.NONE, entity);
         ItemStackRenderState bowState = null;
-        if (item.kind() == InstrumentKind.VIOLIN || item.kind() == InstrumentKind.VIOLA) {
+        if (kind == InstrumentKind.VIOLIN || kind == InstrumentKind.VIOLA) {
             bowState = new ItemStackRenderState();
             resolver.updateForLiving(bowState, bow(), ItemDisplayContext.NONE, entity);
         }
-        boolean playing = MusicClient.recentlyPlayed(entity.getId()) || VoiceBank.holding(MusicClient.heldKey(entity.getId()));
-        return new Held(item.kind(), body, bowState, playing ? 1 : 0);
+        return new Held(kind, body, bowState, move);
     }
 
     /** 坐在弦乐器后面：乐器是方块，只画弓；手里原本拿的不画；姿势挂在右臂上（按右手运弓布置，左撇子也一样）。 */
@@ -186,7 +195,7 @@ public final class HandheldPoses {
     }
 
     /** 双臂伸向乐器上的两个手位（原版只为拿着乐器的那只手调用两手姿势，所以两只手臂都在这里摆，同原版拉弓）。 */
-    private static void pose(InstrumentKind kind, HumanoidModel<?> model, HumanoidRenderState state) {
+    static void pose(InstrumentKind kind, HumanoidModel<?> model, HumanoidRenderState state) {
         if (kind.seated()) {
             seatedPose(kind, model, state);
             return;
@@ -227,7 +236,7 @@ public final class HandheldPoses {
      * 手臂指向手位。原版手臂沿自身 +Y 垂下，先绕 X 再绕 Y 转（ModelPart 按 ZYX 合成），所以方向
      * (sin x·sin y, cos x, sin x·cos y) 反解得 x、y。手臂中线在支点外侧 1 像素（side）。
      */
-    private static void reach(ModelPart arm, Vector3f hand, float drop, float lift, float side) {
+    static void reach(ModelPart arm, Vector3f hand, float drop, float lift, float side) {
         float dx = hand.x - (arm.x + side), dy = hand.y - (arm.y + drop), dz = hand.z - arm.z;
         float len = Mth.sqrt(dx * dx + dy * dy + dz * dz);
         if (len < 1e-3f) return;
@@ -255,14 +264,20 @@ public final class HandheldPoses {
 
         private static void draw(PoseStack pose, SubmitNodeCollector collector, int light, AvatarRenderState state, PlayerModel model,
                                  Matrix4f pixels, ItemStackRenderState item) {
-            pose.pushPose();
-            model.root().translateAndRotate(pose);
-            // HeldRig 用像素；物品模型以方块为单位、已居中
-            pose.scale(1 / 16f, 1 / 16f, 1 / 16f);
-            pose.mulPose(pixels);
-            pose.scale(16, 16, 16);
-            item.submit(pose, collector, light, OverlayTexture.NO_OVERLAY, state.outlineColor);
-            pose.popPose();
+            drawOn(pose, collector, light, state.outlineColor, model, pixels, item);
         }
+    }
+
+    /** 把一件乐器（或弓）画在人形模型根坐标的 pixels 处（玩家和原版人形生物共用）。 */
+    static void drawOn(PoseStack pose, SubmitNodeCollector collector, int light, int outline, HumanoidModel<?> model,
+                       Matrix4f pixels, ItemStackRenderState item) {
+        pose.pushPose();
+        model.root().translateAndRotate(pose);
+        // HeldRig 用像素；物品模型以方块为单位、已居中
+        pose.scale(1 / 16f, 1 / 16f, 1 / 16f);
+        pose.mulPose(pixels);
+        pose.scale(16, 16, 16);
+        item.submit(pose, collector, light, OverlayTexture.NO_OVERLAY, outline);
+        pose.popPose();
     }
 }

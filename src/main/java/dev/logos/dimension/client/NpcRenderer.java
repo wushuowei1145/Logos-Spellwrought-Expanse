@@ -88,6 +88,8 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
         super(context, new DefaultedEntityGeoModel<>(asset));
         withScale(MODEL_SCALE);
         withRenderLayer(handLayer(context));
+        // 坐在星辰花琴凳上演奏：画乐器、不画手里的（排在手持物品层之后）
+        withRenderLayer(new dev.logos.dimension.client.music.NpcMusician.Layer<>(this));
         this.shadowRadius = 0.35f;
     }
 
@@ -222,6 +224,8 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
             snapshots.ifPresent(BODY_BONE, body -> body.setRotY(body.getRotY() + state.yRot * Mth.DEG_TO_RAD));
             snapshots.ifPresent(ARMS_BONE, arms -> arms.setRotX(arms.getRotX() - state.xRot * Mth.DEG_TO_RAD));
         }
+        // 坐在星辰花琴凳上演奏：坐下、两臂够到手位（在动画和视线之后）
+        dev.logos.dimension.client.music.NpcMusician.pose(info, snapshots);
         NpcMesh mesh = mesh(info.model());
         GeoBone[] glow = mesh.glowBones();
         if (glow.length == 0) return;
