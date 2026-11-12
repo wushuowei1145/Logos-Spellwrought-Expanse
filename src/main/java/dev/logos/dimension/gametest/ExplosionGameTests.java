@@ -5,8 +5,16 @@ import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.ServerConfig;
 import dev.logos.dimension.explosion.ExplosionMagic;
 import dev.logos.dimension.explosion.ExplosionStaffItem;
+import dev.logos.dimension.explosion.ExplosionStaffPage;
 import dev.logos.dimension.explosion.ExplosionTimeline;
+import dev.logos.item.PageContainer;
+import dev.logos.item.PageTier;
+import dev.logos.item.SpellPages;
+import dev.logos.lang.Intent;
+import dev.logos.lang.Spell;
+import dev.logos.runtime.Casting;
 import dev.logos.runtime.FreeManaEntity;
+import dev.logos.runtime.Limits;
 import dev.logos.runtime.PlayerMagic;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.util.Map;
@@ -55,7 +63,8 @@ public final class ExplosionGameTests {
         var tests = Map.<String, Consumer<GameTestHelper>>of(
                 "explosion_charge", ExplosionGameTests::charge,
                 "explosion_kills_and_carves", h -> blast(h, true),
-                "explosion_keeps_terrain_when_off", h -> blast(h, false));
+                "explosion_keeps_terrain_when_off", h -> blast(h, false),
+                "explosion_staff_page", ExplosionGameTests::page);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -67,7 +76,7 @@ public final class ExplosionGameTests {
         });
     }
 
-    private static ServerPlayer player(GameTestHelper h, Vec3 at, float pitch) {
+    static ServerPlayer player(GameTestHelper h, Vec3 at, float pitch) {
         var cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), "explosion-test"), false);
         var p = new ServerPlayer(h.getLevel().getServer(), h.getLevel(), cookie.gameProfile(), cookie.clientInformation());
         var connection = new Connection(PacketFlow.SERVERBOUND);
@@ -115,6 +124,46 @@ public final class ExplosionGameTests {
         free.forEach(Entity::discard);
         p.discard();
         h.succeed();
+    }
+
+    /**
+     * 在 Logos 眼里爆裂魔杖只有一张贤者级载页，意图是攻击、一次注入 6400、谁都背得动；不是玩家的生物拿着它施放这张载页时：
+     * 没注满不放、魔力不丢（这只僵尸没有魔力池，散成游离魔力），注满了放出真正的爆裂魔法，范围内连它自己一起全灭。
+     */
+    private static void page(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ItemStack staff = new ItemStack(ExplosionStaffItem.ITEM.get());
+        ExplosionStaffPage.ensure(staff);
+        ItemStack page = PageContainer.get(staff, 0);
+        h.assertTrue(PageContainer.size(staff) == 1 && SpellPages.isInscribed(page) && SpellPages.tier(page) == PageTier.SAGE, "一张写好的贤者级载页");
+        Spell spell = SpellPages.spell(page);
+        h.assertTrue(spell != null && ExplosionStaffPage.is(spell), "载页上是爆裂魔杖的术式");
+        h.assertTrue(spell.profile().primary() == Intent.STRIKE, "术式的意图是攻击，实际是 " + spell.profile().primary());
+        h.assertTrue(Math.abs(Casting.injection(spell, PageTier.SAGE, 0).mana() - ExplosionMagic.MANA) < 1e-6, "一次注入 6400");
+        h.assertTrue(spell.stability() <= Limits.DEFAULT_STABILITY, "默认稳定度就背得动");
+
+        Vec3 c = Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(1, 1, 1)));
+        Mob caster = mob(level, EntityType.ZOMBIE, c);
+        caster.setItemInHand(InteractionHand.MAIN_HAND, staff);
+        Mob foe = mob(level, EntityType.COW, c.add(0, 0, 6));
+        int before = ExplosionMagic.blasts();
+        Casting.castAs(caster, spell, 3000, PageTier.SAGE.recovery(), foe, null, true);
+        h.assertTrue(ExplosionMagic.blasts() == before, "没注满不放");
+        var free = level.getEntitiesOfClass(FreeManaEntity.class, new AABB(BlockPos.containing(c)).inflate(4));
+        h.assertTrue(!free.isEmpty(), "没注满时注入的魔力不丢：没有魔力池的散成游离魔力");
+        free.forEach(Entity::discard);
+        h.assertTrue(foe.isAlive(), "载页上的小魔弹也没有放出去");
+        // 注满：半径调小、不挖地形，只在这一次放出时生效（放出时就记下了）
+        boolean savedTerrain = ServerConfig.EXPLOSION_BREAKS_TERRAIN.get();
+        int savedRadius = ServerConfig.EXPLOSION_RADIUS.get();
+        ServerConfig.EXPLOSION_BREAKS_TERRAIN.set(false);
+        ServerConfig.EXPLOSION_RADIUS.set(RADIUS);
+        Casting.castAs(caster, spell, ExplosionMagic.MANA, PageTier.SAGE.recovery(), foe, null, true);
+        ServerConfig.EXPLOSION_BREAKS_TERRAIN.set(savedTerrain);
+        ServerConfig.EXPLOSION_RADIUS.set(savedRadius);
+        h.assertTrue(ExplosionMagic.blasts() == before + 1, "注满就放出爆裂魔法");
+        h.runAfterDelay(ExplosionTimeline.FULL_AT + 4, () -> h.succeedWhen(RealTimeWait.paced(() ->
+                h.assertTrue(!foe.isAlive() && !caster.isAlive(), "目标和站在范围里的施法者都死了"))));
     }
 
     private static Mob mob(ServerLevel level, EntityType<? extends Mob> type, Vec3 at) {

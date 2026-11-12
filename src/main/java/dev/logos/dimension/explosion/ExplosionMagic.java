@@ -89,6 +89,7 @@ public final class ExplosionMagic {
         bus.addListener((RegisterPayloadHandlersEvent event) -> event.registrar("1").playToClient(ExplosionPayload.TYPE, ExplosionPayload.CODEC));
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> BLASTS.removeIf(b -> !b.tick()));
         ExplosionExhaustion.register();
+        ExplosionStaffPage.register(bus);
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> {
             CHARGES.clear();
             BLASTS.clear();
