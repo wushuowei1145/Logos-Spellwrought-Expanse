@@ -83,6 +83,8 @@ tasks.named('test', Test) {
     testLogging { events 'passed', 'failed' }
     // SampleMapTest 核对「音乐厅音源」资源包；测试 JVM 的工作目录不是项目根目录，路径从这里传
     systemProperty 'logos_dimension.concert_hall_pack', file('resourcepacks/concert_hall').absolutePath
+    // 管风琴新旧合成的试听：-PorganDemo=<输出目录> 时 OrganDemoTest 渲染 wav，否则跳过
+    systemProperty 'logos_dimension.organ_demo', providers.gradleProperty('organDemo').getOrElse('')
 }
 // 测试 JVM 的工作目录由模组测试器决定；通过测试资源读取预设，避免依赖当前目录。
 tasks.named('processTestResources') {

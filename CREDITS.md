@@ -59,6 +59,18 @@ NPC 的骨骼命名、动画名、动画控制器结构与优先级、手部条�
 
 转载资源包、放进整合包、二次修改时保留 Salamander 的署名与协议链接（资源包根目录的 `NOTICE.txt`）。
 
+## 管风琴合成的参考（没有使用其代码或数据）
+
+教堂管风琴的声音（`music/organ/OrganSynth`、`OrganReverb`）是本模组自己写的加法合成和混响，下面几个项目只作为思路参考：
+没有拷贝、改写它们的代码，也没有使用它们的音栓数据或冲激响应文件。借鉴了什么、没借鉴什么见 [教堂管风琴](docs/PIPE_ORGAN.md) 第 9 节。
+
+| 项目 | 作者 | 协议 | 参考了 |
+|---|---|---|---|
+| [Aeolus](https://kokkinizita.linuxaudio.org/linuxaudio/aeolus/index.html) | Fons Adriaensen | GPL-3 | 每个泛音各自的电平与起音、音色沿键盘变化、管列微失谐与随机起伏、起音段 + 循环段的波表 |
+| [Aeolus 插件](https://github.com/Archie3d/aeolus_plugin) | Arthur Benilov（Archie3d） | GPL-3 | 混合音栓高音区折回 |
+| [Caecilia](https://github.com/alessonqueirozdev-hub/Caecilia) | Alesson Queiroz 与贡献者 | Apache-2.0 | 起音快慢随音高、簧管起音滑音、每根管确定的小差异、簧管共振峰 |
+| [zita-rev1](https://kokkinizita.linuxaudio.org/linuxaudio/zita-rev1-doc/quickguide.html) | Fons Adriaensen | GPL | 混响参数的定义（预延迟、低频 / 中频两段混响时间与分频点、「混响时间减半处」的高频阻尼）；网络结构按 Jot 的反馈延迟网络文献自写 |
+
 ## 本模组使用借用素材的限制
 
 - **非商业**：本模组不能收费、付费抢先体验，或以借用素材牟利。需要商用时，先取得车万女仆作者的许可，或换成自制动画。
