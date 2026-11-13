@@ -1,5 +1,26 @@
 # 首版验证记录
 
+## 教堂管风琴：重做合成音效
+
+2026-11-14：分支 `feat/organ-synth`，在 main `87b08488`（#254）上做完下表的检查，再变基到 `50a86a04`（#256）后重新编译、重跑管风琴单元测试（13/13）和 `organ_play_ui`、`organ_reload_ui`、`organ_views`（3/3、7/7 检查）。Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`。
+说明见 [docs/PIPE_ORGAN.md](docs/PIPE_ORGAN.md) 第 3、4、9 节。维护者给了 Aeolus、Aeolus 插件、Caecilia、zita-rev1 四份参考，请我们做出更好听的合成管风琴；
+新写的加法合成（每个泛音各自起音、管列微失谐与慢起伏、气声、对齐的相位）和 8 路反馈延迟网络混响（烘进采样，另有松键尾音），只借思路、没用它们的代码和数据（Aeolus、zita-rev1 是 GPL）。
+新旧对比试听在 `builds/organ-synth-2026-11-13/试听`，维护者听了三稿后定稿；试玩包同目录。
+
+| 层级 | 结果 |
+| --- | --- |
+| 试听（离线） | `OrganDemo` 照游戏里的放法（每刻改音量、循环点、变调、松键尾音）把八组音栓、单音 / 音阶 / 和弦 / 低音踏板用第一版和新版各渲染一遍，有混响、无混响两套。量过：新旧响度相差约 ±1.5 dB；起音头 80 ms 每个频段都不比稳定时响（第一稿 3–8 kHz 冲高 11–14 dB）；频谱重心起音时不比稳定时亮（簧管组合约 1.1–1.3 倍，第二稿合唱、天籁 1.5–2.4 倍）；低音 C1 一个周期干净（第一稿相位打散，周期里盖满毛刺）；循环接缝的跳变不大于段内正常的相邻跳变；教堂档中频混响时间约 3.5 秒、高频更短；没有咔哒声 |
+| 单元 | 新增 / 重写 `OrganSynthTest` **11/11**（循环无缝、两次合成逐点相同、音高误差 < 0.1 音分、长笛音高、起音不响不亮、低音周期紧凑、#243 八度平衡、尾音淡入衰减变暗与 bloom、缩放相邻差 < 1 dB、音栓与预设、房间估计）、`OrganReverbTest` **2/2**（阻尼滤波器增益、中频混响时间合乎设定且高频短、低频不短、能量归一）；`OrganDemoTest` 默认跳过。探针：让小管子先起音（第二稿的做法）时起音那一项失败（起音重心是稳定时的 1.5 倍）。全量 **402/403**（1 项跳过），唯一失败的仍是 main 上就缺的 zh_cn `item.logos_dimension.fuda_desk` |
+| 实际客户端 | `organ_play_ui`、`organ_reload_ui`、`organ_views` **3/3、7/7 检查**；`organ_play_ui` 改严：按住和弦 4 秒（比一个采样 2.8 秒长）仍有 4 路在响且循环点已设上，松键 0.75 秒后（按着的音早已淡完）大厅里仍有尾音。探针：不给管风琴缓冲设循环点时「按住 4 秒仍在响」那一项失败。日志里没有循环点或管风琴组合的警告 |
+| 改过的问题 | 维护者听第一稿：起音「啪」一下（柔和最明显）、低音踏板有科幻感——去掉起音噪声和冲高、相位改回对齐、低音主音栓收一点、最高泛音渐弱；听第二稿：其他组合也有一点「嗒」——改成同一个键上的管子按琴键音高一起起音、高的分音晚一点，起音先暗后亮；另外每个采样各自缩放（相邻差 ≤ 1 dB），整套共用一个倍数时高音被低音压轻 3–4 dB |
+| 未验证 | 游戏里的实际听感；多人、专用服务器、光影包、Sound Physics Remastered；低配机器上合成一套组合的等待；`#243` 八度平衡在 A3 处有约 3.5 dB 的台阶（4′ 长笛 1.1 音分的失谐在这里从同相叠加变成慢拍，维护者认可的音色带来的，测试上限放到 4 dB） |
+
+```text
+./gradlew test -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar --tests "dev.logos.dimension.music.organ.*"
+./gradlew test -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar --tests "*OrganDemoTest*" -PorganDemo=/absolute/path/organ-demo
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar "-PldTest=organ_play_ui,organ_reload_ui,organ_views" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 灵猫居民：猫耳猫尾的人形 NPC、八种毛色、林隙村镇刷新、灵猫相伴
 
 2026-11-13：分支 `feat/spirit-cat`，在 main `87b08488`（#254）上做完下表的检查，再变基到 `a2207505`（#255）后重新编译、重跑 `MysticalCatAssetsTest` 与 `NpcPartsTest`（4/4、13/13）。Logos jar `builds/orchestra-arranger-2026-11-13/logos-0.6.0-main-aa4168c.jar`。

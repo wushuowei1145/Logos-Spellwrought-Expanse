@@ -5,7 +5,6 @@ import dev.logos.dimension.music.InstrumentBlockEntity;
 import dev.logos.dimension.music.InstrumentKind;
 import dev.logos.dimension.music.SampleMap;
 import dev.logos.dimension.music.organ.OrganSynth;
-import dev.logos.dimension.music.organ.RoomAcoustics;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,8 +30,9 @@ import org.jspecify.annotations.Nullable;
  *       这个力度的那个采样变调播放，音量随力度；持续音的采样带循环点，按住多久响多久。会止音的乐器松键时
  *       按这个采样的松键时间淡出（钢琴低音长、高音短），大键琴另放一下拨子落回的声音；钢琴踩下延音踏板时不止音，
  *       竖琴、钟琴、管钟的声音拨响或敲响后自然衰减。</li>
- *   <li>管风琴：按当前音栓组合的循环段（{@link OrganMixer}）按住多久响多久，起音 3 tick 推上来，松键淡出，
- *       室内时补一段混响尾音；按着音时换了音栓，已按住的音交叉淡入新组合（{@link #tickOrgans}）。</li>
+ *   <li>管风琴：按当前音栓组合与房间的采样（{@link OrganMixer}）：起音和混响都已合成在采样里，直接全音量放，之后在循环段里
+ *       按住多久响多久；松键很快淡出，房间有混响时接上这一套的尾音（按得越短、混响长得越少，尾音越轻）；
+ *       按着音时换了音栓或房间，已按住的音交叉淡入新组合的循环段（{@link #tickOrgans}）。</li>
  * </ul>
  * 复音有上限，满了先停「已松开、最旧」的音（尾音也算）；所有乐器加起来满了，从发声最多的那件乐器里停，
  * 不去掐别的乐器仅有的一个长音。
@@ -66,6 +66,8 @@ final class VoiceBank {
         final int velocity;
         /** 乐团里这个声部的响度（倍数）：管风琴的余响、换音栓时的接续音也按它。 */
         float gain = 1f;
+        /** 管风琴：这个音最初弹下的时刻（换音栓接续时不变），松键时按它算混响长到了几成。 */
+        long noteStart;
         boolean held = true;
         boolean damped;
 
@@ -84,6 +86,7 @@ final class VoiceBank {
             this.held = !tail;
             this.zone = zone;
             this.velocity = velocity;
+            this.noteStart = started;
         }
 
         /** 采样自然放完时声音引擎直接把它移走，不再调用 tick，所以还要问一下声音引擎它是否还在。 */
@@ -315,9 +318,10 @@ final class VoiceBank {
         if (kind == InstrumentKind.PIPE_ORGAN) {
             InstrumentBlockEntity be = organAt(pos);
             if (be == null) return;
-            OrganMixer.Mix mix = OrganMixer.now(be.effectiveStops());
+            OrganMixer.Mix mix = OrganMixer.now(be);
             gen = mix.gen;
-            sound = organSound(mix, be, pitch, false, 3, gain);
+            // 起音已经合成在采样里（从静音柔和地长出来），直接全音量放
+            sound = organSound(mix, be, pitch, mix.note(pitch), 1f, 0, true, gain);
         } else {
             // 大键琴不分力度：一律按中强
             vel = kind.velocitySensitive() ? velocity : 100;
@@ -337,29 +341,33 @@ final class VoiceBank {
         s.voices.add(voice);
     }
 
-    private static DirectSound organSound(OrganMixer.Mix mix, InstrumentBlockEntity be, int pitch, boolean tail, int attack, float gain) {
-        OrganSynth.Sample sample = mix.sample(pitch);
+    /** 管风琴松键后每刻音量乘的倍数：约 0.2 秒降到 −40 dB（真管子停得快，余下的交给尾音）。 */
+    private static final float ORGAN_RELEASE = 0.35f;
+
+    /**
+     * 管风琴一个音的声音。buffer 是整个采样、只有循环段，或尾音；volume 是相对这套组合基准音量的倍数。
+     * 基准音量 = 组合的响度（{@link OrganMixer.Mix#loudness}）× 0.9，没有音管时减半，再乘乐团里这个声部的响度。
+     */
+    private static DirectSound organSound(OrganMixer.Mix mix, InstrumentBlockEntity be, int pitch, Identifier buffer, float volume, int attack, boolean loop, float gain) {
         var o = be.organ();
         int range = o == null ? 16 : o.range();
-        float base = Math.min(1f, mix.loudness * (o != null && o.pipes() == 0 ? 0.5f : 1f) * gain);
-        Vec3 at = be.voiceCenter();
-        if (tail) {
-            RoomAcoustics.Reverb r = OrganRoom.reverb(be.getBlockPos(), be);
-            float wet = (float) (0.3 + 0.15 * Math.min(1, r.seconds() / 3));
-            return new DirectSound(mix.tail(pitch, r), OrganSynth.ratio(sample, pitch), base * wet, at, range, 0, false);
-        }
-        return new DirectSound(mix.loop(pitch), OrganSynth.ratio(sample, pitch), base * 0.9f, at, range, attack, true);
+        float base = Math.min(1f, mix.loudness * (o != null && o.pipes() == 0 ? 0.5f : 1f) * gain) * 0.9f;
+        return new DirectSound(buffer, OrganSynth.ratio(mix.sample(pitch), pitch), base * volume, be.voiceCenter(), range, attack, loop);
     }
 
-    /** 松开一个管风琴的音：淡出，室内时补尾音（同一个音的旧尾音先止住）。 */
+    /**
+     * 松开一个管风琴的音：很快淡出；这一套组合有房间时接上它的尾音（同一个音的旧尾音先止住）。尾音的音量按这个音按了多久：
+     * 按得很短时房间里的混响还没长起来，尾音也轻（{@link OrganSynth.Sample#bloomAt}）。
+     */
     private static void releaseOrgan(Source s, Voice v) {
         v.held = false;
-        v.sound.release(0.5f);
+        v.sound.release(ORGAN_RELEASE);
         InstrumentBlockEntity be = organAt(s.pos);
         if (be == null) return;
-        if (!OrganRoom.reverb(s.pos, be).on()) return;
-        OrganMixer.Mix mix = OrganMixer.ready(be.effectiveStops());
-        if (mix == null || mix.gen != v.gen) return;
+        OrganMixer.Mix mix = OrganMixer.byGen(v.gen);
+        if (mix == null) return;
+        Identifier tailBuffer = mix.tail(v.pitch);
+        if (tailBuffer == null) return;
         int tails = 0;
         for (Voice t : s.voices) {
             if (!t.tail || !t.alive()) continue;
@@ -368,7 +376,8 @@ final class VoiceBank {
         }
         if (tails >= MAX_TAILS) return;
         makeRoom(s);
-        DirectSound tail = organSound(mix, be, v.pitch, true, 0, v.gain);
+        int ticks = (int) Math.min(1000, (System.nanoTime() - v.noteStart) / 50_000_000L);
+        DirectSound tail = organSound(mix, be, v.pitch, tailBuffer, mix.sample(v.pitch).bloomAt(ticks), 1, false, v.gain);
         Minecraft.getInstance().getSoundManager().play(tail);
         Voice t = new Voice(tail, v.input, v.pitch, v.part, System.nanoTime(), mix.gen, true);
         t.gain = v.gain;
@@ -427,24 +436,25 @@ final class VoiceBank {
     }
 
     /**
-     * 每 tick：管风琴按着的音如果用的不是当前音栓的组合（玩家刚换了音栓），新组合合成好之后交叉淡入；
-     * 同时预先合成当前组合，免得下一个音要当场合成。
+     * 每 tick：管风琴按着的音如果用的不是当前的组合（玩家刚换了音栓、房间的混响变了，或第一个音先借用了上一套），
+     * 新组合合成好之后交叉淡入它的循环段（不再起一次音）；同时预先合成当前组合，免得下一个音要等。
      */
     static void tickOrgans() {
         for (Source s : SOURCES.values()) {
             if (s.kind != InstrumentKind.PIPE_ORGAN) continue;
             InstrumentBlockEntity be = organAt(s.pos);
             if (be == null) continue;
-            OrganMixer.Mix mix = OrganMixer.ready(be.effectiveStops());
+            OrganMixer.Mix mix = OrganMixer.ready(be);
             if (mix == null) continue;
             for (Voice v : new ArrayList<>(s.voices)) {
                 if (!v.held || v.tail || v.gen == mix.gen || !v.alive()) continue;
                 v.held = false;
                 v.sound.release(0.6f);
-                DirectSound fresh = organSound(mix, be, v.pitch, false, 2, v.gain);
+                DirectSound fresh = organSound(mix, be, v.pitch, mix.steady(v.pitch), 1f, 2, true, v.gain);
                 Minecraft.getInstance().getSoundManager().play(fresh);
                 Voice f = new Voice(fresh, v.input, v.pitch, v.part, System.nanoTime(), mix.gen, false);
                 f.gain = v.gain;
+                f.noteStart = v.noteStart;
                 s.voices.add(f);
             }
         }

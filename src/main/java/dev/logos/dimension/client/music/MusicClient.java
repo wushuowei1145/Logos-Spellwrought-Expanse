@@ -80,12 +80,12 @@ public final class MusicClient {
         return InstrumentBlock.center(level.getBlockState(pos), pos);
     }
 
-    /** 管风琴：预先合成当前音栓的组合（打开界面、开始放纸带时调用）。 */
+    /** 管风琴：预先合成当前音栓与房间的组合（打开界面、开始放纸带时调用）。 */
     static void prewarmOrgan(BlockPos pos) {
         var level = Minecraft.getInstance().level;
         if (level != null && level.getBlockEntity(pos) instanceof dev.logos.dimension.music.InstrumentBlockEntity be
                 && be.kind() == InstrumentKind.PIPE_ORGAN) {
-            OrganMixer.prewarm(be.effectiveStops());
+            OrganMixer.prewarm(be);
         }
     }
 

@@ -180,7 +180,7 @@ public abstract class OrganViews implements UIScenario {
         public void define(ScenarioBuilder s) {
             stage(s, 0.0, 1.0, -3.0, 180f, 10f, false)
                 .openScreen("open the organ", ctx -> new InstrumentScreen(CONSOLE))
-                .waitUntil("the mix is ready", ctx -> OrganMixer.ready(clientConsole().effectiveStops()) != null)
+                .waitUntil("the mix is ready", ctx -> OrganMixer.ready(clientConsole()) != null)
                 .ticks(5)
                 .keyDown('Z')
                 .ticks(20)
@@ -214,7 +214,7 @@ public abstract class OrganViews implements UIScenario {
                     MusicClient.control(CONSOLE, MusicPayloads.Control.STOPS, OrganStop.Preset.PLENUM.mask());
                 })
                 .waitUntil("full organ arrives on the client", ctx -> clientConsole().stops() == OrganStop.Preset.PLENUM.mask())
-                .waitUntil("the full-organ mix is ready", ctx -> OrganMixer.ready(clientConsole().effectiveStops()) != null)
+                .waitUntil("the full-organ mix is ready", ctx -> OrganMixer.ready(clientConsole()) != null)
                 .ticks(10)
                 .screenshot("organ_stops_ui")
                 .step("back to the keys", ctx -> {
@@ -226,10 +226,14 @@ public abstract class OrganViews implements UIScenario {
                 .ticks(10)
                 .keyDown('Z').keyDown('C').keyDown('B').keyDown('Q')
                 .ticks(30)
-                .check("the held chord is still sounding (looping)", ctx -> VoiceBank.sounding(MusicClient.liveKey(CONSOLE)) >= 4)
                 .screenshot("organ_play_ui")
+                // 一个采样 = 0.75 秒起音 + 2.05 秒循环段；按住 4 秒还在响，说明循环点设上了、声音在循环段里循环
+                .ticks(50)
+                .check("the held chord keeps sounding past the end of the sample (loop points)",
+                    ctx -> VoiceBank.sounding(MusicClient.liveKey(CONSOLE)) >= 4 && LoopedSoundBuffer.appliedCount() > 0)
                 .keyUp('Z').keyUp('C').keyUp('B').keyUp('Q')
-                .ticks(4)
+                // 松键后按着的音约 0.2 秒淡完，0.75 秒时还在响的只有大厅的尾音
+                .ticks(15)
                 .check("release leaves reverb tails in the hall", ctx -> VoiceBank.sounding(MusicClient.liveKey(CONSOLE)) >= 1)
                 .teardown("close", ctx -> Minecraft.getInstance().setScreen(null));
         }
