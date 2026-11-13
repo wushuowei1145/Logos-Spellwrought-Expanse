@@ -1,0 +1,64 @@
+{
+  "start": "draw",
+  "sheathe": "sheathe",
+  "combo_memory": 1.6,
+  "moves": {
+    "draw": {"length": 1.2, "next": "idle"},
+    "idle": {
+      "length": 2.4, "playback": "loop", "blend_in": 0.14,
+      "on": [
+        {"input": "attack", "to": "kesa_1", "combo": true},
+        {"input": "use_press", "to": "guard"}
+      ]
+    },
+    "kesa_1": {
+      "length": 0.82, "attack_speed_base": 1.3, "contact": 0.35, "blend_in": 0.1, "cone": 110,
+      "combo_next": "kaeshi_2", "next": "idle",
+      "on": [
+        {"input": "use_press", "to": "guard"},
+        {"input": "attack", "to": "kaeshi_2", "window": [0.08], "queue": true, "at": 0.5}
+      ]
+    },
+    "kaeshi_2": {
+      "length": 0.74, "attack_speed_base": 1.3, "contact": 0.2, "blend_in": 0.06, "cone": 110,
+      "combo_next": "sune_3", "next": "idle",
+      "on": [
+        {"input": "use_press", "to": "guard"},
+        {"input": "attack", "to": "sune_3", "window": [0.08], "queue": true, "at": 0.44}
+      ]
+    },
+    "sune_3": {
+      "length": 0.84, "attack_speed_base": 1.3, "contact": 0.39, "blend_in": 0.06, "cone": 140, "damage": 0.9,
+      "combo_next": "men_4", "next": "idle",
+      "on": [
+        {"input": "use_press", "to": "guard"},
+        {"input": "attack", "to": "men_4", "window": [0.08], "queue": true, "at": 0.54}
+      ]
+    },
+    "men_4": {
+      "length": 1.1, "attack_speed_base": 1.3, "contact": 0.48, "blend_in": 0.06, "cone": 60, "damage": 1.3,
+      "combo_next": "kesa_1", "next": "idle",
+      "on": [
+        {"input": "use_press", "to": "guard"},
+        {"input": "attack", "to": "kesa_1", "window": [0.1], "queue": true, "at": 0.8}
+      ]
+    },
+    "guard": {
+      "length": 1.6, "playback": "loop", "reset_combo": true, "blend_in": 0.05,
+      "on": [
+        {"input": "block", "to": "guard_hit"},
+        {"input": "use_release", "to": "idle"}
+      ]
+    },
+    "guard_hit": {
+      "length": 0.34, "blend_in": 0.02, "next": "guard",
+      "on": [
+        {"input": "block", "to": "guard_hit"},
+        {"input": "use_release", "to": "idle"}
+      ]
+    },
+    "parried": {"length": 0.5, "reset_combo": true, "blend_in": 0.03, "next": "idle"},
+    "parried_npc": {"length": 0.8, "reset_combo": true, "blend_in": 0.03, "next": "idle"},
+    "sheathe": {"length": 1.3, "blend_in": 0.1, "next": "$clear"}
+  }
+}

@@ -44,6 +44,7 @@ public final class LogosDimension {
         dev.logos.dimension.item.YumiItem.init();
         dev.logos.dimension.item.RyukaItem.init();
         dev.logos.dimension.ryuka.Ryuka.register(bus);
+        dev.logos.dimension.item.NaginataItem.init();
         dev.logos.dimension.item.AncientEmbraceItem.register(bus);
         dev.logos.dimension.item.NatureAttachments.TYPES.register(bus);
         dev.logos.dimension.instance.CauldronBinding.register(bus);

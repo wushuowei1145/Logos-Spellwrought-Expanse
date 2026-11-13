@@ -454,6 +454,20 @@ class Baker:
         def target(side, mode):
             if mode in ('sword', 'two'):
                 y = self.shaft(clip, t, side)
+                if mode == 'two' and getattr(sk, 'two_slides', False):
+                    # 够不着时这只手沿杆往主手那边滑，滑到够得着为止，手不离杆（薙刀两手距离大）。
+                    shoulder = (W['Arm'] @ np.append(sk.pivot(side + 'Arm'), 1))[:3]
+                    reach = 0.97 * (np.linalg.norm(sk.pivot(side + 'ForeArm') - sk.pivot(side + 'Arm'))
+                                    + np.linalg.norm(sk.pivot(side + 'Hand') - sk.pivot(side + 'ForeArm')) + abs(sk.hand_grip[1]))
+                    other = self.shaft(clip, t, 'Right')
+                    best = (math.inf, y)
+                    for candidate in np.linspace(y, other, 41):
+                        far = np.linalg.norm((weapon_world @ np.array([0, candidate * s, 0, 1]))[:3] - shoulder)
+                        best = min(best, (far, candidate))
+                        if far <= reach:
+                            best = (far, candidate)
+                            break
+                    y = best[1]
                 return (weapon_world @ np.array([0, y * s, 0, 1]))[:3], weapon_world[:3, :3] @ GRIP.T
             if mode == 'slide':
                 # 前手不动、杆从手里滑过（长枪连刺）：手的目标点投到杆上取最近处，夹在骨架给的可握范围里。
@@ -478,7 +492,8 @@ class Baker:
                 local = np.asarray(hermite(channel(clip, side[0].lower() + 'weapon', (0, 0, 0)), t), float)
                 return (weapon_world @ np.append(local * s, 1))[:3], weapon_world[:3, :3] @ GRIP.T
             if mode == 'saya':
-                return (sheath_world @ np.array([0, 3.1 * s, 0, 1]))[:3], sheath_world[:3, :3] @ GRIP.T
+                # 手握鞘的位置（鞘网格单位）；薙刀的刃套网格原点在握柄处，要给大得多的值。
+                return (sheath_world @ np.array([0, getattr(sk, 'saya_grip', 3.1) * s, 0, 1]))[:3], sheath_world[:3, :3] @ GRIP.T
             if mode == 'mune':
                 # 左掌托住刀背：掌心朝刃，手指横过刀面。mune 给出托点在刀身上的高度（刀的单位）。
                 y = float(np.atleast_1d(hermite(channel(clip, 'mune', 8.0), t))[0])
