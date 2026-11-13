@@ -313,6 +313,8 @@ public abstract class ConductingViews implements UIScenario {
         return n;
     }
 
+    private static net.minecraft.core.BlockPos restedMember;
+
     private static boolean partsAsExpected() {
         PodiumBlockEntity be = clientPodium();
         if (be == null) return false;
@@ -348,6 +350,18 @@ public abstract class ConductingViews implements UIScenario {
             b = b.openScreen("open the podium", ctx -> new PodiumScreen(PODIUM))
                 .ticks(10)
                 .screenshot("orchestra_podium_screen")
+                // 声部列表最后一行「休息」：选中它再点乐器，那件乐器休息（锁定）；右键乐器解锁，重新分到声部
+                .step("pick Rest, click the first member", ctx -> {
+                    PodiumScreen screen = (PodiumScreen) Minecraft.getInstance().screen;
+                    PodiumBlockEntity be = clientPodium();
+                    screen.clickRow(false, ConductingViews.score().parts().size(), 0);
+                    screen.clickRow(true, 0, 0);
+                    restedMember = be.members().get(0);
+                })
+                .waitUntil("the first member rests, locked", ctx -> clientPodium().mask(restedMember) == 0 && clientPodium().locked(restedMember))
+                .screenshot("orchestra_podium_screen_rest")
+                .step("right-click it to unlock", ctx -> ((PodiumScreen) Minecraft.getInstance().screen).clickRow(true, 0, 1))
+                .waitUntil("it plays its part again", ctx -> !clientPodium().locked(restedMember) && partsAsExpected())
                 .step("select the flutes", ctx -> {
                     outlineBefore = PartOutline.passes();
                     Conducting.select(PODIUM, 4);

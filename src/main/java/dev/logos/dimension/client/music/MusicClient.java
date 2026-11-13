@@ -401,6 +401,8 @@ public final class MusicClient {
         final PriorityQueue<long[]> offs = new PriorityQueue<>((a, b) -> Long.compare(a[0], b[0]));
         /** 乐团成员：跟着指挥台的时钟走（为空时用自己的 anchor）。 */
         @Nullable Clock shared;
+        /** 乐团成员：演奏 {@link dev.logos.dimension.music.orchestra.OrchestraScore} 那一份总谱（钢琴曲拆出的声部也在里面）。 */
+        boolean ensemble;
         /** 乐团里各声部的响度（倍数；为空时都是 1）。 */
         float @Nullable [] gains;
 
@@ -449,6 +451,7 @@ public final class MusicClient {
             }
             if (roll == null) {
                 if (rollId != null) roll = MusicClient.roll(rollId);
+                if (roll != null && ensemble) roll = dev.logos.dimension.music.orchestra.OrchestraScore.of(roll).roll();
                 if (roll == null) return;
             }
             InstrumentKind kind = kindAt(this.pos);

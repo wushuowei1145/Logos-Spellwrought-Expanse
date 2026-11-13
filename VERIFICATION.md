@@ -1,5 +1,25 @@
 # 首版验证记录
 
+## 乐团：声部分派重写、钢琴曲拆声部、手动休息
+
+2026-11-13：分支 `fix/orchestra-arranger`（未提交），基于 main `00baa48d`（#253），Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`
+（main 合进爆裂魔杖女仆支持后要这一版）。说明见 [docs/ORCHESTRA.md](docs/ORCHESTRA.md) 第 5 节、第 9 节。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | `OrchestraArrangerTest` **11/11**（新增：轨道名认乐器、名字比写错的音色号可信；贝多芬第一交响曲的轨道 + 32 件乐器：提琴各拉各的声部、六把小提琴第一第二各一半、单簧管由双簧管或长笛接、圆号由小号或巴松管接、拨弦叠在已经在拉的人身上、键盘和钟琴管钟休息、定音鼓打定音鼓；手动休息不被改；钢琴曲拆成旋律 / 和声 / 低音、钢琴竖琴弹原曲、提琴分三个声部、定音鼓休息；管弦乐不拆）；全量 **396/397**，唯一失败的仍是 main 上就缺的 zh_cn `item.logos_dimension.fuda_desk` |
+| 真实文件 | 临时测试（没提交）用模组自己的 MIDI 读取把维护者 `logos_music` 里 48 个文件都分了一遍（音乐厅那样的 32 件乐器）：贝多芬第一、第五交响曲各乐章弦木铜都对上，键盘和钟琴管钟休息；单通道、多通道钢琴谱都拆出三个声部，低音给巴松管、大提琴、低音提琴；Bad Apple 管弦版按名字认出写错音色号的中提琴、第二小提琴 |
+| 世界测试 | `orchestra_*` **7/7** |
+| 实际客户端 | `orchestra_conduct_ui` 加「声部列表最后一行选『休息』、点第一件乐器：它休息并锁定；右键解锁后回到原来的声部」；连同 `orchestra_hall_ui`、`orchestra_seated_member_ui`、`orchestra_seated_ui` **4/4、44/44 检查**；截图看过界面里的「休息」行和休息中的小号 |
+| 改过的问题 | 第一版第一轮一对一对挑最高分：钢琴曲里大提琴先占了离它最近的和声，低音只剩中提琴移八度去拉（改成总分最高的配法）；多出来的乐器按「人少的声部」优先，长笛、小提琴被派去低音（改成只在比最合适的差不到 10 分的声部里挑人少的）；多出来的长笛、小号去齐奏提琴声部（改成只齐奏写给自己、同类、能替的声部）；合成鼓之类的打击音色派给了巴松管（太鼓、通通鼓、合成鼓给定音鼓，木鱼、音效谁都不演奏） |
+| 未验证 | 实际听感（拆出来的旋律、和声、低音在合奏里好不好听）；多人、专用服务器 |
+
+```text
+./gradlew test -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar --tests "*OrchestraArrangerTest*"
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar "-PdimensionTests=logos_dimension:orchestra_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar "-PldTest=orchestra_conduct_ui,orchestra_hall_ui,orchestra_seated_member_ui,orchestra_seated_ui" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 神狐薙刀：12 把物品、单手立持、四刀连招、立即格挡（玩家）
 
 - 三种刃型 × 四套刀装共 12 把（编号 12–23），铁级，攻击伤害 7、攻速 1.3、攻击距离 +0.5。设计见 [docs/NAGINATA.md](docs/NAGINATA.md)。
