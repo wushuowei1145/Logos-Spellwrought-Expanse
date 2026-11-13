@@ -288,6 +288,21 @@ public abstract class ConductingViews implements UIScenario {
         });
     }
 
+    /** 看着 target、按一下右键（使用键），等它处理完。 */
+    static ScenarioBuilder rightClickAt(ScenarioBuilder s, String name, Vec3 target) {
+        return s.step("right-click " + name, ctx -> {
+                var mc = Minecraft.getInstance();
+                mc.player.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, target);
+                net.minecraft.client.KeyMapping.click(mc.options.keyUse.getKey());
+            })
+            .ticks(6);
+    }
+
+    /** 按一下左键（攻击键）：指挥状态下是打一拍。 */
+    static ScenarioBuilder leftClick(ScenarioBuilder s, String name) {
+        return s.step(name, ctx -> net.minecraft.client.KeyMapping.click(Minecraft.getInstance().options.keyAttack.getKey()));
+    }
+
     /** 在服务端记下乐团此刻的位置。 */
     static ScenarioBuilder recordServerClock(ScenarioBuilder s) {
         return s.server("read the podium clock", ctx -> {
@@ -373,19 +388,15 @@ public abstract class ConductingViews implements UIScenario {
                     Minecraft.getInstance().setScreen(null);
                     Conducting.select(PODIUM, -1);
                 })
-                .ticks(2)
-                // 右键空中（不潜行）换声部
-                .step("look up and right-click with the baton", ctx -> {
-                    var mc = Minecraft.getInstance();
-                    mc.player.setXRot(-60f);
-                    mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
-                })
-                .check("the baton selects the first part", ctx -> Conducting.selectedPart(PODIUM) == 0)
-                .step("right-click again", ctx -> {
-                    var mc = Minecraft.getInstance();
-                    mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
-                })
-                .check("then the second", ctx -> Conducting.selectedPart(PODIUM) == 1)
+                .ticks(2);
+            // 右键准星指着的乐器：选中它的声部，再点一次取消（docs/ORCHESTRA.md 第 17 节）
+            b = rightClickAt(b, "the first violins' stand", Vec3.atCenterOf(ORIGIN.offset(-3, 1, 3)))
+                .check("the baton selects the first violins", ctx -> Conducting.selectedPart(PODIUM) == 0);
+            b = rightClickAt(b, "the second violins' stand", Vec3.atCenterOf(ORIGIN.offset(-1, 1, 3)))
+                .check("then the second violins", ctx -> Conducting.selectedPart(PODIUM) == 1);
+            b = rightClickAt(b, "the second violins' stand again", Vec3.atCenterOf(ORIGIN.offset(-1, 1, 3)))
+                .check("clicking the selected part again lets it go", ctx -> Conducting.selectedPart(PODIUM) == -1);
+            b = b
                 .step("no selection, look at the orchestra", ctx -> {
                     Conducting.select(PODIUM, -1);
                     Minecraft.getInstance().player.setXRot(12f);
@@ -532,6 +543,152 @@ public abstract class ConductingViews implements UIScenario {
     }
 
     /** 坐在大提琴后面的人（选项 A）：乐团演奏时琴按总谱响，演奏者的弓跟着拉。 */
+    /**
+     * 指挥打拍子（docs/ORCHESTRA.md 第 17 节）：右键乐器选声部、滚轮调响度；左键打两拍起奏（按两拍的间隔）；
+     * 打得快乐团就快；不打了停在那里（延长），再打一拍接着走；画拍子（按住左键往下落、弹起）也算一拍，画得大就响。
+     */
+    @LDLRegisterClient(name = "orchestra_baton_ui", group = "instrument", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class Baton extends ConductingViews {
+        private static int beatsBefore;
+        private static double countInRate;
+
+        @Override
+        public void define(ScenarioBuilder s) {
+            ScenarioBuilder b = stage(s, true, false)
+                .step("forget earlier conducting", ctx -> BatonInput.reset())
+                .server("score on the stand, gather nearby", ctx -> {
+                    PodiumBlockEntity be = serverPodium(ctx.server().overworld());
+                    be.setScore(punched(score()));
+                    be.gather();
+                    be.setGain(3, 0);
+                    be.setMaster(0);
+                })
+                .waitUntil("the podium has twelve members on the client", ctx -> clientPodium() != null && clientPodium().members().size() == 12);
+            b = rightClickAt(b, "the cello", Vec3.atCenterOf(CELLO).add(0, 0.6, 0))
+                .check("right-clicking the cello selects the cellos", ctx -> Conducting.selectedPart(PODIUM) == 3)
+                .step("scroll up twice", ctx -> {
+                    BatonInput.dynamics(PODIUM, 1);
+                    BatonInput.dynamics(PODIUM, 1);
+                })
+                .waitUntil("the cellos are 2 dB louder", ctx -> clientPodium().gain(3) == 2);
+            b = view(b, "orchestra_baton_cello_selected", 1.6, 1.8, 2.6, 0.6);
+            b = rightClickAt(b, "the cello again", Vec3.atCenterOf(CELLO).add(0, 0.6, 0))
+                .check("again lets it go", ctx -> Conducting.selectedPart(PODIUM) == -1)
+                .step("scroll down with nothing selected", ctx -> BatonInput.dynamics(PODIUM, -1))
+                .waitUntil("everyone is 1 dB softer", ctx -> clientPodium().master() == -1)
+                .step("look at the orchestra", ctx -> Minecraft.getInstance().player.setXRot(12f));
+            // 两拍起奏：隔 8 刻；乐团的速度按两拍的间隔（测试客户端一刻不一定正好 50 毫秒，按量到的间隔核对）
+            b = leftClick(b, "the first count-in beat").ticks(8);
+            b = leftClick(b, "the second count-in beat")
+                .waitUntil("the orchestra starts", ctx -> Conducting.position(PODIUM) != null)
+                .checkServer("at the count-in tempo, led by me", ctx -> {
+                    PodiumBlockEntity be = serverPodium(ctx.server().overworld());
+                    countInRate = quarterMs() / BatonInput.countInGapMs();
+                    return be.isPlaying() && be.leader() != null && Math.abs(be.rate() - countInRate) < 0.02;
+                });
+            // 打得更快：每 7 刻一拍（比起奏的 8 刻快八分之一）
+            for (int i = 0; i < 10; i++) b = leftClick(b.ticks(7), "beat " + i);
+            b = b.ticks(2)
+                .check("the orchestra follows the faster beat", ctx -> BatonInput.follower() != null && BatonInput.follower().rate() > countInRate * 1.08)
+                .checkServer("the server follows too", ctx -> serverPodium(ctx.server().overworld()).rate() > countInRate * 1.04)
+                .screenshot("orchestra_baton_hud");
+            b = view(b, "orchestra_baton_trail", -1.6, 1.2, -2.6, 1.0);
+            // 不打了：一拍半之内停住
+            b = b.waitUntil("a fermata", ctx -> {
+                    var e = Conducting.ensemble(PODIUM);
+                    return e != null && e.rateMilli == 0;
+                })
+                .checkServer("the server holds as well", ctx -> serverPodium(ctx.server().overworld()).held())
+                .step("remember where", ctx -> serverPosition = Conducting.position(PODIUM))
+                .ticks(20)
+                .check("it waits", ctx -> Conducting.position(PODIUM) == serverPosition)
+                .screenshot("orchestra_baton_fermata");
+            b = leftClick(b, "one beat goes on").ticks(4)
+                .check("it goes on", ctx -> Conducting.position(PODIUM) > serverPosition)
+                // 画拍子：按住左键，往下拖 320 像素再弹起
+                .step("press and start drawing", ctx -> {
+                    beatsBefore = BatonInput.beatsTaken;
+                    BatonInput.testMouse = new double[]{400, 100, 1};
+                })
+                .ticks(3);
+            for (int i = 1; i <= 8; i++) {
+                final double y = 100 + i * 40;
+                b = b.step("draw down " + i, ctx -> BatonInput.testMouse = new double[]{400, y, 1}).ticks(1);
+            }
+            for (int i = 1; i <= 4; i++) {
+                final double y = 420 - i * 60;
+                b = b.step("bounce up " + i, ctx -> BatonInput.testMouse = new double[]{400, y, 1}).ticks(1);
+            }
+            b = b.check("the bounce at the bottom is a beat", ctx -> BatonInput.beatsTaken > beatsBefore)
+                .check("a big stroke is a loud one", ctx -> BatonInput.expression() > 1.1)
+                .step("let go", ctx -> BatonInput.testMouse = new double[]{400, 180, 0})
+                .ticks(2)
+                .step("real mouse again", ctx -> BatonInput.testMouse = null);
+            b.teardown("forget the conducting", ctx -> BatonInput.reset());
+            restore(b);
+        }
+    }
+
+    /**
+     * 节拍器与判定（docs/ORCHESTRA.md 第 18 节）：指挥台界面里打开节拍器；乐团演奏时节拍器跟着响；正好打在节拍器的拍上是 PERFECT、连击，
+     * 偏了 200 毫秒是 MISS、连击归零。
+     */
+    @LDLRegisterClient(name = "orchestra_metronome_ui", group = "instrument", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class MetronomeViews extends ConductingViews {
+        private static int ticksBefore;
+        private static long beatAt;
+
+        private static long nextBeat() {
+            var e = Conducting.ensemble(PODIUM);
+            return Metronome.nextBeatNanos(e.beats, System.nanoTime());
+        }
+
+        @Override
+        public void define(ScenarioBuilder s) {
+            ScenarioBuilder b = stage(s, true, false)
+                .step("forget earlier conducting", ctx -> BatonInput.reset())
+                .server("score on the stand, gather nearby, metronome off", ctx -> {
+                    PodiumBlockEntity be = serverPodium(ctx.server().overworld());
+                    be.setScore(punched(score()));
+                    be.gather();
+                    if (be.metronome()) be.toggleMetronome();
+                })
+                .waitUntil("the podium has twelve members on the client", ctx -> clientPodium() != null && clientPodium().members().size() == 12)
+                .openScreen("open the podium", ctx -> new PodiumScreen(PODIUM))
+                .ticks(5)
+                .step("switch the metronome on", ctx -> ((PodiumScreen) Minecraft.getInstance().screen).toggleMetronome())
+                .waitUntil("the metronome is on", ctx -> clientPodium().metronome())
+                .ticks(2)
+                .screenshot("orchestra_metronome_screen")
+                .step("close the screen", ctx -> Minecraft.getInstance().setScreen(null))
+                .server("the orchestra plays by itself", ctx -> serverPodium(ctx.server().overworld()).start(0))
+                .waitUntil("it plays", ctx -> Conducting.ensemble(PODIUM) != null && Conducting.ensemble(PODIUM).beats != null)
+                .step("count the clicks from here", ctx -> ticksBefore = Metronome.ticks)
+                .waitUntil("the metronome clicks along", ctx -> Metronome.ticks >= ticksBefore + 3)
+                .step("beat right on the metronome", ctx -> {
+                    beatAt = nextBeat();
+                    BatonInput.beat(PODIUM, beatAt);
+                })
+                .check("PERFECT", ctx -> BatonInput.judgement() == dev.logos.dimension.music.orchestra.Judgement.PERFECT && BatonInput.combo() == 1)
+                .waitUntil("that beat comes", ctx -> System.nanoTime() > beatAt + 200_000_000L)
+                .step("and again", ctx -> {
+                    beatAt = nextBeat();
+                    BatonInput.beat(PODIUM, beatAt);
+                })
+                .check("PERFECT again, combo 2", ctx -> BatonInput.judgement() == dev.logos.dimension.music.orchestra.Judgement.PERFECT && BatonInput.combo() == 2)
+                .waitUntil("that beat comes too", ctx -> System.nanoTime() >= beatAt)
+                .ticks(1)
+                .screenshot("orchestra_metronome_perfect")
+                .waitUntil("a little later", ctx -> System.nanoTime() > beatAt + 200_000_000L)
+                .step("a beat 200 ms late", ctx -> BatonInput.beat(PODIUM, nextBeat() + 200_000_000L))
+                .check("MISS, the combo is gone", ctx -> BatonInput.judgement() == dev.logos.dimension.music.orchestra.Judgement.MISS && BatonInput.combo() == 0)
+                .ticks(1)
+                .screenshot("orchestra_metronome_miss");
+            b.teardown("forget the conducting", ctx -> BatonInput.reset());
+            restore(b);
+        }
+    }
+
     @LDLRegisterClient(name = "orchestra_seated_member_ui", group = "instrument", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
     public static class SeatedMember extends ConductingViews {
         @Override

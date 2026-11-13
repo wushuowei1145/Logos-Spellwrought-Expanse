@@ -64,6 +64,7 @@ public final class OrchestraGameTests {
         tests.put("orchestra_saves", OrchestraGameTests::saves);
         tests.put("orchestra_members_leave", OrchestraGameTests::membersLeave);
         tests.put("orchestra_conducted_instruments_wait", OrchestraGameTests::conductedInstrumentsWait);
+        tests.put("orchestra_follows_the_beat", OrchestraGameTests::followsTheBeat);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -252,6 +253,49 @@ public final class OrchestraGameTests {
         level.destroyBlock(be.getBlockPos(), false);
         h.assertTrue(entity(h, right).orchestra() == null, "breaking the podium frees its instruments");
         h.succeed();
+    }
+
+    /**
+     * 指挥打拍子（docs/ORCHESTRA.md 第 17 节）：站在台上的人打两拍起奏，预备拍按两拍的间隔、他就是指挥；他打的拍子换掉时钟的位置和速度，
+     * 延长时乐团停住；走下指挥台后乐团从那里按设定的速度接着走。全体响度存盘。
+     */
+    private static void followsTheBeat(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        PodiumBlockEntity be = podium(h, new BlockPos(3, 1, 1), Direction.SOUTH);
+        BlockPos left = violinStand(h, new BlockPos(5, 1, 4)), right = violinStand(h, new BlockPos(1, 1, 4));
+        be.setScore(punched(duet()));
+        be.toggle(left);
+        be.toggle(right);
+        net.minecraft.world.entity.player.Player player = h.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        net.minecraft.world.phys.Vec3 stand = be.standAt();
+        player.snapTo(stand.x, stand.y, stand.z, 0, 0);
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(Orchestra.BATON.get()));
+        h.assertTrue(PodiumBlock.conducting(player) && be.getBlockPos().equals(PodiumBlock.under(player)), "the player conducts from the podium");
+        // 120 bpm 的 4/4：一拍 500 毫秒；起奏前两拍隔 400 毫秒，就是快了 25%
+        h.assertTrue(be.start(0, 400, player), "two beats start it");
+        h.assertTrue(Math.abs(be.rate() - 1.25) < 1e-6 && be.leader() == player, "the count-in sets the tempo and the conductor: " + be.rate());
+        h.assertTrue(be.positionMs() < 0, "an upbeat first");
+        be.follow(player, 1000, 1.1, 1.2f, false);
+        h.assertTrue(Math.abs(be.positionMs() - 1000) < 30 && Math.abs(be.rate() - 1.1) < 1e-6, "a beat moves the clock");
+        be.follow(player, 1500, 1.0, 1f, true);
+        h.assertTrue(be.held() && be.positionMs() == 1500, "a fermata holds");
+        h.runAfterDelay(3, () -> {
+            h.assertTrue(be.held() && be.positionMs() == 1500, "still holding while the conductor stands there");
+            player.snapTo(stand.x + 4, stand.y - 0.5, stand.z + 3, 0, 0);
+            h.runAfterDelay(2, () -> {
+                h.assertTrue(be.leader() == null && !be.held() && Math.abs(be.rate() - 1.0) < 1e-6, "stepping down gives the tempo back");
+                h.assertTrue(be.positionMs() >= 1500, "it goes on from where it held");
+                be.setMaster(-4);
+                h.assertTrue(!be.metronome(), "the metronome starts off");
+                be.toggleMetronome();
+                CompoundTag tag = be.saveWithFullMetadata(level.registryAccess());
+                BlockEntity loaded = BlockEntity.loadStatic(be.getBlockPos(), be.getBlockState(), tag, level.registryAccess());
+                h.assertTrue(loaded instanceof PodiumBlockEntity copy && copy.master() == -4 && copy.metronome(), "the master volume and the metronome saved");
+                be.stop();
+                h.assertTrue(be.leader() == null, "stopping forgets the conductor");
+                h.succeed();
+            });
+        });
     }
 
     private static void conductedInstrumentsWait(GameTestHelper h) {

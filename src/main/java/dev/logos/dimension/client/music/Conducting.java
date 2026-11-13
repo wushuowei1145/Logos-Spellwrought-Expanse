@@ -59,6 +59,11 @@ public final class Conducting {
         final MusicClient.Clock clock = new MusicClient.Clock();
         int durationMs;
         int tempo = 100;
+        /** 时钟真正的速度（千分之几；延长时为 0）。 */
+        int rateMilli = 1000;
+        /** 指挥手势的力度、全体的响度（倍数），乘在每个声部的响度上。 */
+        float expression = 1, master = 1;
+        @Nullable UUID leader;
         final Map<BlockPos, Integer> masks = new HashMap<>();
         final Map<BlockPos, MusicClient.Track> tracks = new HashMap<>();
         final float[] gains = new float[MusicRoll.MAX_PARTS];
@@ -102,17 +107,25 @@ public final class Conducting {
             if (e != null) stop(e);
             e = new Ensemble(podium);
             e.rollId = p.roll();
-            e.clock.set(p.positionMs(), p.tempo() / 100.0, now);
+            e.clock.set(p.positionMs(), p.rateMilli() / 1000.0, now);
             ENSEMBLES.put(podium, e);
-        } else {
+        } else if (!BatonInput.leading(podium)) {
+            // 自己在打拍子时时钟听自己的（服务端的是自己发过去又转回来的，晚了一来一回）
             int drift = p.positionMs() - e.clock.position(now);
             boolean jump = Math.abs(drift) > JUMP_MS;
-            if (p.tempo() != e.tempo || Math.abs(drift) * 1_000_000L > RESYNC_NS) e.clock.set(p.positionMs(), p.tempo() / 100.0, now);
+            if (p.rateMilli() != e.rateMilli || Math.abs(drift) * 1_000_000L > RESYNC_NS) e.clock.set(p.positionMs(), p.rateMilli() / 1000.0, now);
             if (jump) for (MusicClient.Track t : e.tracks.values()) t.needSeek = true;
         }
         e.tempo = p.tempo();
+        e.rateMilli = p.rateMilli();
+        e.leader = p.leader();
+        e.expression = p.expressionMilli() / 1000f;
+        e.master = (float) Math.pow(10, p.master() / 20.0);
         e.durationMs = p.durationMs();
-        for (int i = 0; i < e.gains.length; i++) e.gains[i] = i < p.gains().length ? (float) Math.pow(10, p.gains()[i] / 20.0) : 1f;
+        for (int i = 0; i < e.gains.length; i++) {
+            float part = i < p.gains().length ? (float) Math.pow(10, p.gains()[i] / 20.0) : 1f;
+            e.gains[i] = part * e.master * e.expression;
+        }
         e.muteMask = p.muteMask();
         e.soloMask = p.soloMask();
         e.masks.clear();
@@ -259,30 +272,9 @@ public final class Conducting {
         return (float) Math.exp(-(pos - on[i]) / 160.0);
     }
 
-    /** 指挥棒右键空中（或右键不是乐器、指挥台的方块）：换到下一个有人演奏的声部（再往后是不选）。 */
-    public static void cycleSelection() {
-        var mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
-        var bound = mc.player.getMainHandItem().get(Orchestra.BATON_PODIUM.get());
-        if (bound == null) bound = mc.player.getOffhandItem().get(Orchestra.BATON_PODIUM.get());
-        if (bound == null || !(mc.level.getBlockEntity(bound.pos()) instanceof PodiumBlockEntity be)) return;
-        int used = 0;
-        for (BlockPos m : be.members()) used |= be.mask(m);
-        int cur = selectedPart(bound.pos());
-        for (int step = 1; step <= MusicRoll.MAX_PARTS + 1; step++) {
-            int next = cur + step;
-            if (next >= MusicRoll.MAX_PARTS) {
-                select(bound.pos(), -1);
-                mc.gui.setOverlayMessage(net.minecraft.network.chat.Component.translatable("message.logos_dimension.orchestra.selected_none"), false);
-                return;
-            }
-            if ((used & (1 << next)) != 0) {
-                select(bound.pos(), next);
-                mc.gui.setOverlayMessage(net.minecraft.network.chat.Component.translatable("message.logos_dimension.orchestra.selected",
-                    PodiumScreen.partName(be, next)), false);
-                return;
-            }
-        }
+    /** 这座指挥台的乐团（客户端）；没在演奏时为 null。 */
+    static @Nullable Ensemble ensemble(BlockPos podium) {
+        return ENSEMBLES.get(podium);
     }
 
     // —— 指挥的手势 ——
@@ -326,6 +318,8 @@ public final class Conducting {
             int slot = Math.max(0, Math.min(e.envelope.length - 1, (int) ((pos + 150) / 100)));
             amp = 0.55 + 0.7 * e.envelope[slot];
         }
+        // 跟着指挥的手势：画得大就挥得大
+        amp *= Math.max(0.6, Math.min(1.4, e.expression));
         return new Pose(tip, amp, cue(e, pos, c.beatMs()), blend, amp > 1.05);
     }
 
@@ -353,16 +347,6 @@ public final class Conducting {
             n++;
         }
         return n == 0 ? null : sum.scale(1.0 / n);
-    }
-
-    /** 指挥状态下左键什么都不做：不挥手、不攻击、不挖方块（服务端 {@link Orchestra} 也拦一道）。 */
-    @SubscribeEvent
-    static void input(net.neoforged.neoforge.client.event.InputEvent.InteractionKeyMappingTriggered event) {
-        var mc = Minecraft.getInstance();
-        if (event.isAttack() && mc.player != null && PodiumBlock.conducting(mc.player)) {
-            event.setCanceled(true);
-            event.setSwingHand(false);
-        }
     }
 
     /** 测试用：这座指挥台的乐团此刻的位置；没在演奏时为 null。 */

@@ -1,5 +1,25 @@
 # 首版验证记录
 
+## 乐团：指挥打拍子、右键选声部、滚轮调力度、节拍器与判定
+
+2026-11-13：分支 `feat/orchestra-conducting`（未提交），基于 main `87b08488`（#254），Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`
+（main 现在要 `ManaVessels`，旧的 lasting-companion jar 编译不过）。说明见 [docs/ORCHESTRA.md](docs/ORCHESTRA.md) 第 17、18 节。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 新增 `JudgementTest` 3/3（四档的界线；连击到 MISS 归零；离最近一拍的真实毫秒，两倍速时减半）、`BeatFollowerTest` 7/7（稳定的快拍子把乐团带到 1.2 倍、几拍后拍点对得上；渐慢把速度拉下来；晚了时钟等一等、早了赶一赶；只打一、三拍速度不变；少一拍将近半拍后延长、只触发一次、再打一拍按原速接着走；松手不再延长；起奏两拍的速度和上下限）；全量 **406/407**，唯一失败的仍是 main 上就缺的 zh_cn `item.logos_dimension.fuda_desk` |
+| 世界测试 | 新增 `orchestra_follows_the_beat`（站在台上的人两拍起奏，速度按间隔、他就是指挥；一拍换掉时钟的位置和速度；延长时位置不动，过几刻还是不动；走下指挥台后按设定的速度从停住的地方接着走；全体响度、节拍器开关存盘（节拍器默认关）；停下忘掉指挥）：`orchestra_*` **8/8** |
+| 实际客户端 | 新场景 `orchestra_metronome_ui`：指挥台界面打开节拍器；乐团演奏时节拍器跟着响（数到 3 声以上）；正好打在节拍器的拍上 PERFECT、再一拍 PERFECT 两连击；晚 200 毫秒 MISS、连击归零。`orchestra_metronome_ui` + `orchestra_baton_ui` **2/2、13/13 检查**。新场景 `orchestra_baton_ui`：右键大提琴选中大提琴声部、滚轮两格 +2 dB、再右键取消、没选中时滚轮调全体 −1 dB；左键两拍起奏，服务端的速度等于「一拍 ÷ 量到的间隔」、指挥是我；打得比起奏快八分之一，客户端和服务端的速度都跟上去；不打了乐团停住（客户端时钟、服务端都是延长），过 20 刻位置不动；再打一拍接着走；画拍子往下拖 320 像素再弹起算一拍、力度变大。`orchestra_conduct_ui` 的选声部改成右键乐器（第一小提琴、第二小提琴、再点一次取消）。回归 `orchestra_conduct_ui`、`orchestra_seated_member_ui`、`ensemble_resync_ui`（时钟改成可以停住的写法）、`orchestra_hall_ui`、`orchestra_seated_ui`、`orchestra_player_mallets_ui`、`organ_play_ui`：**8/8、59/59 检查** |
+| 截图人工看过 | 第一人称的左上角提示（小节、拍、♩=、跟着你的拍子、全体 −1 dB、「准」）和金色火花；延长时的提示；第三人称棒尖一串金点跟着指挥棒；指挥台界面的节拍器开关；准星上方金色带晕的 PERFECT 和「COMBO 2」、灰色 MISS |
+| 改过的问题 | 滚轮连着两格只加了 1 dB：还没同步回来的响度记的时刻转成 int 溢出了，改成 long。测试客户端一刻不是正好 50 毫秒（约 65），起奏、加快的检查改成按量到的间隔核对 |
+| 未验证 | 节拍器的声音只数了次数、没人耳听过；真鼠标画拍子（场景里用的是代替的鼠标坐标；视角不动靠 `CalculatePlayerTurnEvent` 把灵敏度设成 −1/3，没在真窗口里拖过）；多人（指挥和听众各一个客户端）、专用服务器 |
+
+```text
+./gradlew test -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar --tests "*BeatFollowerTest"
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar "-PdimensionTests=logos_dimension:orchestra_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar "-PldTest=orchestra_baton_ui,orchestra_conduct_ui" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 乐团：声部分派重写、钢琴曲拆声部、手动休息
 
 2026-11-13：分支 `fix/orchestra-arranger`（未提交），基于 main `00baa48d`（#253），Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`

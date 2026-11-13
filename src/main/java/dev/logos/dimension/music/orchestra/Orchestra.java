@@ -60,6 +60,7 @@ public final class Orchestra {
         var r = event.registrar("1");
         r.playToServer(EnsemblePayloads.PodiumControl.TYPE, EnsemblePayloads.PodiumControl.CODEC, (p, c) -> c.enqueueWork(() -> control(p, c)));
         r.playToClient(EnsemblePayloads.EnsembleState.TYPE, EnsemblePayloads.EnsembleState.CODEC);
+        r.playToServer(EnsemblePayloads.ConductBeat.TYPE, EnsemblePayloads.ConductBeat.CODEC, (p, c) -> c.enqueueWork(() -> beat(p, c)));
     }
 
     public static void tell(Player player, String key, Object... args) {
@@ -72,7 +73,9 @@ public final class Orchestra {
         if (be == null || player.distanceToSqr(be.standAt()) > Instruments.REACH * Instruments.REACH) return;
         switch (p.action()) {
             case EnsemblePayloads.PodiumControl.START -> {
-                if (!be.isPlaying() && !be.start(p.a())) tell(player, "cannot_start");
+                // 起奏前打两拍（b 是间隔）：只有站在这座台上、拿着指挥棒的人才算指挥
+                boolean counted = p.b() > 0 && PodiumBlock.conducting(player) && p.podium().equals(PodiumBlock.under(player));
+                if (!be.isPlaying() && !be.start(p.a(), counted ? p.b() : 0, counted ? player : null)) tell(player, "cannot_start");
             }
             case EnsemblePayloads.PodiumControl.STOP -> be.stop();
             case EnsemblePayloads.PodiumControl.GATHER -> {
@@ -87,6 +90,8 @@ public final class Orchestra {
             case EnsemblePayloads.PodiumControl.GAIN -> be.setGain(p.a(), p.b());
             case EnsemblePayloads.PodiumControl.MUTE -> be.toggleMute(p.a());
             case EnsemblePayloads.PodiumControl.SOLO -> be.toggleSolo(p.a());
+            case EnsemblePayloads.PodiumControl.MASTER -> be.setMaster(p.a());
+            case EnsemblePayloads.PodiumControl.METRONOME -> be.toggleMetronome();
             case EnsemblePayloads.PodiumControl.EJECT -> {
                 if (be.isPlaying()) {
                     tell(player, "busy");
@@ -97,6 +102,15 @@ public final class Orchestra {
             }
             default -> {}
         }
+    }
+
+    /** 指挥打的一拍：只收站在这座指挥台上、拿着指挥棒的人的。 */
+    private static void beat(EnsemblePayloads.ConductBeat p, IPayloadContext c) {
+        if (!(c.player() instanceof ServerPlayer player) || !player.level().isLoaded(p.podium())) return;
+        if (!PodiumBlock.conducting(player) || !p.podium().equals(PodiumBlock.under(player))) return;
+        PodiumBlockEntity be = PodiumBlock.entityAt(player.level(), p.podium());
+        if (be == null || !be.isPlaying()) return;
+        be.follow(player, p.positionMs(), p.rateMilli() / 1000.0, p.expressionMilli() / 1000f, p.held());
     }
 
     /** 指挥棒右键指挥台：没绑定这座时绑定；绑定了就开始 / 停止演奏。 */

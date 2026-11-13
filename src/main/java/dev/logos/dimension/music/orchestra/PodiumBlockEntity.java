@@ -60,6 +60,10 @@ public class PodiumBlockEntity extends BlockEntity {
     private final byte[] gains = new byte[MusicRoll.MAX_PARTS];
     private int muteMask;
     private int soloMask;
+    /** 全体的响度（dB）：指挥台上滚轮，没选中声部时调它。 */
+    private int master;
+    /** 节拍器：指挥打拍子时听得到按设定速度走的咔哒声（docs/ORCHESTRA.md 第 18 节）。 */
+    private boolean metronome;
     private boolean powered;
 
     // 播放（服务端，不存盘）
@@ -69,9 +73,16 @@ public class PodiumBlockEntity extends BlockEntity {
     private long startNanos;
     private int startOffsetMs;
     private long startTick;
+    /** 时钟此刻的速度（相对纸带原速）：设定的速度，或跟着指挥的拍子；延长时为 0。 */
+    private double rate = 1;
     private @Nullable BeatMap beats;
     private int pendingTempo = -1;
     private int pendingBar;
+    /** 正在打拍子的人（不存盘）；为空时乐团按设定的速度自己走。 */
+    private net.minecraft.world.entity.player.@Nullable Player leader;
+    /** 指挥手势给的力度（倍数）。 */
+    private float expression = 1;
+    private long lastFollowNanos;
 
     public PodiumBlockEntity(BlockPos pos, BlockState state) {
         super(Orchestra.PODIUM_ENTITY.get(), pos, state);
@@ -87,7 +98,13 @@ public class PodiumBlockEntity extends BlockEntity {
     public int gain(int part) { return gains[part]; }
     public int muteMask() { return muteMask; }
     public int soloMask() { return soloMask; }
+    public int master() { return master; }
+    public boolean metronome() { return metronome; }
     public boolean isPlaying() { return playing != null; }
+    /** 时钟此刻的速度（相对原速），延长时为 0。 */
+    public double rate() { return rate; }
+    public net.minecraft.world.entity.player.@Nullable Player leader() { return leader; }
+    public boolean held() { return playing != null && rate == 0; }
 
     public Direction facing() {
         return getBlockState().getValue(PodiumBlock.FACING);
@@ -108,7 +125,7 @@ public class PodiumBlockEntity extends BlockEntity {
     /** 此刻的播放位置（毫秒，起奏前的预备拍里为负）。 */
     public int positionMs() {
         if (playing == null) return 0;
-        return startOffsetMs + (int) Math.min(Integer.MAX_VALUE / 2, (System.nanoTime() - startNanos) / 1_000_000.0 * tempo / 100.0);
+        return startOffsetMs + (int) Math.min(Integer.MAX_VALUE / 2, (System.nanoTime() - startNanos) / 1_000_000.0 * rate);
     }
 
     private @Nullable InstrumentBlockEntity instrument(BlockPos pos) {
@@ -327,8 +344,16 @@ public class PodiumBlockEntity extends BlockEntity {
 
     // —— 演奏 ——
 
-    /** 从第 fromBar 小节起奏（先有一拍预备）。没有总谱、没有成员时不开始。 */
+    /** 从第 fromBar 小节起奏（先有一拍预备），按设定的速度。没有总谱、没有成员时不开始。 */
     public boolean start(int fromBar) {
+        return start(fromBar, 0, null);
+    }
+
+    /**
+     * 从第 fromBar 小节起奏。countInMs > 0 时是指挥起奏前打的两拍之间隔：预备拍就按这个速度，乐团在下一拍进来，
+     * 打拍子的人（who）就是指挥，乐团此后跟着他的拍子。
+     */
+    public boolean start(int fromBar, int countInMs, net.minecraft.world.entity.player.@Nullable Player who) {
         if (!(level instanceof ServerLevel)) return false;
         RollInfo info = score.get(Instruments.MUSIC_ROLL.get());
         MusicRoll roll = scoreRoll();
@@ -344,6 +369,9 @@ public class PodiumBlockEntity extends BlockEntity {
         beats = BeatMap.of(roll);
         double from = beats.barStartMs(Math.max(0, fromBar));
         double prep = ConductorPattern.conduct(beats.at(from)).beatMs();
+        rate = countInMs > 0 ? BeatFollower.countIn(prep, countInMs) : tempo / 100.0;
+        leader = countInMs > 0 ? who : null;
+        expression = 1;
         playing = info.id();
         playingHash = info.hash();
         durationMs = roll.durationMs();
@@ -360,6 +388,8 @@ public class PodiumBlockEntity extends BlockEntity {
         playing = null;
         beats = null;
         pendingTempo = -1;
+        leader = null;
+        expression = 1;
         for (BlockPos m : members) {
             InstrumentBlockEntity be = instrument(m);
             if (be != null && worldPosition.equals(be.conductedBy())) be.setConducted(null);
@@ -370,7 +400,9 @@ public class PodiumBlockEntity extends BlockEntity {
     /** 改速度：在演奏时从下一小节起生效。 */
     public void setTempo(int percent) {
         int v = Math.max(MIN_TEMPO, Math.min(MAX_TEMPO, percent));
-        if (playing != null && beats != null) {
+        if (playing != null && beats != null && leader != null) {
+            tempo = v;   // 正有人打拍子：速度听他的，设定的留到他不打了再用
+        } else if (playing != null && beats != null) {
             pendingTempo = v;
             pendingBar = beats.at(positionMs()).bar() + 1;
         } else {
@@ -382,10 +414,11 @@ public class PodiumBlockEntity extends BlockEntity {
     /** 把速度换成 v，换的那一刻在第 bar 小节的开头：时钟从小节线起按新速度走，位置不跳。 */
     private void applyTempo(int v, double barMs) {
         long now = System.nanoTime();
-        double nanosSinceBar = (positionMs() - barMs) / (tempo / 100.0) * 1_000_000.0;
+        double nanosSinceBar = (positionMs() - barMs) / Math.max(1e-6, rate) * 1_000_000.0;
         startOffsetMs = (int) Math.round(barMs);
         startNanos = now - (long) nanosSinceBar;
         tempo = v;
+        rate = v / 100.0;
         pendingTempo = -1;
         changed();
         broadcast();
@@ -396,6 +429,48 @@ public class PodiumBlockEntity extends BlockEntity {
         gains[part] = (byte) Math.max(MIN_GAIN, Math.min(MAX_GAIN, db));
         changed();
         if (isPlaying()) broadcast();
+    }
+
+    public void setMaster(int db) {
+        master = Math.max(MIN_GAIN, Math.min(MAX_GAIN, db));
+        changed();
+        if (isPlaying()) broadcast();
+    }
+
+    /**
+     * 站在台上的人打了一拍（docs/ORCHESTRA.md 第 17 节）：此刻乐团在 positionMs、此后按 clockRate 走（held 时停住），
+     * 手势的力度 expression。他就成了指挥，直到走下指挥台、放下指挥棒。太密的（30 毫秒内）只记下、不另发包，延长、接着走总是马上发。
+     */
+    public void follow(net.minecraft.world.entity.player.Player who, int positionMs, double clockRate, float expression, boolean held) {
+        if (playing == null) return;
+        boolean wasHeld = rate == 0;
+        startOffsetMs = positionMs;
+        startNanos = System.nanoTime();
+        rate = held ? 0 : Math.max(BeatFollower.MIN_RATE * 0.6, Math.min(BeatFollower.MAX_RATE * 1.5, clockRate));
+        this.expression = Math.max(0.3f, Math.min(1.6f, expression));
+        leader = who;
+        pendingTempo = -1;
+        long now = startNanos;
+        if (wasHeld != held || now - lastFollowNanos > 30_000_000L) {
+            lastFollowNanos = now;
+            broadcast();
+        }
+    }
+
+    /** 指挥走下指挥台、放下指挥棒、下线：乐团从此刻的位置按设定的速度接着自己走。 */
+    private void releaseLeader() {
+        int pos = positionMs();
+        leader = null;
+        expression = 1;
+        startOffsetMs = pos;
+        startNanos = System.nanoTime();
+        rate = tempo / 100.0;
+        broadcast();
+    }
+
+    public void toggleMetronome() {
+        metronome = !metronome;
+        changed();
     }
 
     public void toggleMute(int part) {
@@ -426,6 +501,9 @@ public class PodiumBlockEntity extends BlockEntity {
             be.stop();
             return;
         }
+        if (be.leader != null && (be.leader.isRemoved() || !PodiumBlock.conducting(be.leader) || !pos.equals(PodiumBlock.under(be.leader)))) {
+            be.releaseLeader();
+        }
         if (be.pendingTempo >= 0 && be.beats != null) {
             double barMs = be.beats.barStartMs(be.pendingBar);
             if (position >= barMs) be.applyTempo(be.pendingTempo, barMs);
@@ -443,7 +521,8 @@ public class PodiumBlockEntity extends BlockEntity {
         List<EnsemblePayloads.MemberPart> list = new ArrayList<>();
         for (BlockPos m : members) list.add(new EnsemblePayloads.MemberPart(m, masks.getOrDefault(m, 0)));
         var p = new EnsemblePayloads.EnsembleState(worldPosition, playing, playingHash, positionMs(), durationMs, tempo, list,
-            gains.clone(), muteMask, soloMask);
+            gains.clone(), muteMask, soloMask, (int) Math.round(rate * 1000), Math.round(expression * 1000), master,
+            leader == null ? null : leader.getUUID());
         if (to != null) {
             PacketDistributor.sendToPlayer(to, p);
         } else {
@@ -498,6 +577,8 @@ public class PodiumBlockEntity extends BlockEntity {
         for (int i = 0; i < gains.length; i++) gains[i] = (byte) (i < g.size() ? Math.max(MIN_GAIN, Math.min(MAX_GAIN, g.get(i))) : 0);
         muteMask = input.read("mute", Codec.INT).orElse(0);
         soloMask = input.read("solo", Codec.INT).orElse(0);
+        master = Math.max(MIN_GAIN, Math.min(MAX_GAIN, input.read("master", Codec.INT).orElse(0)));
+        metronome = input.read("metronome", Codec.BOOL).orElse(false);
         powered = input.read("powered", Codec.BOOL).orElse(false);
     }
 
@@ -531,6 +612,8 @@ public class PodiumBlockEntity extends BlockEntity {
         output.store("gains", Codec.INT.listOf(), g);
         output.store("mute", Codec.INT, muteMask);
         output.store("solo", Codec.INT, soloMask);
+        output.store("master", Codec.INT, master);
+        output.store("metronome", Codec.BOOL, metronome);
         output.store("powered", Codec.BOOL, powered);
     }
 

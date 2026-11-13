@@ -38,6 +38,7 @@ final class PodiumScreen extends Screen {
     private int tempoX, fromX, gainX;
     /** 只有选中声部时才能按的：响度、静音、独奏。 */
     private final List<Button> partButtons = new java.util.ArrayList<>();
+    private @Nullable Button metronomeButton;
 
     PodiumScreen(BlockPos pos) {
         super(Component.translatable("screen.logos_dimension.podium.title"));
@@ -136,6 +137,16 @@ final class PodiumScreen extends Screen {
         Button mute = button(tr("mute"), plus.getRight() + 6, y2, b -> partAction(EnsemblePayloads.PodiumControl.MUTE));
         Button solo = button(tr("solo"), mute.getRight() + 2, y2, b -> partAction(EnsemblePayloads.PodiumControl.SOLO));
         partButtons.addAll(List.of(minus, plus, mute, solo));
+        // 节拍器开关（右边，和开始 / 停止同一列）
+        Component on = tr("metronome", tr("on"));
+        int mw = Math.max(font.width(on), font.width(tr("metronome", tr("off")))) + 12;
+        metronomeButton = Button.builder(on, b -> toggleMetronome()).bounds(right - mw, y2, mw, 16).build();
+        addRenderableWidget(metronomeButton);
+    }
+
+    /** 节拍器开关（测试也用）。 */
+    void toggleMetronome() {
+        send(EnsemblePayloads.PodiumControl.METRONOME, 0, 0);
     }
 
     private void tempo(int d) {
@@ -222,6 +233,7 @@ final class PodiumScreen extends Screen {
         g.text(font, selected, x, y2 + 4, sel < 0 ? Parchment.INK_HINT : Conducting.PART_COLORS[sel] | 0xFF000000, false);
         if (sel >= 0) g.text(font, Component.literal(String.format("%+d dB", be.gain(sel))), gainX, y2 + 4, Parchment.INK, false);
         for (Button b : partButtons) b.active = sel >= 0;
+        if (metronomeButton != null) metronomeButton.setMessage(tr("metronome", tr(be.metronome() ? "on" : "off")));
         g.text(font, tr("tempo", be.tempo()), tempoX, y + 4, Parchment.INK, false);
         g.text(font, tr("from_bar", fromBar + 1), fromX, y + 4, Parchment.INK, false);
         super.extractRenderState(g, mouseX, mouseY, partialTick);
