@@ -135,8 +135,9 @@ public final class LongswordRig {
         for (var value : weapon.getAsJsonArray("cubes")) {
             var cube = value.getAsJsonObject();
             boolean sheath = cube.get("part").getAsString().equals("sheath");
-            // 第一人称只画剑，剑鞘只在第三人称挂在腰侧；不挂剑鞘的武器（曦誓）都不画。
-            if (sheath && (view.equals("fp") || !sheathed)) continue;
+            // 第一人称只画剑，剑鞘只在第三人称挂在腰侧（薙刀的刃套在拔刀、收刀时拿在手上，网格写了 fp_sheath，第一人称也画）；
+            // 不挂剑鞘的武器（曦誓）都不画。
+            if (sheath && ((view.equals("fp") && !weapon.has("fp_sheath")) || !sheathed)) continue;
             var bone = skeleton.bone(sheath ? CombatBones.SHEATH : CombatBones.WEAPON);
             // 网格都以 Weapon（或 Sheath）枢轴为原点；方块写了武器自己的骨骼时跟着那根骨骼动。
             String owner = cube.has("bone") && own.contains(cube.get("bone").getAsString()) ? cube.get("bone").getAsString() : bone.name();

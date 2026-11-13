@@ -29,7 +29,7 @@ class ParryTest {
     }
 
     @Test void everyMeleeWeaponHasAShortStaggerThatAcceptsNoInput() throws Exception {
-        for (var name : List.of("uchigatana", "oath_spear", "longsword", "dawnvow", "blacksteel_longsword")) {
+        for (var name : List.of("uchigatana", "oath_spear", "naginata", "longsword", "dawnvow", "blacksteel_longsword")) {
             for (var stagger : Map.of(Moveset.PARRIED, 0.5, Moveset.PARRIED_NPC, 0.8).entrySet()) {
                 var move = moveset(name).move(stagger.getKey());
                 assertNotNull(move, name + " 没有 " + stagger.getKey());

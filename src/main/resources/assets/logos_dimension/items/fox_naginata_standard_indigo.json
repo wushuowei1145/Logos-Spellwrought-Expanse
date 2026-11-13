@@ -1,0 +1,1 @@
+{"model":{"type":"minecraft:select","property":"minecraft:display_context","cases":[{"when":["gui","fixed"],"model":{"type":"minecraft:model","model":"logos_dimension:item/fox_naginata_standard_indigo_icon"}}],"fallback":{"type":"minecraft:model","model":"logos_dimension:item/fox_naginata_standard_indigo"}}}
