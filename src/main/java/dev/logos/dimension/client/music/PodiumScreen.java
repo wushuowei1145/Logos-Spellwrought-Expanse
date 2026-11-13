@@ -7,6 +7,7 @@ import dev.logos.dimension.music.RollInfo;
 import dev.logos.dimension.music.orchestra.BeatMap;
 import dev.logos.dimension.music.orchestra.EnsemblePayloads;
 import dev.logos.dimension.music.orchestra.OrchestraArranger;
+import dev.logos.dimension.music.orchestra.OrchestraScore;
 import dev.logos.dimension.music.orchestra.PodiumBlockEntity;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -31,6 +32,8 @@ final class PodiumScreen extends Screen {
     private int x0, y0;
     private int fromBar;
     private int scroll;
+    /** 选中了声部列表最后的「休息」：再点乐器就让它休息。 */
+    private boolean restPicked;
     /** 底下两行文字的位置（按按钮实际的宽度排出来）。 */
     private int tempoX, fromX, gainX;
     /** 只有选中声部时才能按的：响度、静音、独奏。 */
@@ -54,13 +57,28 @@ final class PodiumScreen extends Screen {
         return level != null && level.getBlockEntity(pos) instanceof PodiumBlockEntity be ? be : null;
     }
 
-    private @Nullable MusicRoll score(PodiumBlockEntity be) {
+    /** 合奏用的总谱（钢琴曲另有拆出的旋律、和声、低音，{@link OrchestraScore}）。 */
+    private static OrchestraScore.@Nullable Score prepared(PodiumBlockEntity be) {
         RollInfo info = be.score().get(Instruments.MUSIC_ROLL.get());
-        return info == null ? null : MusicClient.roll(info.id());
+        MusicRoll raw = info == null ? null : MusicClient.roll(info.id());
+        return raw == null ? null : OrchestraScore.of(raw);
     }
 
-    /** 声部的名字：纸带里写的，没写时「声部 n」。 */
+    private @Nullable MusicRoll score(PodiumBlockEntity be) {
+        OrchestraScore.Score s = prepared(be);
+        return s == null ? null : s.roll();
+    }
+
+    /** 声部的名字：纸带里写的，没写时「声部 n」；钢琴曲拆出来的是「旋律」「和声」「低音」。 */
     static Component partName(PodiumBlockEntity be, int part) {
+        OrchestraScore.Score s = prepared(be);
+        if (s != null && s.voice(part)) {
+            return Component.translatable("screen.logos_dimension.podium.voice." + switch (s.role(part)) {
+                case OrchestraScore.MELODY -> "melody";
+                case OrchestraScore.HARMONY -> "harmony";
+                default -> "bass";
+            });
+        }
         RollInfo info = be.score().get(Instruments.MUSIC_ROLL.get());
         if (info != null && part < info.parts().size() && !info.parts().get(part).isBlank()) return Component.literal(info.parts().get(part));
         return Component.translatable("screen.logos_dimension.podium.part", part + 1);
@@ -162,6 +180,12 @@ final class PodiumScreen extends Screen {
         return x0 + W / 2 - 10;
     }
 
+    /** 测试用：在声部列表（members 为 false）或成员列表的第 row 行上点一下（button 0 左键、1 右键）。 */
+    boolean clickRow(boolean members, int row, int button) {
+        double x = members ? splitX() + 20 : x0 + PAD + 12, y = listTop() + row * ROW + ROW / 2.0;
+        return mouseClicked(new net.minecraft.client.input.MouseButtonEvent(x, y, new net.minecraft.client.input.MouseButtonInfo(button, 0)), false);
+    }
+
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         Parchment.draw(g, x0, y0, W, H);
@@ -227,6 +251,11 @@ final class PodiumScreen extends Screen {
             g.text(font, who, splitX() - 6 - font.width(who), y, color, false);
             y += ROW;
         }
+        // 最后一行「休息」：选中它再点乐器，让那件乐器休息（同手动改派，锁定）
+        if (y + ROW <= listBottom()) {
+            if (restPicked) g.fill(x - 2, y - 1, splitX() - 4, y + ROW - 1, 0x33E0B84A);
+            g.text(font, tr("rest_row"), x + 10, y, restPicked ? Parchment.INK : Parchment.INK_HINT, false);
+        }
     }
 
     private void drawMembers(GuiGraphicsExtractor g, PodiumBlockEntity be, int mouseX, int mouseY) {
@@ -276,7 +305,13 @@ final class PodiumScreen extends Screen {
             if (mx < splitX()) {
                 MusicRoll roll = score(be);
                 if (roll != null && row < roll.parts().size()) {
+                    restPicked = false;
                     Conducting.select(pos, Conducting.selectedPart(pos) == row ? -1 : row);
+                    return true;
+                }
+                if (roll != null && row == roll.parts().size()) {
+                    restPicked = !restPicked;
+                    Conducting.select(pos, -1);
                     return true;
                 }
             } else {
@@ -286,6 +321,8 @@ final class PodiumScreen extends Screen {
                         send(EnsemblePayloads.PodiumControl.UNLOCK, index, 0);
                     } else if (event.hasShiftDown()) {
                         send(EnsemblePayloads.PodiumControl.REMOVE, index, 0);
+                    } else if (restPicked) {
+                        send(EnsemblePayloads.PodiumControl.ASSIGN, index, 0);
                     } else {
                         int sel = Conducting.selectedPart(pos);
                         if (sel >= 0) send(EnsemblePayloads.PodiumControl.ASSIGN, index, 1 << sel);

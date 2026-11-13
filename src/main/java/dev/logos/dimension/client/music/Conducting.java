@@ -126,6 +126,7 @@ public final class Conducting {
             if (t == null) {
                 t = new MusicClient.Track(e.key(m.getKey()), m.getKey());
                 t.rollId = e.rollId;
+                t.ensemble = true;
                 t.shared = e.clock;
                 t.playing = true;
                 e.tracks.put(m.getKey(), t);
@@ -150,7 +151,9 @@ public final class Conducting {
         long now = System.nanoTime();
         for (Ensemble e : new ArrayList<>(ENSEMBLES.values())) {
             if (e.roll == null) {
-                e.roll = MusicClient.roll(e.rollId);
+                MusicRoll raw = MusicClient.roll(e.rollId);
+                // 合奏用的总谱（钢琴曲另有拆出的旋律、和声、低音），声部编号同服务端分派的
+                e.roll = raw == null ? null : dev.logos.dimension.music.orchestra.OrchestraScore.of(raw).roll();
                 if (e.roll != null) analyse(e);
             }
             for (MusicClient.Track t : e.tracks.values()) t.advance(now);
