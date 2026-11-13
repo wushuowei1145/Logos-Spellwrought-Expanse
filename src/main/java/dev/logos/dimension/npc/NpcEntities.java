@@ -38,8 +38,18 @@ public final class NpcEntities {
     public static final DeferredItem<SpawnEggItem> DIVINE_FOX_SPAWN_EGG = DimensionBlocks.ITEMS.registerItem("divine_fox_spawn_egg",
             SpawnEggItem::new, p -> p.spawnEgg(DIVINE_FOX.get()));
 
+    /** 灵猫与神狐同一套素体：眼睛约 1.26 格，猫耳尖约 1.65 格。 */
+    public static final Supplier<EntityType<MysticalCat>> MYSTICAL_CAT = TYPES.register("mystical_cat", () ->
+            EntityType.Builder.of(MysticalCat::new, MobCategory.CREATURE).sized(0.6f, 1.5f).eyeHeight(1.26f).clientTrackingRange(10)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("mystical_cat"))));
+
+    public static final DeferredItem<SpawnEggItem> MYSTICAL_CAT_SPAWN_EGG = DimensionBlocks.ITEMS.registerItem("mystical_cat_spawn_egg",
+            SpawnEggItem::new, p -> p.spawnEgg(MYSTICAL_CAT.get()));
+
     public static void register(IEventBus bus) {
         TYPES.register(bus);
+        MysticalCompany.register(bus);
+        NeoForge.EVENT_BUS.addListener(MysticalCatResidents::onLevelTick);
         ElfSounds.register(bus);
         FoxSounds.register(bus);
         bus.addListener(NpcEntities::attributes);
@@ -51,12 +61,14 @@ public final class NpcEntities {
     private static void attributes(EntityAttributeCreationEvent event) {
         event.put(FOREST_ELF.get(), ForestElf.createAttributes().build());
         event.put(DIVINE_FOX.get(), DivineFox.createAttributes().build());
+        event.put(MYSTICAL_CAT.get(), MysticalCat.createAttributes().build());
     }
 
     private static void creativeTab(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.SPAWN_EGGS) {
             event.accept(FOREST_ELF_SPAWN_EGG.get());
             event.accept(DIVINE_FOX_SPAWN_EGG.get());
+            event.accept(MYSTICAL_CAT_SPAWN_EGG.get());
         }
     }
 

@@ -85,7 +85,12 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
     }
 
     public NpcRenderer(EntityRendererProvider.Context context, Identifier asset) {
-        super(context, new DefaultedEntityGeoModel<>(asset));
+        this(context, new DefaultedEntityGeoModel<>(asset));
+    }
+
+    /** 自带模型对象的角色（例如灵猫按毛色换贴图）；模型的 {@code getTextureResource(null)} 须给出默认贴图。 */
+    protected NpcRenderer(EntityRendererProvider.Context context, com.geckolib.model.GeoModel<T> model) {
+        super(context, model);
         withScale(MODEL_SCALE);
         withRenderLayer(handLayer(context));
         // 坐在星辰花琴凳上演奏：画乐器、不画手里的（排在手持物品层之后）

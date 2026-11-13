@@ -1,5 +1,21 @@
 # 首版验证记录
 
+## 灵猫居民：猫耳猫尾的人形 NPC、八种毛色、林隙村镇刷新、灵猫相伴
+
+2026-11-13：分支 `feat/spirit-cat`，在 main `87b08488`（#254）上做完下表的检查，再变基到 `a2207505`（#255）后重新编译、重跑 `MysticalCatAssetsTest` 与 `NpcPartsTest`（4/4、13/13）。Logos jar `builds/orchestra-arranger-2026-11-13/logos-0.6.0-main-aa4168c.jar`。
+说明见 [docs/MYSTICAL_CAT.md](docs/MYSTICAL_CAT.md)；模型在仓库外的 `cat_model/mystical_cat/`。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | `MysticalCatAssetsTest` **4/4**（零件组都在模型里、随机外观能存能读、400 只里猫又的比例、八张毛色贴图与默认贴图同尺寸同透明像素、动画只用模型里的骨骼、开心表情替换眼嘴）；`NpcPartsTest` 通过；`LangCoverageTest` 仍是 main 上就缺的 zh_cn `item.logos_dimension.fuda_desk` |
+| 实际客户端 | `mystical_cat_lineup`、`mystical_cat_angle`、`mystical_cat_faces`、`mystical_cat_poses`、`mystical_cat_night`、`mystical_cat_town` **6/6、11/11 检查**。截图看过：八种毛色与零件组合、坐姿、被摸头、伸懒腰、洗脸、夜里猫又尾尖的灵火发光。镇子场景：找到最近的林隙镇子，补到 6 只后不再多补，每只以镇子中心为家、不会消失；AI 跑十秒不出错；摸头 +1、喂鳕鱼 +2 后亲近度 3，身边的玩家拿到灵猫相伴 |
+| 改过的问题 | 第一轮手写动作的方向：伸懒腰上身前倾、低头（应后仰、抬头），被摸头双臂往外张（应收在胸前），举过头顶的手臂交叉在脸前（举起以后 Z 方向和垂着时相反）；对照森林精灵的行礼核对后改正。26.1 的 `TemptGoal` 需要 `tempt_range` 属性，站定预览关着 AI 看不出来，镇子场景里一跑 AI 就崩，已加上 |
+| 未验证 | 光影包、多人与专用服务器；长时间游玩里的坐下与来蹭蹭频率；镇子场景生成时日志里有林隙村镇石基 Feature 的 far chunk setBlock 报错，来自村镇本身，与灵猫无关 |
+
+```text
+./gradlew test -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar --tests "*MysticalCatAssetsTest*" --tests "*NpcPartsTest*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar "-PldTest=mystical_cat_lineup,mystical_cat_angle,mystical_cat_faces,mystical_cat_poses,mystical_cat_night,mystical_cat_town" -PldTestHeadless -PldTestWindow=1600x900
+
 ## 乐团：指挥打拍子、右键选声部、滚轮调力度、节拍器与判定
 
 2026-11-13：分支 `feat/orchestra-conducting`（未提交），基于 main `87b08488`（#254），Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`

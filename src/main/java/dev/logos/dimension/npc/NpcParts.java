@@ -242,6 +242,8 @@ public final class NpcParts {
 
     /** 神狐：零件表来自仓库外 fox_model/divine_fox 的合并结果（tools/divine_fox_assets.py 导入）。 */
     public static final Race DIVINE_FOX = Race.load("divine_fox");
+    /** 灵猫（docs/MYSTICAL_CAT.md）：毛色不在零件表里，是另一张贴图。 */
+    public static final Race MYSTICAL_CAT = Race.load("mystical_cat");
 
     private NpcParts() {}
 }
