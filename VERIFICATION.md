@@ -2,7 +2,7 @@
 
 ## 教堂管风琴：重做合成音效
 
-2026-11-14：分支 `feat/organ-synth`（未提交），基于 main `87b08488`（#254），Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`。
+2026-11-14：分支 `feat/organ-synth`，在 main `87b08488`（#254）上做完下表的检查，再变基到 `50a86a04`（#256）后重新编译、重跑管风琴单元测试（13/13）和 `organ_play_ui`、`organ_reload_ui`、`organ_views`（3/3、7/7 检查）。Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`。
 说明见 [docs/PIPE_ORGAN.md](docs/PIPE_ORGAN.md) 第 3、4、9 节。维护者给了 Aeolus、Aeolus 插件、Caecilia、zita-rev1 四份参考，请我们做出更好听的合成管风琴；
 新写的加法合成（每个泛音各自起音、管列微失谐与慢起伏、气声、对齐的相位）和 8 路反馈延迟网络混响（烘进采样，另有松键尾音），只借思路、没用它们的代码和数据（Aeolus、zita-rev1 是 GPL）。
 新旧对比试听在 `builds/organ-synth-2026-11-13/试听`，维护者听了三稿后定稿；试玩包同目录。
