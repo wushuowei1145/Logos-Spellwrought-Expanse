@@ -369,16 +369,18 @@ public final class MusicClient {
      */
     static final class Clock {
         long anchor;
+        double base;
         double tempo = 1;
 
         int position(long now) {
-            return (int) Math.floor((now - anchor) / 1_000_000.0 * tempo);
+            return (int) Math.floor(base + (now - anchor) / 1_000_000.0 * tempo);
         }
 
-        /** 让 now 这一刻的位置正好是 positionMs，此后按 tempo 走。 */
-        void set(int positionMs, double tempo, long now) {
+        /** 让 now 这一刻的位置正好是 positionMs，此后按 tempo 走（tempo 为 0 时停在那里：指挥的延长）。 */
+        void set(double positionMs, double tempo, long now) {
             this.tempo = tempo;
-            anchor = now - (long) (positionMs / tempo * 1_000_000.0);
+            base = positionMs;
+            anchor = now;
         }
     }
 
