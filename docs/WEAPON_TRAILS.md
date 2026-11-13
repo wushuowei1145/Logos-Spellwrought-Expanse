@@ -89,6 +89,7 @@
 | 群誓·狼牙长枪 | `trails/oath_spear.json` | `oath_spear` | 直刺、横扫、上挑、连刺各刺按时段，砸地按速度 | `weapon_trails_spear` |
 | 凌霄 | `trails/lingxiao.json` | `lingxiao`；御剑飞行的尾迹 `lingxiao_flight` | 四式按时段，收剑的剑花也出光 | `weapon_trails_lingxiao` |
 | 流火（玩家与白梅） | `trails/ryuka.json`（`tip_x` 弯刀） | `ryuka`（`fixed`） | 五段连斩、弹刀、突刺按时段；白梅按 GeckoLib 动画名记时段 | `weapon_trails_ryuka` |
+| 神狐薙刀（12 把） | `trails/naginata.json`（`meshes` 分刃型、`tip_x` 弯刃） | `physical` | 四刀只亮砍下去那一段，按时段（举刀、收招也很快，按速度会多出一道） | `weapon_trails_naginata` |
 | 神狐 NPC 的打刀 | 读玩家的 `trails/uchigatana.json` | `physical`，狐火缠绕时 `foxfire_kitsune` | 只在 `contact` 前后出光，够快就亮到这段结束 | `weapon_trails_fox` |
 
 和弓不出刀光。

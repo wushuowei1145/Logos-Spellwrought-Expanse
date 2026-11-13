@@ -1,0 +1,22 @@
+{
+  "blade": {"from": 16.85, "to": 24.45, "tip_x": -1.12},
+  "meshes": {
+    "fox_naginata_slender_wood": {"from": 16.85, "to": 23.55, "tip_x": -0.85},
+    "fox_naginata_slender_ink": {"from": 16.85, "to": 23.55, "tip_x": -0.85},
+    "fox_naginata_slender_vermilion": {"from": 16.85, "to": 23.55, "tip_x": -0.85},
+    "fox_naginata_slender_indigo": {"from": 16.85, "to": 23.55, "tip_x": -0.85},
+    "fox_naginata_broad_wood": {"from": 16.85, "to": 25.15, "tip_x": -1.42},
+    "fox_naginata_broad_ink": {"from": 16.85, "to": 25.15, "tip_x": -1.42},
+    "fox_naginata_broad_vermilion": {"from": 16.85, "to": 25.15, "tip_x": -1.42},
+    "fox_naginata_broad_indigo": {"from": 16.85, "to": 25.15, "tip_x": -1.42}
+  },
+  "style": "logos_dimension:physical",
+  "speed": 7,
+  "auto": false,
+  "clips": {
+    "kesa_1": {"windows": [[0.25, 0.43]]},
+    "kaeshi_2": {"windows": [[0.12, 0.3]]},
+    "sune_3": {"windows": [[0.27, 0.47]]},
+    "men_4": {"windows": [[0.37, 0.53]]}
+  }
+}
