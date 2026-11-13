@@ -7,6 +7,12 @@
 - 美术素材使用代码绘制，不使用图像生成服务；代码注释与文档字符串使用中文。
 - NPC 模型按 [docs/NPC_MODELS.md](docs/NPC_MODELS.md)：车万女仆 GeckoLib 骨架命名、2 倍制作、entityCutout（不剔除背面）加原版实体光照，发光部件用 `ysmGlow` 前缀骨骼；制作做法见 [docs/NPC_MODELING_GUIDE.md](docs/NPC_MODELING_GUIDE.md)；普通 NPC 的随机外观按 [docs/NPC_APPEARANCE.md](docs/NPC_APPEARANCE.md)，幼年、伴侣与繁殖按 [docs/NPC_POPULATION.md](docs/NPC_POPULATION.md)，施法按 [docs/NPC_MAGIC.md](docs/NPC_MAGIC.md)；借用车万女仆的动画按 [CREDITS.md](CREDITS.md) 署名并登记。
 - 战斗动作（玩家与 NPC 共用的连招）按 [docs/COMBAT_SKELETON.md](docs/COMBAT_SKELETON.md)：TLM 骨骼名、Bedrock 动作文件、`dev.logos.dimension.combat` 运行时；其中第 1 节的兼容性规则优先于新功能，只接管本附属自己的武器与生物，失败时退回原版。新增带动作的三维武器时按 [docs/COMBAT_WEAPON_WORKFLOW.md](docs/COMBAT_WEAPON_WORKFLOW.md) 的流程和清单做。
+- 刀光按 [docs/WEAPON_TRAILS.md](docs/WEAPON_TRAILS.md)，尤其是其中“规范与踩坑”一节：
+  - **接入**：刀光是刀身扫过的面，方向不另外指定。每个动作组一份 `combat/trails/<动作组>.json`，刀身范围写在这里，不写进导入工具会重写的 `combat/weapons/*.json`。
+  - **出光**：先量刀尖速度，起手快的招式用 `windows`；改招式、加招式时同步改出光时段。
+  - **样式**：按伤害类型选，新样式另建文件，带颜色的层 `occlude` 取中间值。
+  - **光影**：顶点写全（含法线），第一人称走 `ShaderPackOverlay.item`，改了核心要在两个光影包下各跑一遍。
+  - **外部素材**：参考 UE 等外部特效时只照搬逻辑，不拷素材包的贴图。
 - 提交与 PR 不添加 AI 作者、共同作者或贡献者署名，使用维护者已有的 Git 身份。
 - 复用现有 Logos 材料注册 ID，不复制注册污染碎片。
 - 特效按 [docs/VFX.md](docs/VFX.md) 做：复用 Logos 的法术特效时在服务端调用 `dev.logos.runtime.Vfx`；附属自己的特效直接用 Photon 写，已有贴图用 `logos:` 路径引用。构建需要 `-PlogosJar`。

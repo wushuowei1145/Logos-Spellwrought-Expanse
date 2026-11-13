@@ -177,7 +177,47 @@ BoneTrails.feed(key, holder, poseStack.last().pose(), base, tip,
 - 侵蚀用的条纹噪声 `noise_aniso` 也在这里生成（可平铺）；其余噪声和粒子贴图直接用 Logos 已有的 `logos:textures/vfx/...`，不复制。
 - 新形状加到 `trail_textures.py` 里生成，不要手画后丢进来没有来源。
 
+## 规范与踩坑
+
+做新武器的刀光、改核心或样式时照这几条做。都是这一轮踩过的坑。
+
+**接入**
+- 刀光就是刀身扫过的面，方向不用另外指定。不要为了"看起来顺"去改刀光的几何，要改的是动作本身。
+- 一个动作组一份 `combat/trails/<动作组>.json`。刀身范围写在这里，不写进 `combat/weapons/*.json`：那些文件由导入工具整份重写，写进去下次导入就没了。
+- 刀身范围从护手或刀镡之上量到刀尖，用网格里 `weapon` 方块的 Y 坐标；弯刀写 `tip_x`。长枪只取枪头那一段。
+- 不出刀光的武器（弓）不要建这个文件。
+
+**什么时候出光**
+- 先量每一招的刀尖速度，再决定用 `{}`（按速度）还是 `windows`（按时段）。很多起手（举刀过顶、回身）比真正那一刀还快，按速度会把蓄势也画成一道。拿不准时用 `windows`，以动作 `timeline` 里的 `contact` 为中心往前后取，或照编排里那一刀 `arc` 的起止。
+- 待机、格挡、拔刀、收刀默认不出光；纯展示的转刀看效果决定，并写进武器文档。
+- **改招式、加招式时同步改出光时段。** 白梅的回身横扫（#223）加了招式没加时段，那一招就不出光（#227 补上）。`ShiraumeTrailsTest` 这类测试会挡住，不要跳过。
+- NPC 按动作出光，要用 GeckoLib 控制器的 `getCurrentAnimationPoint()` 取动作名和 `animTime()`。不要按服务端同步来的开始刻推算：会晚 1–2 刻，一刀只挥 0.1 秒，时段会落进挥刀前的停顿里。
+
+**样式**
+- 样式按武器造成的伤害类型选。武器有自己的光，就另建一份样式文件，不改共用的元素样式。
+- 除非伤害本身就带属性（流火的狐火），否则不要 `fixed`，缠绕要能换成那种元素的刀光。
+- 一种样式三层：身子、高光、刃线（见上节）。带颜色的身子 `occlude` 取 0.4–0.7。纯发光在白天的亮天空前会被洗成白色，第一版就是这样失败的。
+- 刃线层要加 `facing`，否则从背后看竖劈、看长枪直刺，刀光会细成一条线。
+- 参考外部特效（UE 素材包等）时，逻辑可以照搬：用 UE 命令行编辑器只读导出材质图、参数，看清它怎么做，再在这里实现。**贴图不要拷**，那是素材包的资源，仓库是公开的。新形状加到 `tools/trail_textures.py` 里生成；Logos 已有的噪声和粒子贴图用 `logos:` 路径引用，不复制。
+
+**光影包**（照 Logos 的 `SHADER_PACK_VFX.md`）
+- **顶点写全**：位置、颜色、UV、光照、法线一个不少。开光影时 Iris 把格式换成带法线的扩展格式，少写法线会直接崩溃：`Missing elements in vertex: Normal`（#224 修过一次）。
+- 世界里的刀光交给 `ShaderPackOverlay.collector`，第一人称的交给 `ShaderPackOverlay.item(out, true)`。用错收集器时，光影下第一人称刀光看不见。
+- 阴影通道里送来的点要丢掉（`Dissolves.shadowPass()`），那时的姿势是太阳视角。
+- 改了核心或着色器，要在 Complementary 和 photon 两个光影包下各跑一遍刀光场景（`-PldTestSeedDir=<含 mods/、shaderpacks/、config/iris.properties 的目录>`），并确认日志里没有 `Missing elements in vertex`。没在光影下测过，PR 里写"光影下未测"。
+
+**动作本身**
+- 相邻关键帧的刀向差过 90°、尤其接近反向时，刀会在一帧里翻过去，刀光变成一块平板。修编排（补中间帧），不要在刀光里跳帧绕开。见 [COMBAT_WEAPON_WORKFLOW.md](COMBAT_WEAPON_WORKFLOW.md) 第 4 节（#225）。
+
+**测试和截图**
+- 截图要定格：招式播到命中后约 0.1 秒时 `/tick freeze`，截完再 `tick unfreeze`。截图本身要花零点几秒，不定格的话拍到的总是刀光散了一半之后。第一人称要更早，刀挥过命中点后很快就出了画面。
+- 看整道刀光的形状（越往尾越窄、越碎）用俯视机位：隐身盔甲架加 `setCameraEntity`。机位不是玩家时要隐藏界面，否则原版还会画第一人称的手。
+- 场景结束时把自己生成的生物带走，否则同一次试玩里后面的场景镜头前会站着它们。
+- 一次 `-PldTest` 会清空所有截图目录，要留的图先复制到仓库外的 `art/weapon_trails/`。
+- 断言至少包括：挥砍时 `WeaponTrails.ribbons() > 0`，蓄势、待机、收刀时为 0，样式名对，缠绕时换成对应元素。
+
 ## 检查
 
 - 单元测试 `WeaponTrailsTest`：样式和设置文件读得通、引用的贴图与动作都在、出光时段不超出动作、每种伤害类型都有样式；扫过的面按段记点，帧间补点贴着圆弧。
-- 实际客户端 `group:weapon_trails`：打刀四段连招在第三人称背后、正面与第一人称截图；依次缠上七种元素各砍一刀，检查样式切换并截图；最后用俯视机位（隐身盔甲架）看物理、火焰、虚空的整道刀光形状。检查数值时可用 `WeaponTrails.ribbons()`、`WeaponTrails.sparks()`、`LongswordClient.trailStyle(entity, firstPerson)`。
+- 实际客户端 `group:weapon_trails`：打刀四段连招在第三人称背后、正面与第一人称截图；依次缠上七种元素各砍一刀，检查样式切换并截图；最后用俯视机位（隐身盔甲架）看物理、火焰、虚空的整道刀光形状。各武器另有自己的组：`weapon_trails_longsword`、`weapon_trails_spear`、`weapon_trails_lingxiao`、`weapon_trails_ryuka`（含白梅）、`weapon_trails_fox`。
+- 光影包：改了核心或着色器时，`group:weapon_trails` 与 `group:weapon_trails_ryuka` 在 Complementary 和 photon 下各跑一遍（见上节）。检查数值时可用 `WeaponTrails.ribbons()`、`WeaponTrails.sparks()`、`LongswordClient.trailStyle(entity, firstPerson)`。
