@@ -1,0 +1,288 @@
+{
+ "race": "mystical_cat",
+ "body_cubes": 36,
+ "slots": {
+  "hair": {
+   "optional": true,
+   "parts": [
+    {
+     "id": "hair_cat_layered",
+     "groups": [
+      "hair_cat_layered"
+     ],
+     "default": true,
+     "cubes": 47
+    },
+    {
+     "id": "hair_cat_braids",
+     "groups": [
+      "hair_cat_braids"
+     ],
+     "default": false,
+     "cubes": 107
+    },
+    {
+     "id": "hair_cat_hime",
+     "groups": [
+      "hair_cat_hime_cap",
+      "hair_cat_hime_bang_0",
+      "hair_cat_hime_bang_1",
+      "hair_cat_hime_bang_2",
+      "hair_cat_hime_bang_3",
+      "hair_cat_hime_bang_4",
+      "hair_cat_hime_bang_5",
+      "hair_cat_hime_left_hime_lock",
+      "hair_cat_hime_left_bob",
+      "hair_cat_hime_right_hime_lock",
+      "hair_cat_hime_right_bob",
+      "hair_cat_hime_back_0",
+      "hair_cat_hime_back_1",
+      "hair_cat_hime_back_2",
+      "hair_cat_hime_back_3",
+      "hair_cat_hime_back_4"
+     ],
+     "default": false,
+     "cubes": 104
+    },
+    {
+     "id": "hair_cat_ponytail",
+     "groups": [
+      "hair_cat_ponytail"
+     ],
+     "default": false,
+     "cubes": 80
+    }
+   ]
+  },
+  "headwear": {
+   "optional": true,
+   "parts": [
+    {
+     "id": "headwear_cat_bell_ribbon",
+     "groups": [
+      "headwear_cat_bell_ribbon"
+     ],
+     "default": true,
+     "cubes": 4
+    },
+    {
+     "id": "headwear_cat_beret",
+     "groups": [
+      "headwear_cat_beret"
+     ],
+     "default": false,
+     "cubes": 6
+    },
+    {
+     "id": "headwear_cat_witch_hat",
+     "groups": [
+      "headwear_cat_witch_hat"
+     ],
+     "default": false,
+     "cubes": 19
+    }
+   ],
+   "chance": 0.55
+  },
+  "ears": {
+   "optional": false,
+   "parts": [
+    {
+     "id": "ear_cat_upright",
+     "groups": [
+      "ear_cat_upright_left",
+      "ear_cat_upright_right"
+     ],
+     "default": true,
+     "cubes": 80
+    },
+    {
+     "id": "ear_cat_folded",
+     "groups": [
+      "ear_cat_folded_left",
+      "ear_cat_folded_right"
+     ],
+     "default": false,
+     "cubes": 114
+    },
+    {
+     "id": "ear_cat_tufted",
+     "groups": [
+      "ear_cat_tufted_left",
+      "ear_cat_tufted_right"
+     ],
+     "default": false,
+     "cubes": 84
+    }
+   ]
+  },
+  "tails": {
+   "optional": false,
+   "parts": [
+    {
+     "id": "tail_cat_long",
+     "groups": [
+      "tail_cat_long_chain1_seg01"
+     ],
+     "default": true,
+     "cubes": 22
+    },
+    {
+     "id": "tail_cat_fluffy",
+     "groups": [
+      "tail_cat_fluffy_chain1_seg01"
+     ],
+     "default": false,
+     "cubes": 30
+    },
+    {
+     "id": "tail_cat_ribbon",
+     "groups": [
+      "tail_cat_ribbon_chain1_seg01"
+     ],
+     "default": false,
+     "cubes": 30
+    },
+    {
+     "id": "tail_cat_twin",
+     "groups": [
+      "tail_cat_twin_chain1_seg01",
+      "tail_cat_twin_chain2_seg01"
+     ],
+     "default": false,
+     "cubes": 52
+    }
+   ]
+  },
+  "eyebrows": {
+   "optional": false,
+   "parts": [
+    {
+     "id": "eyebrows_cat_standard",
+     "groups": [
+      "eyebrows_cat_standard_left",
+      "eyebrows_cat_standard_right"
+     ],
+     "default": true,
+     "cubes": 4
+    }
+   ]
+  },
+  "eyes": {
+   "optional": false,
+   "parts": [
+    {
+     "id": "eyes_cat_round",
+     "groups": [
+      "eyes_cat_round_left_pupil",
+      "eyes_cat_round_left",
+      "eyes_cat_round_right_pupil",
+      "eyes_cat_round_right"
+     ],
+     "default": true,
+     "cubes": 16
+    }
+   ]
+  },
+  "mouth": {
+   "optional": false,
+   "parts": [
+    {
+     "id": "mouth_cat_omega",
+     "groups": [
+      "mouth_cat_omega"
+     ],
+     "default": true,
+     "cubes": 4
+    },
+    {
+     "id": "mouth_cat_smile",
+     "groups": [
+      "mouth_cat_smile"
+     ],
+     "default": false,
+     "cubes": 3
+    }
+   ]
+  },
+  "outfit": {
+   "optional": true,
+   "parts": [
+    {
+     "id": "outfit_cat_academy",
+     "groups": [
+      "outfit_cat_academy_forearm_l",
+      "outfit_cat_academy_arm_l",
+      "outfit_cat_academy_forearm_r",
+      "outfit_cat_academy_arm_r",
+      "outfit_cat_academy_torso",
+      "outfit_cat_academy_skirt",
+      "outfit_cat_academy_foot_l",
+      "outfit_cat_academy_shin_l",
+      "outfit_cat_academy_foot_r",
+      "outfit_cat_academy_shin_r",
+      "outfit_cat_academy_hips"
+     ],
+     "default": true,
+     "cubes": 75
+    },
+    {
+     "id": "outfit_cat_townsfolk",
+     "groups": [
+      "outfit_cat_townsfolk_forearm_l",
+      "outfit_cat_townsfolk_arm_l",
+      "outfit_cat_townsfolk_forearm_r",
+      "outfit_cat_townsfolk_arm_r",
+      "outfit_cat_townsfolk_torso",
+      "outfit_cat_townsfolk_skirt",
+      "outfit_cat_townsfolk_foot_l",
+      "outfit_cat_townsfolk_shin_l",
+      "outfit_cat_townsfolk_boot_l",
+      "outfit_cat_townsfolk_foot_r",
+      "outfit_cat_townsfolk_shin_r",
+      "outfit_cat_townsfolk_boot_r",
+      "outfit_cat_townsfolk_hips"
+     ],
+     "default": false,
+     "cubes": 62
+    },
+    {
+     "id": "outfit_cat_witch",
+     "groups": [
+      "outfit_cat_witch_forearm_l",
+      "outfit_cat_witch_arm_l",
+      "outfit_cat_witch_forearm_r",
+      "outfit_cat_witch_arm_r",
+      "outfit_cat_witch_torso",
+      "outfit_cat_witch_skirt",
+      "outfit_cat_witch_foot_l",
+      "outfit_cat_witch_shin_l",
+      "outfit_cat_witch_foot_r",
+      "outfit_cat_witch_shin_r",
+      "outfit_cat_witch_hips"
+     ],
+     "default": false,
+     "cubes": 65
+    }
+   ]
+  }
+ },
+ "conflicts": [],
+ "requires": {},
+ "expressions": [
+  {
+   "id": "expression_happy",
+   "groups": [
+    "expression_happy"
+   ],
+   "hides": [
+    "Eyelid",
+    "Mouth"
+   ],
+   "parts": {
+    "eyes_cat_happy": 12,
+    "mouth_cat_happy": 1
+   }
+  }
+ ]
+}

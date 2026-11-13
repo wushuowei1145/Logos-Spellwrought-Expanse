@@ -6,6 +6,7 @@
 - PR 默认以 main 为目标；只有明确说明的依赖审查才指向功能分支，依赖功能分支上的更新必须另行整合到 main，不能把功能分支内合并称为主分支已更新。
 - 美术素材使用代码绘制，不使用图像生成服务；代码注释与文档字符串使用中文。
 - NPC 模型按 [docs/NPC_MODELS.md](docs/NPC_MODELS.md)：车万女仆 GeckoLib 骨架命名、2 倍制作、entityCutout（不剔除背面）加原版实体光照，发光部件用 `ysmGlow` 前缀骨骼；制作做法见 [docs/NPC_MODELING_GUIDE.md](docs/NPC_MODELING_GUIDE.md)；普通 NPC 的随机外观按 [docs/NPC_APPEARANCE.md](docs/NPC_APPEARANCE.md)，幼年、伴侣与繁殖按 [docs/NPC_POPULATION.md](docs/NPC_POPULATION.md)，施法按 [docs/NPC_MAGIC.md](docs/NPC_MAGIC.md)；借用车万女仆的动画按 [CREDITS.md](CREDITS.md) 署名并登记。
+- 灵猫居民（猫耳猫尾的人形；毛色是同一套 UV 的另一张贴图，不进零件表；林隙村镇里由 `MysticalCatResidents` 补人）按 [docs/MYSTICAL_CAT.md](docs/MYSTICAL_CAT.md)。
 - 战斗动作（玩家与 NPC 共用的连招）按 [docs/COMBAT_SKELETON.md](docs/COMBAT_SKELETON.md)：TLM 骨骼名、Bedrock 动作文件、`dev.logos.dimension.combat` 运行时；其中第 1 节的兼容性规则优先于新功能，只接管本附属自己的武器与生物，失败时退回原版。新增带动作的三维武器时按 [docs/COMBAT_WEAPON_WORKFLOW.md](docs/COMBAT_WEAPON_WORKFLOW.md) 的流程和清单做。
 - 刀光按 [docs/WEAPON_TRAILS.md](docs/WEAPON_TRAILS.md)，尤其是其中“规范与踩坑”一节：
   - **接入**：刀光是刀身扫过的面，方向不另外指定。每个动作组一份 `combat/trails/<动作组>.json`，刀身范围写在这里，不写进导入工具会重写的 `combat/weapons/*.json`。

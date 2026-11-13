@@ -37,6 +37,8 @@ public final class ElfFactions {
             targets.addGoal(3, new NearestAttackableTargetGoal<>(raider, DivineFox.class, true));
         } else if (event.getEntity() instanceof Creeper creeper) {
             ((MobGoalsAccess) creeper).logos_dimension$goalSelector().addGoal(3, new AvoidEntityGoal<>(creeper, DivineFox.class, CREEPER_FEAR, 1.0, 1.2));
+            // 苦力怕也躲灵猫，和原版躲猫一样是 6 格
+            ((MobGoalsAccess) creeper).logos_dimension$goalSelector().addGoal(3, new AvoidEntityGoal<>(creeper, MysticalCat.class, 6, 1.0, 1.2));
         }
     }
 
