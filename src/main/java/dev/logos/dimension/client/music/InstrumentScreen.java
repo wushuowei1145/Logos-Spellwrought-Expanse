@@ -63,6 +63,11 @@ public class InstrumentScreen extends Screen implements MidiKeyboard.Target {
         this.base = 48;
     }
 
+    /** 这个界面演奏的乐器（主块）。 */
+    BlockPos pos() {
+        return pos;
+    }
+
     private @Nullable InstrumentBlockEntity entity() {
         var level = Minecraft.getInstance().level;
         return level != null && level.getBlockEntity(pos) instanceof InstrumentBlockEntity be ? be : null;
@@ -257,7 +262,9 @@ public class InstrumentScreen extends Screen implements MidiKeyboard.Target {
     public void tick() {
         InstrumentBlockEntity be = entity();
         var me = Minecraft.getInstance().player;
-        if (be == null || me == null || me.distanceToSqr(be.soundCenter()) > Instruments.REACH * Instruments.REACH) {
+        // 离开太远、这里不再是一件乐器（谱台前的乐手站起来、乐器拿走了）时关掉
+        if (be == null || me == null || me.distanceToSqr(be.soundCenter()) > Instruments.REACH * Instruments.REACH
+                || MusicClient.kindAt(pos) == null) {
             onClose();
             return;
         }
