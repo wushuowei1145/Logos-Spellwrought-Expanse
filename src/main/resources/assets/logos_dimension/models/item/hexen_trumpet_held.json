@@ -1,1064 +1,3822 @@
 {
+  "ambientocclusion": false,
   "textures": {
+    "hexen_trumpet": "logos_dimension:block/instrument/hexen_trumpet",
     "banner": "logos_dimension:block/instrument/hexenwald_banner",
-    "black": "minecraft:block/black_concrete",
-    "gold": "minecraft:block/gold_block",
-    "lacquer": "minecraft:block/quartz_block_top",
-    "particle": "minecraft:block/gold_block"
+    "particle": "logos_dimension:block/instrument/hexen_trumpet"
   },
   "elements": [
     {
       "from": [
         0.4,
-        8.6,
-        7.6
+        8.8177,
+        7.56
       ],
       "to": [
-        1.4,
-        9.4,
-        8.4
+        1.0,
+        9.1823,
+        8.44
       ],
       "faces": {
         "north": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            0.4,
-            6.6,
-            1.4,
-            7.4
-          ]
-        },
-        "south": {
-          "texture": "#gold",
-          "uv": [
-            0.4,
-            6.6,
-            1.4,
-            7.4
-          ]
-        },
-        "east": {
-          "texture": "#gold",
-          "uv": [
-            7.6,
-            6.6,
-            8.4,
-            7.4
-          ]
-        },
-        "west": {
-          "texture": "#gold",
-          "uv": [
-            7.6,
-            6.6,
-            8.4,
-            7.4
-          ]
-        },
-        "up": {
-          "texture": "#gold",
-          "uv": [
-            0.4,
-            7.6,
-            1.4,
-            8.4
-          ]
-        },
-        "down": {
-          "texture": "#gold",
-          "uv": [
-            0.4,
-            7.6,
-            1.4,
-            8.4
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        1.4,
-        8.75,
-        7.75
-      ],
-      "to": [
-        9.5,
-        9.25,
-        8.25
-      ],
-      "faces": {
-        "north": {
-          "texture": "#gold",
-          "uv": [
-            1.4,
-            6.75,
-            9.5,
-            7.25
-          ]
-        },
-        "south": {
-          "texture": "#gold",
-          "uv": [
-            1.4,
-            6.75,
-            9.5,
-            7.25
-          ]
-        },
-        "east": {
-          "texture": "#gold",
-          "uv": [
-            7.75,
-            6.75,
-            8.25,
-            7.25
-          ]
-        },
-        "west": {
-          "texture": "#gold",
-          "uv": [
-            7.75,
-            6.75,
-            8.25,
-            7.25
-          ]
-        },
-        "up": {
-          "texture": "#gold",
-          "uv": [
-            1.4,
-            7.75,
-            9.5,
-            8.25
-          ]
-        },
-        "down": {
-          "texture": "#gold",
-          "uv": [
-            1.4,
-            7.75,
-            9.5,
-            8.25
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        6.0,
-        6.6,
-        7.4
-      ],
-      "to": [
-        6.8,
-        10.4,
-        8.6
-      ],
-      "faces": {
-        "north": {
-          "texture": "#gold",
-          "uv": [
-            6.0,
-            5.6,
-            6.8,
-            9.4
-          ]
-        },
-        "south": {
-          "texture": "#gold",
-          "uv": [
-            6.0,
-            5.6,
-            6.8,
-            9.4
-          ]
-        },
-        "east": {
-          "texture": "#gold",
-          "uv": [
-            7.4,
-            5.6,
-            8.6,
-            9.4
-          ]
-        },
-        "west": {
-          "texture": "#gold",
-          "uv": [
-            7.4,
-            5.6,
-            8.6,
-            9.4
-          ]
-        },
-        "up": {
-          "texture": "#gold",
-          "uv": [
-            6.0,
-            7.4,
-            6.8,
-            8.6
-          ]
-        },
-        "down": {
-          "texture": "#gold",
-          "uv": [
-            6.0,
-            7.4,
-            6.8,
-            8.6
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        5.9,
-        10.4,
-        7.3
-      ],
-      "to": [
-        6.9,
-        10.9,
-        8.7
-      ],
-      "faces": {
-        "north": {
-          "texture": "#lacquer",
-          "uv": [
-            5.9,
-            5.1,
-            6.9,
-            5.6
-          ]
-        },
-        "south": {
-          "texture": "#lacquer",
-          "uv": [
-            5.9,
-            5.1,
-            6.9,
-            5.6
-          ]
-        },
-        "east": {
-          "texture": "#lacquer",
-          "uv": [
-            7.3,
-            5.1,
-            8.7,
-            5.6
-          ]
-        },
-        "west": {
-          "texture": "#lacquer",
-          "uv": [
-            7.3,
-            5.1,
-            8.7,
-            5.6
-          ]
-        },
-        "up": {
-          "texture": "#lacquer",
-          "uv": [
-            5.9,
-            7.3,
-            6.9,
-            8.7
-          ]
-        },
-        "down": {
-          "texture": "#lacquer",
-          "uv": [
-            5.9,
-            7.3,
-            6.9,
-            8.7
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        7.1,
-        6.6,
-        7.4
-      ],
-      "to": [
-        7.9,
-        10.4,
-        8.6
-      ],
-      "faces": {
-        "north": {
-          "texture": "#gold",
-          "uv": [
-            7.1,
-            5.6,
-            7.9,
-            9.4
-          ]
-        },
-        "south": {
-          "texture": "#gold",
-          "uv": [
-            7.1,
-            5.6,
-            7.9,
-            9.4
-          ]
-        },
-        "east": {
-          "texture": "#gold",
-          "uv": [
-            7.4,
-            5.6,
-            8.6,
-            9.4
-          ]
-        },
-        "west": {
-          "texture": "#gold",
-          "uv": [
-            7.4,
-            5.6,
-            8.6,
-            9.4
-          ]
-        },
-        "up": {
-          "texture": "#gold",
-          "uv": [
-            7.1,
-            7.4,
-            7.9,
-            8.6
-          ]
-        },
-        "down": {
-          "texture": "#gold",
-          "uv": [
-            7.1,
-            7.4,
-            7.9,
-            8.6
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        7.0,
-        10.4,
-        7.3
-      ],
-      "to": [
-        8.0,
-        10.9,
-        8.7
-      ],
-      "faces": {
-        "north": {
-          "texture": "#lacquer",
-          "uv": [
+            9.0,
             7.0,
-            5.1,
-            8.0,
-            5.6
+            8.5,
+            8.0
           ]
         },
         "south": {
-          "texture": "#lacquer",
+          "texture": "#hexen_trumpet",
           "uv": [
+            8.5,
             7.0,
-            5.1,
-            8.0,
-            5.6
+            9.0,
+            8.0
           ]
         },
         "east": {
-          "texture": "#lacquer",
+          "texture": "#hexen_trumpet",
           "uv": [
-            7.3,
-            5.1,
-            8.7,
-            5.6
+            10.0,
+            7.0,
+            10.5,
+            8.0
           ]
         },
         "west": {
-          "texture": "#lacquer",
+          "texture": "#hexen_trumpet",
           "uv": [
-            7.3,
-            5.1,
-            8.7,
-            5.6
-          ]
-        },
-        "up": {
-          "texture": "#lacquer",
-          "uv": [
+            11.5,
             7.0,
-            7.3,
-            8.0,
-            8.7
-          ]
-        },
-        "down": {
-          "texture": "#lacquer",
-          "uv": [
-            7.0,
-            7.3,
-            8.0,
-            8.7
+            12.0,
+            8.0
           ]
         }
       }
     },
     {
       "from": [
-        8.2,
-        6.6,
-        7.4
+        0.46,
+        8.8177,
+        7.56
       ],
       "to": [
+        0.94,
+        9.1823,
+        8.44
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            9.0,
+            7.0,
+            8.5,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            8.5,
+            7.0,
+            9.0,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            10.0,
+            7.0,
+            10.5,
+            8.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            11.5,
+            7.0,
+            12.0,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          0.7,
+          9,
+          8
+        ],
+        "x": 45.0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        0.52,
+        8.8177,
+        7.56
+      ],
+      "to": [
+        0.88,
+        9.1823,
+        8.44
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            9.0,
+            7.0,
+            8.5,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            8.5,
+            7.0,
+            9.0,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            10.0,
+            7.0,
+            10.5,
+            8.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            11.5,
+            7.0,
+            12.0,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          0.7,
+          9,
+          8
+        ],
+        "x": 90.0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        0.58,
+        8.8177,
+        7.56
+      ],
+      "to": [
+        0.82,
+        9.1823,
+        8.44
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            9.0,
+            7.0,
+            8.5,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            8.5,
+            7.0,
+            9.0,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            10.0,
+            7.0,
+            10.5,
+            8.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            11.5,
+            7.0,
+            12.0,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          0.7,
+          9,
+          8
+        ],
+        "x": 135.0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        0.95,
+        8.82,
+        7.82
+      ],
+      "to": [
+        2.1,
+        9.18,
+        8.18
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            13.0,
+            7.0,
+            13.5,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            13.0,
+            7.0,
+            13.5,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            14.5,
+            7.0,
+            15.0,
+            8.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            13.0,
+            7.0,
+            13.5,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            13.0,
+            7.0,
+            13.5,
+            8.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        2.0,
+        8.8882,
+        7.73
+      ],
+      "to": [
+        13.0,
+        9.1118,
+        8.27
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            7.5,
+            1.0,
+            2.0,
+            2.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            1.0,
+            7.5,
+            2.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        2.06,
+        8.8882,
+        7.73
+      ],
+      "to": [
+        12.94,
+        9.1118,
+        8.27
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            7.5,
+            1.0,
+            2.0,
+            2.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            10.0,
+            1.0,
+            11.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          7.5,
+          9,
+          8
+        ],
+        "x": 45.0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        2.12,
+        8.8882,
+        7.73
+      ],
+      "to": [
+        12.88,
+        9.1118,
+        8.27
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            7.5,
+            1.0,
+            2.0,
+            2.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            10.0,
+            1.0,
+            11.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          7.5,
+          9,
+          8
+        ],
+        "x": 90.0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        2.18,
+        8.8882,
+        7.73
+      ],
+      "to": [
+        12.82,
+        9.1118,
+        8.27
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            7.5,
+            1.0,
+            2.0,
+            2.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            10.0,
+            1.0,
+            11.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          7.5,
+          9,
+          8
+        ],
+        "x": 135.0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        12.6,
+        8.7846,
+        7.48
+      ],
+      "to": [
+        13.35,
+        9.2154,
+        8.52
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            10.0,
+            2.0,
+            11.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            10.0,
+            2.5,
+            11.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            10.0,
+            4.0,
+            11.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            10.0,
+            4.0,
+            11.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        12.66,
+        8.7846,
+        7.48
+      ],
+      "to": [
+        13.29,
+        9.2154,
+        8.52
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            10.0,
+            2.0,
+            11.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            10.0,
+            2.5,
+            11.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            10.0,
+            4.0,
+            11.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            10.0,
+            4.0,
+            11.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.975,
+          9,
+          8
+        ],
+        "x": 45.0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        12.72,
+        8.7846,
+        7.48
+      ],
+      "to": [
+        13.23,
+        9.2154,
+        8.52
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            10.0,
+            2.0,
+            11.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            10.0,
+            2.5,
+            11.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            10.0,
+            4.0,
+            11.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            10.0,
+            4.0,
+            11.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.975,
+          9,
+          8
+        ],
+        "x": 90.0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        12.78,
+        8.7846,
+        7.48
+      ],
+      "to": [
+        13.17,
+        9.2154,
+        8.52
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            10.0,
+            2.0,
+            11.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            10.0,
+            2.5,
+            11.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            10.0,
+            4.0,
+            11.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            10.0,
+            4.0,
+            11.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.975,
+          9,
+          8
+        ],
+        "x": 135.0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        12.9,
+        9.26,
+        7.6438
+      ],
+      "to": [
+        14.72,
+        9.36,
+        8.3562
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            13.5,
+            1.0,
+            14.5,
+            2.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            13.5,
+            1.0,
+            14.5,
+            2.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            5.0,
+            10.0,
+            5.5,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            13.5,
+            1.0,
+            14.5,
+            2.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            7.0,
+            1.5,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.9,
+          9.36,
+          8.0
+        ],
+        "x": 0.0,
+        "y": -0.0,
+        "z": 15.9454
+      }
+    },
+    {
+      "from": [
+        12.9,
+        9.1546,
+        7.8984
+      ],
+      "to": [
+        14.72,
+        9.2546,
+        8.6108
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            13.5,
+            1.0,
+            14.5,
+            2.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            13.5,
+            1.0,
+            14.5,
+            2.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            5.0,
+            10.0,
+            5.5,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            13.5,
+            1.0,
+            14.5,
+            2.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            7.0,
+            1.5,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.9,
+          9.2546,
+          8.2546
+        ],
+        "x": 43.8763,
+        "y": -11.2013,
+        "z": 11.4218
+      }
+    },
+    {
+      "from": [
+        12.9,
+        8.9,
+        8.0038
+      ],
+      "to": [
+        14.72,
         9.0,
-        10.4,
-        8.6
+        8.7162
       ],
       "faces": {
         "north": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            8.2,
-            5.6,
-            9.0,
-            9.4
+            13.5,
+            1.0,
+            14.5,
+            2.0
           ]
         },
         "south": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            8.2,
-            5.6,
-            9.0,
-            9.4
+            13.5,
+            1.0,
+            14.5,
+            2.0
           ]
         },
         "east": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            7.4,
-            5.6,
-            8.6,
-            9.4
-          ]
-        },
-        "west": {
-          "texture": "#gold",
-          "uv": [
-            7.4,
-            5.6,
-            8.6,
-            9.4
+            5.0,
+            10.0,
+            5.5,
+            11.0
           ]
         },
         "up": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            8.2,
-            7.4,
-            9.0,
-            8.6
+            13.5,
+            1.0,
+            14.5,
+            2.0
           ]
         },
         "down": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            8.2,
-            7.4,
-            9.0,
-            8.6
+            0.5,
+            7.0,
+            1.5,
+            8.0
           ]
         }
+      },
+      "rotation": {
+        "origin": [
+          12.9,
+          9.0,
+          8.36
+        ],
+        "x": 90.0,
+        "y": -15.9454,
+        "z": 0.0
       }
     },
     {
       "from": [
-        8.1,
-        10.4,
-        7.3
+        12.9,
+        8.6454,
+        7.8984
       ],
       "to": [
-        9.1,
-        10.9,
-        8.7
+        14.72,
+        8.7454,
+        8.6108
       ],
       "faces": {
         "north": {
-          "texture": "#lacquer",
+          "texture": "#hexen_trumpet",
           "uv": [
-            8.1,
-            5.1,
-            9.1,
-            5.6
+            13.5,
+            1.0,
+            14.5,
+            2.0
           ]
         },
         "south": {
-          "texture": "#lacquer",
+          "texture": "#hexen_trumpet",
           "uv": [
-            8.1,
-            5.1,
-            9.1,
-            5.6
+            13.5,
+            1.0,
+            14.5,
+            2.0
           ]
         },
         "east": {
-          "texture": "#lacquer",
+          "texture": "#hexen_trumpet",
           "uv": [
-            7.3,
-            5.1,
-            8.7,
-            5.6
-          ]
-        },
-        "west": {
-          "texture": "#lacquer",
-          "uv": [
-            7.3,
-            5.1,
-            8.7,
-            5.6
+            5.0,
+            10.0,
+            5.5,
+            11.0
           ]
         },
         "up": {
-          "texture": "#lacquer",
+          "texture": "#hexen_trumpet",
           "uv": [
-            8.1,
-            7.3,
-            9.1,
-            8.7
+            13.5,
+            1.0,
+            14.5,
+            2.0
           ]
         },
         "down": {
-          "texture": "#lacquer",
+          "texture": "#hexen_trumpet",
           "uv": [
-            8.1,
-            7.3,
-            9.1,
-            8.7
+            0.5,
+            7.0,
+            1.5,
+            8.0
           ]
         }
+      },
+      "rotation": {
+        "origin": [
+          12.9,
+          8.7454,
+          8.2546
+        ],
+        "x": 136.1237,
+        "y": -11.2013,
+        "z": -11.4218
       }
     },
     {
       "from": [
-        4.5,
-        6.6,
-        7.8
+        12.9,
+        8.54,
+        7.6438
       ],
       "to": [
-        6.0,
-        7.1,
-        8.2
+        14.72,
+        8.64,
+        8.3562
       ],
       "faces": {
         "north": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            4.5,
-            8.9,
-            6.0,
-            9.4
+            13.5,
+            1.0,
+            14.5,
+            2.0
           ]
         },
         "south": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            4.5,
-            8.9,
-            6.0,
-            9.4
+            13.5,
+            1.0,
+            14.5,
+            2.0
           ]
         },
         "east": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            7.8,
-            8.9,
-            8.2,
-            9.4
-          ]
-        },
-        "west": {
-          "texture": "#gold",
-          "uv": [
-            7.8,
-            8.9,
-            8.2,
-            9.4
+            5.0,
+            10.0,
+            5.5,
+            11.0
           ]
         },
         "up": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            4.5,
-            7.8,
-            6.0,
-            8.2
+            13.5,
+            1.0,
+            14.5,
+            2.0
           ]
         },
         "down": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            4.5,
-            7.8,
-            6.0,
-            8.2
+            0.5,
+            7.0,
+            1.5,
+            8.0
           ]
         }
+      },
+      "rotation": {
+        "origin": [
+          12.9,
+          8.64,
+          8.0
+        ],
+        "x": 180.0,
+        "y": -0.0,
+        "z": -15.9454
       }
     },
     {
       "from": [
-        4.3,
-        6.6,
-        7.8
+        12.9,
+        8.6454,
+        7.3892
       ],
       "to": [
-        4.8,
+        14.72,
+        8.7454,
+        8.1016
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            13.5,
+            1.0,
+            14.5,
+            2.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            13.5,
+            1.0,
+            14.5,
+            2.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            5.0,
+            10.0,
+            5.5,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            13.5,
+            1.0,
+            14.5,
+            2.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            7.0,
+            1.5,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.9,
+          8.7454,
+          7.7454
+        ],
+        "x": -136.1237,
+        "y": 11.2013,
+        "z": -11.4218
+      }
+    },
+    {
+      "from": [
+        12.9,
+        8.9,
+        7.2838
+      ],
+      "to": [
+        14.72,
         9.0,
-        8.2
+        7.9962
       ],
       "faces": {
         "north": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            4.3,
-            7.0,
-            4.8,
-            9.4
+            13.5,
+            1.0,
+            14.5,
+            2.0
           ]
         },
         "south": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            4.3,
-            7.0,
-            4.8,
-            9.4
+            13.5,
+            1.0,
+            14.5,
+            2.0
           ]
         },
         "east": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            7.8,
-            7.0,
-            8.2,
-            9.4
-          ]
-        },
-        "west": {
-          "texture": "#gold",
-          "uv": [
-            7.8,
-            7.0,
-            8.2,
-            9.4
+            5.0,
+            10.0,
+            5.5,
+            11.0
           ]
         },
         "up": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            4.3,
-            7.8,
-            4.8,
-            8.2
+            13.5,
+            1.0,
+            14.5,
+            2.0
           ]
         },
         "down": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            4.3,
-            7.8,
-            4.8,
-            8.2
+            0.5,
+            7.0,
+            1.5,
+            8.0
           ]
         }
+      },
+      "rotation": {
+        "origin": [
+          12.9,
+          9.0,
+          7.64
+        ],
+        "x": -90.0,
+        "y": 15.9454,
+        "z": 0.0
       }
     },
     {
       "from": [
-        9.0,
-        6.6,
-        7.8
+        12.9,
+        9.1546,
+        7.3892
       ],
       "to": [
-        11.0,
-        7.1,
-        8.2
+        14.72,
+        9.2546,
+        8.1016
       ],
       "faces": {
         "north": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            9.0,
-            8.9,
-            11.0,
-            9.4
+            13.5,
+            1.0,
+            14.5,
+            2.0
           ]
         },
         "south": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            9.0,
-            8.9,
-            11.0,
-            9.4
+            13.5,
+            1.0,
+            14.5,
+            2.0
           ]
         },
         "east": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            7.8,
-            8.9,
-            8.2,
-            9.4
-          ]
-        },
-        "west": {
-          "texture": "#gold",
-          "uv": [
-            7.8,
-            8.9,
-            8.2,
-            9.4
+            5.0,
+            10.0,
+            5.5,
+            11.0
           ]
         },
         "up": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            9.0,
-            7.8,
-            11.0,
-            8.2
+            13.5,
+            1.0,
+            14.5,
+            2.0
           ]
         },
         "down": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            9.0,
-            7.8,
-            11.0,
-            8.2
+            0.5,
+            7.0,
+            1.5,
+            8.0
           ]
         }
+      },
+      "rotation": {
+        "origin": [
+          12.9,
+          9.2546,
+          7.7454
+        ],
+        "x": -43.8763,
+        "y": 11.2013,
+        "z": 11.4218
       }
     },
     {
       "from": [
-        9.5,
-        8.55,
-        7.55
+        14.55,
+        9.7,
+        7.4507
       ],
       "to": [
-        11.5,
-        9.45,
-        8.45
-      ],
-      "faces": {
-        "north": {
-          "texture": "#gold",
-          "uv": [
-            9.5,
-            6.55,
-            11.5,
-            7.45
-          ]
-        },
-        "south": {
-          "texture": "#gold",
-          "uv": [
-            9.5,
-            6.55,
-            11.5,
-            7.45
-          ]
-        },
-        "east": {
-          "texture": "#gold",
-          "uv": [
-            7.55,
-            6.55,
-            8.45,
-            7.45
-          ]
-        },
-        "west": {
-          "texture": "#gold",
-          "uv": [
-            7.55,
-            6.55,
-            8.45,
-            7.45
-          ]
-        },
-        "up": {
-          "texture": "#gold",
-          "uv": [
-            9.5,
-            7.55,
-            11.5,
-            8.45
-          ]
-        },
-        "down": {
-          "texture": "#gold",
-          "uv": [
-            9.5,
-            7.55,
-            11.5,
-            8.45
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        11.5,
-        8.2,
-        7.2
-      ],
-      "to": [
-        13.2,
+        16.1825,
         9.8,
-        8.8
+        8.5493
       ],
       "faces": {
         "north": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            11.5,
-            6.2,
-            13.2,
-            7.8
+            2.5,
+            7.0,
+            3.5,
+            8.0
           ]
         },
         "south": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            11.5,
-            6.2,
-            13.2,
-            7.8
+            2.5,
+            7.0,
+            3.5,
+            8.0
           ]
         },
         "east": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            7.2,
-            6.2,
-            8.8,
-            7.8
-          ]
-        },
-        "west": {
-          "texture": "#gold",
-          "uv": [
-            7.2,
-            6.2,
-            8.8,
-            7.8
+            6.5,
+            10.0,
+            7.0,
+            11.0
           ]
         },
         "up": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            11.5,
-            7.2,
-            13.2,
-            8.8
+            4.5,
+            7.0,
+            5.5,
+            8.0
           ]
         },
         "down": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            11.5,
-            7.2,
-            13.2,
-            8.8
+            6.5,
+            7.0,
+            7.5,
+            8.0
           ]
         }
+      },
+      "rotation": {
+        "origin": [
+          14.55,
+          9.8,
+          8.0
+        ],
+        "x": 0.0,
+        "y": -0.0,
+        "z": 49.9697
       }
     },
     {
       "from": [
-        13.2,
-        7.7,
-        6.7
+        14.55,
+        9.5928,
+        7.8507
       ],
       "to": [
-        14.6,
+        16.1825,
+        9.6928,
+        8.9493
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            10.0,
+            7.0,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            4.5,
+            7.0,
+            5.5,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            7.0,
+            7.5,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          14.55,
+          9.6928,
+          8.4
+        ],
+        "x": 20.3724,
+        "y": -22.5105,
+        "z": 45.8739
+      }
+    },
+    {
+      "from": [
+        14.55,
+        9.3,
+        8.1435
+      ],
+      "to": [
+        16.1825,
+        9.4,
+        9.2421
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            10.0,
+            7.0,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            4.5,
+            7.0,
+            5.5,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            7.0,
+            7.5,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          14.55,
+          9.4,
+          8.6928
+        ],
+        "x": 48.0878,
+        "y": -41.5382,
+        "z": 30.7627
+      }
+    },
+    {
+      "from": [
+        14.55,
+        8.9,
+        8.2507
+      ],
+      "to": [
+        16.1825,
+        9.0,
+        9.3493
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            10.0,
+            7.0,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            4.5,
+            7.0,
+            5.5,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            7.0,
+            7.5,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          14.55,
+          9.0,
+          8.8
+        ],
+        "x": 90.0,
+        "y": -49.9697,
+        "z": 0.0
+      }
+    },
+    {
+      "from": [
+        14.55,
+        8.5,
+        8.1435
+      ],
+      "to": [
+        16.1825,
+        8.6,
+        9.2421
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            10.0,
+            7.0,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            4.5,
+            7.0,
+            5.5,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            7.0,
+            7.5,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          14.55,
+          8.6,
+          8.6928
+        ],
+        "x": 131.9122,
+        "y": -41.5382,
+        "z": -30.7627
+      }
+    },
+    {
+      "from": [
+        14.55,
+        8.2072,
+        7.8507
+      ],
+      "to": [
+        16.1825,
+        8.3072,
+        8.9493
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            10.0,
+            7.0,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            4.5,
+            7.0,
+            5.5,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            7.0,
+            7.5,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          14.55,
+          8.3072,
+          8.4
+        ],
+        "x": 159.6276,
+        "y": -22.5105,
+        "z": -45.8739
+      }
+    },
+    {
+      "from": [
+        14.55,
+        8.1,
+        7.4507
+      ],
+      "to": [
+        16.1825,
+        8.2,
+        8.5493
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            10.0,
+            7.0,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            4.5,
+            7.0,
+            5.5,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            7.0,
+            7.5,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          14.55,
+          8.2,
+          8.0
+        ],
+        "x": 180.0,
+        "y": -0.0,
+        "z": -49.9697
+      }
+    },
+    {
+      "from": [
+        14.55,
+        8.2072,
+        7.0507
+      ],
+      "to": [
+        16.1825,
+        8.3072,
+        8.1493
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            10.0,
+            7.0,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            4.5,
+            7.0,
+            5.5,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            7.0,
+            7.5,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          14.55,
+          8.3072,
+          7.6
+        ],
+        "x": -159.6276,
+        "y": 22.5105,
+        "z": -45.8739
+      }
+    },
+    {
+      "from": [
+        14.55,
+        8.5,
+        6.7579
+      ],
+      "to": [
+        16.1825,
+        8.6,
+        7.8565
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            10.0,
+            7.0,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            4.5,
+            7.0,
+            5.5,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            7.0,
+            7.5,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          14.55,
+          8.6,
+          7.3072
+        ],
+        "x": -131.9122,
+        "y": 41.5382,
+        "z": -30.7627
+      }
+    },
+    {
+      "from": [
+        14.55,
+        8.9,
+        6.6507
+      ],
+      "to": [
+        16.1825,
+        9.0,
+        7.7493
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            10.0,
+            7.0,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            4.5,
+            7.0,
+            5.5,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            7.0,
+            7.5,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          14.55,
+          9.0,
+          7.2
+        ],
+        "x": -90.0,
+        "y": 49.9697,
+        "z": 0.0
+      }
+    },
+    {
+      "from": [
+        14.55,
+        9.3,
+        6.7579
+      ],
+      "to": [
+        16.1825,
+        9.4,
+        7.8565
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            10.0,
+            7.0,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            4.5,
+            7.0,
+            5.5,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            7.0,
+            7.5,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          14.55,
+          9.4,
+          7.3072
+        ],
+        "x": -48.0878,
+        "y": 41.5382,
+        "z": 30.7627
+      }
+    },
+    {
+      "from": [
+        14.55,
+        9.5928,
+        7.0507
+      ],
+      "to": [
+        16.1825,
+        9.6928,
+        8.1493
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.5,
+            7.0,
+            3.5,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            10.0,
+            7.0,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            4.5,
+            7.0,
+            5.5,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            6.5,
+            7.0,
+            7.5,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          14.55,
+          9.6928,
+          7.6
+        ],
+        "x": -20.3724,
+        "y": 22.5105,
+        "z": 45.8739
+      }
+    },
+    {
+      "from": [
+        5.98,
+        6.4,
+        7.826
+      ],
+      "to": [
+        6.82,
         10.3,
-        9.3
+        8.174
       ],
       "faces": {
-        "north": {
-          "texture": "#gold",
-          "uv": [
-            13.2,
-            5.7,
-            14.6,
-            8.3
-          ]
-        },
-        "south": {
-          "texture": "#gold",
-          "uv": [
-            13.2,
-            5.7,
-            14.6,
-            8.3
-          ]
-        },
         "east": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            6.7,
-            5.7,
-            9.3,
-            8.3
+            0.5,
+            1.0,
+            1.0,
+            5.0
           ]
         },
         "west": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            6.7,
-            5.7,
-            9.3,
-            8.3
+            0.5,
+            1.0,
+            1.0,
+            5.0
           ]
         },
         "up": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            13.2,
-            6.7,
-            14.6,
-            9.3
+            8.0,
+            10.0,
+            8.5,
+            11.0
           ]
         },
         "down": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            13.2,
-            6.7,
-            14.6,
-            9.3
+            9.5,
+            10.0,
+            10.0,
+            11.0
           ]
         }
       }
     },
     {
       "from": [
-        14.6,
-        6.9,
-        5.9
+        5.98,
+        6.46,
+        7.826
       ],
       "to": [
-        15.6,
-        11.1,
-        10.1
+        6.82,
+        10.24,
+        8.174
       ],
       "faces": {
-        "north": {
-          "texture": "#gold",
-          "uv": [
-            14.6,
-            4.9,
-            15.6,
-            9.1
-          ]
-        },
-        "south": {
-          "texture": "#gold",
-          "uv": [
-            14.6,
-            4.9,
-            15.6,
-            9.1
-          ]
-        },
         "east": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            5.9,
-            4.9,
-            10.1,
-            9.1
+            0.5,
+            1.0,
+            1.0,
+            5.0
           ]
         },
         "west": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            5.9,
-            4.9,
-            10.1,
-            9.1
+            0.5,
+            1.0,
+            1.0,
+            5.0
           ]
         },
         "up": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            14.6,
-            5.9,
-            15.6,
-            10.1
+            8.0,
+            10.0,
+            8.5,
+            11.0
           ]
         },
         "down": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            14.6,
-            5.9,
-            15.6,
-            10.1
+            9.5,
+            10.0,
+            10.0,
+            11.0
           ]
         }
+      },
+      "rotation": {
+        "origin": [
+          6.4,
+          8.35,
+          8
+        ],
+        "x": 0,
+        "y": 45.0,
+        "z": 0
       }
     },
     {
       "from": [
-        15.55,
-        7.4,
-        6.4
+        5.98,
+        6.52,
+        7.826
       ],
       "to": [
-        15.6,
-        10.6,
-        9.6
+        6.82,
+        10.18,
+        8.174
       ],
       "faces": {
         "east": {
-          "texture": "#black",
+          "texture": "#hexen_trumpet",
           "uv": [
-            6.4,
-            5.4,
-            9.6,
-            8.6
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            8.0,
+            10.0,
+            8.5,
+            11.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            9.5,
+            10.0,
+            10.0,
+            11.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.4,
+          8.35,
+          8
+        ],
+        "x": 0,
+        "y": 90.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        5.98,
+        6.58,
+        7.826
+      ],
+      "to": [
+        6.82,
+        10.12,
+        8.174
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            8.0,
+            10.0,
+            8.5,
+            11.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            9.5,
+            10.0,
+            10.0,
+            11.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          6.4,
+          8.35,
+          8
+        ],
+        "x": 0,
+        "y": 135.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        6.29,
+        10.3,
+        7.89
+      ],
+      "to": [
+        6.51,
+        10.62,
+        8.11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            11.0,
+            10.0,
+            11.5,
+            11.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            11.0,
+            10.0,
+            11.5,
+            11.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            11.0,
+            10.0,
+            11.5,
+            11.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            11.0,
+            10.0,
+            11.5,
+            11.0
           ]
         }
       }
     },
     {
       "from": [
-        3.0,
-        1.2,
+        6.07,
+        10.62,
+        7.67
+      ],
+      "to": [
+        6.73,
+        10.86,
+        8.33
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            12.5,
+            10.0,
+            13.0,
+            11.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            12.5,
+            10.0,
+            13.0,
+            11.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            14.0,
+            10.0,
+            14.5,
+            11.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            14.0,
+            10.0,
+            14.5,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            13.0,
+            1.0,
+            14.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            12.5,
+            10.0,
+            13.0,
+            11.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.08,
+        6.4,
+        7.826
+      ],
+      "to": [
+        7.92,
+        10.3,
+        8.174
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            8.0,
+            10.0,
+            8.5,
+            11.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            9.5,
+            10.0,
+            10.0,
+            11.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.08,
+        6.46,
+        7.826
+      ],
+      "to": [
+        7.92,
+        10.24,
+        8.174
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            8.0,
+            10.0,
+            8.5,
+            11.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            9.5,
+            10.0,
+            10.0,
+            11.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          7.5,
+          8.35,
+          8
+        ],
+        "x": 0,
+        "y": 45.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        7.08,
+        6.52,
+        7.826
+      ],
+      "to": [
+        7.92,
+        10.18,
+        8.174
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            8.0,
+            10.0,
+            8.5,
+            11.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            9.5,
+            10.0,
+            10.0,
+            11.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          7.5,
+          8.35,
+          8
+        ],
+        "x": 0,
+        "y": 90.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        7.08,
+        6.58,
+        7.826
+      ],
+      "to": [
+        7.92,
+        10.12,
+        8.174
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            8.0,
+            10.0,
+            8.5,
+            11.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            9.5,
+            10.0,
+            10.0,
+            11.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          7.5,
+          8.35,
+          8
+        ],
+        "x": 0,
+        "y": 135.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        7.39,
+        10.3,
+        7.89
+      ],
+      "to": [
+        7.61,
+        10.62,
+        8.11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            11.0,
+            10.0,
+            11.5,
+            11.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            11.0,
+            10.0,
+            11.5,
+            11.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            11.0,
+            10.0,
+            11.5,
+            11.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            11.0,
+            10.0,
+            11.5,
+            11.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.17,
+        10.62,
+        7.67
+      ],
+      "to": [
+        7.83,
+        10.86,
+        8.33
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            12.5,
+            10.0,
+            13.0,
+            11.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            12.5,
+            10.0,
+            13.0,
+            11.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            14.0,
+            10.0,
+            14.5,
+            11.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            14.0,
+            10.0,
+            14.5,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            13.0,
+            1.0,
+            14.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            12.5,
+            10.0,
+            13.0,
+            11.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        8.18,
+        6.4,
+        7.826
+      ],
+      "to": [
+        9.02,
+        10.3,
+        8.174
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            8.0,
+            10.0,
+            8.5,
+            11.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            9.5,
+            10.0,
+            10.0,
+            11.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        8.18,
+        6.46,
+        7.826
+      ],
+      "to": [
+        9.02,
+        10.24,
+        8.174
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            8.0,
+            10.0,
+            8.5,
+            11.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            9.5,
+            10.0,
+            10.0,
+            11.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8.6,
+          8.35,
+          8
+        ],
+        "x": 0,
+        "y": 45.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        8.18,
+        6.52,
+        7.826
+      ],
+      "to": [
+        9.02,
+        10.18,
+        8.174
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            8.0,
+            10.0,
+            8.5,
+            11.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            9.5,
+            10.0,
+            10.0,
+            11.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8.6,
+          8.35,
+          8
+        ],
+        "x": 0,
+        "y": 90.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        8.18,
+        6.58,
+        7.826
+      ],
+      "to": [
+        9.02,
+        10.12,
+        8.174
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            5.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            8.0,
+            10.0,
+            8.5,
+            11.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            9.5,
+            10.0,
+            10.0,
+            11.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8.6,
+          8.35,
+          8
+        ],
+        "x": 0,
+        "y": 135.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        8.49,
+        10.3,
+        7.89
+      ],
+      "to": [
+        8.71,
+        10.62,
+        8.11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            11.0,
+            10.0,
+            11.5,
+            11.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            11.0,
+            10.0,
+            11.5,
+            11.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            11.0,
+            10.0,
+            11.5,
+            11.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            11.0,
+            10.0,
+            11.5,
+            11.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        8.27,
+        10.62,
+        7.67
+      ],
+      "to": [
+        8.93,
+        10.86,
+        8.33
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            12.5,
+            10.0,
+            13.0,
+            11.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            12.5,
+            10.0,
+            13.0,
+            11.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            14.0,
+            10.0,
+            14.5,
+            11.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            14.0,
+            10.0,
+            14.5,
+            11.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            0.5,
+            13.0,
+            1.0,
+            14.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            12.5,
+            10.0,
+            13.0,
+            11.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3.9739,
+        8.8006,
+        7.79
+      ],
+      "to": [
+        4.9184,
+        9.2606,
+        8.21
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            13.0,
+            4.0,
+            14.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            13.0,
+            4.0,
+            14.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.9739,
+          9.0306,
+          8.0
+        ],
+        "x": 180.0,
+        "y": -0.0,
+        "z": -157.5
+      }
+    },
+    {
+      "from": [
+        3.2058,
+        8.5437,
+        7.85
+      ],
+      "to": [
+        4.1503,
+        9.0037,
+        8.15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            13.0,
+            4.0,
+            14.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            13.0,
+            4.0,
+            14.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.2058,
+          8.7737,
+          8.0
+        ],
+        "x": 180.0,
+        "y": -0.0,
+        "z": -112.5
+      }
+    },
+    {
+      "from": [
+        2.8444,
+        7.8189,
+        7.79
+      ],
+      "to": [
+        3.7889,
+        8.2789,
+        8.21
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            13.0,
+            4.0,
+            14.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            13.0,
+            4.0,
+            14.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          2.8444,
+          8.0489,
+          8.0
+        ],
+        "x": 0.0,
+        "y": -0.0,
+        "z": -67.5
+      }
+    },
+    {
+      "from": [
+        3.1013,
+        7.0508,
+        7.85
+      ],
+      "to": [
+        4.0458,
+        7.5108,
+        8.15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            13.0,
+            4.0,
+            14.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            13.0,
+            4.0,
+            14.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          3.1013,
+          7.2808,
+          8.0
+        ],
+        "x": 0.0,
+        "y": -0.0,
+        "z": -22.5
+      }
+    },
+    {
+      "from": [
+        3.85,
+        6.73,
+        7.73
+      ],
+      "to": [
+        11.65,
+        7.21,
+        8.27
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            8.5,
+            1.0,
+            12.5,
+            2.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            8.5,
+            1.0,
+            12.5,
+            2.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            8.5,
+            1.0,
+            12.5,
+            2.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            8.5,
+            1.0,
+            12.5,
+            2.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        11.5261,
+        6.6894,
+        7.79
+      ],
+      "to": [
+        12.4706,
+        7.1494,
+        8.21
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            13.0,
+            4.0,
+            14.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            13.0,
+            4.0,
+            14.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          11.5261,
+          6.9194,
+          8.0
+        ],
+        "x": 0.0,
+        "y": -0.0,
+        "z": 22.5
+      }
+    },
+    {
+      "from": [
+        12.2942,
+        6.9463,
+        7.85
+      ],
+      "to": [
+        13.2387,
+        7.4063,
+        8.15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            13.0,
+            4.0,
+            14.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            13.0,
+            4.0,
+            14.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2942,
+          7.1763,
+          8.0
+        ],
+        "x": 0.0,
+        "y": -0.0,
+        "z": 67.5
+      }
+    },
+    {
+      "from": [
+        12.6556,
+        7.6711,
+        7.79
+      ],
+      "to": [
+        13.6001,
+        8.1311,
+        8.21
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            13.0,
+            4.0,
+            14.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            13.0,
+            4.0,
+            14.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.6556,
+          7.9011,
+          8.0
+        ],
+        "x": -180.0,
+        "y": -0.0,
+        "z": 112.5
+      }
+    },
+    {
+      "from": [
+        12.3987,
+        8.4392,
+        7.85
+      ],
+      "to": [
+        13.3432,
+        8.8992,
+        8.15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            13.0,
+            4.0,
+            14.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            3.5,
+            13.0,
+            4.0,
+            14.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_trumpet",
+          "uv": [
+            2.0,
+            13.0,
+            2.5,
+            14.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.3987,
+          8.6692,
+          8.0
+        ],
+        "x": -180.0,
+        "y": -0.0,
+        "z": 157.5
+      }
+    },
+    {
+      "from": [
+        3.75,
+        -1.05,
         7.98
       ],
       "to": [
-        10.5,
-        8.7,
+        11.25,
+        6.45,
         8.02
       ],
       "faces": {
@@ -1084,140 +3842,261 @@
     },
     {
       "from": [
-        3.2,
-        8.7,
-        7.9
+        4.35,
+        6.55,
+        7.66
       ],
       "to": [
-        3.5,
-        8.8,
-        8.1
+        4.65,
+        7.35,
+        8.34
       ],
       "faces": {
         "north": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            3.2,
-            7.2,
-            3.5,
-            7.3
+            5.0,
+            13.0,
+            5.5,
+            14.0
           ]
         },
         "south": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            3.2,
-            7.2,
-            3.5,
-            7.3
+            5.0,
+            13.0,
+            5.5,
+            14.0
           ]
         },
         "east": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            7.9,
-            7.2,
-            8.1,
-            7.3
+            5.0,
+            13.0,
+            5.5,
+            14.0
           ]
         },
         "west": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            7.9,
-            7.2,
-            8.1,
-            7.3
+            5.0,
+            13.0,
+            5.5,
+            14.0
           ]
         },
         "up": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            3.2,
-            7.9,
-            3.5,
-            8.1
+            6.5,
+            13.0,
+            7.0,
+            14.0
           ]
         },
         "down": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            3.2,
-            7.9,
-            3.5,
-            8.1
+            6.5,
+            13.0,
+            7.0,
+            14.0
           ]
         }
       }
     },
     {
       "from": [
-        10.0,
-        8.7,
-        7.9
+        10.35,
+        6.55,
+        7.66
       ],
       "to": [
-        10.3,
-        8.8,
-        8.1
+        10.65,
+        7.35,
+        8.34
       ],
       "faces": {
         "north": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            10.0,
-            7.2,
-            10.3,
-            7.3
+            5.0,
+            13.0,
+            5.5,
+            14.0
           ]
         },
         "south": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            10.0,
-            7.2,
-            10.3,
-            7.3
+            5.0,
+            13.0,
+            5.5,
+            14.0
           ]
         },
         "east": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            7.9,
-            7.2,
-            8.1,
-            7.3
+            5.0,
+            13.0,
+            5.5,
+            14.0
           ]
         },
         "west": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            7.9,
-            7.2,
-            8.1,
-            7.3
+            5.0,
+            13.0,
+            5.5,
+            14.0
           ]
         },
         "up": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            10.0,
-            7.9,
-            10.3,
-            8.1
+            6.5,
+            13.0,
+            7.0,
+            14.0
           ]
         },
         "down": {
-          "texture": "#gold",
+          "texture": "#hexen_trumpet",
           "uv": [
-            10.0,
-            7.9,
-            10.3,
-            8.1
+            6.5,
+            13.0,
+            7.0,
+            14.0
           ]
         }
       }
     }
   ],
+  "display": {
+    "gui": {
+      "rotation": [
+        20,
+        200,
+        0
+      ],
+      "translation": [
+        0.308,
+        2.996,
+        0.0
+      ],
+      "scale": [
+        1.0206,
+        1.0206,
+        1.0206
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        -0.02,
+        3.571,
+        0
+      ],
+      "scale": [
+        0.5237,
+        0.5237,
+        0.5237
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "translation": [
+        0.033,
+        2.553,
+        0.0
+      ],
+      "scale": [
+        0.851,
+        0.851,
+        0.851
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        100,
+        15
+      ],
+      "translation": [
+        1,
+        2,
+        0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        -100,
+        -15
+      ],
+      "translation": [
+        -1,
+        2,
+        0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.55,
+        0.55,
+        0.55
+      ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [
+        0,
+        -90,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.55,
+        0.55,
+        0.55
+      ]
+    }
+  },
   "render_type": "minecraft:cutout"
 }

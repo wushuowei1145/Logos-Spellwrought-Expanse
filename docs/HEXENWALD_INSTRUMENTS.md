@@ -14,7 +14,7 @@
 - **星辰花**：五瓣小星花作为镶嵌纹样，少量点缀（琴盖内侧、竖琴共鸣箱、纸带的封条），不铺满。
 - **灵猫**：灵猫在这个国家地位很高，所以竖琴的柱头雕成一只坐着的猫（耳朵、尾巴绕柱），钢琴的谱架两端有小小的猫耳卷饰。
 - **魔法**：演奏时从琴身飘出原版音符粒子（复用原版 `note` 粒子，按音高着色，不新画贴图）；纸带自动演奏时，纸带上被读到的孔会有很淡的光。不加额外的光柱、法阵。
-- 模型与贴图按惯例由 Python 代码生成（`tools/instrument_art.py`），不用图像生成服务；能用原版或 Logos 已有贴图的地方（木板、金块、石英、纸）按路径直接引用，不复制。
+- 模型与贴图按惯例由 Python 代码生成，不用图像生成服务。2026-11-14 起全部乐器按 [INSTRUMENT_ART.md](INSTRUMENT_ART.md) 重做：逐面手绘的贴图页（`tools/instrument_models/`），不再拉伸原版贴图。
 
 ## 2. 方块与物品清单
 
@@ -267,7 +267,8 @@
 | `client/music/InstrumentScreen`、`RollEditorScreen`、`MidiImportScreen`、`MidiLibrary`、`KeyLayout` | 界面、键位、MIDI 文件夹 |
 | `tools/instrument_sources.py` | 下载录音采样、做成 ogg、写采样表 `instruments/<乐器>.json`（第 15 节） |
 | `tools/instrument_samples.py` | 合成钢片琴的采样（两个采样库都没有钢片琴） |
-| `tools/instrument_art.py` | 模型、方块状态、掉落、配方、四张新贴图 |
+| `tools/instrument_art.py` | 方块状态、掉落、配方、物品定义、纸带图标、魔女之森旗 |
+| `tools/instrument_models/`、`tools/instrument_kit.py` | 模型与模型贴图（按组：键盘、管风琴、弦乐、管乐、打击乐与指挥台），见 [INSTRUMENT_ART.md](INSTRUMENT_ART.md) |
 
 设置：服务端 `[instruments] allowRollUpload`、`uploadsPerMinute`；客户端 `instrumentVoices`、`instrumentTotalVoices`、`instrumentKeys`。
 
@@ -276,7 +277,7 @@
 ```text
 uv run --no-project --with numpy --with scipy python tools/instrument_sources.py --cache <下载目录> --ffmpeg <带 libvorbis 的 ffmpeg> [--demo <试听目录>]
 uv run --no-project --with numpy python tools/instrument_samples.py --ffmpeg <带 libvorbis 的 ffmpeg>   # 只有钢片琴
-uv run --no-project --with pillow python tools/instrument_art.py
+uv run --no-project --with pillow --with numpy python tools/instrument_art.py
 ./gradlew test --tests "dev.logos.dimension.music.*" -PlogosJar=...
 ./gradlew runGameTestServer -PlogosJar=... "-PdimensionTests=logos_dimension:instrument_*"
 ./gradlew runClient -PlogosJar=... "-PldTest=instrument_views,instrument_play_ui,roll_editor_ui,midi_import_ui" -PldTestHeadless -PldTestWindow=1280x720
@@ -429,7 +430,7 @@ uv run --no-project --with pillow python tools/instrument_art.py
   右臂姿势换成大提琴 / 低音提琴：两腿（大提琴分开前伸、低音提琴伸直），右臂瞄向弓根，左臂瞄向指板。
   原版手臂是直的：`HeldRig.seated` 让右手瞄准弓根该在的位置，手实际到哪弓根就在哪，弓总从琴弦上的那一点穿过（弓毛贴着琴弦）；
   左手沿指板从琴枕往下，找第一个离肩正好一臂远的点（落在指板下段，像高把位）。
-- 美术：`tools/instrument_art.py` 的 `orchestra()`、`handheld()`。大提琴、低音提琴按竖直的样子画在琴自己的坐标里，再整体后仰、
+- 美术：`tools/instrument_models/strings.py`（2026-11-14 重做；当初是 `tools/instrument_art.py` 的 `orchestra()`、`handheld()`）。大提琴、低音提琴按竖直的样子画在琴自己的坐标里，再整体后仰、
   向左倾（26.1 的模型元素认 x/y/z 欧拉角转动，`rigid()` 把整组元素当刚体转，已带转动的元素与它合成）；琴的摆放与 `HeldRig` 的
   `CELLO` / `BASS` 布局是同一组数（脚本运行时打印弓根离右肩的距离、左手的位置，核对直臂够不够得着）。
   中提琴是小提琴的模型换成原版红树木板的清漆；资源包图标（深红幕布、金色帷幔、聚光灯下一把大提琴）也由这个脚本画。

@@ -1,16 +1,14 @@
 {
   "ambientocclusion": false,
   "textures": {
-    "black": "minecraft:block/black_concrete",
-    "maple": "minecraft:block/birch_planks",
-    "walnut": "minecraft:block/dark_oak_planks",
-    "particle": "minecraft:block/dark_oak_planks"
+    "organ_pipes": "logos_dimension:block/instrument/organ_pipes",
+    "particle": "logos_dimension:block/instrument/particle_walnut"
   },
   "elements": [
     {
       "from": [
         4,
-        0,
+        0.0,
         4
       ],
       "to": [
@@ -20,185 +18,50 @@
       ],
       "faces": {
         "north": {
-          "texture": "#walnut",
+          "texture": "#organ_pipes",
           "uv": [
-            4,
-            0.0,
-            12,
-            16.0
+            6.875,
+            0.25,
+            7.875,
+            4.25
           ]
         },
         "south": {
-          "texture": "#walnut",
+          "texture": "#organ_pipes",
           "uv": [
-            4,
-            0.0,
-            12,
-            16.0
+            8.125,
+            0.25,
+            9.125,
+            4.25
           ]
         },
         "east": {
-          "texture": "#walnut",
+          "texture": "#organ_pipes",
           "uv": [
-            4,
-            0.0,
-            12,
-            16.0
+            8.125,
+            0.25,
+            9.125,
+            4.25
           ]
         },
         "west": {
-          "texture": "#walnut",
+          "texture": "#organ_pipes",
           "uv": [
-            4,
-            0.0,
-            12,
-            16.0
+            8.125,
+            0.25,
+            9.125,
+            4.25
           ]
         },
         "up": {
-          "texture": "#walnut",
+          "texture": "#organ_pipes",
           "uv": [
-            4,
-            4,
-            12,
-            12
-          ]
-        },
-        "down": {
-          "texture": "#walnut",
-          "uv": [
-            4,
-            4,
-            12,
-            12
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        3.8,
-        15,
-        3.8
-      ],
-      "to": [
-        12.2,
-        16,
-        12.2
-      ],
-      "faces": {
-        "north": {
-          "texture": "#maple",
-          "uv": [
-            3.8,
-            0.0,
-            12.2,
-            1.0
-          ]
-        },
-        "south": {
-          "texture": "#maple",
-          "uv": [
-            3.8,
-            0.0,
-            12.2,
-            1.0
-          ]
-        },
-        "east": {
-          "texture": "#maple",
-          "uv": [
-            3.8,
-            0.0,
-            12.2,
-            1.0
-          ]
-        },
-        "west": {
-          "texture": "#maple",
-          "uv": [
-            3.8,
-            0.0,
-            12.2,
-            1.0
-          ]
-        },
-        "up": {
-          "texture": "#maple",
-          "uv": [
-            3.8,
-            3.8,
-            12.2,
-            12.2
-          ]
-        },
-        "down": {
-          "texture": "#maple",
-          "uv": [
-            3.8,
-            3.8,
-            12.2,
-            12.2
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        5,
-        16,
-        5
-      ],
-      "to": [
-        11,
-        16.02,
-        11
-      ],
-      "faces": {
-        "north": {
-          "texture": "#black",
-          "uv": [
-            5,
-            15.98,
-            11,
-            16.0
-          ]
-        },
-        "south": {
-          "texture": "#black",
-          "uv": [
-            5,
-            15.98,
-            11,
-            16.0
-          ]
-        },
-        "east": {
-          "texture": "#black",
-          "uv": [
-            5,
-            15.98,
-            11,
-            16.0
-          ]
-        },
-        "west": {
-          "texture": "#black",
-          "uv": [
-            5,
-            15.98,
-            11,
-            16.0
-          ]
-        },
-        "up": {
-          "texture": "#black",
-          "uv": [
-            5,
-            5,
-            11,
-            11
-          ]
+            1.25,
+            4.75,
+            2.25,
+            6.75
+          ],
+          "cullface": "up"
         }
       }
     }

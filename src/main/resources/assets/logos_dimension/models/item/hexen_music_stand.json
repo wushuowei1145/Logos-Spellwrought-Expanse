@@ -1,3 +1,107 @@
 {
-  "parent": "logos_dimension:block/hexen_music_stand_none"
+  "parent": "logos_dimension:block/hexen_music_stand_none",
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "translation": [
+        -0.039,
+        -0.206,
+        0.0
+      ],
+      "scale": [
+        0.8237,
+        0.8237,
+        0.8237
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        -0.0,
+        2.015,
+        0
+      ],
+      "scale": [
+        0.3769,
+        0.3769,
+        0.3769
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "translation": [
+        -0.0,
+        0.031,
+        0.0
+      ],
+      "scale": [
+        0.7539,
+        0.7539,
+        0.7539
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        0.032,
+        2.453,
+        0
+      ],
+      "scale": [
+        0.6825,
+        0.6825,
+        0.6825
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "translation": [
+        0.027,
+        0.023,
+        0.0
+      ],
+      "scale": [
+        0.5654,
+        0.5654,
+        0.5654
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        225,
+        0
+      ],
+      "translation": [
+        0.027,
+        0.023,
+        0.0
+      ],
+      "scale": [
+        0.5654,
+        0.5654,
+        0.5654
+      ]
+    }
+  }
 }

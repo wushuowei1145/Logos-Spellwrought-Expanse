@@ -75,4 +75,36 @@ class ItemModelDisplayTest {
         assertTrue(offenders.isEmpty(),
             "这些物品引用的方块模型没有 parent/display，手持和掉落会显示成整块：\n"+String.join("\n",offenders));
     }
+
+    /**
+     * 物品模型经过 `item/` 再 parent 到方块模型时也一样：沿 parent 链往上找，链上得有一个模型带 `display`，
+     * 或者最后落到原版模型（原版的 item/generated、block/block 自带显示变换）。
+     *
+     * <p>实机反馈（2026-11-14）：管风琴音管、风箱、钢片琴、钟琴、乐谱架拿在手上和掉在地上是整块大小，物品栏里是正面平视图——
+     * 它们的物品模型只有 `parent: block/...`，那个方块模型没有 display。上面那条检查只看直接引用 `block/` 的物品，漏掉了这种。
+     */
+    @Test void itemModelChainsEndInADisplay()throws Exception{
+        var offenders=new ArrayList<String>();
+        for(String id:itemIds()){
+            var item=read("items/"+id+".json");
+            if(!item.has("model"))continue;
+            var itemModel=item.getAsJsonObject("model");
+            String type=itemModel.has("type")?itemModel.get("type").getAsString():"";
+            if(!itemModel.has("model")||!"minecraft:model".equals(type))continue;
+            String ref=itemModel.get("model").getAsString();
+            var chain=new ArrayList<String>();
+            boolean ok=false;
+            while(ref!=null&&chain.size()<16){
+                chain.add(ref);
+                if(!ref.startsWith("logos_dimension:")){ok=true;break;}
+                var model=read("models/"+ref.substring("logos_dimension:".length())+".json");
+                if(model.has("display")){ok=true;break;}
+                ref=model.has("parent")?model.get("parent").getAsString():null;
+                if(ref!=null&&!ref.contains(":"))ref="minecraft:"+ref;
+            }
+            if(!ok)offenders.add(id+": "+String.join(" -> ",chain));
+        }
+        assertTrue(offenders.isEmpty(),
+            "这些物品的模型链上没有 display，也没落到原版模型，手持、掉落、物品栏都会按原尺寸画：\n"+String.join("\n",offenders));
+    }
 }

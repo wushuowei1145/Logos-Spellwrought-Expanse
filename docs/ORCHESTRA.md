@@ -33,7 +33,7 @@
 | 指挥台 `hexen_podium` | 方块，两格宽一格深：主块和指挥右手边的侧块，拆任一块整座拆掉，只掉一座和谱架上的总谱 | 存总谱、成员、声部分派、速度、响度；站上去指挥 | 讲台在上、金锭居中、深色橡木板 ×5 |
 | 指挥棒 `hexen_baton` | 物品，不叠放 | 右键指挥台：绑定 / 开始 / 停止；（台下）右键乐器：加入 / 退出；站在台上：左键打拍子、右键乐器选声部、滚轮调响度（第 17 节） | 木棍 + 金粒（无序） |
 
-- 样子（`tools/instrument_art.py` 的 `podium_elements`）：两格宽的深胡桃木台身、台面下一道金线、台面略探出；台前（朝乐团）
+- 样子（`tools/instrument_models/percussion.py`，2026-11-14 按 [INSTRUMENT_ART.md](INSTRUMENT_ART.md) 重做；下面是最初的描述）：两格宽的深胡桃木台身、台面下一道金线、台面略探出；台前（朝乐团）
   一级踏步，立面一排六朵星辰花镶嵌；台后两角各一根矮栏柱，金箍、金球，柱间一道低扶栏和两根细栏杆；台面前沿正中一座斜谱架，
   谱板向乐团倾 32°，托条朝着指挥，谱板上沿在指挥胸下（挥到拍点的手臂从上面过，垂着的手碰不到）。放了总谱时（方块状态 `score=true`）摊开一本谱子：红封面露一圈边，两页白纸各两行五线谱。
   贴图全部按路径复用（深色橡木板、金块、星辰花镶嵌、白 / 红 / 黑混凝土），没有新贴图。
@@ -207,7 +207,7 @@
 | 纯逻辑（单元测试） | `music/orchestra/OrchestraArranger`、`BeatMap`、`ConductorPattern`、`BeatFollower`（跟拍子，第 17 节）、`Judgement`（判定，第 18 节）；`MusicRoll` 的速度表、`MidiReader` |
 | 客户端 | `client/music/Conducting`（乐团播放、手势、选中）、`BatonInput`（打拍子、画拍子、右键选声部、滚轮调响度、判定和反馈）、`Metronome`（节拍器）、`ConductingPoses`（手臂、第一人称）、`PartOutline` + `shaders/post/part_outline*`、`PodiumScreen` |
 | 乐器那边 | `InstrumentBlockEntity`（`orchestra`、`conductedBy`、拆掉时退出）、`MusicStandBlock`（换乐器时通知）、`InstrumentBlock`（指挥棒右键） |
-| 美术 | `tools/instrument_art.py` 的 `podium()` |
+| 美术 | `tools/instrument_models/percussion.py`（模型）、`tools/instrument_art.py` 的 `podium()`（方块状态、掉落、配方） |
 | 琴凳与生物乐手（第 14–16 节） | `music/StarbloomBenchBlock`、`StarbloomDuetBenchBlock`、`BenchSeat`、`Benches`、`InstrumentPosts`、`InstrumentSeat`；客户端 `StationPoses`（工位、琴槌）；客户端 `client/music/MusicianPoses`（手位、原版人形模型）、`NpcMusician`（车万女仆骨架的两骨 IK）、`mixin/MusicianModelMixin`；车万女仆模组的女仆 `MaidMusicians`（只在有女仆模组的 jar 时编译）、`animation/maid_musician.animation.json` |
 | 测试 | 单元 `BeatFollowerTest`、`JudgementTest`、`BeatMapTest`、`ConductorPatternTest`、`OrchestraArrangerTest`、`MusicRollTest`、`MidiReaderTest`；世界 `orchestra_*`、`bench_*`；客户端 `orchestra_baton_ui`、`orchestra_metronome_ui`、`orchestra_conduct_ui`、`orchestra_seated_member_ui`、`orchestra_hall_ui` |
 

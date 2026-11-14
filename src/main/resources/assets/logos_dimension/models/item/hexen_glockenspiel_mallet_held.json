@@ -1,145 +1,382 @@
 {
+  "ambientocclusion": false,
   "textures": {
-    "lacquer": "minecraft:block/quartz_block_top",
-    "walnut": "minecraft:block/dark_oak_planks",
-    "particle": "minecraft:block/jungle_planks"
+    "hexen_mallets": "logos_dimension:block/instrument/hexen_mallets",
+    "particle": "logos_dimension:block/instrument/hexen_mallets"
   },
   "elements": [
     {
       "from": [
-        7.75,
+        7.7,
         0,
-        7.75
+        7.7
       ],
       "to": [
-        8.25,
-        10.0,
-        8.25
+        8.3,
+        0.4,
+        8.3
       ],
       "faces": {
         "north": {
-          "texture": "#walnut",
+          "texture": "#hexen_mallets",
           "uv": [
-            7.75,
-            6.0,
-            8.25,
-            16.0
+            4.5,
+            12.0,
+            5.0,
+            13.0
           ]
         },
         "south": {
-          "texture": "#walnut",
+          "texture": "#hexen_mallets",
           "uv": [
-            7.75,
-            6.0,
-            8.25,
-            16.0
+            4.5,
+            12.0,
+            5.0,
+            13.0
           ]
         },
         "east": {
-          "texture": "#walnut",
+          "texture": "#hexen_mallets",
           "uv": [
-            7.75,
             6.0,
-            8.25,
-            16.0
+            12.0,
+            6.5,
+            13.0
           ]
         },
         "west": {
-          "texture": "#walnut",
+          "texture": "#hexen_mallets",
           "uv": [
-            7.75,
             6.0,
-            8.25,
-            16.0
+            12.0,
+            6.5,
+            13.0
           ]
         },
         "up": {
-          "texture": "#walnut",
+          "texture": "#hexen_mallets",
           "uv": [
-            7.75,
-            7.75,
-            8.25,
-            8.25
+            4.5,
+            12.0,
+            5.0,
+            13.0
           ]
         },
         "down": {
-          "texture": "#walnut",
+          "texture": "#hexen_mallets",
           "uv": [
-            7.75,
-            7.75,
-            8.25,
-            8.25
+            4.5,
+            12.0,
+            5.0,
+            13.0
           ]
         }
       }
     },
     {
       "from": [
-        7.3,
-        10.0,
-        7.3
+        7.74,
+        0.4,
+        7.74
       ],
       "to": [
-        8.7,
-        11.4,
-        8.7
+        8.26,
+        3.2,
+        8.26
       ],
       "faces": {
         "north": {
-          "texture": "#lacquer",
+          "texture": "#hexen_mallets",
           "uv": [
-            7.3,
-            4.6,
-            8.7,
-            6.0
+            5.0,
+            1.0,
+            5.5,
+            4.0
           ]
         },
         "south": {
-          "texture": "#lacquer",
+          "texture": "#hexen_mallets",
           "uv": [
-            7.3,
-            4.6,
-            8.7,
-            6.0
+            5.0,
+            1.0,
+            5.5,
+            4.0
           ]
         },
         "east": {
-          "texture": "#lacquer",
+          "texture": "#hexen_mallets",
           "uv": [
-            7.3,
-            4.6,
-            8.7,
-            6.0
+            5.0,
+            1.0,
+            5.5,
+            4.0
           ]
         },
         "west": {
-          "texture": "#lacquer",
+          "texture": "#hexen_mallets",
           "uv": [
-            7.3,
-            4.6,
-            8.7,
-            6.0
+            5.0,
+            1.0,
+            5.5,
+            4.0
           ]
         },
         "up": {
-          "texture": "#lacquer",
+          "texture": "#hexen_mallets",
           "uv": [
-            7.3,
-            7.3,
-            8.7,
-            8.7
+            7.5,
+            12.0,
+            8.0,
+            13.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.82,
+        3.2,
+        7.82
+      ],
+      "to": [
+        8.18,
+        9.55,
+        8.18
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            3.5,
+            1.0,
+            4.0,
+            7.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            3.5,
+            1.0,
+            4.0,
+            7.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            3.5,
+            1.0,
+            4.0,
+            7.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            3.5,
+            1.0,
+            4.0,
+            7.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.74,
+        9.55,
+        7.74
+      ],
+      "to": [
+        8.26,
+        9.95,
+        8.26
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            4.5,
+            12.0,
+            5.0,
+            13.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            4.5,
+            12.0,
+            5.0,
+            13.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            6.0,
+            12.0,
+            6.5,
+            13.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            6.0,
+            12.0,
+            6.5,
+            13.0
           ]
         },
         "down": {
-          "texture": "#lacquer",
+          "texture": "#hexen_mallets",
           "uv": [
-            7.3,
-            7.3,
-            8.7,
-            8.7
+            4.5,
+            12.0,
+            5.0,
+            13.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.35,
+        10.15,
+        7.35
+      ],
+      "to": [
+        8.65,
+        11.25,
+        8.65
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            9.0,
+            12.0,
+            9.5,
+            13.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            9.0,
+            12.0,
+            9.5,
+            13.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            10.5,
+            12.0,
+            11.0,
+            13.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            10.5,
+            12.0,
+            11.0,
+            13.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            9.0,
+            12.0,
+            9.5,
+            13.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            9.0,
+            12.0,
+            9.5,
+            13.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.55,
+        9.95,
+        7.55
+      ],
+      "to": [
+        8.45,
+        11.45,
+        8.45
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            6.5,
+            1.0,
+            7.0,
+            3.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            6.5,
+            1.0,
+            7.0,
+            3.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            6.5,
+            1.0,
+            7.0,
+            3.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            6.5,
+            1.0,
+            7.0,
+            3.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            12.0,
+            12.0,
+            12.5,
+            13.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_mallets",
+          "uv": [
+            12.0,
+            12.0,
+            12.5,
+            13.0
           ]
         }
       }
     }
-  ]
+  ],
+  "display": {}
 }

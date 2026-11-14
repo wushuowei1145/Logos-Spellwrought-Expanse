@@ -150,7 +150,7 @@ public final class MusicianPoses {
         return h;
     }
 
-    /** 琴键顶面的高（像素，从地面算）：同 tools/instrument_art.py 里各件乐器的键盘。 */
+    /** 琴键顶面的高（像素，从地面算）：同 tools/instrument_models/keyboards.py、organ.py 里各件乐器的键盘。 */
     private static float keyTop(InstrumentKind kind) {
         return switch (kind) {
             case HARPSICHORD -> 12.2f;

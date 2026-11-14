@@ -40,7 +40,7 @@ public final class StationPoses {
 
     private StationPoses() {}
 
-    /** 琴槌模型：握点（模型像素 y）和槌头中心（y），同 tools/instrument_art.py 的 mallet_elements。 */
+    /** 琴槌模型：握点（模型像素 y）和槌头中心（y），同 tools/instrument_models/percussion.py 的琴槌。 */
     static float toolGrip(InstrumentKind kind) {
         return 1.5f;
     }
@@ -81,7 +81,7 @@ public final class StationPoses {
             // 方块模型里琴正面朝北、演奏者在南面朝北：就是演奏者面朝北的坐标
             Vector3f feet = new Vector3f((float) f.x, (float) f.y, (float) f.z);
             float move = VoiceBank.recentlyPlayed(main) ? 1 : 0;
-            // 大提琴的凳面高 7.1 像素（tools/instrument_art.py），前沿在双脚前 2.3 像素
+            // 大提琴的凳面高 7.1 像素（tools/instrument_models/strings.py），前沿在双脚前 2.3 像素
             return new MusicianPoses.Musician(MusicianPoses.Mode.BOWED, kind, move, null, null, feet, standing,
                 standing ? 0 : 7.1f - feet.y, 2.3f);
         }

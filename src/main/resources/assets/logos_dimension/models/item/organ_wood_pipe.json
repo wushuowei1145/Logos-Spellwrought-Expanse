@@ -1,3 +1,107 @@
 {
-  "parent": "logos_dimension:block/organ_wood_pipe_single"
+  "parent": "logos_dimension:block/organ_wood_pipe_single",
+  "display": {
+    "gui": {
+      "rotation": [
+        15,
+        195,
+        0
+      ],
+      "translation": [
+        -0.068,
+        -0.375,
+        0.0
+      ],
+      "scale": [
+        0.8754,
+        0.8754,
+        0.8754
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        -0.0,
+        2.0,
+        0
+      ],
+      "scale": [
+        0.375,
+        0.375,
+        0.375
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "translation": [
+        -0.0,
+        -0.0,
+        0.0
+      ],
+      "scale": [
+        0.75,
+        0.75,
+        0.75
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        0.119,
+        2.283,
+        0
+      ],
+      "scale": [
+        0.5597,
+        0.5597,
+        0.5597
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "translation": [
+        0.119,
+        -0.0,
+        0.0
+      ],
+      "scale": [
+        0.5625,
+        0.5625,
+        0.5625
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        225,
+        0
+      ],
+      "translation": [
+        0.119,
+        -0.0,
+        0.0
+      ],
+      "scale": [
+        0.5625,
+        0.5625,
+        0.5625
+      ]
+    }
+  }
 }
