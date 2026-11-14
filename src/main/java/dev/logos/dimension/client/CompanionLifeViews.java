@@ -234,12 +234,62 @@ public abstract class CompanionLifeViews extends CompanionViews {
                         int t = CompanionBlade.started("tsuki") - thrusts, o = CompanionBlade.startedTotal() - CompanionBlade.started("tsuki") - cuts;
                         long ticks = ctx.server().overworld().getGameTime() - began;
                         System.out.println("[companion] melee: " + ticks + " ticks, thrusts=" + t + " other cuts=" + o);
-                        return t <= 1 + ticks / CompanionMind.THRUST_GAP && o >= 3 * Math.max(1, t);
+                        // 每记突刺后面至少接 COMBO_AFTER_THRUST 刀（刀砍得进去以后尸壳倒得快，一记突刺加两刀就够了）
+                        return t <= 1 + ticks / CompanionMind.THRUST_GAP && o >= CompanionMind.COMBO_AFTER_THRUST * Math.max(1, t);
                     })
                     .waitUntilServer("没敌人了，收刀", ctx -> !c.blade().drawn())
                     .ticks(5)
                     .check("客户端里刀散了", ctx -> Minecraft.getInstance().level.getEntity(c.getId()) instanceof ShiraumeCompanion cc && !cc.bladeShown())
                     .teardown("恢复界面", ctx -> Minecraft.getInstance().options.hideGui = false);
+        }
+    }
+
+    /**
+     * 主人打了一头不还手、也不跑的牛（不是敌对生物，也没冲着谁来；30 血，不到“强敌”，她不先缠狐火；三格多外）：她过去拿刀砍，刀得真的砍进去
+     * （用户：对着目标攻击不造成伤害。刀的敌我过滤只认敌对生物和冲着她、主人来的，她自己挑的目标反倒砍不进去）。
+     */
+    @LDLRegisterClient(name = "companion_owner_target", group = "shiraume_companion", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class OwnerTarget extends CompanionLifeViews {
+        // 主人站在旁边矮石台上（六格内，不然她先跟着主人走）
+        private static final Vec3 EYE = new Vec3(-2, FLOOR + 4.6, -1.5), LOOK = new Vec3(.5, FLOOR + 1, 2.5);
+        private ShiraumeCompanion c;
+        private Mob cow;
+        private int landed;
+
+        @Override
+        public void define(ScenarioBuilder s) {
+            stage(s, GameType.SURVIVAL).runCommand("difficulty normal")
+                    .server("主人站上石台", ctx -> onPillar(ctx.server().overworld(), ctx.player(), EYE, LOOK)).ticks(10)
+                    .step("对准", ctx -> aimClient(LOOK))
+                    .server("召唤", ctx -> c = summonAt(ctx.player(), new Vec3(.5, FLOOR + 1, .5)))
+                    .waitUntilServer("入场播完", ctx -> !"summon".equals(c.npcMiscAnimation()))
+                    .server("她身边三格多一头不动的牛（30 血；再远她就放狐火了）", ctx -> {
+                        ServerLevel level = ctx.server().overworld();
+                        c.getNavigation().stop();
+                        cow = spawn(level, EntityType.COW, new Vec3(c.getX(), FLOOR + 1, c.getZ() + 3.2), 180);
+                        cow.setNoAi(true);
+                        cow.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(30);
+                        cow.setHealth(30);
+                        landed = CompanionBlade.landed();
+                    })
+                    .server("主人打它一下", ctx -> cow.hurtServer(ctx.server().overworld(), ctx.player().damageSources().playerAttack(ctx.player()), 1))
+                    .waitUntilServer("凝出流火", ctx -> trace() && c.blade().drawn())
+                    .waitUntilServer("砍进去两刀", ctx -> trace() && CompanionBlade.landed() - landed >= 2)
+                    .screenshot("companion_owner_target")
+                    .checkServer("牛掉了刀伤的血", ctx -> {
+                        System.out.println("[companion] owner target: cow " + cow.getHealth() + "/30, " + CompanionBlade.tally());
+                        return cow.getHealth() <= 30 - 1 - 2 * c.foxfireDamage() * CompanionBlade.BLADE * .8;
+                    })
+                    .teardown("恢复界面", ctx -> Minecraft.getInstance().options.hideGui = false);
+        }
+
+        /** 每秒记一行她在想什么（失败时看得出卡在哪）。 */
+        private boolean trace() {
+            if (c.tickCount % 20 == 0 && c.mind() != null) {
+                System.out.println("[companion] owner target t=" + c.tickCount + " d=" + String.format("%.2f", c.distanceTo(cow)) + " cow=" + cow.getHealth()
+                        + " " + c.mind().describe() + " | " + CompanionBlade.tally());
+            }
+            return true;
         }
     }
 

@@ -544,7 +544,7 @@ public final class CompanionMind extends Goal {
         }
         // 反击：最快的三连或切上
         String move = punishing ? c.getRandom().nextFloat() < .7f ? "sanren_1" : "kiriage" : pickMove();
-        if (!blade.attack(move, hold ? null : target)) return;
+        if (!blade.attack(move, target, !hold)) return;
         lastMove = move;
         combo--;
     }
@@ -929,7 +929,7 @@ public final class CompanionMind extends Goal {
     }
 
     /** 给命令 {@code info} 看的一行。 */
-    String describe() {
+    public String describe() {
         StringBuilder sb = new StringBuilder(current.name()).append(" foe=").append(foe == null ? "-" : foe.getName().getString())
                 .append(" blade=").append(c.blade().drawn() ? c.blade().move() == null ? "?" : c.blade().move().name() : "-");
         for (var e : scores.entrySet()) {

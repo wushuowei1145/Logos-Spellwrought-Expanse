@@ -139,14 +139,24 @@ class CompanionPactTest {
         assertEquals(dev.logos.dimension.ryuka.Ryuka.DAMAGE, CompanionStats.BASE_FOXFIRE * CompanionBlade.BLADE, 1e-6);
     }
 
-    /** 突刺往前冲的那一段和 Boss 招式文件 tsuki 的 lunge 一致，两下接触都在冲的那一段里。 */
-    @Test void thrustLungeMatchesTheBoss() throws Exception {
+    /**
+     * 突刺往前冲的那一段和 Boss 招式文件 tsuki 的 lunge 一样长，但在第一下接触时冲完（照搬 Boss 的时刻，第一下刺出去时
+     * 她才冲了三分之一，够不着）。
+     */
+    @Test void thrustLungeEndsAtTheFirstContact() throws Exception {
         JsonObject boss = read("/data/logos_dimension/combat/movesets/shiraume.json").getAsJsonObject("moves").getAsJsonObject("tsuki");
         var lunge = boss.getAsJsonArray("lunge");
-        assertEquals(lunge.get(0).getAsDouble(), CompanionBlade.LUNGE_FROM, 1e-9);
-        assertEquals(lunge.get(1).getAsDouble(), CompanionBlade.LUNGE_TO, 1e-9);
+        assertEquals(lunge.get(1).getAsDouble() - lunge.get(0).getAsDouble(), CompanionBlade.LUNGE_TO - CompanionBlade.LUNGE_FROM, 1e-9);
         Moveset set = Moveset.parse(read("/data/logos_dimension/combat/movesets/shiraume_companion.json"));
-        for (double t : set.move("tsuki").contacts()) assertTrue(t > CompanionBlade.LUNGE_FROM && t < CompanionBlade.LUNGE_TO, "接触 " + t);
+        assertEquals(set.move("tsuki").contacts().get(0), CompanionBlade.LUNGE_TO, 1e-9);
+    }
+
+    /** 够不够得着量到对方身上最近的一点：盒子里的点是它自己，盒子外的点夹到盒子边上。 */
+    @Test void reachMeasuresToTheNearestPointOfTheBox() {
+        var box = new net.minecraft.world.phys.AABB(0, 0, 0, 1, 2, 1);
+        var inside = new net.minecraft.world.phys.Vec3(.5, 1, .5);
+        assertEquals(inside, CompanionBlade.nearest(box, inside));
+        assertEquals(new net.minecraft.world.phys.Vec3(1, 2, 0), CompanionBlade.nearest(box, new net.minecraft.world.phys.Vec3(3, 5, -1)));
     }
 
     /**
