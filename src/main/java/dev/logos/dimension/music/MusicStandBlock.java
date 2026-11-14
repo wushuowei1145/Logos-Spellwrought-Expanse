@@ -28,6 +28,9 @@ import org.jspecify.annotations.Nullable;
  * 乐谱架：拿着手持乐器右键，把乐器放到架子上（小提琴靠着架子、长笛横在谱台边、小号搁在谱台上垂着王室旗）；
  * 之后它就是一件方块乐器：纸带槽、红石合奏、演奏页都和钢琴一样。潜行空手右键把乐器拿回来。
  * 放着什么乐器记在方块状态 {@link #HOLDS} 上（模型因此看得出来），乐器物品本身存在方块实体里。
+ * <p>
+ * 空架子正对着一张琴凳、凳子上坐着拿手持乐器的人或生物时（{@link #seatedPlayer}），架子就是那位乐手的谱台：
+ * 右键打开那张琴凳的乐器界面（演奏页、纸带页），拿着纸带右键把纸带放进琴凳（docs/ORCHESTRA.md 第 19 节）。
  */
 public class MusicStandBlock extends InstrumentBlock {
     public enum Holds implements StringRepresentable {
@@ -108,10 +111,36 @@ public class MusicStandBlock extends InstrumentBlock {
         return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
     }
 
+    /**
+     * 空架子正对着的琴凳（谱面朝着的那一格、凳子面朝架子），凳子上坐着拿手持乐器的人或生物、正在演奏它（琴凳的 {@code plays} 不是空的）时
+     * 返回琴凳的主块；否则为 null。架子上自己放着乐器时也为 null（那时架子就是那件乐器）。
+     */
+    public static @Nullable BlockPos seatedPlayer(BlockGetter level, BlockPos stand, BlockState state) {
+        if (!state.hasProperty(HOLDS) || state.getValue(HOLDS) != Holds.NONE) return null;
+        Direction facing = state.getValue(FACING);
+        BlockPos front = stand.relative(facing);
+        if (!(level.getBlockState(front).getBlock() instanceof StarbloomBenchBlock)) return null;
+        BlockPos bench = StarbloomBenchBlock.main(level, front);
+        BlockState benchState = level.getBlockState(bench);
+        if (!(benchState.getBlock() instanceof StarbloomBenchBlock b) || benchState.getValue(FACING) != facing.getOpposite()) return null;
+        return b.kind(benchState) != null ? bench : null;
+    }
+
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                           InteractionHand hand, BlockHitResult hit) {
         InstrumentKind kind = Instruments.heldKind(stack);
+        BlockPos bench = seatedPlayer(level, pos, state);
+        if (kind == null && bench != null && Instruments.isRoll(stack)) {
+            // 谱台前坐着乐手：纸带交给琴凳（乐手照着它演奏）
+            if (level.isClientSide()) return InteractionResult.SUCCESS;
+            if (!(level.getBlockEntity(bench) instanceof InstrumentBlockEntity be)) return InteractionResult.PASS;
+            ItemStack old = be.roll();
+            be.setRoll(stack.copyWithCount(1));
+            if (!player.getAbilities().instabuild) stack.shrink(1);
+            if (!old.isEmpty() && !player.getInventory().add(old)) player.drop(old, false);
+            return InteractionResult.SUCCESS;
+        }
         if (kind == null) return super.useItemOn(stack, state, level, pos, player, hand, hit);
         if (level.isClientSide()) return InteractionResult.SUCCESS;
         if (!(level.getBlockEntity(pos) instanceof InstrumentBlockEntity be)) return InteractionResult.PASS;
@@ -129,6 +158,12 @@ public class MusicStandBlock extends InstrumentBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         Holds holds = state.getValue(HOLDS);
+        BlockPos bench = seatedPlayer(level, pos, state);
+        if (bench != null) {
+            // 谱台前坐着乐手：打开那张琴凳的乐器界面（界面类只在客户端存在，经静态入口打开）
+            if (level.isClientSide()) dev.logos.dimension.client.music.MusicClient.openInstrument(bench);
+            return InteractionResult.SUCCESS;
+        }
         if (holds == Holds.NONE) {
             if (player instanceof net.minecraft.server.level.ServerPlayer sp) {
                 sp.sendSystemMessage(Component.translatable("message.logos_dimension.instrument.need_instrument"), true);

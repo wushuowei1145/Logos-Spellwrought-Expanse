@@ -553,4 +553,96 @@ public abstract class HallViews implements UIScenario {
             });
         }
     }
+
+    /**
+     * 谱台前坐着乐手（docs/ORCHESTRA.md 第 19 节）：第一小提琴前排外侧的僵尸拿着小提琴坐在琴凳上，空手右键它面前的乐谱架，
+     * 打开的是那张琴凳的乐器界面；弹三个音琴凳出声；拿着纸带右键乐谱架，纸带进了琴凳，放起来僵尸拉琴；
+     * 拿走僵尸的小提琴，界面关掉，再右键乐谱架不再打开。
+     */
+    @LDLRegisterClient(name = "orchestra_stand_player_ui", group = "instrument", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class StandPlayer extends HallViews {
+        /** 僵尸面前的乐谱架（琴凳朝南，架子在它南边一格、朝北）。 */
+        static final BlockPos STAND = VIOLIN_BENCH.south();
+
+        private static void rightClickStand() {
+            var mc = Minecraft.getInstance();
+            mc.gameMode.useItemOn(mc.player, net.minecraft.world.InteractionHand.MAIN_HAND,
+                new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(STAND).add(0, 0.3, 0.2), net.minecraft.core.Direction.SOUTH, STAND, false));
+        }
+
+        @Override
+        public void define(ScenarioBuilder s) {
+            ScenarioBuilder b = stage(s)
+                .server("stand south of the zombie's music stand, empty-handed", ctx -> {
+                    ctx.player().getInventory().clearContent();
+                    DimensionTravel.teleport(ctx.player(), ctx.server().overworld(),
+                        new Vec3(STAND.getX() + 0.5, STAND.getY(), STAND.getZ() + 1.8), 180f, 20f);
+                })
+                .ticks(10)
+                .check("the stand is empty, the bench behind it plays the violin", ctx -> {
+                    var level = Minecraft.getInstance().level;
+                    return level.getBlockState(STAND).getValue(MusicStandBlock.HOLDS) == MusicStandBlock.Holds.NONE
+                        && level.getBlockState(VIOLIN_BENCH).getValue(StarbloomBenchBlock.PLAYS) == MusicStandBlock.Holds.VIOLIN
+                        && VIOLIN_BENCH.equals(MusicStandBlock.seatedPlayer(level, STAND, level.getBlockState(STAND)));
+                })
+                .step("right-click the music stand", ctx -> rightClickStand())
+                .waitUntil("the zombie's violin opens", ctx -> Minecraft.getInstance().screen instanceof InstrumentScreen screen
+                    && screen.pos().equals(VIOLIN_BENCH))
+                .waitUntilServer("I play the bench", ctx -> ctx.server().overworld().getBlockEntity(VIOLIN_BENCH) instanceof InstrumentBlockEntity be
+                    && ctx.player().getUUID().equals(be.performer()))
+                .step("show the hud", ctx -> Minecraft.getInstance().options.hideGui = false)
+                .keyDown('Z').keyDown('C').keyDown('B')
+                .ticks(6)
+                .check("the bench sounds the violin", ctx -> VoiceBank.sounding(MusicClient.liveKey(VIOLIN_BENCH)) >= 3
+                    && VoiceBank.recentlyPlayed(VIOLIN_BENCH))
+                .screenshot("orchestra_stand_player_ui")
+                .keyUp('Z').keyUp('C').keyUp('B')
+                .step("close the screen", ctx -> {
+                    Minecraft.getInstance().setScreen(null);
+                    Minecraft.getInstance().options.hideGui = true;
+                })
+                .server("hold a score", ctx -> ctx.player().setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,
+                    ConductingViews.punched(ConductingViews.score())))
+                .ticks(4)
+                .step("right-click the stand with the score", ctx -> rightClickStand())
+                .waitUntilServer("the score went to the bench, not the stand", ctx -> {
+                    var level = ctx.server().overworld();
+                    return level.getBlockEntity(VIOLIN_BENCH) instanceof InstrumentBlockEntity bench && !bench.roll().isEmpty()
+                        && level.getBlockEntity(STAND) instanceof InstrumentBlockEntity stand && stand.roll().isEmpty();
+                })
+                .server("play it", ctx -> {
+                    if (ctx.server().overworld().getBlockEntity(VIOLIN_BENCH) instanceof InstrumentBlockEntity be) be.play();
+                })
+                .waitUntil("the zombie plays the score", ctx -> VoiceBank.recentlyPlayed(VIOLIN_BENCH));
+            b = shot(b, "orchestra_stand_player_bowing", point(-9.6, 4.9, -5.4), point(-11, 3.9, -7.6));
+            b = b.server("put the score away", ctx -> ctx.player().getInventory().clearContent())
+                .ticks(4)
+                .step("open it again from the stand", ctx -> rightClickStand())
+                .waitUntil("open again", ctx -> Minecraft.getInstance().screen instanceof InstrumentScreen screen && screen.pos().equals(VIOLIN_BENCH))
+                .server("take the zombie's violin back", ctx -> {
+                    ServerLevel level = ctx.server().overworld();
+                    if (level.getBlockEntity(VIOLIN_BENCH) instanceof InstrumentBlockEntity be) be.stopPlayback();
+                    Entity zombie = StarbloomBenchBlock.occupant(level, VIOLIN_BENCH);
+                    if (zombie instanceof Mob mob) Benches.takeBack(mob, ctx.player());
+                    StarbloomBenchBlock.refresh(level, VIOLIN_BENCH);
+                })
+                .waitUntil("the screen closes with the violin gone", ctx -> Minecraft.getInstance().screen == null
+                    && Minecraft.getInstance().level.getBlockState(VIOLIN_BENCH).getValue(StarbloomBenchBlock.PLAYS) == MusicStandBlock.Holds.NONE)
+                .server("empty hands", ctx -> ctx.player().getInventory().clearContent())
+                .ticks(2)
+                .step("right-click the stand once more", ctx -> rightClickStand())
+                .ticks(10)
+                .check("nothing opens without a musician", ctx -> Minecraft.getInstance().screen == null);
+            b.teardownServer("stop playing", ctx -> {
+                if (ctx.server().overworld().getBlockEntity(VIOLIN_BENCH) instanceof InstrumentBlockEntity be) be.stopPlayback();
+            });
+            b.teardown("my own eyes again", ctx -> {
+                var mc = Minecraft.getInstance();
+                mc.setScreen(null);
+                if (mc.player != null) mc.setCameraEntity(mc.player);
+                mc.options.hideGui = false;
+                mc.options.setCameraType(CameraType.FIRST_PERSON);
+            });
+        }
+    }
 }
