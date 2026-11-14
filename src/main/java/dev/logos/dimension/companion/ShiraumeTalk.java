@@ -54,6 +54,8 @@ final class ShiraumeTalk {
     static CompanionSheet sheet(ShiraumeCompanion c, ServerPlayer p) {
         var bond = p.getData(Companions.BOND);
         int seals = Math.min(bond.seals(), MAX_SEALS);
+        // 她身上的继承平时 5 秒才更新一次；面板开着时每秒刷新档案，先按主人现在的装备算一遍，穿脱盔甲马上看得到
+        CompanionStats.apply(c, p, bond.seals());
         float fox = c.foxfireDamage();
         List<CompanionSheet.Stat> stats = List.of(
                 new CompanionSheet.Stat("health", c.getMaxHealth(), (float) CompanionStats.BASE_HEALTH, c.getHealth()),

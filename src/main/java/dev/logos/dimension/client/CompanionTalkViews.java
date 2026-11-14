@@ -18,6 +18,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.inventory.ChestMenu;
@@ -64,6 +65,7 @@ public abstract class CompanionTalkViews extends CompanionViews {
         private ShiraumeCompanion c;
         private Mob husk;
         private int guiScale;
+        private float maxHead;
         private java.util.concurrent.CompletableFuture<Void> reload = java.util.concurrent.CompletableFuture.completedFuture(null);
 
         /** 维护者玩的是中文：对话和面板用中文拍（测试客户端默认英文）。 */
@@ -147,6 +149,27 @@ public abstract class CompanionTalkViews extends CompanionViews {
                         return Math.abs(sheet.stat("health").value() - 46) < .01 && Math.abs(sheet.stat("attack").value() - 5.8) < .01;
                     })
                     .screenshot("companion_panel_stats")
+                    .server("主人穿上钻石胸甲（护甲 8、韧性 2）", ctx ->
+                            ctx.player().setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.DIAMOND_CHESTPLATE)))
+                    .waitUntil("面板上护甲 4 +2.4、韧性 0 +0.6", ctx -> {
+                        var sheet = panel().parent().sheet();
+                        return Math.abs(sheet.stat("armor").value() - 6.4) < .01 && Math.abs(sheet.stat("toughness").value() - .6) < .01;
+                    })
+                    .screenshot("companion_panel_stats_armor")
+                    .server("脱下来", ctx -> ctx.player().setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY))
+                    .waitUntil("面板上护甲回到 4、韧性 0", ctx -> {
+                        var sheet = panel().parent().sheet();
+                        return Math.abs(sheet.stat("armor").value() - 4) < .01 && sheet.stat("toughness").value() < .01;
+                    })
+                    .step("拖着转十圈，每 7° 量一次头", ctx -> {
+                        maxHead = 0;
+                        for (int i = 0; i < 520; i++) {
+                            panel().drag(7);
+                            maxHead = Math.max(maxHead, Math.abs(panel().headOffset()));
+                        }
+                    }).ticks(2)
+                    .check("转多少圈，头相对身子都不超过 50°", ctx -> maxHead > 30 && maxHead <= 50.01)
+                    .screenshot("companion_panel_turned")
                     .step("契印 · 能力", ctx -> panel().tab(CompanionPanelScreen.Tab.SKILLS)).ticks(4)
                     .screenshot("companion_panel_skills")
                     .server("盖三枚契印", ctx -> {
