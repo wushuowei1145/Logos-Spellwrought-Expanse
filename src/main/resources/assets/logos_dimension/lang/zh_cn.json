@@ -1524,7 +1524,6 @@
   "screen.logos_dimension.podium.metronome": "节拍器：%s",
   "screen.logos_dimension.podium.on": "开",
   "screen.logos_dimension.podium.off": "关",
-  "hud.logos_dimension.conducting.combo": "%s 连击",
   "screen.logos_dimension.podium.no_score": "谱架上没有总谱",
   "screen.logos_dimension.podium.insert_score": "拿着纸带右键指挥台放上总谱",
   "screen.logos_dimension.podium.loading": "正在读取总谱……",

@@ -1,5 +1,17 @@
 # 首版验证记录
 
+## 指挥：按到拍子上的金色点击效果
+
+2026-11-14：分支 `fix/conducting-click`，基于 main `7125db8a`（#258，#255 之后），Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`。
+说明见 [docs/ORCHESTRA.md](docs/ORCHESTRA.md) 第 18.2 节。平时指挥不再显示 PERFECT / GREAT / GOOD / MISS 和连击（底下照样算，留给音游玩法），按到拍子上（80 毫秒以内）准星上一个小的金色点击效果。
+
+| 层级 | 结果 |
+|---|---|
+| 单元 | 全量 419 个 1 个失败、1 个跳过，失败的仍是 main 上就缺的 zh_cn `item.logos_dimension.fuda_desk` |
+| 实际客户端 | `orchestra_metronome_ui` 改成：正好打在节拍器的拍上迸出星星（底下仍判 PERFECT、两连击）；晚 200 毫秒不迸星星（底下 MISS、连击归零）。`orchestra_metronome_ui` + `orchestra_baton_ui` **2/2、13/13 检查** |
+| 截图人工看过 | 按到拍子上 0.13 秒时准星周围六颗像素十字小金星；没按到时只有左上角灰字 |
+| 未验证 | 真鼠标的手感、星星大小亮度合不合适 |
+
 ## 乐器美术重做
 
 2026-11-14：分支 `feat/instrument-art`（未提交），基于 main `52e94cfc`（#257），Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`。
