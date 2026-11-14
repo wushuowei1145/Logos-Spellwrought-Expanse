@@ -17,6 +17,8 @@
 - 提交与 PR 不添加 AI 作者、共同作者或贡献者署名，使用维护者已有的 Git 身份。
 - 复用现有 Logos 材料注册 ID，不复制注册污染碎片。
 - 特效按 [docs/VFX.md](docs/VFX.md) 做：复用 Logos 的法术特效时在服务端调用 `dev.logos.runtime.Vfx`；附属自己的特效直接用 Photon 写，已有贴图用 `logos:` 路径引用。构建需要 `-PlogosJar`。
+- 做运镜、全屏后期、画风、处决特写或新的全屏通道之前，先读总览 [docs/CINEMATICS.md](docs/CINEMATICS.md)：选哪个系统、通道的顺序、深度在哪一步取、兼容和光敏的规矩（全屏明暗交替每秒不超过 3 次，遵从「隐藏闪电的闪烁」）、不要贴在屏幕上的纹理、着色器不要用 GLSL 内置名、怎么测。
+- 处决特写（投技、处决的两秒特写）按 [docs/EXECUTION_SHOTS.md](docs/EXECUTION_SHOTS.md)：服务端调 `ExecutionShots.play`，玩家逐刀点击的用 `InteractiveExecutions.start`；伤害由调用方按 `ExecutionTimeline` 的时刻自己做。
 - 运镜（镜头暂时离开玩家再回来，方块、Boss 等共用）按 [docs/CAMERA_SHOTS.md](docs/CAMERA_SHOTS.md)：服务端调 `CameraShots.play`，不要用 `setCameraEntity` 做这件事。
 - 全屏后期（黑白闪、电影蒙版）按 [docs/SCREEN_EFFECTS.md](docs/SCREEN_EFFECTS.md)：服务端调 `ScreenEffects.flash`，不要占原版 `setPostEffect` 的槽。改了后期要在文档列的 Sodium、Iris 和两种光影包下各跑一遍。
 - 消散（模型逐渐消失、边缘发光）按 [docs/DISSOLVE.md](docs/DISSOLVE.md)：服务端调 `Dissolving`。让特效泛光用 `GlowBloom`，见 [docs/SCREEN_EFFECTS.md](docs/SCREEN_EFFECTS.md)，不要按亮度对整个画面取阈值。
