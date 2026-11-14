@@ -55,8 +55,8 @@ public final class NpcMusician {
     private static final float PLAYER_REACH = 9;
     /** 弹键盘时上身前倾（弧度，绕腰 {@code UpBody}）：车万女仆骨架的手臂只有 7.5 像素左右，坐直了只够得着正前方的琴键。 */
     private static final float KEYS_LEAN = 0.3f;
-    /** 弹竖琴时上身略前倾。 */
-    private static final float HARP_LEAN = 0.1f;
+    /** 弹竖琴时上身前倾（同键盘）：琴弦在琴凳前沿外 6 像素，坐直了手够不着。 */
+    private static final float HARP_LEAN = 0.3f;
     /** 键盘、竖琴的手位够不着时左右收回到这个比例的臂长以内（肘留一点弯）。 */
     private static final float REACH = 0.97f;
     /** 大腿平伸时有一半厚度在支点下面（森林精灵、神狐的大腿厚 3.8 单位）：整个人再抬高这么多，大腿压在凳面上而不是陷进去。 */

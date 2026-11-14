@@ -594,10 +594,13 @@ def build_seated(out):
 
 # —— 灵猫竖琴 ——
 
-# 方块坐标（朝北放置）：下半格是主块，模型画满 y 0–32；占地 x 1–15、z 4–12（ConcertHarpBlock 的碰撞箱）。
-# 琴弦在 z = 8 的平面里（x 5.9–13，同旧模型；MusicianPoses.harp 的手在 y 12–20），立柱在左（x≈3.5），
+# 方块坐标（朝北放置）：下半格是主块，模型画满 y 0–32。下面先按琴身居中画（琴弦在 z = 8 的平面里，x 5.9–13），
+# 画完整架往演奏者那一侧（南）挪 HARP_SHIFT：琴弦落在 z = 13，占地 x 1–15、z 9–16（ConcertHarpBlock 的碰撞箱；
+# 底座和踏板伸出格子 0.4–1.5 像素，在琴凳前沿之前）。琴凳上的人肩膀离格子正中的弦约 13.5 像素，森林精灵、神狐的手臂
+# 只有 7.5 像素左右，挪近了 MusicianPoses.harp 才能把手放在弦上（那边的 HARP_STRINGS_Z 同这里）。立柱在左（x≈3.5），
 # 共鸣箱从立柱脚斜着升到右上，琴颈是一条 S 形的「和声曲线」从柱冠连到共鸣箱顶。
-HARP_COLUMN = (3.5, 8.0)            # 立柱中心 (x, z)
+HARP_SHIFT = 5.0                   # 整架往南挪多少像素
+HARP_COLUMN = (3.5, 8.0)            # 立柱中心 (x, z)，挪之前
 HARP_COLUMN_MAT = "gilt"           # 立柱的料：金（按任务说明）；维护者想压金色比例可以改成 "marble"
 HARP_BOARD = ((5.6, 2.8), (13.2, 23.6))   # 音板正面那条线（下端在底座上、上端在琴颈下）
 HARP_NECK = [(4.4, 27.0), (6.4, 26.3), (8.4, 25.8), (10.2, 25.95), (11.9, 26.35), (13.3, 25.95), (14.6, 24.7)]
@@ -726,7 +729,7 @@ def harp_elements(s):
         else:
             mat = {0: "string_red", 3: "string_navy"}.get((i - 3) % 7, "gut")
         el.append(cube((x - 0.09, yb, 7.91), (x + 0.09, yt, 8.09), mat, s, grain="y", faces=keep("north", "south", "east", "west")))
-    return el
+    return kit.shifted(el, 0, 0, HARP_SHIFT)
 
 
 def _paw_line(img, w, h, rng):

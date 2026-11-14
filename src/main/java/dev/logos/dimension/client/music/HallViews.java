@@ -63,6 +63,9 @@ public abstract class HallViews implements UIScenario {
     private static int camera = -1;
     private static final List<Integer> MUSICIANS = new ArrayList<>();
     private static int pianist = -1, violinist = -1, organist = -1, cellist = -1, bassist = -1, glockenist = -1, timpanist = -1;
+    private static int harpist = -1, zombieHarpist = -1;
+    /** 第一竖琴的琴凳（精灵，在合奏里）、第二竖琴的琴凳（不在合奏里，坐个原版僵尸：看直臂够不够得着琴弦）。 */
+    static final BlockPos HARP_BENCH = at(-10, 4, -14), SECOND_HARP_BENCH = at(-12, 4, -14);
     static final BlockPos TIMPANI_BENCH = at(-4, 6, -20);
 
     static BlockPos at(int x, int y, int z) {
@@ -190,7 +193,8 @@ public abstract class HallViews implements UIScenario {
                 pianist = seat(level, elf, PIANO_BENCH, null, me).getId();
                 seat(level, NpcEntities.DIVINE_FOX.get(), at(-4, 3, -9), null, me);
                 seat(level, elf, at(-8, 4, -14), null, me);
-                seat(level, elf, at(-10, 4, -14), null, me);
+                harpist = seat(level, elf, HARP_BENCH, null, me).getId();
+                zombieHarpist = seat(level, EntityType.ZOMBIE, SECOND_HARP_BENCH, null, me).getId();
                 organist = seat(level, elf, ORGAN_BENCH, violin, me).getId();
                 // 工位：大提琴、低音提琴琴后，钟琴、管钟前面；定音鼓后的双人琴凳
                 cellist = post(level, EntityType.ZOMBIE, at(5, 3, -7)).getId();
@@ -316,6 +320,16 @@ public abstract class HallViews implements UIScenario {
                     return c != null && c.mode() == MusicianPoses.Mode.BOWED && c.kind() == InstrumentKind.CELLO && !c.standing()
                         && bass != null && bass.mode() == MusicianPoses.Mode.BOWED && bass.kind() == InstrumentKind.DOUBLE_BASS && bass.standing();
                 })
+                .check("both harpists (elf, zombie) have their hands on the harp's strings", ctx -> {
+                    for (int id : new int[]{harpist, zombieHarpist}) {
+                        var m = musician(id);
+                        if (m == null || m.mode() != MusicianPoses.Mode.HARP || m.left() == null || m.right() == null) return false;
+                        for (var hand : new org.joml.Vector3f[]{m.left(), m.right()}) {
+                            if (Math.abs(hand.z - MusicianPoses.HARP_STRINGS_Z) > 2 || hand.x < 5.9f || hand.x > 13) return false;
+                        }
+                    }
+                    return true;
+                })
                 .check("the skeleton at the glockenspiel holds two mallets", ctx -> {
                     var g = musician(glockenist);
                     return g != null && g.mode() == MusicianPoses.Mode.MALLETS && g.left() != null && g.right() != null && g.standing();
@@ -364,6 +378,16 @@ public abstract class HallViews implements UIScenario {
             b = shot(b, "hall_piano_hands", point(-3.3, 5.7, -4.4), point(-4.1, 4.1, -6.1));
             b = shot(b, "hall_celesta_hands", point(-6.5, 6.0, -13.9), point(-7.6, 5.0, -13.2));
             b = shot(b, "hall_organ_hands", point(1.9, 8.0, -17.6), point(0.4, 7.1, -18.9));
+            // 竖琴手的两只手搭在琴弦上：从前面两架竖琴中间看，再从右肩后上方往下看（看得出手和琴弦是不是在同一层）；第二竖琴是原版僵尸
+            b = shot(b, "hall_harp_hands", point(-11.1, 6.6, -11.3), point(-9.5, 5.1, -12.9));
+            b = shot(b, "hall_harp_over_shoulder", point(-10.15, 6.0, -13.6), point(-9.5, 4.95, -12.85));
+            b = shot(b, "hall_harp_zombie_front", point(-13.2, 6.4, -11.4), point(-11.5, 5.1, -12.9));
+            b = shot(b, "hall_harp_zombie_over_shoulder", point(-12.15, 6.0, -13.6), point(-11.5, 4.95, -12.85));
+            b = shot(b, "hall_harp_zombie_legs", point(-13.6, 4.75, -13.0), point(-11.5, 4.45, -13.0));
+            // 拉弓：从运弓那只手的前方隔几刻连拍几张，看手和弓是不是一起走（弓 21 刻来回一次）。大提琴朝南、手在西边；低音提琴朝西、手在北边
+            for (int i = 1; i <= 4; i++) b = shot(b, "hall_cello_bow_zombie_" + i, point(4.3, 4.5, -5.3), point(5.4, 3.8, -6.6));
+            for (int i = 1; i <= 4; i++) b = shot(b, "hall_cello_bow_elf_" + i, point(6.3, 4.5, -5.3), point(7.4, 3.8, -6.6));
+            for (int i = 1; i <= 3; i++) b = shot(b, "hall_bass_bow_elf_" + i, point(11.0, 5.0, -8.9), point(12.4, 4.1, -7.6));
             b = b.server("stop, the player sits at a free violin bench with a violin", ctx -> {
                     ServerLevel level = ctx.server().overworld();
                     if (level.getBlockEntity(PODIUM) instanceof PodiumBlockEntity be) be.stop();
@@ -396,6 +420,33 @@ public abstract class HallViews implements UIScenario {
                     return m != null && m.mode() == MusicianPoses.Mode.KEYS && m.left() != null && m.left().x < m.right().x;
                 });
             b = shot(b, "hall_player_organ", point(-2.4, 8.6, -16.6), point(0.5, 7.6, -19.4));
+            b = shot(b, "hall_player_organ_hands", point(1.9, 8.0, -17.6), point(0.4, 7.1, -18.9));
+            // 玩家坐到钢琴、竖琴前（精灵让座）：身体真正画出来时手也在琴键、琴弦上（26.1 画之前会再 setupAnim 一次，见 MusicianDrawMixin）
+            b = b.server("the player moves to the piano; the elf pianist makes room", ctx -> {
+                    ServerLevel level = ctx.server().overworld();
+                    if (InstrumentBlock.entityAt(level, CONSOLE) instanceof InstrumentBlockEntity console) console.stopPlayback();
+                    ctx.player().stopRiding();
+                    vacate(level, PIANO_BENCH);
+                    StarbloomBenchBlock.sit(level, PIANO_BENCH, ctx.player());
+                })
+                .waitUntil("I sit at the piano", ctx -> {
+                    var m = MusicianPoses.of(Minecraft.getInstance().player);
+                    return m != null && m.mode() == MusicianPoses.Mode.KEYS && m.kind() == InstrumentKind.GRAND_PIANO;
+                });
+            b = shot(b, "hall_player_piano", point(-6.8, 5.2, -3.4), point(-5, 4.6, -6.2));
+            b = shot(b, "hall_player_piano_hands", point(-3.3, 5.7, -4.4), point(-4.1, 4.1, -6.1));
+            b = b.server("the player moves to the first harp; the elf harpist makes room", ctx -> {
+                    ServerLevel level = ctx.server().overworld();
+                    ctx.player().stopRiding();
+                    vacate(level, HARP_BENCH);
+                    StarbloomBenchBlock.sit(level, HARP_BENCH, ctx.player());
+                })
+                .waitUntil("I sit at the harp", ctx -> {
+                    var m = MusicianPoses.of(Minecraft.getInstance().player);
+                    return m != null && m.mode() == MusicianPoses.Mode.HARP;
+                });
+            b = shot(b, "hall_player_harp", point(-6.2, 6.4, -11.2), point(-9, 5.5, -14));
+            b = shot(b, "hall_player_harp_hands", point(-11.1, 6.6, -11.3), point(-9.5, 5.1, -12.9));
             b.teardownServer("stop playing, stand up", ctx -> {
                 ServerLevel level = ctx.server().overworld();
                 if (InstrumentBlock.entityAt(level, CONSOLE) instanceof InstrumentBlockEntity console) console.stopPlayback();

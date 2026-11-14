@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * 坐在星辰花琴凳上演奏的人形（玩家、僵尸、骷髅……）：在模型自己的 setupAnim 全部跑完之后再摆双臂。
  * 僵尸之类的模型在 setupAnim 末尾还会再抬一次手，所以不能放在 HumanoidModel.setupAnim 里。只在渲染状态带着演奏者时起作用。
+ * 这里摆的姿势给随后的乐器层用；身体在 {@link MusicianDrawMixin} 那里画之前还会再 setupAnim 一次，要在那边再摆。
  */
 @Mixin(LivingEntityRenderer.class)
 public abstract class MusicianModelMixin {
