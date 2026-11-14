@@ -218,7 +218,7 @@ public final class CompanionPanelScreen extends Screen {
         if (model == null) return;
         CompanionStyle.Showcase show = style.showcase();
         float side = show.yaw() + turn;
-        float body = 180 + side, head = body + side * show.look();
+        float body = 180 + side, head = body + show.head(side);
         model.yBodyRot = model.yBodyRotO = body;
         model.setYRot(body);
         model.yRotO = body;
@@ -507,10 +507,20 @@ public final class CompanionPanelScreen extends Screen {
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
         if (dragging) {
-            turn += (float) dx * 1.6f;
+            turn = Mth.wrapDegrees(turn + (float) dx * 1.6f);
             return true;
         }
         return super.mouseDragged(event, dx, dy);
+    }
+
+    /** 测试用：像拖动一样转 {@code degrees} 度。 */
+    public void drag(float degrees) {
+        turn = Mth.wrapDegrees(turn + degrees);
+    }
+
+    /** 测试用：现在头相对身子转了多少度。 */
+    public float headOffset() {
+        return style.showcase().head(style.showcase().yaw() + turn);
     }
 
     @Override

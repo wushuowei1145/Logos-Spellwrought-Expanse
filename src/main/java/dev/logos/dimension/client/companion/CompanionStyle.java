@@ -40,7 +40,21 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
      * 头转回来多少成看着你（{@code look}）；{@code pitch} 镜头俯仰；{@code height} 她占展示框高度的几成；{@code lift} 往上挪多少（格）。
      */
     public record Showcase(BiFunction<Level, CompanionSheet, @Nullable LivingEntity> make, float yaw, float look, float pitch, float height,
-                           float lift) {}
+                           float lift) {
+        /** 头最多往你这边转多少度。 */
+        static final float MAX_HEAD = 50;
+
+        /**
+         * 身子侧了 {@code side} 度（拖动转身后的总角度）时，头相对身子转多少度。按 sin 变：侧身 90° 时转得最多、背对你时不转，
+         * 转多少圈都连续、有上限（原来是 side × look，一直累加，转几圈头就拧到背后去了）。默认角度 {@code yaw} 时正好是 yaw × look。
+         */
+        public float head(float side) {
+            double s = Math.sin(Math.toRadians(yaw));
+            float amp = Math.abs(s) > .05 ? (float) (yaw * look / s) : look * 60;
+            amp = Math.min(Math.abs(amp), MAX_HEAD);
+            return amp * (float) Math.sin(Math.toRadians(side));
+        }
+    }
 
     private static final Map<String, CompanionStyle> STYLES = new ConcurrentHashMap<>();
 
