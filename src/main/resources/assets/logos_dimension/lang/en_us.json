@@ -1198,6 +1198,7 @@
   "item.logos_dimension.explosion_staff": "Explosion Staff",
   "item.logos_dimension.explosion_staff.desc": "Made for one spell only: Explosion",
   "item.logos_dimension.explosion_staff.usage": "Hold right-click in the main hand to chant (%1$s mana, about %2$s s), let go once full to cast where you aim",
+  "item.logos_dimension.explosion_staff.cast": "Hold right-click to chant, let go once full to cast",
   "item.logos_dimension.explosion_staff.warning": "Everything inside the blast is wiped out; do not stand too close",
   "message.logos_dimension.explosion.main_hand": "Hold the Explosion Staff in your main hand to chant",
   "message.logos_dimension.explosion.mana": "Not enough mana: Explosion needs %1$s, you have %2$s",
