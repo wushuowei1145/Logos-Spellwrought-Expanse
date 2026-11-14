@@ -1198,6 +1198,7 @@
   "item.logos_dimension.explosion_staff": "爆裂魔杖",
   "item.logos_dimension.explosion_staff.desc": "只为一种魔法而生：爆裂魔法",
   "item.logos_dimension.explosion_staff.usage": "主手按住右键吟唱（注入 %1$s 魔力，约 %2$s 秒），蓄满后松开，在准星所指之处释放",
+  "item.logos_dimension.explosion_staff.cast": "按住右键吟唱，蓄满后松开释放",
   "item.logos_dimension.explosion_staff.warning": "爆炸范围内的一切都会被消灭，别站得太近",
   "message.logos_dimension.explosion.main_hand": "爆裂魔杖要拿在主手才能吟唱",
   "message.logos_dimension.explosion.mana": "魔力不足：爆裂魔法需要 %1$s 魔力，当前 %2$s",

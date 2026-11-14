@@ -91,7 +91,7 @@ public final class BlacksteelLongswordItem extends WandItem implements CombatWea
     @Override public void combatTick(ServerPlayer player, String move) { SwordCasting.tick(player, move); }
     @Override public boolean manaGuard(ServerPlayer player, String move) { return SwordCasting.guarding(move); }
 
-    @Override protected String usage() { return Component.translatable("tooltip.logos_dimension.blacksteel_longsword.cast").getString(); }
+    @Override protected Component usage() { return Component.translatable("tooltip.logos_dimension.blacksteel_longsword.cast"); }
 
     /** 补回剑的伤害与攻速；装了带 wrap_cost、wrap_power 的 Logos 时再加缠绕的减费与增伤，没有就不加。 */
     @SubscribeEvent static void attributes(ItemAttributeModifierEvent event) {

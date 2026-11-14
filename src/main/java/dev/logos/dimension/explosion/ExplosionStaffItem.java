@@ -71,7 +71,7 @@ public final class ExplosionStaffItem extends WandItem {
     }
 
     @Override
-    protected String usage() {
-        return "按住右键吟唱，蓄满后松开释放";
+    protected Component usage() {
+        return Component.translatable("item.logos_dimension.explosion_staff.cast");
     }
 }
