@@ -77,7 +77,7 @@ import org.jspecify.annotations.Nullable;
  * <p>动画走附属的 NPC 驱动：走、跑、死亡由主控制器按状态播；入场、表情、小动作、蜷着睡、跪坐、泡温泉、吃东西由 {@code misc} 播；
  * 施放狐火和流火招式由 {@code combat} 播。
  */
-public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, FoxfireBearer, LastingCompanion, Parry.Reactive {
+public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, FoxfireBearer, LastingCompanion, Parry.Reactive, CompanionTalk.Talker {
     public static final Identifier ASSET = LogosDimension.id("shiraume_companion");
 
     public enum Mode { COMPANION, WAITING, PACT, LEAVING }
@@ -120,6 +120,9 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
     private @Nullable UUID owner;
     private float foxfireDamage = (float) CompanionStats.BASE_FOXFIRE;
     private boolean staying, soaking;
+    /** 正在和她说话的人（对话界面开着，{@link CompanionTalk}）；她自己选的装束（对话里让她换的，打完仗会换回这一套）。 */
+    private @Nullable UUID talkWith;
+    private CompanionOutfit preferred = CompanionOutfit.MIKO;
     private long leavingAt = -1, vanishAt = -1;
     private long castStart = -1, kindleReady;
     private @Nullable LivingEntity castTarget;
@@ -226,6 +229,10 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
 
     public boolean staying() {
         return staying;
+    }
+
+    void setStaying(boolean on) {
+        staying = on;
     }
 
     void toggleStay(ServerPlayer p) {
@@ -435,6 +442,8 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
             return;
         }
         ServerPlayer p = ownerPlayer();
+        // 对话在别处结束了（主人下线、换了维度……没经过 talkEnded）：别一直站着等
+        if (talkWith != null && tickCount % 20 == 0 && CompanionTalk.partner(this) == null) talkWith = null;
         if (tickCount % 20 == 0) {
             // 主人不在（下线、死亡、去了别的维度），或者契上记的已经不是她（旧存档里留下的那一位）：悄悄离开
             if (p == null || !p.getData(Companions.BOND).out().map(getUUID()::equals).orElse(false)) {
@@ -503,7 +512,9 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
             return;
         }
         BlockPos at = p.blockPosition();
-        boolean open = level.getHeight(Heightmap.Types.MOTION_BLOCKING, at.getX(), at.getZ()) <= at.getY();
+        // 露天：头顶那一格往上没有挡着的方块。脚下那一格可以是半砖、土径（站在上面时脚在那一格里），
+        // 脚底也可能差一点点陷进下面那一格（浮点误差），所以和脚下那一格往上一格比，不和脚下那一格比
+        boolean open = level.getHeight(Heightmap.Types.MOTION_BLOCKING, at.getX(), at.getZ()) <= at.getY() + 1;
         if (open || !lanternOn() && level.getBrightness(LightLayer.BLOCK, at) > 7) {
             setLantern(false);
             return;
@@ -530,6 +541,17 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
             level.sendParticles(new DustParticleOptions(FoxfireFlame.SHIRAUME.core, 1.2f), getX(), getY() + .7, getZ(), 16, .3, .45, .3, 0);
             level.playSound(null, getX(), getY(), getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.NEUTRAL, .7f, 1.4f);
         }
+    }
+
+    /** 她自己选的那一套（对话里换的）；平时是巫女服。 */
+    public CompanionOutfit preferredOutfit() {
+        return preferred;
+    }
+
+    /** 对话里让她换上 {@code o}：记下来，打完仗也换回这一套。 */
+    void chooseOutfit(CompanionOutfit o, long now) {
+        preferred = o;
+        dress(o, now);
     }
 
     /** 上次换装（或泡着温泉、续上浴衣）是哪一刻。 */
@@ -592,6 +614,7 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
         }
         Vec3 aim = target.position().add(0, target.getBbHeight() * .55, 0).subtract(from);
         FoxfireBolt.companion(level, this, from, aim, target, foxfireDamage);
+        casts++;
         level.playSound(null, getX(), getY(), getZ(), SoundEvents.FIRECHARGE_USE, SoundSource.NEUTRAL, .45f, 1.9f);
     }
 
@@ -696,8 +719,12 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
         }
     }
 
-    /** 测试用：吃过几口、摘过几次。 */
-    private static int meals, picked;
+    /** 测试用：吃过几口、摘过几次、放过几发狐火弹。 */
+    private static int meals, picked, casts;
+
+    public static int casts() {
+        return casts;
+    }
 
     public static int meals() {
         return meals;
@@ -729,7 +756,7 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
     // ---------------------------------------------------------------- 互动
 
     /**
-     * 右键她（docs/SHIRAUME_COMPANION.md 第 8.11 节）：等她的那位玩家来说话；主人空手摸头、潜行空手开包袱、
+     * 右键她（docs/SHIRAUME_COMPANION.md 第 8.11 节）：等她的那位玩家来说话；主人潜行右键和她说话（对话，第 8.13 节）、空手摸头、
      * 拿吃的喂她、拿空白形代盖契印、绑定的形代丢了时拿一张纸让她再折一张。
      */
     @Override
@@ -742,18 +769,18 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
             return InteractionResult.SUCCESS;
         }
         if (mode() != Mode.COMPANION) return InteractionResult.PASS;
+        if (sp.isShiftKeyDown()) {
+            CompanionTalk.begin(sp, this);
+            return InteractionResult.SUCCESS;
+        }
         ItemStack held = sp.getItemInHand(hand);
         if (held.isEmpty()) {
-            if (sp.isShiftKeyDown()) {
-                CompanionPouch.open(sp);
-            } else {
-                getNavigation().stop();
-                getLookControl().setLookAt(sp, 40, 40);
-                mood.petted(level().getGameTime());
-                var b = sp.getData(Companions.BOND);
-                long day = level().getOverworldClockTime() / 24000;
-                sp.setData(Companions.BOND, b.withAffection(b.affection() + CompanionBond.pat(b.patsOn(day))).withPats(day, b.patsOn(day) + 1));
-            }
+            getNavigation().stop();
+            getLookControl().setLookAt(sp, 40, 40);
+            mood.petted(level().getGameTime());
+            var b = sp.getData(Companions.BOND);
+            long day = level().getOverworldClockTime() / 24000;
+            sp.setData(Companions.BOND, b.withAffection(b.affection() + CompanionBond.pat(b.patsOn(day))).withPats(day, b.patsOn(day) + 1));
             return InteractionResult.SUCCESS;
         }
         if (KatashiroItem.isBlank(held)) {
@@ -891,6 +918,7 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
         if (owner != null) output.store("Owner", UUIDUtil.CODEC, owner);
         output.putBoolean("Staying", staying);
         output.putString("Outfit", outfit().id);
+        output.putString("PreferredOutfit", preferred.id);
         // 过场中途存档：读回来接着等
         output.putBoolean("Waiting", waiting());
     }
@@ -901,6 +929,7 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
         owner = input.read("Owner", UUIDUtil.CODEC).orElse(null);
         staying = input.getBooleanOr("Staying", false);
         entityData.set(OUTFIT, CompanionOutfit.byId(input.getStringOr("Outfit", CompanionOutfit.MIKO.id)).id);
+        preferred = CompanionOutfit.byId(input.getStringOr("PreferredOutfit", CompanionOutfit.MIKO.id));
         // 泡温泉时存的档：泡的状态不存，失重也别带回来
         setNoGravity(false);
         if (input.getBooleanOr("Waiting", false) && owner != null) waitFor(owner);
@@ -939,6 +968,72 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
     @Override
     public Identifier npcAnimationAsset() {
         return ASSET;
+    }
+
+    // ---------------------------------------------------------------- 说话（CompanionTalk.Talker）
+
+    /** 有人在和她说话（服务端）。 */
+    public boolean talking() {
+        return talkWith != null;
+    }
+
+    @Override
+    public String talkId() {
+        return ShiraumeTalk.ID;
+    }
+
+    @Override
+    public boolean canTalk(ServerPlayer p) {
+        return isCompanion() && !leaving() && !isDeadOrDying() && owner != null && owner.equals(p.getUUID());
+    }
+
+    @Override
+    public CompanionSheet talkSheet(ServerPlayer p) {
+        return ShiraumeTalk.sheet(this, p);
+    }
+
+    @Override
+    public List<CompanionTalk.Line> talkGreeting(ServerPlayer p) {
+        return ShiraumeTalk.greeting(this, p);
+    }
+
+    @Override
+    public CompanionTalk.Reply talkPick(ServerPlayer p, String option) {
+        return ShiraumeTalk.pick(this, p, option);
+    }
+
+    @Override
+    public void talkStarted(ServerPlayer p) {
+        talkWith = p.getUUID();
+        getNavigation().stop();
+    }
+
+    @Override
+    public void talkEnded(ServerPlayer p, boolean bye) {
+        talkWith = null;
+        ShiraumeTalk.ended(this, p, bye);
+    }
+
+    @Override
+    public void talkInterrupted(ServerPlayer p) {
+        ShiraumeTalk.interrupted(this, p);
+    }
+
+    @Override
+    public CompanionTalk.@Nullable Line talkBack(ServerPlayer p) {
+        return ShiraumeTalk.back(this, p);
+    }
+
+    /**
+     * 角色面板里展示的那一位（客户端临时造的，不放进世界）：穿 {@code outfit}，表情 {@code face}（{@code face_*}，循环），
+     * 身体播 {@code pose}（{@code ryuka_idle} 这类循环动作，可以为 null），{@code blade} 时流火凝在手上。
+     */
+    public void showcase(CompanionOutfit outfit, String face, @Nullable String pose, boolean blade) {
+        entityData.set(OUTFIT, outfit.id);
+        entityData.set(MISC, face);
+        entityData.set(MOVE, pose == null ? "" : pose + "|0|1|true");
+        entityData.set(BLADE_STATE, (blade ? "1|" : "0|") + (level().getGameTime() - 1000));
+        entityData.set(LANTERN, false);
     }
 
     @Override

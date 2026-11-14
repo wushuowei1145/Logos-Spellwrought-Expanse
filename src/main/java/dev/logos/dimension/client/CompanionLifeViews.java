@@ -46,7 +46,7 @@ import net.minecraft.world.phys.Vec3;
  * <li>{@code companion_execute}：主人的流火印在劫掠兽身上爆开，她冲上去上挑接处决；
  * <li>{@code companion_feed}：喂她甜浆果（喜欢）、腐肉（不吃）；她饿了自己去摘浆果，浆果丛扎不到她；
  * <li>{@code companion_soak}：主人泡在一格半深的露天风吕格局里，她浮在旁边泡着不起身；换到浅池，她跟过去坐在池底泡；
- * <li>{@code companion_lantern}：主人在没有天光的地方，她身边飘起一团淡粉狐火；潜行右键打开她的包袱；
+ * <li>{@code companion_lantern}：主人在没有天光的地方，她身边飘起一团淡粉狐火；潜行右键和她说话，从对话里打开她的包袱；
  * <li>{@code companion_outfit}：泡温泉换上浴衣「梅灯夜渡」，出浴后还穿着，一打起来换回巫女服；命令也能换。
  * </ul>
  */
@@ -606,15 +606,17 @@ public abstract class CompanionLifeViews extends CompanionViews {
                     .screenshot("companion_lantern")
                     .ticks(35)
                     .screenshot("companion_lantern_2")
-                    .server("潜行右键她", ctx -> {
-                        ServerPlayer p = ctx.player();
-                        p.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-                        p.setShiftKeyDown(true);
-                        c.interact(p, InteractionHand.MAIN_HAND, Vec3.ZERO);
-                        p.setShiftKeyDown(false);
-                    })
-                    .checkServer("打开了她的包袱", ctx -> ctx.player().containerMenu instanceof ChestMenu)
+                    .server("潜行右键她：对话", ctx -> CompanionTalkViews.sneakClick(ctx.player(), c))
+                    .waitUntil("对话打开", ctx -> CompanionTalkViews.talk() != null)
+                    .step("让我看看你的包袱", ctx -> CompanionTalkViews.talk().choose("pouch"))
+                    .waitUntilServer("打开了她的包袱", ctx -> ctx.player().containerMenu instanceof ChestMenu)
                     .server("关上", ctx -> ctx.player().closeContainer())
+                    .waitUntil("回到对话", ctx -> CompanionTalkViews.talk() != null)
+                    .step("一会再聊", ctx -> {
+                        CompanionTalkViews.talk().skip();
+                        CompanionTalkViews.talk().choose("bye");
+                    })
+                    .waitUntil("对话关了", ctx -> Minecraft.getInstance().screen == null)
                     .server("收回她", ctx -> Companions.dismiss(ctx.player()))
                     .waitUntilServer("灯拆掉了", ctx -> CompanionLight.count(ctx.server().overworld()) == 0)
                     .teardown("恢复界面", ctx -> Minecraft.getInstance().options.hideGui = false);

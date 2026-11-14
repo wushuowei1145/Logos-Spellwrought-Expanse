@@ -82,12 +82,14 @@ public final class Companions {
      *   <li>{@code seals}：契印（白梅的叫尾之契）；
      *   <li>{@code affection}：好感，一起经历的事情慢慢加；{@code satiety}：她的饱腹（0–{@link CompanionBond#SATIETY_MAX}）；
      *   <li>{@code mealDay}、{@code meals}：最近一次一起吃饭的游戏日、那天吃了几次；{@code soakDay}：最近一次一起泡温泉的日子；
-     *       {@code guardDay}：形代替身最近一次用掉的日子；{@code patDay}、{@code pats}：同理，摸头。
+     *       {@code guardDay}：形代替身最近一次用掉的日子；{@code patDay}、{@code pats}：同理，摸头；
+     *   <li>{@code tactic}：行动策略（{@link CompanionTactic}，对话里改）。
      * </ul>
      */
     public record Bond(boolean pact, Optional<UUID> out, long restUntil, int seals, boolean comeBack, float affection, float satiety,
-                       long mealDay, int meals, long soakDay, long guardDay, long patDay, int pats) {
-        public static final Bond NONE = new Bond(false, Optional.empty(), 0, 0, false, 0, CompanionBond.SATIETY_MAX, -1, 0, -1, -1, -1, 0);
+                       long mealDay, int meals, long soakDay, long guardDay, long patDay, int pats, String tactic) {
+        public static final Bond NONE = new Bond(false, Optional.empty(), 0, 0, false, 0, CompanionBond.SATIETY_MAX, -1, 0, -1, -1, -1, 0,
+                CompanionTactic.ADAPTIVE.id);
         static final Codec<Bond> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("pact", false).forGetter(Bond::pact),
                 UUIDUtil.CODEC.optionalFieldOf("out").forGetter(Bond::out),
@@ -101,51 +103,60 @@ public final class Companions {
                 Codec.LONG.optionalFieldOf("soak_day", -1L).forGetter(Bond::soakDay),
                 Codec.LONG.optionalFieldOf("guard_day", -1L).forGetter(Bond::guardDay),
                 Codec.LONG.optionalFieldOf("pat_day", -1L).forGetter(Bond::patDay),
-                Codec.INT.optionalFieldOf("pats", 0).forGetter(Bond::pats)).apply(i, Bond::new));
+                Codec.INT.optionalFieldOf("pats", 0).forGetter(Bond::pats),
+                Codec.STRING.optionalFieldOf("tactic", CompanionTactic.ADAPTIVE.id).forGetter(Bond::tactic)).apply(i, Bond::new));
 
         Bond withOut(@Nullable UUID id) {
-            return new Bond(pact, Optional.ofNullable(id), restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats);
+            return new Bond(pact, Optional.ofNullable(id), restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic);
         }
 
         Bond withRest(long until) {
-            return new Bond(pact, out, until, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats);
+            return new Bond(pact, out, until, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic);
         }
 
         Bond withComeBack(boolean back) {
-            return new Bond(pact, out, restUntil, seals, back, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats);
+            return new Bond(pact, out, restUntil, seals, back, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic);
         }
 
         Bond withPact(boolean made) {
-            return new Bond(made, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats);
+            return new Bond(made, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic);
         }
 
         Bond withSeals(int n) {
-            return new Bond(pact, out, restUntil, Math.max(0, n), comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats);
+            return new Bond(pact, out, restUntil, Math.max(0, n), comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic);
         }
 
         Bond withAffection(float a) {
-            return new Bond(pact, out, restUntil, seals, comeBack, Math.max(0, a), satiety, mealDay, meals, soakDay, guardDay, patDay, pats);
+            return new Bond(pact, out, restUntil, seals, comeBack, Math.max(0, a), satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic);
         }
 
         Bond withSatiety(float s) {
             return new Bond(pact, out, restUntil, seals, comeBack, affection, Mth.clamp(s, 0, CompanionBond.SATIETY_MAX), mealDay, meals, soakDay,
-                    guardDay, patDay, pats);
+                    guardDay, patDay, pats, tactic);
         }
 
         Bond withMeal(long day, int count) {
-            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, day, count, soakDay, guardDay, patDay, pats);
+            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, day, count, soakDay, guardDay, patDay, pats, tactic);
         }
 
         Bond withSoak(long day) {
-            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, day, guardDay, patDay, pats);
+            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, day, guardDay, patDay, pats, tactic);
         }
 
         Bond withGuard(long day) {
-            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, day, patDay, pats);
+            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, day, patDay, pats, tactic);
         }
 
         Bond withPats(long day, int count) {
-            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, day, count);
+            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, day, count, tactic);
+        }
+
+        public Bond withTactic(CompanionTactic t) {
+            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, t.id);
+        }
+
+        public CompanionTactic tacticOf() {
+            return CompanionTactic.byId(tactic);
         }
 
         /** 今天（游戏日 {@code day}）已经一起吃过几次饭。 */
@@ -175,6 +186,8 @@ public final class Companions {
         ATTACHMENTS.register(bus);
         KatashiroItem.register(bus);
         CompanionLines.register(bus);
+        CompanionTalk.register(bus);
+        ShiraumeTalk.init();
         bus.addListener((EntityAttributeCreationEvent event) -> event.put(SHIRAUME.get(), ShiraumeCompanion.createAttributes().build()));
         NeoForge.EVENT_BUS.addListener(Companions::onBreak);
         NeoForge.EVENT_BUS.addListener(Companions::onPlace);

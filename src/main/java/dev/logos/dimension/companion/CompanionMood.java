@@ -29,6 +29,9 @@ final class CompanionMood {
     private boolean curled;
     private long pettedAt = -10_000, poutAt = -10_000, surprisedAt = -10_000, curiousUntil = -10_000, delightUntil = -10_000, afraidUntil = -10_000;
     private long nextHungry;
+    /** 说着话时的表情（对话里她回话时定），到哪一刻。 */
+    private @Nullable String talkFace;
+    private long talkFaceUntil;
     private int pets;
     private long strongKillSeen, fallSeen, stretchDay = -1, nextTilt, nextSneeze;
     private long farSince = -1;
@@ -109,6 +112,12 @@ final class CompanionMood {
 
     void pouted(long now) {
         poutAt = now;
+    }
+
+    /** 说话时摆 {@code face} 这个表情 {@code ticks} 刻（之后说着话就是安心的样子）。 */
+    void talk(String face, long now, int ticks) {
+        talkFace = face;
+        talkFaceUntil = now + ticks;
     }
 
     void tick(long now) {
@@ -208,6 +217,7 @@ final class CompanionMood {
         boolean engaged = c.mind() != null && c.mind().engaged();
         String want;
         if (engaged) want = "face_angry";
+        else if (c.talking()) want = now < talkFaceUntil && talkFace != null ? talkFace : "face_content";
         else if (now < afraidUntil) want = "face_flustered";
         else if (now - surprisedAt < 30) want = "face_surprised";
         else if (now < delightUntil) want = "face_happy";
