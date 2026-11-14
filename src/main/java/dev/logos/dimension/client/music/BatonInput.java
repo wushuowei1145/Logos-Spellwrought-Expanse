@@ -86,6 +86,11 @@ public final class BatonInput {
     private static double judgedMs;
     private static long judgedAt;
     private static int combo;
+    /** 离拍子多少毫秒以内算按到拍子上（和判定的 GREAT 一样宽）。 */
+    static final double ON_BEAT_MS = 80;
+    // 准星上的金色星星：什么时候迸出的、每颗的方向（弧度）
+    private static long clickedAt;
+    private static final double[] STAR_ANGLES = new double[6];
     /** 测试用：代替真的鼠标（{x, y, 按下为 1}）；为 null 时用真的。 */
     static double @Nullable [] testMouse;
     /** 测试用：打过几拍（按键、画拍子都算）。 */
@@ -201,17 +206,22 @@ public final class BatonInput {
         judge(wasHeld ? 0 : metronome ? metronomeMs : b.errorMs(), now);
     }
 
-    /** 一拍的判定：档次、连击、棒尖的火花，左上角写早晚多少毫秒。 */
+    /**
+     * 一拍：按到拍子上（{@link #ON_BEAT_MS} 以内）准星上迸出一小簇金色的星星，左上角写早晚多少毫秒。
+     * 档次和连击照样算着（{@link Judgement}，留给以后的音游玩法），平时不显示。
+     */
     private static void judge(double errorMs, long now) {
         Judgement j = Judgement.of(errorMs);
         judgement = j;
         judgedMs = errorMs;
         judgedAt = now;
         combo = j.combo(combo);
-        burst(j);
-        if (Math.abs(errorMs) < 5) flash(Component.translatable("hud.logos_dimension.conducting.on_time"), j.color);
+        boolean onBeat = Math.abs(errorMs) <= ON_BEAT_MS;
+        if (onBeat) click(now);
+        int color = onBeat ? 0xFFE8C15A : 0xFFB0B0B0;
+        if (Math.abs(errorMs) < 5) flash(Component.translatable("hud.logos_dimension.conducting.on_time"), color);
         else flash(Component.translatable(errorMs < 0 ? "hud.logos_dimension.conducting.early" : "hud.logos_dimension.conducting.late",
-            Math.round(Math.abs(errorMs))), j.color);
+            Math.round(Math.abs(errorMs))), color);
     }
 
     private static long started;
@@ -308,36 +318,6 @@ public final class BatonInput {
         lastTrail = now;
         Vec3 tip = tipInWorld(player);
         if (tip != null) player.level().addParticle(new DustParticleOptions(0xE8C15A, 0.35f), tip.x, tip.y, tip.z, 0, 0, 0);
-    }
-
-    /** 棒尖的火花：PERFECT 是一圈往外散的金光（在拍子平面上）加几点碎金，其他档次少一些、颜色不同，MISS 几点灰。 */
-    private static void burst(Judgement j) {
-        var mc = Minecraft.getInstance();
-        if (mc.player == null) return;
-        Vec3 tip = tipInWorld(mc.player);
-        if (tip == null) return;
-        var level = mc.player.level();
-        var rand = mc.player.getRandom();
-        int rgb = j.color & 0xFFFFFF;
-        if (j == Judgement.PERFECT || j == Judgement.GREAT) {
-            Vec3 fwd = Vec3.directionFromRotation(0, mc.player.yBodyRot), right = new Vec3(-fwd.z, 0, fwd.x);
-            int n = j == Judgement.PERFECT ? 18 : 12;
-            double speed = j == Judgement.PERFECT ? 0.11 : 0.08;
-            for (int i = 0; i < n; i++) {
-                double a = Math.PI * 2 * i / n;
-                Vec3 v = right.scale(Math.cos(a) * speed).add(0, Math.sin(a) * speed, 0);
-                level.addParticle(new DustParticleOptions(rgb, j == Judgement.PERFECT ? 0.6f : 0.45f), tip.x, tip.y, tip.z, v.x, v.y, v.z);
-            }
-        }
-        int sparks = switch (j) {
-            case PERFECT -> 8;
-            case GREAT, GOOD -> 5;
-            case MISS -> 3;
-        };
-        for (int i = 0; i < sparks; i++) {
-            double vx = (rand.nextDouble() - 0.5) * 0.06, vy = (rand.nextDouble() - 0.3) * 0.06, vz = (rand.nextDouble() - 0.5) * 0.06;
-            level.addParticle(new DustParticleOptions(rgb, 0.4f), tip.x, tip.y, tip.z, vx, vy, vz);
-        }
     }
 
     /** 棒尖在世界里的大致位置：胸前一步远的竖直平面上，按 {@link Conducting#poseOf} 的图形。 */
@@ -515,45 +495,49 @@ public final class BatonInput {
             int alpha = (int) (255 * (1 - (now - feedbackAt) / 700_000_000.0));
             g.text(font, feedback, x + 4, y + 33, (Math.max(16, alpha) << 24) | (feedbackColor & 0xFFFFFF));
         }
-        pop(g, now);
+        stars(g, now);
+    }
+
+    private static void click(long now) {
+        clickedAt = now;
+        var rand = java.util.concurrent.ThreadLocalRandom.current();
+        double turn = rand.nextDouble() * Math.PI * 2;
+        for (int i = 0; i < STAR_ANGLES.length; i++) {
+            STAR_ANGLES[i] = turn + Math.PI * 2 * i / STAR_ANGLES.length + (rand.nextDouble() - 0.5) * 0.6;
+        }
     }
 
     /**
-     * 判定像音游一样跳在准星上方：一下放大再落回去（0.09 秒），0.35 秒后淡出；PERFECT 字大、外面一圈金色的晕。下面是连击数。
+     * 按到拍子上时准星上的点击效果：中间一闪，六颗小金星往外飞（0.45 秒，先快后慢），边飞边变小、淡出。像素画的十字星。
      */
-    private static void pop(GuiGraphicsExtractor g, long now) {
-        Judgement j = judgement;
-        if (j == null) return;
-        double age = Math.max(0, (now - judgedAt) / 1_000_000.0);
-        if (age > 700) return;
-        var mc = Minecraft.getInstance();
-        var font = mc.font;
-        float alpha = (float) (age < 350 ? 1 : 1 - (age - 350) / 350);
-        float base = j == Judgement.PERFECT ? 2.4f : 1.9f;
-        float scale = (float) (base * (age < 90 ? 1.35 - 0.35 * age / 90 : 1));
-        String text = j.name();
-        float cx = g.guiWidth() / 2f, cy = g.guiHeight() / 2f - 34;
-        if (j == Judgement.PERFECT) {
-            for (int k = 0; k < 8; k++) {
-                double a = k * Math.PI / 4;
-                bigText(g, font, text, cx + (float) Math.cos(a) * scale * 0.8f, cy + (float) Math.sin(a) * scale * 0.8f, scale, argb(alpha * 0.28f, 0xB07A10));
-            }
+    private static void stars(GuiGraphicsExtractor g, long now) {
+        if (clickedAt == 0) return;
+        double age = Math.max(0, (now - clickedAt) / 1_000_000.0);
+        if (age > 450) return;
+        double t = age / 450;
+        float cx = g.guiWidth() / 2f, cy = g.guiHeight() / 2f;
+        if (age < 120) {
+            float f = (float) (1 - age / 120);
+            star(g, cx, cy, 3, argb(f, 0xFFF3B0), argb(f * 0.8f, 0xFFD54A));
         }
-        bigText(g, font, text, cx, cy, scale, argb(alpha, j.color & 0xFFFFFF));
-        if (combo >= 2) {
-            String c = Component.translatable("hud.logos_dimension.conducting.combo", combo).getString();
-            bigText(g, font, c, cx, cy + font.lineHeight * scale * 0.5f + 8, 1.1f, argb(alpha * 0.9f, 0xF2EAD0));
+        double out = 1 - (1 - t) * (1 - t) * (1 - t);
+        float alpha = (float) (t < 0.55 ? 1 : 1 - (t - 0.55) / 0.45);
+        int arm = t < 0.4 ? 2 : 1;
+        for (int i = 0; i < STAR_ANGLES.length; i++) {
+            double r = 4 + 13 * out * (i % 2 == 0 ? 1 : 0.78);
+            star(g, cx + (float) (Math.cos(STAR_ANGLES[i]) * r), cy + (float) (Math.sin(STAR_ANGLES[i]) * r), arm,
+                argb(alpha, 0xFFF3B0), argb(alpha * 0.9f, 0xE8B23A));
         }
     }
 
-    private static void bigText(GuiGraphicsExtractor g, net.minecraft.client.gui.Font font, String s, float cx, float cy, float scale, int argb) {
-        if ((argb >>> 24) < 4) return;
-        var pose = g.pose();
-        pose.pushMatrix();
-        pose.translate(cx, cy);
-        pose.scale(scale, scale);
-        g.text(font, s, -font.width(s) / 2, -font.lineHeight / 2, argb);
-        pose.popMatrix();
+    /** 一颗十字星：中心一点亮色，四条臂（长 arm）金色。 */
+    private static void star(GuiGraphicsExtractor g, float x, float y, int arm, int core, int edge) {
+        if ((core >>> 24) < 4) return;
+        int ix = Math.round(x), iy = Math.round(y);
+        g.fill(ix - arm, iy, ix + arm + 1, iy + 1, edge);
+        g.fill(ix, iy - arm, ix + 1, iy, edge);
+        g.fill(ix, iy + 1, ix + 1, iy + arm + 1, edge);
+        g.fill(ix, iy, ix + 1, iy + 1, core);
     }
 
     private static int argb(float alpha, int rgb) {
@@ -586,6 +570,11 @@ public final class BatonInput {
         return combo;
     }
 
+    /** 测试用：最近一次星星什么时候迸出的（纳秒，没有为 0）。 */
+    static long clickedAt() {
+        return clickedAt;
+    }
+
     /** 测试用：画拍子给的力度。 */
     static float expression() {
         return expression;
@@ -595,6 +584,7 @@ public final class BatonInput {
     static void reset() {
         judgement = null;
         combo = 0;
+        clickedAt = 0;
         Metronome.reset();
         podium = null;
         follower = null;

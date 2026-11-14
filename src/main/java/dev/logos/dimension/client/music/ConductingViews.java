@@ -669,21 +669,28 @@ public abstract class ConductingViews implements UIScenario {
                     beatAt = nextBeat();
                     BatonInput.beat(PODIUM, beatAt);
                 })
-                .check("PERFECT", ctx -> BatonInput.judgement() == dev.logos.dimension.music.orchestra.Judgement.PERFECT && BatonInput.combo() == 1)
+                .check("on the beat: gold stars (still judged PERFECT underneath)", ctx -> BatonInput.clickedAt() == beatAt
+                    && BatonInput.judgement() == dev.logos.dimension.music.orchestra.Judgement.PERFECT && BatonInput.combo() == 1)
                 .waitUntil("that beat comes", ctx -> System.nanoTime() > beatAt + 200_000_000L)
                 .step("and again", ctx -> {
                     beatAt = nextBeat();
                     BatonInput.beat(PODIUM, beatAt);
                 })
-                .check("PERFECT again, combo 2", ctx -> BatonInput.judgement() == dev.logos.dimension.music.orchestra.Judgement.PERFECT && BatonInput.combo() == 2)
+                .check("on the beat again", ctx -> BatonInput.clickedAt() == beatAt
+                    && BatonInput.judgement() == dev.logos.dimension.music.orchestra.Judgement.PERFECT && BatonInput.combo() == 2)
                 .waitUntil("that beat comes too", ctx -> System.nanoTime() >= beatAt)
                 .ticks(1)
-                .screenshot("orchestra_metronome_perfect")
+                .waitUntil("stars mid-flight", ctx -> System.nanoTime() > beatAt + 130_000_000L)
+                .screenshot("orchestra_metronome_on_beat")
                 .waitUntil("a little later", ctx -> System.nanoTime() > beatAt + 200_000_000L)
-                .step("a beat 200 ms late", ctx -> BatonInput.beat(PODIUM, nextBeat() + 200_000_000L))
-                .check("MISS, the combo is gone", ctx -> BatonInput.judgement() == dev.logos.dimension.music.orchestra.Judgement.MISS && BatonInput.combo() == 0)
+                .step("a beat 200 ms late", ctx -> {
+                    beatAt = nextBeat() + 200_000_000L;
+                    BatonInput.beat(PODIUM, beatAt);
+                })
+                .check("off the beat: no stars", ctx -> BatonInput.clickedAt() != beatAt
+                    && BatonInput.judgement() == dev.logos.dimension.music.orchestra.Judgement.MISS && BatonInput.combo() == 0)
                 .ticks(1)
-                .screenshot("orchestra_metronome_miss");
+                .screenshot("orchestra_metronome_off_beat");
             b.teardown("forget the conducting", ctx -> BatonInput.reset());
             restore(b);
         }

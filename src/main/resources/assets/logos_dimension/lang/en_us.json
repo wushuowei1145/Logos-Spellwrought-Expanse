@@ -1524,7 +1524,6 @@
   "screen.logos_dimension.podium.metronome": "Metronome: %s",
   "screen.logos_dimension.podium.on": "On",
   "screen.logos_dimension.podium.off": "Off",
-  "hud.logos_dimension.conducting.combo": "COMBO %s",
   "screen.logos_dimension.podium.no_score": "No score on the stand",
   "screen.logos_dimension.podium.insert_score": "Right-click the podium with a music roll to place a score",
   "screen.logos_dimension.podium.loading": "Loading the score...",
