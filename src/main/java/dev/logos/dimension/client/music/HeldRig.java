@@ -147,8 +147,7 @@ final class HeldRig {
      * 坐着（大提琴）或站着（低音提琴）演奏的方块乐器：乐器是方块模型、不跟着人动，这里只算琴弓和两只手。
      * 坐标先按朝北放置的方块模型写，再换到玩家模型的根坐标：演奏者面朝北、站在 {@link #seatFeet} 处，
      * 玩家模型整体缩小到 15/16，模型的 y 从脖子往下量（脚在 +24）。
-     * 原版手臂是直的：右手瞄准弓根该在的地方，手实际到哪弓根就在哪，弓总从琴弦上的 contact 那一点过；
-     * 左手按在指板上一臂远的位置。
+     * 右手瞄准弓根该在的地方，在那条线上一臂远处握住弓根，弓总从琴弦上的 contact 那一点过；左手按在指板上一臂远的位置。
      */
     static Place seated(InstrumentKind kind, HumanoidModel<?> model, float t, float move) {
         Vector3f feet = seatFeet(kind);
@@ -161,6 +160,8 @@ final class HeldRig {
     /**
      * 同 {@link #seated}，但都在朝北放置的方块模型坐标（像素）里：肩的位置、手臂长（肩到手心）由骨架给出，
      * 所以原版人形模型和附属 NPC 的骨架（{@link NpcMusician}）共用。返回的琴弓矩阵把弓的物品像素放到方块像素里。
+     * 惯用手的手位就是画出来的弓根（离肩一臂远）：原版直臂指过去正好落在那里，NPC 的两段手臂按它解 IK，手总捏着弓根。
+     * 弓根「该在」的点（target）对 NPC 常常比一臂远，按它解时手被收回到肩的正前方、只跟着它上下动，弓却在左右拉。
      */
     static Place seatedBlock(InstrumentKind kind, Vector3f rightShoulder, Vector3f leftShoulder, float reach, float t, float move) {
         Layout l = kind == InstrumentKind.DOUBLE_BASS ? BASS : CELLO;
@@ -177,7 +178,7 @@ final class HeldRig {
         Vector3f third = new Vector3f(face).cross(stick);
         Matrix4f rot = new Matrix4f(face.x, face.y, face.z, 0, stick.x, stick.y, stick.z, 0, third.x, third.y, third.z, 0, 0, 0, 0, 1);
         Matrix4f bow = local(grip, rot, l.bowScale(), 8.1f, 1.8f, 8);
-        return new Place(null, bow, target, neckHand(l, r, leftShoulder, reach));
+        return new Place(null, bow, grip, neckHand(l, r, leftShoulder, reach));
     }
 
     /** 方块像素 → 玩家模型根坐标的矩阵（{@link #toModel} 的矩阵形式）。 */

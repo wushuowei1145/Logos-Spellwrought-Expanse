@@ -99,7 +99,8 @@ public final class MusicianPoses {
         if (kind == InstrumentKind.TIMPANI) return StationPoses.timpani(level, bench, feet);
         Hands hands = hands(entity.getId(), kind, VoiceBank.notesAt(linked), SPLIT);
         Direction facing = benchState.getValue(StarbloomBenchBlock.FACING);
-        Vector3f[] at = kind == InstrumentKind.CONCERT_HARP ? harp(hands, feet) : keys(kind, hands, keySpan(bench, facing, linked, mainState, block, kind), feet);
+        Vector3f[] at = kind == InstrumentKind.CONCERT_HARP ? harp(hands, lateral(bench, facing, linked))
+            : keys(kind, hands, keySpan(bench, facing, linked, mainState, block, kind), feet);
         return new Musician(kind == InstrumentKind.CONCERT_HARP ? Mode.HARP : Mode.KEYS, kind, 0, at[0], at[1], feet, false, SEAT,
             (float) (feet.z - StarbloomBenchBlock.FRONT_EDGE));
     }
@@ -185,10 +186,30 @@ public final class MusicianPoses {
         return new Vector3f[]{new Vector3f(xl, y - 0.9f * h.lowPress, -1.2f), new Vector3f(xr, y - 0.9f * h.highPress, -1.2f)};
     }
 
-    /** 竖琴：琴弦平面沿前后方向立在前面一格，两手在琴弦两侧，低音在下；拨弦时手往回一勾。 */
-    private static Vector3f[] harp(Hands h, Vector3f feet) {
-        return new Vector3f[]{new Vector3f(feet.x - 2.4f, 12 + 8 * h.low, -1.5f + 1.2f * h.lowPress),
-            new Vector3f(feet.x + 2.4f, 12 + 8 * h.high, -1.5f + 1.2f * h.highPress)};
+    /** 竖琴琴弦所在的平面（琴凳坐标的 z，像素）：琴在琴凳正前方一格，弦在那一格朝北放置时 z = 13（tools/instrument_models/strings.py 的 HARP_SHIFT）。 */
+    static final float HARP_STRINGS_Z = 13 - 16;
+    /** 手在琴弦上左右走的范围（琴那一格里的 x，像素）：最低音弦在 x = 5.9；最右边几根高音短弦挂在肩膀上方，手只走到 11.2。 */
+    private static final float HARP_LOW_X = 6.1f, HARP_HIGH_X = 11.2f;
+
+    /** main 那一格比琴凳主块往演奏者右手边偏多少像素（单人琴凳正前方的乐器为 0）。 */
+    private static float lateral(BlockPos bench, Direction facing, BlockPos main) {
+        Direction right = facing.getClockWise();
+        return 16 * ((main.getX() - bench.getX()) * right.getStepX() + (main.getZ() - bench.getZ()) * right.getStepZ());
+    }
+
+    /**
+     * 竖琴：琴弦平面左右立在前面一格、正对演奏者，低音在左；弦的下端沿共鸣箱往右斜升（x 每往右 1 像素高 2.74），越往右弦越短、越高。
+     * 两只手按音高在弦上左右移，停在弦的中段偏上（左手 15、右手往上到 19 像素，不低于弦下端 1.5 像素），手心停在弦前 0.6 像素
+     * （手指搭在弦上），拨弦时往回一勾。
+     */
+    private static Vector3f[] harp(Hands h, float dx) {
+        return new Vector3f[]{harpHand(h.low, h.lowPress, dx), harpHand(h.high, h.highPress, dx)};
+    }
+
+    private static Vector3f harpHand(float u, float press, float dx) {
+        float x = HARP_LOW_X + u * (HARP_HIGH_X - HARP_LOW_X);
+        float bottom = 4.3f + 2.74f * (x - 5.9f);
+        return new Vector3f(dx + x, Math.max(15 + 4 * u, bottom + 1.5f), HARP_STRINGS_Z + 0.6f + 1.0f * press);
     }
 
     /**
@@ -267,9 +288,11 @@ public final class MusicianPoses {
         } else if (m.left() != null && m.right() != null) {
             HandheldPoses.reach(model.leftArm, benchToModel(m.left(), m.feet()), 0, 0, 1);
             HandheldPoses.reach(model.rightArm, benchToModel(m.right(), m.feet()), 0, 0, -1);
-            // 原版的腿没有膝盖：坐在乐器前时往前下方斜伸（原版骑乘那样平伸会插进琴身）
-            model.rightLeg.xRot = -0.8f;
-            model.leftLeg.xRot = -0.8f;
+            // 原版的腿没有膝盖：坐在乐器前时往前下方斜伸（原版骑乘那样平伸会插进琴身）；竖琴的底座离琴凳前沿只有 3 像素，
+            // 腿再往下垂一些，脚落在底座后面的踏板那里（斜伸 0.8 会从琴身里穿过去）
+            float legs = m.mode() == Mode.HARP ? -0.5f : -0.8f;
+            model.rightLeg.xRot = legs;
+            model.leftLeg.xRot = legs;
             model.rightLeg.yRot = 0.12f;
             model.leftLeg.yRot = -0.12f;
             model.rightLeg.zRot = 0;

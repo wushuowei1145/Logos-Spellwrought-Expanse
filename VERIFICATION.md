@@ -1,5 +1,31 @@
 # 首版验证记录
 
+## 竖琴手够到琴弦、NPC 运弓手跟着弓、原版人形演奏姿势画出来
+
+2026-11-14：分支 `fix/harp-pose`，在 main `7125db8a`（#258）上做完下表的检查，再变基到 `4d543ee5`（#259）后重新编译、重跑 `BowGripTest`，Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`。
+竖琴琴弦在格子正中，离琴凳上人的肩约 13.5 像素，森林精灵、神狐的手臂只有 7.5 像素左右、原版直臂 9.4，手停在琴身后面约 6 像素；
+维护者选了「模型整架往琴凳一侧挪 5 像素」（外观不变）。大提琴、低音提琴：NPC 的运弓手按弓根「该在」的点解 IK，那个点比一臂远，
+手被收回到肩的正前方只上下动，弓却在左右拉（维护者说玩家没问题）。
+查竖琴时发现原版人形（玩家、僵尸……）坐琴凳、站工位的演奏姿势身体上一直画不出来（维护者也看到玩家坐在钢琴、管风琴前没有演奏动作）：
+26.1.2 的 `ModelFeatureRenderer.renderModel` 画身体前会再 setupAnim 一次，新增 `MusicianDrawMixin` 在那之后再摆一遍。
+
+| 层级 | 结果 |
+|---|---|
+| 生成脚本 | `strings.py` 的 `HARP_SHIFT = 5`：只有竖琴的方块、物品模型变了，66 个元素逐个是 z +5（9.4–17.5），贴图页逐字节一致，其余弦乐模型不变；物品显示的平移重新居中 |
+| 单元 | 新增 `BowGripTest`（大提琴、低音提琴 × 四种肩位、一个来回）：手位就是画出来的弓根、离肩正好一臂、跟着弓左右走 1.5 像素以上；去掉修复时失败、加上通过 |
+| 世界 | `bench_*` **6/6**、`instrument_*` **8/8**（碰撞箱 z 4–12 → 9–16） |
+| 实际客户端 | `orchestra_hall_ui` 加第二竖琴上的原版僵尸、「两位竖琴手的手都在琴弦那一层」检查、21 张近景（竖琴前面、右肩后上方、僵尸侧面；大提琴僵尸 / 精灵、低音提琴精灵运弓各连拍 3–4 张；玩家管风琴近景，玩家换到钢琴、竖琴各两张）**1/1、11/11 检查**；连同 `instrument_views`、`orchestra_seated_ui`、`orchestra_player_mallets_ui`、`orchestra_seated_member_ui`、`orchestra_handheld_ui` **6/6、32/32 检查**（分两批跑） |
+| 截图对比 | 音乐厅机位：以前精灵的手伸在琴凳前的空中，现在竖琴就在她面前、手在弦上；精灵大提琴手以前手停在琴边、弓根在左边滑来滑去，现在手捏着弓根一起走。原版人形：以前玩家坐在管风琴前、拿小提琴坐琴凳时手垂着（小提琴浮在面前），僵尸大提琴手、竖琴手手平举、腿平伸穿过竖琴；现在玩家两手在管风琴、钢琴琴键和竖琴弦上，小提琴夹在下巴下，僵尸拉弓按弦，竖琴前腿垂下、脚在底座后面 |
+| 未验证 | 车万女仆（没加 `-Ptlm`）；光影包；神狐坐竖琴（骨架同精灵）；穿盔甲的演奏者（盔甲模型也走 `renderModel`，应当跟着摆，没拍） |
+
+```text
+./gradlew test -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar --tests "*BowGripTest*"
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar "-PdimensionTests=logos_dimension:bench_*"
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar "-PdimensionTests=logos_dimension:instrument_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar "-PldTest=orchestra_hall_ui,instrument_views,orchestra_seated_ui" -PldTestHeadless -PldTestWindow=1280x720
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar "-PldTest=orchestra_player_mallets_ui,orchestra_seated_member_ui,orchestra_handheld_ui" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 指挥：按到拍子上的金色点击效果
 
 2026-11-14：分支 `fix/conducting-click`，基于 main `7125db8a`（#258，#255 之后），Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`。
