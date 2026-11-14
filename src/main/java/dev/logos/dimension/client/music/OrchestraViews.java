@@ -120,7 +120,8 @@ public abstract class OrchestraViews implements UIScenario {
                 var mc = Minecraft.getInstance();
                 return mc.level != null && mc.level.getBlockState(BASS.above()).is(Instruments.DOUBLE_BASS.get())
                     && mc.level.getBlockEntity(TIMPANI) instanceof InstrumentBlockEntity && mc.level.getEntity(camera) != null
-                    && mc.level.getBlockState(ORIGIN.offset(2, 1, -5)).getValue(MusicStandBlock.HOLDS) == MusicStandBlock.Holds.BASSOON;
+                    // 谱架那格的区块可能比低音提琴、定音鼓晚到（客户端读到 void_air）：没到就接着等，不要 getValue 抛错
+                    && mc.level.getBlockState(ORIGIN.offset(2, 1, -5)).getOptionalValue(MusicStandBlock.HOLDS).orElse(null) == MusicStandBlock.Holds.BASSOON;
             });
     }
 

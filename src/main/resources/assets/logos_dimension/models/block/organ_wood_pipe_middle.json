@@ -1,14 +1,14 @@
 {
   "ambientocclusion": false,
   "textures": {
-    "walnut": "minecraft:block/dark_oak_planks",
-    "particle": "minecraft:block/dark_oak_planks"
+    "organ_pipes": "logos_dimension:block/instrument/organ_pipes",
+    "particle": "logos_dimension:block/instrument/particle_walnut"
   },
   "elements": [
     {
       "from": [
         4,
-        0,
+        0.0,
         4
       ],
       "to": [
@@ -18,57 +18,39 @@
       ],
       "faces": {
         "north": {
-          "texture": "#walnut",
+          "texture": "#organ_pipes",
           "uv": [
-            4,
-            0.0,
-            12,
-            16.0
+            6.875,
+            0.25,
+            7.875,
+            4.25
           ]
         },
         "south": {
-          "texture": "#walnut",
+          "texture": "#organ_pipes",
           "uv": [
-            4,
-            0.0,
-            12,
-            16.0
+            8.125,
+            0.25,
+            9.125,
+            4.25
           ]
         },
         "east": {
-          "texture": "#walnut",
+          "texture": "#organ_pipes",
           "uv": [
-            4,
-            0.0,
-            12,
-            16.0
+            8.125,
+            0.25,
+            9.125,
+            4.25
           ]
         },
         "west": {
-          "texture": "#walnut",
+          "texture": "#organ_pipes",
           "uv": [
-            4,
-            0.0,
-            12,
-            16.0
-          ]
-        },
-        "up": {
-          "texture": "#walnut",
-          "uv": [
-            4,
-            4,
-            12,
-            12
-          ]
-        },
-        "down": {
-          "texture": "#walnut",
-          "uv": [
-            4,
-            4,
-            12,
-            12
+            8.125,
+            0.25,
+            9.125,
+            4.25
           ]
         }
       }

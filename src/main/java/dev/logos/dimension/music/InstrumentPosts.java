@@ -34,7 +34,7 @@ public final class InstrumentPosts {
 
     /**
      * 演奏者双脚在朝北放置的方块模型里的位置（像素；x 向东、y 向上、z 向南）。大提琴、低音提琴的人在琴后（南面，面朝北），
-     * 钟琴、管钟的人在前面（北面，面朝南）——同 tools/instrument_art.py 里各自的画法。
+     * 钟琴、管钟的人在前面（北面，面朝南）——同 tools/instrument_models/percussion.py 里各自的画法。
      */
     public static Vec3 feet(InstrumentKind kind) {
         return switch (kind) {

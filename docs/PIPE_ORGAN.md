@@ -110,12 +110,13 @@
 | `client/music/OrganMixer` | 按音栓 + 房间并行合成组合、交给声音引擎的缓冲（带循环点的整段、只有循环段的接续、尾音）、还没合成好时先用上一套、缓存 4 套 |
 | `client/music/OrganRoom` | 42 条射线量房间（管风琴自己的方块不算墙、要有顶才算室内） |
 | `client/music/VoiceBank` | 管风琴发声（全音量起、松键淡出接尾音、尾音按按住时长）、换音栓 / 房间时交叉淡入 |
-| `tools/instrument_art.py` 的 `organ()` | 模型、方块状态、掉落、配方（只用原版贴图和已有的琴键、星辰花镶嵌） |
+| `tools/instrument_art.py` 的 `organ()` | 方块状态、掉落、配方 |
+| `tools/instrument_models/organ.py` | 演奏台、风箱、音管的模型与贴图页（2026-11-14 重做，见 [INSTRUMENT_ART.md](INSTRUMENT_ART.md)） |
 
 ### 8.3 维护
 
 ```text
-uv run --no-project --with pillow python tools/instrument_art.py
+uv run --no-project --with pillow --with numpy python tools/instrument_art.py
 ./gradlew test --tests "dev.logos.dimension.music.organ.*" -PlogosJar=...
 ./gradlew runGameTestServer -PlogosJar=... "-PdimensionTests=logos_dimension:organ_*"
 ./gradlew runClient -PlogosJar=... "-PldTest=organ_views,organ_play_ui,organ_reload_ui" -PldTestHeadless -PldTestWindow=1280x720

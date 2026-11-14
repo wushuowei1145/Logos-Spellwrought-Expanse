@@ -1,5 +1,26 @@
 # 首版验证记录
 
+## 乐器美术重做
+
+2026-11-14：分支 `feat/instrument-art`（未提交），基于 main `52e94cfc`（#257），Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`。
+规范与结果见 [docs/INSTRUMENT_ART.md](docs/INSTRUMENT_ART.md)。
+
+| 层级 | 结果 |
+|---|---|
+| 生成时检查 | 全部乐器模型（方块与物品，含 held / playing / 谱架上的变体）：元素都在 −16–32 之内、不超预算（最大三角钢琴 131 / 220）、同向平行面间距 < 0.05 且重叠的 **0 处**（重做前定音鼓 50、指挥台 41、管钟 32……） |
+| 生成脚本 | `tools/instrument_art.py` 删掉旧几何（1859 → 494 行）前后：先删光它写的 221 个文件再重新生成，219 个逐字节一致，只少了不再用的 `piano_keys.png`、`starbloom_inlay.png` |
+| 单元 | 新增 `ItemModelDisplayTest.itemModelChainsEndInADisplay`（沿 parent 链找 display）：旧模型上报 7 件（钢片琴、钟琴、乐谱架、三种音管、风箱），新模型通过；全量 419 个 1 个失败、1 个跳过，失败的仍是 main 上就缺的 zh_cn `item.logos_dimension.fuda_desk` |
+| 实际客户端 | 新场景 `instrument_gallery_ui`（全部乐器三排、14 个机位、物品栏图标、9 件第一人称手持、第三人称、掉落）；连同 `instrument_views`、`mallet_instrument_views`、`music_stand_views`、`organ_views`、`handheld_play_ui`、`orchestra_seated_ui`、`orchestra_hall_ui`、`orchestra_player_mallets_ui`、`orchestra_handheld_ui` **10/10**，检查全过；截图看过：手、弓、琴槌都落在新模型上，没有缺贴图、没有 mipmap 降级警告 |
+| 改过的问题 | 实机看出风箱底边一道透光的缝（凹进去的侧板和底座没合上）、锡管开口处几条透光的缝，补上后 192 个角度查 0 处；定音鼓鼓皮上多出的两支槌（演奏时一面鼓四支槌）去掉；`orchestra_handheld_ui` 的等待条件在谱架那格区块还没到客户端时 `getValue` 抛错（看区块到达的先后，单独跑也会挂），改成没到就接着等 |
+| 未验证 | 光影包；多人、专用服务器（只改了资源和一处测试场景）；10 个场景连着跑时 `orchestra_hall_ui`、`orchestra_player_mallets_ui` 会等超时，单独跑都过（场景之间的状态，和模型无关） |
+
+```text
+uv run --no-project --with pillow --with numpy python tools/instrument_art.py
+uv run --no-project --with pillow --with numpy python tools/instrument_models/run.py <组> --preview <目录>
+./gradlew test -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar --tests "*ItemModelDisplayTest*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.6.0-main-aa4168c.jar "-PldTest=instrument_gallery_ui" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 教堂管风琴：重做合成音效
 
 2026-11-14：分支 `feat/organ-synth`，在 main `87b08488`（#254）上做完下表的检查，再变基到 `50a86a04`（#256）后重新编译、重跑管风琴单元测试（13/13）和 `organ_play_ui`、`organ_reload_ui`、`organ_views`（3/3、7/7 检查）。Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`。

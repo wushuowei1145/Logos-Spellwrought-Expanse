@@ -1,558 +1,1415 @@
 {
   "ambientocclusion": false,
   "textures": {
-    "black": "minecraft:block/black_concrete",
-    "gold": "minecraft:block/gold_block",
-    "iron": "minecraft:block/iron_block",
-    "maple": "minecraft:block/birch_planks",
-    "red": "minecraft:block/red_concrete",
-    "walnut": "minecraft:block/dark_oak_planks",
-    "white": "minecraft:block/white_concrete",
-    "particle": "minecraft:block/dark_oak_planks"
+    "hexen_music_stand": "logos_dimension:block/instrument/hexen_music_stand",
+    "hexen_oboe": "logos_dimension:block/instrument/hexen_oboe",
+    "particle": "logos_dimension:block/instrument/particle_walnut"
   },
   "elements": [
     {
       "from": [
-        3,
-        0,
-        7.4
-      ],
-      "to": [
-        13,
-        0.8,
-        8.6
-      ],
-      "faces": {
-        "north": {
-          "texture": "#walnut",
-          "uv": [
-            3,
-            15.2,
-            13,
-            16.0
-          ]
-        },
-        "south": {
-          "texture": "#walnut",
-          "uv": [
-            3,
-            15.2,
-            13,
-            16.0
-          ]
-        },
-        "east": {
-          "texture": "#walnut",
-          "uv": [
-            7.4,
-            15.2,
-            8.6,
-            16.0
-          ]
-        },
-        "west": {
-          "texture": "#walnut",
-          "uv": [
-            7.4,
-            15.2,
-            8.6,
-            16.0
-          ]
-        },
-        "up": {
-          "texture": "#walnut",
-          "uv": [
-            3,
-            7.4,
-            13,
-            8.6
-          ]
-        },
-        "down": {
-          "texture": "#walnut",
-          "uv": [
-            3,
-            7.4,
-            13,
-            8.6
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        7.4,
-        0,
-        3
-      ],
-      "to": [
-        8.6,
-        0.8,
-        13
-      ],
-      "faces": {
-        "north": {
-          "texture": "#walnut",
-          "uv": [
-            7.4,
-            15.2,
-            8.6,
-            16.0
-          ]
-        },
-        "south": {
-          "texture": "#walnut",
-          "uv": [
-            7.4,
-            15.2,
-            8.6,
-            16.0
-          ]
-        },
-        "east": {
-          "texture": "#walnut",
-          "uv": [
-            3,
-            15.2,
-            13,
-            16.0
-          ]
-        },
-        "west": {
-          "texture": "#walnut",
-          "uv": [
-            3,
-            15.2,
-            13,
-            16.0
-          ]
-        },
-        "up": {
-          "texture": "#walnut",
-          "uv": [
-            7.4,
-            3,
-            8.6,
-            13
-          ]
-        },
-        "down": {
-          "texture": "#walnut",
-          "uv": [
-            7.4,
-            3,
-            8.6,
-            13
-          ]
-        }
-      }
-    },
-    {
-      "from": [
-        2.6,
-        0,
+        8.5,
+        1.73,
         7.6
       ],
       "to": [
-        3.4,
-        0.6,
+        10.8265,
+        2.37,
         8.4
       ],
       "faces": {
         "north": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            2.6,
-            15.4,
-            3.4,
-            16.0
+            14.0,
+            6.0,
+            14.5,
+            6.5
           ]
         },
         "south": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            2.6,
-            15.4,
-            3.4,
-            16.0
+            14.0,
+            6.0,
+            14.5,
+            6.5
           ]
         },
         "east": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.6,
-            15.4,
-            8.4,
-            16.0
-          ]
-        },
-        "west": {
-          "texture": "#gold",
-          "uv": [
-            7.6,
-            15.4,
-            8.4,
-            16.0
+            2.25,
+            7.5,
+            2.5,
+            8.0
           ]
         },
         "up": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            2.6,
-            7.6,
-            3.4,
-            8.4
+            14.0,
+            6.0,
+            14.5,
+            6.5
           ]
         },
         "down": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            2.6,
-            7.6,
-            3.4,
-            8.4
+            14.0,
+            6.0,
+            14.5,
+            6.5
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8.5,
+          2.05,
+          8.0
+        ],
+        "x": 0.0,
+        "y": -0.0,
+        "z": -28.2174
+      }
+    },
+    {
+      "from": [
+        10.3,
+        0.7418,
+        7.66
+      ],
+      "to": [
+        12.5148,
+        1.2818,
+        8.34
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            15.0,
+            6.0,
+            15.5,
+            6.5
+          ]
+        },
+        "south": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            15.0,
+            6.0,
+            15.5,
+            6.5
+          ]
+        },
+        "up": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            15.0,
+            6.0,
+            15.5,
+            6.5
+          ]
+        },
+        "down": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            15.0,
+            6.0,
+            15.5,
+            6.5
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          10.3,
+          1.0118,
+          8.0
+        ],
+        "x": 0.0,
+        "y": -0.0,
+        "z": -13.8942
+      }
+    },
+    {
+      "from": [
+        11.95,
+        0.0,
+        7.5
+      ],
+      "to": [
+        12.95,
+        0.72,
+        8.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.0,
+            7.5,
+            3.25,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.0,
+            7.5,
+            3.25,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.75,
+            7.5,
+            4.0,
+            8.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.75,
+            7.5,
+            4.0,
+            8.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.0,
+            7.5,
+            3.25,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.0,
+            7.5,
+            3.25,
+            8.0
           ]
         }
       }
     },
     {
       "from": [
-        12.6,
-        0,
+        7.5,
+        1.73,
         7.6
       ],
       "to": [
-        13.4,
-        0.6,
+        9.8265,
+        2.37,
         8.4
       ],
       "faces": {
         "north": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            12.6,
-            15.4,
-            13.4,
-            16.0
+            14.0,
+            6.0,
+            14.5,
+            6.5
           ]
         },
         "south": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            12.6,
-            15.4,
-            13.4,
-            16.0
+            14.0,
+            6.0,
+            14.5,
+            6.5
           ]
         },
         "east": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.6,
-            15.4,
-            8.4,
-            16.0
-          ]
-        },
-        "west": {
-          "texture": "#gold",
-          "uv": [
-            7.6,
-            15.4,
-            8.4,
-            16.0
+            2.25,
+            7.5,
+            2.5,
+            8.0
           ]
         },
         "up": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            12.6,
-            7.6,
-            13.4,
-            8.4
+            14.0,
+            6.0,
+            14.5,
+            6.5
           ]
         },
         "down": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            12.6,
-            7.6,
-            13.4,
-            8.4
+            14.0,
+            6.0,
+            14.5,
+            6.5
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          7.5,
+          2.05,
+          8.0
+        ],
+        "x": 180.0,
+        "y": -0.0,
+        "z": -151.7826
+      }
+    },
+    {
+      "from": [
+        5.7,
+        0.7418,
+        7.66
+      ],
+      "to": [
+        7.9148,
+        1.2818,
+        8.34
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            15.0,
+            6.0,
+            15.5,
+            6.5
+          ]
+        },
+        "south": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            15.0,
+            6.0,
+            15.5,
+            6.5
+          ]
+        },
+        "up": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            15.0,
+            6.0,
+            15.5,
+            6.5
+          ]
+        },
+        "down": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            15.0,
+            6.0,
+            15.5,
+            6.5
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          5.7,
+          1.0118,
+          8.0
+        ],
+        "x": 180.0,
+        "y": -0.0,
+        "z": -166.1058
+      }
+    },
+    {
+      "from": [
+        3.05,
+        0.0,
+        7.5
+      ],
+      "to": [
+        4.05,
+        0.72,
+        8.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.0,
+            7.5,
+            3.25,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.0,
+            7.5,
+            3.25,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.75,
+            7.5,
+            4.0,
+            8.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.75,
+            7.5,
+            4.0,
+            8.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.0,
+            7.5,
+            3.25,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.0,
+            7.5,
+            3.25,
+            8.0
           ]
         }
       }
     },
     {
       "from": [
-        7.6,
-        0,
-        2.6
+        8.0,
+        1.73,
+        8.1
       ],
       "to": [
-        8.4,
-        0.6,
-        3.4
+        10.3265,
+        2.37,
+        8.9
       ],
       "faces": {
         "north": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.6,
-            15.4,
-            8.4,
-            16.0
+            14.0,
+            6.0,
+            14.5,
+            6.5
           ]
         },
         "south": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.6,
-            15.4,
-            8.4,
-            16.0
+            14.0,
+            6.0,
+            14.5,
+            6.5
           ]
         },
         "east": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            2.6,
-            15.4,
-            3.4,
-            16.0
-          ]
-        },
-        "west": {
-          "texture": "#gold",
-          "uv": [
-            2.6,
-            15.4,
-            3.4,
-            16.0
+            2.25,
+            7.5,
+            2.5,
+            8.0
           ]
         },
         "up": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.6,
-            2.6,
-            8.4,
-            3.4
+            14.0,
+            6.0,
+            14.5,
+            6.5
           ]
         },
         "down": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.6,
-            2.6,
-            8.4,
-            3.4
+            14.0,
+            6.0,
+            14.5,
+            6.5
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8.0,
+          2.05,
+          8.5
+        ],
+        "x": 90.0,
+        "y": -61.7826,
+        "z": -90.0
+      }
+    },
+    {
+      "from": [
+        8.0,
+        0.7418,
+        9.96
+      ],
+      "to": [
+        10.2148,
+        1.2818,
+        10.64
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            15.0,
+            6.0,
+            15.5,
+            6.5
+          ]
+        },
+        "south": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            15.0,
+            6.0,
+            15.5,
+            6.5
+          ]
+        },
+        "up": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            15.0,
+            6.0,
+            15.5,
+            6.5
+          ]
+        },
+        "down": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            15.0,
+            6.0,
+            15.5,
+            6.5
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8.0,
+          1.0118,
+          10.3
+        ],
+        "x": 90.0,
+        "y": -76.1058,
+        "z": -90.0
+      }
+    },
+    {
+      "from": [
+        7.5,
+        0.0,
+        11.95
+      ],
+      "to": [
+        8.5,
+        0.72,
+        12.95
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.0,
+            7.5,
+            3.25,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.0,
+            7.5,
+            3.25,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.75,
+            7.5,
+            4.0,
+            8.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.75,
+            7.5,
+            4.0,
+            8.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.0,
+            7.5,
+            3.25,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.0,
+            7.5,
+            3.25,
+            8.0
           ]
         }
       }
     },
     {
       "from": [
-        7.6,
-        0,
-        12.6
+        8.0,
+        1.73,
+        7.1
       ],
       "to": [
-        8.4,
-        0.6,
-        13.4
+        10.3265,
+        2.37,
+        7.9
       ],
       "faces": {
         "north": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.6,
-            15.4,
-            8.4,
-            16.0
+            14.0,
+            6.0,
+            14.5,
+            6.5
           ]
         },
         "south": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.6,
-            15.4,
-            8.4,
-            16.0
+            14.0,
+            6.0,
+            14.5,
+            6.5
           ]
         },
         "east": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            12.6,
-            15.4,
-            13.4,
-            16.0
-          ]
-        },
-        "west": {
-          "texture": "#gold",
-          "uv": [
-            12.6,
-            15.4,
-            13.4,
-            16.0
+            2.25,
+            7.5,
+            2.5,
+            8.0
           ]
         },
         "up": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.6,
-            12.6,
-            8.4,
-            13.4
+            14.0,
+            6.0,
+            14.5,
+            6.5
           ]
         },
         "down": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.6,
-            12.6,
-            8.4,
-            13.4
+            14.0,
+            6.0,
+            14.5,
+            6.5
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8.0,
+          2.05,
+          7.5
+        ],
+        "x": -90.0,
+        "y": 61.7826,
+        "z": -90.0
+      }
+    },
+    {
+      "from": [
+        8.0,
+        0.7418,
+        5.36
+      ],
+      "to": [
+        10.2148,
+        1.2818,
+        6.04
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            15.0,
+            6.0,
+            15.5,
+            6.5
+          ]
+        },
+        "south": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            15.0,
+            6.0,
+            15.5,
+            6.5
+          ]
+        },
+        "up": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            15.0,
+            6.0,
+            15.5,
+            6.5
+          ]
+        },
+        "down": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            15.0,
+            6.0,
+            15.5,
+            6.5
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8.0,
+          1.0118,
+          5.7
+        ],
+        "x": -90.0,
+        "y": 76.1058,
+        "z": -90.0
+      }
+    },
+    {
+      "from": [
+        7.5,
+        0.0,
+        3.05
+      ],
+      "to": [
+        8.5,
+        0.72,
+        4.05
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.0,
+            7.5,
+            3.25,
+            8.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.0,
+            7.5,
+            3.25,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.75,
+            7.5,
+            4.0,
+            8.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.75,
+            7.5,
+            4.0,
+            8.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.0,
+            7.5,
+            3.25,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.0,
+            7.5,
+            3.25,
+            8.0
           ]
         }
       }
     },
     {
       "from": [
-        7.4,
-        0.8,
-        7.4
+        7.02,
+        0.55,
+        7.5941
       ],
       "to": [
-        8.6,
-        11,
-        8.6
+        8.98,
+        2.45,
+        8.4059
       ],
       "faces": {
-        "north": {
-          "texture": "#walnut",
-          "uv": [
-            7.4,
-            5,
-            8.6,
-            15.2
-          ]
-        },
-        "south": {
-          "texture": "#walnut",
-          "uv": [
-            7.4,
-            5,
-            8.6,
-            15.2
-          ]
-        },
         "east": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.4,
-            5,
-            8.6,
-            15.2
+            13.5,
+            0.5,
+            13.75,
+            1.5
           ]
         },
         "west": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.4,
-            5,
-            8.6,
-            15.2
+            13.5,
+            0.5,
+            13.75,
+            1.5
           ]
         },
         "up": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.4,
-            7.4,
-            8.6,
-            8.6
+            0.25,
+            7.5,
+            0.75,
+            8.0
           ]
         },
         "down": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.4,
-            7.4,
-            8.6,
-            8.6
+            0.25,
+            7.5,
+            0.75,
+            8.0
           ]
         }
       }
     },
     {
       "from": [
-        7.2,
-        6,
-        7.2
+        7.02,
+        0.61,
+        7.5941
       ],
       "to": [
-        8.8,
-        6.6,
-        8.8
+        8.98,
+        2.39,
+        8.4059
       ],
       "faces": {
-        "north": {
-          "texture": "#gold",
-          "uv": [
-            7.2,
-            9.4,
-            8.8,
-            10.0
-          ]
-        },
-        "south": {
-          "texture": "#gold",
-          "uv": [
-            7.2,
-            9.4,
-            8.8,
-            10.0
-          ]
-        },
         "east": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.2,
-            9.4,
-            8.8,
-            10.0
+            13.5,
+            0.5,
+            13.75,
+            1.5
           ]
         },
         "west": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.2,
-            9.4,
-            8.8,
-            10.0
+            13.5,
+            0.5,
+            13.75,
+            1.5
           ]
         },
         "up": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.2,
-            7.2,
-            8.8,
-            8.8
+            0.25,
+            7.5,
+            0.75,
+            8.0
           ]
         },
         "down": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.2,
-            7.2,
-            8.8,
-            8.8
+            0.25,
+            7.5,
+            0.75,
+            8.0
           ]
         }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          1.5,
+          8
+        ],
+        "x": 0,
+        "y": 45.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        7.02,
+        0.67,
+        7.5941
+      ],
+      "to": [
+        8.98,
+        2.33,
+        8.4059
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            13.5,
+            0.5,
+            13.75,
+            1.5
+          ]
+        },
+        "west": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            13.5,
+            0.5,
+            13.75,
+            1.5
+          ]
+        },
+        "up": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            0.25,
+            7.5,
+            0.75,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            0.25,
+            7.5,
+            0.75,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          1.5,
+          8
+        ],
+        "x": 0,
+        "y": 90.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        7.02,
+        0.73,
+        7.5941
+      ],
+      "to": [
+        8.98,
+        2.27,
+        8.4059
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            13.5,
+            0.5,
+            13.75,
+            1.5
+          ]
+        },
+        "west": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            13.5,
+            0.5,
+            13.75,
+            1.5
+          ]
+        },
+        "up": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            0.25,
+            7.5,
+            0.75,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            0.25,
+            7.5,
+            0.75,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          1.5,
+          8
+        ],
+        "x": 0,
+        "y": 135.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        7.5,
+        2.3,
+        7.7929
+      ],
+      "to": [
+        8.5,
+        11.1,
+        8.2071
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            0.25,
+            0.5,
+            0.5,
+            5.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            0.25,
+            0.5,
+            0.5,
+            5.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.5,
+        2.36,
+        7.7929
+      ],
+      "to": [
+        8.5,
+        11.04,
+        8.2071
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            0.25,
+            0.5,
+            0.5,
+            5.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            0.25,
+            0.5,
+            0.5,
+            5.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          6.7,
+          8
+        ],
+        "x": 0,
+        "y": 45.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        7.5,
+        2.42,
+        7.7929
+      ],
+      "to": [
+        8.5,
+        10.98,
+        8.2071
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            0.25,
+            0.5,
+            0.5,
+            5.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            0.25,
+            0.5,
+            0.5,
+            5.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          6.7,
+          8
+        ],
+        "x": 0,
+        "y": 90.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        7.5,
+        2.48,
+        7.7929
+      ],
+      "to": [
+        8.5,
+        10.92,
+        8.2071
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            1.0,
+            0.5,
+            1.25,
+            4.5
+          ]
+        },
+        "west": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            1.0,
+            0.5,
+            1.25,
+            4.5
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          6.7,
+          8
+        ],
+        "x": 0,
+        "y": 135.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        7.3,
+        6.0,
+        7.7101
+      ],
+      "to": [
+        8.7,
+        6.7,
+        8.2899
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            4.5,
+            7.5,
+            4.75,
+            8.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            4.5,
+            7.5,
+            4.75,
+            8.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            5.25,
+            7.5,
+            5.5,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            5.25,
+            7.5,
+            5.5,
+            8.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.3,
+        6.06,
+        7.7101
+      ],
+      "to": [
+        8.7,
+        6.64,
+        8.2899
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            4.5,
+            7.5,
+            4.75,
+            8.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            4.5,
+            7.5,
+            4.75,
+            8.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            5.25,
+            7.5,
+            5.5,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            5.25,
+            7.5,
+            5.5,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          6.35,
+          8
+        ],
+        "x": 0,
+        "y": 45.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        7.3,
+        6.12,
+        7.7101
+      ],
+      "to": [
+        8.7,
+        6.58,
+        8.2899
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            4.5,
+            7.5,
+            4.75,
+            8.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            4.5,
+            7.5,
+            4.75,
+            8.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            5.25,
+            7.5,
+            5.5,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            5.25,
+            7.5,
+            5.5,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          6.35,
+          8
+        ],
+        "x": 0,
+        "y": 90.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        7.3,
+        6.18,
+        7.7101
+      ],
+      "to": [
+        8.7,
+        6.52,
+        8.2899
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            4.5,
+            7.5,
+            4.75,
+            8.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            4.5,
+            7.5,
+            4.75,
+            8.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            5.25,
+            7.5,
+            5.5,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            5.25,
+            7.5,
+            5.5,
+            8.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          6.35,
+          8
+        ],
+        "x": 0,
+        "y": 135.0,
+        "z": 0
       }
     },
     {
@@ -563,62 +1420,62 @@
       ],
       "to": [
         14,
-        16,
-        7.7
+        16.15,
+        7.6
       ],
       "faces": {
         "north": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            2,
-            0.0,
-            14,
-            5.4
+            1.75,
+            0.5,
+            4.75,
+            3.5
           ]
         },
         "south": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            2,
-            0.0,
-            14,
-            5.4
+            5.25,
+            0.5,
+            8.25,
+            3.5
           ]
         },
         "east": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.1,
-            0.0,
-            7.7,
-            5.4
+            8.75,
+            0.5,
+            9.0,
+            3.5
           ]
         },
         "west": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.1,
-            0.0,
-            7.7,
-            5.4
+            8.75,
+            0.5,
+            9.0,
+            3.5
           ]
         },
         "up": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            2,
-            7.1,
-            14,
-            7.7
+            0.25,
+            6.0,
+            3.25,
+            6.5
           ]
         },
         "down": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            2,
-            7.1,
-            14,
-            7.7
+            3.75,
+            6.0,
+            6.75,
+            6.5
           ]
         }
       },
@@ -634,387 +1491,856 @@
     },
     {
       "from": [
-        2.6,
-        11.0,
-        7.0
+        2.5,
+        10.95,
+        6.98
       ],
       "to": [
-        13.4,
-        15.5,
-        7.1
+        13.5,
+        15.85,
+        7.04
       ],
       "faces": {
         "north": {
-          "texture": "#white",
+          "texture": "#hexen_music_stand",
           "uv": [
-            2.6,
+            9.5,
             0.5,
-            13.4,
-            5.0
+            12.25,
+            3.0
           ]
-        }
-      },
-      "rotation": {
-        "axis": "x",
-        "angle": 20,
-        "origin": [
-          8,
-          10.6,
-          7.4
-        ]
-      }
-    },
-    {
-      "from": [
-        3.0,
-        12.2,
-        6.98
-      ],
-      "to": [
-        13.0,
-        12.28,
-        7.0
-      ],
-      "faces": {
-        "north": {
-          "texture": "#black",
+        },
+        "east": {
+          "texture": "#hexen_music_stand",
           "uv": [
-            3.0,
-            3.72,
-            13.0,
-            3.8
-          ]
-        }
-      },
-      "rotation": {
-        "axis": "x",
-        "angle": 20,
-        "origin": [
-          8,
-          10.6,
-          7.4
-        ]
-      }
-    },
-    {
-      "from": [
-        3.0,
-        12.6,
-        6.98
-      ],
-      "to": [
-        13.0,
-        12.68,
-        7.0
-      ],
-      "faces": {
-        "north": {
-          "texture": "#black",
-          "uv": [
-            3.0,
-            3.32,
-            13.0,
-            3.4
-          ]
-        }
-      },
-      "rotation": {
-        "axis": "x",
-        "angle": 20,
-        "origin": [
-          8,
-          10.6,
-          7.4
-        ]
-      }
-    },
-    {
-      "from": [
-        3.0,
-        13.0,
-        6.98
-      ],
-      "to": [
-        13.0,
-        13.08,
-        7.0
-      ],
-      "faces": {
-        "north": {
-          "texture": "#black",
-          "uv": [
-            3.0,
-            2.92,
+            12.75,
+            0.5,
             13.0,
             3.0
           ]
-        }
-      },
-      "rotation": {
-        "axis": "x",
-        "angle": 20,
-        "origin": [
-          8,
-          10.6,
-          7.4
-        ]
-      }
-    },
-    {
-      "from": [
-        3.0,
-        13.4,
-        6.98
-      ],
-      "to": [
-        13.0,
-        13.48,
-        7.0
-      ],
-      "faces": {
-        "north": {
-          "texture": "#black",
-          "uv": [
-            3.0,
-            2.52,
-            13.0,
-            2.6
-          ]
-        }
-      },
-      "rotation": {
-        "axis": "x",
-        "angle": 20,
-        "origin": [
-          8,
-          10.6,
-          7.4
-        ]
-      }
-    },
-    {
-      "from": [
-        3.0,
-        13.8,
-        6.98
-      ],
-      "to": [
-        13.0,
-        13.88,
-        7.0
-      ],
-      "faces": {
-        "north": {
-          "texture": "#black",
-          "uv": [
-            3.0,
-            2.12,
-            13.0,
-            2.2
-          ]
-        }
-      },
-      "rotation": {
-        "axis": "x",
-        "angle": 20,
-        "origin": [
-          8,
-          10.6,
-          7.4
-        ]
-      }
-    },
-    {
-      "from": [
-        2,
-        10.3,
-        6.2
-      ],
-      "to": [
-        14,
-        10.9,
-        7.4
-      ],
-      "faces": {
-        "north": {
-          "texture": "#walnut",
-          "uv": [
-            2,
-            5.1,
-            14,
-            5.7
-          ]
-        },
-        "south": {
-          "texture": "#walnut",
-          "uv": [
-            2,
-            5.1,
-            14,
-            5.7
-          ]
-        },
-        "east": {
-          "texture": "#walnut",
-          "uv": [
-            6.2,
-            5.1,
-            7.4,
-            5.7
-          ]
         },
         "west": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            6.2,
-            5.1,
-            7.4,
-            5.7
+            12.75,
+            0.5,
+            13.0,
+            3.0
           ]
         },
         "up": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            2,
-            6.2,
-            14,
-            7.4
+            10.75,
+            6.0,
+            13.5,
+            6.5
           ]
         },
         "down": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            2,
-            6.2,
-            14,
-            7.4
+            10.75,
+            6.0,
+            13.5,
+            6.5
+          ]
+        }
+      },
+      "rotation": {
+        "axis": "x",
+        "angle": 20,
+        "origin": [
+          8,
+          10.6,
+          7.4
+        ]
+      }
+    },
+    {
+      "from": [
+        2.08,
+        10.25,
+        6.3
+      ],
+      "to": [
+        13.92,
+        10.8,
+        7.55
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            7.25,
+            6.0,
+            10.25,
+            6.5
+          ]
+        },
+        "south": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.75,
+            6.0,
+            6.75,
+            6.5
+          ]
+        },
+        "east": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            2.25,
+            7.5,
+            2.5,
+            8.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            2.25,
+            7.5,
+            2.5,
+            8.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.75,
+            6.0,
+            6.75,
+            6.5
+          ]
+        },
+        "down": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            3.75,
+            6.0,
+            6.75,
+            6.5
           ]
         }
       }
     },
     {
       "from": [
-        2,
+        7.3,
+        10.5,
+        7.45
+      ],
+      "to": [
+        8.7,
+        11.7,
+        8.75
+      ],
+      "faces": {
+        "south": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            6.0,
+            7.5,
+            6.25,
+            8.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            6.75,
+            7.5,
+            7.0,
+            8.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            6.75,
+            7.5,
+            7.0,
+            8.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            6.0,
+            7.5,
+            6.25,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            6.0,
+            7.5,
+            6.25,
+            8.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.65,
         10.85,
-        6.2
+        8.75
       ],
       "to": [
-        14,
-        10.95,
-        6.4
+        8.35,
+        11.45,
+        9.05
       ],
       "faces": {
-        "north": {
-          "texture": "#gold",
-          "uv": [
-            2,
-            5.05,
-            14,
-            5.15
-          ]
-        },
         "south": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            2,
-            5.05,
-            14,
-            5.15
+            7.5,
+            7.5,
+            7.75,
+            8.0
           ]
         },
         "east": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            6.2,
-            5.05,
-            6.4,
-            5.15
+            8.25,
+            7.5,
+            8.5,
+            8.0
           ]
         },
         "west": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            6.2,
-            5.05,
-            6.4,
-            5.15
+            8.25,
+            7.5,
+            8.5,
+            8.0
           ]
         },
         "up": {
-          "texture": "#gold",
+          "texture": "#hexen_music_stand",
           "uv": [
-            2,
-            6.2,
-            14,
-            6.4
+            7.5,
+            7.5,
+            7.75,
+            8.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            7.5,
+            7.5,
+            7.75,
+            8.0
           ]
         }
       }
     },
     {
       "from": [
-        11.4,
-        0.5,
-        3.6
+        12.664,
+        2.2213,
+        4.3697
       ],
       "to": [
-        13.0,
-        1.3,
-        5.2
+        14.529,
+        2.3173,
+        5.0059
       ],
       "faces": {
         "north": {
-          "texture": "#black",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.0,
-            14.6,
-            9.0,
-            15.6
+            6.5,
+            1.0,
+            7.5,
+            2.0
           ]
         },
         "south": {
-          "texture": "#black",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.0,
-            14.6,
-            9.0,
-            15.6
+            6.5,
+            1.0,
+            7.5,
+            2.0
           ]
         },
         "east": {
-          "texture": "#black",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.0,
-            14.6,
-            9.0,
-            15.6
-          ]
-        },
-        "west": {
-          "texture": "#black",
-          "uv": [
-            7.0,
-            14.6,
-            9.0,
-            15.6
+            10.5,
+            1.0,
+            11.0,
+            2.0
           ]
         },
         "up": {
-          "texture": "#black",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.0,
-            7.0,
-            9.0,
-            9.0
+            6.5,
+            1.0,
+            7.5,
+            2.0
           ]
         },
         "down": {
-          "texture": "#black",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.0,
-            7.0,
-            9.0,
-            9.0
+            8.5,
+            1.0,
+            9.5,
+            2.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.664,
+          2.3173,
+          4.6878
+        ],
+        "x": 1.4789,
+        "y": 8.8786,
+        "z": -80.5037
+      }
+    },
+    {
+      "from": [
+        12.5281,
+        2.17,
+        4.6938
+      ],
+      "to": [
+        14.393,
+        2.266,
+        5.33
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            10.5,
+            1.0,
+            11.0,
+            2.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            8.5,
+            1.0,
+            9.5,
+            2.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.5281,
+          2.266,
+          5.0119
+        ],
+        "x": 45.6552,
+        "y": 2.321,
+        "z": -83.3758
+      }
+    },
+    {
+      "from": [
+        12.2,
+        2.1488,
+        4.828
+      ],
+      "to": [
+        14.065,
+        2.2448,
+        5.4642
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            10.5,
+            1.0,
+            11.0,
+            2.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            8.5,
+            1.0,
+            9.5,
+            2.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          2.2448,
+          5.1461
+        ],
+        "x": 90.0,
+        "y": -0.3815,
+        "z": -90.0
+      }
+    },
+    {
+      "from": [
+        11.8719,
+        2.17,
+        4.6938
+      ],
+      "to": [
+        13.7369,
+        2.266,
+        5.33
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            10.5,
+            1.0,
+            11.0,
+            2.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            8.5,
+            1.0,
+            9.5,
+            2.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          11.8719,
+          2.266,
+          5.0119
+        ],
+        "x": 134.3448,
+        "y": 2.321,
+        "z": -96.6242
+      }
+    },
+    {
+      "from": [
+        11.736,
+        2.2213,
+        4.3697
+      ],
+      "to": [
+        13.601,
+        2.3173,
+        5.0059
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            10.5,
+            1.0,
+            11.0,
+            2.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            8.5,
+            1.0,
+            9.5,
+            2.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          11.736,
+          2.3173,
+          4.6878
+        ],
+        "x": 178.5211,
+        "y": 8.8786,
+        "z": -99.4963
+      }
+    },
+    {
+      "from": [
+        11.8719,
+        2.2727,
+        4.0457
+      ],
+      "to": [
+        13.7369,
+        2.3687,
+        4.6819
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            10.5,
+            1.0,
+            11.0,
+            2.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            8.5,
+            1.0,
+            9.5,
+            2.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          11.8719,
+          2.3687,
+          4.3638
+        ],
+        "x": -136.4653,
+        "y": 15.5564,
+        "z": -96.8717
+      }
+    },
+    {
+      "from": [
+        12.2,
+        2.2939,
+        3.9115
+      ],
+      "to": [
+        14.065,
+        2.3899,
+        4.5477
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            10.5,
+            1.0,
+            11.0,
+            2.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            8.5,
+            1.0,
+            9.5,
+            2.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          2.3899,
+          4.2296
+        ],
+        "x": -90.0,
+        "y": 18.3815,
+        "z": -90.0
+      }
+    },
+    {
+      "from": [
+        12.5281,
+        2.2727,
+        4.0457
+      ],
+      "to": [
+        14.393,
+        2.3687,
+        4.6819
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            10.5,
+            1.0,
+            11.0,
+            2.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            6.5,
+            1.0,
+            7.5,
+            2.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            8.5,
+            1.0,
+            9.5,
+            2.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.5281,
+          2.3687,
+          4.3638
+        ],
+        "x": -43.5347,
+        "y": 15.5564,
+        "z": -83.1283
+      }
+    },
+    {
+      "from": [
+        11.656,
+        2.068,
+        4.1746
+      ],
+      "to": [
+        12.744,
+        2.468,
+        4.6254
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            12.0,
+            1.0,
+            12.5,
+            2.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            12.0,
+            1.0,
+            12.5,
+            2.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            13.5,
+            1.0,
+            14.0,
+            2.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            13.5,
+            1.0,
+            14.0,
+            2.0
           ]
         }
       },
@@ -1031,458 +2357,221 @@
     },
     {
       "from": [
-        11.32,
-        0.5,
-        3.52
+        11.656,
+        2.1062,
+        4.4512
       ],
       "to": [
-        13.08,
-        0.74,
-        5.28
+        12.744,
+        2.3862,
+        4.902
       ],
       "faces": {
-        "north": {
-          "texture": "#iron",
-          "uv": [
-            6.9,
-            15.3,
-            9.1,
-            15.6
-          ]
-        },
-        "south": {
-          "texture": "#iron",
-          "uv": [
-            6.9,
-            15.3,
-            9.1,
-            15.6
-          ]
-        },
         "east": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            6.9,
-            15.3,
-            9.1,
-            15.6
+            12.0,
+            1.0,
+            12.5,
+            2.0
           ]
         },
         "west": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            6.9,
-            15.3,
-            9.1,
-            15.6
+            12.0,
+            1.0,
+            12.5,
+            2.0
           ]
         },
         "up": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            6.9,
-            6.9,
-            9.1,
-            9.1
+            13.5,
+            1.0,
+            14.0,
+            2.0
           ]
         },
         "down": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            6.9,
-            6.9,
-            9.1,
-            9.1
+            13.5,
+            1.0,
+            14.0,
+            2.0
           ]
         }
       },
       "rotation": {
         "origin": [
           12.2,
-          0.5,
-          4.4
+          2.2462,
+          4.6766
         ],
-        "x": 9.0,
-        "y": -0.0,
-        "z": 0.0
+        "x": 12.6253,
+        "y": 44.2989,
+        "z": 8.891
       }
     },
     {
       "from": [
-        11.6,
-        1.3,
-        3.8
+        11.656,
+        2.1662,
+        4.4512
       ],
       "to": [
-        12.8,
-        2.26,
-        5.0
+        12.744,
+        2.3262,
+        4.902
       ],
       "faces": {
-        "north": {
-          "texture": "#black",
-          "uv": [
-            7.25,
-            13.4,
-            8.75,
-            14.6
-          ]
-        },
-        "south": {
-          "texture": "#black",
-          "uv": [
-            7.25,
-            13.4,
-            8.75,
-            14.6
-          ]
-        },
         "east": {
-          "texture": "#black",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.25,
-            13.4,
-            8.75,
-            14.6
+            12.0,
+            1.0,
+            12.5,
+            2.0
           ]
         },
         "west": {
-          "texture": "#black",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.25,
-            13.4,
-            8.75,
-            14.6
+            12.0,
+            1.0,
+            12.5,
+            2.0
           ]
         },
         "up": {
-          "texture": "#black",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.25,
-            7.25,
-            8.75,
-            8.75
+            13.5,
+            1.0,
+            14.0,
+            2.0
           ]
         },
         "down": {
-          "texture": "#black",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.25,
-            7.25,
-            8.75,
-            8.75
+            13.5,
+            1.0,
+            14.0,
+            2.0
           ]
         }
       },
       "rotation": {
         "origin": [
           12.2,
-          0.5,
-          4.4
+          2.2462,
+          4.6766
         ],
-        "x": 9.0,
-        "y": -0.0,
-        "z": 0.0
+        "x": 90.0,
+        "y": 81.0,
+        "z": 90.0
+      }
+    },
+    {
+      "from": [
+        11.656,
+        2.2262,
+        4.4512
+      ],
+      "to": [
+        12.744,
+        2.2662,
+        4.902
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            12.0,
+            1.0,
+            12.5,
+            2.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            12.0,
+            1.0,
+            12.5,
+            2.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            13.5,
+            1.0,
+            14.0,
+            2.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            13.5,
+            1.0,
+            14.0,
+            2.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          2.2462,
+          4.6766
+        ],
+        "x": 167.3747,
+        "y": 44.2989,
+        "z": 171.109
       }
     },
     {
       "from": [
         11.72,
-        2.26,
-        3.92
+        2.3,
+        4.2012
       ],
       "to": [
         12.68,
         6.66,
-        4.88
+        4.5988
       ],
       "faces": {
-        "north": {
-          "texture": "#black",
-          "uv": [
-            7.4,
-            7.9,
-            8.6,
-            13.4
-          ]
-        },
-        "south": {
-          "texture": "#black",
-          "uv": [
-            7.4,
-            7.9,
-            8.6,
-            13.4
-          ]
-        },
         "east": {
-          "texture": "#black",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.4,
-            7.9,
-            8.6,
-            13.4
+            0.5,
+            1.0,
+            1.0,
+            6.0
           ]
         },
         "west": {
-          "texture": "#black",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.4,
-            7.9,
-            8.6,
-            13.4
+            0.5,
+            1.0,
+            1.0,
+            6.0
           ]
         },
         "up": {
-          "texture": "#black",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.4,
-            7.4,
-            8.6,
-            8.6
-          ]
-        },
-        "down": {
-          "texture": "#black",
-          "uv": [
-            7.4,
-            7.4,
-            8.6,
-            8.6
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          12.2,
-          0.5,
-          4.4
-        ],
-        "x": 9.0,
-        "y": -0.0,
-        "z": 0.0
-      }
-    },
-    {
-      "from": [
-        11.64,
-        6.58,
-        3.84
-      ],
-      "to": [
-        12.76,
-        6.98,
-        4.96
-      ],
-      "faces": {
-        "north": {
-          "texture": "#iron",
-          "uv": [
-            7.3,
-            7.5,
-            8.7,
-            8.0
-          ]
-        },
-        "south": {
-          "texture": "#iron",
-          "uv": [
-            7.3,
-            7.5,
-            8.7,
-            8.0
-          ]
-        },
-        "east": {
-          "texture": "#iron",
-          "uv": [
-            7.3,
-            7.5,
-            8.7,
-            8.0
-          ]
-        },
-        "west": {
-          "texture": "#iron",
-          "uv": [
-            7.3,
-            7.5,
-            8.7,
-            8.0
-          ]
-        },
-        "up": {
-          "texture": "#iron",
-          "uv": [
-            7.3,
-            7.3,
-            8.7,
-            8.7
-          ]
-        },
-        "down": {
-          "texture": "#iron",
-          "uv": [
-            7.3,
-            7.3,
-            8.7,
-            8.7
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          12.2,
-          0.5,
-          4.4
-        ],
-        "x": 9.0,
-        "y": -0.0,
-        "z": 0.0
-      }
-    },
-    {
-      "from": [
-        11.76,
-        6.98,
-        3.96
-      ],
-      "to": [
-        12.64,
-        9.3,
-        4.84
-      ],
-      "faces": {
-        "north": {
-          "texture": "#black",
-          "uv": [
-            7.45,
-            4.6,
-            8.55,
-            7.5
-          ]
-        },
-        "south": {
-          "texture": "#black",
-          "uv": [
-            7.45,
-            4.6,
-            8.55,
-            7.5
-          ]
-        },
-        "east": {
-          "texture": "#black",
-          "uv": [
-            7.45,
-            4.6,
-            8.55,
-            7.5
-          ]
-        },
-        "west": {
-          "texture": "#black",
-          "uv": [
-            7.45,
-            4.6,
-            8.55,
-            7.5
-          ]
-        },
-        "up": {
-          "texture": "#black",
-          "uv": [
-            7.45,
-            7.45,
-            8.55,
-            8.55
-          ]
-        },
-        "down": {
-          "texture": "#black",
-          "uv": [
-            7.45,
-            7.45,
-            8.55,
-            8.55
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          12.2,
-          0.5,
-          4.4
-        ],
-        "x": 9.0,
-        "y": -0.0,
-        "z": 0.0
-      }
-    },
-    {
-      "from": [
-        11.8,
-        9.3,
-        4.0
-      ],
-      "to": [
-        12.6,
-        10.9,
-        4.8
-      ],
-      "faces": {
-        "north": {
-          "texture": "#black",
-          "uv": [
-            7.5,
-            2.6,
-            8.5,
-            4.6
-          ]
-        },
-        "south": {
-          "texture": "#black",
-          "uv": [
-            7.5,
-            2.6,
-            8.5,
-            4.6
-          ]
-        },
-        "east": {
-          "texture": "#black",
-          "uv": [
-            7.5,
-            2.6,
-            8.5,
-            4.6
-          ]
-        },
-        "west": {
-          "texture": "#black",
-          "uv": [
-            7.5,
-            2.6,
-            8.5,
-            4.6
-          ]
-        },
-        "up": {
-          "texture": "#black",
-          "uv": [
-            7.5,
-            7.5,
-            8.5,
-            8.5
-          ]
-        },
-        "down": {
-          "texture": "#black",
-          "uv": [
-            7.5,
-            7.5,
-            8.5,
-            8.5
+            15.0,
+            1.0,
+            15.5,
+            2.0
           ]
         }
       },
@@ -1500,67 +2589,220 @@
     {
       "from": [
         11.72,
-        10.82,
-        3.92
+        2.311,
+        4.8238
       ],
       "to": [
         12.68,
-        11.14,
-        4.88
+        6.551,
+        5.2214
       ],
       "faces": {
-        "north": {
-          "texture": "#iron",
-          "uv": [
-            7.4,
-            2.3,
-            8.6,
-            2.7
-          ]
-        },
-        "south": {
-          "texture": "#iron",
-          "uv": [
-            7.4,
-            2.3,
-            8.6,
-            2.7
-          ]
-        },
         "east": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.4,
-            2.3,
-            8.6,
-            2.7
+            0.5,
+            1.0,
+            1.0,
+            6.0
           ]
         },
         "west": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.4,
-            2.3,
-            8.6,
-            2.7
+            0.5,
+            1.0,
+            1.0,
+            6.0
           ]
         },
         "up": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.4,
-            7.4,
-            8.6,
-            8.6
+            15.0,
+            1.0,
+            15.5,
+            2.0
           ]
         },
         "down": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.4,
-            7.4,
-            8.6,
-            8.6
+            0.5,
+            8.0,
+            1.0,
+            9.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          4.431,
+          5.0226
+        ],
+        "x": 12.6253,
+        "y": 44.2989,
+        "z": 8.891
+      }
+    },
+    {
+      "from": [
+        11.72,
+        2.371,
+        4.8238
+      ],
+      "to": [
+        12.68,
+        6.491,
+        5.2214
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            6.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            6.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            15.0,
+            1.0,
+            15.5,
+            2.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            0.5,
+            8.0,
+            1.0,
+            9.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          4.431,
+          5.0226
+        ],
+        "x": 90.0,
+        "y": 81.0,
+        "z": 90.0
+      }
+    },
+    {
+      "from": [
+        11.72,
+        2.431,
+        4.8238
+      ],
+      "to": [
+        12.68,
+        6.431,
+        5.2214
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            6.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            0.5,
+            1.0,
+            1.0,
+            6.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            15.0,
+            1.0,
+            15.5,
+            2.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            0.5,
+            8.0,
+            1.0,
+            9.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          4.431,
+          5.0226
+        ],
+        "x": 167.3747,
+        "y": 44.2989,
+        "z": 171.109
+      }
+    },
+    {
+      "from": [
+        11.776,
+        6.62,
+        4.2244
+      ],
+      "to": [
+        12.624,
+        10.94,
+        4.5756
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            2.0,
+            1.0,
+            2.5,
+            6.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            2.0,
+            1.0,
+            2.5,
+            6.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            2.0,
+            8.0,
+            2.5,
+            9.0
           ]
         }
       },
@@ -1577,68 +2819,212 @@
     },
     {
       "from": [
-        11.92,
-        11.14,
-        4.12
+        11.776,
+        6.5781,
+        5.5197
       ],
       "to": [
-        12.48,
-        11.78,
-        4.68
+        12.624,
+        10.7781,
+        5.8709
       ],
       "faces": {
-        "north": {
-          "texture": "#red",
-          "uv": [
-            7.65,
-            1.5,
-            8.35,
-            2.3
-          ]
-        },
-        "south": {
-          "texture": "#red",
-          "uv": [
-            7.65,
-            1.5,
-            8.35,
-            2.3
-          ]
-        },
         "east": {
-          "texture": "#red",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.65,
-            1.5,
-            8.35,
-            2.3
+            2.0,
+            1.0,
+            2.5,
+            6.0
           ]
         },
         "west": {
-          "texture": "#red",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.65,
-            1.5,
-            8.35,
-            2.3
+            2.0,
+            1.0,
+            2.5,
+            6.0
           ]
         },
         "up": {
-          "texture": "#red",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.65,
-            7.65,
-            8.35,
-            8.35
+            2.0,
+            8.0,
+            2.5,
+            9.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          8.6781,
+          5.6953
+        ],
+        "x": 12.6253,
+        "y": 44.2989,
+        "z": 8.891
+      }
+    },
+    {
+      "from": [
+        11.776,
+        6.6381,
+        5.5197
+      ],
+      "to": [
+        12.624,
+        10.7181,
+        5.8709
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            2.0,
+            1.0,
+            2.5,
+            6.0
           ]
         },
-        "down": {
-          "texture": "#red",
+        "west": {
+          "texture": "#hexen_oboe",
           "uv": [
-            7.65,
-            7.65,
-            8.35,
-            8.35
+            2.0,
+            1.0,
+            2.5,
+            6.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            2.0,
+            8.0,
+            2.5,
+            9.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          8.6781,
+          5.6953
+        ],
+        "x": 90.0,
+        "y": 81.0,
+        "z": 90.0
+      }
+    },
+    {
+      "from": [
+        11.776,
+        6.6981,
+        5.5197
+      ],
+      "to": [
+        12.624,
+        10.6581,
+        5.8709
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            2.0,
+            1.0,
+            2.5,
+            6.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            2.0,
+            1.0,
+            2.5,
+            6.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            2.0,
+            8.0,
+            2.5,
+            9.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          8.6781,
+          5.6953
+        ],
+        "x": 167.3747,
+        "y": 44.2989,
+        "z": 171.109
+      }
+    },
+    {
+      "from": [
+        11.992,
+        10.9,
+        4.192
+      ],
+      "to": [
+        12.408,
+        11.66,
+        4.608
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            3.5,
+            8.0,
+            4.0,
+            9.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            3.5,
+            8.0,
+            4.0,
+            9.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            3.5,
+            8.0,
+            4.0,
+            9.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            3.5,
+            8.0,
+            4.0,
+            9.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            5.0,
+            8.0,
+            5.5,
+            9.0
           ]
         }
       },
@@ -1655,344 +3041,59 @@
     },
     {
       "from": [
-        11.84,
-        11.78,
-        4.28
+        11.88,
+        11.66,
+        4.304
       ],
       "to": [
-        12.56,
+        12.52,
         12.66,
-        4.52
+        4.496
       ],
       "faces": {
         "north": {
-          "texture": "#maple",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.55,
-            0.4,
-            8.45,
-            1.5
+            6.5,
+            8.0,
+            7.0,
+            9.0
           ]
         },
         "south": {
-          "texture": "#maple",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.55,
-            0.4,
-            8.45,
-            1.5
-          ]
-        },
-        "east": {
-          "texture": "#maple",
-          "uv": [
-            7.85,
-            0.4,
-            8.15,
-            1.5
-          ]
-        },
-        "west": {
-          "texture": "#maple",
-          "uv": [
-            7.85,
-            0.4,
-            8.15,
-            1.5
-          ]
-        },
-        "up": {
-          "texture": "#maple",
-          "uv": [
-            7.55,
-            7.85,
-            8.45,
-            8.15
-          ]
-        },
-        "down": {
-          "texture": "#maple",
-          "uv": [
-            7.55,
-            7.85,
-            8.45,
-            8.15
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          12.2,
-          0.5,
-          4.4
-        ],
-        "x": 9.0,
-        "y": -0.0,
-        "z": 0.0
-      }
-    },
-    {
-      "from": [
-        11.88,
-        2.82,
-        3.76
-      ],
-      "to": [
-        12.52,
-        3.22,
-        3.936
-      ],
-      "faces": {
-        "north": {
-          "texture": "#iron",
-          "uv": [
-            7.6,
-            12.2,
-            8.4,
-            12.7
-          ]
-        },
-        "east": {
-          "texture": "#iron",
-          "uv": [
-            7.2,
-            12.2,
-            7.42,
-            12.7
-          ]
-        },
-        "west": {
-          "texture": "#iron",
-          "uv": [
-            7.2,
-            12.2,
-            7.42,
-            12.7
-          ]
-        },
-        "up": {
-          "texture": "#iron",
-          "uv": [
-            7.6,
-            7.2,
-            8.4,
-            7.42
-          ]
-        },
-        "down": {
-          "texture": "#iron",
-          "uv": [
-            7.6,
-            7.2,
-            8.4,
-            7.42
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          12.2,
-          0.5,
-          4.4
-        ],
-        "x": 9.0,
-        "y": -0.0,
-        "z": 0.0
-      }
-    },
-    {
-      "from": [
-        11.88,
-        3.7,
-        3.76
-      ],
-      "to": [
-        12.52,
-        4.1,
-        3.936
-      ],
-      "faces": {
-        "north": {
-          "texture": "#iron",
-          "uv": [
-            7.6,
-            11.1,
-            8.4,
-            11.6
-          ]
-        },
-        "east": {
-          "texture": "#iron",
-          "uv": [
-            7.2,
-            11.1,
-            7.42,
-            11.6
-          ]
-        },
-        "west": {
-          "texture": "#iron",
-          "uv": [
-            7.2,
-            11.1,
-            7.42,
-            11.6
-          ]
-        },
-        "up": {
-          "texture": "#iron",
-          "uv": [
-            7.6,
-            7.2,
-            8.4,
-            7.42
-          ]
-        },
-        "down": {
-          "texture": "#iron",
-          "uv": [
-            7.6,
-            7.2,
-            8.4,
-            7.42
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          12.2,
-          0.5,
-          4.4
-        ],
-        "x": 9.0,
-        "y": -0.0,
-        "z": 0.0
-      }
-    },
-    {
-      "from": [
-        11.88,
-        4.58,
-        3.76
-      ],
-      "to": [
-        12.52,
-        4.98,
-        3.936
-      ],
-      "faces": {
-        "north": {
-          "texture": "#iron",
-          "uv": [
-            7.6,
-            10.0,
-            8.4,
-            10.5
-          ]
-        },
-        "east": {
-          "texture": "#iron",
-          "uv": [
-            7.2,
-            10.0,
-            7.42,
-            10.5
-          ]
-        },
-        "west": {
-          "texture": "#iron",
-          "uv": [
-            7.2,
-            10.0,
-            7.42,
-            10.5
-          ]
-        },
-        "up": {
-          "texture": "#iron",
-          "uv": [
-            7.6,
-            7.2,
-            8.4,
-            7.42
-          ]
-        },
-        "down": {
-          "texture": "#iron",
-          "uv": [
-            7.6,
-            7.2,
-            8.4,
-            7.42
-          ]
-        }
-      },
-      "rotation": {
-        "origin": [
-          12.2,
-          0.5,
-          4.4
-        ],
-        "x": 9.0,
-        "y": -0.0,
-        "z": 0.0
-      }
-    },
-    {
-      "from": [
-        11.88,
-        7.38,
-        3.76
-      ],
-      "to": [
-        12.52,
-        7.78,
-        3.936
-      ],
-      "faces": {
-        "north": {
-          "texture": "#iron",
-          "uv": [
-            7.6,
             6.5,
-            8.4,
-            7.0
+            8.0,
+            7.0,
+            9.0
           ]
         },
         "east": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.2,
             6.5,
-            7.42,
-            7.0
+            8.0,
+            7.0,
+            9.0
           ]
         },
         "west": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.2,
             6.5,
-            7.42,
-            7.0
+            8.0,
+            7.0,
+            9.0
           ]
         },
         "up": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.6,
-            7.2,
-            8.4,
-            7.42
-          ]
-        },
-        "down": {
-          "texture": "#iron",
-          "uv": [
-            7.6,
-            7.2,
-            8.4,
-            7.42
+            8.0,
+            8.0,
+            8.5,
+            9.0
           ]
         }
       },
@@ -2009,59 +3110,59 @@
     },
     {
       "from": [
-        11.88,
-        8.18,
-        3.76
+        12.0,
+        3.06,
+        3.816
       ],
       "to": [
-        12.52,
-        8.58,
-        3.936
+        12.4,
+        3.332,
+        3.968
       ],
       "faces": {
         "north": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.6,
-            5.5,
-            8.4,
-            6.0
+            9.5,
+            8.0,
+            10.0,
+            9.0
           ]
         },
         "east": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.2,
-            5.5,
-            7.42,
-            6.0
+            11.0,
+            8.0,
+            11.5,
+            9.0
           ]
         },
         "west": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.2,
-            5.5,
-            7.42,
-            6.0
+            11.0,
+            8.0,
+            11.5,
+            9.0
           ]
         },
         "up": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.6,
-            7.2,
-            8.4,
-            7.42
+            9.5,
+            8.0,
+            10.0,
+            9.0
           ]
         },
         "down": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.6,
-            7.2,
-            8.4,
-            7.42
+            9.5,
+            8.0,
+            10.0,
+            9.0
           ]
         }
       },
@@ -2078,59 +3179,629 @@
     },
     {
       "from": [
-        11.88,
-        8.98,
-        3.76
+        12.0,
+        3.98,
+        3.816
       ],
       "to": [
-        12.52,
+        12.4,
+        4.252,
+        3.968
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            9.5,
+            8.0,
+            10.0,
+            9.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            11.0,
+            8.0,
+            11.5,
+            9.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            11.0,
+            8.0,
+            11.5,
+            9.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            9.5,
+            8.0,
+            10.0,
+            9.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            9.5,
+            8.0,
+            10.0,
+            9.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          0.5,
+          4.4
+        ],
+        "x": 9.0,
+        "y": -0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "from": [
+        12.0,
+        4.9,
+        3.816
+      ],
+      "to": [
+        12.4,
+        5.172,
+        3.968
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            9.5,
+            8.0,
+            10.0,
+            9.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            11.0,
+            8.0,
+            11.5,
+            9.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            11.0,
+            8.0,
+            11.5,
+            9.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            9.5,
+            8.0,
+            10.0,
+            9.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            9.5,
+            8.0,
+            10.0,
+            9.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          0.5,
+          4.4
+        ],
+        "x": 9.0,
+        "y": -0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "from": [
+        12.008,
+        7.54,
+        3.864
+      ],
+      "to": [
+        12.392,
+        7.812,
+        4.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            9.5,
+            8.0,
+            10.0,
+            9.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            11.0,
+            8.0,
+            11.5,
+            9.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            11.0,
+            8.0,
+            11.5,
+            9.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            9.5,
+            8.0,
+            10.0,
+            9.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            9.5,
+            8.0,
+            10.0,
+            9.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          0.5,
+          4.4
+        ],
+        "x": 9.0,
+        "y": -0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "from": [
+        12.008,
+        8.46,
+        3.864
+      ],
+      "to": [
+        12.392,
+        8.732,
+        4.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            9.5,
+            8.0,
+            10.0,
+            9.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            11.0,
+            8.0,
+            11.5,
+            9.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            11.0,
+            8.0,
+            11.5,
+            9.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            9.5,
+            8.0,
+            10.0,
+            9.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            9.5,
+            8.0,
+            10.0,
+            9.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          0.5,
+          4.4
+        ],
+        "x": 9.0,
+        "y": -0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "from": [
+        12.008,
         9.38,
-        3.936
+        3.864
+      ],
+      "to": [
+        12.392,
+        9.652,
+        4.0
       ],
       "faces": {
         "north": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.6,
-            4.5,
-            8.4,
+            9.5,
+            8.0,
+            10.0,
+            9.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            11.0,
+            8.0,
+            11.5,
+            9.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            11.0,
+            8.0,
+            11.5,
+            9.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            9.5,
+            8.0,
+            10.0,
+            9.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            9.5,
+            8.0,
+            10.0,
+            9.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          0.5,
+          4.4
+        ],
+        "x": 9.0,
+        "y": -0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "from": [
+        11.704,
+        7.14,
+        3.904
+      ],
+      "to": [
+        11.824,
+        10.5,
+        4.024
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            5.0,
+            1.0,
+            5.5,
+            5.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            5.0,
+            1.0,
+            5.5,
             5.0
           ]
         },
         "east": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.2,
-            4.5,
-            7.42,
+            5.0,
+            1.0,
+            5.5,
             5.0
           ]
         },
         "west": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.2,
-            4.5,
-            7.42,
+            5.0,
+            1.0,
+            5.5,
             5.0
           ]
         },
         "up": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.6,
-            7.2,
-            8.4,
-            7.42
+            12.5,
+            8.0,
+            13.0,
+            9.0
           ]
         },
         "down": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.6,
-            7.2,
-            8.4,
-            7.42
+            12.5,
+            8.0,
+            13.0,
+            9.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          0.5,
+          4.4
+        ],
+        "x": 9.0,
+        "y": -0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "from": [
+        12.576,
+        2.54,
+        3.904
+      ],
+      "to": [
+        12.696,
+        6.42,
+        4.024
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            3.5,
+            1.0,
+            4.0,
+            6.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            3.5,
+            1.0,
+            4.0,
+            6.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            3.5,
+            1.0,
+            4.0,
+            6.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            3.5,
+            1.0,
+            4.0,
+            6.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            12.5,
+            8.0,
+            13.0,
+            9.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            12.5,
+            8.0,
+            13.0,
+            9.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          0.5,
+          4.4
+        ],
+        "x": 9.0,
+        "y": -0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "from": [
+        12.008,
+        9.7,
+        4.8
+      ],
+      "to": [
+        12.392,
+        10.5,
+        4.944
+      ],
+      "faces": {
+        "south": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            14.0,
+            8.0,
+            14.5,
+            9.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            14.0,
+            8.0,
+            14.5,
+            9.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            14.0,
+            8.0,
+            14.5,
+            9.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            0.5,
+            11.0,
+            1.0,
+            12.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            0.5,
+            11.0,
+            1.0,
+            12.0
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          0.5,
+          4.4
+        ],
+        "x": 9.0,
+        "y": -0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "from": [
+        11.976,
+        4.9,
+        4.84
+      ],
+      "to": [
+        12.424,
+        5.34,
+        5.24
+      ],
+      "faces": {
+        "south": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            2.0,
+            11.0,
+            2.5,
+            12.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            3.5,
+            11.0,
+            4.0,
+            12.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            3.5,
+            11.0,
+            4.0,
+            12.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            2.0,
+            11.0,
+            2.5,
+            12.0
+          ]
+        },
+        "down": {
+          "texture": "#hexen_oboe",
+          "uv": [
+            2.0,
+            11.0,
+            2.5,
+            12.0
           ]
         }
       },
@@ -2148,67 +3819,58 @@
     {
       "from": [
         12.64,
-        2.58,
-        4.16
+        2.54,
+        4.24
       ],
       "to": [
-        12.8,
-        10.42,
-        4.32
+        12.808,
+        3.34,
+        4.56
       ],
       "faces": {
         "north": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            8.55,
-            3.2,
-            8.75,
-            13.0
+            5.0,
+            11.0,
+            5.5,
+            12.0
           ]
         },
         "south": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            8.55,
-            3.2,
-            8.75,
-            13.0
+            5.0,
+            11.0,
+            5.5,
+            12.0
           ]
         },
         "east": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.7,
-            3.2,
-            7.9,
-            13.0
-          ]
-        },
-        "west": {
-          "texture": "#iron",
-          "uv": [
-            7.7,
-            3.2,
-            7.9,
-            13.0
+            5.0,
+            11.0,
+            5.5,
+            12.0
           ]
         },
         "up": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            8.55,
-            7.7,
-            8.75,
-            7.9
+            3.5,
+            11.0,
+            4.0,
+            12.0
           ]
         },
         "down": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            8.55,
-            7.7,
-            8.75,
-            7.9
+            3.5,
+            11.0,
+            4.0,
+            12.0
           ]
         }
       },
@@ -2225,68 +3887,59 @@
     },
     {
       "from": [
-        11.96,
-        4.98,
-        4.864
+        11.608,
+        7.94,
+        4.272
       ],
       "to": [
-        12.44,
-        5.46,
-        5.28
+        11.768,
+        8.74,
+        4.528
       ],
       "faces": {
         "north": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.7,
-            9.4,
-            8.3,
-            10.0
+            5.0,
+            11.0,
+            5.5,
+            12.0
           ]
         },
         "south": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.7,
-            9.4,
-            8.3,
-            10.0
-          ]
-        },
-        "east": {
-          "texture": "#iron",
-          "uv": [
-            8.58,
-            9.4,
-            9.1,
-            10.0
+            5.0,
+            11.0,
+            5.5,
+            12.0
           ]
         },
         "west": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            8.58,
-            9.4,
-            9.1,
-            10.0
+            5.0,
+            11.0,
+            5.5,
+            12.0
           ]
         },
         "up": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.7,
-            8.58,
-            8.3,
-            9.1
+            3.5,
+            11.0,
+            4.0,
+            12.0
           ]
         },
         "down": {
-          "texture": "#iron",
+          "texture": "#hexen_oboe",
           "uv": [
-            7.7,
-            8.58,
-            8.3,
-            9.1
+            3.5,
+            11.0,
+            4.0,
+            12.0
           ]
         }
       },
@@ -2303,284 +3956,196 @@
     },
     {
       "from": [
-        12.04,
-        9.78,
-        4.824
+        11.05,
+        0.0,
+        3.9237
       ],
       "to": [
-        12.36,
-        10.58,
-        4.96
+        13.35,
+        0.5,
+        4.8763
       ],
       "faces": {
-        "north": {
-          "texture": "#iron",
-          "uv": [
-            7.8,
-            3.0,
-            8.2,
-            4.0
-          ]
-        },
-        "south": {
-          "texture": "#iron",
-          "uv": [
-            7.8,
-            3.0,
-            8.2,
-            4.0
-          ]
-        },
         "east": {
-          "texture": "#iron",
+          "texture": "#hexen_music_stand",
           "uv": [
-            8.53,
-            3.0,
-            8.7,
-            4.0
+            9.0,
+            7.5,
+            9.25,
+            8.0
           ]
         },
         "west": {
-          "texture": "#iron",
+          "texture": "#hexen_music_stand",
           "uv": [
-            8.53,
-            3.0,
-            8.7,
-            4.0
+            9.0,
+            7.5,
+            9.25,
+            8.0
           ]
         },
         "up": {
-          "texture": "#iron",
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.8,
-            8.53,
-            8.2,
-            8.7
+            1.25,
+            7.5,
+            1.75,
+            8.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        11.05,
+        0.06,
+        3.9237
+      ],
+      "to": [
+        13.35,
+        0.44,
+        4.8763
+      ],
+      "faces": {
+        "east": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            9.0,
+            7.5,
+            9.25,
+            8.0
           ]
         },
-        "down": {
-          "texture": "#iron",
+        "west": {
+          "texture": "#hexen_music_stand",
           "uv": [
-            7.8,
-            8.53,
-            8.2,
-            8.7
+            9.0,
+            7.5,
+            9.25,
+            8.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_music_stand",
+          "uv": [
+            1.25,
+            7.5,
+            1.75,
+            8.0
           ]
         }
       },
       "rotation": {
         "origin": [
           12.2,
-          0.5,
+          0.25,
           4.4
         ],
-        "x": 9.0,
-        "y": -0.0,
-        "z": 0.0
+        "x": 0,
+        "y": 45.0,
+        "z": 0
       }
     },
     {
       "from": [
-        10.9,
-        0,
-        3.594
+        11.05,
+        0.12,
+        3.9237
       ],
       "to": [
-        13.5,
-        0.5,
-        5.206
+        13.35,
+        0.38,
+        4.8763
       ],
       "faces": {
-        "north": {
-          "texture": "#walnut",
-          "uv": [
-            10.9,
-            15.5,
-            13.5,
-            16.0
-          ]
-        },
-        "south": {
-          "texture": "#walnut",
-          "uv": [
-            10.9,
-            15.5,
-            13.5,
-            16.0
-          ]
-        },
         "east": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            3.594,
-            15.5,
-            5.206,
-            16.0
+            9.0,
+            7.5,
+            9.25,
+            8.0
           ]
         },
         "west": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            3.594,
-            15.5,
-            5.206,
-            16.0
+            9.0,
+            7.5,
+            9.25,
+            8.0
           ]
         },
         "up": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            10.9,
-            3.594,
-            13.5,
-            5.206
-          ]
-        },
-        "down": {
-          "texture": "#walnut",
-          "uv": [
-            10.9,
-            3.594,
-            13.5,
-            5.206
+            1.25,
+            7.5,
+            1.75,
+            8.0
           ]
         }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          0.25,
+          4.4
+        ],
+        "x": 0,
+        "y": 90.0,
+        "z": 0
       }
     },
     {
       "from": [
-        11.082,
-        0,
-        3.282
+        11.05,
+        0.18,
+        3.9237
       ],
       "to": [
-        13.318,
-        0.5,
-        5.518
+        13.35,
+        0.32,
+        4.8763
       ],
       "faces": {
-        "north": {
-          "texture": "#walnut",
-          "uv": [
-            11.082,
-            15.5,
-            13.318,
-            16.0
-          ]
-        },
-        "south": {
-          "texture": "#walnut",
-          "uv": [
-            11.082,
-            15.5,
-            13.318,
-            16.0
-          ]
-        },
         "east": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            3.282,
-            15.5,
-            5.518,
-            16.0
+            9.0,
+            7.5,
+            9.25,
+            8.0
           ]
         },
         "west": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            3.282,
-            15.5,
-            5.518,
-            16.0
+            9.0,
+            7.5,
+            9.25,
+            8.0
           ]
         },
         "up": {
-          "texture": "#walnut",
+          "texture": "#hexen_music_stand",
           "uv": [
-            11.082,
-            3.282,
-            13.318,
-            5.518
-          ]
-        },
-        "down": {
-          "texture": "#walnut",
-          "uv": [
-            11.082,
-            3.282,
-            13.318,
-            5.518
+            1.25,
+            7.5,
+            1.75,
+            8.0
           ]
         }
-      }
-    },
-    {
-      "from": [
-        11.394,
-        0,
-        3.1
-      ],
-      "to": [
-        13.006,
-        0.5,
-        5.7
-      ],
-      "faces": {
-        "north": {
-          "texture": "#walnut",
-          "uv": [
-            11.394,
-            15.5,
-            13.006,
-            16.0
-          ]
-        },
-        "south": {
-          "texture": "#walnut",
-          "uv": [
-            11.394,
-            15.5,
-            13.006,
-            16.0
-          ]
-        },
-        "east": {
-          "texture": "#walnut",
-          "uv": [
-            3.1,
-            15.5,
-            5.7,
-            16.0
-          ]
-        },
-        "west": {
-          "texture": "#walnut",
-          "uv": [
-            3.1,
-            15.5,
-            5.7,
-            16.0
-          ]
-        },
-        "up": {
-          "texture": "#walnut",
-          "uv": [
-            11.394,
-            3.1,
-            13.006,
-            5.7
-          ]
-        },
-        "down": {
-          "texture": "#walnut",
-          "uv": [
-            11.394,
-            3.1,
-            13.006,
-            5.7
-          ]
-        }
+      },
+      "rotation": {
+        "origin": [
+          12.2,
+          0.25,
+          4.4
+        ],
+        "x": 0,
+        "y": 135.0,
+        "z": 0
       }
     }
   ]

@@ -1,74 +1,38 @@
 {
   "ambientocclusion": false,
   "textures": {
-    "iron": "minecraft:block/iron_block",
-    "particle": "minecraft:block/iron_block"
+    "organ_pipes": "logos_dimension:block/instrument/organ_pipes",
+    "particle": "logos_dimension:block/instrument/particle_tin"
   },
   "elements": [
     {
       "from": [
-        5.5,
-        0,
-        4.5
+        4.5,
+        0.0,
+        6.5285
       ],
       "to": [
-        10.5,
-        16,
-        11.5
+        11.5,
+        16.0,
+        9.4715
       ],
       "faces": {
-        "north": {
-          "texture": "#iron",
-          "uv": [
-            5.5,
-            0.0,
-            10.5,
-            16.0
-          ]
-        },
-        "south": {
-          "texture": "#iron",
-          "uv": [
-            5.5,
-            0.0,
-            10.5,
-            16.0
-          ]
-        },
         "east": {
-          "texture": "#iron",
+          "texture": "#organ_pipes",
           "uv": [
-            4.5,
-            0.0,
-            11.5,
-            16.0
+            9.375,
+            0.25,
+            9.75,
+            4.25
           ]
         },
         "west": {
-          "texture": "#iron",
+          "texture": "#organ_pipes",
           "uv": [
-            4.5,
-            0.0,
-            11.5,
-            16.0
-          ]
-        },
-        "up": {
-          "texture": "#iron",
-          "uv": [
-            5.5,
-            4.5,
-            10.5,
-            11.5
-          ]
-        },
-        "down": {
-          "texture": "#iron",
-          "uv": [
-            5.5,
-            4.5,
-            10.5,
-            11.5
+            9.375,
+            0.25,
+            9.75,
+            4.25
           ]
         }
       }
@@ -76,69 +40,127 @@
     {
       "from": [
         4.5,
-        0,
-        5.5
+        0.0,
+        6.5285
       ],
       "to": [
         11.5,
-        16,
-        10.5
+        16.0,
+        9.4715
       ],
       "faces": {
-        "north": {
-          "texture": "#iron",
-          "uv": [
-            4.5,
-            0.0,
-            11.5,
-            16.0
-          ]
-        },
-        "south": {
-          "texture": "#iron",
-          "uv": [
-            4.5,
-            0.0,
-            11.5,
-            16.0
-          ]
-        },
         "east": {
-          "texture": "#iron",
+          "texture": "#organ_pipes",
           "uv": [
-            5.5,
-            0.0,
-            10.5,
-            16.0
+            9.375,
+            0.25,
+            9.75,
+            4.25
           ]
         },
         "west": {
-          "texture": "#iron",
+          "texture": "#organ_pipes",
           "uv": [
-            5.5,
-            0.0,
-            10.5,
-            16.0
-          ]
-        },
-        "up": {
-          "texture": "#iron",
-          "uv": [
-            4.5,
-            5.5,
-            11.5,
-            10.5
-          ]
-        },
-        "down": {
-          "texture": "#iron",
-          "uv": [
-            4.5,
-            5.5,
-            11.5,
-            10.5
+            9.375,
+            0.25,
+            9.75,
+            4.25
           ]
         }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8.0,
+          8
+        ],
+        "x": 0,
+        "y": 45.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        4.5,
+        0.0,
+        6.5285
+      ],
+      "to": [
+        11.5,
+        16.0,
+        9.4715
+      ],
+      "faces": {
+        "east": {
+          "texture": "#organ_pipes",
+          "uv": [
+            9.375,
+            0.25,
+            9.75,
+            4.25
+          ]
+        },
+        "west": {
+          "texture": "#organ_pipes",
+          "uv": [
+            9.375,
+            0.25,
+            9.75,
+            4.25
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8.0,
+          8
+        ],
+        "x": 0,
+        "y": 90.0,
+        "z": 0
+      }
+    },
+    {
+      "from": [
+        4.5,
+        0.0,
+        6.5285
+      ],
+      "to": [
+        11.5,
+        16.0,
+        9.4715
+      ],
+      "faces": {
+        "east": {
+          "texture": "#organ_pipes",
+          "uv": [
+            9.375,
+            0.25,
+            9.75,
+            4.25
+          ]
+        },
+        "west": {
+          "texture": "#organ_pipes",
+          "uv": [
+            9.375,
+            0.25,
+            9.75,
+            4.25
+          ]
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8.0,
+          8
+        ],
+        "x": 0,
+        "y": 135.0,
+        "z": 0
       }
     }
   ]

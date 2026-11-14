@@ -1,5 +1,5 @@
 {
   "textures": {
-    "particle": "minecraft:block/quartz_block_top"
+    "particle": "logos_dimension:block/instrument/particle_marble"
   }
 }

@@ -18,7 +18,7 @@ public class SeatedInstrumentBlock extends TallInstrumentBlock {
     /**
      * 演奏者双脚在朝北放置的方块模型里的位置（像素；x 向东、y 向上、z 向南，琴的正面朝北）：
      * 大提琴的人坐在琴后的凳子上，脚底比地面略低（坐姿的大腿正好压在凳面上）；低音提琴的人站在琴后。
-     * 与 tools/instrument_art.py 的 SEATED（"feet"）、客户端的 HeldRig.seated 一致。
+     * 与 tools/instrument_models/strings.py 的 SEATED（"feet"）、客户端的 HeldRig.seated 一致。
      */
     public static Vec3 feet(InstrumentKind kind) {
         return kind == InstrumentKind.DOUBLE_BASS ? new Vec3(8, 0, 11.5) : new Vec3(8, -2.25, 12.5);

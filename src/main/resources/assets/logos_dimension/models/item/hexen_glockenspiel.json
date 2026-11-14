@@ -1,3 +1,107 @@
 {
-  "parent": "logos_dimension:block/hexen_glockenspiel"
+  "parent": "logos_dimension:block/hexen_glockenspiel",
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "translation": [
+        0.63,
+        0.856,
+        0.0
+      ],
+      "scale": [
+        0.8097,
+        0.8097,
+        0.8097
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        -0.0,
+        2.729,
+        0
+      ],
+      "scale": [
+        0.4286,
+        0.4286,
+        0.4286
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "translation": [
+        -0.0,
+        1.457,
+        0.0
+      ],
+      "scale": [
+        0.8571,
+        0.8571,
+        0.8571
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        -0.325,
+        2.681,
+        0
+      ],
+      "scale": [
+        0.4184,
+        0.4184,
+        0.4184
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "translation": [
+        -0.378,
+        0.826,
+        0.0
+      ],
+      "scale": [
+        0.4858,
+        0.4858,
+        0.4858
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        225,
+        0
+      ],
+      "translation": [
+        -0.378,
+        0.826,
+        0.0
+      ],
+      "scale": [
+        0.4858,
+        0.4858,
+        0.4858
+      ]
+    }
+  }
 }

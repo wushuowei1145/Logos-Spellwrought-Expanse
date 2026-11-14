@@ -47,13 +47,13 @@ import org.jspecify.annotations.Nullable;
  */
 public class StarbloomBenchBlock extends InstrumentBlock {
     public static final EnumProperty<MusicStandBlock.Holds> PLAYS = EnumProperty.create("plays", MusicStandBlock.Holds.class);
-    /** 凳面高（像素），与 tools/instrument_art.py 的 bench_elements 一致。 */
+    /** 凳面高（像素），与 tools/instrument_models/keyboards.py 的琴凳一致。 */
     public static final float TOP = 10;
     /** 坐的人双脚在方块里的位置（像素，凳子中间）：双脚比地面低 2 像素，坐姿的大腿正好压在凳面上（同大提琴的凳子）。 */
     public static final Vec3 FEET = new Vec3(8, -2, 8);
     /** 关联了乐器的琴凳：坐的人往乐器那边挪这么多像素（离琴键近一些，手够得着）。 */
     public static final float LINKED_FORWARD = 2.5f;
-    /** 凳面前沿（像素，琴凳朝北时的 z），与碰撞箱、tools/instrument_art.py 的 bench_elements 一致。 */
+    /** 凳面前沿（像素，琴凳朝北时的 z），与碰撞箱、tools/instrument_models/keyboards.py 的琴凳一致。 */
     public static final float FRONT_EDGE = 3;
     private static final Map<Direction, VoxelShape> SHAPES = Shapes.rotateHorizontal(Block.box(1, 0, FRONT_EDGE, 15, TOP, 13));
 

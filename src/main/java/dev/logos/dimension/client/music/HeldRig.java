@@ -115,7 +115,7 @@ final class HeldRig {
 
     /**
      * 巴松管：斜挎在身前，管靴在惯用手一侧的胯前，管身离竖直 30°、喇叭口越过非惯用手一侧的肩膀；
-     * 嘴边那一段管身在脸的外侧，弯管从那里伸到嘴里（哨片尖 = tools/instrument_art.py 的 BASSOON_REED）。
+     * 嘴边那一段管身在脸的外侧，弯管从那里伸到嘴里（哨片尖 = tools/instrument_models/winds.py 的 BASSOON_REED）。
      */
     private static Place bassoon(Matrix4f body, boolean mirror, float t, float move) {
         float sway = 1.5f * DEG * move * (float) Math.sin(t * 0.12f);
@@ -131,7 +131,7 @@ final class HeldRig {
     }
 
     /**
-     * 坐着（大提琴）或站着（低音提琴）拉的琴在朝北放置的方块模型里的摆放，与 tools/instrument_art.py 的 SEATED 是同一组数：
+     * 坐着（大提琴）或站着（低音提琴）拉的琴在朝北放置的方块模型里的摆放，与 tools/instrument_models/strings.py 的 SEATED 是同一组数：
      * 琴按竖直、正面朝北画在自己的坐标里（琴脚尖在原点，y 沿琴身向上，x 向东，z 朝琴背），先后仰 lean°（琴头朝演奏者）、
      * 再向左倾 tilt°（琴头朝西），琴脚尖放在 endpin（方块像素）。contact 是弓毛压在弦上的点；左手沿指板与琴颈中间那条线
      * （z = neckZ，y 在 neckLow–neckHigh）从琴枕往下，找第一个直臂够得着的位置。

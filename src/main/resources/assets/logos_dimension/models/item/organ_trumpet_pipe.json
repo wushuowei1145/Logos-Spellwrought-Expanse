@@ -1,3 +1,107 @@
 {
-  "parent": "logos_dimension:block/organ_trumpet_pipe"
+  "parent": "logos_dimension:block/organ_trumpet_pipe",
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        135,
+        0
+      ],
+      "translation": [
+        2.097,
+        2.712,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0.0,
+        2.78,
+        0
+      ],
+      "scale": [
+        0.4724,
+        0.4724,
+        0.4724
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "translation": [
+        0.0,
+        1.559,
+        0.0
+      ],
+      "scale": [
+        0.9449,
+        0.9449,
+        0.9449
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        1.228,
+        1.712,
+        0
+      ],
+      "scale": [
+        0.5856,
+        0.5856,
+        0.5856
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "translation": [
+        1.486,
+        1.169,
+        0.0
+      ],
+      "scale": [
+        0.7087,
+        0.7087,
+        0.7087
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        225,
+        0
+      ],
+      "translation": [
+        1.486,
+        1.169,
+        0.0
+      ],
+      "scale": [
+        0.7087,
+        0.7087,
+        0.7087
+      ]
+    }
+  }
 }
