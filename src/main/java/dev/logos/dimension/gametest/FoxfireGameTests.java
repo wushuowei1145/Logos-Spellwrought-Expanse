@@ -287,8 +287,8 @@ public final class FoxfireGameTests {
         try {
             var check = Class.forName("dev.logos.sage.SageAgent").getDeclaredMethod("check", String.class, java.util.Set.class, int.class);
             check.setAccessible(true);
-            java.util.Set<String> runes = new java.util.HashSet<>();
-            dev.logos.lang.Runes.all().forEach(r -> runes.add(r.name));
+            // 书灵按解锁键（rune:…、element:…、motion:…）查搭档学会了什么；这里全给，只剩 foxfire 本身被拒
+            java.util.Set<String> runes = new java.util.HashSet<>(dev.logos.lang.Unlocks.all());
             Object refused = check.invoke(null, "(spell :name \"书灵的狐火\" (damage caster 1 foxfire))", runes, 1000);
             Object accepted = check.invoke(null, "(spell :name \"书灵的奥秘\" (damage caster 1 arcane))", runes, 1000);
             var spell = refused.getClass().getDeclaredMethod("spell");

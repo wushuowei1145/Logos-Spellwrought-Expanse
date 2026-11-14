@@ -208,7 +208,7 @@ public final class ShiraumeGameTests {
     private static void guardBreakSparesRyuka(GameTestHelper h) {
         var f = Fixture.create(h, new ItemStack(RyukaItem.ITEM.get()));
         var m = PlayerMagic.of(f.p);
-        m.maxMana = m.mana = 1000;
+        m.baseMaxMana = m.mana = 1000;
         m.trace = false;
         var boss = human(f, 3, true);
         f.at(30, () -> {
@@ -277,7 +277,7 @@ public final class ShiraumeGameTests {
                 dev.logos.item.SpellPages.inscribed(dev.logos.item.PageTier.CRYSTAL, "(spell :name \"蓄\" :mana 40 (mark caster #charged))", null))));
         var f = Fixture.create(h, sword);
         var m = PlayerMagic.of(f.p);
-        m.maxMana = m.mana = 1000;
+        m.baseMaxMana = m.mana = 1000;
         m.trace = false;
         var health = f.p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
         health.setBaseValue(200);

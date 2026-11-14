@@ -98,7 +98,7 @@ public final class ExplosionMaidGameTests {
 
         ServerPlayer owner = ExplosionGameTests.player(h, Vec3.atBottomCenterOf(o).add(-3, 0, 0), 0);
         owner.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-        PlayerMagic.of(owner).maxMana = 10000;
+        PlayerMagic.of(owner).baseMaxMana = 10000;
         PlayerMagic.of(owner).mana = 10000;
         Mob maid;
         try {

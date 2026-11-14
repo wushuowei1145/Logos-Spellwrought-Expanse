@@ -125,7 +125,7 @@ public abstract class DissolveViews implements UIScenario {
                         // GeckoLib 模型：它把自己当自定义几何画
                         ServerPlayer p = ctx.player();
                         PlayerMagic m = PlayerMagic.of(p);
-                        m.maxMana = m.mana = 100000;
+                        m.baseMaxMana = m.mana = 100000;
                         m.trace = false;
                         Casting.cast(p, Casting.compile("(spell :mana 6000 (summon mana_lifeform :level 3 :at (pos-of caster)))"), null, null);
                         ManaLifeform lifeform = (ManaLifeform) Familiars.latest(p, null);

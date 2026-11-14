@@ -81,7 +81,7 @@ public class RyukaView implements UIScenario {
                     golem.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1000); golem.setHealth(1000);
                     golem.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.INVISIBILITY,7200,0,false,false));
                     golem.setPos(.5,100,2.8); level.addFreshEntity(golem); target = golem.getId();
-                    var magic = PlayerMagic.of(ctx.player()); magic.maxMana = Math.max(magic.maxMana, 3000); magic.mana = 3000;
+                    var magic = PlayerMagic.of(ctx.player()); magic.baseMaxMana = Math.max(magic.baseMaxMana, 3000); magic.mana = 3000;
                     // 流火放在第 2 格，先空手；切过去那一刻才开始凝聚，截图不会错过
                     ctx.player().getInventory().clearContent();
                     ctx.player().getInventory().setItem(1, new ItemStack(RyukaItem.ITEM.get()));

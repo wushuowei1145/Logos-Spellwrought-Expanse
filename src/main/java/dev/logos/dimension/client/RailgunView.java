@@ -59,7 +59,7 @@ public class RailgunView implements UIScenario {
             ctx.player().setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Economy.coin(Currency.IMPERIAL, 1), 16));
             ManaWrap.wrap(ctx.player(), Element.LIGHTNING, 1, 600);
             var magic = PlayerMagic.of(ctx.player());
-            magic.maxMana = magic.mana = 10000;
+            magic.baseMaxMana = magic.mana = 10000;
             DimensionTravel.teleport(ctx.player(), ctx.server().overworld(), new Vec3(.5, 100, .5), -90, 0);
         }).waitUntil("缠绕同步 " + view, ctx -> ManaWrap.of(Minecraft.getInstance().player) != null).ticks(10);
         s.step("按住右键 " + view, ctx -> {

@@ -126,7 +126,7 @@ public final class LongswordGameTests {
                 dev.logos.item.SpellPages.inscribed(dev.logos.item.PageTier.CRYSTAL,spell,null))));
         return sword;
     }
-    private static void mana(ServerPlayer p){var m=dev.logos.runtime.PlayerMagic.of(p);m.maxMana=m.mana=1000;m.trace=false;}
+    private static void mana(ServerPlayer p){var m=dev.logos.runtime.PlayerMagic.of(p);m.baseMaxMana=m.mana=1000;m.trace=false;}
     private static double manaOf(ServerPlayer p){return dev.logos.runtime.PlayerMagic.of(p).mana;}
     /** 黑钢长剑格挡：0.3 秒举剑前摇之后挡住正面的一击，不掉血也不损耗耐久，改扣原版盾牌该掉的耐久那么多魔力（6 伤害 → 7）；没挂载页时左键开不起蓄力，仍在格挡；松开放下剑。 */
     private static void guard(GameTestHelper h) {
@@ -254,9 +254,8 @@ public final class LongswordGameTests {
      */
     private static void manaGuard(GameTestHelper h) {
         var f=Fixture.create(h);mana(f.p);
-        // 魔力每刻回复 0.3，关掉它才量得出每次格挡扣了多少。
-        f.p.getAttribute(dev.logos.runtime.SpellModifiers.MANA_REGENERATION).addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
-                LogosDimension.id("test_no_regeneration"),-1,net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+        // 魔力每刻都在回，关掉它才量得出每次格挡扣了多少。
+        noRegeneration(f.p);
         // 被挡下的术式结束后剩下的魔力会变成游离魔力，飘到持剑者身上被吸收；每刻清掉。
         h.onEachTick(()->h.getLevel().getEntitiesOfClass(dev.logos.runtime.FreeManaEntity.class,new net.minecraft.world.phys.AABB(f.origin,f.origin).inflate(16)).forEach(Entity::discard));
         var foe=new ServerPlayer[1];var health=new float[1];
@@ -296,10 +295,11 @@ public final class LongswordGameTests {
      * 流火的魔力护盾：拿斧头的木桩一刚架刀就砍来 → 弹刀，不扣魔力也不破防；过了弹刀窗口再砍 → 照样挡下，扣 6 伤害的 7 点
      * 加破盾 5 秒 × 4 = 20 点，不破防；魔法伤害照样挡（4 → 5）；虚空穿透；魔力只够挡不够顶住斧头时 → 挡下这一击，但破防 5 秒。
      */
-    /** 不让魔力自己回：要按扣了多少魔力断言。 */
-    private static void noRegeneration(ServerPlayer p) {
-        p.getAttribute(dev.logos.runtime.SpellModifiers.MANA_REGENERATION).addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
-                LogosDimension.id("test_no_regeneration"),-1,net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+    /** 不让魔力自己回：要按扣了多少魔力断言。Logos 0.7 起回魔是固定值加上限的百分比，两项都关。 */
+    static void noRegeneration(ServerPlayer p) {
+        for (var regen : List.of(dev.logos.runtime.SpellModifiers.MANA_REGENERATION, dev.logos.runtime.SpellModifiers.MANA_REGENERATION_PERCENT))
+            p.getAttribute(regen).addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                    LogosDimension.id("test_no_regeneration"),-1,net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
     }
     /** 一只血很厚、不动的尸壳（处决要砍好多刀；铁傀儡原版不受摔落伤害，所以不用它）。 */
     private static LivingEntity dummy(GameTestHelper h, Vec3 at) {
@@ -420,8 +420,7 @@ public final class LongswordGameTests {
     }
     private static void ryukaGuard(GameTestHelper h) {
         var f=Fixture.create(h,new ItemStack(dev.logos.dimension.item.RyukaItem.ITEM.get()));mana(f.p);
-        f.p.getAttribute(dev.logos.runtime.SpellModifiers.MANA_REGENERATION).addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
-                LogosDimension.id("test_no_regeneration"),-1,net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+        noRegeneration(f.p);
         var axe=new ItemStack(net.minecraft.world.item.Items.IRON_AXE);
         f.at(30,()->{f.idle();f.use();});
         f.at(32,()->{

@@ -83,7 +83,7 @@ public final class DawnvowChargeGameTests {
             p.setPos(origin);
             look(p);
             p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(LongswordItem.DAWNVOW.get()));
-            PlayerMagic.of(p).maxMana = Math.max(PlayerMagic.of(p).maxMana, mana);
+            PlayerMagic.of(p).baseMaxMana = Math.max(PlayerMagic.of(p).baseMaxMana, mana);
             PlayerMagic.of(p).mana = mana;
             // 嵌入连接没有真实网络循环：逐刻推进玩家，并钉在原地朝 +x
             h.onEachTick(() -> { p.tickCount = 1; p.doTick(); p.setPos(origin); p.setDeltaMovement(Vec3.ZERO); look(p); });

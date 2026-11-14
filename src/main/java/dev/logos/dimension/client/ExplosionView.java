@@ -162,7 +162,7 @@ public class ExplosionView implements UIScenario {
                     front = camera(level, new Vec3(-1.4, TOP + 2.6, 3.6), new Vec3(.2, TOP + 2.1, .5));
                     ctx.player().setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ExplosionStaffItem.ITEM.get()));
                     var magic = PlayerMagic.of(ctx.player());
-                    magic.maxMana = magic.mana = 10000;
+                    magic.baseMaxMana = magic.mana = 10000;
                 })
                 .waitUntil("魔杖同步", ctx -> Minecraft.getInstance().player.getMainHandItem().is(ExplosionStaffItem.ITEM.get()))
                 .waitUntil("机位同步", ctx -> Minecraft.getInstance().level.getEntity(side) != null && Minecraft.getInstance().level.getEntity(far) != null
