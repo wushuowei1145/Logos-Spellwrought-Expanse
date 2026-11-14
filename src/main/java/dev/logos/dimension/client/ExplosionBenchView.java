@@ -163,7 +163,7 @@ public class ExplosionBenchView implements UIScenario {
                     far = ExplosionView.camera(ctx.server().overworld(), new Vec3(-110, ExplosionView.TOP + 30, 20), new Vec3(0, ExplosionView.TOP + 26, 96));
                     ctx.player().setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ExplosionStaffItem.ITEM.get()));
                     var magic = PlayerMagic.of(ctx.player());
-                    magic.maxMana = magic.mana = 10000;
+                    magic.baseMaxMana = magic.mana = 10000;
                 })
                 .waitUntil("站稳", ctx -> Minecraft.getInstance().player.getY() > ExplosionView.TOP && Minecraft.getInstance().player.onGround())
                 .waitUntil("机位同步", ctx -> Minecraft.getInstance().level.getEntity(far) != null)

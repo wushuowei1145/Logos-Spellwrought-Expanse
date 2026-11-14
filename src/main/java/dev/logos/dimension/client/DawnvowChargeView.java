@@ -146,7 +146,7 @@ public class DawnvowChargeView implements UIScenario {
                     player.getInventory().clearContent();
                     player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(LongswordItem.DAWNVOW.get()));
                     var magic = PlayerMagic.of(player);
-                    magic.maxMana = Math.max(magic.maxMana, 3000);
+                    magic.baseMaxMana = Math.max(magic.baseMaxMana, 3000);
                     magic.mana = 3000;
                     targets[0] = target(level, EntityType.HUSK, 18).getId();
                     targets[1] = target(level, EntityType.IRON_GOLEM, 28).getId();

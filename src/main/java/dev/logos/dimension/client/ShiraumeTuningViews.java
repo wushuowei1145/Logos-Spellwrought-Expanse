@@ -323,7 +323,7 @@ public class ShiraumeTuningViews implements UIScenario {
                     ServerPlayer p = ctx.player();
                     p.setItemInHand(InteractionHand.MAIN_HAND, castingSword());
                     var m = PlayerMagic.of(p);
-                    m.maxMana = m.mana = 1000;
+                    m.baseMaxMana = m.mana = 1000;
                     ShiraumeBeast b = beast(level(ctx));
                     b.setScripted(true);
                     b.play("idle_combat");

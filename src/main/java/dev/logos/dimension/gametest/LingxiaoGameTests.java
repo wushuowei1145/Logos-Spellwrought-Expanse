@@ -71,7 +71,7 @@ public final class LingxiaoGameTests {
             for(int x=cx-1;x<=cx+1;x++)for(int z=cz-1;z<=cz+1;z++){long key=new net.minecraft.world.level.ChunkPos(x,z).pack();chunks.add(key);if(FORCED.merge(key,1,Integer::sum)==1)h.getLevel().setChunkForced(x,z,true);}
             p.setPos(origin);p.setYRot(-90);p.setYHeadRot(-90);p.setXRot(0);
             p.setItemInHand(InteractionHand.MAIN_HAND,new ItemStack(LingxiaoSwordItem.ITEM.get()));
-            target=mob(origin.add(2.3,0,0));dev.logos.runtime.PlayerMagic.of(p).maxMana=1000;LogosNatureBridge.mana(p,100);
+            target=mob(origin.add(2.3,0,0));dev.logos.runtime.PlayerMagic.of(p).baseMaxMana=1000;LogosNatureBridge.mana(p,100);
             // Logos 的自然回复照常进行：御剑连回复一起扣，测的就是面板上实际少了多少。
             h.onEachTick(()->{if(closed)return;p.tickCount=1;
                 p.doTick();p.setYRot(-90);p.setYHeadRot(-90);p.setXRot(0);});
@@ -115,7 +115,8 @@ public final class LingxiaoGameTests {
     }
     private static void exhaustion(GameTestHelper h){
         var f=new Fixture(h);f.target.discard();final double[] lowest={1};
-        f.at(30,()->{LogosNatureBridge.mana(f.p,1);f.use();h.assertTrue(f.p.isPassenger(),"一点魔力也应能起飞一刻");});
+        // 只给飞一刻的量：每刻消耗加上这一刻的回复（Logos 0.7 起回复含上限的百分比，上限 1000 时一刻要 1.05）
+        f.at(30,()->{LogosNatureBridge.mana(f.p,dev.logos.dimension.lingxiao.FlightRules.MANA_PER_TICK+LogosNatureBridge.regenerationPerTick(f.p));f.use();h.assertTrue(f.p.isPassenger(),"只够一刻的魔力也应能起飞一刻");});
         for(int t=31;t<37;t++)f.at(t,()->lowest[0]=Math.min(lowest[0],LogosNatureBridge.mana(f.p)));
         f.at(37,()->{h.assertTrue(!f.p.isPassenger(),"魔力耗尽未下剑");h.assertTrue(lowest[0]>=0,"魔力扣成负数："+lowest[0]);f.success();});
     }

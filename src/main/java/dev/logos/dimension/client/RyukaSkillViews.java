@@ -111,7 +111,7 @@ public final class RyukaSkillViews {
                         level.addFreshEntity(husk);
                         target = husk.getId();
                         var magic = PlayerMagic.of(ctx.player());
-                        magic.maxMana = Math.max(magic.maxMana, 3000);
+                        magic.baseMaxMana = Math.max(magic.baseMaxMana, 3000);
                         magic.mana = 3000;
                         ctx.player().getInventory().clearContent();
                         ctx.player().getInventory().setItem(1, new ItemStack(RyukaItem.ITEM.get()));

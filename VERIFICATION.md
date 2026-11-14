@@ -1,5 +1,26 @@
 # 首版验证记录
 
+## 依赖 Logos 0.7.0：最大魔力字段改名、回魔按上限百分比、符文解锁
+
+2026-11-14：分支 `fix/base-max-mana`，基于 main `2b5dd091`（#263）。Logos jar 由 Logos main `755fcee`（#436，0.7.0）现场构建的 `logos-0.7.0.jar`。
+
+Logos #430 把 `PlayerMagic.maxMana` 字段改名为 `baseMaxMana`（实际上限改由 `PlayerMagic.maxMana(Player)` 算：基础值 + 成长 + 属性修饰），附属 main 编译不过。改动：
+
+- 依赖下限 `[0.6.0,)` → `[0.7.0,)`；CI 的 `LOGOS_REF` 指向 `755fcee`；README 同步。
+- 测试和客户端场景里设上限的地方改写 `baseMaxMana`（17 个文件）。
+- `LogosNatureBridge.maxMana` 原来反射读 `maxMana` 字段，改为调用 `PlayerMagic.maxMana(Player)`，凌霄御剑的魔力条显示的是加上成长和装备之后的真实上限。
+- 0.7 的回魔 = 固定值 + 上限的百分比（`mana_regeneration_percent`，默认 0.5%）。长剑测试的 `noRegeneration` 只关了固定值，现在两项都关（`longsword_mana_guard`、`longsword_ryuka_dash`、`longsword_ryuka_guard` 用到）。
+- `lingxiao_exhaustion`：上限 1000 时每刻回复 0.55，飞一刻要扣 0.5 + 0.55，原来给的 1 点不够；改为正好给一刻的量。御剑本身的扣法没变（净每秒 10）。
+- `foxfire_word_refused_by_sage`：0.7 起 `SageAgent.check` 的可用集合是解锁键（`rune:…`、`element:…`、`motion:…`），测试改传 `Unlocks.all()`。
+
+| 层级 | 结果 |
+|---|---|
+| 编译 | `compileJava compileTestJava` 通过 |
+| 反射 | `LogosNatureBridge`、`LogosMagicBridge` 等按名字取的 Logos 成员，用 `javap` 在 0.7.0 jar 里逐个核对过都在 |
+| 单元 | 427 个 1 个失败、1 个跳过，失败的仍是 main 上就缺的 zh_cn `item.logos_dimension.fuda_desk` |
+| GameTest | 全量 279 个：改之前 4 个失败（上面三类）；改之后这 4 个通过，另有 `shiraume_ichimonji_wave`、`bench_joins_the_orchestra` 各失败一次（第一轮全量里都通过），单独各重复 10 次 10/10 通过，按偶发记 |
+| 未验证 | 实际客户端、专用服务器 |
+
 ## 谱台前的乐手：右键乐谱架打开琴凳上乐手的乐器
 
 2026-11-14：分支 `feat/stand-seated-player`，基于 main `b82ee991`（#262；测试在 #260 的 `46cf6cd3` 上跑，变基后编译通过），Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`。

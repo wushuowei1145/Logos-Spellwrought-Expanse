@@ -76,7 +76,7 @@ public class BlacksteelCastView implements UIScenario {
                             dev.logos.item.SpellPages.inscribed(dev.logos.item.PageTier.CRYSTAL, BEAM, null))));
                     ctx.player().getInventory().clearContent(); ctx.player().getInventory().setSelectedSlot(0);
                     ctx.player().setItemInHand(InteractionHand.MAIN_HAND, sword);
-                    var m = dev.logos.runtime.PlayerMagic.of(ctx.player()); m.maxMana = m.mana = 1000;
+                    var m = dev.logos.runtime.PlayerMagic.of(ctx.player()); m.baseMaxMana = m.mana = 1000;
                 }).setGameMode(GameType.SURVIVAL)
                 .waitUntil("拔剑后待机", ctx -> phase("idle")).ticks(4)
                 // 格挡

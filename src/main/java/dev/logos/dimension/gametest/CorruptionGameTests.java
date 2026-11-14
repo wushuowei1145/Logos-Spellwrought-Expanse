@@ -411,7 +411,7 @@ public final class CorruptionGameTests {
         BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));
         ServerPlayer player = player(h, at);
         PlayerMagic magic = PlayerMagic.of(player);
-        magic.maxMana = magic.mana = 1000;
+        magic.baseMaxMana = magic.mana = 1000;
         h.succeedWhen(() -> {
             check(h, magic.mana < 1000, "碰到脉络应当掉魔力：魔力 " + magic.mana + "，模式 " + player.gameMode());
             check(h, player.getHealth() < player.getMaxHealth(), "碰到脉络应当受伤");

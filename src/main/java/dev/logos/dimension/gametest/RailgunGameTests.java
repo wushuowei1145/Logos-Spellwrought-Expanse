@@ -66,7 +66,7 @@ public final class RailgunGameTests {
         p.snapTo(at.getX() + .5, at.getY(), at.getZ() + .5, -90, 0);
         p.setYHeadRot(-90);
         var magic = PlayerMagic.of(p);
-        magic.maxMana = 1000;
+        magic.baseMaxMana = 1000;
         magic.mana = 250;
         p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Economy.coin(Currency.IMPERIAL, 1), 2));
         return p;

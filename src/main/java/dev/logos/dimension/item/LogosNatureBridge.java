@@ -14,7 +14,8 @@ import net.minecraft.world.phys.Vec3;
 /** 复用单独安装的 Logos API；反射集中在边界并缓存，避免将主模组打进附属包。 */
 public final class LogosNatureBridge {
     private static final Method MAGIC_OF, ALERT, DAMAGE, TRAIL, TRAIL_END;
-    private static final Field MANA, MAX_MANA;
+    private static final Field MANA;
+    private static final Method MAX_MANA;
     private static final Constructor<?> INSTANCE;
     private static final Object LIFE, FORWARD, PLAIN, SPELL;
     static {
@@ -23,7 +24,7 @@ public final class LogosNatureBridge {
             MAGIC_OF = magic.getMethod("of", Player.class);
             ALERT = magic.getMethod("alert", ServerPlayer.class, Component.class);
             MANA = magic.getField("mana");
-            MAX_MANA = magic.getField("maxMana");
+            MAX_MANA = magic.getMethod("maxMana", Player.class); // 上限 = 基础值 + 成长 + 属性修饰（Logos #430 起字段改名为 baseMaxMana）
             var element = Class.forName("dev.logos.lang.Element");
             LIFE = element.getField("LIFE").get(null);
             var motion = Class.forName("dev.logos.lang.Motion");
@@ -51,7 +52,7 @@ public final class LogosNatureBridge {
     }
 
     public static double maxMana(Player player) {
-        try { return MAX_MANA.getDouble(MAGIC_OF.invoke(null, player)); }
+        try { return (double) MAX_MANA.invoke(null, player); }
         catch (ReflectiveOperationException error) { throw failure(error); }
     }
 

@@ -100,7 +100,7 @@ public final class ExplosionGameTests {
         var p = player(h, Vec3.atBottomCenterOf(o), 30);
         var staff = p.getMainHandItem();
         var magic = PlayerMagic.of(p);
-        magic.maxMana = 10000;
+        magic.baseMaxMana = 10000;
         magic.mana = 6000;
         h.assertTrue(staff.getItem().use(level, p, InteractionHand.MAIN_HAND) == InteractionResult.FAIL && ExplosionMagic.paid(p) < 0,
                 "不到 6400 魔力不能吟唱");

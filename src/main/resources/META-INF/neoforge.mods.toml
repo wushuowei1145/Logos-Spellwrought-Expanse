@@ -29,7 +29,7 @@ side="BOTH"
 [[dependencies.logos_dimension]]
 modId="logos"
 type="required"
-versionRange="[0.6.0,)"
+versionRange="[0.7.0,)"
 ordering="AFTER"
 side="BOTH"
 
