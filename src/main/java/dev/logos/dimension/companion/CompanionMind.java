@@ -22,6 +22,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -33,6 +34,7 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.SweetBerryBushBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -56,6 +58,11 @@ public final class CompanionMind extends Goal {
     /** 流火：敌人贴近到这里、她血量在这一成以上就凝刀；血量掉到这里以下、或敌人退到这么远就散刀。 */
     static final double MELEE_IN = 3.5, MELEE_OUT = 6;
     static final float MELEE_HEALTH = .5f, SHEATHE_HEALTH = .35f;
+    /**
+     * 行动策略（{@link CompanionTactic}）：优先远程时敌人贴到这么近才凝刀、拉开到这么远就收刀；优先近战时这么远以内就凝刀走过去
+     * （远过 {@link #MELEE_CHASE} 才收刀），够不着的才放狐火。不参与攻击时，敌人离她或主人这么近就躲到主人背后。
+     */
+    static final double RANGED_DRAW = 1.8, RANGED_SHEATHE = 2.8, MELEE_REACH = SHOOT_RANGE, MELEE_CHASE = SHOOT_RANGE + 4, PASSIVE_SHY = 8;
     /** 突刺只用来拉近：两次之间至少隔这么多刻；冲到跟前接着再砍这么多刀（另加 0–1）不停手。一串砍完在架势里停这么多刻（另加 0–同样多）。 */
     public static final int THRUST_GAP = 100, COMBO_AFTER_THRUST = 2, STRING_REST = 8;
     /** 两次放狐火弹之间至少隔这么多刻；主人的仇人、主人在打的东西，这么多刻内算数。 */
@@ -71,20 +78,27 @@ public final class CompanionMind extends Goal {
      */
     public static final double SPRING_DEEP = 2.2, SOAK_WATERLINE = 28.4 / 32;
 
-    public enum Kind { FOLLOW, STAY, ENGAGE, COVER, KINDLE, RETREAT, REST, IDLE, EXECUTE, FORAGE, SCAVENGE, SOAK, HIDE, ERRAND }
+    public enum Kind { FOLLOW, STAY, ENGAGE, COVER, KINDLE, RETREAT, REST, IDLE, EXECUTE, FORAGE, SCAVENGE, SOAK, HIDE, ERRAND, TALK }
 
     private final ShiraumeCompanion c;
     private Kind current = Kind.IDLE;
     private final Map<Kind, Double> scores = new EnumMap<>(Kind.class);
     private @Nullable ServerPlayer owner;
     private double dist;
-    private @Nullable LivingEntity foe, execTarget, shooter, dog;
+    private @Nullable LivingEntity foe, execTarget, shooter, dog, ordered;
+    private CompanionTactic tactic = CompanionTactic.ADAPTIVE;
+    /** 优先近战时，要打的那个走得过去（不是飞在高处、寻路找得到）。 */
+    private boolean reachable = true;
     private @Nullable BlockPos bush, spring, soakAt, edge;
     private double soakY;
     private @Nullable ItemEntity loot;
     private int threats, stuck, idleLook, combo;
+    /** 优先远程：这一串砍完已经往后跳过一次（一串只跳一次，跳完照常在架势里停、再起下一串）。 */
+    private boolean backstepped;
     private String lastMove = "";
     private long lastCast = -1000, nextThrust, restUntil = -1, countered, nextIntercept, shooterAt = -10_000, nextForage, soakSince = -1, springSeen = -10_000;
+    /** 最近一次在打（迎战、护主、缠火、处决、后撤、拿着刀）是哪一刻：打完歇一会儿才换回她自己选的装束。 */
+    private long lastFight = -10_000;
     private @Nullable Vec3 lastPos;
     /** 测试用：截下过几发；泡着泡着起身过几次。 */
     static int intercepts, soakEnds;
@@ -134,6 +148,15 @@ public final class CompanionMind extends Goal {
         return foe;
     }
 
+    public CompanionTactic tactic() {
+        return tactic;
+    }
+
+    /** 这一仗她不出手：不参与攻击，而且不是主人用 {@code sic} 点名的目标。 */
+    private boolean holdsBack() {
+        return tactic == CompanionTactic.PASSIVE && (foe == null || foe != ordered);
+    }
+
     public static int intercepts() {
         return intercepts;
     }
@@ -175,6 +198,12 @@ public final class CompanionMind extends Goal {
         Vec3 order = LogosCompanionBridge.orderPoint(c);
         boolean calm = foe == null && !c.blade().executing();
         var bond = p.getData(Companions.BOND);
+        tactic = bond.tacticOf();
+        reachable = foe == null || tactic != CompanionTactic.MELEE || reachable(foe);
+        boolean holdBack = holdsBack();
+        // 说着话的时候来了敌人：话先放一放
+        if (foe != null && c.talking()) CompanionTalk.interrupt(c);
+        boolean talking = c.talking() && foe == null;
         boolean hungry = bond.satiety() < CompanionBond.HUNGRY;
         boolean pouchFood = hungry && Companions.pouch(p).foodSlot() >= 0;
         if (now % 40 == 0 || bush != null && !ripe(level, bush)) bush = calm && !c.staying() ? findBush(level, p) : null;
@@ -194,18 +223,23 @@ public final class CompanionMind extends Goal {
 
         scores.put(Kind.FOLLOW, c.staying() || order != null ? 0 : .3 + (dist > 6 ? .4 : 0));
         scores.put(Kind.STAY, c.staying() ? .6 : 0);
-        scores.put(Kind.ENGAGE, foe == null ? 0 : .7 + (foe instanceof Mob m && m.getTarget() == p ? .1 : 0));
-        scores.put(Kind.COVER, foe != null && p.getHealth() < p.getMaxHealth() * .4f && foe.distanceTo(p) < 8 ? .95 : 0);
+        scores.put(Kind.ENGAGE, foe == null || holdBack ? 0 : .7 + (foe instanceof Mob m && m.getTarget() == p ? .1 : 0));
+        scores.put(Kind.COVER, foe != null && !holdBack && p.getHealth() < p.getMaxHealth() * .4f && foe.distanceTo(p) < 8 ? .95 : 0);
         scores.put(Kind.KINDLE, foe != null && strong && !wrapped && !c.blade().drawn() && c.kindleReady(now) && w.fighting(now) && dist < 8 ? .9 : 0);
-        scores.put(Kind.RETREAT, foe != null && c.getHealth() < c.getMaxHealth() * .3f ? .85 : 0);
+        // 不参与攻击：敌人离她或主人近了，就躲到主人背后
+        scores.put(Kind.RETREAT, foe != null && c.getHealth() < c.getMaxHealth() * .3f ? .85
+                : holdBack && foe != null && (foe.distanceTo(c) < PASSIVE_SHY || foe.distanceTo(p) < PASSIVE_SHY) ? .75 : 0);
         scores.put(Kind.REST, p.isSleeping() ? 1 : doing == OwnerWatch.Activity.AFK && calm ? .5 : 0);
         scores.put(Kind.IDLE, .1);
-        scores.put(Kind.EXECUTE, c.blade().executing() ? 1.2 : execTarget != null && c.getHealth() >= c.getMaxHealth() * SHEATHE_HEALTH ? .93 : 0);
+        scores.put(Kind.EXECUTE, c.blade().executing() ? 1.2
+                : execTarget != null && tactic != CompanionTactic.PASSIVE && c.getHealth() >= c.getMaxHealth() * SHEATHE_HEALTH ? .93 : 0);
         scores.put(Kind.FORAGE, !calm || c.staying() ? 0 : pouchFood ? .6 : bush != null && (hungry || now >= nextForage) && dist < 10 ? (hungry ? .55 : .33) : 0);
         scores.put(Kind.SCAVENGE, loot != null ? .36 : 0);
         scores.put(Kind.SOAK, inSpring && calm ? .75 : 0);
         scores.put(Kind.HIDE, dog != null ? .5 : 0);
         scores.put(Kind.ERRAND, order == null ? 0 : LogosCompanionBridge.onErrand(c) ? .8 : .55);
+        // 主人在和她说话（对话界面开着）：站住、看着主人；泡着温泉就泡着说
+        scores.put(Kind.TALK, talking && !c.soaking() ? .92 : 0);
 
         Kind best = current;
         double top = -1;
@@ -226,9 +260,17 @@ public final class CompanionMind extends Goal {
         }
         // 没在打了：刀收起来
         if (!engaged() && current != Kind.RETREAT && c.blade().drawn() && !c.blade().executing()) c.blade().sheathe();
-        // 浴衣（第 8.10 节）：一打起来就换回巫女服；出浴后穿一阵（CompanionOutfit.LINGER）再换回
-        if (c.outfit() == CompanionOutfit.UMEAKARI && (engaged() || current == Kind.RETREAT || c.blade().drawn()
-                || current != Kind.SOAK && now - c.dressedAt() > CompanionOutfit.LINGER)) c.dress(CompanionOutfit.MIKO, now);
+        boolean fighting = engaged() || current == Kind.RETREAT || c.blade().drawn();
+        if (fighting) lastFight = now;
+        // 浴衣（第 8.10 节）：一打起来就换回巫女服；出浴后穿一阵（CompanionOutfit.LINGER）再换回。
+        // 对话里让她换上的那一套（preferredOutfit）不到时候换回：打完歇五秒再换上
+        CompanionOutfit chosen = c.preferredOutfit();
+        if (c.outfit() == CompanionOutfit.UMEAKARI && (fighting
+                || chosen != CompanionOutfit.UMEAKARI && current != Kind.SOAK && now - c.dressedAt() > CompanionOutfit.LINGER)) {
+            c.dress(CompanionOutfit.MIKO, now);
+        } else if (!fighting && chosen != CompanionOutfit.MIKO && c.outfit() != chosen && current != Kind.SOAK && now - lastFight > 100) {
+            c.dress(chosen, now);
+        }
         if (dog != null) c.mood.afraid(now);
     }
 
@@ -262,7 +304,8 @@ public final class CompanionMind extends Goal {
         if (ownerFoe != null && ownerFoe.distanceTo(p) < 24) best = ownerFoe;
         if (shooter != null && shooter.isAlive() && now - shooterAt < SHOOTER_MEMORY && c.canHarm(shooter) && shooter.distanceTo(p) < 32) best = shooter;
         LivingEntity ordered = LogosCompanionBridge.ordered(c);
-        if (ordered != null && ordered.distanceTo(p) < 32) best = ordered;
+        this.ordered = ordered != null && ordered.distanceTo(p) < 32 ? ordered : null;
+        if (this.ordered != null) best = ordered;
         if (best != null && c.staying() && best.distanceTo(c) > THREAT_RADIUS) return null;
         return best;
     }
@@ -384,6 +427,7 @@ public final class CompanionMind extends Goal {
             case SOAK -> soak(level, p, now);
             case HIDE -> hide(p, now);
             case ERRAND -> errand(p, now);
+            case TALK -> talk(p);
         }
     }
 
@@ -430,16 +474,23 @@ public final class CompanionMind extends Goal {
         // 神狐一族不怕狐火（只受一成半）：对它们不放狐火，6 格内就凝刀守着，不主动走过去；贴近了再砍，血少了只守不攻
         boolean kin = FoxfireRules.kin(target);
         boolean low = c.getHealth() < c.getMaxHealth() * SHEATHE_HEALTH;
+        // 行动策略：随机应变照原来的；优先远程贴到跟前才凝刀、拉开就收；优先近战远远地就凝刀走过去（够不着的除外），
+        // 血少了也不收刀，只守不攻
+        boolean closeIn = tactic == CompanionTactic.MELEE && reachable;
+        double drawAt = tactic == CompanionTactic.RANGED ? RANGED_DRAW : closeIn ? MELEE_REACH : MELEE_IN;
+        double sheatheAt = tactic == CompanionTactic.RANGED ? RANGED_SHEATHE : closeIn ? MELEE_CHASE : MELEE_OUT;
+        float drawHealth = closeIn ? SHEATHE_HEALTH : MELEE_HEALTH;
         if (blade.drawn()) {
-            if (!blade.executing() && (low && !kin || d > MELEE_OUT)) blade.sheathe();
-        } else if ((c.getHealth() >= c.getMaxHealth() * MELEE_HEALTH && d <= MELEE_IN || kin && d <= MELEE_OUT) && !c.casting() && !c.eating()
+            boolean away = kin ? d > MELEE_OUT : d > sheatheAt;
+            if (!blade.executing() && (low && !kin && !closeIn || away || tactic == CompanionTactic.MELEE && !reachable && !kin)) blade.sheathe();
+        } else if ((c.getHealth() >= c.getMaxHealth() * drawHealth && d <= drawAt || kin && d <= MELEE_OUT) && !c.casting() && !c.eating()
                 && blade.draw()) {
             // 刚凝出刀：直接起一串，不先停
             combo = 2 + c.getRandom().nextInt(3);
             restUntil = -1;
         }
         if (blade.drawn()) {
-            melee(target, now, d, hold, kin && (d > MELEE_IN || low));
+            melee(target, now, d, hold, kin && (d > MELEE_IN || low) || closeIn && low);
             return;
         }
         if (kin) {
@@ -490,7 +541,7 @@ public final class CompanionMind extends Goal {
         LivingEntity punish = blade.punishing(now);
         boolean punishing = punish != null
                 && c.distanceTo(punish) <= CompanionBlade.REACH + punish.getBbWidth() * .5 - .2 + (hold ? 0 : CompanionBlade.LUNGE_MAX - .4);
-        if (guardOnly && !punishing) {
+        if (guardOnly && (!punishing || holdsBack())) {
             c.getNavigation().stop();
             c.getLookControl().setLookAt(target, 40, 40);
             if (blade.ready()) face(target);
@@ -535,11 +586,18 @@ public final class CompanionMind extends Goal {
         if (combo <= 0) {
             // 一串砍完：回到架势里停一下再起下一串（围着的多就多停一会儿）；刚弹开过她的刀的，一次只试探一刀，多守着等它出手
             if (!blade.ready()) return;
+            // 优先远程：砍完一串往后一跳，拉开了就收刀放狐火（一串只跳一次，对方追上来就照常接着打）
+            if (tactic == CompanionTactic.RANGED && !hold && !backstepped && !FoxfireRules.kin(target) && blade.attack("backstep", target, false)) {
+                lastMove = "backstep";
+                backstepped = true;
+                return;
+            }
             int crowd = crowd(4.5);
             boolean wary = blade.wary(target, now);
             if (restUntil < 0) restUntil = now + STRING_REST + c.getRandom().nextInt(STRING_REST) + (crowd >= 2 ? STRING_REST : 0) + (wary ? 2 * STRING_REST : 0);
             if (now < restUntil) return;
             restUntil = -1;
+            backstepped = false;
             combo = wary ? 1 : crowd >= 2 ? 1 + c.getRandom().nextInt(2) : 2 + c.getRandom().nextInt(3);
         }
         // 反击：最快的三连或切上
@@ -611,7 +669,10 @@ public final class CompanionMind extends Goal {
      */
     private void retreat(ServerPlayer p, LivingEntity threat, long now) {
         double close = FoxfireRules.kin(threat) ? MELEE_OUT : MELEE_IN;
-        if (c.distanceTo(threat) <= close && !c.casting() && (c.blade().drawn() || c.blade().draw())) {
+        // 不参与攻击：只有被追到跟前、冲着她来的才凝刀挡，不然一直往主人背后躲
+        boolean stand = holdsBack() ? threat instanceof Mob m && m.getTarget() == c && c.distanceTo(threat) <= RANGED_DRAW
+                : c.distanceTo(threat) <= close;
+        if (stand && !c.casting() && (c.blade().drawn() || c.blade().draw())) {
             c.setSprinting(false);
             melee(threat, now, c.distanceTo(threat), true, true);
             return;
@@ -622,8 +683,29 @@ public final class CompanionMind extends Goal {
         if (now % THINK == 0) c.getNavigation().moveTo(spot.x, spot.y, spot.z, 1.4);
         c.setSprinting(true);
         c.getLookControl().setLookAt(threat, 30, 30);
-        if (!FoxfireRules.kin(threat) && c.hasLineOfSight(threat) && c.distanceTo(threat) < SHOOT_RANGE && now - lastCast >= CAST_GAP && !c.casting()
-                && c.startCast(threat, false)) lastCast = now;
+        if (!holdsBack() && !FoxfireRules.kin(threat) && c.hasLineOfSight(threat) && c.distanceTo(threat) < SHOOT_RANGE && now - lastCast >= CAST_GAP
+                && !c.casting() && c.startCast(threat, false)) lastCast = now;
+    }
+
+    /** 优先近战时够不够得着 {@code t}：不是飞在头顶上，而且寻路找得到过去的路。 */
+    private boolean reachable(LivingEntity t) {
+        if (!t.onGround() && !t.isInWater() && t.getY() - c.getY() > 2.5) return false;
+        if (c.distanceTo(t) < 3) return true;
+        Path path = c.getNavigation().createPath(t, 1);
+        return path != null && path.canReach();
+    }
+
+    /** 说话：站住，转过来看着主人（对话由 {@link CompanionTalk} 管）。 */
+    private void talk(ServerPlayer p) {
+        c.getNavigation().stop();
+        c.setSprinting(false);
+        if (c.mood.curled()) c.mood.curl(false);
+        c.getLookControl().setLookAt(p, 30, 30);
+        if (!c.blade().drawn() && !c.casting()) {
+            float yaw = (float) (Math.toDegrees(Math.atan2(p.getZ() - c.getZ(), p.getX() - c.getX())) - 90);
+            c.setYRot(Mth.approachDegrees(c.getYRot(), yaw, 12));
+            c.yBodyRot = c.getYRot();
+        }
     }
 
     /** 休息：主人睡下，她走到床边蜷起来睡；主人挂机，她挨着主人打盹。 */
@@ -930,7 +1012,7 @@ public final class CompanionMind extends Goal {
 
     /** 给命令 {@code info} 看的一行。 */
     public String describe() {
-        StringBuilder sb = new StringBuilder(current.name()).append(" foe=").append(foe == null ? "-" : foe.getName().getString())
+        StringBuilder sb = new StringBuilder(current.name()).append(" tactic=").append(tactic.id).append(" foe=").append(foe == null ? "-" : foe.getName().getString())
                 .append(" blade=").append(c.blade().drawn() ? c.blade().move() == null ? "?" : c.blade().move().name() : "-");
         for (var e : scores.entrySet()) {
             if (e.getValue() > 0) sb.append(' ').append(e.getKey().name().toLowerCase()).append('=').append(String.format("%.2f", e.getValue()));
