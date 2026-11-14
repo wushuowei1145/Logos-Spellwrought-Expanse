@@ -71,13 +71,19 @@ public final class CompanionBlade implements MoveRunner.Actor {
      * 走到两人半宽之外再留 {@link #KEEP} 格就停。Boss 的突刺按她的个子冲不远，照搬会够不着、一记接一记地刺。
      */
     public static final double LUNGE_MAX = 3.0, STEP_MAX = .9, KEEP = .75;
-    /** 突刺往前冲的那一段（动作时间，秒），同 Boss 招式文件 tsuki 的 lunge。 */
-    static final double LUNGE_FROM = .58, LUNGE_TO = .76;
+    /**
+     * 突刺往前冲的那一段（动作时间，秒）：Boss 招式文件 tsuki 的 lunge 是 .58–.76，比第一下接触（.64）晚完，她冲到三分之一就刺、
+     * 够不着；这里提前到第一下接触时冲完，长度不变。
+     */
+    static final double LUNGE_FROM = .46, LUNGE_TO = .64;
+    /** 起手到砍中之间每刻最多转多少度追着这一刀对着的那个（它绕着她走、被打退也砍得到）。 */
+    static final float TRACK_TURN = 45;
 
     private final ShiraumeCompanion c;
     private @Nullable MoveRunner runner;
-    /** 这一招对着谁（突刺冲过去、出刀往前带一步）；没有就原地出刀。 */
+    /** 这一招对着谁（起手时转过去；突刺冲过去、出刀往前带一步，{@link #step} 为假时原地出刀）。 */
     private @Nullable LivingEntity aim;
+    private boolean step;
     /** 刚被她弹开近战、还在僵直里的那个，到哪一刻为止。 */
     private @Nullable LivingEntity punish;
     private long punishUntil;
@@ -194,8 +200,14 @@ public final class CompanionBlade implements MoveRunner.Actor {
      * （连招的后几段也带）；null 时原地出刀。
      */
     public boolean attack(String name, @Nullable LivingEntity at) {
+        return attack(name, at, true);
+    }
+
+    /** {@code step}：往 {@code at} 那边冲、带步；假时原地出刀，只转过去对着它。 */
+    public boolean attack(String name, @Nullable LivingEntity at, boolean step) {
         if (!canFollowUp() || runner.moveset().move(name) == null) return false;
         aim = at;
+        this.step = step;
         runner.force(name, c.level().getGameTime());
         started.merge(name, 1, Integer::sum);
         return true;
@@ -215,6 +227,10 @@ public final class CompanionBlade implements MoveRunner.Actor {
     /** 测试用：砍中的、被对方挡下的、她被弹反僵直的、她挡下的次数。 */
     static int landed, foeBlocked, staggers, blocks;
 
+    public static int landed() {
+        return landed;
+    }
+
     public static String tally() {
         return "cuts " + startedTotal() + " landed " + landed + " foe-blocked " + foeBlocked + " her-staggers " + staggers + " her-blocks " + blocks;
     }
@@ -233,13 +249,19 @@ public final class CompanionBlade implements MoveRunner.Actor {
         }
         if (executing != null && (now >= executionEnds || !executing.isAlive())) endExecution(level);
         if (runner == null) return;
+        // 先走、先转，再结算这一刻的接触：反过来的话，砍中那一刻的一步（突刺冲的那一段）要等刀落空以后才走
+        Moveset.Move m = runner.move();
+        if (m != null) {
+            double rate = runner.rate();
+            double t = runner.age(now) / 20 * rate;
+            track(m, t);
+            approach(m, t - rate / 20, t);
+        }
         runner.tick(now);
         if (runner == null) return;
-        Moveset.Move m = runner.move();
+        m = runner.move();
         if (m == null) return;
-        double rate = runner.rate();
-        double t = runner.age(now) / 20 * rate;
-        approach(m, t - rate / 20, t);
+        double t = runner.age(now) / 20 * runner.rate();
         // 后撤步往后跳（Boss 招式文件里的 leap，这里按她的个头缩小）
         if ("backstep".equals(m.name()) && Math.abs(t - .12) < .026) {
             Vec3 back = Vec3.directionFromRotation(0, c.getYRot()).scale(-.55);
@@ -254,7 +276,7 @@ public final class CompanionBlade implements MoveRunner.Actor {
      */
     private void approach(Moveset.Move m, double before, double after) {
         LivingEntity at = aim;
-        if (at == null || !at.isAlive() || !m.hasContact()) return;
+        if (!step || at == null || !at.isAlive() || !m.hasContact()) return;
         boolean lunge = "tsuki".equals(m.name());
         double from = lunge ? LUNGE_FROM : 0, to = lunge ? LUNGE_TO : m.contact(), max = lunge ? LUNGE_MAX : STEP_MAX;
         double overlap = Math.min(after, to) - Math.max(before, from);
@@ -263,6 +285,20 @@ public final class CompanionBlade implements MoveRunner.Actor {
         double need = gap.length() - KEEP - (at.getBbWidth() + c.getBbWidth()) * .5;
         if (need <= .02) return;
         c.move(MoverType.SELF, gap.normalize().scale(Math.min(need, max * overlap / (to - from))));
+    }
+
+    /** 起手到最后一下接触之前（动作时间 {@code t}，秒）：身子追着这一刀对着的那个转，每刻最多 {@link #TRACK_TURN} 度。 */
+    private void track(Moveset.Move m, double t) {
+        LivingEntity at = aim;
+        if (at == null || !at.isAlive() || !m.hasContact() || t > m.lastContact()) return;
+        c.lookAt(at, TRACK_TURN, 30);
+        c.yBodyRot = c.getYRot();
+        c.setYHeadRot(c.getYRot());
+    }
+
+    /** 这一刀对着的那个（刀在手上、它还活着时）。 */
+    @Nullable LivingEntity aimed() {
+        return drawn() && aim != null && aim.isAlive() ? aim : null;
     }
 
     // ---------------------------------------------------------------- 招式状态机
@@ -302,9 +338,10 @@ public final class CompanionBlade implements MoveRunner.Actor {
         boolean any = false;
         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, c.getBoundingBox().inflate(REACH + 1), e -> e != c && e.isAlive() && c.canHarm(e))) {
             if (!c.hostileTo(e)) continue;
+            // 够不够得着量到它身上最近的一点（高一点、矮一点的也砍得到），方向按它的中心
+            if (nearest(e.getBoundingBox(), eye).distanceTo(eye) > REACH) continue;
             Vec3 to = e.position().add(0, e.getBbHeight() * .5, 0).subtract(eye);
             double flat = Math.sqrt(to.x * to.x + to.z * to.z);
-            if (to.length() > REACH + e.getBbWidth() * .5) continue;
             if (flat > .9 && (to.x * forward.x + to.z * forward.z) / flat < Math.cos(Math.toRadians(cone / 2))) continue;
             any |= hit(level, e, (float) damage, true);
             // 这一刀被弹开了（招式已经换成被弹反）：后面的不再结算
@@ -312,6 +349,11 @@ public final class CompanionBlade implements MoveRunner.Actor {
         }
         level.playSound(null, c.getX(), c.getY(), c.getZ(), any ? SoundEvents.PLAYER_ATTACK_SWEEP : SoundEvents.PLAYER_ATTACK_NODAMAGE,
                 SoundSource.NEUTRAL, .7f, 1.3f + c.getRandom().nextFloat() * .2f);
+    }
+
+    /** 盒子 {@code box} 上离 {@code p} 最近的一点。 */
+    static Vec3 nearest(net.minecraft.world.phys.AABB box, Vec3 p) {
+        return new Vec3(Mth.clamp(p.x, box.minX, box.maxX), Mth.clamp(p.y, box.minY, box.maxY), Mth.clamp(p.z, box.minZ, box.maxZ));
     }
 
     /** 流火砍中一下：伤害、狐火印（满了爆开）、缠身。 */

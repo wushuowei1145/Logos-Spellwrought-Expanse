@@ -249,9 +249,13 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
         return owner == null || !owner.equals(LogosMagicBridge.masterOf(e));
     }
 
-    /** 刀扫过去时砍不砍它：敌对生物、她的目标、冲着她或主人来的。路过的动物和村民不砍。 */
+    /**
+     * 刀扫过去时砍不砍它：她正在对付的那个（心智挑的：主人在打的、{@code sic} 指的、打她的……不一定是敌对生物，
+     * 她的心智不设原版的 {@code getTarget}）、这一刀对着的、敌对生物、冲着她或主人来的。路过的动物和村民不砍。
+     */
     boolean hostileTo(LivingEntity e) {
-        if (e == getTarget() || e instanceof Enemy) return true;
+        if (e == getTarget() || e instanceof Enemy || e == blade.aimed()) return true;
+        if (mind != null && e == mind.foe()) return true;
         return e instanceof Mob m && (m.getTarget() == this || m.getTarget() != null && m.getTarget().getUUID().equals(owner));
     }
 
