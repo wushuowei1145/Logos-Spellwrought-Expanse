@@ -1,5 +1,21 @@
 # 首版验证记录
 
+## 拿魂符收起工位上的女仆不再崩客户端
+
+2026-11-15：分支 `fix/maid-slab-leash`，基于 main `26926614`（#268），Logos jar `编译成品/20261115-1122-最新版/logos-0.7.0.jar`（一键编译，Logos dc3d381）、
+`builds/touhoulittlemaid-2.0.0-neoforge+mc26.1.2-snapshot.jar`。维护者的崩溃报告：拴绳牵上工位的女仆，拿魂符右键收起时客户端崩溃，
+`Saving entity NBT` ← `Leashable.writeLeashData` ← 女仆模组 `SlabClickEvent` → `MaidItemStorageHelper.saveMaid`（在客户端也存一遍），
+`NullPointerException: Invalid LeashData had no attachment`。上座时解开拴绳，原版客户端收到对方 id 0 后留下空的拴绳记录，存它就崩。
+
+| 层级 | 结果 |
+|---|---|
+| 实际客户端 | 本地临时场景（加在 `MaidHallViews` 里跑，**没有提交**，免得测试要带女仆模组）：自己的女仆拴着牵上大提琴工位，记下客户端那边她的拴绳记录，手拿空魂符右键她；服务端女仆收进魂符、手里变成有女仆的魂符；检查客户端没留空拴绳记录。**加修复前**：右键那一步 `Saving entity NBT` / `Invalid LeashData had no attachment`，同维护者的崩溃。**加修复后**（`mixin/LeashLinkClearMixin`）：不崩，女仆收进魂符，客户端没留空拴绳记录；连同 `orchestra_maids_ui` **2/2、5/5 检查** |
+| 未验证 | 普通拴绳（不经过工位）解开后再收女仆：同一个原因，修法覆盖到，没单独跑；琴凳（`StarbloomBenchBlock` 牵上去也是先解开拴绳）同理 |
+
+```text
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.7.0.jar -Ptlm "-PldTest=orchestra_maids_ui" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 依赖 Logos 0.7.0：最大魔力字段改名、回魔按上限百分比、符文解锁
 
 2026-11-14：分支 `fix/base-max-mana`，基于 main `2b5dd091`（#263）。Logos jar 由 Logos main `755fcee`（#436，0.7.0）现场构建的 `logos-0.7.0.jar`。

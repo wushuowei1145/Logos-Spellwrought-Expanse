@@ -381,6 +381,9 @@
   把 id 放在按引用比较的集合里，永远对不上（连它自带的 `vehicle$minecraft:player` 也是），按标签查的那一路是好的。模型包自己写了同名动作时用模型包的。按酒狐的身材调的高度，别的模型可能高低差一点。
   手里的东西照女仆模组的画（拿着小提琴就是手里拿着）。
 - 女仆怎么上琴凳、工位：同别的生物，拴绳牵着右键（女仆骑着东西时女仆模组本来就不让它走动）；把乐器交给它也一样。
+- 拿魂符收起牵上来的女仆：上座时先解开拴绳，原版客户端收到「拴绳没人拿着」（对方 id 0）后留下一条空的拴绳记录、不再清，
+  女仆模组的魂符在客户端也把女仆存一遍，存这条记录时崩溃（`Invalid LeashData had no attachment`，2026-11-15 维护者报的）。
+  `mixin/LeashLinkClearMixin` 在客户端照服务端的样子把它清成 null（只动原版的 `ClientPacketListener`，不碰女仆模组）。
 - 编译：女仆模组 26.1 版不在任何 Maven 上，同 Logos 用本地 jar（`libs/touhoulittlemaid.jar` 或 `-Ptlm_jar=<路径>`），没有 jar 时
   `MaidMusicians`、`MaidHallViews` 不参与编译；运行时只有装了女仆模组的客户端才注册（`LogosDimension` 按类名找）。`-Ptlm` 把它加进开发环境。
   **发出去的 jar 一定要带着女仆 jar 编译**：没带时只在 Gradle 输出里有一行 `Touhou Little Maid compat left out`，游戏照常，
