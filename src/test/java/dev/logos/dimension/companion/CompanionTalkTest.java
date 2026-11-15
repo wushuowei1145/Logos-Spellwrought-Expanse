@@ -56,13 +56,14 @@ class CompanionTalkTest {
     }
 
     @Test void currentOptionsFollowTheSheet() {
-        CompanionSheet sheet = new CompanionSheet(1, "shiraume", "umeakari", List.of(), List.of(), 0, 9, "STRANGER", 0, 20, 20, true, "melee", 1, 10, .3f);
+        CompanionSheet sheet = new CompanionSheet(1, "shiraume", "umeakari", List.of(), List.of(), 0, 9, "STRANGER", 0, 20, 20, true, "melee", true, 1, 10, .3f);
         assertTrue(TalkMenu.current(TalkMenu.Option.server("tactic.melee", "tactic=melee"), sheet));
         assertFalse(TalkMenu.current(TalkMenu.Option.server("tactic.ranged", "tactic=ranged"), sheet));
         assertTrue(TalkMenu.current(TalkMenu.Option.server(TalkMenu.STAY, "staying=true"), sheet));
         assertFalse(TalkMenu.current(TalkMenu.Option.server(TalkMenu.FOLLOW, "staying=false"), sheet));
         assertTrue(TalkMenu.current(TalkMenu.Option.server("outfit.umeakari", "outfit=umeakari"), sheet));
         assertFalse(TalkMenu.current(TalkMenu.Option.server("chat.food"), sheet));
+        assertTrue(TalkMenu.current(TalkMenu.Option.server(TalkMenu.PVP, "pvp=true"), sheet));
     }
 
     @Test void sheetSurvivesTheNetwork() {
@@ -70,7 +71,7 @@ class CompanionTalkTest {
                 List.of(new CompanionSheet.Stat("health", 46, 40, 30.5f), new CompanionSheet.Stat("attack", 5.8f, 4, -1)),
                 List.of(new CompanionSheet.Skill("foxfire", CompanionSheet.NORMAL, 0, true, List.of("5.8")),
                         new CompanionSheet.Skill("katashiro", CompanionSheet.SPECIAL, 1, false, List.of("#gui.logos_dimension.companion.locked"))),
-                3, 9, "CLOSE", .25f, 12, 20, false, "ranged", 4, 10, .45f);
+                3, 9, "CLOSE", .25f, 12, 20, false, "ranged", false, 4, 10, .45f);
         ByteBuf buf = Unpooled.buffer();
         CompanionSheet.CODEC.encode(buf, sheet);
         assertEquals(sheet, CompanionSheet.CODEC.decode(buf));

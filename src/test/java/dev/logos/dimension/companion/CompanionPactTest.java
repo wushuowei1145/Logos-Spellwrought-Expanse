@@ -58,7 +58,8 @@ class CompanionPactTest {
     @Test void theFirstSealUnlocksTheKatashiroGuard() {
         assertFalse(CompanionBond.unlocked(0, CompanionBond.GUARD_SEAL));
         assertTrue(CompanionBond.unlocked(1, CompanionBond.GUARD_SEAL));
-        assertEquals(.35, CompanionStats.ratio(1), 1e-9, "每枚契印继承多 5%");
+        assertEquals(.38, CompanionStats.ratio(1), 1e-9, "每枚契印继承多 8%");
+        assertEquals(1, CompanionStats.ratio(CompanionStats.FULL_SEALS), 1e-9, "九尾全亮时全部继承");
         assertEquals(CompanionStats.MAX_RATIO, CompanionStats.ratio(30), 1e-9);
     }
 
@@ -134,9 +135,11 @@ class CompanionPactTest {
         assertFalse(owner.clip(ShiraumePact.local(new double[]{1.9, -.5, .95}, fwd), new Vec3(0, .55, 0)).isEmpty());
     }
 
-    /** 基础狐火时她一刀的伤害和玩家手里流火的一刀一样（她的是吃护甲的刀伤，见 CompanionBlade.BLADE）。 */
+    /** 九尾全亮、基础攻击时她一刀的伤害和玩家手里流火的一刀一样（她的是吃护甲的刀伤，见 CompanionStats.blade）；没盖契印时低一些。 */
     @Test void aBaseCutMatchesRyuka() {
-        assertEquals(dev.logos.dimension.ryuka.Ryuka.DAMAGE, CompanionStats.BASE_FOXFIRE * CompanionBlade.BLADE, 1e-6);
+        assertEquals(dev.logos.dimension.ryuka.Ryuka.DAMAGE, CompanionStats.BASE_FOXFIRE * CompanionStats.blade(CompanionStats.FULL_SEALS), 1e-6);
+        assertEquals(CompanionStats.blade(CompanionStats.FULL_SEALS), CompanionStats.blade(30), 1e-9);
+        assertTrue(CompanionStats.blade(0) < CompanionStats.blade(4) && CompanionStats.blade(4) < CompanionStats.blade(9));
     }
 
     /**

@@ -55,30 +55,36 @@ final class ShiraumeTalk {
         var bond = p.getData(Companions.BOND);
         int seals = Math.min(bond.seals(), MAX_SEALS);
         // 她身上的继承平时 5 秒才更新一次；面板开着时每秒刷新档案，先按主人现在的装备算一遍，穿脱盔甲马上看得到
-        CompanionStats.apply(c, p, bond.seals());
+        CompanionStats.Parts parts = CompanionStats.apply(c, p, bond.seals());
         float fox = c.foxfireDamage();
         List<CompanionSheet.Stat> stats = List.of(
-                new CompanionSheet.Stat("health", c.getMaxHealth(), (float) CompanionStats.BASE_HEALTH, c.getHealth()),
-                new CompanionSheet.Stat("attack", fox, (float) CompanionStats.BASE_FOXFIRE, -1),
-                new CompanionSheet.Stat("armor", (float) c.getAttributeValue(Attributes.ARMOR), (float) CompanionStats.BASE_ARMOR, -1),
-                new CompanionSheet.Stat("toughness", (float) c.getAttributeValue(Attributes.ARMOR_TOUGHNESS), 0, -1));
+                stat("health", c.getMaxHealth(), parts.health(), c.getHealth()),
+                stat("attack", fox, parts.attack(), -1),
+                stat("armor", (float) c.getAttributeValue(Attributes.ARMOR), parts.armor(), -1),
+                stat("toughness", (float) c.getAttributeValue(Attributes.ARMOR_TOUGHNESS), parts.toughness(), -1));
         long day = p.level().getOverworldClockTime() / 24000;
         boolean guard = CompanionBond.unlocked(seals, CompanionBond.GUARD_SEAL);
         String guardToday = !guard ? "#gui.logos_dimension.companion.locked"
                 : bond.guardDay() == day ? "#gui.logos_dimension.companion.used_today" : "#gui.logos_dimension.companion.ready";
         List<CompanionSheet.Skill> skills = new ArrayList<>(List.of(
-                new CompanionSheet.Skill("foxfire", CompanionSheet.NORMAL, 0, true, List.of(num(fox))),
-                new CompanionSheet.Skill("ryuka", CompanionSheet.NORMAL, 0, true, List.of(num(fox * CompanionBlade.BLADE))),
+                new CompanionSheet.Skill("foxfire", CompanionSheet.NORMAL, 0, true, List.of(num(c.boltDamage()))),
+                new CompanionSheet.Skill("ryuka", CompanionSheet.NORMAL, 0, true, List.of(num(c.bladeDamage()))),
+                new CompanionSheet.Skill("brand", CompanionSheet.NORMAL, CompanionBond.BRAND_SEAL, CompanionBond.unlocked(seals, CompanionBond.BRAND_SEAL),
+                        List.of(num(ShiraumeCompanion.BRAND_DAMAGE), num(ShiraumeCompanion.BRAND_SLOW / 20f))),
                 new CompanionSheet.Skill("execute", CompanionSheet.SPECIAL, 0, true, List.of()),
+                new CompanionSheet.Skill("chain", CompanionSheet.SPECIAL, CompanionBond.CHAIN_SEAL, CompanionBond.unlocked(seals, CompanionBond.CHAIN_SEAL),
+                        List.of()),
                 new CompanionSheet.Skill("kindle", CompanionSheet.SPECIAL, 0, true, List.of(num(fox * ShiraumeCompanion.KINDLE_SHARE),
                         num(ShiraumeCompanion.KINDLE_SECONDS), num(ShiraumeCompanion.KINDLE_COOLDOWN / 20f))),
                 new CompanionSheet.Skill("katashiro", CompanionSheet.SPECIAL, CompanionBond.GUARD_SEAL, guard, List.of(guardToday)),
+                new CompanionSheet.Skill("teach", CompanionSheet.PASSIVE, CompanionBond.FOXFIRE_SEAL, CompanionBond.unlocked(seals, CompanionBond.FOXFIRE_SEAL),
+                        List.of()),
                 new CompanionSheet.Skill("lantern", CompanionSheet.PASSIVE, 0, true, List.of()),
                 new CompanionSheet.Skill("intercept", CompanionSheet.PASSIVE, 0, true, List.of()),
                 new CompanionSheet.Skill("parry", CompanionSheet.PASSIVE, 0, true, List.of(num(CompanionBlade.BLOCK_MELEE * 100),
                         num(CompanionBlade.BLOCK_PROJECTILE * 100)))));
-        // 下一枚契印要找回的力量：还没定，先写「？？？」
-        if (seals >= CompanionBond.GUARD_SEAL && seals < MAX_SEALS) {
+        // 第四印以后要找回的力量：还没定，先写「？？？」
+        if (seals >= CompanionBond.BRAND_SEAL && seals < MAX_SEALS) {
             skills.add(new CompanionSheet.Skill("sealed", CompanionSheet.SPECIAL, seals + 1, false, List.of(String.valueOf(seals + 1))));
         }
         CompanionBond.Stage st = CompanionBond.Stage.of(bond.affection());
@@ -86,8 +92,13 @@ final class ShiraumeTalk {
         float progress = st.ordinal() + 1 >= all.length ? 1
                 : (bond.affection() - st.from) / (all[st.ordinal() + 1].from - st.from);
         return new CompanionSheet(c.getId(), ID, c.outfit().id, stats, List.copyOf(skills), seals, MAX_SEALS, st.name(), progress,
-                bond.satiety(), CompanionBond.SATIETY_MAX, c.staying(), bond.tactic(), memories(seals), MEMORY_LINES.length,
+                bond.satiety(), CompanionBond.SATIETY_MAX, c.staying(), bond.tactic(), bond.pvp(), memories(seals), MEMORY_LINES.length,
                 (float) CompanionStats.ratio(bond.seals()));
+    }
+
+    /** 一项数值：合计照她身上的（生命、护甲按属性），分成她自己的、羁绊的，其余算继承。 */
+    private static CompanionSheet.Stat stat(String id, float value, CompanionStats.Part part, float current) {
+        return new CompanionSheet.Stat(id, value, (float) part.own(), (float) part.bond(), current);
     }
 
     /** 盖了 {@code seals} 枚契印时想起了几段往事。 */
@@ -178,6 +189,14 @@ final class ShiraumeTalk {
                 c.setStaying(true);
                 c.mood.talk("face_pout", now, 60);
                 return Reply.say(line("stay"));
+            }
+            case TalkMenu.PVP -> {
+                // 开关：开着时打主人身边起冲突的玩家（服务器关了 PvP、同队不许互伤时照样不打）
+                boolean on = !bond.pvp();
+                p.setData(Companions.BOND, bond.withPvp(on));
+                c.mood.talk(on ? "face_kitsune" : "face_content", now, 60);
+                if (on && !p.canHarmPlayer(p)) return Reply.say(line("pvp_on"), line("pvp_off_server"));
+                return Reply.say(line(on ? "pvp_on" : "pvp_off"));
             }
             default -> {
             }

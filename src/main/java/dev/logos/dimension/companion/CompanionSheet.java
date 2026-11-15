@@ -17,26 +17,32 @@ import net.minecraft.network.codec.StreamCodec;
  * @param seals        契印枚数，{@code maxSeals} 一共几枚（白梅九尾就是九枚）
  * @param stage        羁绊到了哪一段（{@link CompanionBond.Stage} 的名字），{@code stageProgress} 离下一段走了几成（0–1）
  * @param satiety      饱腹，{@code satietyMax} 上限
- * @param staying      留在原地（假：跟着主人）；{@code tactic} 行动策略（{@link CompanionTactic}）
+ * @param staying      留在原地（假：跟着主人）；{@code tactic} 行动策略（{@link CompanionTactic}）；{@code pvp} 攻击玩家开着没有
  * @param memories     想起了几段往事（第 0 段本来就记得），{@code memoryTotal} 一共几段
  * @param ratio        继承主人长期属性的比例（0–1）
  */
 public record CompanionSheet(int entity, String companion, String outfit, List<Stat> stats, List<Skill> skills, int seals, int maxSeals,
                              String stage, float stageProgress, float satiety, float satietyMax, boolean staying, String tactic,
-                             int memories, int memoryTotal, float ratio) {
+                             boolean pvp, int memories, int memoryTotal, float ratio) {
     /** 能力的三类：普通攻击、特殊、被动。 */
     public static final int NORMAL = 0, SPECIAL = 1, PASSIVE = 2;
 
     /**
-     * 一项数值。{@code value} 现在的值，{@code base} 她自己本来的，多出来的是从主人那里继承的；{@code current} 不小于 0 时
-     * 显示成「current / value」（生命）。语言键 {@code gui.logos_dimension.companion.stat.<id>}。
+     * 一项数值。{@code value} 现在的值，{@code base} 她自己的（基础加契印长的），{@code bond} 羁绊给的，其余是从主人那里继承的；
+     * {@code current} 不小于 0 时显示成「current / value」（生命）。语言键 {@code gui.logos_dimension.companion.stat.<id>}。
      */
-    public record Stat(String id, float value, float base, float current) {
+    public record Stat(String id, float value, float base, float bond, float current) {
         static final StreamCodec<ByteBuf, Stat> CODEC = StreamCodec.composite(ByteBufCodecs.STRING_UTF8, Stat::id, ByteBufCodecs.FLOAT, Stat::value,
-                ByteBufCodecs.FLOAT, Stat::base, ByteBufCodecs.FLOAT, Stat::current, Stat::new);
+                ByteBufCodecs.FLOAT, Stat::base, ByteBufCodecs.FLOAT, Stat::bond, ByteBufCodecs.FLOAT, Stat::current, Stat::new);
 
+        /** 没有羁绊那一项的（攻击、生命之外）。 */
+        public Stat(String id, float value, float base, float current) {
+            this(id, value, base, 0, current);
+        }
+
+        /** 从主人那里继承的。 */
         public float bonus() {
-            return value - base;
+            return value - base - bond;
         }
     }
 
@@ -64,13 +70,14 @@ public record CompanionSheet(int entity, String companion, String outfit, List<S
         ByteBufCodecs.FLOAT.encode(buf, s.satietyMax);
         ByteBufCodecs.BOOL.encode(buf, s.staying);
         ByteBufCodecs.STRING_UTF8.encode(buf, s.tactic);
+        ByteBufCodecs.BOOL.encode(buf, s.pvp);
         ByteBufCodecs.VAR_INT.encode(buf, s.memories);
         ByteBufCodecs.VAR_INT.encode(buf, s.memoryTotal);
         ByteBufCodecs.FLOAT.encode(buf, s.ratio);
     }, buf -> new CompanionSheet(ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf),
             Stat.CODEC.apply(ByteBufCodecs.list()).decode(buf), Skill.CODEC.apply(ByteBufCodecs.list()).decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
             ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.FLOAT.decode(buf), ByteBufCodecs.FLOAT.decode(buf),
-            ByteBufCodecs.FLOAT.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
+            ByteBufCodecs.FLOAT.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
             ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.FLOAT.decode(buf)));
 
     public Stat stat(String id) {

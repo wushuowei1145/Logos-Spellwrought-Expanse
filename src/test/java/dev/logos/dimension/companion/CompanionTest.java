@@ -48,6 +48,23 @@ class CompanionTest {
         assertEquals(CompanionStats.MAX_RATIO, CompanionStats.ratio(100), 1e-9);
     }
 
+    /** 契印让她自己的生命、护甲、韧性也长（到九枚为止）；羁绊每段加生命和攻击；九尾全亮时全部继承。 */
+    @Test void sealsGrowHerOwnStatsAndBondAddsHealthAndAttack() {
+        var owner = new CompanionStats.Owner(20, 20, 8, 8, 1);
+        var p = CompanionStats.parts(owner, 4, 2);
+        assertEquals(CompanionStats.BASE_HEALTH + 4 * CompanionStats.SEAL_HEALTH, p.health().own(), 1e-9);
+        assertEquals(CompanionStats.BASE_ARMOR + 4 * CompanionStats.SEAL_ARMOR, p.armor().own(), 1e-9);
+        assertEquals(4 * CompanionStats.SEAL_TOUGHNESS, p.toughness().own(), 1e-9);
+        assertEquals(2 * CompanionStats.BOND_HEALTH, p.health().bond(), 1e-9);
+        assertEquals(2 * CompanionStats.BOND_ATTACK, p.attack().bond(), 1e-9);
+        assertEquals(0, p.armor().bond(), 1e-9);
+        assertEquals(CompanionStats.ratio(4) * 20, p.health().inherited(), 1e-9);
+        var full = CompanionStats.parts(owner, 9, 4);
+        assertEquals(20, full.health().inherited(), 1e-9, "九尾全亮：全部继承");
+        assertEquals(full.health().own(), CompanionStats.parts(owner, 20, 4).health().own(), 1e-9, "九枚以后不再长");
+        assertEquals(full.stats().health(), full.health().total(), 1e-9);
+    }
+
     /** 主人在做什么：睡觉 > 战斗 > 挖 > 建 > 赶路 > 发呆 / 挂机。 */
     @Test void readsWhatTheOwnerIsDoing() {
         long now = 10_000;

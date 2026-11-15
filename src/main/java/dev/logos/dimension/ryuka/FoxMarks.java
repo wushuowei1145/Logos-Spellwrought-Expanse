@@ -43,8 +43,9 @@ public final class FoxMarks {
 
     private record Marks(int count, long last) {}
     private static final Map<LivingEntity, Marks> MARKS = new WeakHashMap<>();
-    /** 爆开过、还能被处决的目标，到哪一刻为止。 */
-    private static final Map<LivingEntity, Long> OPEN = new WeakHashMap<>();
+    /** 爆开过、还能被处决的目标：到哪一刻为止，是谁打爆的。 */
+    private record Open(long until, java.util.UUID by) {}
+    private static final Map<LivingEntity, Open> OPEN = new WeakHashMap<>();
     /** 测试用：一共爆开过几次。 */
     private static int bursts;
 
@@ -71,8 +72,14 @@ public final class FoxMarks {
 
     /** {@code target} 爆开过，现在还能被处决。 */
     public static boolean executable(LivingEntity target) {
-        Long until = OPEN.get(target);
-        return until != null && target.level().getGameTime() < until;
+        Open open = OPEN.get(target);
+        return open != null && target.level().getGameTime() < open.until;
+    }
+
+    /** 这次爆开是谁打爆的（最后一枚印是谁添的）；没在窗口里为 null。 */
+    public static java.util.@org.jspecify.annotations.Nullable UUID burstBy(LivingEntity target) {
+        Open open = OPEN.get(target);
+        return open == null || target.level().getGameTime() >= open.until ? null : open.by;
     }
 
     /** 处决开始：用掉这次爆开（身上新攒的印照旧）。 */
@@ -91,7 +98,7 @@ public final class FoxMarks {
             return false;
         }
         MARKS.remove(target);
-        OPEN.put(target, now + WINDOW);
+        OPEN.put(target, new Open(now + WINDOW, by.getUUID()));
         sync(target, 0, Payload.BURST);
         burst(by, target, level);
         return true;

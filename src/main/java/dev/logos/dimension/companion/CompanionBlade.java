@@ -34,7 +34,7 @@ import org.jspecify.annotations.Nullable;
  * 白梅的流火（docs/SHIRAUME_COMPANION.md 第 8.4 节）：敌人贴近、她血量充裕时从拳中凝出一把，招式由与玩家、Boss 共用的
  * 招式状态机驱动（招式文件 {@code shiraume_companion}，动作是 Boss 人形的编排烘焙到她骨架上的 {@code ryuka_*}）。
  * <ul>
- *   <li>刀伤按她继承后的攻击（{@link ShiraumeCompanion#foxfireDamage()}）× {@link #BLADE} × 招式的倍数；砍中留狐火印（谁的流火都算），
+ *   <li>刀伤按她的攻击 × 随契印涨的倍数（{@link ShiraumeCompanion#bladeDamage()}，{@link CompanionStats#blade}）× 招式的倍数；砍中留狐火印（谁的流火都算），
  *       照流火的规矩缠身 3 秒；
  *   <li>没在出招时，近战 {@link #BLOCK_MELEE}、弹射物 {@link #BLOCK_PROJECTILE} 挡下：近战是弹刀，对方进入被弹反的僵直；
  *   <li>目标在狐火印爆开后的窗口里（她或主人打出来的都算）：上挑接处决（不可交互的那种），旁人看到目标在半空被刀光砍。
@@ -50,7 +50,7 @@ public final class CompanionBlade implements MoveRunner.Actor {
      * 玩家的流火是不吃护甲的狐火）；刀够得着多远（格，另加目标半宽）；攻速（攻击招式按 2.2 倍播：Boss 的起手和收势都长，
      * 原样用的话一刀要一秒，两只神狐都打不过）。
      */
-    public static final double BLADE = 2.25, REACH = 2.4, ATTACK_SPEED = 2.2;
+    public static final double REACH = 2.4, ATTACK_SPEED = 2.2;
     /** 砍完最后一下再过这么多刻就能接下一刀，不等 Boss 那段长长的收势播完（连招中间那几段除外）。 */
     static final int RECOVER = 2;
     /**
@@ -330,7 +330,7 @@ public final class CompanionBlade implements MoveRunner.Actor {
             launch(level, executing);
             return;
         }
-        double damage = c.foxfireDamage() * BLADE * move.damage();
+        double damage = c.bladeDamage() * move.damage();
         double cone = move.cone() > 0 ? move.cone() : 110;
         Vec3 eye = c.position().add(0, c.getBbHeight() * .5, 0);
         float yaw = c.getYRot() * Mth.DEG_TO_RAD;
@@ -448,7 +448,7 @@ public final class CompanionBlade implements MoveRunner.Actor {
         ExecutionTimeline tl = new ExecutionTimeline(shot);
         long now = level.getGameTime();
         executionEnds = now + ticks;
-        float blade = (float) (c.foxfireDamage() * BLADE);
+        float blade = c.bladeDamage();
         for (ExecutionTimeline.Slash s : tl.slashes()) {
             scheduled.add(new Scheduled(now + Math.round(s.contact()), () -> {
                 if (target.isAlive()) hit(level, target, blade * (float) EXECUTION_SLASH, false);
