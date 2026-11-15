@@ -383,6 +383,9 @@
 - 女仆怎么上琴凳、工位：同别的生物，拴绳牵着右键（女仆骑着东西时女仆模组本来就不让它走动）；把乐器交给它也一样。
 - 编译：女仆模组 26.1 版不在任何 Maven 上，同 Logos 用本地 jar（`libs/touhoulittlemaid.jar` 或 `-Ptlm_jar=<路径>`），没有 jar 时
   `MaidMusicians`、`MaidHallViews` 不参与编译；运行时只有装了女仆模组的客户端才注册（`LogosDimension` 按类名找）。`-Ptlm` 把它加进开发环境。
+  **发出去的 jar 一定要带着女仆 jar 编译**：没带时只在 Gradle 输出里有一行 `Touhou Little Maid compat left out`，游戏照常，
+  女仆坐上琴凳、站上工位却是女仆模组默认的跪坐姿势。2026-11-15 查到一键编译只给 Logos 传了 `-Ptlm_jar`，附属那份就是这样漏的
+  （脚本已改成也传给附属，并核对 jar 里有 `MaidMusicians`）。查的时候先看 jar 里有没有 `dev/logos/dimension/client/music/MaidMusicians.class`。
 
 ### 16.4 没做的
 
