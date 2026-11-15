@@ -9827,7 +9827,7 @@
               }
             },
             {
-              "biome": "logos_dimension:elven_forest",
+              "biome": "logos_dimension:blighted_elven_forest",
               "parameters": {
                 "temperature": 0,
                 "humidity": 0.4,
@@ -9887,7 +9887,7 @@
               }
             },
             {
-              "biome": "logos_dimension:elven_forest",
+              "biome": "logos_dimension:blighted_elven_forest",
               "parameters": {
                 "temperature": 0,
                 "humidity": 0.4,
@@ -10007,7 +10007,7 @@
               }
             },
             {
-              "biome": "logos_dimension:elven_forest",
+              "biome": "logos_dimension:blighted_elven_forest",
               "parameters": {
                 "temperature": 0,
                 "humidity": 0.4,
@@ -10067,7 +10067,7 @@
               }
             },
             {
-              "biome": "logos_dimension:elven_forest",
+              "biome": "logos_dimension:blighted_elven_forest",
               "parameters": {
                 "temperature": 0,
                 "humidity": 0.4,
@@ -10547,7 +10547,7 @@
               }
             },
             {
-              "biome": "logos_dimension:elven_forest",
+              "biome": "logos_dimension:blighted_elven_forest",
               "parameters": {
                 "temperature": 0,
                 "humidity": 0.8,
@@ -10607,7 +10607,7 @@
               }
             },
             {
-              "biome": "logos_dimension:elven_forest",
+              "biome": "logos_dimension:blighted_elven_forest",
               "parameters": {
                 "temperature": 0,
                 "humidity": 0.8,
@@ -10727,7 +10727,7 @@
               }
             },
             {
-              "biome": "logos_dimension:elven_forest",
+              "biome": "logos_dimension:blighted_elven_forest",
               "parameters": {
                 "temperature": 0,
                 "humidity": 0.8,
@@ -10787,7 +10787,7 @@
               }
             },
             {
-              "biome": "logos_dimension:elven_forest",
+              "biome": "logos_dimension:blighted_elven_forest",
               "parameters": {
                 "temperature": 0,
                 "humidity": 0.8,
@@ -13427,7 +13427,7 @@
               }
             },
             {
-              "biome": "logos_dimension:elven_forest",
+              "biome": "logos_dimension:blighted_elven_forest",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": 0.4,
@@ -13487,7 +13487,7 @@
               }
             },
             {
-              "biome": "logos_dimension:elven_forest",
+              "biome": "logos_dimension:blighted_elven_forest",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": 0.4,
@@ -13607,7 +13607,7 @@
               }
             },
             {
-              "biome": "logos_dimension:elven_forest",
+              "biome": "logos_dimension:blighted_elven_forest",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": 0.4,
@@ -13667,7 +13667,7 @@
               }
             },
             {
-              "biome": "logos_dimension:elven_forest",
+              "biome": "logos_dimension:blighted_elven_forest",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": 0.4,
@@ -14147,7 +14147,7 @@
               }
             },
             {
-              "biome": "logos_dimension:elven_forest",
+              "biome": "logos_dimension:blighted_elven_forest",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": 0.8,
@@ -14207,7 +14207,7 @@
               }
             },
             {
-              "biome": "logos_dimension:elven_forest",
+              "biome": "logos_dimension:blighted_elven_forest",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": 0.8,
@@ -14327,7 +14327,7 @@
               }
             },
             {
-              "biome": "logos_dimension:elven_forest",
+              "biome": "logos_dimension:blighted_elven_forest",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": 0.8,
@@ -14387,7 +14387,7 @@
               }
             },
             {
-              "biome": "logos_dimension:elven_forest",
+              "biome": "logos_dimension:blighted_elven_forest",
               "parameters": {
                 "temperature": 0.4,
                 "humidity": 0.8,

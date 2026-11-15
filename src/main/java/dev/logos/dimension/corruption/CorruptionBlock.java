@@ -22,7 +22,7 @@ public class CorruptionBlock extends Block implements CorruptionBehaviour {
         super(properties);
     }
 
-    @Override protected MapCodec<CorruptionBlock> codec() { return CODEC; }
+    @Override protected MapCodec<? extends CorruptionBlock> codec() { return CODEC; }
 
     @Override
     public int attemptUseCharge(CorruptionSpreader.Cursor cursor, LevelAccessor level, BlockPos origin, RandomSource random, CorruptionSpreader spreader) {

@@ -54,6 +54,10 @@ CameraShots.play(player, CameraShot.of(
 - 锁操作和打开界面时一样：每刻开头 `KeyMapping.releaseAll()`，结束时 `setAll()` 并恢复切换式的潜行疾跑。滚轮和鼠标转向不走按键映射，单独拦。
 - 客户端还可以 `CameraDirector.play(shot, rig)`：停留期间的机位、视线和画面倾斜由 `rig` 逐帧给（可以硬切、抖动），进出的过渡和遮幅仍按 `shot` 走。[处决特写](EXECUTION_SHOTS.md)就是这样切镜的。
 
+## 已有镜头附加轨迹
+
+女王入场先由服务端 `CameraShots.play` 发一段普通镜头，再按顺序发前景提示包。收到提示后，`CameraDirector.attachRig(rig)` 给当前镜头附加机位轨迹，不重置时钟、过渡、遮幅或输入锁。默认镜头没有轨迹时的行为保持不变。前景平面与观看保护的具体生命周期见 [腐败精灵森林](BLIGHTED_ELVEN_FOREST.md)。
+
 ## 测试
 
 ```text

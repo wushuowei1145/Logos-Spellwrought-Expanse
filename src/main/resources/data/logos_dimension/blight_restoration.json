@@ -1,0 +1,379 @@
+[
+  {
+    "Name": "logos_dimension:cloudsea_moss_vale_ground"
+  },
+  {
+    "Name": "minecraft:dirt"
+  },
+  {
+    "Name": "logos_dimension:elven_heartwood",
+    "Properties": {
+      "axis": "y"
+    }
+  },
+  {
+    "Name": "logos_dimension:elven_heartwood",
+    "Properties": {
+      "axis": "x"
+    }
+  },
+  {
+    "Name": "logos_dimension:elven_heartwood",
+    "Properties": {
+      "axis": "z"
+    }
+  },
+  {
+    "Name": "minecraft:moss_block"
+  },
+  {
+    "Name": "minecraft:spruce_planks"
+  },
+  {
+    "Name": "logos_dimension:elven_pale_planks"
+  },
+  {
+    "Name": "minecraft:birch_fence",
+    "Properties": {
+      "north": "false",
+      "south": "true",
+      "east": "true",
+      "west": "false",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:birch_fence",
+    "Properties": {
+      "north": "false",
+      "south": "false",
+      "east": "false",
+      "west": "false",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:birch_fence",
+    "Properties": {
+      "north": "true",
+      "south": "false",
+      "east": "false",
+      "west": "false",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:birch_fence",
+    "Properties": {
+      "north": "false",
+      "south": "false",
+      "east": "true",
+      "west": "false",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:birch_fence",
+    "Properties": {
+      "north": "true",
+      "south": "false",
+      "east": "true",
+      "west": "false",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:birch_fence",
+    "Properties": {
+      "north": "false",
+      "south": "true",
+      "east": "false",
+      "west": "false",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:birch_fence",
+    "Properties": {
+      "north": "true",
+      "south": "true",
+      "east": "false",
+      "west": "false",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:birch_fence",
+    "Properties": {
+      "north": "true",
+      "south": "true",
+      "east": "true",
+      "west": "false",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:birch_fence",
+    "Properties": {
+      "north": "false",
+      "south": "false",
+      "east": "false",
+      "west": "true",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:birch_fence",
+    "Properties": {
+      "north": "true",
+      "south": "false",
+      "east": "false",
+      "west": "true",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:birch_fence",
+    "Properties": {
+      "north": "false",
+      "south": "false",
+      "east": "true",
+      "west": "true",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:birch_fence",
+    "Properties": {
+      "north": "true",
+      "south": "false",
+      "east": "true",
+      "west": "true",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:birch_fence",
+    "Properties": {
+      "north": "false",
+      "south": "true",
+      "east": "false",
+      "west": "true",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:birch_fence",
+    "Properties": {
+      "north": "true",
+      "south": "true",
+      "east": "false",
+      "west": "true",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:birch_fence",
+    "Properties": {
+      "north": "false",
+      "south": "true",
+      "east": "true",
+      "west": "true",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:birch_fence",
+    "Properties": {
+      "north": "true",
+      "south": "true",
+      "east": "true",
+      "west": "true",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "logos_dimension:elven_canopy",
+    "Properties": {
+      "distance": "1",
+      "persistent": "true",
+      "waterlogged": "false",
+      "season": "0"
+    }
+  },
+  {
+    "Name": "minecraft:spruce_stairs",
+    "Properties": {
+      "facing": "south",
+      "half": "bottom",
+      "shape": "straight",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:spruce_stairs",
+    "Properties": {
+      "facing": "north",
+      "half": "bottom",
+      "shape": "straight",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:spruce_stairs",
+    "Properties": {
+      "facing": "east",
+      "half": "bottom",
+      "shape": "straight",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:spruce_stairs",
+    "Properties": {
+      "facing": "west",
+      "half": "bottom",
+      "shape": "straight",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "logos_dimension:cloudsea_fir_heart_log",
+    "Properties": {
+      "axis": "y"
+    }
+  },
+  {
+    "Name": "logos_dimension:cloudsea_fir_heart_log",
+    "Properties": {
+      "axis": "x"
+    }
+  },
+  {
+    "Name": "logos_dimension:cloudsea_fir_heart_log",
+    "Properties": {
+      "axis": "z"
+    }
+  },
+  {
+    "Name": "logos_dimension:cloudsea_fir_heart_leaf",
+    "Properties": {
+      "distance": "1",
+      "persistent": "true",
+      "waterlogged": "false",
+      "season": "0"
+    }
+  },
+  {
+    "Name": "minecraft:dark_oak_stairs",
+    "Properties": {
+      "facing": "west",
+      "half": "bottom",
+      "shape": "straight",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:dark_oak_stairs",
+    "Properties": {
+      "facing": "north",
+      "half": "bottom",
+      "shape": "straight",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:dark_oak_stairs",
+    "Properties": {
+      "facing": "east",
+      "half": "bottom",
+      "shape": "straight",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:dark_oak_stairs",
+    "Properties": {
+      "facing": "south",
+      "half": "bottom",
+      "shape": "straight",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:dark_oak_planks"
+  },
+  {
+    "Name": "minecraft:birch_slab",
+    "Properties": {
+      "type": "bottom",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:oak_stairs",
+    "Properties": {
+      "facing": "south",
+      "half": "bottom",
+      "shape": "straight",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:oak_stairs",
+    "Properties": {
+      "facing": "north",
+      "half": "bottom",
+      "shape": "straight",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:oak_stairs",
+    "Properties": {
+      "facing": "east",
+      "half": "bottom",
+      "shape": "straight",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "minecraft:oak_stairs",
+    "Properties": {
+      "facing": "west",
+      "half": "bottom",
+      "shape": "straight",
+      "waterlogged": "false"
+    }
+  },
+  {
+    "Name": "logos_dimension:cloudsea_ancient_beech_log",
+    "Properties": {
+      "axis": "y"
+    }
+  },
+  {
+    "Name": "logos_dimension:cloudsea_ancient_beech_log",
+    "Properties": {
+      "axis": "x"
+    }
+  },
+  {
+    "Name": "logos_dimension:cloudsea_ancient_beech_log",
+    "Properties": {
+      "axis": "z"
+    }
+  },
+  {
+    "Name": "logos_dimension:cloudsea_ancient_beech_leaf",
+    "Properties": {
+      "distance": "7",
+      "persistent": "true",
+      "waterlogged": "false",
+      "season": "0"
+    }
+  },
+  {
+    "Name": "logos_dimension:journey_limestone"
+  }
+]

@@ -3,6 +3,10 @@
     {
       "structure": "logos_dimension:elven_world_tree",
       "weight": 1
+    },
+    {
+      "structure": "logos_dimension:blighted_elven_world_tree",
+      "weight": 1
     }
   ],
   "placement": {

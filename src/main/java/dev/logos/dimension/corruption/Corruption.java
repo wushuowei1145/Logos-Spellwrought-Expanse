@@ -54,6 +54,6 @@ public final class Corruption {
 
     /** 算网络一部分、碰到会受伤的方块（核心不算）。 */
     public static boolean isNetworkBlock(BlockState state) {
-        return state.is(BLOCK.get()) || state.is(VEIN.get());
+        return state.getBlock() instanceof CorruptionBlock || state.is(VEIN.get());
     }
 }
