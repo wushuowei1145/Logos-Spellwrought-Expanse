@@ -73,11 +73,14 @@ class SampleMapTest {
     private static void coversEverything(InstrumentKind kind, SampleMap map, String layer) {
         assertFalse(map.zones().isEmpty(), layer + " " + kind + " has zones");
         assertEquals(SampleMap.FORMAT, map.format(), layer + " " + kind + " map format");
-        for (int p = kind.low(); p <= kind.high(); p++) {
+        // 无音高的打击乐只看自己的鼓键：每个键有自己的录音（不借隔壁键的、不变调）；中间夹着的别的键（通通鼓）不出声
+        int[] pitches = kind.unpitched() ? kind.keys() : java.util.stream.IntStream.rangeClosed(kind.low(), kind.high()).toArray();
+        for (int p : pitches) {
             for (int v = 1; v <= 127; v++) {
                 SampleMap.Zone z = map.pick(p, v);
                 assertNotNull(z, layer + " " + kind + " " + p + " v" + v);
                 assertTrue(z.lo() <= p && p <= z.hi() && z.vlo() <= v && v <= z.vhi(), layer + " " + kind + " " + p + " v" + v + " not covered exactly");
+                if (kind.unpitched()) assertTrue(z.lo() == p && z.hi() == p && z.key() == p, layer + " " + kind + " key " + p + " uses its own sample");
                 // 变调不超过 4 个半音
                 assertTrue(Math.abs(p - z.key()) <= 4.01, layer + " " + kind + " " + p + " shifted from " + z.key());
                 // 各采样存的电平不同（各自放大到峰值 -1 dBFS），换层时响度是否接得上由生成脚本按响度核对；

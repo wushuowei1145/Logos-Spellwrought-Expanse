@@ -136,6 +136,7 @@ public final class SampleMaps {
         java.util.Set<String> files = new java.util.HashSet<>();
         for (var e : roll.events()) {
             if (e.type() != dev.logos.dimension.music.MusicRoll.NOTE || (partMask & (1 << e.part())) == 0) continue;
+            if (e.part() < roll.parts().size() && !kind.playsPart(roll.parts().get(e.part()))) continue;
             int pitch = kind.fold(e.pitch() + shifts[e.part()]);
             SampleMap.Zone z = map.pick(pitch, kind.velocitySensitive() ? e.velocity() : 100);
             if (z == null || !files.add(z.file())) continue;

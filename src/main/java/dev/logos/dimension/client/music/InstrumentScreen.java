@@ -321,7 +321,7 @@ public class InstrumentScreen extends Screen implements MidiKeyboard.Target {
     /** 不在这件乐器音域里的键不出声（不按八度折叠，界面上画暗）。 */
     private boolean playable(int pitch) {
         InstrumentKind k = kind();
-        return pitch >= k.low() && pitch <= k.high();
+        return k.sounds(pitch);
     }
 
     private void press(int key, int pitch) {

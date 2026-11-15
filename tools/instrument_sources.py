@@ -9,6 +9,7 @@
 - 钢琴：Salamander Grand Piano V3（Alexander Holm，CC BY 3.0），sfzinstruments 的 FLAC 版，音准用 Markus Fiedler 的重新调律值
 - 竖琴、钟琴、管钟、大键琴：Versilian Community Sample Library（VCSL，CC0）
 - 小提琴、长笛、小号：VS Chamber Orchestra: Community Edition（VSCO 2 CE，CC0）
+- 大鼓、小军鼓、吊镲、三角铁（无音高打击乐，按 GM 第 10 通道的鼓键一键一套录音）：VCSL
 两个库都没有钢片琴，资源包里就没有钢片琴（用本体合成的）；管风琴在客户端按音栓现场合成，也不在资源包里。
 
 每个采样的处理：
@@ -173,6 +174,8 @@ class Spec:
     trust_octave: bool = False     # 以实测的八度为准（备用乐器：还没核对过各文件夹的八度写法）
     auto_range: bool = False       # 音域按采样实际音高定（备用乐器）
     note: str = ""
+    drums: bool = False            # 无音高打击乐：每个 GM 鼓键用自己的录音，层数各自定；音区不拉平，各键响度按 key_level
+    key_level: dict = field(default_factory=dict)   # 鼓键 → 相对电平（dB）：踩镲比强音镲轻、边击比军鼓轻
 
 
 def files_in(cache: Cache, key: str, folder: str) -> list[str]:
@@ -668,6 +671,8 @@ class Sample:
     file: str = ""
     lo: int = 0
     hi: int = 0
+    vlo: int = 0          # 打击乐：这个区的力度范围（0 = 按 Spec.layers）
+    vhi: int = 0
     release_file: str | None = None
     release_gain: float = 0.0
     release_seconds: float = 0.0
@@ -804,6 +809,41 @@ def zones(spec: Spec, samples: list[Sample]) -> None:
         s.curve = spec.curve if spec.velocity else 0.0
 
 
+# 打击乐每个鼓键的层数各不一样（边击只录了一层、军鼓录了五层）：按这个键自己有几层均分力度
+VEL_SPLITS = {1: [(1, 127)], 2: [(1, 84), (85, 127)], 3: [(1, 56), (57, 96), (97, 127)],
+              4: [(1, 40), (41, 72), (73, 104), (105, 127)], 5: [(1, 32), (33, 60), (61, 86), (87, 108), (109, 127)]}
+
+
+def zones_drums(spec: Spec, samples: list[Sample]) -> None:
+    """打击乐：每个鼓键只用自己的录音（不借隔壁键的，否则边击会响成军鼓），从轻到重分它自己的力度段。"""
+    by_key: dict[int, list[Sample]] = {}
+    for s in samples:
+        by_key.setdefault(round(s.key), []).append(s)
+    for key, group in by_key.items():
+        group.sort(key=lambda s: s.src.layer)
+        for s, (vlo, vhi) in zip(group, VEL_SPLITS[len(group)]):
+            s.lo = s.hi = key
+            s.vlo, s.vhi = vlo, vhi
+            s.curve = spec.curve if spec.velocity else 0.0
+
+
+def balance_drums(spec: Spec, samples: list[Sample], log) -> None:
+    """打击乐的响度：不拉平音区（各键本来就不一样），每个区在自己力度上限处落在 REF + level + 这个键的 key_level 上。"""
+    for s in samples:
+        s.store = 0.891 / max(s.peak, 1e-9)
+        at_top = 20 * math.log10((s.vhi / 127) ** spec.curve) if spec.velocity else 0.0
+        target = REF + spec.level + spec.key_level.get(round(s.key), 0.0) + at_top
+        stored = s.loudness + 20 * math.log10(s.store)
+        s.gain = 10 ** ((target - stored) / 20)
+    over = float(np.percentile([s.gain for s in samples], 95))
+    if over > 1:
+        log(f"    ! {spec.kind}: needs {20 * math.log10(over):.1f} dB more than full scale; whole instrument lowered")
+        for s in samples:
+            s.gain /= over
+    for s in samples:
+        s.gain = round(min(1.0, s.gain), 4)
+
+
 def report_layers(spec: Spec, used: list[Sample], log) -> None:
     """换层处的响度差：每个音在下一层力度下限处与上一层力度上限处的响度（K 计权，dB）。"""
     if not spec.velocity or len(spec.layers) < 2:
@@ -849,8 +889,12 @@ def build(spec: Spec, cache: Cache, write: bool, log) -> list[Sample]:
         spec.low = round(min(s.key for s in samples)) - 2
         spec.high = round(max(s.key for s in samples)) + 3
         log(f"   range {name_of(spec.low)}-{name_of(spec.high)}")
-    balance(spec, samples, log)
-    zones(spec, samples)
+    if spec.drums:
+        zones_drums(spec, samples)
+        balance_drums(spec, samples, log)
+    else:
+        balance(spec, samples, log)
+        zones(spec, samples)
     used = [s for s in samples if s.hi >= 0]
     for s in samples:
         if s.hi < 0:
@@ -905,7 +949,7 @@ def write_map_json(path: Path, source: str, attenuation: int, quality: str, zone
 def write_map(spec: Spec, used: list[Sample]) -> None:
     zs = []
     for s in sorted(used, key=lambda s: (s.src.layer, s.key)):
-        vlo, vhi = spec.layers[s.src.layer]
+        vlo, vhi = (s.vlo, s.vhi) if s.vhi else spec.layers[s.src.layer]
         z = {"file": s.file, "key": round(s.key, 3), "lo": s.lo, "hi": s.hi, "vlo": vlo, "vhi": vhi,
              "gain": s.gain, "curve": s.curve, "frames": len(s.audio), "release": s.release_seconds}
         if s.loop:
@@ -1003,6 +1047,59 @@ def demo(spec: Spec, out: Path) -> None:
     encode(mix, out / f"demo_{spec.kind}.ogg", 6)
 
 
+def drum_demo(kinds: list[str], out: Path, name: str = "demo_drums") -> None:
+    """打击乐的试听：先把每个鼓键轻、重各敲一下，再来四小节节奏（大鼓、军鼓、踩镲 / 叮叮镲、强音镲、三角铁一起）。"""
+    zones: dict[int, list[dict]] = {}
+    for kind in kinds:
+        data = json.loads((ASSETS / "instruments" / f"{kind}.json").read_text(encoding="utf-8"))
+        for z in data["zones"]:
+            zones.setdefault(z["lo"], []).append(z)
+    cache: dict[str, np.ndarray] = {}
+    events = []   # (秒, 鼓键, 力度)
+    t = 0.3
+    for key in sorted(zones):
+        long = key in (35, 36, 49, 52, 53, 55, 57, 81)
+        for v in (56, 118):
+            events.append((t, key, v))
+            t += 1.6 if long else 0.6
+        t += 0.3
+    t += 1.0
+    beat = 60 / 100
+    for bar in range(4):
+        b0 = t + bar * 4 * beat
+        if bar in (0, 2):
+            events.append((b0, 49 if bar == 0 else 57, 112))
+        events.append((b0, 81, 90))
+        for q in range(4):
+            events.append((b0 + q * beat, 36 if q % 2 == 0 else 38, 104 if q % 2 == 0 else 96))
+            for e in range(2):
+                cym = 42 if bar < 2 else 51
+                events.append((b0 + (q + e / 2) * beat, cym, 84 if e == 0 else 64))
+        if bar == 3:
+            for i in range(8):
+                events.append((b0 + 2 * beat + i * beat / 4, 38, 60 + 7 * i))
+            events.append((b0 + 3 * beat, 80, 80))
+            events.append((b0 + 3.5 * beat, 80, 80))
+    end = t + 16 * beat
+    events += [(end, 36, 120), (end, 49, 124), (end, 81, 100)]
+    mix = np.zeros(int((end + 7) * SR))
+    for start, key, v in events:
+        if key not in zones:
+            continue
+        z = pick(zones[key], key, v)
+        if z["file"] not in cache:
+            cache[z["file"]] = decode_ogg(ASSETS / "sounds" / f"{z['file']}.ogg")
+        y = render_note(cache[z["file"]], z, key, v, 0.1, False)
+        i = int(start * SR)
+        n = min(len(y), len(mix) - i)
+        mix[i:i + n] += y[:n]
+    peak = float(np.abs(mix).max())
+    if peak > 0.98:
+        mix *= 0.98 / peak
+    out.mkdir(parents=True, exist_ok=True)
+    encode(mix, out / f"{name}.ogg", 6)
+
+
 # ---------------------------------------------------------------- 以后备用的乐器（--reserve：只做出来量体积、渲染试听，不写进模组）
 
 
@@ -1042,25 +1139,69 @@ def struck(kind: str, repo: str, folder: str, regex: str, layers: dict, splits: 
 
 TWO = [(1, 84), (85, 127)]
 THREE = [(1, 56), (57, 96), (97, 127)]
+
+PERC = "Membranophones/Struck Membranophones/"
+IDIO = "Idiophones/Struck Idiophones/"
+
+
+def drum_kit(kind: str, keys: dict, seconds: dict, level: float = 0.0, key_level: dict | None = None, rng: int = 48,
+             note: str = "") -> Spec:
+    """无音高打击乐（docs/ORCHESTRA.md 第 20 节）：keys = {GM 鼓键: (文件夹, 正则, {力度标记: 由轻到重的序号})}，
+    每个键用自己那几个录音（同一个文件夹里按正则挑，dyn 组是力度标记）；音高就是鼓键号，不量、不变调。"""
+    def sources(cache: Cache) -> list[Src]:
+        out = []
+        for key, (folder, regex, layers) in keys.items():
+            got = pattern("vcsl", folder, regex, layers, label=key)(cache)
+            assert got, (kind, key, folder, regex)
+            out += got
+        return out
+    return Spec(kind, "vcsl", min(keys), max(keys), VEL_SPLITS[5], sources, pitch="label",
+                max_seconds=lambda m: seconds.get(m, 2.0), level=level, range=rng, drums=True, key_level=key_level or {},
+                note=note)
+
+
+DRUM_SPECS: dict[str, Spec] = {
+    "bass_drum": drum_kit("bass_drum", {
+        35: (PERC + "Bass Drum 1", r"BDrumNew_hit_v(?P<dyn>[2357])_rr1_Sum\.wav$", {"2": 0, "3": 1, "5": 2, "7": 3}),
+        36: (PERC + "Bass Drum 2", r"bassdrum_hit_(?P<dyn>pp|mp|mf|f|ff)1?\.wav$", {"pp": 0, "mp": 1, "mf": 2, "f": 3, "ff": 4}),
+    }, {35: 3.0, 36: 3.5}, level=0.0, rng=64, note="35 原声大鼓 = Bass Drum 1 四层、36 大鼓 = Bass Drum 2 五层"),
+    "snare_drum": drum_kit("snare_drum", {
+        37: (PERC + "Snare Drum, Modern 3", r"Snare4_Xstick_v(?P<dyn>2)_rr1_Mid\.wav$", {"2": 0}),
+        38: (PERC + "Snare Drum, Modern 1", r"Snare2_HitSN_v(?P<dyn>[35679])_rr1_Mid\.wav$", {"3": 0, "5": 1, "6": 2, "7": 3, "9": 4}),
+        39: (PERC + "Snare Drum, Modern 3", r"Snare4_rimshot_v(?P<dyn>[24])_rr1_Mid\.wav$", {"2": 0, "4": 1}),
+        40: (PERC + "Snare Drum, Modern 3", r"Snare4_HitSN_v(?P<dyn>[245])_rr1_Mid\.wav$", {"2": 0, "4": 1, "5": 2}),
+    }, {37: 0.8, 38: 1.4, 39: 1.4, 40: 1.4}, level=-2.0, key_level={37: -6.0}, rng=48,
+        note="37 边击、39 鼓边重击、40 重音 = Snare Drum Modern 3，38 军鼓 = Modern 1（响弦）"),
+    "suspended_cymbal": drum_kit("suspended_cymbal", {
+        42: (IDIO + "Hi-Hat Cymbal", r"HiHat_HitC_v(?P<dyn>[1234])_rr1_Mid\.wav$", {"1": 0, "2": 1, "3": 2, "4": 3}),
+        44: (IDIO + "Hi-Hat Cymbal", r"HiHat_Close_rr(?P<dyn>1)_Mid\.wav$", {"1": 0}),
+        46: (IDIO + "Hi-Hat Cymbal", r"HiHat_HitO_rr(?P<dyn>1)_Mid\.wav$", {"1": 0}),
+        49: (IDIO + "Suspended Cymbal 1", r"susCymb1_hit_(?P<dyn>pp|mp|f|fff)1\.wav$", {"pp": 0, "mp": 1, "f": 2, "fff": 3}),
+        51: (IDIO + "Suspended Cymbal 1", r"susCymb1_hit_stick_(?P<dyn>pp|mp|f)1\.wav$", {"pp": 0, "mp": 1, "f": 2}),
+        52: (IDIO + "Suspended Cymbal 1", r"susCymb1_hit_(?P<dyn>f|fff)1\.wav$", {"f": 0, "fff": 1}),
+        53: (IDIO + "Suspended Cymbal 1", r"susCymb1_hit_bell_(?P<dyn>pp|mf|fff)1\.wav$", {"pp": 0, "mf": 1, "fff": 2}),
+        55: (IDIO + "Suspended Cymbal 2", r"susCymb2_hit_(?P<dyn>pp|mp)1\.wav$", {"pp": 0, "mp": 1}),
+        57: (IDIO + "Suspended Cymbal 2", r"susCymb2_hit_(?P<dyn>pp|mp|mf|f|fff)1\.wav$", {"pp": 0, "mp": 1, "mf": 2, "f": 3, "fff": 4}),
+        59: (IDIO + "Suspended Cymbal 2", r"susCymb2_hit_stick_(?P<dyn>pp|mp|mf)1\.wav$", {"pp": 0, "mp": 1, "mf": 2}),
+    }, {42: 0.6, 44: 0.6, 46: 1.6, 49: 5.0, 51: 3.0, 52: 4.0, 53: 3.0, 55: 2.5, 57: 5.0, 59: 3.0}, level=-3.0,
+        key_level={42: -9.0, 44: -12.0, 46: -6.0, 51: -5.0, 59: -5.0, 53: -4.0, 55: -3.0}, rng=64,
+        note="强音 49 / 57 = 两面吊镲的软槌击，叮叮 51 / 59 = 鼓棒击，53 = 镲帽，踩镲 42 / 44 / 46 = Hi-Hat Cymbal"),
+    "triangle": drum_kit("triangle", {
+        80: (IDIO + "Triangles", r"Triangle1_HitM_v1_rr(?P<dyn>2)_Mid\.wav$", {"2": 0}),
+        81: (IDIO + "Triangles", r"Triangle1_Hit_v(?P<dyn>[12])_rr1_Mid\.wav$", {"1": 0, "2": 1}),
+    }, {80: 0.8, 81: 4.0}, level=-6.0, key_level={80: -3.0}, rng=40, note="80 闷音 = HitM，81 开音 = Hit 两层"),
+}
+SPECS.update(DRUM_SPECS)
+
 RESERVES: dict[str, Spec] = {
     "piccolo": sustained("piccolo", "Woodwinds/Piccolo/Sus", rf"piccolo_{N}_sustain(?P<dyn>1)\.wav$", {"1": 0}, [(1, 127)], curve=1.2),
     "clarinet": sustained("clarinet", "Woodwinds/Clarinet/susLong", rf"DCClar_susLong_{N}_v(?P<dyn>\d)_rr1_sum\.wav$", {"1": 0, "2": 1, "3": 2}, THREE),
     "french_horn": sustained("french_horn", "Brass/F Horn/sus", rf"MOHorn_sus_{N}_v(?P<dyn>\d)_1\.wav$", {"1": 0, "2": 1, "3": 2}, THREE),
     "trombone": sustained("trombone", "Brass/Tenor Trombone/sus", rf"tenortbn_sus_{N}_v(?P<dyn>\d)_1\.wav$", {"1": 0, "2": 1, "3": 2}, THREE),
     "tuba": sustained("tuba", "Brass/Tuba/sus", rf"Tuba3_sus_{N}_v(?P<dyn>\d)_rr1_Mid\.wav$", {"1": 0, "2": 1, "3": 2}, THREE),
-    # 打击乐（无音高的按 C4 一格）
-    "snare_drum": struck("snare_drum", "vcsl", "Membranophones/Struck Membranophones/Snare Drum, Modern 1",
-                         r"Snare2_HitSN_v(?P<dyn>\d)_rr1_Mid\.wav$", {"3": 0, "6": 1, "9": 2}, THREE, 1.5, label=60),
-    "bass_drum": struck("bass_drum", "vcsl", "Membranophones/Struck Membranophones/Bass Drum 2",
-                        r"bassdrum_hit_(?P<dyn>pp|mp|mf|ff)1?\.wav$", {"pp": 0, "mp": 1, "mf": 2, "ff": 3},
-                        [(1, 40), (41, 72), (73, 104), (105, 127)], 4.0, label=60),
+    # 打击乐（无音高的按 C4 一格）；大鼓、小军鼓、吊镲、三角铁已经做进乐团（DRUM_SPECS），这里只剩对镲
     "clash_cymbals": struck("clash_cymbals", "vcsl", "Idiophones/Struck Idiophones/Clash Cymbals 1",
                             r"cymbal_crash1_(?P<dyn>mp|mf|ff)\d\.wav$", {"mp": 0, "mf": 1, "ff": 2}, THREE, 6.0, label=60),
-    "suspended_cymbal": struck("suspended_cymbal", "vcsl", "Idiophones/Struck Idiophones/Suspended Cymbal 1",
-                               r"susCymb1_hit_(?P<dyn>pp|mp|f|fff)1\.wav$", {"pp": 0, "mp": 1, "f": 2, "fff": 3},
-                               [(1, 40), (41, 72), (73, 104), (105, 127)], 6.0, label=60),
-    "triangle": struck("triangle", "vcsl", "Idiophones/Struck Idiophones/Triangles", r"Triangle1_Hit_v(?P<dyn>\d)_rr1_Mid\.wav$",
-                       {"1": 0, "2": 1}, TWO, 4.0, label=60),
     # 越南筝（Đàn tranh）：两个库里唯一的东亚弹拨乐器，可做筝 / 古筝的底子
     "dan_tranh": struck("dan_tranh", "vcsl", "Chordophones/Zithers/Dan Tranh/Normal", rf"^{N}_(?P<dyn>mf|ff)_1\.wav$",
                         {"mf": 0, "ff": 1}, TWO, 5.0),
@@ -1094,14 +1235,17 @@ def main() -> None:
         print(f"total {sum(r[6] for r in rows) / 1e6:.1f} MB, {sum(r[5] for r in rows):.0f} s of audio")
         return
     kinds = args.only or list(SPECS)
+    drum_kinds = [k for k in kinds if k in DRUM_SPECS]
 
     def log(msg: str) -> None:
         print(msg, flush=True)
 
     for kind in kinds:
         build(SPECS[kind], cache, not args.report, log)
-        if args.demo and not args.report:
+        if args.demo and not args.report and kind not in DRUM_SPECS:
             demo(SPECS[kind], args.demo)
+    if args.demo and not args.report and drum_kinds:
+        drum_demo(drum_kinds, args.demo, "demo_drums_recorded")
     if not args.report:
         size = sum(f.stat().st_size for f in (ASSETS / "sounds/instrument").rglob("*.ogg"))
         log(f"instrument sounds now {size / 1e6:.1f} MB")

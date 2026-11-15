@@ -220,6 +220,54 @@ class OrchestraArrangerTest {
         assertArrayEquals(new int[]{1, 1 << 1, 1 << 2, 1 << 3, 0, 1}, masks);
     }
 
+    /** 钢琴旋律加一条鼓（第 10 通道）：大鼓、小军鼓、吊镲、三角铁、通通鼓（没人演奏）各有几个音。 */
+    private static MusicRoll pianoWithDrums() {
+        List<MusicRoll.Event> events = new ArrayList<>(pianoPiece().events());
+        int[] groove = {36, 42, 38, 42, 36, 42, 38, 49, 81, 45};
+        for (int i = 0; i < 40; i++) events.add(MusicRoll.Event.note(i * 400, 1, groove[i % groove.length], 100, 60));
+        return new MusicRoll("", "", 12000, 4, 4, List.of(new MusicRoll.Part("", 0), new MusicRoll.Part("Drums", MusicRoll.DRUMS)), events);
+    }
+
+    @Test void drumPartsGoToEveryPercussionistThatHasTheirKeysAndToNobodyElse() {
+        MusicRoll piece = pianoWithDrums();
+        OrchestraScore.Score s = OrchestraScore.of(piece);
+        assertTrue(s.split(), "a piano piece with a drum track is still split into voices");
+        for (MusicRoll.Event e : s.roll().events()) {
+            if (s.voice(e.part())) assertFalse(e.pitch() == 45 || e.pitch() == 42, "drum notes never land in the melody, harmony or bass");
+        }
+        List<OrchestraArranger.Member> members = List.of(m(InstrumentKind.GRAND_PIANO, 0), m(InstrumentKind.VIOLIN, 1),
+            m(InstrumentKind.BASS_DRUM, 2), m(InstrumentKind.SNARE_DRUM, 3), m(InstrumentKind.SUSPENDED_CYMBAL, 4),
+            m(InstrumentKind.TRIANGLE, 5), m(InstrumentKind.SNARE_DRUM, 6), m(InstrumentKind.TIMPANI, 7));
+        int[] masks = OrchestraArranger.assign(piece, members);
+        int drums = 1 << 1;
+        assertEquals(1, masks[0], "the pianist plays the original piano part, not the drums");
+        assertEquals(0, masks[1] & drums, "the violin never gets the drum part");
+        assertNotEquals(0, masks[1], "the violin plays a split voice");
+        for (int i = 2; i <= 6; i++) assertEquals(drums, masks[i], members.get(i).kind() + " plays only the drum part");
+        assertEquals(0, masks[7], "the timpani rests: nothing is written for it");
+    }
+
+    @Test void percussionWithoutADrumPartRestsAndDrumPartsWithoutPercussionStaySilent() {
+        int[] masks = OrchestraArranger.assign(BEETHOVEN, List.of(m(InstrumentKind.SNARE_DRUM, 0), m(InstrumentKind.TRIANGLE, 1)));
+        assertArrayEquals(new int[]{0, 0}, masks, "no drum track: the snare and triangle rest");
+        masks = OrchestraArranger.assign(pianoWithDrums(), List.of(m(InstrumentKind.GRAND_PIANO, 0), m(InstrumentKind.PIPE_ORGAN, 1)));
+        for (int mask : masks) assertEquals(0, mask & (1 << 1), "no percussionist: keyboards don't pick up the drum part");
+    }
+
+    @Test void drumKindsKnowTheirKeys() {
+        assertEquals(InstrumentKind.BASS_DRUM, InstrumentKind.ofDrumKey(36));
+        assertEquals(InstrumentKind.SNARE_DRUM, InstrumentKind.ofDrumKey(37));
+        assertEquals(InstrumentKind.SUSPENDED_CYMBAL, InstrumentKind.ofDrumKey(42));
+        assertEquals(InstrumentKind.SUSPENDED_CYMBAL, InstrumentKind.ofDrumKey(59));
+        assertEquals(InstrumentKind.TRIANGLE, InstrumentKind.ofDrumKey(81));
+        assertNull(InstrumentKind.ofDrumKey(45), "toms have no instrument");
+        assertFalse(InstrumentKind.SUSPENDED_CYMBAL.sounds(45), "a tom key inside the cymbal's key span is still silent");
+        assertEquals(81, InstrumentKind.TRIANGLE.fold(81), "drum keys are not folded");
+        assertTrue(InstrumentKind.TRIANGLE.playsPart(new MusicRoll.Part("", MusicRoll.DRUMS)));
+        assertFalse(InstrumentKind.GRAND_PIANO.playsPart(new MusicRoll.Part("", MusicRoll.DRUMS)));
+        assertFalse(InstrumentKind.TRIANGLE.playsPart(new MusicRoll.Part("", 0)));
+    }
+
     @Test void orchestralScoresAreNotSplit() {
         assertFalse(OrchestraScore.of(BEETHOVEN).split());
         assertEquals(BEETHOVEN.parts().size(), OrchestraScore.of(BEETHOVEN).voiceStart());

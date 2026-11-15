@@ -1,5 +1,29 @@
 # 首版验证记录
 
+## 乐团：打击乐组（大鼓、小军鼓、吊镲、三角铁）
+
+2026-11-15：分支 `feat/orchestra-percussion`（未提交），基于 main `a766e466`（#269），Logos jar `builds/orchestra-percussion-2026-11-15/logos-0.7.0-dc3d381.jar`
+（Logos dc3d381，同 CI 的 `LOGOS_REF`）。说明见 [docs/ORCHESTRA.md](docs/ORCHESTRA.md) 第 20 节。
+
+| 层级 | 结果 |
+|---|---|
+| 生成时检查 | 四件方块模型和四种槌：同向平行面重叠 0 处、都在 −16–32 之内、不超预算（大鼓 81、小军鼓 82、吊镲 58、三角铁 31 / 110；槌 4–12 / 12）；重新生成全部乐器时原有的模型逐字节不变 |
+| 单元 | 新增 `MidiReaderTest`（第 10 通道读成打击乐声部、没人演奏的鼓键导入时提示）、`MusicRollTest.drumPartsRoundTripAndAreNeverShifted`、`OrchestraArrangerTest` 三个（打击乐声部只交给认得其中鼓键的打击乐、没有鼓的曲子打击乐休息、键盘不接打击乐声部、鼓键归属）、`SampleMapTest` 打击乐每个键用自己不变调的采样；全量 431 个 1 个失败、1 个跳过，失败的仍是 main 上就缺的 zh_cn `item.logos_dimension.fuda_desk` |
+| GameTest | 新增 `station_percussion_posts`（四件的工位位置、朝向、站着）；`station_*` 4/4（三角铁改形状后又跑一遍）、`bench_*` 6/6、`orchestra_*` 8/8、`creative_tabs_cover_items` 1/1、`instrument_*` 8/8 |
+| 实际客户端 | 新场景 `orchestra_percussion_ui`（音乐厅里僵尸、骷髅、精灵、尸壳站到大鼓、小军鼓、吊镲、三角铁前，总谱加一条鼓；检查三件在响、四位各拿各的槌、小军鼓和吊镲两只手都落下过；最后玩家空手右键站到小军鼓前两手敲）**1/1、1/1 检查**；`instrument_gallery_ui` 多一排打击乐（连同 `concert_hall_pack_ui` 2/2、5/5）；`orchestra_hall_ui`、`orchestra_player_mallets_ui` 2/2、11/11 |
+| 改过的问题 | 实机看出三角铁挂得太低（腰下），生物伸长手臂往下够、槌尖停在三角顶上：三角铁和架子抬高 4 像素（底边离地 13.6，方块轮廓到 20）、落点一起抬高，侧面、正面、俯视三个临时机位看过槌尖在三角里面、敲在底边上；大鼓鼓徽原来只画在演奏者那面，观众和指挥看到的是白鼓皮，两面都画上 |
+| 试玩后（第二版） | 维护者：大鼓侧放、人在侧面敲；合成的大鼓太小声（资源包没问题）。大鼓的方块状态多转 90°、工位挪到东侧面朝西（落点相对鼓皮不变），音乐厅吊镲挪到 (4, 6, −19)；`station_percussion_posts` 改查大鼓手在东侧、面朝西，`station_*` 4/4、`instrument_*` 8/8、单元同上，`orchestra_percussion_ui` + `instrument_gallery_ui` 2/2，截图看过僵尸站在鼓侧、槌落在东面鼓皮偏右上。合成大鼓：K 计权和录音一样（−16 dB），A 计权轻 7–10 dB、切掉 120 Hz 以下轻 9–10 dB（能量几乎都在 50 Hz 上下）；按录音的倍频程能量补上方模态和槌声后 A 计权差 −0.6 / −0.1 dB、切 120 Hz 差 +1.3 / −1.5 dB；小军鼓、吊镲、三角铁两种量法本来就差在 ±2 dB 以内，没动 |
+| 未验证 | 光影包；多人、专用服务器；车万女仆站打击乐工位（和钟琴同一段代码，jar 带女仆模组编译过，没跑场景）；真实的 MIDI 文件（只用测试里手写的） |
+
+```text
+uv run --no-project --with pillow --with numpy python tools/instrument_models/run.py drums --preview <目录>
+uv run --no-project --with pillow --with numpy python tools/instrument_samples.py --ffmpeg <ffmpeg> --only bass_drum snare_drum suspended_cymbal triangle
+uv run --no-project --with pillow --with numpy python tools/instrument_sources.py --cache <采样缓存> --only bass_drum snare_drum suspended_cymbal triangle
+./gradlew --offline test -PlogosJar=/absolute/path/logos-0.7.0.jar
+./gradlew --offline runGameTestServer -PlogosJar=/absolute/path/logos-0.7.0.jar "-PdimensionTests=logos_dimension:station_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.7.0.jar "-PldTest=orchestra_percussion_ui" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 拿魂符收起工位上的女仆不再崩客户端
 
 2026-11-15：分支 `fix/maid-slab-leash`，基于 main `26926614`（#268），Logos jar `编译成品/20261115-1122-最新版/logos-0.7.0.jar`（一键编译，Logos dc3d381）、

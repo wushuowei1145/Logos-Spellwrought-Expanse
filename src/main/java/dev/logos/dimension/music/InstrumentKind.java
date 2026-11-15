@@ -41,7 +41,17 @@ public enum InstrumentKind {
     /** 巴松（大管，手持）：B♭1–E5，木管乐器里最低沉的。 */
     BASSOON("bassoon", "hexen_bassoon", 34, 76, 40, true, true, false),
     /** 定音鼓（方块）：D2–A3，铜鼓腔、皮槌，敲响后余音不止。 */
-    TIMPANI("timpani", "hexen_timpani", 38, 57, 64, false, true, false);
+    TIMPANI("timpani", "hexen_timpani", 38, 57, 64, false, true, false),
+    // 以下第四批：无音高的打击乐（docs/ORCHESTRA.md 第 20 节）。「音高」就是 General MIDI 第 10 通道的鼓键号，
+    // 每件只认自己那几个键（不移调、不按八度折叠），纸带里只演奏打击乐声部（MidiReader 把第 10 通道读成 MusicRoll.DRUMS）。
+    /** 大鼓：35 原声大鼓、36 大鼓。 */
+    BASS_DRUM("bass_drum", "hexen_bass_drum", new int[]{35, 36}, 64),
+    /** 小军鼓：37 边击、38 军鼓、39 拍手（奏成鼓边重击）、40 电军鼓（奏成重音）。 */
+    SNARE_DRUM("snare_drum", "hexen_snare_drum", new int[]{37, 38, 39, 40}, 48),
+    /** 吊镲：49、57 强音镲，55 水镲，52 中国镲（奏成强音）；51、59 叮叮镲，53 镲帽；42、44、46 踩镲（闭、踩、开，奏成轻击）。 */
+    SUSPENDED_CYMBAL("suspended_cymbal", "hexen_suspended_cymbal", new int[]{42, 44, 46, 49, 51, 52, 53, 55, 57, 59}, 64),
+    /** 三角铁：80 闷音、81 开音。 */
+    TRIANGLE("triangle", "hexen_triangle", new int[]{80, 81}, 40);
 
     private final String id;
     private final int low;
@@ -51,6 +61,8 @@ public enum InstrumentKind {
     private final String blockId;
     private final boolean velocitySensitive;
     private final boolean usesPedal;
+    /** 无音高打击乐认的 GM 鼓键（从小到大）；有音高的乐器为 null。 */
+    private final int @org.jspecify.annotations.Nullable [] keys;
 
     InstrumentKind(String id, String blockId, int low, int high, int broadcastRange,
                    boolean dampsOnRelease, boolean velocitySensitive, boolean usesPedal) {
@@ -62,6 +74,20 @@ public enum InstrumentKind {
         this.high = high;
         this.broadcastRange = broadcastRange;
         this.dampsOnRelease = dampsOnRelease;
+        this.keys = null;
+    }
+
+    /** 无音高打击乐：敲响后自然衰减（不止音）、感力度、没有踏板；音域是最低到最高的那个键。 */
+    InstrumentKind(String id, String blockId, int[] keys, int broadcastRange) {
+        this.id = id;
+        this.blockId = blockId;
+        this.velocitySensitive = true;
+        this.usesPedal = false;
+        this.low = keys[0];
+        this.high = keys[keys.length - 1];
+        this.broadcastRange = broadcastRange;
+        this.dampsOnRelease = false;
+        this.keys = keys.clone();
     }
 
     public String id() { return id; }
@@ -82,6 +108,29 @@ public enum InstrumentKind {
     public boolean handheld() { return this == VIOLIN || this == FLUTE || this == TRUMPET || this == VIOLA || this == OBOE || this == BASSOON; }
     /** 坐在乐器后面的凳子上演奏的方块乐器（大提琴、低音提琴）：长音循环，有坐姿和琴弓。 */
     public boolean seated() { return this == CELLO || this == DOUBLE_BASS; }
+    /** 无音高的打击乐（大鼓、小军鼓、吊镲、三角铁）：音高是 GM 鼓键号，只认自己的几个键。 */
+    public boolean unpitched() { return keys != null; }
+
+    /** 这件乐器的键（无音高打击乐），有音高的乐器返回空数组。 */
+    public int[] keys() { return keys == null ? new int[0] : keys.clone(); }
+
+    /** 这个音（或鼓键）这件乐器能不能发声：有音高的看音域，打击乐看是不是自己的键。 */
+    public boolean sounds(int pitch) {
+        if (keys == null) return pitch >= low && pitch <= high;
+        for (int k : keys) if (k == pitch) return true;
+        return false;
+    }
+
+    /** 纸带的这个声部归不归这件乐器演奏：打击乐只演奏打击乐声部（第 10 通道），别的乐器只演奏有音高的声部。 */
+    public boolean playsPart(MusicRoll.Part part) {
+        return part.drums() == unpitched();
+    }
+
+    /** GM 鼓键归哪件打击乐；没有对应的乐器（通通鼓、牛铃……）为 null。 */
+    public static @org.jspecify.annotations.Nullable InstrumentKind ofDrumKey(int key) {
+        for (InstrumentKind k : values()) if (k.keys != null && k.sounds(key)) return k;
+        return null;
+    }
     /** 乐器名字的翻译键：手持乐器是物品名，其余是方块名。 */
     public String nameKey() { return (handheld() ? "item.logos_dimension." : "block.logos_dimension.") + blockId; }
 
@@ -90,6 +139,7 @@ public enum InstrumentKind {
      * 声部比乐器音域还宽时剩下的个别音才用它；编辑器里点音试听也用它。实时演奏不折叠，音域外的键不出声（#243）。
      */
     public int fold(int pitch) {
+        if (keys != null) return pitch;  // 鼓键不是音高，不折
         while (pitch < low) pitch += 12;
         while (pitch > high) pitch -= 12;
         return pitch;

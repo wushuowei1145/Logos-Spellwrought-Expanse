@@ -55,7 +55,7 @@ NPC 的骨骼命名、动画名、动画控制器结构与优先级、手部条�
 |---|---|---|---|
 | 星辰花三角钢琴 | [Salamander Grand Piano V3](https://github.com/sfzinstruments/SalamanderGrandPiano)（提交 `3382bf94`，原始发布 <https://archive.org/details/SalamanderGrandPianoV3>） | Alexander Holm；SFZ / FLAC 版 kinwie（sfzinstruments）；重新调律 Markus Fiedler | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)，**须署名**；本模组的钢琴采样是它的改编 |
 | 小提琴、中提琴、大提琴、低音提琴、长笛、双簧管、巴松管、小号、定音鼓 | [VS Chamber Orchestra: Community Edition](https://github.com/sgossner/VSCO-2-CE)（提交 `44030090`） | Versilian Studios（Sam Gossner、Simon Dalzell 录音，Elan Hickler 切采样） | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)，不要求署名，这里致谢 |
-| 灵猫竖琴、钟琴、管钟、大键琴 | [Versilian Community Sample Library](https://github.com/sgossner/VCSL)（提交 `c1ea7bcc`） | Versilian Studios 及贡献者 | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)，不要求署名，这里致谢 |
+| 灵猫竖琴、钟琴、管钟、大键琴、大鼓、小军鼓、吊镲、三角铁 | [Versilian Community Sample Library](https://github.com/sgossner/VCSL)（提交 `c1ea7bcc`） | Versilian Studios 及贡献者 | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)，不要求署名，这里致谢 |
 
 转载资源包、放进整合包、二次修改时保留 Salamander 的署名与协议链接（资源包根目录的 `NOTICE.txt`）。
 

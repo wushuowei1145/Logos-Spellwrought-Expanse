@@ -885,7 +885,7 @@ def build_pipe_organ(b: HallBuilder):
 
 
 def populate_orchestra_instruments(b: HallBuilder):
-    """按现实交响乐团标准席位摆放全部 15 种乐器与演奏席（共 45 件可演奏乐器，其中核心 32 件绑定至指挥台）。"""
+    """按现实交响乐团标准席位摆放全部 19 种乐器与演奏席（核心 32 件绑定至指挥台，含大鼓、小军鼓、吊镲、三角铁的打击乐组）。"""
     # 注：指挥台 hexen_podium 已在 build_orchestra_stage 中放置于 (-1, 3, -5) 与 (0, 3, -5)，
     #     管风琴演奏台已在 build_pipe_organ 中放置于 (0, 6, -20) 并作为第 1 件绑定乐器。
 
@@ -900,7 +900,7 @@ def populate_orchestra_instruments(b: HallBuilder):
 
     # 2. 第一小提琴声部（First Violins，舞台西侧前排，指挥左侧）：6 架（4 架绑定 + 2 架外翼声部扩充）
     first_violins = [
-        (-11, -7, True), (-9, -7, True), (-7, -7, True), (-8, -9, True),
+        (-11, -7, True), (-9, -7, True), (-7, -7, True), (-8, -9, False),
         (-13, -7, False), (-13, -9, False),
     ]
     for x, z, bind in first_violins:
@@ -909,7 +909,7 @@ def populate_orchestra_instruments(b: HallBuilder):
 
     # 3. 第二小提琴声部（Second Violins，第一小提琴内后侧）：4 架（3 架绑定 + 1 架外翼声部扩充）
     second_violins = [
-        (-10, -9, True), (-9, -11, True), (-7, -11, True),
+        (-10, -9, True), (-9, -11, True), (-7, -11, False),
         (-11, -11, False),
     ]
     for x, z, bind in second_violins:
@@ -918,7 +918,7 @@ def populate_orchestra_instruments(b: HallBuilder):
 
     # 4. 中提琴声部（Violas，舞台中央正对指挥）：4 架（3 架绑定 + 1 架声部扩充）
     violas = [
-        (0, -8, True), (2, -8, True), (1, -11, True),
+        (0, -8, True), (2, -8, True), (1, -11, False),
         (-2, -11, False),
     ]
     for x, z, bind in violas:
@@ -927,7 +927,7 @@ def populate_orchestra_instruments(b: HallBuilder):
 
     # 5. 大提琴声部（Cellos，舞台东侧前排，指挥右侧）：5 把大提琴（3 把绑定 + 2 把外侧扩充，自带红丝绒琴凳）
     cellos = [
-        (5, -7, True), (7, -7, True), (6, -10, True),
+        (5, -7, True), (7, -7, True), (6, -10, False),
         (9, -7, False), (9, -10, False),
     ]
     for x, z, bind in cellos:
@@ -984,6 +984,15 @@ def populate_orchestra_instruments(b: HallBuilder):
     #     facing=north：敲管钟的人站在管钟北面（同一级台阶上）面朝指挥，管钟在他和指挥之间
     b.place_tall_instrument(5, 6, -19, "hexen_tubular_bells", "north", "第一管钟 (Tubular Bells I)", bind=True)
     b.place_tall_instrument(8, 6, -19, "hexen_tubular_bells", "north", "第二管钟 (Tubular Bells II)", bind=False)
+
+    # 9c. 打击乐组（大鼓、小军鼓、吊镲、三角铁，全部绑定；乐团里打击乐声部 = MIDI 第 10 通道）：和管钟排成一排，
+    #     facing=north：人站在乐器北面（同一级台阶上）面朝指挥。为了指挥台 32 件的上限，第一、第二小提琴、中提琴、大提琴
+    #     各少绑一件（每个声部仍有两件以上）；离指挥台都在 16 格以内
+    b.place_single_instrument(2, 6, -19, "hexen_triangle", "north", "三角铁 (Triangle)", bind=True)
+    b.place_single_instrument(3, 6, -19, "hexen_snare_drum", "north", "小军鼓 (Snare Drum)", bind=True)
+    b.place_single_instrument(4, 6, -19, "hexen_suspended_cymbal", "north", "吊镲 (Suspended Cymbal)", bind=True)
+    # 大鼓侧放（鼓皮朝东西），鼓手站在东边 (7, 6, −19) 那格里、面朝西敲，所以这格空着
+    b.place_single_instrument(6, 6, -19, "hexen_bass_drum", "north", "大鼓 (Bass Drum)", bind=True)
 
 
 def verify_and_audit(b: HallBuilder) -> dict:
@@ -1159,6 +1168,10 @@ def verify_and_audit(b: HallBuilder) -> dict:
         "hexen_cello",
         "hexen_double_bass",
         "hexen_timpani",
+        "hexen_bass_drum",
+        "hexen_snare_drum",
+        "hexen_suspended_cymbal",
+        "hexen_triangle",
         "starbloom_bench[violin]",
         "starbloom_bench[viola]",
         "starbloom_bench[flute]",

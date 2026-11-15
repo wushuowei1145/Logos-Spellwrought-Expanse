@@ -478,7 +478,7 @@ public class RollEditorScreen extends Screen {
         for (int r = 0; r < rows; r++) {
             int pitch = topPitch - r;
             int y = gridTop + r * ROW;
-            boolean out = pitch < kind().low() || pitch > kind().high();
+            boolean out = !kind().sounds(pitch);
             int bg = out ? 0xFFB8AA90 : KeyLayout.isBlack(pitch) ? 0xFFE2D6BC : 0xFFF2EAD6;
             g.fill(gridLeft, y, gridLeft + gridW, y + ROW, bg);
             g.fill(keysLeft, y, gridLeft - 1, y + ROW, KeyLayout.isBlack(pitch) ? 0xFF2A1C14 : 0xFFF8F2E4);

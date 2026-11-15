@@ -33,9 +33,10 @@ def item_def(name, model=None):
     write(ASSETS / f"items/{name}.json", {"model": {"type": "minecraft:model", "model": f"logos_dimension:{model or 'item/' + name}"}})
 
 
-def single(name):
-    """只有朝向的方块状态。"""
-    return {"variants": {f"facing={f}": ({"model": f"logos_dimension:block/{name}"} | ({"y": y} if y else {})) for f, y in YROT.items()}}
+def single(name, turn=0):
+    """只有朝向的方块状态；turn：模型再多转的角度（侧放的大鼓 90°）。"""
+    return {"variants": {f"facing={f}": ({"model": f"logos_dimension:block/{name}"} | ({"y": (y + turn) % 360} if (y + turn) % 360 else {}))
+                         for f, y in YROT.items()}}
 
 
 def two_part(name, prop, main_value, values):
@@ -469,6 +470,29 @@ def duet_bench():
         "result": {"id": "logos_dimension:starbloom_duet_bench", "count": 1}})
 
 
+# —— 大鼓、小军鼓、吊镲、三角铁（无音高打击乐，docs/ORCHESTRA.md 第 20 节；模型在 instrument_models/drums.py）——
+
+DRUMS = ("hexen_bass_drum", "hexen_snare_drum", "hexen_suspended_cymbal", "hexen_triangle")
+# 只供渲染的鼓槌（items/held/，不是物品）：工位上画在手里
+DRUM_TOOLS = ("bass_drum_beater", "snare_stick", "cymbal_mallet", "triangle_beater")
+
+
+def drums():
+    for name in DRUMS:
+        item_def(name)
+        # 大鼓侧放：模型（物品栏里鼓皮朝前）在方块里再转 90°，鼓皮朝东西，人在东面朝西敲（StationPoses、InstrumentPosts）
+        write(ASSETS / f"blockstates/{name}.json", single(name, 90 if name == "hexen_bass_drum" else 0))
+        write(DATA / f"loot_table/blocks/{name}.json", loot(name))
+    for tool in DRUM_TOOLS:
+        item_def(f"held/{tool}", f"item/hexen_{tool}_held")
+    shaped("hexen_bass_drum", ["PLP", "LNL", "P P"], {"P": "minecraft:dark_oak_planks", "L": "minecraft:leather", "N": "minecraft:note_block"})
+    shaped("hexen_snare_drum", [" L ", "INI", "S S"], {"L": "minecraft:leather", "I": "minecraft:iron_nugget", "N": "minecraft:note_block",
+                                                       "S": "minecraft:stick"})
+    shaped("hexen_suspended_cymbal", [" G ", "CNC", " S "], {"G": "minecraft:gold_nugget", "C": "minecraft:copper_ingot", "N": "minecraft:note_block",
+                                                              "S": "minecraft:stick"})
+    shaped("hexen_triangle", [" I ", "I I", "SNS"], {"I": "minecraft:iron_ingot", "S": "minecraft:stick", "N": "minecraft:note_block"})
+
+
 def main():
     blockstates()
     loot_and_recipes()
@@ -480,6 +504,7 @@ def main():
     podium()
     bench()
     duet_bench()
+    drums()
     png(ROOT / "resourcepacks/concert_hall/pack.png", concert_hall_icon())
     # 全部乐器的模型与模型贴图
     sys.path.insert(0, str(Path(__file__).resolve().parent))

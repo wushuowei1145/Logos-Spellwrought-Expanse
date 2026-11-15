@@ -54,7 +54,8 @@ class MidiReaderTest {
             0x83, 0x60, 0x80, 67, 0,      // 再 480 tick（1000 ms）关
             0x00, 0xB0, 64, 0,            // 松开踏板
             0x00, 0xFF, 0x2F, 0x00);
-        byte[] drums = bytes(0x00, 0x99, 36, 100, 0x60, 0x89, 36, 0, 0x00, 0xFF, 0x2F, 0x00);
+        // 第 10 通道：36 大鼓、45 通通鼓（没有对应的乐器，照样记下、导入时提一句）
+        byte[] drums = bytes(0x00, 0x99, 36, 100, 0x60, 0x89, 36, 0, 0x00, 0x99, 45, 90, 0x60, 0x89, 45, 0, 0x00, 0xFF, 0x2F, 0x00);
         MidiReader.Result r = MidiReader.read(midi(1, 480, conductor, piano, drums), "测试");
         MusicRoll roll = r.roll();
         assertEquals("测试", roll.title());
@@ -62,9 +63,14 @@ class MidiReaderTest {
         assertEquals(3, roll.beatsPerBar());
         assertEquals(4, roll.beatUnit());
         assertEquals(java.util.List.of(new MusicRoll.Tempo(1000, 6000, 3, 4)), roll.tempos(), "the tempo change at tick 960 is kept for the conductor");
-        assertEquals(1, roll.parts().size());
+        assertEquals(2, roll.parts().size(), "channel 10 becomes its own drum part");
         assertEquals("Piano", roll.parts().get(0).name());
-        var notes = roll.events().stream().filter(e -> e.type() == MusicRoll.NOTE).toList();
+        assertFalse(roll.parts().get(0).drums());
+        assertTrue(roll.parts().get(1).drums());
+        assertEquals("打击乐", roll.parts().get(1).name());
+        var drumNotes = roll.events().stream().filter(e -> e.type() == MusicRoll.NOTE && e.part() == 1).toList();
+        assertEquals(java.util.List.of(36, 45), drumNotes.stream().map(MusicRoll.Event::pitch).toList(), "drum keys are kept as GM key numbers");
+        var notes = roll.events().stream().filter(e -> e.type() == MusicRoll.NOTE && e.part() == 0).toList();
         assertEquals(3, notes.size());
         assertEquals(60, notes.get(0).pitch());
         assertEquals(500, notes.get(0).durationMs());
@@ -76,7 +82,7 @@ class MidiReaderTest {
         assertEquals(MusicRoll.PEDAL_DOWN, pedals.get(0).type());
         assertEquals(500, pedals.get(0).timeMs());
         assertEquals(2000, pedals.get(1).timeMs());
-        assertTrue(r.notes().stream().anyMatch(s -> s.contains("打击乐")));
+        assertTrue(r.notes().stream().anyMatch(s -> s.contains("打击乐") && s.contains("1 个音")), "the tom has no instrument: " + r.notes());
         assertFalse(r.truncated());
         // 能编码，且限制之内
         MusicRoll.decode(roll.encode());

@@ -473,9 +473,11 @@ public final class MusicClient {
             while (cursor < ev.size() && ev.get(cursor).timeMs() <= pos) {
                 MusicRoll.Event e = ev.get(cursor++);
                 if ((partMask & (1 << e.part())) == 0 || !hear) continue;
+                // 打击乐声部只给无音高的打击乐，有音高的声部只给别的乐器（钢琴不会把鼓键当音高弹出来）
+                if (e.part() < roll.parts().size() && !kind.playsPart(roll.parts().get(e.part()))) continue;
                 if (e.type() == MusicRoll.NOTE) {
                     if (pos - e.timeMs() > LATE_MS) continue;
-                    // 整个声部移八度；声部比乐器的音域还宽时，剩下的个别音才按八度折进来
+                    // 整个声部移八度；声部比乐器的音域还宽时，剩下的个别音才按八度折进来（打击乐的鼓键不移、不折）
                     int sounding = kind.fold(e.pitch() + shifts[e.part()]);
                     float gain = gains == null ? 1f : gains[e.part()];
                     VoiceBank.noteOn(key, kind, this.pos, at, e.pitch(), sounding, e.velocity(), e.part(), gain);

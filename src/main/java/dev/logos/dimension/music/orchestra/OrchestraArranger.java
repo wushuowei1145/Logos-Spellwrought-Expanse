@@ -17,6 +17,8 @@ import org.jspecify.annotations.Nullable;
  * 音色号只说了一类（48 弦乐合奏、45 拨弦）或者没有对应的乐器时，再看音区。钢琴曲另外拆出旋律、和声、低音（{@link OrchestraScore}）。
  * 然后对每个「声部 × 乐器」打分（{@link #score}），分四轮配：每个声部一件（总分最高的配法，{@link #match}）、多出来的去齐奏、
  * 没人的声部叠给键盘、零星的声部叠给已经在演奏的人。
+ * 打击乐声部（MIDI 第 10 通道，{@link MusicRoll#DRUMS}）不参加这四轮：先交给每一件认得其中某些鼓键的无音高打击乐
+ * （大鼓、小军鼓、吊镲、三角铁各奏自己的键），别的乐器不演奏它；无音高打击乐也只演奏打击乐声部。
  * 锁定的乐器（玩家手动改派过，包括手动让它休息）保持原样。
  */
 public final class OrchestraArranger {
@@ -107,8 +109,9 @@ public final class OrchestraArranger {
         return false;
     }
 
-    /** 这个声部当作哪个音色号看：轨道名认得出按名字，否则按纸带里的音色号。 */
+    /** 这个声部当作哪个音色号看：打击乐声部就是 {@link MusicRoll#DRUMS}；轨道名认得出按名字，否则按纸带里的音色号。 */
     static int program(MusicRoll.Part part) {
+        if (part.drums()) return MusicRoll.DRUMS;
         Integer named = programOfName(part.name());
         return named != null ? named : part.program();
     }
@@ -133,9 +136,10 @@ public final class OrchestraArranger {
         return program == 113 || program == 115 || program >= 119;
     }
 
-    /** 只演奏写给自己的声部的打击乐器。 */
+    /** 只演奏写给自己的声部的打击乐器（无音高的打击乐只演奏打击乐声部）。 */
     static boolean percussion(@Nullable InstrumentKind kind) {
-        return kind == InstrumentKind.TIMPANI || kind == InstrumentKind.GLOCKENSPIEL || kind == InstrumentKind.TUBULAR_BELLS;
+        return kind == InstrumentKind.TIMPANI || kind == InstrumentKind.GLOCKENSPIEL || kind == InstrumentKind.TUBULAR_BELLS
+            || kind != null && kind.unpitched();
     }
 
     /**
@@ -158,7 +162,12 @@ public final class OrchestraArranger {
     }
 
     /** 一个声部的统计：音符数、移调前的中位音高、当作的音色号、是不是钢琴曲拆出来的声部。 */
-    record PartStats(int index, int notes, int median, int program, boolean voice) {}
+    record PartStats(int index, int notes, int median, int program, boolean voice) {
+        /** 打击乐声部（第 10 通道）。 */
+        boolean drums() {
+            return program == MusicRoll.DRUMS;
+        }
+    }
 
     static List<PartStats> stats(OrchestraScore.Score score) {
         MusicRoll roll = score.roll();
@@ -190,7 +199,9 @@ public final class OrchestraArranger {
         int most = 0;
         for (PartStats ps : parts) most = Math.max(most, ps.notes());
         boolean[] sparse = new boolean[MusicRoll.MAX_PARTS];
-        for (PartStats ps : parts) sparse[ps.index()] = !ps.voice() && ps.notes() < most * SPARSE && !percussion(ofProgram(ps.program()));
+        for (PartStats ps : parts) {
+            sparse[ps.index()] = !ps.voice() && !ps.drums() && ps.notes() < most * SPARSE && !percussion(ofProgram(ps.program()));
+        }
         Map<InstrumentKind, int[]> shifts = new EnumMap<>(InstrumentKind.class);
         Map<InstrumentKind, int[]> inRange = new EnumMap<>(InstrumentKind.class);
         for (Member m : members) {
@@ -211,10 +222,22 @@ public final class OrchestraArranger {
                 }
             }
         }
-        // 钢琴曲：键盘、竖琴、管风琴弹原曲（全部原来的声部），别的乐器分拆出来的旋律、和声、低音
+        // 打击乐声部：每一件认得其中某些鼓键、没锁定的无音高打击乐都演奏它（各奏自己的键）；两面小军鼓就一起打
+        for (PartStats ps : parts) {
+            if (!ps.drums()) continue;
+            for (int i = 0; i < members.size(); i++) {
+                InstrumentKind kind = members.get(i).kind();
+                if (members.get(i).lockedMask() >= 0 || !kind.unpitched() || inRange.get(kind)[ps.index()] == 0) continue;
+                masks[i] |= 1 << ps.index();
+                busy[i] = true;
+                covered[ps.index()] = true;
+                players[ps.index()]++;
+            }
+        }
+        // 钢琴曲：键盘、竖琴、管风琴弹原曲（全部原来的声部，打击乐声部除外），别的乐器分拆出来的旋律、和声、低音
         if (score.split()) {
             int originals = 0;
-            for (PartStats ps : parts) if (!ps.voice()) originals |= 1 << ps.index();
+            for (PartStats ps : parts) if (!ps.voice() && !ps.drums()) originals |= 1 << ps.index();
             for (int i = 0; i < members.size(); i++) {
                 if (busy[i] || !polyphonic(members.get(i).kind())) continue;
                 masks[i] = originals;
@@ -241,7 +264,7 @@ public final class OrchestraArranger {
         // 第一轮：每个声部一件（零星的声部不单独占人）。整体最合适地配（总分最高），不是一对一对挑最高的：
         // 否则大提琴先占了离它最近的和声，低音只剩中提琴去移八度
         List<Integer> rows = new ArrayList<>(), cols = new ArrayList<>();
-        for (PartStats ps : parts) if (!covered[ps.index()] && !sparse[ps.index()]) rows.add(ps.index());
+        for (PartStats ps : parts) if (!covered[ps.index()] && !sparse[ps.index()] && !ps.drums()) rows.add(ps.index());
         for (int i = 0; i < members.size(); i++) if (!busy[i]) cols.add(i);
         double[][] gain = new double[rows.size()][cols.size()];
         for (double[] g : gain) java.util.Arrays.fill(g, Double.NaN);
@@ -287,9 +310,9 @@ public final class OrchestraArranger {
             covered[best.part()] = true;
             players[best.part()]++;
         }
-        // 第三轮：还没人演奏的声部（不是拆出来的）叠给已有声部、能弹多声部的乐器
+        // 第三轮：还没人演奏的声部（不是拆出来的、不是打击乐）叠给已有声部、能弹多声部的乐器
         for (PartStats ps : parts) {
-            if (covered[ps.index()] || ps.voice() || sparse[ps.index()]) continue;
+            if (covered[ps.index()] || ps.voice() || sparse[ps.index()] || ps.drums()) continue;
             int best = -1;
             double bestScore = Double.NEGATIVE_INFINITY;
             for (int i = 0; i < members.size(); i++) {
@@ -387,13 +410,13 @@ public final class OrchestraArranger {
         return out;
     }
 
-    /** 每个声部在这件乐器上（整体移八度之后）能弹到的音数。 */
+    /** 每个声部在这件乐器上（整体移八度之后）能弹到的音数；打击乐声部只算给认得这个鼓键的无音高打击乐。 */
     private static int[] covered(MusicRoll score, InstrumentKind kind, int[] shift) {
         int[] n = new int[MusicRoll.MAX_PARTS];
         for (MusicRoll.Event e : score.events()) {
-            if (e.type() != MusicRoll.NOTE || e.part() < 0 || e.part() >= MusicRoll.MAX_PARTS) continue;
-            int p = e.pitch() + shift[e.part()];
-            if (p >= kind.low() && p <= kind.high()) n[e.part()]++;
+            if (e.type() != MusicRoll.NOTE || e.part() < 0 || e.part() >= score.parts().size()) continue;
+            if (!kind.playsPart(score.parts().get(e.part()))) continue;
+            if (kind.sounds(e.pitch() + shift[e.part()])) n[e.part()]++;
         }
         return n;
     }
@@ -403,6 +426,7 @@ public final class OrchestraArranger {
      * 别的乐器不演奏写给键盘、打击乐的声部。
      */
     static boolean eligible(PartStats part, InstrumentKind kind) {
+        if (part.drums() || kind.unpitched()) return false;  // 打击乐声部另外分（见 assign），无音高打击乐只演奏它
         if (!part.voice() && unpitched(part.program())) return false;
         InstrumentKind named = ofProgram(part.program());
         if (percussion(kind)) return !part.voice() && named == kind;
@@ -415,6 +439,7 @@ public final class OrchestraArranger {
      * 同一类（弦乐合奏配提琴家族、键盘一类配键盘）或替身（单簧管配双簧管……）去齐奏。
      */
     static boolean doubles(PartStats part, InstrumentKind kind) {
+        if (part.drums() || kind.unpitched()) return false;
         if (part.voice()) return true;
         InstrumentKind named = ofProgram(part.program());
         boolean identified = named != null || stringSection(part.program()) || !substitutes(part.program()).isEmpty();
