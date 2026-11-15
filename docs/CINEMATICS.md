@@ -8,7 +8,7 @@
 | 全屏后期 | [SCREEN_EFFECTS.md](SCREEN_EFFECTS.md) | 黑白闪（冲击帧）、电影蒙版、泛光 `GlowBloom`、后期里画的特效 `PostVfx` |
 | 区域画风 | [WORLD_STYLES.md](WORLD_STYLES.md) | 门后、群系里的世界换一种画风（黑白、童话、国画），走进去时球形切换 |
 | 处决特写 | [EXECUTION_SHOTS.md](EXECUTION_SHOTS.md) | 投技、处决的两秒特写：抛起、黑白、刀光、红色重击、拍下；可交互版本；飞身刺（两人的剪影，刺中后定格，定格时换场景） |
-| 各功能自己的通道 | [EXPLOSION_MAGIC.md](EXPLOSION_MAGIC.md)、[DAWNVOW_CHARGE.md](DAWNVOW_CHARGE.md)、[RAILGUN.md](RAILGUN.md)、[SHIRAUME_BOSS.md](SHIRAUME_BOSS.md)、[ORCHESTRA.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/ORCHESTRA.md) | 爆裂魔法、曦誓蓄力、超电磁炮、白梅战、乐团描边各有一个全屏通道 |
+| 各功能自己的通道 | [EXPLOSION_MAGIC.md](EXPLOSION_MAGIC.md)、[DAWNVOW_CHARGE.md](DAWNVOW_CHARGE.md)、[RAILGUN.md](RAILGUN.md)、[SHIRAUME_BOSS.md](SHIRAUME_BOSS.md)、[ORCHESTRA.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/ORCHESTRA.md)、[QUEEN_CORE_BATTLE.md](QUEEN_CORE_BATTLE.md) | 爆裂魔法、曦誓蓄力、超电磁炮、白梅战、乐团描边、树心净化各有一个全屏通道 |
 
 ## 一、先选对工具
 
@@ -49,8 +49,9 @@
 6. `PartOutline`：乐团选中声部的描边
 7. `ShiraumeScreen`：白梅战的色散和红光
 8. `WorldStyleRenderer`：区域画风
-9. `ExecutionRenderer`：处决特写，整个画面换成平涂的颜色；飞身刺定格时直接贴存下的那一帧
-10. `ScreenEffectRenderer`：黑白闪和电影蒙版，最后画
+9. `QueenPurificationScreen`：女王结局的世界坐标球形净化，仅结局期间取 `PostVfx` 深度
+10. `ExecutionRenderer`：处决特写，整个画面换成平涂的颜色；飞身刺定格时直接贴存下的那一帧
+11. `ScreenEffectRenderer`：黑白闪和电影蒙版，最后画
 
 新通道按「要处理谁的结果」决定放哪：
 
