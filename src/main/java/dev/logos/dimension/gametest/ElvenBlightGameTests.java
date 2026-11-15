@@ -29,7 +29,7 @@ public final class ElvenBlightGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS = DeferredRegister.create(Registries.TEST_FUNCTION, LogosDimension.ID);
     private ElvenBlightGameTests() {}
     public static void register(IEventBus bus) {
-        var tests = Map.<String, Consumer<GameTestHelper>>of(
+        var tests = new LinkedHashMap<>(Map.<String, Consumer<GameTestHelper>>of(
                 "elven_blight_heart_once_and_saved", ElvenBlightGameTests::once,
                 "elven_blight_emergence_and_defeat", ElvenBlightGameTests::defeat,
                 "elven_blight_growth_uses_corruption", ElvenBlightGameTests::growth,
@@ -39,7 +39,10 @@ public final class ElvenBlightGameTests {
                 "elven_blight_natural_trigger", ElvenBlightGameTests::trigger,
                 "elven_blight_cleanup_is_local_and_restores", BlightReclamationTests::cleanup,
                 "elven_blight_reclamation_saved_and_rotated", BlightReclamationTests::saved,
-                "elven_blight_natural_nodes", BlightReclamationTests::natural);
+                "elven_blight_natural_nodes", BlightReclamationTests::natural));
+        tests.put("elven_blight_three_stage_battle", QueenBattleTests::battle);
+        tests.put("elven_blight_queen_purification", QueenBattleTests::restoration);
+        tests.put("elven_blight_queen_logos_spells", QueenBattleTests::spells);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent e) -> {
@@ -96,7 +99,7 @@ public final class ElvenBlightGameTests {
         h.assertTrue(ElvenForestGameTests.roots(tree) >= 1500, "腐败树根缺少接地子件");
         h.succeed();
     }
-    private record Fixture(QueenHeart heart, ServerPlayer player, BlockPos pos) {
+    record Fixture(QueenHeart heart, ServerPlayer player, BlockPos pos) {
         void close(GameTestHelper h) {
             var world = h.getLevel();
             if (heart.queen() != null && world.getEntity(heart.queen()) != null) world.getEntity(heart.queen()).discard();
@@ -104,9 +107,12 @@ public final class ElvenBlightGameTests {
             for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++) world.setChunkForced((pos.getX() >> 4) + x, (pos.getZ() >> 4) + z, false);
         }
     }
-    private static Fixture fixture(GameTestHelper h) {
+    static Fixture fixture(GameTestHelper h) {
+        return fixture(h, BlockPos.ZERO);
+    }
+    static Fixture fixture(GameTestHelper h, BlockPos offset) {
         var world = h.getLevel();
-        BlockPos at = h.absolutePos(new BlockPos(8, 9, 8));
+        BlockPos at = h.absolutePos(new BlockPos(8, 9, 8)).offset(offset);
         for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++) world.setChunkForced((at.getX() >> 4) + x, (at.getZ() >> 4) + z, true);
         for (int x = -8; x <= 8; x++) for (int z = -8; z <= 8; z++) {
             world.setBlockAndUpdate(at.offset(x, -8, z), Blocks.STONE.defaultBlockState());

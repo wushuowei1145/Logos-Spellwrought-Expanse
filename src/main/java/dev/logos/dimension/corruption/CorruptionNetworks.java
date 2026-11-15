@@ -265,6 +265,18 @@ public final class CorruptionNetworks extends SavedData {
         setDirty();
     }
 
+    /** 批量净化绕过方块回调时，显式撤销这一格的归属；外圈未清理的原状态仍留在网络里。 */
+    public void purified(BlockPos pos) {
+        release(pos);
+        Network core = ofCore(pos);
+        if (core != null) {
+            core.passive = false;
+            core.spreader.cursors().clear();
+            core.reserve = 0;
+            setDirty();
+        }
+    }
+
     /** 蔓延把 {@code original} 换成了 {@code pos} 上的污秽：记下来，核心没了以后变回去。不属于任何网络的位置不记。 */
     public void remember(BlockPos pos, BlockState original) {
         Network n = at(pos);

@@ -31,7 +31,7 @@ final class SuspendedHeart {
         double t = phase / 100;
         return (float) Math.exp(-Math.pow((t - .24) / .13, 2));
     }
-    private record Panel(Vec3[] centers, Vec3[] offsets, Vec3 normal, int color, float phase) {}
+    private record Panel(Vec3[] centers, Vec3[] offsets, Vec3 normal, int color, float phase, float startWeight, float endWeight) {}
     private static List<Panel> panels;
     private static List<Vec3> attachments;
     private static void build() {
@@ -43,9 +43,9 @@ final class SuspendedHeart {
             Vec3 start = radial(angle, 2.6, 4.2 + Math.sin(angle) * .5);
             Vec3 end = anchor(angle, 14.8, 12 + i % 3 * 2.1);
             Vec3 bend = radial(angle + .08, 8, 6.8 + i % 2);
-            tube(start, bend, end, .29, 10, i);
+            tube(start, bend, end, .29, 10, i, 1);
             Vec3 fork = curve(start, bend, end, .62);
-            tube(fork, radial(angle - .17, 11, 10), anchor(angle - .27, 14.9, 16 + i % 2), .13, 6, i + 11);
+            tube(fork, radial(angle - .17, 11, 10), anchor(angle - .27, 14.9, 16 + i % 2), .13, 6, i + 11, .38f);
         }
         panels = List.copyOf(panels);
         attachments = List.copyOf(attachments);
@@ -60,7 +60,7 @@ final class SuspendedHeart {
     static List<Vec3> attachments() { build(); return attachments; }
     private static Vec3 radial(double a, double radius, double y) { return new Vec3(Math.cos(a) * radius, y, Math.sin(a) * radius); }
     private static Vec3 curve(Vec3 a, Vec3 b, Vec3 c, double t) { return a.scale((1 - t) * (1 - t)).add(b.scale(2 * t * (1 - t))).add(c.scale(t * t)); }
-    private static void tube(Vec3 a, Vec3 b, Vec3 c, double radius, int steps, int seed) {
+    private static void tube(Vec3 a, Vec3 b, Vec3 c, double radius, int steps, int seed, float weight) {
         Vec3[][] centers = new Vec3[steps + 1][6], offsets = new Vec3[steps + 1][6];
         for (int j = 0; j <= steps; j++) {
             double t = j / (double) steps;
@@ -79,10 +79,10 @@ final class SuspendedHeart {
             Vec3[] cs = {centers[j][k], centers[j][n], centers[j + 1][n], centers[j + 1][k]};
             Vec3[] os = {offsets[j][k], offsets[j][n], offsets[j + 1][n], offsets[j + 1][k]};
             Vec3 normal = os[0].add(os[1]).normalize();
-            panels.add(new Panel(cs, os, normal, k == 2 ? 8 : 2 + (k + seed) % 3, j * 3));
+            panels.add(new Panel(cs, os, normal, k == 2 ? 8 : 2 + (k + seed) % 3, j * 3, weight * (1 - j / (float) steps), weight * (1 - (j + 1) / (float) steps)));
         }
     }
-    static void draw(PoseStack.Pose pose, VertexConsumer out, int light, float time, boolean defeated) {
+    static void draw(PoseStack.Pose pose, VertexConsumer out, int light, float time, boolean defeated, double drop, float collapse) {
         build();
         for (Panel p : panels) {
             float pulse = defeated ? 0 : beat(time - p.phase);
@@ -91,6 +91,8 @@ final class SuspendedHeart {
             int tint = glow ? 0xff000000 | value << 16 | value << 8 | value : 0xffffffff;
             for (int i = 0; i < 4; i++) {
                 Vec3 at = p.centers[i].add(p.offsets[i].scale(1 + .07 * pulse));
+                // 核心下降时管道端点仍扎在树壁；共殒时才把整张控制网络收回核心。
+                at = at.add(0, drop * (i < 2 ? p.startWeight : p.endWeight), 0).lerp(new Vec3(0, 3 + drop, 0), collapse);
                 out.addVertex(pose, (float) at.x, (float) at.y, (float) at.z).setColor(tint).setUv((p.color + .5f) / 16, .5f / 16)
                         .setOverlay(OverlayTexture.NO_OVERLAY).setLight(glow ? LightCoordsUtil.FULL_BRIGHT : light)
                         .setNormal(pose, (float) p.normal.x, (float) p.normal.y, (float) p.normal.z);

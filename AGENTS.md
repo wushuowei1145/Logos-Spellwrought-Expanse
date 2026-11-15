@@ -23,6 +23,7 @@
 - 全屏后期（黑白闪、电影蒙版）按 [docs/SCREEN_EFFECTS.md](docs/SCREEN_EFFECTS.md)：服务端调 `ScreenEffects.flash`，不要占原版 `setPostEffect` 的槽。改了后期要在文档列的 Sodium、Iris 和两种光影包下各跑一遍。
 - 消散（模型逐渐消失、边缘发光）按 [docs/DISSOLVE.md](docs/DISSOLVE.md)：服务端调 `Dissolving`。让特效泛光用 `GlowBloom`，见 [docs/SCREEN_EFFECTS.md](docs/SCREEN_EFFECTS.md)，不要按亮度对整个画面取阈值。
 - 要在画面变暗、调色之后仍然亮着的特效（或要在雾和光影包之外、几百格外都看得见的特效）交给 `PostVfx`，见 [docs/SCREEN_EFFECTS.md](docs/SCREEN_EFFECTS.md)；爆裂魔法按 [docs/EXPLOSION_MAGIC.md](docs/EXPLOSION_MAGIC.md)，大面积改方块照它的 `Crater` 直接写区块数据、按区块重发，不要逐个 `setBlock`。
+- 腐化女王核心战与净化结局按 [docs/QUEEN_CORE_BATTLE.md](docs/QUEEN_CORE_BATTLE.md)：女王和核心都接现有 MoveRunner，阶段结束动作播完再开放弱点，生命法术经公开 Casting 接口，恢复方块按区块批量处理。
 - 腐败（核心、脉络、污秽、网络）按 [docs/CORRUPTION.md](docs/CORRUPTION.md)：蔓延照搬原版幽匿催发体，改蔓延规则时对照原版 `SculkSpreader` 等类；玩法数值在 `ServerConfig` 的 `[corruption]` 一节。
 - 门后异画风按 [docs/WORLD_STYLES.md](docs/WORLD_STYLES.md)：服务端调 `StyleRealms.add`，只能换画风，不要用第二镜头显示别处。
 - 乐器（钢琴、竖琴、打孔纸带、MIDI 导入）按 [docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md)，管风琴按 [docs/PIPE_ORGAN.md](docs/PIPE_ORGAN.md)：钢琴与竖琴的采样用 `tools/instrument_samples.py` 合成，管风琴的音色在客户端现场合成、经 `OrganBufferMixin` 交给声音引擎，都不放录音素材；服务端从不读 MIDI 或玩家给的路径，只收客户端解析好的纸带并重新校验。
