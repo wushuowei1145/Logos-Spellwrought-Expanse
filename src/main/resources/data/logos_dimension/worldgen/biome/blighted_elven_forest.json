@@ -1,0 +1,37 @@
+{
+  "has_precipitation": true,
+  "temperature": 0.6,
+  "downfall": 0.8,
+  "effects": {
+    "water_color": "#54404e",
+    "grass_color": "#665d63",
+    "foliage_color": "#514650",
+    "fog_color": "#a194a1",
+    "water_fog_color": "#584659"
+  },
+  "carvers": [
+    "minecraft:cave",
+    "minecraft:cave_extra_underground",
+    "minecraft:canyon"
+  ],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "logos_dimension:blighted_elven_trees",
+      "logos_dimension:blighted_elven_growth",
+      "logos_dimension:blighted_elven_outcrop",
+      "logos_dimension:blight_nodes"
+    ],
+    []
+  ],
+  "spawners": {},
+  "spawn_costs": {}
+}

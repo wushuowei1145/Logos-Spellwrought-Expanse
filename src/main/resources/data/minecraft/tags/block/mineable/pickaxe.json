@@ -41,6 +41,7 @@
     "logos_dimension:taixuan_brass_tile_stairs",
     "logos_dimension:taixuan_brass_ridge_slab",
     "logos_dimension:taixuan_brass_block",
-    "logos_dimension:taixuan_dark_iron"
+    "logos_dimension:taixuan_dark_iron",
+    "logos_dimension:blight_node"
   ]
 }

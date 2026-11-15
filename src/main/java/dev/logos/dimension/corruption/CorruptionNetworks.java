@@ -175,7 +175,7 @@ public final class CorruptionNetworks extends SavedData {
     /** 放下核心：开一个新网络。玩家放的往核心四周撒初始电荷；分出来的子核心不撒，电荷由母网络交过来。 */
     void open(ServerLevel level, BlockPos core) {
         if (ofCore(core) != null) return;
-        Network n = new Network(nextId++, core.immutable(), new LongOpenHashSet(), List.of(), level.getGameTime() + idleTicks(), new Long2ObjectOpenHashMap<>(), planting, 0);
+        Network n = new Network(nextId++, core.immutable(), new LongOpenHashSet(), List.of(), level.getGameTime() + idleTicks(), new Long2ObjectOpenHashMap<>(), planting, 0, planting == 0 || networks.get(planting).passive, false);
         networks.put(n.id, n);
         cores.put(n.core.asLong(), n.id);
         int seed = planting != 0 ? 0 : ServerConfig.CORRUPTION_SEED_CHARGE.getAsInt();
@@ -183,6 +183,51 @@ public final class CorruptionNetworks extends SavedData {
             for (Direction side : Direction.Plane.HORIZONTAL) n.spreader.addCursors(core.relative(side), Math.max(1, seed / 4));
         }
         setDirty();
+    }
+
+    /** 为原版生成的区域核心建立普通网络；初始地景不消耗蔓延电荷。 */
+    public void prepareGenerated(ServerLevel level, BlockPos core) {
+        open(level, core);
+        Network n = ofCore(core);
+        if (!n.generated) { n.generated = true; n.spreader.cursors().clear(); setDirty(); }
+    }
+
+    /** 生成污染显式认领并记下健康状态，不能依赖模板的放置顺序或邻接回调。 */
+    public void adoptGenerated(ServerLevel level, BlockPos core, BlockPos pos, @Nullable BlockState original) {
+        Network n = ofCore(core);
+        if (n == null || !Corruption.isNetworkBlock(level.getBlockState(pos))) return;
+        long key = pos.asLong();
+        // 动态长出的脉络仍属于生出它的活网络，不被区域登记抢走。
+        if (original == null && at(pos) != null && at(pos) != n) return;
+        int old = owner.put(key, n.id);
+        if (old != 0 && old != n.id) {
+            Network was = networks.get(old);
+            if (was != null) { was.members.remove(key); was.originals.remove(key); }
+        }
+        boolean changed = n.members.add(key);
+        if (original != null && n.originals.put(key, original) != original) changed = true;
+        if (changed) setDirty();
+    }
+
+    /** 核心在登记完成前被拆，或区块重载后，剩余生成污染仍沿用同一套消散与还原。 */
+    public void fadeGenerated(ServerLevel level, BlockPos core, LongArrayList positions, Long2ObjectOpenHashMap<BlockState> originals) {
+        fades.add(new Fade(core, positions, originals, level.getGameTime() + WAVE_DELAY, FADE_TICKS, 0xA91F32));
+        setDirty();
+    }
+
+    /** 源头被击败后停止该区域及其子核心的被动供养；不拆核心、不清除残余网络。 */
+    public void passiveSupply(BlockPos core, boolean supplied) {
+        Network root = ofCore(core);
+        if (root == null) return;
+        for (Network n : networks.values()) {
+            Network at = n;
+            for (int guard = 0; guard <= networks.size() && at != null; guard++, at = networks.get(at.parent)) {
+                if (at == root) {
+                    if (n.passive != supplied) { n.passive = supplied; setDirty(); }
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -236,7 +281,7 @@ public final class CorruptionNetworks extends SavedData {
         cores.remove(core.asLong());
         n.members.forEach(owner::remove);
         for (Network child : networks.values()) if (child.parent == n.id) child.parent = 0;
-        fades.add(new Fade(core, new LongArrayList(n.members.toLongArray()), n.originals, level.getGameTime() + WAVE_DELAY, FADE_TICKS));
+        fades.add(new Fade(core, new LongArrayList(n.members.toLongArray()), n.originals, level.getGameTime() + WAVE_DELAY, FADE_TICKS, n.generated ? 0xA91F32 : FADE_COLOR));
         setDirty();
     }
 
@@ -382,7 +427,9 @@ public final class CorruptionNetworks extends SavedData {
         }
         if (!fades.isEmpty()) {
             long t0 = System.nanoTime();
-            fades.removeIf(f -> f.step(level, now));
+            int[] budget = {512};
+            var iterator = fades.iterator();
+            while (iterator.hasNext() && budget[0] > 0) if (iterator.next().step(level, now, budget)) iterator.remove();
             worstFadeNanos = Math.max(worstFadeNanos, System.nanoTime() - t0);
             setDirty();
         }
@@ -397,10 +444,11 @@ public final class CorruptionNetworks extends SavedData {
     /** 阶段变了才改方块（改方块状态会同步给客户端、改亮度和碰撞箱）。 */
     private void syncStage(ServerLevel level, Network n) {
         int stage = stageFor(n.members.size());
+        if (n.generated) stage = Math.min(2, stage);
         if (stage == n.stage || !level.isLoaded(n.core)) return;
         n.stage = stage;
         BlockState state = level.getBlockState(n.core);
-        if (state.is(Corruption.CORE.get()) && state.getValue(CorruptionCoreBlock.STAGE) != stage) {
+        if (state.getBlock() instanceof CorruptionCoreBlock && state.getValue(CorruptionCoreBlock.STAGE) != stage) {
             level.setBlock(n.core, state.setValue(CorruptionCoreBlock.STAGE, stage), Block.UPDATE_CLIENTS);
         }
     }
@@ -450,7 +498,7 @@ public final class CorruptionNetworks extends SavedData {
         if (now < n.idleAt) return;
         n.idleAt = now + idleTicks();
         int charge = ServerConfig.CORRUPTION_IDLE_CHARGE.getAsInt();
-        if (charge <= 0 || !level.shouldTickBlocksAt(n.core)) return;
+        if (!n.passive || charge <= 0 || !level.shouldTickBlocksAt(n.core)) return;
         if (full(n)) {
             overflow(level, n, n.core, charge, false);
             setDirty();
@@ -490,7 +538,9 @@ public final class CorruptionNetworks extends SavedData {
                 Codec.LONG.fieldOf("idle_at").forGetter(n -> n.idleAt),
                 ORIGINALS.optionalFieldOf("originals", new Long2ObjectOpenHashMap<>()).forGetter(n -> n.originals),
                 Codec.INT.optionalFieldOf("parent", 0).forGetter(n -> n.parent),
-                Codec.INT.optionalFieldOf("reserve", 0).forGetter(n -> n.reserve)
+                Codec.INT.optionalFieldOf("reserve", 0).forGetter(n -> n.reserve),
+                Codec.BOOL.optionalFieldOf("passive", true).forGetter(n -> n.passive),
+                Codec.BOOL.optionalFieldOf("generated", false).forGetter(n -> n.generated)
         ).apply(i, Network::new));
 
         final int id;
@@ -504,13 +554,16 @@ public final class CorruptionNetworks extends SavedData {
         int parent;
         /** 满了以后存下的电荷，以后用来生产污秽衍生物。 */
         int reserve;
+        boolean passive, generated;
         /** 这次开服以来靠杀生得到的电荷，只给测试和排查看，不存档。 */
         int fed;
         /** 上次同步到方块上的成长阶段，不存档（读档后重新算一次）。 */
         int stage = -1;
 
         Network(int id, BlockPos core, LongOpenHashSet members, List<CorruptionSpreader.Cursor> cursors, long idleAt, Long2ObjectOpenHashMap<BlockState> originals,
-                int parent, int reserve) {
+                int parent, int reserve, boolean passive, boolean generated) {
+            this.passive = passive;
+            this.generated = generated;
             this.parent = parent;
             this.reserve = reserve;
             this.id = id;
@@ -529,6 +582,7 @@ public final class CorruptionNetworks extends SavedData {
         public int fed() { return fed; }
         public int parent() { return parent; }
         public int reserve() { return reserve; }
+        public boolean passive() { return passive; }
         /** {@code pos} 原来是什么方块；不是蔓延变来的就是 null。 */
         public @Nullable BlockState original(BlockPos pos) { return originals.get(pos.asLong()); }
     }
@@ -544,7 +598,8 @@ public final class CorruptionNetworks extends SavedData {
                 Codec.LONG_STREAM.xmap(s -> new LongArrayList(s.toArray()), l -> LongStream.of(l.toLongArray())).fieldOf("left").forGetter(Fade::left),
                 ORIGINALS.optionalFieldOf("restore", new Long2ObjectOpenHashMap<>()).forGetter(f -> f.restore),
                 Codec.LONG.fieldOf("start").forGetter(f -> f.start),
-                Codec.INT.optionalFieldOf("ticks", FADE_TICKS).forGetter(f -> f.ticks)
+                Codec.INT.optionalFieldOf("ticks", FADE_TICKS).forGetter(f -> f.ticks),
+                Codec.INT.optionalFieldOf("color", FADE_COLOR).forGetter(f -> f.color)
         ).apply(i, Fade::new));
 
         final BlockPos origin;
@@ -554,11 +609,12 @@ public final class CorruptionNetworks extends SavedData {
         final LongArrayList waiting = new LongArrayList();
         /** 要变回去的污秽原来是什么。 */
         final Long2ObjectOpenHashMap<BlockState> restore;
-        final int ticks;
+        final int ticks, color;
         long start;
         int next;
 
-        Fade(BlockPos origin, LongArrayList positions, Long2ObjectOpenHashMap<BlockState> restore, long start, int ticks) {
+        Fade(BlockPos origin, LongArrayList positions, Long2ObjectOpenHashMap<BlockState> restore, long start, int ticks, int color) {
+            this.color = color;
             this.origin = origin;
             this.restore = new Long2ObjectOpenHashMap<>(restore);
             this.start = start;
@@ -578,25 +634,29 @@ public final class CorruptionNetworks extends SavedData {
         }
 
         /** 走一刻，全部消散完时返回 true。 */
-        boolean step(ServerLevel level, long now) {
+        boolean step(ServerLevel level, long now, int[] budget) {
             if (now < start) return false;
             double radius = (now - start) * WAVE_SPEED;
             double reach = radius * radius;
             Long2ObjectOpenHashMap<Batch> byChunk = new Long2ObjectOpenHashMap<>();
-            while (next < pending.size()) {
+            while (next < pending.size() && budget[0] > 0) {
                 BlockPos pos = BlockPos.of(pending.getLong(next));
                 if (pos.distSqr(origin) > reach) break;
                 next++;
+                budget[0]--;
                 take(level, pos, byChunk);
             }
             if (!waiting.isEmpty() && now % 20 == 0) {
                 LongArrayList again = new LongArrayList(waiting);
                 waiting.clear();
-                for (long p : again) take(level, BlockPos.of(p), byChunk);
+                for (long p : again) {
+                    if (budget[0]-- > 0) take(level, BlockPos.of(p), byChunk);
+                    else waiting.add(p);
+                }
             }
             for (Batch batch : byChunk.values()) {
-                if (!batch.gone.isEmpty()) Dissolving.blocks(level, batch.gone, DissolveShape.noise(), ticks, FADE_COLOR);
-                if (!batch.back.isEmpty()) Dissolving.replace(level, batch.back, batch.into, DissolveShape.noise(), ticks, FADE_COLOR);
+                if (!batch.gone.isEmpty()) Dissolving.blocks(level, batch.gone, DissolveShape.noise(), ticks, color);
+                if (!batch.back.isEmpty()) Dissolving.replace(level, batch.back, batch.into, DissolveShape.noise(), ticks, color);
             }
             return next >= pending.size() && waiting.isEmpty();
         }
@@ -614,7 +674,9 @@ public final class CorruptionNetworks extends SavedData {
             BlockState state = level.getBlockState(pos);
             if (!Corruption.isNetworkBlock(state) && !state.is(Corruption.CORE.get())) return;
             Batch batch = byChunk.computeIfAbsent(ChunkPos.pack(pos.getX() >> 4, pos.getZ() >> 4), k -> new Batch());
-            BlockState original = state.is(Corruption.BLOCK.get()) ? restore.remove(pos.asLong()) : null;
+            // 已被玩家改建或被另一个活网络重新认领的位置不能被旧消散波覆盖。
+            if (CorruptionNetworks.get(level).at(pos) != null) return;
+            BlockState original = state.getBlock() instanceof CorruptionBlock ? restore.remove(pos.asLong()) : null;
             if (original == null && state.getFluidState().is(Fluids.WATER)) original = Blocks.WATER.defaultBlockState();
             if (original == null) {
                 batch.gone.add(pos);

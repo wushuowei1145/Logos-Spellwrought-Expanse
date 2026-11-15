@@ -9,6 +9,7 @@ import dev.logos.runtime.PlayerMagic;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
@@ -54,6 +55,7 @@ public final class CorruptionContact {
 
     /** 亡灵、被腐败的生物（污秽衍生物等）、旁观者和创造模式的玩家不受影响。 */
     public static boolean immune(LivingEntity living) {
+        if (living instanceof ServerPlayer player && dev.logos.dimension.elven.blight.QueenEntrances.protectedNow(player)) return true;
         if (living.is(EntityTypeTags.UNDEAD) || dev.logos.dimension.corruption.mob.CorruptionMobs.isCorrupted(living)) return true;
         return living instanceof Player player && (player.isSpectator() || player.isCreative());
     }

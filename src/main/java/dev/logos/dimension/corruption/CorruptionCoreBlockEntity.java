@@ -24,7 +24,11 @@ public class CorruptionCoreBlockEntity extends BlockEntity {
     private int blink, nextBlink = 60, grow = GROW, lastStage = -1, age;
 
     public CorruptionCoreBlockEntity(BlockPos pos, BlockState state) {
-        super(Corruption.CORE_ENTITY.get(), pos, state);
+        this(Corruption.CORE_ENTITY.get(), pos, state);
+    }
+
+    protected CorruptionCoreBlockEntity(net.minecraft.world.level.block.entity.BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type, pos, state);
         // 每个核心初始朝向不一样，几个核心摆在一起不会长得一模一样
         bodyYaw = lastBodyYaw = (float) (Math.floorMod(pos.asLong() * 0x9E3779B97F4A7C15L, 6283L) / 1000.0);
     }
@@ -33,7 +37,7 @@ public class CorruptionCoreBlockEntity extends BlockEntity {
         return getBlockState().getValue(CorruptionCoreBlock.STAGE);
     }
 
-    void clientTick() {
+    public void clientTick() {
         if (level == null) return;
         age++;
         lastBodyYaw = bodyYaw;

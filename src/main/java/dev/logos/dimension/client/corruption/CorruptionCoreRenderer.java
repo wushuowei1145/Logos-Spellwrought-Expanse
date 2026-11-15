@@ -30,7 +30,7 @@ import org.jspecify.annotations.Nullable;
 @EventBusSubscriber(modid = LogosDimension.ID, value = Dist.CLIENT)
 public class CorruptionCoreRenderer implements BlockEntityRenderer<CorruptionCoreBlockEntity, CorruptionCoreRenderer.State> {
     static final Identifier TEXTURE = LogosDimension.id("textures/entity/corruption_core.png");
-    private static final RenderType TYPE = RenderTypes.entitySolid(TEXTURE);
+    private final RenderType type;
     /** 离镜头多远（格）换粗一档。 */
     private static final double FAR = 24;
     /** 一次心跳多少刻：咚、咚，然后停一下。 */
@@ -47,7 +47,8 @@ public class CorruptionCoreRenderer implements BlockEntityRenderer<CorruptionCor
         boolean far;
     }
 
-    public CorruptionCoreRenderer(BlockEntityRendererProvider.Context context) {}
+    public CorruptionCoreRenderer(BlockEntityRendererProvider.Context context) { this(context, TEXTURE); }
+    public CorruptionCoreRenderer(BlockEntityRendererProvider.Context context, Identifier texture) { type = RenderTypes.entitySolid(texture); }
 
     @SubscribeEvent
     static void register(EntityRenderersEvent.RegisterRenderers event) {
@@ -122,7 +123,7 @@ public class CorruptionCoreRenderer implements BlockEntityRenderer<CorruptionCor
         pose.mulPose(Axis.YP.rotation(state.bodyYaw));
         pose.scale(scale, scale, scale);
         pose.translate(-s.n / 2f, 0, -s.n / 2f);
-        collector.submitCustomGeometry(pose, TYPE, (p, buf) -> mesh.draw(p, buf, state.lightCoords, glow));
+        collector.submitCustomGeometry(pose, type, (p, buf) -> mesh.draw(p, buf, state.lightCoords, glow));
         if (s.eye != null) {
             CoreMesh ball = eye(state.far);
             float r = s.eyeRadius, m = (float) Math.ceil(r) * 2 + 2;
@@ -133,7 +134,7 @@ public class CorruptionCoreRenderer implements BlockEntityRenderer<CorruptionCor
             // 眨眼：上下压扁
             pose.scale(1, 1 - .85f * state.blink, 1);
             pose.translate(-m / 2, -m / 2, -m / 2);
-            collector.submitCustomGeometry(pose, TYPE, (p, buf) -> ball.draw(p, buf, state.lightCoords, 1));
+            collector.submitCustomGeometry(pose, type, (p, buf) -> ball.draw(p, buf, state.lightCoords, 1));
             pose.popPose();
         }
         pose.popPose();

@@ -20,8 +20,8 @@ import net.neoforged.neoforge.client.event.RenderGuiEvent;
 @EventBusSubscriber(modid = LogosDimension.ID, value = Dist.CLIENT)
 public final class ShiraumeTitle {
     /** 淡入、开始淡出、完全消失（刻）。 */
-    static final float IN = 14, OUT_AT = 52, GONE = 68;
-    private static final int RED = 0xC8323C, PALE = 0xF4E6EC, PINK = 0xF4A6CF;
+    static final float IN = dev.logos.dimension.client.BossTitle.IN,
+            OUT_AT = dev.logos.dimension.client.BossTitle.OUT_AT, GONE = dev.logos.dimension.client.BossTitle.GONE;
 
     /** 客户端场景用：停在第几刻上（小于 0 不停）。 */
     private static float held = -1;
@@ -43,64 +43,10 @@ public final class ShiraumeTitle {
     }
 
     static void draw(GuiGraphicsExtractor g, Font font, float age) {
-        float in = Mth.clamp(age / IN, 0, 1), out = 1 - Mth.clamp((age - OUT_AT) / (GONE - OUT_AT), 0, 1);
-        float alpha = in * in * (3 - 2 * in) * out;
-        if (alpha <= .01f) return;
-        int w = g.guiWidth(), h = g.guiHeight();
-        float cx = w / 2f, cy = h / 2f - h * .04f;
-        // 大字：两个字，从疏到密地收拢
-        String name = Component.translatable("gui.logos_dimension.shiraume.title_name").getString();
-        int[] widths = name.codePoints().map(cp -> font.width(new String(Character.toChars(cp)))).toArray();
-        // 两个汉字时字距疏朗；字多（英文名）时收紧，整行不超过画面宽度的六成
-        boolean few = widths.length <= 3;
-        float gap = Mth.lerp(in * in * (3 - 2 * in), few ? 2.4f : .9f, few ? .55f : .12f) * font.lineHeight;
-        float total = 0;
-        for (int i = 0; i < widths.length; i++) total += widths[i] + (i > 0 ? gap : 0);
-        float big = Math.min(Math.max(3.5f, h / 46f), w * .6f / Math.max(1, total));
-        float x = cx - total * big / 2f;
-        int i = 0;
-        for (int cp : name.codePoints().toArray()) {
-            String ch = new String(Character.toChars(cp));
-            glyph(g, font, ch, x, cy - font.lineHeight * big / 2f, big, alpha);
-            x += (widths[i++] + gap) * big;
-        }
-        // 上面的称号
-        String epithet = Component.translatable("gui.logos_dimension.shiraume.title_epithet").getString();
-        float small = big * .36f;
-        text(g, font, epithet, cx - font.width(epithet) * small / 2f, cy - font.lineHeight * big / 2f - font.lineHeight * small * 1.6f, small,
-                argb(alpha * .9f, PALE));
-        // 朱线（从中间往两边长出来）与假名
-        float line = total * big * .62f * in;
-        float ly = cy + font.lineHeight * big / 2f + big * 1.6f;
-        var pose = g.pose();
-        pose.pushMatrix();
-        pose.translate(cx - line / 2f, ly);
-        pose.scale(Math.max(1, line), Math.max(1, big * .28f));
-        g.fill(0, 0, 1, 1, argb(alpha * .85f, RED));
-        pose.popMatrix();
-        String kana = Component.translatable("gui.logos_dimension.shiraume.title_kana").getString();
-        float tiny = big * .3f;
-        text(g, font, kana, cx - font.width(kana) * tiny / 2f, ly + big * 1.2f, tiny, argb(alpha * .85f, PINK));
-    }
-
-    /** 一个大字：外面一圈暗红的晕（错开画几遍），中间亮白。 */
-    private static void glyph(GuiGraphicsExtractor g, Font font, String ch, float x, float y, float scale, float alpha) {
-        float r = scale * .35f;
-        for (int k = 0; k < 8; k++) {
-            double a = k * Math.PI / 4;
-            text(g, font, ch, x + (float) Math.cos(a) * r, y + (float) Math.sin(a) * r, scale, argb(alpha * .22f, RED));
-        }
-        text(g, font, ch, x, y, scale, argb(alpha, PALE));
-    }
-
-    private static void text(GuiGraphicsExtractor g, Font font, String s, float x, float y, float scale, int argb) {
-        if ((argb >>> 24) < 4) return;
-        var pose = g.pose();
-        pose.pushMatrix();
-        pose.translate(x, y);
-        pose.scale(scale, scale);
-        g.text(font, s, 0, 0, argb, false);
-        pose.popMatrix();
+        dev.logos.dimension.client.BossTitle.draw(g, font, age,
+                Component.translatable("gui.logos_dimension.shiraume.title_name"),
+                Component.translatable("gui.logos_dimension.shiraume.title_epithet"),
+                Component.translatable("gui.logos_dimension.shiraume.title_kana"));
     }
 
     /** 标题出现时视角从原来的收到 {@link #TITLE_FOV} 度，淡出时放回去。 */
@@ -115,7 +61,4 @@ public final class ShiraumeTitle {
         event.setFOV(Mth.lerp(k, event.getFOV(), Math.min(event.getFOV(), TITLE_FOV)));
     }
 
-    private static int argb(float alpha, int rgb) {
-        return Mth.clamp(Math.round(alpha * 255), 0, 255) << 24 | rgb & 0xFFFFFF;
-    }
 }

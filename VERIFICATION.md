@@ -24,6 +24,15 @@ uv run --no-project --with pillow --with numpy python tools/instrument_sources.p
 ./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.7.0.jar "-PldTest=orchestra_percussion_ui" -PldTestHeadless -PldTestWindow=1280x720
 ```
 
+## 提交前整合与复查
+
+2026-11-15：整合 main `a766e466`（#267–#269），保留过场总览、女仆编译说明和解除拴绳后的客户端崩溃修复。官方接口返回的三个主分支提交均按签名载荷还原并校验提交 SHA；最新主分支树 SHA 为 `423c37d0fe890ab050866618231d3cc74a85bfac`，与本地重建的树一致。文档冲突保留双方记录。本次不改 Logos，前置仍用未修改的 `dc3d381` / 0.7.0。
+
+- 全量单元：431 条，429 通过、1 失败、1 跳过。唯一失败仍是主干已有的 zh_cn `item.logos_dimension.fuda_desk` 缺名，相关模型、UV、动作、物品显示与镜头单元通过；未把全量记成通过。
+- 世界：整合后 `elven_blight_*` 10/10、`corruption_*` 16/16。
+- 实际客户端：整合后 `elven_blight_queen` 1/1 场景、13/13 检查通过，默认渲染，无 Sodium/Iris；构建成功。光影包验证仍以先前入场章节的版本和范围为准。
+- 提交范围为已完成的腐败森林、区域核心逐片净化、四格腐化女王、手持权杖、入场与地板。战后高空镜头、整棵世界树大范围净化及球形噪波遮罩按用户要求留到后续，未实现或混入本次代码。
+
 ## 拿魂符收起工位上的女仆不再崩客户端
 
 2026-11-15：分支 `fix/maid-slab-leash`，基于 main `26926614`（#268），Logos jar `编译成品/20261115-1122-最新版/logos-0.7.0.jar`（一键编译，Logos dc3d381）、
@@ -38,6 +47,136 @@ uv run --no-project --with pillow --with numpy python tools/instrument_sources.p
 
 ```text
 ./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.7.0.jar -Ptlm "-PldTest=orchestra_maids_ui" -PldTestHeadless -PldTestWindow=1280x720
+
+## 女王战场地板纹路
+
+2026-11-15：只更新既有 `blighted_lumen` 的外观，黑石顶面增加四瓣猩红花冠、连续枝藤和暗金叶脉；侧面与底面为暗色石材。64×64 顶面、32×32 侧面均由 `tools/elven_queen_floor.py` 绘制，基础生成器复用同一入口。注册 ID、NBT、场地模板、碰撞和亮度未改；旧存档已有地板直接显示新外观。
+
+- 资源检查：两张贴图完全不透明，纹理引用有效；模型继承原版 `cube_bottom_top`；重复导出 SHA-256 一致。
+- 实际客户端：`elven_blight_queen` 1/1 场景、13/13 检查通过，原版渲染、无 Sodium/Iris；已查看俯视和女王坐姿近景，确认地板实际显示新花纹。
+- 构建成功。此次没有新增单元测试，也未重跑世界或光影组合；预览与 JAR 放在仓库外 `outputs/elven-boss/floor-v1`。未提交、未上传。
+
+## 四格腐化女王与墨绿树枝权杖
+
+2026-11-15：名称统一为「腐化女王」／`The Corrupted Queen`，实体 ID 不变。保留已确认的精灵面容、长发与配色，新增叶披肩、外层裙瓣、腰封藤纹、袖缘垂叶、后冠和发饰。305 骨骼、503 方块，其中权杖 30 方块；768×1024 贴图，由代码绘制。按固定 0.5 显示，本体冠尖实测约 4.008 格（旋转后的包围极值），实体碰撞箱高 4、眼高 3.3。较高的权杖不参与本体身高归一化。
+
+- 单元：最终 `ElvenBlightDataTest` 4/4、`CameraShotTest` 7/7。含 UV 范围、骨骼父子关系、持物挂点及旧动作保留检查。
+- 世界：分别运行 `elven_blight_heart_once_and_saved` 与 `elven_blight_melee_hits_once`，各 1/1 通过；前者包含真实实体的四格碰撞箱与眼高校验。最初逗号组合选择只执行了一个用例，没有把它记成三条。
+- 实际客户端：最终 `elven_blight_queen` 1/1 场景、13/13 检查通过，使用原版渲染、无 Sodium/Iris。首轮查看坐姿发现长杖入地，修正手持枢轴的动画朝向后重跑；已查看坐姿横杖、起身、站立与双语标题截图。本轮没有验证光影包或多人。
+- 资源：原有 11 段动作全部保留；位移按前后骨架比例换算。重复导出后几何、动作、贴图 SHA-256 均不变；贴图 alpha 仅 0/255。权杖挂在 `RightHandLocator` 下，整组可收起，另有施法和备用收纳挂点。
+- 交付：仓库外 `outputs/elven-boss/regalia-v3` 中保留带 11 段动作的 Bedrock `.bbmodel`、独立权杖 `.bbmodel`、贴图和几何、实机录制与 JAR。安装包要求 Logos 0.7.0；主模组未修改，未提交、未上传。
+
+## 女王双语入场标题
+
+2026-11-15：中文改为「腐败的精灵女王」，下方英文 `The Corrupted Elven Queen`；与白梅共用 `BossTitle`，保留相同字距收拢、淡红晕、朱线和淡入淡出。按用户最终选择使用游戏默认字体。女王标题在入场第 32–100 刻播放，随镜头退出；白梅的触发与视野逻辑保持原样。
+
+- 实际客户端：`elven_blight_queen` 1/1 场景、12/12 检查通过；原版渲染，无 Sodium/Iris。已查看女王双语标题与同场景白梅排版对照截图，没有缺字、截断或挤出画面。
+- 构建：`runClient jar --offline` 成功；前置为未修改的 Logos 0.7.0。此次只改 GUI 标题，未重跑世界测试、全量单元或光影组合；前一节入场验证是此前版本结果。
+- 新预览与安装包存于仓库外 `outputs/elven-boss/entrance-v2`，保留 `entrance-v1`。未提交、未上传。
+
+## 女王入场：镜头前景、斜侧推镜与观看保护
+
+2026-11-15：分支 `feat/corrupted-elven-intro`，基于最新 main `974cd60d`。前一工作区和全部源文件保留，将森林与净化成果三方整合到新工作区；保留主干新增内容，文档冲突分别合并。前置是未修改的 Logos main `dc3d381` 构建的 **0.7.0**，没有自行修改 Logos 版本或源码。未提交、未上传。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 最终定向 13/13：`CameraShotTest` 7、`ElvenBlightDataTest` 4、`ItemModelDisplayTest` 2。首次全量 431 条中 428 通过、2 失败、1 跳过；本功能三种增生未继承物品显示的问题已修复并定向通过，另一失败是主干已有 zh_cn `item.logos_dimension.fuda_desk` 缺名；没有把定向结果称为全量通过 |
+| 世界 | `elven_blight_*` 10/10：五秒入场期间女王免伤、结束后能攻击、一次性长入场及战斗重置短起身、核心 UUID 读档、战斗与森林逐步净化；最终 `corruption_*` 16/16，普通核心与接触行为回归通过 |
+| 实际客户端 | 整合后初轮三场景 15/15 检查；查看截图发现玩家身体挡住女王，修正为斜侧推镜。最终入场专门场景 12/12：前景实际绘制、镜头线避开玩家、观看者受伤被拦截及接触免疫、退场后撤保护并归还控制、女王进入战斗 |
+| 光影 | 最终入场同一 12 项分别通过：无 Sodium/Iris；Sodium 0.9.2 + Iris 1.11.4 + Complementary Reimagined r5.9.3；同一 Sodium/Iris + photon v1.3b。已确认日志实际启用对应光影包，并查看截图。没有声称其他版本或光影包通过 |
+| 录制与源文件 | 49 张真实游戏渲染帧，按采样刻数制作 GIF；新增 `queen_entrance`，原 `queen_rise` 和全部攻击保留，共 11 个片段；新 Blockbench 文件保存在仓库外 `outputs/elven-boss/entrance-v1`，不覆盖上一版源文件 |
+| 构建 | 最终 JAR 成功，要求 Logos 0.7.0；含新前景贴图、入场通道、11 个动作与原 348 份森林模板，不含凭据、源 `.bbmodel` 或光影包 |
+| 未验证 | 多人实战及高延迟手感、手动中断或跳过入场、其他光影包、大型存档长期表现；直接 `/summon` 的游荡女王不自动执行守护者入场，需核心守护状态或 `Guarding` 状态触发 |
+
+镜头仍通过 `CameraShots.play` 发出；前景提示按网络顺序给同一段镜头附加轨迹，不重置锁操作或时钟。近血管、远薄膜、孢子在镜头空间绘制，没有新的全屏着色器或云体实体。首次标记随女王保存；观看保护不写永久无敌标志，结束、玩家死亡或换维度后失效。管理员绕过无敌的伤害照常有效。开发录制器只在测试场景临时注册，正式运行没有抓帧开销。
+
+```text
+python tools/elven_queen_entrance.py
+./gradlew test --tests '*CameraShotTest' --tests '*ElvenBlightDataTest' --tests '*ItemModelDisplayTest' -PlogosJar=/absolute/path/logos-0.7.0.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.7.0.jar '-PdimensionTests=logos_dimension:elven_blight_*'
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.7.0.jar '-PdimensionTests=logos_dimension:corruption_*'
+./gradlew runClient jar -PlogosJar=/absolute/path/logos-0.7.0.jar -PldTest=elven_blight_queen -PldTestHeadless -PldTestWindow=1280x720
+```
+
+两种光影复测分别增加 `-PldTestSeedDir=/absolute/path/seed`，seed 包含上述 Sodium/Iris 与对应光影包；这些第三方文件均不入仓库。
+
+## 猩红污染与逐步净化
+
+2026-11-14：继续本地分支 `feat/corrupted-elven-forest`，保留原污秽、脉络和增生造型；生成污染记录健康材质，区域核心逐片清理。未提交、未上传。
+
+| 层级 | 结果 |
+| --- | --- |
+| 模板 | `python tools/test_elven_blight.py` 5/5：348 份模板无实体、作物；每格记忆均与原健康模板的材质及朝向一致；外露脉络 58,371 格，安全内厅不被污染 |
+| 单元 | 全量 400/401；唯一失败为 main 已有 zh_cn `item.logos_dimension.fuda_desk` 缺名；本次新增核心、污秽与物品名称齐全 |
+| 世界 | `elven_blight_*` 10/10：自然区域核心、明确归属与原材质、局部还原不清邻区、不覆盖玩家改建、提前拆核心后仍能还原、全部材质的旋转镜像、净化进度与停止供养状态存档，以及女王场地和战斗回归 |
+| 腐败回归 | 最终 `corruption_*` 16/16：普通核心成长、子核心独立、蔓延、接触伤害、玩家挖掘、原材质恢复、大网络消散与衍生物行为通过 |
+| 实际客户端 | `elven_blight_cleanup,elven_blight_exterior,elven_blight_queen` 3/3 场景、11/11 检查；自然生成林地实际拆核心后树冠与地面恢复，邻区仍污染；真实客户端锄右键保留底材；悬吊血管、坐姿与起身回归通过；已查看 1280×720 原始截图，无光影包 |
+| 构建 | 最终 `runClient jar` 成功；JAR 包含 48 个稳定还原状态、348 份模板、女王与区域核心资源，不含凭据或 `.bbmodel`。包与对比截图位于仓库外 `outputs/elven-boss`，测试包名含 `elven-reclamation-preview` |
+| 性能约束 | 登记每维度每刻最多检查 8192 个候选方块，跳过无污染区段；所有网络的消散共用每维度每刻 512 个位置预算；不强加载区块 |
+| 存档边界 | 完整还原用于本版新生成森林；旧版直接生成的普通污秽没有原始树材记录，不做猜测还原 |
+| 未验证 | 多人实战、长距离探索后的大型存档开销、第三方光影包、数值平衡 |
+
+修复了生成材质改成带记忆状态后，表面脉络选择器未同步导致的漏生成。原版区块中的方块实体可能尚未实例化，测试与预览从待加载位置集合读取；树叶恢复后由原版更新叶距，客户端检查恢复的材质类型，完整朝向还原由世界测试另查。
+
+```text
+python tools/blighted_elven_forest.py
+python tools/elven_blight_reclamation_art.py
+python tools/test_elven_blight.py
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:elven_blight_*"
+./gradlew runClient jar -PlogosJar=/absolute/path/logos-0.6.0.jar -PldTest=elven_blight_cleanup,elven_blight_exterior,elven_blight_queen -PldTestHeadless -PldTestWindow=1280x720
+```
+
+## 腐败森林重覆盖、悬吊核心与华服女王
+
+2026-11-14：继续本地分支 `feat/corrupted-elven-forest`，未提交、未上传。主模组源码与版本号保持原样。
+
+| 层级 | 结果 |
+| --- | --- |
+| 模板检查 | `python tools/test_elven_blight.py` 4/4：348 份模板；树心外树材中实际污秽占 82.1%，附着脉络 58,371 格；内厅家具、楼层、楼梯已清空，黑色安全地板与唯一悬吊标记正确 |
+| 单元 | `ElvenBlightDataTest` 4/4；全量 400/401，唯一失败仍为 main 已有的 `LangCoverageTest`：zh_cn 缺 `item.logos_dimension.fuda_desk` |
+| 世界 | `elven_blight_*` 7/7：原版 343 部件组装、自然腐败地表、守护坐姿与起身、唯一 UUID 和重载、起身保护及击败记录、横扫单次结算、增生土壤与安全地板 |
+| 实际客户端 | `elven_blight_queen,elven_blight_exterior` 2/2 场景、8/8 检查；16 个血管接头均在树壁内，查看了悬吊核心、华服坐姿、起身及林外的 1280×720 原始截图，无光影包 |
+| 构建 | 最终 `runClient jar` 成功；测试 JAR 与截图整理到仓库外 `outputs/elven-boss`，使用 v2 文件名区分首版 |
+| 美术数据 | 女王 187 骨骼、403 方块，384×512 三分区贴图；保留 10 个动作，华服、长袖、发冠、首饰和拖尾拆组；导出的 Blockbench 源文件包含动作，放在仓库外 |
+| 腐败回归 | 首轮原有 `corruption_*` 16/16；之后没有继续更改原腐败网络与蔓延算法 |
+| 未验证 | 多人实战、平衡、第三方光影包、不同存档的实际面积占比 |
+
+世界测试在实际腐败群系组装地标，地表样本 52 个合适位置中 51 个为污秽；这是单次样本，不宣称所有存档都有此覆盖率。实际客户端同时观察林外、悬吊核心、坐姿华服与起身；血管接头检查要求全部 16 个端点扎入实体树壁，核心朝向随原版结构旋转。发现原世界树北侧旧拱门会让一条接头悬空，将前侧接头抬高到实木墙，并扩大对应渲染包围盒。
+
+```text
+python tools/blighted_elven_forest.py
+python tools/elven_blight_art.py
+python tools/elven_queen_regalia.py
+python tools/elven_blight_preview.py
+python tools/test_elven_blight.py
+./gradlew test jar --continue -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:elven_blight_*"
+./gradlew runClient jar -PlogosJar=/absolute/path/logos-0.6.0.jar -PldTest=elven_blight_queen,elven_blight_exterior -PldTestHeadless -PldTestWindow=1280x720
+```
+
+## 腐败精灵森林与腐败精灵女王首版（场地已由上方方案替代）
+
+2026-11-13：本地分支 `feat/corrupted-elven-forest`，基于 main `87b08488`；前置使用 Logos main `b4c3c77` 构建的 0.6.0，没有修改前置源码或版本号。说明见 [腐败精灵森林](docs/BLIGHTED_ELVEN_FOREST.md)。未提交、未上传。
+
+| 层级 | 结果 |
+| --- | --- |
+| 模板检查 | `python tools/test_elven_blight.py` 2/2：348 份模板不带实体、作物、培养罐和健康树材，拼接池引用完整，世界树仅一个树心标记 |
+| 单元 | 新增 `ElvenBlightDataTest` 3/3；全量 399/400，唯一失败为主干已有的 `LangCoverageTest`：缺 `item.logos_dimension.fuda_desk` 的中文名称；本次新增方块与物品名称已齐全 |
+| 世界 | `elven_blight_*` 6/6：原版 343 部件拼接与树心定位、自然靠近触发、同一核心不重复召唤、保存 UUID、登场免伤与解除、击败不再触发、横扫单次结算、增生土壤规则与腐败免疫、场地脉光安全落脚与照明 |
+| 腐败回归 | 原有 `corruption_*` 16/16：蔓延、网络拆分、接触伤害、原方块恢复、核心成长与衍生物行为均通过 |
+| 实际客户端 | `elven_blight_queen` 1/1 场景、4/4 检查；查看了核心闭合、核心张开女王爬出、站立三张 1280×720 截图，无光影包 |
+| 构建 | 本地 `jar` 任务成功；JAR 含全部 348 份腐败模板与独立女王资源，不含 `.bbmodel` 源文件 |
+| 未验证 | 多人实战、平衡、第三方光影包，以及不同存档中腐败森林的实际面积占比（数据为五组精灵噪声分支中的一组，不宣称所有种子精确 20%） |
+
+修复了两轮检查发现的问题：26.1 旧 `random_patch` 不可用，改成原版单方块 Feature 加放置修饰器；补齐树根的 placed feature；战斗按实体逐刻计时，测试等待区块实体真正走刻；截图镜头由树干内部移进树心并增加净空断言；原有地板光纹改为腐败脉光，避免整个场地失去照明，也避免把登场期间玩家的全部落脚点变成持续伤害区。
+
+```text
+python tools/blighted_elven_forest.py
+python tools/elven_blight_art.py
+python tools/test_elven_blight.py
+./gradlew test jar --continue -PlogosJar=/absolute/path/logos-0.6.0.jar
+./gradlew runGameTestServer -PlogosJar=/absolute/path/logos-0.6.0.jar "-PdimensionTests=logos_dimension:elven_blight_*"
+./gradlew runClient -PlogosJar=/absolute/path/logos-0.6.0.jar -PldTest=elven_blight_queen -PldTestHeadless -PldTestWindow=1280x720
 ```
 
 ## 依赖 Logos 0.7.0：最大魔力字段改名、回魔按上限百分比、符文解锁

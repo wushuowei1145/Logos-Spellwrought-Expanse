@@ -66,6 +66,7 @@ public final class LogosDimension {
         dev.logos.dimension.corruption.Corruption.init();
         dev.logos.dimension.corruption.Corruption.register(bus);
         dev.logos.dimension.corruption.mob.CorruptionMobs.register(bus);
+        dev.logos.dimension.elven.blight.ElvenBlight.register(bus);
         DimensionBlocks.BLOCKS.register(bus); DimensionBlocks.ITEMS.register(bus);
         DimensionFluids.TYPES.register(bus); DimensionFluids.FLUIDS.register(bus);
         DimensionParticles.register(bus);
@@ -95,6 +96,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.OrganGameTests.register(bus);
         dev.logos.dimension.gametest.FoxfireGameTests.register(bus);
         dev.logos.dimension.gametest.ShiraumeGameTests.register(bus);
+        dev.logos.dimension.gametest.ElvenBlightGameTests.register(bus);
         dev.logos.dimension.gametest.ReifuGameTests.register(bus);
         dev.logos.dimension.gametest.CauldronInstanceGameTests.register(bus);
         dev.logos.dimension.gametest.GrapeGameTests.register(bus);
