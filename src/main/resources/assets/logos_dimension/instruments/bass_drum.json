@@ -1,0 +1,32 @@
+{
+ "format": 1,
+ "quality": "synth",
+ "source": "synthesized by tools/instrument_samples.py",
+ "range": 64,
+ "zones": [
+  {
+   "file": "instrument/bass_drum/k35",
+   "key": 35.0,
+   "lo": 35,
+   "hi": 35,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.7486,
+   "curve": 1.4,
+   "frames": 154350,
+   "release": 0.0
+  },
+  {
+   "file": "instrument/bass_drum/k36",
+   "key": 36.0,
+   "lo": 36,
+   "hi": 36,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.6667,
+   "curve": 1.4,
+   "frames": 154350,
+   "release": 0.0
+  }
+ ]
+}

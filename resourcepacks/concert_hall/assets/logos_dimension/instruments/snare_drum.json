@@ -1,0 +1,140 @@
+{
+ "format": 1,
+ "quality": "recorded",
+ "source": "Versilian Community Sample Library (CC0 1.0) sgossner/VCSL@c1ea7bcc3c73",
+ "range": 48,
+ "zones": [
+  {
+   "file": "instrument/snare_drum/37_0",
+   "key": 37.0,
+   "lo": 37,
+   "hi": 37,
+   "vlo": 1,
+   "vhi": 127,
+   "gain": 0.6839,
+   "curve": 1.4,
+   "frames": 34474,
+   "release": 0.0
+  },
+  {
+   "file": "instrument/snare_drum/38_0",
+   "key": 38.0,
+   "lo": 38,
+   "hi": 38,
+   "vlo": 1,
+   "vhi": 32,
+   "gain": 0.1603,
+   "curve": 1.4,
+   "frames": 61739,
+   "release": 0.0
+  },
+  {
+   "file": "instrument/snare_drum/39_0",
+   "key": 39.0,
+   "lo": 39,
+   "hi": 39,
+   "vlo": 1,
+   "vhi": 84,
+   "gain": 0.3705,
+   "curve": 1.4,
+   "frames": 61739,
+   "release": 0.0
+  },
+  {
+   "file": "instrument/snare_drum/40_0",
+   "key": 40.0,
+   "lo": 40,
+   "hi": 40,
+   "vlo": 1,
+   "vhi": 56,
+   "gain": 0.2695,
+   "curve": 1.4,
+   "frames": 38052,
+   "release": 0.0
+  },
+  {
+   "file": "instrument/snare_drum/38_1",
+   "key": 38.0,
+   "lo": 38,
+   "hi": 38,
+   "vlo": 33,
+   "vhi": 60,
+   "gain": 0.2916,
+   "curve": 1.4,
+   "frames": 59822,
+   "release": 0.0
+  },
+  {
+   "file": "instrument/snare_drum/39_1",
+   "key": 39.0,
+   "lo": 39,
+   "hi": 39,
+   "vlo": 85,
+   "vhi": 127,
+   "gain": 1.0,
+   "curve": 1.4,
+   "frames": 61739,
+   "release": 0.0
+  },
+  {
+   "file": "instrument/snare_drum/40_1",
+   "key": 40.0,
+   "lo": 40,
+   "hi": 40,
+   "vlo": 57,
+   "vhi": 96,
+   "gain": 0.5188,
+   "curve": 1.4,
+   "frames": 44365,
+   "release": 0.0
+  },
+  {
+   "file": "instrument/snare_drum/38_2",
+   "key": 38.0,
+   "lo": 38,
+   "hi": 38,
+   "vlo": 61,
+   "vhi": 86,
+   "gain": 0.4577,
+   "curve": 1.4,
+   "frames": 59834,
+   "release": 0.0
+  },
+  {
+   "file": "instrument/snare_drum/40_2",
+   "key": 40.0,
+   "lo": 40,
+   "hi": 40,
+   "vlo": 97,
+   "vhi": 127,
+   "gain": 0.9803,
+   "curve": 1.4,
+   "frames": 44141,
+   "release": 0.0
+  },
+  {
+   "file": "instrument/snare_drum/38_3",
+   "key": 38.0,
+   "lo": 38,
+   "hi": 38,
+   "vlo": 87,
+   "vhi": 108,
+   "gain": 0.6153,
+   "curve": 1.4,
+   "frames": 38365,
+   "release": 0.0
+  },
+  {
+   "file": "instrument/snare_drum/38_4",
+   "key": 38.0,
+   "lo": 38,
+   "hi": 38,
+   "vlo": 109,
+   "vhi": 127,
+   "gain": 0.7458,
+   "curve": 1.4,
+   "frames": 31483,
+   "release": 0.0
+  }
+ ]
+}

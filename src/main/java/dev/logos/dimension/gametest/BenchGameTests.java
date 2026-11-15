@@ -70,6 +70,7 @@ public final class BenchGameTests {
         tests.put("station_posts_by_lead", BenchGameTests::posts);
         tests.put("station_timpani_benches", BenchGameTests::timpani);
         tests.put("station_player_posts", BenchGameTests::playerPosts);
+        tests.put("station_percussion_posts", BenchGameTests::percussionPosts);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -272,6 +273,53 @@ public final class BenchGameTests {
         level.getBlockState(cello).useWithoutItem(level, player, hit(cello));
         h.assertTrue(player.getVehicle() instanceof dev.logos.dimension.music.InstrumentSeat seat && seat.getType() == Instruments.SEAT.get()
             && seat.kind() == InstrumentKind.CELLO, "the cello's post is a seat");
+        h.succeed();
+    }
+
+    /**
+     * 大鼓、小军鼓、吊镲、三角铁（docs/ORCHESTRA.md 第 20 节）：空手右键站到乐器前面（朝北放置时站在北面）的工位上，面朝乐器；
+     * 拴绳牵着的生物也上得去；有人时不再收人；琴凳不关联它们（不是坐着弹的乐器）。
+     */
+    private static void percussionPosts(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        var blocks = List.of(Instruments.BASS_DRUM.get(), Instruments.SNARE_DRUM.get(), Instruments.SUSPENDED_CYMBAL.get(), Instruments.TRIANGLE.get());
+        var kinds = List.of(InstrumentKind.BASS_DRUM, InstrumentKind.SNARE_DRUM, InstrumentKind.SUSPENDED_CYMBAL, InstrumentKind.TRIANGLE);
+        Player player = h.makeMockPlayer(GameType.SURVIVAL);
+        for (int i = 0; i < blocks.size(); i++) {
+            BlockPos drum = h.absolutePos(new BlockPos(1 + 2 * i, 1, 3));
+            place(level, drum, blocks.get(i).defaultBlockState().setValue(InstrumentBlock.FACING, Direction.NORTH));
+            player.stopRiding();
+            player.snapTo(drum.getX() + 0.5, drum.getY(), drum.getZ() - 1.5, 180, 0);
+            level.getBlockState(drum).useWithoutItem(level, player, hit(drum));
+            if (!(player.getVehicle() instanceof dev.logos.dimension.music.InstrumentSeat post)) {
+                throw new AssertionError("an empty hand takes the " + kinds.get(i) + " post");
+            }
+            h.assertTrue(post.getType() == Instruments.STANDING_POST.get() && post.kind() == kinds.get(i), kinds.get(i) + " is played standing");
+            post.positionRider(player);
+            if (kinds.get(i) == InstrumentKind.BASS_DRUM) {
+                // 大鼓侧放：鼓皮朝东西，人站在东面那面鼓皮外、面朝西
+                h.assertTrue(player.getX() > drum.getX() + 1 && Math.abs(player.getZ() - (drum.getZ() + 0.5)) < 1.0e-3,
+                    "bass drum: standing east of it, beside a head: " + player.position());
+                h.assertTrue(Math.abs(net.minecraft.util.Mth.wrapDegrees(post.getYRot() - Direction.WEST.toYRot())) < 1.0e-3, "bass drum: facing its head");
+            } else {
+                h.assertTrue(player.getZ() < drum.getZ() && Math.abs(player.getX() - (drum.getX() + 0.5)) < 1.0e-3,
+                    kinds.get(i) + ": standing north of it: " + player.position());
+                h.assertTrue(Math.abs(net.minecraft.util.Mth.wrapDegrees(post.getYRot() - Direction.SOUTH.toYRot())) < 1.0e-3, kinds.get(i) + ": facing it");
+            }
+            h.assertTrue(StarbloomBenchBlock.performerFacing(kinds.get(i), level.getBlockState(drum)) == null, kinds.get(i) + " is not a bench instrument");
+        }
+        // 生物：拴绳牵着上大鼓（玩家先下来），玩家再来时已经有人
+        BlockPos bass = h.absolutePos(new BlockPos(1, 1, 3));
+        player.stopRiding();
+        ForestElf elf = elf(h, new BlockPos(1, 1, 6));
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.LEAD));
+        elf.setLeashedTo(player, true);
+        level.getBlockState(bass).useItemOn(player.getMainHandItem(), level, player, InteractionHand.MAIN_HAND, hit(bass));
+        h.assertTrue(elf.getVehicle() instanceof dev.logos.dimension.music.InstrumentSeat seat && seat.kind() == InstrumentKind.BASS_DRUM,
+            "the led elf takes the bass drum");
+        player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+        level.getBlockState(bass).useWithoutItem(level, player, hit(bass));
+        h.assertTrue(player.getVehicle() == null, "a taken post takes no one else");
         h.succeed();
     }
 

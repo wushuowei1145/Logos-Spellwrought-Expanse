@@ -55,6 +55,10 @@ VCSL 是 VSCO 2 CE 的扩展版，收了 VSCO 2 CE 的大部分采样（有的�
 | 巴松管（手持） | VSCO 2 CE `Woodwinds/Bassoon/sus` | A♯1–D♯5 13 个音（弱的一层少一个）× v1 / v2 两层 | 直音长音；**文件名比实际低一个八度**；加了循环点 |
 | 王室小号（手持） | VSCO 2 CE `Brass/Trumpet/sus` | F3–C6 10 个音 × 弱 / 强两层 | 直音长音；**文件名比实际低一个八度**；加了循环点 |
 | 定音鼓 | VSCO 2 CE `Percussion/Timpani`（Hit） | 五面鼓 × v1 / v3 / v4 三层（第一面鼓没录 v4，最强一层用它的 v3） | 文件名不写音名，音高按 VSCO 的 SFZ：F♯2、A♯2、C♯3、E3、F♯3；音域 D2–A3 |
+| 大鼓 | VCSL `Bass Drum 1`、`Bass Drum 2` | 35 = Bass Drum 1 v2 / v3 / v5 / v7 四层；36 = Bass Drum 2 pp / mp / mf / f / ff 五层 | 无音高：每个 GM 鼓键用自己的录音，不变调（下同） |
+| 小军鼓 | VCSL `Snare Drum, Modern 1`、`Modern 3` | 37 边击（Modern 3 Xstick）一层；38 军鼓（Modern 1 响弦）五层；39 鼓边重击（Modern 3 rimshot）两层；40 重音（Modern 3 响弦）三层 | 响弦全开 |
+| 吊镲 | VCSL `Suspended Cymbal 1`、`2`、`Hi-Hat Cymbal` | 强音 49 / 57 = 两面吊镲软槌击 4 / 5 层；52 中国镲、55 水镲 = 其中两层；叮叮 51 / 59 = 鼓棒击 3 层；53 镲帽 3 层；踩镲 42 闭 4 层、44 踩、46 开各一层 | 踩镲的键在吊镲上奏成轻击（用踩镲的录音） |
+| 三角铁 | VCSL `Triangles`（Triangle1） | 81 开音两层；80 闷音一层 | |
 
 各库文件名的八度写法不一样（有的把中央 C 写成 C3），八度以库自带的 SFZ 为准；每个采样再量一遍音高：按谐波定出它实际在
 哪个八度、差多少音分，和预期不符时报出来，只取测出的音分。
@@ -69,7 +73,11 @@ VCSL 是 VSCO 2 CE 的扩展版，收了 VSCO 2 CE 的大部分采样（有的�
   5 Hz 的揉弦（6 个周期）、一个周期的慢摆动都取整数个周期，弓噪、气声做成以循环长度为周期的噪声，循环终点正好接上起点。
   起音只是音量和亮度慢慢推起来，没有噪声冲击。
 - 响度、力度曲线与录音同一套标准（K 计权，力度 127 时约 −16 dB），装不装资源包，同一件乐器差不多一样响。
-- 体积：钢琴 0.58 MB、大键琴 0.48、竖琴 0.38，其余每件 0.1–0.26 MB，共 3.4 MB。
+- 无音高的打击乐（大鼓、小军鼓、吊镲、三角铁）每个 GM 鼓键合成一个采样、不变调：大鼓、军鼓的鼓皮按模态（加一点音高回落），
+  军鼓的响弦、镲的嘶声是滤波噪声，镲和三角铁是一大把不谐和的分音（镲两百多支、高的衰减快）；各键之间的轻重按 `DRUM_KEYS` 的电平。
+  大鼓的能量大多在 50 Hz 上下，K 计权对得上录音、耳朵和小音箱却听着轻 10 dB：上方模态、槌声按录音的倍频程能量补过，
+  A 计权、切掉 120 Hz 以下后都和录音差在 1.5 dB 以内（新的低频乐器同样要用这两种量法对一下）。
+- 体积：钢琴 0.58 MB、大键琴 0.48、竖琴 0.38，其余每件 0.1–0.26 MB，打击乐四件共 0.34 MB，共 3.7 MB。
 
 ## 5. 录音怎么做成游戏里的采样
 
@@ -138,10 +146,8 @@ uv run --no-project --with numpy --with scipy python tools/instrument_audit.py -
 | 大号 | VSCO 2 CE `Brass/Tuba` | 长音 9 音（17–50），3 层；断奏 2 层 | |
 | 小号其他奏法 | VSCO 2 CE `Brass/Trumpet` | 揉音 11 音、断奏 3 层、直弱音器 / 哈蒙弱音器各 8 音 | 可加到现在的小号上 |
 | 定音鼓滚奏、另两套定音鼓 | VSCO 2 CE `Percussion/Timpani`（Roll）；VCSL `Timpani 1`、`Timpani 2` | 五面鼓滚奏 2 层；Timpani 2 有 204 个文件，3 层 | 滚奏可做成「按住 = 滚奏」 |
-| 小军鼓 | VCSL `Snare Drum, Modern 1–3`、`Rope Tension` | 每种 20–30 个文件，最多 9 层 | 无音高 |
-| 大鼓 | VCSL `Bass Drum 1`、`Bass Drum 2` | Bass Drum 2 有 pp–ff 六档 | 无音高 |
-| 镲 | VCSL `Clash Cymbals 1/2`（对镲）、`Suspended Cymbal 1/2`（吊镲） | 对镲 5–10 个，吊镲 23–25 个 | 无音高 |
-| 三角铁 | VCSL `Triangles` | 37 个文件，2 层 | 无音高 |
+| 对镲 | VCSL `Clash Cymbals 1/2` | 5–10 个文件 | 无音高；大鼓、小军鼓、吊镲、三角铁 2026-11-15 已做进乐团（第 3 节） |
+| 打击乐其他奏法 | VCSL 同上各文件夹 | 军鼓滚奏、Rope Tension 军鼓；大鼓滚奏、渐强；吊镲滚奏、弓擦、刮奏；三角铁滚奏 | 可做成「按住 = 滚奏」 |
 | 录音的管风琴 | VCSL `Pipe Organ`（Loud / Quiet / 两种踏板）、`Renaissance Organ`（8′ / 4′ / Full） | 21–27 音，每种一个固定的音栓组合 | 不能自由开关音栓，所以现在的管风琴仍合成；可另做一台「文艺复兴小管风琴」 |
 | 其他大键琴 | VCSL `Harpsichord, French / Flemish / English（Normal、Lute 两种音栓）/ Italian` | 各 27–32 音 | 现在用的 Unk 是每个半音都有的；English 的 Lute 音栓可做成换音色 |
 | 马林巴、木琴、颤音琴 | VCSL `Marimba`（3 层）、`Xylophone`（pp / ff）、`Vibraphone`（软硬槌） | 8–11 音 | 不在之前的表里，顺带记下 |

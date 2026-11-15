@@ -28,8 +28,23 @@ public final class MusicRoll {
     public static final int PEDAL_DOWN = 1;
     public static final int PEDAL_UP = 2;
 
-    /** 声部：名字与 GM 音色号（只作提示，播放时由乐器决定音色）。 */
-    public record Part(String name, int program) {}
+    /**
+     * 打击乐声部（MIDI 第 10 通道）的「音色号」：GM 只有 0–127，128 专门标打击乐。这个声部里的音高是 GM 鼓键号，
+     * 只有无音高的打击乐器演奏（{@link InstrumentKind#playsPart}），整体移八度、按八度折叠都不做。
+     */
+    public static final int DRUMS = 128;
+
+    /** 声部：名字与 GM 音色号（只作提示，播放时由乐器决定音色）；打击乐声部的音色号是 {@link #DRUMS}。 */
+    public record Part(String name, int program) {
+        public boolean drums() {
+            return program == DRUMS;
+        }
+    }
+
+    /** 读进来的音色号：0–127 照旧，128 是打击乐，别的按 GM 截到 0–127。 */
+    static int program(int raw) {
+        return raw == DRUMS ? DRUMS : raw & 0x7F;
+    }
 
     /** 一个事件。踏板事件的 pitch/velocity/duration 为 0。 */
     public record Event(int timeMs, int type, int part, int pitch, int velocity, int durationMs) {
@@ -89,7 +104,7 @@ public final class MusicRoll {
         this.beatsPerBar = Math.max(1, Math.min(32, beatsPerBar));
         this.beatUnit = Math.max(1, Math.min(32, beatUnit));
         List<Part> ps = new ArrayList<>();
-        for (Part p : parts) ps.add(new Part(clip(p.name(), MAX_PART_NAME), p.program() & 0x7F));
+        for (Part p : parts) ps.add(new Part(clip(p.name(), MAX_PART_NAME), program(p.program())));
         if (ps.isEmpty()) ps.add(new Part("", 0));
         this.parts = List.copyOf(ps);
         List<Event> sorted = new ArrayList<>(events);
@@ -129,6 +144,7 @@ public final class MusicRoll {
      * 用音域 low–high 的乐器放这卷纸带时，每个声部整体移几个半音（12 的倍数）：让能弹到的音最多，
      * 整个声部一起移，旋律里的音程保持不变（不逐音折叠）。一样多时不移优先，再是移得少的、往上移的。
      * 移完仍超出音域的个别音由播放时按八度折进来（声部本身比乐器音域还宽时才会有）。
+     * 打击乐声部不移（鼓键不是音高）。
      */
     public int[] octaveShifts(int low, int high) {
         int[] shifts = new int[MAX_PARTS];
@@ -143,7 +159,7 @@ public final class MusicRoll {
             }
         }
         for (int part = 0; part < MAX_PARTS; part++) {
-            if (!used[part]) continue;
+            if (!used[part] || part < parts.size() && parts.get(part).drums()) continue;
             int best = 0;
             for (int k : new int[]{1, -1, 2, -2, 3, -3, 4, -4, 5, -5}) {
                 if (inRange[part][k + 5] > inRange[part][best + 5]) best = k;
@@ -239,7 +255,7 @@ public final class MusicRoll {
         int partCount = in.u8();
         if (partCount < 1 || partCount > MAX_PARTS) throw new FormatException("声部数不对");
         List<Part> parts = new ArrayList<>(partCount);
-        for (int i = 0; i < partCount; i++) parts.add(new Part(in.string(MAX_PART_NAME), in.u8() & 0x7F));
+        for (int i = 0; i < partCount; i++) parts.add(new Part(in.string(MAX_PART_NAME), program(in.u8())));
         int count = in.varInt();
         if (count > MAX_EVENTS) throw new FormatException("事件超过 " + MAX_EVENTS + " 个");
         List<Event> events = new ArrayList<>(count);

@@ -301,7 +301,7 @@ final class VoiceBank {
 
     /** @param gain 乐团里这个声部的响度（倍数） */
     static void noteOn(String key, InstrumentKind kind, BlockPos pos, Vec3 at, int input, int pitch, int velocity, int part, float gain) {
-        if (pitch < kind.low() || pitch > kind.high() || gain <= 0) return;
+        if (!kind.sounds(pitch) || gain <= 0) return;
         Source s = source(key, kind, pos, at);
         // 同一个音再次弹下：先止住还在响的那一个（琴槌或手指重新碰到弦；管风琴同一根管不会响两次）
         for (Voice v : s.voices) {

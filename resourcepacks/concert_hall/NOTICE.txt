@@ -37,7 +37,8 @@ VS Chamber Orchestra: Community Edition (VSCO 2 CE)
   协议不要求署名，这里致谢。
 
 ----------------------------------------------------------------------------------------------------
-Versilian Community Sample Library (VCSL)  (concert_harp/, glockenspiel/, tubular_bells/, harpsichord/)
+Versilian Community Sample Library (VCSL)  (concert_harp/, glockenspiel/, tubular_bells/, harpsichord/,
+  bass_drum/, snare_drum/, suspended_cymbal/, triangle/)
   Versilian Studios and contributors
   https://github.com/sgossner/VCSL (commit c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e)
   License / 协议: CC0 1.0 Universal (public domain dedication) https://creativecommons.org/publicdomain/zero/1.0/

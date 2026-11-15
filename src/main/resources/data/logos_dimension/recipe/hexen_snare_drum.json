@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " L ",
+    "INI",
+    "S S"
+  ],
+  "key": {
+    "L": "minecraft:leather",
+    "I": "minecraft:iron_nugget",
+    "N": "minecraft:note_block",
+    "S": "minecraft:stick"
+  },
+  "result": {
+    "id": "logos_dimension:hexen_snare_drum",
+    "count": 1
+  }
+}

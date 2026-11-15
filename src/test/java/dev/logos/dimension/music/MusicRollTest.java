@@ -37,6 +37,25 @@ class MusicRollTest {
         return new MusicRoll(base.title(), base.author(), base.bpmX100(), base.beatsPerBar(), base.beatUnit(), base.parts(), base.events(), tempos);
     }
 
+    /** 打击乐声部（MIDI 第 10 通道）：音色号 128 存得下、读得回；整体移八度不动它（鼓键不是音高）。 */
+    @Test void drumPartsRoundTripAndAreNeverShifted() throws Exception {
+        List<MusicRoll.Event> ev = new ArrayList<>();
+        ev.add(MusicRoll.Event.note(0, 0, 36, 100, 100));
+        ev.add(MusicRoll.Event.note(0, 1, 38, 100, 100));
+        ev.add(MusicRoll.Event.note(500, 1, 81, 80, 100));
+        MusicRoll roll = new MusicRoll("", "", 12000, 4, 4,
+            List.of(new MusicRoll.Part("钢琴", 0), new MusicRoll.Part("打击乐", MusicRoll.DRUMS)), ev);
+        MusicRoll back = MusicRoll.decode(roll.encode());
+        assertFalse(back.parts().get(0).drums());
+        assertTrue(back.parts().get(1).drums());
+        assertEquals(MusicRoll.DRUMS, back.parts().get(1).program());
+        int[] shifts = back.octaveShifts(60, 84);
+        assertEquals(24, shifts[0], "the low piano note is moved up two octaves for a high instrument");
+        assertEquals(0, shifts[1], "drum keys stay where they are");
+        assertEquals(0, new MusicRoll("", "", 12000, 4, 4, List.of(new MusicRoll.Part("", 300)), List.of()).parts().get(0).program() & 0x80,
+            "programs other than 128 are still clipped to 0–127");
+    }
+
     @Test void tempoAndMeterChangesRoundTrip() throws Exception {
         MusicRoll roll = withTempos(sample(), List.of(new MusicRoll.Tempo(4000, 9000, 3, 4), new MusicRoll.Tempo(1000, 6000, 6, 8)));
         byte[] bytes = roll.encode();

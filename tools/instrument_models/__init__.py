@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-GROUPS = ["keyboards", "organ", "strings", "winds", "percussion"]
+GROUPS = ["keyboards", "organ", "strings", "winds", "percussion", "drums"]
 
 
 def build_all(only=None):

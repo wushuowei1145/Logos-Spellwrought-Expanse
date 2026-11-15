@@ -11,6 +11,8 @@ assets/logos_dimension/instruments/<乐器>.json（quality = synth）。装了�
 - 持续音（小提琴、中提琴、大提琴、低音提琴、长笛、双簧管、巴松、小号）合成一段起音和一段 1.2 秒的无缝循环：
   载波、5 Hz 的揉弦（6 个周期）、一个周期的慢摆动都取整数个周期，弓噪、气声用逆 FFT 做成以循环长度为周期的噪声，
   所以循环终点正好接上起点。起音只是音量和亮度慢慢推起来，没有噪声冲击（第一版手持乐器像鼓的那一下就是它）。
+- 无音高的打击乐（大鼓、小军鼓、吊镲、三角铁）每个 GM 鼓键合成一个采样（不变调）：鼓皮按模态、镲和三角铁按一大把不谐和的分音
+  加噪声，响弦、镲的嘶声用滤波噪声；各键之间的轻重按 DRUM_KEYS 里的电平（踩镲比强音镲轻）。
 - 每个采样放大到峰值 -1 dBFS 编码；播放音量按 K 计权响度写进采样表（与录音音源同一套标准，力度 127 时约 -16 dB）。
 - 随机数种子固定、ogg 用固定流序号编码，重复运行字节不变。
 """
@@ -272,6 +274,193 @@ def timpani(midi, rng):
     return finish(out, fade_s=0.8)
 
 
+# ---------------------------------------------------------------- 无音高打击乐（每个 GM 鼓键一个采样）
+
+
+def _env(t, attack, t60):
+    return np.minimum(1.0, t / max(attack, 1e-6)) * np.exp(-6.9 * t / t60)
+
+
+def membrane(f1, rng, modes, duration, glide=0.0, glide_s=0.05):
+    """鼓皮：(1,1) 主模态 f1 和几支上方模态（各自 (倍数, 强弱, t60)），刚敲下时张力大、音高略高再落回。"""
+    n = int(RATE * duration)
+    t = np.arange(n) / RATE
+    bend = 1.0 + glide * np.exp(-t / glide_s)
+    out = np.zeros(n)
+    for ratio, amp, t60 in modes:
+        f = f1 * ratio
+        if f > RATE * 0.45:
+            continue
+        phase = 2 * np.pi * np.cumsum(f * bend) / RATE + rng.uniform(0, 2 * np.pi)
+        out += amp * np.exp(-6.9 * t / t60) * np.sin(phase)
+    return out, t
+
+
+def bass_drum(key, rng):
+    """音乐会大鼓：大而松的鼓皮，羊毛槌敲出很低的轰鸣（44–52 Hz）、一串不谐和的上方模态（80–450 Hz，鼓腔的「咚」）和槌打在皮上的闷响，余音长。
+    只有轰鸣时 K 计权响度够了、耳朵和小音箱却几乎听不见（A 计权比录音轻 10 dB）：上方模态、槌声和 150 / 480 Hz 两处共鸣
+    按 VCSL 录音的倍频程能量对过，A 计权、切掉 120 Hz 以下后的响度都和录音差在 1.5 dB 以内。"""
+    f1 = 44.0 if key == 35 else 52.0
+    modes = [(1.0, 1.0, 2.2), (1.59, 0.9, 1.3), (2.14, 0.8, 0.9), (2.30, 0.55, 0.8), (2.65, 0.6, 0.7), (2.92, 0.45, 0.6),
+             (3.16, 0.45, 0.5), (3.50, 0.35, 0.45), (4.06, 0.3, 0.4), (4.60, 0.25, 0.35), (5.20, 0.2, 0.3), (6.0, 0.16, 0.25),
+             (7.1, 0.12, 0.2), (8.3, 0.09, 0.16)]
+    out, t = membrane(f1, rng, modes, 3.5, glide=0.06, glide_s=0.08)
+    out *= np.minimum(1.0, t / 0.004)
+    out /= head_rms(out)
+    thump = noise_burst(rng, int(RATE * 0.09), 60.0, 2500.0, 0.022)
+    out[: len(thump)] += thump / (np.max(np.abs(thump)) + 1e-9) * 1.6
+    out = spectral_shape(out, lambda f: peak(f, 70.0, 1.0, 1.0) * peak(f, 150.0, 1.0, 4.0) * peak(f, 480.0, 0.8, 5.0)
+                         / (1.0 + (f / 4000.0) ** 3))
+    out = room(out, rng, length=1.2, wet=0.20, damp=2500.0)
+    return finish(out, fade_s=0.6)
+
+
+def snare(key, rng):
+    """小军鼓：鼓皮的模态（约 190 Hz）加贴在下面鼓皮上的响弦（滤波噪声，沙沙地拖一下），鼓棒尖打出很短的一下。
+    37 边击：鼓棒横搭在鼓边上敲，木头响、几乎没有响弦；39 鼓边重击（同时打鼓皮和鼓边，亮而炸）；40 重音（响弦更多）。"""
+    duration = 0.9 if key == 37 else 1.3
+    n = int(RATE * duration)
+    t = np.arange(n) / RATE
+    if key == 37:
+        out = np.zeros(n)
+        for f, amp, t60 in ((420.0, 1.0, 0.09), (1250.0, 0.8, 0.06), (2300.0, 0.4, 0.04), (3900.0, 0.25, 0.03)):
+            out += amp * np.exp(-6.9 * t / t60) * np.sin(2 * np.pi * f * t + rng.uniform(0, 2 * np.pi))
+        out /= head_rms(out)
+        click = noise_burst(rng, int(RATE * 0.02), 1500.0, 9000.0, 0.002)
+        out[: len(click)] += click / (np.max(np.abs(click)) + 1e-9) * 0.6
+        out = room(out, rng, length=0.5, wet=0.12)
+        return finish(out, fade_s=0.3)
+    tone, _ = membrane(188.0, rng, [(1.0, 1.0, 0.32), (1.59, 0.6, 0.2), (2.14, 0.35, 0.16), (2.3, 0.3, 0.14), (2.65, 0.2, 0.1)],
+                       duration, glide=0.03, glide_s=0.03)
+    tone /= head_rms(tone)
+    wires = rng.standard_normal(n) * _env(t, 0.002, 0.26 if key == 40 else 0.22)
+    wires = spectral_shape(wires, lambda f: peak(f, 4500.0, 0.8, 4.0) * (f > 1500.0) / (1.0 + (f / 11000.0) ** 3))
+    wires /= np.sqrt(np.mean(wires[: int(RATE * 0.2)] ** 2)) + 1e-9
+    snares = {38: 0.9, 39: 1.1, 40: 1.3}[key]
+    out = 0.7 * tone + snares * wires
+    crack = noise_burst(rng, int(RATE * 0.025), 1200.0, 10000.0, 0.003 if key != 39 else 0.006)
+    out[: len(crack)] += crack / (np.max(np.abs(crack)) + 1e-9) * (1.6 if key == 39 else 0.8)
+    out = room(out, rng, length=0.7, wet=0.14, damp=6000.0)
+    return finish(out, fade_s=0.4)
+
+
+def metal(rng, n, lo, hi, count, t60_lo, t60_hi, tilt, attack=0.0, cluster=None):
+    """镲、三角铁一类的金属：在 lo–hi 之间对数均匀撒 count 支不谐和的分音，高的衰减快、也轻一些（tilt）。"""
+    t = np.arange(n) / RATE
+    out = np.zeros(n)
+    freqs = np.exp(rng.uniform(np.log(lo), np.log(hi), count))
+    if cluster:
+        freqs = np.concatenate([freqs, np.array(cluster)])
+    for f in freqs:
+        if f > RATE * 0.45:
+            continue
+        x = np.log(f / lo) / np.log(hi / lo)
+        t60 = t60_hi + (t60_lo - t60_hi) * (1 - x) * rng.uniform(0.7, 1.3)
+        amp = (lo / f) ** tilt * rng.uniform(0.5, 1.0)
+        out += amp * np.exp(-6.9 * t / t60) * np.sin(2 * np.pi * f * t + rng.uniform(0, 2 * np.pi))
+    if attack:
+        out *= 1.0 - np.exp(-t / attack)
+    return out, t
+
+
+def cymbal(key, rng):
+    """吊镲（软槌、鼓棒敲）：强音是一大片不谐和的分音慢慢「开花」再长长地散开；叮叮镲是鼓棒尖的「叮」加很轻的余音；
+    镲帽是几支清楚的高音；踩镲键在吊镲上奏成很短的轻击（闭）、更短的一下（踩）、带嘶声的一下（开）。"""
+    if key in (49, 57, 52, 55):
+        duration = {49: 5.0, 57: 5.0, 52: 4.0, 55: 2.5}[key]
+        lo = {49: 380.0, 57: 330.0, 52: 600.0, 55: 520.0}[key]
+        n = int(RATE * duration)
+        out, t = metal(rng, n, lo, 15000.0, 220, duration * 0.75, duration * 0.3, 0.35, attack=0.025)
+        hiss = rng.standard_normal(n) * _env(t, 0.03, duration * 0.5)
+        hiss = spectral_shape(hiss, lambda f: (f > 3000.0) * peak(f, 8000.0, 0.7, 3.0) / (1.0 + (f / 15000.0) ** 4))
+        out = out / head_rms(out) + 0.8 * hiss / (head_rms(hiss))
+        if key == 52:  # 中国镲：中频更多、更「破」
+            out = spectral_shape(out, lambda f: peak(f, 1500.0, 1.2, 6.0))
+        tap = noise_burst(rng, int(RATE * 0.03), 2000.0, 12000.0, 0.004)
+        out[: len(tap)] += tap / (np.max(np.abs(tap)) + 1e-9) * 0.5
+        out = room(out, rng, length=1.1, wet=0.16, damp=7000.0)
+        return finish(out, fade_s=min(1.0, duration * 0.25))
+    if key in (51, 59, 53):
+        duration = 3.0
+        n = int(RATE * duration)
+        if key == 53:
+            ping, t = metal(rng, n, 900.0, 4200.0, 8, 1.6, 0.8, 0.2)
+        else:
+            ping, t = metal(rng, n, 2200.0, 6500.0, 14, 0.35, 0.15, 0.2)
+        wash, _ = metal(rng, n, 420.0, 13000.0, 120, 2.6, 0.9, 0.4, attack=0.04)
+        out = ping / head_rms(ping) + (0.35 if key != 53 else 0.25) * wash / head_rms(wash)
+        tick = noise_burst(rng, int(RATE * 0.015), 3000.0, 12000.0, 0.0015)
+        out[: len(tick)] += tick / (np.max(np.abs(tick)) + 1e-9) * 0.7
+        out = room(out, rng, length=0.8, wet=0.12, damp=8000.0)
+        return finish(out, fade_s=0.6)
+    # 踩镲：42 闭、44 踩、46 开
+    duration = {42: 0.45, 44: 0.35, 46: 1.4}[key]
+    t60 = {42: 0.09, 44: 0.06, 46: 0.7}[key]
+    n = int(RATE * duration)
+    out, t = metal(rng, n, 2500.0, 15000.0, 80, t60, t60 * 0.6, 0.2)
+    hiss = rng.standard_normal(n) * _env(t, 0.001, t60)
+    hiss = spectral_shape(hiss, lambda f: (f > 5000.0) / (1.0 + (f / 16000.0) ** 4))
+    out = out / head_rms(out) + 1.2 * hiss / head_rms(hiss)
+    out = room(out, rng, length=0.5, wet=0.10, damp=9000.0)
+    return finish(out, fade_s=min(0.3, duration * 0.4))
+
+
+def triangle(key, rng):
+    """三角铁：钢棒弯成的三角，钢棒尖敲出一串很高的、不谐和的分音，叮的一下之后余音很长；80 闷音是手捏着，很快就停。"""
+    duration = 4.0 if key == 81 else 0.6
+    n = int(RATE * duration)
+    base = 1180.0
+    t = np.arange(n) / RATE
+    out = np.zeros(n)
+    for ratio, amp, t60 in ((1.0, 0.8, 3.6), (2.756, 1.0, 3.2), (2.81, 0.6, 3.0), (5.404, 0.7, 2.6), (5.47, 0.4, 2.4),
+                            (8.933, 0.45, 2.0), (9.05, 0.3, 1.8), (13.34, 0.25, 1.4), (13.5, 0.15, 1.3)):
+        f = base * ratio
+        if f > RATE * 0.45:
+            continue
+        if key == 80:
+            t60 = min(t60, 0.18)
+        out += amp * np.exp(-6.9 * t / t60) * np.sin(2 * np.pi * f * t + rng.uniform(0, 2 * np.pi))
+    out /= head_rms(out)
+    tick = noise_burst(rng, int(RATE * 0.01), 4000.0, 14000.0, 0.0012)
+    out[: len(tick)] += tick / (np.max(np.abs(tick)) + 1e-9) * 0.5
+    out = room(out, rng, length=0.9, wet=0.14, damp=9000.0)
+    return finish(out, fade_s=0.8 if key == 81 else 0.2)
+
+
+# 鼓键 → (合成函数, 相对电平 dB)；同 InstrumentKind 里各件打击乐的键
+DRUM_KEYS = {
+    "bass_drum": {35: (bass_drum, 0.0), 36: (bass_drum, 0.0)},
+    "snare_drum": {37: (snare, -6.0), 38: (snare, 0.0), 39: (snare, 0.0), 40: (snare, 0.0)},
+    "suspended_cymbal": {42: (cymbal, -9.0), 44: (cymbal, -12.0), 46: (cymbal, -6.0), 49: (cymbal, 0.0), 51: (cymbal, -5.0),
+                         52: (cymbal, 0.0), 53: (cymbal, -4.0), 55: (cymbal, -3.0), 57: (cymbal, 0.0), 59: (cymbal, -5.0)},
+    "triangle": {80: (triangle, -3.0), 81: (triangle, 0.0)},
+}
+# 乐器之间的平衡、可闻距离（同 InstrumentKind）
+DRUM_SPEC = {"bass_drum": dict(level=1.0, range=64), "snare_drum": dict(level=-2.0, range=48),
+             "suspended_cymbal": dict(level=-3.0, range=64), "triangle": dict(level=-6.0, range=40)}
+
+
+def build_drums(name):
+    spec = DRUM_SPEC[name]
+    out_dir = ASSETS / "sounds/instrument" / name
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for old in out_dir.glob("*.ogg"):
+        old.unlink()
+    zones = []
+    for key, (fn, key_level) in DRUM_KEYS[name].items():
+        rng = np.random.default_rng(7000 + key)
+        sig = fn(key, rng)
+        loud = rec.loudness_db(sig, 0, min(len(sig), int(0.8 * RATE)), 0.4)
+        store = 0.891 / (np.max(np.abs(sig)) + 1e-12)
+        stored = loud + 20 * math.log10(store)
+        gain = min(1.0, 10 ** ((rec.REF + spec["level"] + key_level - stored) / 20))
+        rec.encode(sig * store, out_dir / f"k{key}.ogg", 4.0)
+        zones.append({"file": f"instrument/{name}/k{key}", "key": float(key), "lo": key, "hi": key, "vlo": 1, "vhi": 127,
+                      "gain": round(gain, 4), "curve": 1.4, "frames": len(sig), "release": 0.0})
+        print(f"{name} k{key} {len(sig) / RATE:.2f} s gain {gain:.3f}", flush=True)
+    rec.write_map_json(ASSETS / "instruments" / f"{name}.json", "synthesized by tools/instrument_samples.py", spec["range"], "synth", zones)
+
+
 # ---------------------------------------------------------------- 持续音：起音 + 无缝循环
 
 LOOP_S = 1.2
@@ -443,11 +632,19 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ffmpeg", required=True, help="带 libvorbis 的 ffmpeg")
     parser.add_argument("--demo", type=Path, help="把试听用的音阶与和弦另存到这个目录")
-    parser.add_argument("--only", nargs="*", choices=list(INSTRUMENTS), help="只生成这几种乐器")
+    parser.add_argument("--only", nargs="*", choices=list(INSTRUMENTS) + list(DRUM_KEYS), help="只生成这几种乐器")
     args = parser.parse_args()
     rec.FFMPEG = args.ffmpeg
-    for name in args.only or list(INSTRUMENTS):
-        build(name, args.demo)
+    names = args.only or list(INSTRUMENTS) + list(DRUM_KEYS)
+    for name in names:
+        if name in DRUM_KEYS:
+            build_drums(name)
+        else:
+            build(name, args.demo)
+    drums = [n for n in names if n in DRUM_KEYS]
+    if args.demo and drums:
+        rec.ASSETS = ASSETS
+        rec.drum_demo(drums, args.demo, "demo_drums_synth")
     size = sum(f.stat().st_size for f in (ASSETS / "sounds/instrument").rglob("*.ogg"))
     print(f"synthesized instrument sounds in the mod: {size / 1e6:.2f} MB")
 

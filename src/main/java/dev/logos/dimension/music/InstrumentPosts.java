@@ -13,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 /**
- * 乐器的工位（docs/ORCHESTRA.md 第 15 节）：大提琴琴后的凳子、低音提琴琴后、钟琴和管钟前面站的地方。
+ * 乐器的工位（docs/ORCHESTRA.md 第 15、20 节）：大提琴琴后的凳子、低音提琴琴后、钟琴和管钟以及大鼓、小军鼓、吊镲、三角铁前面站的地方。
  * 坐（站）在工位上的人或生物就是这件乐器的演奏者，用 {@link InstrumentSeat} 留在那里（生物连同座位存盘）。
  * 玩家空手右键大提琴、低音提琴坐上去（{@link SeatedInstrumentBlock}）；生物用拴绳牵着右键乐器带上工位，潜行空手右键乐器让它离开。
  * 定音鼓不在这里：坐在鼓后关联的琴凳上（{@link StarbloomBenchBlock}）。
@@ -24,7 +24,7 @@ public final class InstrumentPosts {
     /** 这种乐器有没有工位。 */
     public static boolean has(@Nullable InstrumentKind kind) {
         return kind == InstrumentKind.CELLO || kind == InstrumentKind.DOUBLE_BASS
-            || kind == InstrumentKind.GLOCKENSPIEL || kind == InstrumentKind.TUBULAR_BELLS;
+            || kind == InstrumentKind.GLOCKENSPIEL || kind == InstrumentKind.TUBULAR_BELLS || kind != null && kind.unpitched();
     }
 
     /** 站着演奏（腿伸直、不坐）。 */
@@ -34,9 +34,12 @@ public final class InstrumentPosts {
 
     /**
      * 演奏者双脚在朝北放置的方块模型里的位置（像素；x 向东、y 向上、z 向南）。大提琴、低音提琴的人在琴后（南面，面朝北），
-     * 钟琴、管钟的人在前面（北面，面朝南）——同 tools/instrument_models/percussion.py 里各自的画法。
+     * 钟琴、管钟和无音高的打击乐的人在前面（北面，面朝南）——同 tools/instrument_models/percussion.py、drums.py 里各自的画法。
+     * 大鼓侧放（方块状态多转 90°，鼓皮朝东西）：人站在东面那面鼓皮外、面朝西，在侧面敲。
      */
     public static Vec3 feet(InstrumentKind kind) {
+        if (kind == InstrumentKind.BASS_DRUM) return new Vec3(22, 0, 8);
+        if (kind.unpitched()) return new Vec3(8, 0, -6);
         return switch (kind) {
             case GLOCKENSPIEL -> new Vec3(8, 0, -6);
             case TUBULAR_BELLS -> new Vec3(8, 0, -5);
@@ -44,9 +47,10 @@ public final class InstrumentPosts {
         };
     }
 
-    /** 演奏者面朝的方向：大提琴、低音提琴同乐器的 FACING（琴正面朝北、人在南面）；钟琴、管钟相反（人在北面朝南）。 */
+    /** 演奏者面朝的方向：大提琴、低音提琴同乐器的 FACING（琴正面朝北、人在南面）；钟琴、管钟相反（人在北面朝南）；侧放的大鼓朝西。 */
     public static Direction performerFacing(InstrumentKind kind, Direction facing) {
-        return kind == InstrumentKind.GLOCKENSPIEL || kind == InstrumentKind.TUBULAR_BELLS ? facing.getOpposite() : facing;
+        if (kind == InstrumentKind.BASS_DRUM) return facing.getCounterClockWise();
+        return kind == InstrumentKind.GLOCKENSPIEL || kind == InstrumentKind.TUBULAR_BELLS || kind.unpitched() ? facing.getOpposite() : facing;
     }
 
     /** 工位在世界里的位置：模型坐标按方块朝向转过去（同方块状态的 y 旋转）。 */

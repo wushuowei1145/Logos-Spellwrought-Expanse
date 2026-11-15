@@ -51,13 +51,14 @@ public class InstrumentGalleryViews implements UIScenario {
             Instruments.ORGAN_WIND_CHEST_ITEM, Instruments.ORGAN_TIN_PIPE_ITEM, Instruments.ORGAN_WOOD_PIPE_ITEM, Instruments.ORGAN_TRUMPET_PIPE_ITEM,
             Instruments.CONCERT_HARP_ITEM, Instruments.TUBULAR_BELLS_ITEM, Instruments.GLOCKENSPIEL_ITEM, Instruments.TIMPANI_ITEM,
             Instruments.CELLO_ITEM, Instruments.DOUBLE_BASS_ITEM, Instruments.VIOLIN, Instruments.VIOLA,
+            Instruments.BASS_DRUM_ITEM, Instruments.SNARE_DRUM_ITEM, Instruments.SUSPENDED_CYMBAL_ITEM, Instruments.TRIANGLE_ITEM,
             Instruments.FLUTE, Instruments.OBOE, Instruments.BASSOON, Instruments.TRUMPET,
             Instruments.MUSIC_STAND_ITEM, Orchestra.PODIUM_ITEM, Orchestra.BATON, Benches.BENCH_ITEM, Benches.DUET_ITEM,
             Instruments.BLANK_ROLL, Instruments.MUSIC_ROLL_ITEM);
     }
 
     /** 第一人称拿着看的几件：大件方块、管风琴零件、手持乐器。 */
-    private static final int[] HELD = {0, 4, 5, 8, 10, 14, 16, 19, 20};
+    private static final int[] HELD = {0, 4, 5, 8, 16, 14, 18, 23, 24};
 
     @Override
     public void configure(ScenarioOptions o) {
@@ -161,6 +162,11 @@ public class InstrumentGalleryViews implements UIScenario {
                     column(level, chest.above(), pipe, c[2]);
                 }
                 put(level, ORIGIN.offset(10, 1, -12), Instruments.ORGAN_WIND_CHEST.get());
+                // 第四排：大鼓、小军鼓、吊镲、三角铁
+                put(level, ORIGIN.offset(-6, 1, -16), Instruments.BASS_DRUM.get());
+                put(level, ORIGIN.offset(-3, 1, -16), Instruments.SNARE_DRUM.get());
+                put(level, ORIGIN.offset(0, 1, -16), Instruments.SUSPENDED_CYMBAL.get());
+                put(level, ORIGIN.offset(3, 1, -16), Instruments.TRIANGLE.get());
                 DimensionTravel.teleport(ctx.player(), level, new Vec3(ORIGIN.getX(), GROUND + 9, ORIGIN.getZ() + 14), 180f, 30f);
                 fly(ctx.player());
             })
@@ -182,6 +188,9 @@ public class InstrumentGalleryViews implements UIScenario {
         shot(s, "furniture", 10, 2.4, -2.6, 180f, 18f);
         shot(s, "organ_pipes", 0, 3.4, -6.5, 180f, 14f);
         shot(s, "organ_pipes_close", -4, 2.6, -9.5, 200f, 20f);
+        shot(s, "percussion_row", -1.0, 3.0, -10.4, 180f, 18f);
+        shot(s, "percussion_close", -4.5, 2.2, -13.8, 200f, 24f);
+        shot(s, "percussion_triangle", 4.8, 2.0, -13.6, 160f, 22f);
         shot(s, "back", 0, 7, -22, 0f, 22f);
         shot(s, "back_keyboards", -9, 2.8, -4.5, 0f, 22f);
         s.step("show the HUD", ctx -> Minecraft.getInstance().options.hideGui = false)

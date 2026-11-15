@@ -157,17 +157,17 @@ public final class MidiReader {
         ArrayDeque<Raw>[][] open = new ArrayDeque[16][128];
         List<MusicRoll.Event> events = new ArrayList<>();
         boolean[] pedal = new boolean[16];
-        int drums = 0;
+        // 第 10 通道是打击乐：读成一个打击乐声部（音色号 MusicRoll.DRUMS，音高就是 GM 鼓键号），由大鼓、小军鼓、吊镲、三角铁演奏；
+        // 这几件都不认的键（通通鼓、牛铃……）照样记进纸带，只是没人演奏，导入时告诉玩家有多少个
+        int unplayed = 0;
         for (Raw r : raws) {
             if (r.kind == 0xC0) {
                 program[r.channel] = r.d1;
                 continue;
             }
-            if (r.channel == DRUM_CHANNEL) {
-                if (r.kind == 0x90 && r.d2 > 0) drums++;
-                continue;
-            }
+            if (r.channel == DRUM_CHANNEL && r.kind == 0x90 && r.d2 > 0 && InstrumentKind.ofDrumKey(r.d1) == null) unplayed++;
             if (r.kind == 0xB0) {
+                if (r.channel == DRUM_CHANNEL) continue;
                 if (r.d1 != 64) continue;
                 boolean down = r.d2 >= 64;
                 if (down == pedal[r.channel]) continue;
@@ -178,10 +178,14 @@ public final class MidiReader {
             }
             boolean on = r.kind == 0x90 && r.d2 > 0;
             if (on) {
-                // 第一次出现音符时给这个通道开一个声部（除去打击乐最多 15 个，不会超过 16）
+                // 第一次出现音符时给这个通道开一个声部（16 个通道，最多 16 个声部）
                 partOfChannel.computeIfAbsent(r.channel, ch -> {
                     String name = trackNames.getOrDefault(r.track, "");
-                    parts.add(new MusicRoll.Part(name.isEmpty() ? "通道 " + (ch + 1) : name, program[ch]));
+                    if (ch == DRUM_CHANNEL) {
+                        parts.add(new MusicRoll.Part(name.isEmpty() ? "打击乐" : name, MusicRoll.DRUMS));
+                    } else {
+                        parts.add(new MusicRoll.Part(name.isEmpty() ? "通道 " + (ch + 1) : name, program[ch]));
+                    }
                     return parts.size() - 1;
                 });
                 if (open[r.channel][r.d1] == null) open[r.channel][r.d1] = new ArrayDeque<>();
@@ -207,7 +211,7 @@ public final class MidiReader {
                 }
             }
         }
-        if (drums > 0) notes.add("打击乐（第 10 通道）" + drums + " 个音没有导入");
+        if (unplayed > 0) notes.add("打击乐里有 " + unplayed + " 个音（通通鼓、牛铃等）没有对应的乐器，不演奏");
 
         // 截到上限：事件数、总时长
         events.sort((a, b) -> Integer.compare(a.timeMs(), b.timeMs()));

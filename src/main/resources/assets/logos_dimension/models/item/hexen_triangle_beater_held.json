@@ -1,0 +1,255 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "hexen_drum_tools": "logos_dimension:block/instrument/hexen_drum_tools",
+    "particle": "logos_dimension:block/instrument/hexen_drum_tools"
+  },
+  "elements": [
+    {
+      "from": [
+        7.7,
+        0,
+        7.7
+      ],
+      "to": [
+        8.3,
+        0.3,
+        8.3
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            8.5,
+            5.0,
+            9.0,
+            5.5
+          ]
+        },
+        "south": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            8.5,
+            5.0,
+            9.0,
+            5.5
+          ]
+        },
+        "east": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            10.0,
+            5.0,
+            10.5,
+            5.5
+          ]
+        },
+        "west": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            10.0,
+            5.0,
+            10.5,
+            5.5
+          ]
+        },
+        "up": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            8.5,
+            5.0,
+            9.0,
+            5.5
+          ]
+        },
+        "down": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            8.5,
+            5.0,
+            9.0,
+            5.5
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.72,
+        0.3,
+        7.72
+      ],
+      "to": [
+        8.28,
+        3.0,
+        8.28
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            9.5,
+            0.5,
+            10.0,
+            2.0
+          ]
+        },
+        "south": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            9.5,
+            0.5,
+            10.0,
+            2.0
+          ]
+        },
+        "east": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            9.5,
+            0.5,
+            10.0,
+            2.0
+          ]
+        },
+        "west": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            9.5,
+            0.5,
+            10.0,
+            2.0
+          ]
+        },
+        "up": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            14.0,
+            7.0,
+            14.5,
+            7.5
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.76,
+        3.0,
+        7.76
+      ],
+      "to": [
+        8.24,
+        3.3,
+        8.24
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            8.5,
+            5.0,
+            9.0,
+            5.5
+          ]
+        },
+        "south": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            8.5,
+            5.0,
+            9.0,
+            5.5
+          ]
+        },
+        "east": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            10.0,
+            5.0,
+            10.5,
+            5.5
+          ]
+        },
+        "west": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            10.0,
+            5.0,
+            10.5,
+            5.5
+          ]
+        },
+        "up": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            8.5,
+            5.0,
+            9.0,
+            5.5
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.88,
+        3.3,
+        7.88
+      ],
+      "to": [
+        8.12,
+        9.3,
+        8.12
+      ],
+      "faces": {
+        "north": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            5.0,
+            0.5,
+            5.5,
+            3.5
+          ]
+        },
+        "south": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            5.0,
+            0.5,
+            5.5,
+            3.5
+          ]
+        },
+        "east": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            5.0,
+            0.5,
+            5.5,
+            3.5
+          ]
+        },
+        "west": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            5.0,
+            0.5,
+            5.5,
+            3.5
+          ]
+        },
+        "up": {
+          "texture": "#hexen_drum_tools",
+          "uv": [
+            0.5,
+            8.5,
+            1.0,
+            9.0
+          ]
+        }
+      }
+    }
+  ],
+  "display": {}
+}

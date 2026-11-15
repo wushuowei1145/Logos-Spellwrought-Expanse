@@ -13,6 +13,7 @@ import dev.logos.dimension.music.Benches;
 import dev.logos.dimension.music.InstrumentBlock;
 import dev.logos.dimension.music.InstrumentBlockEntity;
 import dev.logos.dimension.music.InstrumentKind;
+import dev.logos.dimension.music.MusicRoll;
 import dev.logos.dimension.music.Instruments;
 import dev.logos.dimension.music.MusicStandBlock;
 import dev.logos.dimension.music.StarbloomBenchBlock;
@@ -539,6 +540,130 @@ public abstract class HallViews implements UIScenario {
                         && m.left() != null && m.right() != null && m.left().x < m.right().x;
                 });
             b = shot(b, "hall_player_timpani", point(-8.4, 8.8, -15.8), point(-8.4, 7.0, -19.8));
+            b.teardownServer("stop playing, stand up", ctx -> {
+                ServerLevel level = ctx.server().overworld();
+                if (level.getBlockEntity(PODIUM) instanceof PodiumBlockEntity be) be.stop();
+                ctx.player().stopRiding();
+            });
+            b.teardown("my own eyes again", ctx -> {
+                var mc = Minecraft.getInstance();
+                mc.setScreen(null);
+                if (mc.player != null) mc.setCameraEntity(mc.player);
+                mc.options.hideGui = false;
+                mc.options.setCameraType(CameraType.FIRST_PERSON);
+            });
+        }
+    }
+
+    // —— 打击乐组（docs/ORCHESTRA.md 第 20 节）：管钟两边的三角铁、小军鼓、大鼓、吊镲，站在乐器北面、面朝指挥 ——
+
+    static final BlockPos TRIANGLE = at(2, 6, -19), SNARE = at(3, 6, -19), BASS_DRUM = at(6, 6, -19), CYMBAL = at(4, 6, -19);
+    static int bassDrummer, snareDrummer, cymbalist, triangler;
+    /** 小军鼓、吊镲的两只手在演奏中各落下过（轮流打）。 */
+    static boolean snareLeft, snareRight, cymbalLeft, cymbalRight;
+
+    /** 魔女之森进行曲加一条鼓（第 10 通道）：大鼓一三拍、军鼓二四拍、踩镲（后半首换叮叮镲）八分、每四小节一下强音镲、每小节一下三角铁，最后一小节军鼓滚奏。 */
+    static MusicRoll withDrums(MusicRoll score) {
+        int q = ConductingViews.quarterMs();
+        int drums = score.parts().size();
+        List<MusicRoll.Event> ev = new ArrayList<>(score.events());
+        for (int bar = 0; bar < ConductingViews.BARS; bar++) {
+            int t0 = bar * 4 * q;
+            if (bar % 4 == 0) ev.add(MusicRoll.Event.note(t0, drums, bar == 8 ? 57 : 49, 112, q));
+            ev.add(MusicRoll.Event.note(t0, drums, 81, 92, q));
+            for (int beat = 0; beat < 4; beat++) {
+                int t = t0 + beat * q;
+                ev.add(MusicRoll.Event.note(t, drums, beat % 2 == 0 ? 36 : 38, beat % 2 == 0 ? 104 : 96, q / 2));
+                for (int half = 0; half < 2; half++) {
+                    ev.add(MusicRoll.Event.note(t + half * q / 2, drums, bar < 6 ? 42 : 51, half == 0 ? 84 : 64, q / 4));
+                }
+            }
+            if (bar == ConductingViews.BARS - 1) {
+                for (int i = 0; i < 8; i++) ev.add(MusicRoll.Event.note(t0 + 2 * q + i * q / 4, drums, 38, 60 + 7 * i, q / 8));
+            }
+        }
+        List<MusicRoll.Part> parts = new ArrayList<>(score.parts());
+        parts.add(new MusicRoll.Part("打击乐", MusicRoll.DRUMS));
+        return new MusicRoll(score.title(), score.author(), score.bpmX100(), score.beatsPerBar(), score.beatUnit(), parts, ev);
+    }
+
+    /**
+     * 打击乐组：僵尸、骷髅、精灵、尸壳站到大鼓、小军鼓、吊镲、三角铁前的工位上，总谱带一条鼓。合奏起来每件乐器只响自己的键，
+     * 每位鼓手拿着自己的槌：大鼓、三角铁右手一支，小军鼓、吊镲两手各一支、轮流落下。最后玩家自己站到小军鼓前。
+     */
+    @LDLRegisterClient(name = "orchestra_percussion_ui", group = "instrument", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class Percussion extends HallViews {
+        @Override
+        public void define(ScenarioBuilder s) {
+            ScenarioBuilder b = stage(s)
+                .server("post the percussionists", ctx -> {
+                    ServerLevel level = ctx.server().overworld();
+                    for (BlockPos p : new BlockPos[]{TRIANGLE, SNARE, BASS_DRUM, CYMBAL}) vacate(level, p);
+                    bassDrummer = post(level, EntityType.ZOMBIE, BASS_DRUM).getId();
+                    snareDrummer = post(level, EntityType.SKELETON, SNARE).getId();
+                    cymbalist = post(level, NpcEntities.FOREST_ELF.get(), CYMBAL).getId();
+                    triangler = post(level, EntityType.HUSK, TRIANGLE).getId();
+                    snareLeft = snareRight = cymbalLeft = cymbalRight = false;
+                })
+                .waitUntil("the four percussionists stand at their posts", ctx -> {
+                    for (int id : new int[]{bassDrummer, snareDrummer, cymbalist, triangler}) {
+                        Entity e = Minecraft.getInstance().level.getEntity(id);
+                        if (e == null || !(e.getVehicle() instanceof dev.logos.dimension.music.InstrumentSeat)) return false;
+                    }
+                    return true;
+                })
+                .server("score with drums on the stand, start with the baton", ctx -> {
+                    ServerLevel level = ctx.server().overworld();
+                    if (level.getBlockEntity(PODIUM) instanceof PodiumBlockEntity be) {
+                        be.setScore(ConductingViews.punched(withDrums(ConductingViews.score())));
+                        Orchestra.batonOnPodium(ctx.player().getMainHandItem(), level, PODIUM, ctx.player());
+                    }
+                })
+                .waitUntil("the drums sound in the ensemble", ctx -> Conducting.sounding(PODIUM, SNARE) > 0
+                    && Conducting.sounding(PODIUM, BASS_DRUM) > 0 && Conducting.sounding(PODIUM, CYMBAL) > 0)
+                .check("each percussionist strikes its own instrument with its own tools", ctx -> {
+                    InstrumentKind[] kinds = {InstrumentKind.BASS_DRUM, InstrumentKind.SNARE_DRUM, InstrumentKind.SUSPENDED_CYMBAL, InstrumentKind.TRIANGLE};
+                    int[] ids = {bassDrummer, snareDrummer, cymbalist, triangler};
+                    for (int i = 0; i < ids.length; i++) {
+                        var m = musician(ids[i]);
+                        if (m == null || m.mode() != MusicianPoses.Mode.MALLETS || m.kind() != kinds[i] || !m.standing() || m.right() == null) return false;
+                        boolean twoHands = kinds[i] == InstrumentKind.SNARE_DRUM || kinds[i] == InstrumentKind.SUSPENDED_CYMBAL;
+                        if (twoHands != (m.left() != null)) return false;
+                    }
+                    return true;
+                })
+                .waitUntil("the snare's and the cymbal's two hands both come down", ctx -> {
+                    var sn = musician(snareDrummer);
+                    var cy = musician(cymbalist);
+                    if (sn != null && sn.left() != null && sn.right() != null) {
+                        snareLeft |= sn.left().y < 14.2f;
+                        snareRight |= sn.right().y < 14.2f;
+                    }
+                    if (cy != null && cy.left() != null && cy.right() != null) {
+                        cymbalLeft |= cy.left().y < 15.6f;
+                        cymbalRight |= cy.right().y < 15.6f;
+                    }
+                    return snareLeft && snareRight && cymbalLeft && cymbalRight;
+                });
+            b = shot(b, "hall_percussion", point(4.5, 8.4, -14.8), point(4.6, 6.9, -19.6));
+            b = shotOf(b, "hall_percussion_bass_drum", () -> bassDrummer, -2.0, -0.3, 1.3);
+            b = shotOf(b, "hall_percussion_snare", () -> snareDrummer, -0.7, 2.2, 1.3);
+            b = shotOf(b, "hall_percussion_cymbal", () -> cymbalist, -0.8, 2.2, 1.4);
+            b = shotOf(b, "hall_percussion_triangle", () -> triangler, 0.8, 1.9, 1.0);
+            b = b.server("the skeleton leaves the snare; I right-click it with an empty hand", ctx -> {
+                    ServerLevel level = ctx.server().overworld();
+                    vacate(level, SNARE);
+                    ctx.player().getInventory().setSelectedSlot(1);
+                    level.getBlockState(SNARE).useWithoutItem(level, ctx.player(),
+                        new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(SNARE), net.minecraft.core.Direction.UP, SNARE, false));
+                })
+                .waitUntil("my two sticks strike the snare", ctx -> {
+                    var m = MusicianPoses.of(Minecraft.getInstance().player);
+                    return m != null && m.mode() == MusicianPoses.Mode.MALLETS && m.kind() == InstrumentKind.SNARE_DRUM && m.standing()
+                        && m.left() != null && m.right() != null && Math.min(m.left().y, m.right().y) < 14.2f;
+                });
+            b = shot(b, "hall_player_snare", point(3.4, 8.2, -16.6), point(3.5, 6.9, -19.7));
+            b = shotOf(b, "hall_player_snare_side", () -> Minecraft.getInstance().player.getId(), -2.4, 1.4, 1.3);
             b.teardownServer("stop playing, stand up", ctx -> {
                 ServerLevel level = ctx.server().overworld();
                 if (level.getBlockEntity(PODIUM) instanceof PodiumBlockEntity be) be.stop();

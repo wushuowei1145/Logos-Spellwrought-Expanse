@@ -136,6 +136,24 @@ public final class Instruments {
     public static final DeferredItem<?> DOUBLE_BASS_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_double_bass", DOUBLE_BASS);
     public static final DeferredItem<?> TIMPANI_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_timpani", TIMPANI);
 
+    /** 第四批：无音高的打击乐（一格，站在前面的工位上敲；docs/ORCHESTRA.md 第 20 节）。 */
+    public static final DeferredBlock<SingleInstrumentBlock> BASS_DRUM = DimensionBlocks.BLOCKS.registerBlock(
+        "hexen_bass_drum", p -> new SingleInstrumentBlock(p, InstrumentKind.BASS_DRUM, net.minecraft.world.level.block.Block.box(4, 0, 1, 12, 16, 15)),
+        p -> p.mapColor(MapColor.COLOR_BROWN).strength(1.5f).sound(SoundType.WOOD).noOcclusion().pushReaction(PushReaction.BLOCK));
+    public static final DeferredBlock<SingleInstrumentBlock> SNARE_DRUM = DimensionBlocks.BLOCKS.registerBlock(
+        "hexen_snare_drum", p -> new SingleInstrumentBlock(p, InstrumentKind.SNARE_DRUM, net.minecraft.world.level.block.Block.box(3, 0, 2, 13, 14, 11)),
+        p -> p.mapColor(MapColor.GOLD).strength(1.5f).sound(SoundType.COPPER).noOcclusion().pushReaction(PushReaction.BLOCK));
+    public static final DeferredBlock<SingleInstrumentBlock> SUSPENDED_CYMBAL = DimensionBlocks.BLOCKS.registerBlock(
+        "hexen_suspended_cymbal", p -> new SingleInstrumentBlock(p, InstrumentKind.SUSPENDED_CYMBAL, net.minecraft.world.level.block.Block.box(2, 0, 2, 14, 16, 13)),
+        p -> p.mapColor(MapColor.GOLD).strength(1.5f).sound(SoundType.COPPER).noOcclusion().pushReaction(PushReaction.BLOCK));
+    public static final DeferredBlock<SingleInstrumentBlock> TRIANGLE = DimensionBlocks.BLOCKS.registerBlock(
+        "hexen_triangle", p -> new SingleInstrumentBlock(p, InstrumentKind.TRIANGLE, net.minecraft.world.level.block.Block.box(4, 0, 5, 14, 20, 11)),
+        p -> p.mapColor(MapColor.METAL).strength(1.0f).sound(SoundType.METAL).noOcclusion().pushReaction(PushReaction.BLOCK));
+    public static final DeferredItem<?> BASS_DRUM_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_bass_drum", BASS_DRUM);
+    public static final DeferredItem<?> SNARE_DRUM_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_snare_drum", SNARE_DRUM);
+    public static final DeferredItem<?> SUSPENDED_CYMBAL_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_suspended_cymbal", SUSPENDED_CYMBAL);
+    public static final DeferredItem<?> TRIANGLE_ITEM = DimensionBlocks.ITEMS.registerSimpleBlockItem("hexen_triangle", TRIANGLE);
+
     /** 大提琴、低音提琴后面的座位（看不见、不存盘）。 */
     private static final DeferredRegister<net.minecraft.world.entity.EntityType<?>> ENTITY_TYPES =
         DeferredRegister.create(Registries.ENTITY_TYPE, LogosDimension.ID);
@@ -144,7 +162,7 @@ public final class Instruments {
                 net.minecraft.world.entity.MobCategory.MISC).sized(0.25f, 0.25f).noSummon().clientTrackingRange(10).updateInterval(20)
             .build(net.minecraft.resources.ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("instrument_seat"))));
     /**
-     * 站着演奏的工位（低音提琴、钟琴、管钟）：和 {@link #SEAT} 同一个类，只是另一种实体，
+     * 站着演奏的工位（低音提琴、钟琴、管钟、大鼓、小军鼓、吊镲、三角铁）：和 {@link #SEAT} 同一个类，只是另一种实体，
      * 别的模组按骑乘的实体分动作时（车万女仆的 GeckoLib 模型 {@code vehicle#...}，标签 data/logos_dimension/tags/entity_type/）能分清坐着和站着。
      */
     public static final DeferredHolder<net.minecraft.world.entity.EntityType<?>, net.minecraft.world.entity.EntityType<InstrumentSeat>> STANDING_POST =
@@ -164,7 +182,8 @@ public final class Instruments {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<InstrumentBlockEntity>> INSTRUMENT_ENTITY =
         BLOCK_ENTITIES.register("instrument", () -> new BlockEntityType<>(InstrumentBlockEntity::new, GRAND_PIANO.get(), CONCERT_HARP.get(), ORGAN_CONSOLE.get(),
             GLOCKENSPIEL.get(), CELESTA.get(), TUBULAR_BELLS.get(), HARPSICHORD.get(), MUSIC_STAND.get(),
-            CELLO.get(), DOUBLE_BASS.get(), TIMPANI.get(), Benches.BENCH.get(), Benches.DUET.get()));
+            CELLO.get(), DOUBLE_BASS.get(), TIMPANI.get(), Benches.BENCH.get(), Benches.DUET.get(),
+            BASS_DRUM.get(), SNARE_DRUM.get(), SUSPENDED_CYMBAL.get(), TRIANGLE.get()));
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<RollInfo>> MUSIC_ROLL =
         COMPONENTS.registerComponentType("music_roll", b -> b.persistent(RollInfo.CODEC).networkSynchronized(RollInfo.STREAM_CODEC));

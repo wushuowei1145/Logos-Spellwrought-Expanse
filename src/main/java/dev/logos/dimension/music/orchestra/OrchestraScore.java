@@ -15,6 +15,7 @@ import java.util.WeakHashMap;
  * <p>「钢琴曲」：所有有音的声部都是键盘音色（钢琴、大键琴；没写音色号的通道读出来也是 0 号钢琴），轨道名也没说是别的乐器。
  * 拆法（按时间从前往后、几乎同时按下的音算一组）：一组里最高的音归旋律、最低的归低音，中间的归和声；
  * 单独一个音看它离刚才的旋律近还是离刚才的低音近。一组的最高音离低音更近（右手停着、左手在弹和弦）时不算旋律，最低音同理。
+ * 打击乐声部（MIDI 第 10 通道）不算：钢琴加鼓的曲子照样拆，鼓的音也不拆进旋律、和声、低音。
  */
 public final class OrchestraScore {
     public static final int MELODY = 0, HARMONY = 1, BASS = 2;
@@ -56,13 +57,15 @@ public final class OrchestraScore {
         for (MusicRoll.Event e : raw.events()) if (e.type() == MusicRoll.NOTE && e.part() >= 0 && e.part() < parts) used[e.part()] = true;
         boolean any = false;
         for (int p = 0; p < parts; p++) {
-            if (!used[p]) continue;
+            if (!used[p] || raw.parts().get(p).drums()) continue;
             any = true;
             if (!keyboard(raw.parts().get(p))) return new Score(raw, parts, List.of());
         }
         if (!any || parts + 3 > MusicRoll.MAX_PARTS) return new Score(raw, parts, List.of());
         List<MusicRoll.Event> notes = new ArrayList<>();
-        for (MusicRoll.Event e : raw.events()) if (e.type() == MusicRoll.NOTE) notes.add(e);
+        for (MusicRoll.Event e : raw.events()) {
+            if (e.type() == MusicRoll.NOTE && !(e.part() < parts && raw.parts().get(e.part()).drums())) notes.add(e);
+        }
         notes.sort((a, b) -> a.timeMs() != b.timeMs() ? Integer.compare(a.timeMs(), b.timeMs()) : Integer.compare(b.pitch(), a.pitch()));
         List<List<MusicRoll.Event>> voices = List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         split(notes, voices);

@@ -1,0 +1,107 @@
+{
+  "parent": "logos_dimension:block/hexen_snare_drum",
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "translation": [
+        -1.093,
+        1.282,
+        0.0
+      ],
+      "scale": [
+        0.9046,
+        0.9046,
+        0.9046
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        -0.114,
+        2.429,
+        0
+      ],
+      "scale": [
+        0.4286,
+        0.4286,
+        0.4286
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "translation": [
+        0.227,
+        0.857,
+        0.0
+      ],
+      "scale": [
+        0.8571,
+        0.8571,
+        0.8571
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        0.85,
+        1.589,
+        0
+      ],
+      "scale": [
+        0.7032,
+        0.7032,
+        0.7032
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "translation": [
+        0.777,
+        0.643,
+        0.0
+      ],
+      "scale": [
+        0.6429,
+        0.6429,
+        0.6429
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        225,
+        0
+      ],
+      "translation": [
+        0.777,
+        0.643,
+        0.0
+      ],
+      "scale": [
+        0.6429,
+        0.6429,
+        0.6429
+      ]
+    }
+  }
+}
