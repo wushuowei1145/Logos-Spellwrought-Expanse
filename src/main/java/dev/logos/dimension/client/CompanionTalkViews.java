@@ -119,7 +119,7 @@ public abstract class CompanionTalkViews extends CompanionViews {
                         talk().choose("back");
                         talk().choose("tactic");
                     }).ticks(6)
-                    .check("作战策略这一层", ctx -> talk().options().equals(List.of("move.follow", "move.stay", "plan", "back")))
+                    .check("作战策略这一层", ctx -> talk().options().equals(List.of("move.follow", "move.stay", "plan", "pvp", "back")))
                     .screenshot("companion_talk_tactic")
                     .step("修改行动策略", ctx -> talk().choose("plan")).ticks(6)
                     .screenshot("companion_talk_plan")
@@ -136,6 +136,17 @@ public abstract class CompanionTalkViews extends CompanionViews {
                     .waitUntil("档案也是留在原地", ctx -> talk().sheet().staying())
                     .step("跟上", ctx -> talk().choose("move.follow"))
                     .waitUntilServer("又跟上了", ctx -> !c.staying())
+                    .step("攻击玩家（开）", ctx -> {
+                        talk().skip();
+                        talk().choose("pvp");
+                    })
+                    .waitUntilServer("契上记下了攻击玩家", ctx -> ctx.player().getData(Companions.BOND).pvp())
+                    .waitUntil("她回话，选项打上勾", ctx -> said("pvp_on") && talk().sheet().pvp())
+                    .step("字出完", ctx -> talk().skip()).ticks(6)
+                    .screenshot("companion_talk_pvp")
+                    .step("攻击玩家（关）", ctx -> talk().choose("pvp"))
+                    .waitUntilServer("关掉了", ctx -> !ctx.player().getData(Companions.BOND).pvp())
+                    .waitUntil("她回话，勾去掉", ctx -> said("pvp_off") && !talk().sheet().pvp())
                     // 详细数据
                     .step("返回 → 详细数据", ctx -> {
                         talk().skip();
@@ -182,9 +193,9 @@ public abstract class CompanionTalkViews extends CompanionViews {
                         for (int i = 0; i < skills.size(); i++) if (skills.get(i).id().equals("katashiro")) panel().selectSkill(i);
                     }).ticks(4)
                     .screenshot("companion_panel_skills_sealed")
-                    .step("选下一枚契印的 ？？？", ctx -> {
+                    .step("选第四枚契印的 ？？？（狐火印，还没解锁）", ctx -> {
                         var skills = panel().parent().sheet().skills();
-                        for (int i = 0; i < skills.size(); i++) if (skills.get(i).id().equals("sealed")) panel().selectSkill(i);
+                        for (int i = 0; i < skills.size(); i++) if (skills.get(i).id().equals("brand")) panel().selectSkill(i);
                     }).ticks(4)
                     .screenshot("companion_panel_skills_locked")
                     .step("往事", ctx -> panel().tab(CompanionPanelScreen.Tab.MEMORIES)).ticks(4)

@@ -40,6 +40,9 @@ import org.jspecify.annotations.Nullable;
  * 术式发射器、书灵里写它，都和写错一个词一样报错；只有调试（{@code /logos cast}、{@code /alchemy foxfire page}）
  * 和附属自己的生物（神狐的狐火缠绕）用得了。编辑器打开一张狐火术式页时它显示成奥秘，存回去就是普通的奥秘术式。
  *
+ * <p>白梅的第三印教主人狐火之言（{@link #teach}）：学会的人自己写术式时 {@code foxfire} 和别的元素一样认得（编纂台、书与笔、
+ * 发射器、书灵），编纂台的卡片库里也有它。狐火是奥秘的一支，开着符文解锁时还要学会奥秘才写得上。
+ *
  * <p>这些都靠注入 Logos（{@code mixin/Foxfire*Mixin}）。Logos 改了被注入的方法时注入不上，狐火退回普通的奥秘伤害，不会崩。
  */
 public final class Foxfire {
@@ -48,6 +51,10 @@ public final class Foxfire {
     public static final TagKey<EntityType<?>> KIN = TagKey.create(Registries.ENTITY_TYPE, LogosDimension.id("foxfire_kin"));
     /** 术式里狐火的词。 */
     public static final String WORD = "foxfire";
+    /** 书灵的「搭档学会了什么」里，狐火之言的键（同 Logos 的 {@code element:…}）。 */
+    public static final String UNLOCK = "element:" + WORD;
+    /** 客户端：本机的玩家学会了没有（客户端启动时指过去；服务端一直是假）。 */
+    public static java.util.function.BooleanSupplier viewerKnows = () -> false;
 
     /**
      * 正在结算的这一下是狐火：什么颜色，打中后要不要附带效果（缠身每秒烧的那一下不再附带）。
@@ -179,6 +186,35 @@ public final class Foxfire {
     /** 编译完一条用过 foxfire 的术式。 */
     public static void compiled(@Nullable Spell spell) {
         if (spell != null) SOURCES.add(spell.source());
+    }
+
+    /** {@code p} 学会了狐火之言没有（白梅第三印）。 */
+    public static boolean knows(@Nullable Entity p) {
+        return p instanceof net.minecraft.world.entity.player.Player player && player.getData(FoxfireAttachments.KNOWN);
+    }
+
+    /** 教 {@code p} 狐火之言；已经会了返回假。 */
+    public static boolean teach(net.minecraft.server.level.ServerPlayer p) {
+        if (knows(p)) return false;
+        p.setData(FoxfireAttachments.KNOWN, true);
+        p.syncData(FoxfireAttachments.KNOWN);
+        return true;
+    }
+
+    /** 测试和命令用：忘掉狐火之言。 */
+    public static void forget(net.minecraft.server.level.ServerPlayer p) {
+        p.setData(FoxfireAttachments.KNOWN, false);
+        p.syncData(FoxfireAttachments.KNOWN);
+    }
+
+    /** 编译玩家自己写的术式：学会了狐火之言（{@code knows}）的人照常认得 foxfire，没学会的同 {@link #authoring(Supplier)}。 */
+    public static <T> T authoring(boolean knows, Supplier<T> compile) {
+        return knows ? compile.get() : authoring(compile);
+    }
+
+    /** 同上，走编译缓存的地方（{@link #authoring(String, Supplier)}）。 */
+    public static Spell authoring(boolean knows, String src, Supplier<Spell> compile) {
+        return knows ? compile.get() : authoring(src, compile);
     }
 
     /** 编译玩家自己写的术式：这期间 foxfire 是不认识的词。 */

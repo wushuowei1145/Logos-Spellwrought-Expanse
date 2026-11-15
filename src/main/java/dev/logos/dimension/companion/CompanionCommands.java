@@ -100,7 +100,7 @@ public final class CompanionCommands {
                 bond.pact() ? "是" : "否", bond.seals(), s.ratio() * 100, bond.affection(), CompanionBond.Stage.of(bond.affection()), bond.satiety(),
                 o.health(), o.armor(), o.toughness(), o.melee(), o.spellPower())), false);
         src.sendSuccess(() -> Component.literal(String.format("她：生命上限 %.1f 护甲 %.1f 韧性 %.1f 狐火弹 %.1f 刀 %.1f；休息还剩 %d 秒",
-                s.health(), s.armor(), s.toughness(), s.foxfire(), s.foxfire() * CompanionBlade.BLADE, (Companions.restLeft(p) + 19) / 20)), false);
+                s.health(), s.armor(), s.toughness(), s.foxfire(), s.foxfire() * CompanionStats.blade(bond.seals()), (Companions.restLeft(p) + 19) / 20)), false);
         ShiraumeCompanion c = Companions.out(p);
         if (c == null) {
             src.sendSuccess(() -> Component.literal("她现在不在外面"), false);

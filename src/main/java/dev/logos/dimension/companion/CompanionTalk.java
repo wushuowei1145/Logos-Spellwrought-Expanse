@@ -143,6 +143,7 @@ public final class CompanionTalk {
         bus.addListener((RegisterPayloadHandlersEvent event) -> {
             var registrar = event.registrar("1");
             registrar.playToClient(Update.TYPE, Update.CODEC);
+            registrar.playToClient(CompanionGuard.Saved.TYPE, CompanionGuard.Saved.CODEC);
             registrar.playToServer(Pick.TYPE, Pick.CODEC, (payload, context) -> {
                 if (context.player() instanceof ServerPlayer p) pick(p, payload);
             });
@@ -287,6 +288,6 @@ public final class CompanionTalk {
 
     /** 实体已经不在时，结束用的空档案。 */
     static CompanionSheet empty(int entity) {
-        return new CompanionSheet(entity, "", "", List.of(), List.of(), 0, 0, "", 0, 0, 0, false, CompanionTactic.ADAPTIVE.id, 0, 0, 0);
+        return new CompanionSheet(entity, "", "", List.of(), List.of(), 0, 0, "", 0, 0, 0, false, CompanionTactic.ADAPTIVE.id, false, 0, 0, 0);
     }
 }

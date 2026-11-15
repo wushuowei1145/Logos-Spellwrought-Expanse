@@ -67,6 +67,17 @@ public final class CompanionMind extends Goal {
     public static final int THRUST_GAP = 100, COMBO_AFTER_THRUST = 2, STRING_REST = 8;
     /** 两次放狐火弹之间至少隔这么多刻；主人的仇人、主人在打的东西，这么多刻内算数。 */
     static final int CAST_GAP = 22, MEMORY = 100;
+    /**
+     * 掉队了闪回主人身边：两次之间隔 {@link #BLINK_GAP} 刻；闪完还离主人超过 {@link #STUCK_DIST} 格（坐在矿车、船、别的模组的座位上，
+     * 位置被拽回去）算一次没闪成，连着 {@link #STUCK_FAILS} 次就回形代里歇着，免得一直困在那里。
+     */
+    static final int BLINK_GAP = 20, STUCK_FAILS = 5;
+    static final double STUCK_DIST = 6;
+    /**
+     * 血少了、敌人贴着她（后撤时）：先凝刀守 {@link #GUARD_HOLD} 刻；还贴着就闪到主人身边拉开（隔 {@link #ESCAPE_GAP} 刻才能再闪），
+     * 闪不了就站着照常砍，不再只守着发呆。
+     */
+    static final int GUARD_HOLD = 30, ESCAPE_GAP = 160;
     /** 截弹射物：截完多久才能再截；射手在这么多刻里优先打。 */
     static final int INTERCEPT_GAP = 20, SHOOTER_MEMORY = 200;
     /** 摘浆果：找多远；不饿时两次之间隔多久。泡温泉：找多远的温泉格。怕狗：多近算有狗。 */
@@ -96,12 +107,18 @@ public final class CompanionMind extends Goal {
     /** 优先远程：这一串砍完已经往后跳过一次（一串只跳一次，跳完照常在架势里停、再起下一串）。 */
     private boolean backstepped;
     private String lastMove = "";
+    private long blinkCheck = -1, nextBlink, guardSince = -1, nextEscape;
+    private int blinkFails;
     private long lastCast = -1000, nextThrust, restUntil = -1, countered, nextIntercept, shooterAt = -10_000, nextForage, soakSince = -1, springSeen = -10_000;
     /** 最近一次在打（迎战、护主、缠火、处决、后撤、拿着刀）是哪一刻：打完歇一会儿才换回她自己选的装束。 */
     private long lastFight = -10_000;
     private @Nullable Vec3 lastPos;
-    /** 测试用：截下过几发；泡着泡着起身过几次。 */
-    static int intercepts, soakEnds;
+    /** 测试用：截下过几发；泡着泡着起身过几次；残血被贴着时闪开过几次。 */
+    static int intercepts, soakEnds, escapes;
+
+    public static int escapes() {
+        return escapes;
+    }
 
     CompanionMind(ShiraumeCompanion c) {
         this.c = c;
@@ -173,6 +190,7 @@ public final class CompanionMind extends Goal {
         long now = level.getGameTime();
         dist = c.distanceTo(p);
         if (now % THINK == 0) think(level, p, now);
+        if (stuckInSeat(level, p, now)) return;
         if (reflex(level, p, now)) return;
         // 入场动画播完之前先站着行礼（保命和护主的反射照常）
         if (c.mood.summoning()) {
@@ -317,13 +335,15 @@ public final class CompanionMind extends Goal {
     }
 
     /**
-     * 能处决的：狐火印爆开后还在窗口里（她或主人打出来的都算）、离她不远。主人拿着流火站在旁边时让给主人（他要自己点）；
-     * 已经在被别人处决的不抢。
+     * 能处决的：狐火印爆开后还在窗口里、离她不远。她自己打爆的一直能接；别人（主人的流火）打爆的，第二印（{@link CompanionBond#CHAIN_SEAL}）
+     * 以后才接。主人拿着流火站在旁边时让给主人（他要自己点）；已经在被别人处决的不抢；玩家不处决。
      */
     private @Nullable LivingEntity pickExecution(ServerLevel level, ServerPlayer p) {
         LivingEntity best = null;
+        boolean chain = CompanionBond.unlocked(c.seals(), CompanionBond.CHAIN_SEAL);
         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, c.getBoundingBox().inflate(10),
-                e -> e.isAlive() && e != c && c.canHarm(e) && FoxMarks.executable(e))) {
+                e -> e.isAlive() && e != c && !(e instanceof net.minecraft.world.entity.player.Player) && c.canHarm(e) && FoxMarks.executable(e))) {
+            if (!chain && !c.getUUID().equals(FoxMarks.burstBy(e))) continue;
             if (InteractiveExecutions.target(e) != null || ExecutionShots.frozen(e) || e.distanceTo(p) > 16) continue;
             if (p.getMainHandItem().getItem() instanceof RyukaItem && p.distanceTo(e) < 5) continue;
             if (best == null || c.distanceToSqr(e) < c.distanceToSqr(best)) best = e;
@@ -337,11 +357,36 @@ public final class CompanionMind extends Goal {
     private boolean reflex(ServerLevel level, ServerPlayer p, long now) {
         if (intercept(level, p, now)) return true;
         boolean far = c.staying() || current == Kind.ERRAND;
-        boolean lost = !far && (dist > BLINK_AT || dist > 12 && stuck >= 60);
+        boolean lost = !far && (dist > BLINK_AT || dist > 12 && stuck >= 60) && now >= nextBlink;
         boolean danger = c.isInLava() || c.getY() < level.getMinY() + 4;
         if (!lost && !danger) return false;
         blink(level, p);
+        nextBlink = now + BLINK_GAP;
         return true;
+    }
+
+    /**
+     * 闪回主人身边以后看一眼：还离主人很远（坐在矿车、船、别的模组的座位上，闪过去又被拽回座位）就记一次没闪成；连着
+     * {@link #STUCK_FAILS} 次，她说一声、回形代里歇着（对付一切把她困住的东西，不用一个个认）。返回真时她已经在回去了。
+     */
+    private boolean stuckInSeat(ServerLevel level, ServerPlayer p, long now) {
+        if (blinkCheck < 0 || now < blinkCheck) return false;
+        blinkCheck = -1;
+        blinkFails = c.isPassenger() || c.distanceTo(p) > STUCK_DIST ? blinkFails + 1 : 0;
+        if (blinkFails < STUCK_FAILS) return false;
+        blinkFails = 0;
+        stuckRecalls++;
+        CompanionLines.say(p, "stuck", 60);
+        p.sendOverlayMessage(net.minecraft.network.chat.Component.translatable("message.logos_dimension.companion.stuck"));
+        Companions.dismiss(p);
+        return true;
+    }
+
+    /** 测试用：困住了回形代几次。 */
+    static int stuckRecalls;
+
+    public static int stuckRecalls() {
+        return stuckRecalls;
     }
 
     /** 截下射向主人的弹射物（第 8.5 节）：闪到弹道上、凝刀一挥弹回去，射手记下来优先打。 */
@@ -396,6 +441,29 @@ public final class CompanionMind extends Goal {
         puff(level, to.add(0, .7, 0));
         level.playSound(null, to.x, to.y, to.z, SoundEvents.FOX_TELEPORT, SoundSource.NEUTRAL, .8f, 1.3f);
         stuck = 0;
+        // 两刻后看闪成了没有（连着闪的那几刻只看第一次的）
+        if (blinkCheck < 0) blinkCheck = level.getGameTime() + 2;
+    }
+
+    /** 残血被贴着时闪开：闪到主人身后（主人挡在她和敌人中间）；那里站不住就闪到主人身边。 */
+    private void escape(ServerLevel level, ServerPlayer p, LivingEntity threat) {
+        Vec3 away = p.position().subtract(threat.position()).multiply(1, 0, 1);
+        if (away.lengthSqr() < 1e-4) away = p.position().subtract(c.position()).multiply(1, 0, 1);
+        Vec3 spot = away.lengthSqr() < 1e-4 ? null : p.position().add(away.normalize().scale(2.5));
+        // 主人的脚底可能差一点点陷进地面（浮点误差）：抬一点再取那一格，不然取到的是地面
+        BlockPos feet = spot == null ? null : BlockPos.containing(spot.x, spot.y + .2, spot.z);
+        if (feet == null || !level.getBlockState(feet.below()).isFaceSturdy(level, feet.below(), net.minecraft.core.Direction.UP)
+                || !level.noCollision(c, c.getDimensions(c.getPose()).makeBoundingBox(Vec3.atBottomCenterOf(feet)))) {
+            blink(level, p);
+            return;
+        }
+        puff(level, c.position().add(0, .7, 0));
+        c.teleportTo(spot.x, feet.getY(), spot.z);
+        c.getNavigation().stop();
+        c.resetFallDistance();
+        puff(level, spot.add(0, .7, 0));
+        level.playSound(null, spot.x, spot.y, spot.z, SoundEvents.FOX_TELEPORT, SoundSource.NEUTRAL, .8f, 1.3f);
+        if (blinkCheck < 0) blinkCheck = level.getGameTime() + 2;
     }
 
     private static void puff(ServerLevel level, Vec3 at) {
@@ -665,7 +733,8 @@ public final class CompanionMind extends Goal {
 
     /**
      * 后撤（血少了不硬拼，但也不是只挨打）：敌人还远时收刀退到主人身后，边退边放狐火。敌人已经追到跟前（{@link #MELEE_IN} 以内）时，
-     * 转身放狐火会被一路砍（放的时候挡不了），就凝刀站住守着：只弹不攻，弹开了才趁对方僵直反击一串。
+     * 转身放狐火会被一路砍（放的时候挡不了），就凝刀站住守着：只弹不攻，弹开了才趁对方僵直反击一串。守了 {@link #GUARD_HOLD} 刻
+     * 还贴着：闪到主人身边拉开距离（隔 {@link #ESCAPE_GAP} 刻一次）；还不能闪就站着照常砍（不参与攻击时接着守），不会一直发呆。
      */
     private void retreat(ServerPlayer p, LivingEntity threat, long now) {
         double close = FoxfireRules.kin(threat) ? MELEE_OUT : MELEE_IN;
@@ -674,9 +743,20 @@ public final class CompanionMind extends Goal {
                 : c.distanceTo(threat) <= close;
         if (stand && !c.casting() && (c.blade().drawn() || c.blade().draw())) {
             c.setSprinting(false);
-            melee(threat, now, c.distanceTo(threat), true, true);
+            if (guardSince < 0) guardSince = now;
+            boolean held = now - guardSince >= GUARD_HOLD;
+            if (held && now >= nextEscape && !c.blade().executing() && c.level() instanceof ServerLevel level) {
+                c.blade().sheathe();
+                escape(level, p, threat);
+                nextEscape = now + ESCAPE_GAP;
+                guardSince = -1;
+                escapes++;
+                return;
+            }
+            melee(threat, now, c.distanceTo(threat), true, !held || holdsBack());
             return;
         }
+        guardSince = -1;
         c.blade().sheathe();
         Vec3 back = p.position().subtract(threat.position()).multiply(1, 0, 1);
         Vec3 spot = p.position().add(back.lengthSqr() < 1e-4 ? Vec3.ZERO : back.normalize().scale(2.5));

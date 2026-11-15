@@ -87,9 +87,9 @@ public final class Companions {
      * </ul>
      */
     public record Bond(boolean pact, Optional<UUID> out, long restUntil, int seals, boolean comeBack, float affection, float satiety,
-                       long mealDay, int meals, long soakDay, long guardDay, long patDay, int pats, String tactic) {
+                       long mealDay, int meals, long soakDay, long guardDay, long patDay, int pats, String tactic, boolean pvp) {
         public static final Bond NONE = new Bond(false, Optional.empty(), 0, 0, false, 0, CompanionBond.SATIETY_MAX, -1, 0, -1, -1, -1, 0,
-                CompanionTactic.ADAPTIVE.id);
+                CompanionTactic.ADAPTIVE.id, false);
         static final Codec<Bond> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.BOOL.optionalFieldOf("pact", false).forGetter(Bond::pact),
                 UUIDUtil.CODEC.optionalFieldOf("out").forGetter(Bond::out),
@@ -104,55 +104,61 @@ public final class Companions {
                 Codec.LONG.optionalFieldOf("guard_day", -1L).forGetter(Bond::guardDay),
                 Codec.LONG.optionalFieldOf("pat_day", -1L).forGetter(Bond::patDay),
                 Codec.INT.optionalFieldOf("pats", 0).forGetter(Bond::pats),
-                Codec.STRING.optionalFieldOf("tactic", CompanionTactic.ADAPTIVE.id).forGetter(Bond::tactic)).apply(i, Bond::new));
+                Codec.STRING.optionalFieldOf("tactic", CompanionTactic.ADAPTIVE.id).forGetter(Bond::tactic),
+                Codec.BOOL.optionalFieldOf("pvp", false).forGetter(Bond::pvp)).apply(i, Bond::new));
 
         Bond withOut(@Nullable UUID id) {
-            return new Bond(pact, Optional.ofNullable(id), restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic);
+            return new Bond(pact, Optional.ofNullable(id), restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic, pvp);
         }
 
         Bond withRest(long until) {
-            return new Bond(pact, out, until, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic);
+            return new Bond(pact, out, until, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic, pvp);
         }
 
         Bond withComeBack(boolean back) {
-            return new Bond(pact, out, restUntil, seals, back, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic);
+            return new Bond(pact, out, restUntil, seals, back, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic, pvp);
         }
 
         Bond withPact(boolean made) {
-            return new Bond(made, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic);
+            return new Bond(made, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic, pvp);
         }
 
         Bond withSeals(int n) {
-            return new Bond(pact, out, restUntil, Math.max(0, n), comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic);
+            return new Bond(pact, out, restUntil, Math.max(0, n), comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic, pvp);
         }
 
         Bond withAffection(float a) {
-            return new Bond(pact, out, restUntil, seals, comeBack, Math.max(0, a), satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic);
+            return new Bond(pact, out, restUntil, seals, comeBack, Math.max(0, a), satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic, pvp);
         }
 
         Bond withSatiety(float s) {
             return new Bond(pact, out, restUntil, seals, comeBack, affection, Mth.clamp(s, 0, CompanionBond.SATIETY_MAX), mealDay, meals, soakDay,
-                    guardDay, patDay, pats, tactic);
+                    guardDay, patDay, pats, tactic, pvp);
         }
 
         Bond withMeal(long day, int count) {
-            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, day, count, soakDay, guardDay, patDay, pats, tactic);
+            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, day, count, soakDay, guardDay, patDay, pats, tactic, pvp);
         }
 
         Bond withSoak(long day) {
-            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, day, guardDay, patDay, pats, tactic);
+            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, day, guardDay, patDay, pats, tactic, pvp);
         }
 
         Bond withGuard(long day) {
-            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, day, patDay, pats, tactic);
+            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, day, patDay, pats, tactic, pvp);
         }
 
         Bond withPats(long day, int count) {
-            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, day, count, tactic);
+            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, day, count, tactic, pvp);
         }
 
         public Bond withTactic(CompanionTactic t) {
-            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, t.id);
+            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, t.id, pvp);
+        }
+
+        /** 作战策略里「攻击玩家」开着没有。 */
+        public Bond withPvp(boolean on) {
+            return new Bond(pact, out, restUntil, seals, comeBack, affection, satiety, mealDay, meals, soakDay, guardDay, patDay, pats, tactic, on);
         }
 
         public CompanionTactic tacticOf() {
@@ -192,6 +198,7 @@ public final class Companions {
         NeoForge.EVENT_BUS.addListener(Companions::onBreak);
         NeoForge.EVENT_BUS.addListener(Companions::onPlace);
         NeoForge.EVENT_BUS.addListener(Companions::onDamaged);
+        NeoForge.EVENT_BUS.addListener(Companions::onProtect);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, Companions::onDeath);
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) stow(p, true);
@@ -199,7 +206,10 @@ public final class Companions {
             PENDING.remove(e.getEntity().getUUID());
         });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
-            if (e.getEntity() instanceof ServerPlayer p) comeBackLater(p, 40);
+            if (e.getEntity() instanceof ServerPlayer p) {
+                comeBackLater(p, 40);
+                learn(p, false);
+            }
         });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerRespawnEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p && !e.isEndConquered()) comeBackLater(p, 20);
@@ -297,13 +307,26 @@ public final class Companions {
         owner.setData(BOND, owner.getData(BOND).withPact(true));
     }
 
-    /** 盖一枚契印（空白形代、命令）；返回盖完后的枚数。 */
+    /** 盖一枚契印（空白形代、命令）；返回盖完后的枚数。第三枚时教主人狐火之言。 */
     public static int addSeal(ServerPlayer owner) {
         Bond b = owner.getData(BOND);
         owner.setData(BOND, b.withSeals(b.seals() + 1));
         ShiraumeCompanion c = out(owner);
         if (c != null) CompanionStats.apply(c, owner, b.seals() + 1);
+        learn(owner, true);
         return b.seals() + 1;
+    }
+
+    /**
+     * 第三印（{@link CompanionBond#FOXFIRE_SEAL}）：主人学会狐火之言，自己写的术式里可以写 {@code foxfire}。
+     * 刚学会时（{@code tell}）在屏幕上说一声；登录时补教（命令改过契印、旧存档）不说。
+     */
+    static void learn(ServerPlayer owner, boolean tell) {
+        Bond b = owner.getData(BOND);
+        if (!b.pact() || !CompanionBond.unlocked(b.seals(), CompanionBond.FOXFIRE_SEAL)) return;
+        if (!dev.logos.dimension.foxfire.Foxfire.teach(owner) || !tell) return;
+        owner.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.logos_dimension.companion.foxfire_learned")
+                .withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE));
     }
 
     /** 设她的饱腹（命令和测试用）。 */
@@ -395,6 +418,18 @@ public final class Companions {
         if (e.getSource().getDirectEntity() instanceof Projectile proj && proj.getOwner() instanceof ServerPlayer p && victim != p) {
             OwnerWatch.of(p).attacked(now, victim);
         }
+    }
+
+    /**
+     * 继承主人的保护类魔咒（docs/SHIRAUME_COMPANION.md 第 5.1 节）：她挨打时，按主人身上的魔咒对这一下算保护（同原版，火焰保护只挡火……），
+     * 乘继承比例，在护甲之后再减（同原版的先后）。
+     */
+    private static void onProtect(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Pre e) {
+        if (!(e.getEntity() instanceof ShiraumeCompanion c) || !(c.level() instanceof ServerLevel level) || e.getNewDamage() <= 0) return;
+        ServerPlayer owner = c.ownerPlayer();
+        if (owner == null) return;
+        float protection = CompanionStats.protection(level, owner, e.getSource(), c.seals());
+        if (protection > 0) e.setNewDamage(net.minecraft.world.damagesource.CombatRules.getDamageAfterMagicAbsorb(e.getNewDamage(), protection));
     }
 
     private static void onDeath(LivingDeathEvent e) {

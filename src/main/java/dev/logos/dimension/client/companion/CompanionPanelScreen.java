@@ -268,12 +268,14 @@ public final class CompanionPanelScreen extends Screen {
             g.text(font, tr("stat." + id), x, y, style.dim(), false);
             String value = st.current() >= 0 ? num(st.current()) + " / " + num(st.value()) : num(st.value());
             CompanionUi.bigText(g, font, Component.literal(value), valueX, y - 1, style.ink(), 1.25f, false);
-            // 本身 + 继承
+            // 本身 + 羁绊 + 继承（羁绊没加的不写）
             Component bonus = Component.literal("+" + num(st.bonus()));
+            Component bond = Component.literal(st.bond() > 0 ? "+" + num(st.bond()) + " " : "");
             Component base = Component.literal(num(st.base()) + " ");
-            int bw = font.width(bonus);
+            int bw = font.width(bonus), dw = font.width(bond);
             g.text(font, bonus, r - bw, y, style.accent(), false);
-            g.text(font, base, r - bw - font.width(base), y, CompanionUi.alpha(style.dim(), .8f), false);
+            g.text(font, bond, r - bw - dw, y, style.gold(), false);
+            g.text(font, base, r - bw - dw - font.width(base), y, CompanionUi.alpha(style.dim(), .8f), false);
             if (st.current() >= 0) CompanionUi.bar(g, valueX, y + 11, r - valueX, 2, st.current() / Math.max(1, st.value()),
                     style.accent(), CompanionUi.alpha(style.dim(), .2f));
             y += st.current() >= 0 ? 19 : 15;
@@ -300,8 +302,9 @@ public final class CompanionPanelScreen extends Screen {
         g.text(font, sat, r - font.width(sat), y, style.ink(), false);
         y += 14;
         g.text(font, tr("now"), x, y, style.dim(), false);
-        Component now = Component.translatable("talk.logos_dimension.state." + (s.staying() ? "stay" : "follow")).append(" · ")
+        net.minecraft.network.chat.MutableComponent now = Component.translatable("talk.logos_dimension.state." + (s.staying() ? "stay" : "follow")).append(" · ")
                 .append(Component.translatable("talk.logos_dimension.option.tactic." + s.tactic()));
+        if (s.pvp()) now.append(" · ").append(Component.translatable("talk.logos_dimension.option.pvp"));
         g.text(font, now, barX, y, style.ink(), false);
         y += 14;
         g.text(font, tr("outfit"), x, y, style.dim(), false);

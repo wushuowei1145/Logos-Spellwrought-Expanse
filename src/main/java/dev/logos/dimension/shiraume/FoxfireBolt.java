@@ -146,7 +146,7 @@ public class FoxfireBolt extends Projectile {
         if (ShiraumeStrike.blocks(victim, probe, damage)) {
             level.playSound(null, victim.getX(), victim.getY(), victim.getZ(), SoundEvents.SHIELD_BLOCK.value(), SoundSource.HOSTILE, 1, 1.2f);
         } else if (owner instanceof ShiraumeCompanion companion) {
-            ShiraumeStrike.foxfire(companion, victim, damage);
+            if (!ShiraumeStrike.foxfire(companion, victim, damage)) companion.brand(victim);
         } else if (owner instanceof Mob mob) {
             ShiraumeStrike.foxfire(mob, victim, damage * Shiraume.difficultyScale(level));
         }
