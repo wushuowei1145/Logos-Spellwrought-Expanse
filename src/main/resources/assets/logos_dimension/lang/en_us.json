@@ -1889,5 +1889,15 @@
   "block.logos_dimension.blight_node": "Regional Corruption Core",
   "item.logos_dimension.blight_node": "Regional Corruption Core",
   "gui.logos_dimension.queen.title_zh": "腐化女王",
-  "gui.logos_dimension.queen.title_en": "The Corrupted Queen"
+  "gui.logos_dimension.queen.title_en": "The Corrupted Queen",
+  "entity.logos_dimension.queen_tether": "Heart Vessel",
+  "boss.logos_dimension.queen.phase1": "The Corrupted Queen · Puppet Crown",
+  "boss.logos_dimension.queen.phase2": "The Corrupted Queen · Defiant Heart",
+  "boss.logos_dimension.queen.phase3": "The Corrupted Queen · Shared Ruin",
+  "message.logos_dimension.queen.resist": "She is resisting. Sever the exposed root vessels!",
+  "message.logos_dimension.queen.phase2": "The heart cracks. She fights for control.",
+  "message.logos_dimension.queen.phase3": "She binds the heart! Sever its three vessels, then shatter it.",
+  "message.logos_dimension.queen.root_cut": "A feeding vessel is severed.",
+  "message.logos_dimension.queen.last_words": "\"Give me back... my forest.\"",
+  "gui.logos_dimension.queen.roots": "Severed %s/3"
 }

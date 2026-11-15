@@ -1889,5 +1889,15 @@
   "block.logos_dimension.blight_node": "区域腐败核心",
   "item.logos_dimension.blight_node": "区域腐败核心",
   "gui.logos_dimension.queen.title_zh": "腐化女王",
-  "gui.logos_dimension.queen.title_en": "The Corrupted Queen"
+  "gui.logos_dimension.queen.title_en": "The Corrupted Queen",
+  "entity.logos_dimension.queen_tether": "核心血管",
+  "boss.logos_dimension.queen.phase1": "腐化女王 · 牵丝之冠",
+  "boss.logos_dimension.queen.phase2": "腐化女王 · 逆流之心",
+  "boss.logos_dimension.queen.phase3": "腐化女王 · 共殒",
+  "message.logos_dimension.queen.resist": "她在反抗——斩断暴露的血管根结！",
+  "message.logos_dimension.queen.phase2": "核心外壳破裂。她正在争夺自己的身体。",
+  "message.logos_dimension.queen.phase3": "她困住了核心！切断三条供养血管，再击碎核心。",
+  "message.logos_dimension.queen.root_cut": "供养血管断裂。",
+  "message.logos_dimension.queen.last_words": "「我的森林……还给我。」",
+  "gui.logos_dimension.queen.roots": "断链 %s/3"
 }

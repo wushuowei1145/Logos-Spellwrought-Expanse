@@ -44,6 +44,9 @@ public final class ElvenBlight {
     public static final Supplier<EntityType<CorruptedElfQueen>> QUEEN = ENTITIES.register("corrupted_elf_queen", () ->
             EntityType.Builder.of(CorruptedElfQueen::new, MobCategory.MONSTER).sized(1.45f, 4f).eyeHeight(3.3f).clientTrackingRange(10)
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("corrupted_elf_queen"))));
+    public static final Supplier<EntityType<QueenTether>> TETHER = ENTITIES.register("queen_tether", () ->
+            EntityType.Builder.of(QueenTether::new, MobCategory.MISC).sized(1.4f, 1.6f).clientTrackingRange(10)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("queen_tether"))));
 
     private static DeferredBlock<CorruptionGrowthBlock> growth(String id) {
         return DimensionBlocks.BLOCKS.registerBlock(id, CorruptionGrowthBlock::new,
@@ -55,8 +58,11 @@ public final class ElvenBlight {
             DimensionBlocks.ITEMS.registerSimpleBlockItem(block.getId().getPath(), block);
         }
         QueenEntrances.register(bus);
+        QueenEndings.register(bus);
+        QueenSpellEffects.register(bus);
         BLOCK_ENTITIES.register(bus);
         ENTITIES.register(bus);
         bus.addListener((EntityAttributeCreationEvent e) -> e.put(QUEEN.get(), CorruptedElfQueen.attributes().build()));
+        bus.addListener((EntityAttributeCreationEvent e) -> e.put(TETHER.get(), QueenTether.attributes().build()));
     }
 }

@@ -27,6 +27,13 @@ public class QueenHeartBlock extends Block implements EntityBlock {
     }
     @Override protected MapCodec<QueenHeartBlock> codec() { return CODEC; }
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) { b.add(AWAKENED, DEFEATED, FACING); }
+    // 击败标记保留用于阻止重生，但不留下看不见的悬空碰撞。
+    @Override protected net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState s, net.minecraft.world.level.BlockGetter world, BlockPos pos, net.minecraft.world.phys.shapes.CollisionContext context) {
+        return s.getValue(DEFEATED) ? net.minecraft.world.phys.shapes.Shapes.empty() : super.getShape(s, world, pos, context);
+    }
+    @Override protected net.minecraft.world.phys.shapes.VoxelShape getCollisionShape(BlockState s, net.minecraft.world.level.BlockGetter world, BlockPos pos, net.minecraft.world.phys.shapes.CollisionContext context) {
+        return s.getValue(DEFEATED) ? net.minecraft.world.phys.shapes.Shapes.empty() : super.getCollisionShape(s, world, pos, context);
+    }
     @Override protected RenderShape getRenderShape(BlockState s) { return RenderShape.INVISIBLE; }
     @Override protected BlockState rotate(BlockState state, net.minecraft.world.level.block.Rotation rotation) { return state.setValue(FACING, rotation.rotate(state.getValue(FACING))); }
     @Override protected BlockState mirror(BlockState state, net.minecraft.world.level.block.Mirror mirror) { return rotate(state, mirror.getRotation(state.getValue(FACING))); }

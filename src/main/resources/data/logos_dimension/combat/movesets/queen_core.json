@@ -1,0 +1,34 @@
+{
+  "start": "core_thorns",
+  "moves": {
+    "core_thorns": {
+      "length": 2.25,
+      "contact": [
+        1.6
+      ],
+      "damage": 9,
+      "effect": "line",
+      "next": "core_wave"
+    },
+    "core_wave": {
+      "length": 1.8,
+      "contact": [
+        0.0,
+        0.15,
+        0.3,
+        0.45,
+        0.6,
+        0.75,
+        0.9,
+        1.05,
+        1.2,
+        1.35,
+        1.5,
+        1.65
+      ],
+      "damage": 7,
+      "effect": "ring",
+      "next": "core_thorns"
+    }
+  }
+}
