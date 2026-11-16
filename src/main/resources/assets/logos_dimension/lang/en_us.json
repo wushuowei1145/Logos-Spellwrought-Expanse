@@ -1899,5 +1899,6 @@
   "message.logos_dimension.queen.phase3": "She binds the heart! Sever its three vessels, then shatter it.",
   "message.logos_dimension.queen.root_cut": "A feeding vessel is severed.",
   "message.logos_dimension.queen.last_words": "\"Give me back... my forest.\"",
-  "gui.logos_dimension.queen.roots": "Severed %s/3"
+  "gui.logos_dimension.queen.roots": "Severed %s/3",
+  "gui.logos_dimension.queen.ward": "Fed by %s corruption cores · %s%% less damage"
 }

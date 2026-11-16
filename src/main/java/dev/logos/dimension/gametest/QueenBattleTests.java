@@ -23,7 +23,7 @@ public final class QueenBattleTests {
     static void battle(GameTestHelper h) {
         var f = ElvenBlightGameTests.fixture(h, new BlockPos(100000, 200, 100000)); var world = h.getLevel();
         var q = Objects.requireNonNull(f.heart().awaken(f.player()));
-        h.assertTrue(q.getMaxHealth() == 400 && dev.logos.runtime.SpellModifiers.taken(q, dev.logos.lang.Element.LIFE) == .25, "三条血的初始生命或 Logos 魔抗不是 400 / 75%");
+        h.assertTrue(q.getMaxHealth() == 400 && Math.abs(dev.logos.runtime.SpellModifiers.taken(q, dev.logos.lang.Element.LIFE) - 1.3) < 1e-9, "三条血的初始生命或生命易伤不是 400 / 30%");
         f.player().getAbilities().invulnerable = true;
         boolean[] checked = new boolean[7];
         h.onEachTick(() -> {
@@ -84,6 +84,7 @@ public final class QueenBattleTests {
             float before = f.player().getHealth(); double mana = q.mana();
             h.assertTrue(QueenSpells.cast(q, "ray", q.getEyePosition(), f.player()), "无法通过 Logos 运行时施法");
             h.assertTrue(f.player().getHealth() < before && q.mana() == mana - 40, "真实载页未伤到玩家或没有付费");
+            h.assertTrue(f.player().getLastDamageSource() != null && f.player().getLastDamageSource().is(dev.logos.dimension.corruption.Corruption.DAMAGE), "女王的生命法术不是腐败伤害");
             q.payMana(q.mana());
             h.assertTrue(!QueenSpells.cast(q, "fan", q.getEyePosition(), f.player()) && q.mana() == 0, "魔力不足仍然施法");
             h.succeed();

@@ -140,6 +140,22 @@
 实际客户端场景 `corruption_core_stages`：四级核心并排（白天、夜里各一张），走近 3 级，眼珠盯着正面的玩家；玩家绕到侧面，裂口转过来、眼珠还盯着他（两次都检查眼珠朝向和玩家方向差不到 12 度），并记下近处的帧间隔。`corruption_large_fade` 量大网络消散的开销，见 [DISSOLVE.md](DISSOLVE.md)。
 
 
+## 腐败伤害
+
+腐败伤害是生命伤害的子类型，同狐火之于奥秘（[FOXFIRE.md](FOXFIRE.md)）。伤害类型沿用 `logos_dimension:corruption`（腐败方块的接触伤害一直在用），没有另注册。
+
+- **谁打出腐败伤害**：腐败一方，即实体类型标签 `logos_dimension:corrupted` 里的生物（污秽衍生物、腐化女王）。它们打出的 Logos 生命伤害都换成腐败来源：生命强化、生命抗性、法术抗性照常算，护甲不减。玩家写不出腐败伤害（生命本来就不能写）。
+- **打中腐败一方反而回血**：同原版瞬间伤害对亡灵，伤害量变成回血量，冒几粒猩红孢子。女王的范围攻击会治疗她的衍生物。腐败方块的接触伤害本来就不打腐败一方，所以衍生物站在污秽上不会回血。
+- **自己的样子**：腐败伤害的命中、腐败一方法术的弹体、法阵和射线都换成猩红的（叶片、花瓣、光晕仍引用 Logos 的 `life_impact` 贴图）。
+- **怎么用**：附属代码里让腐败一方打一下，调 `CorruptionDamage.hit(attacker, target, amount)`；施法用 Logos 的 `Casting.castAs`，施法者是腐败一方时自动算腐败。
+
+实现：
+
+- 换伤害来源挂在狐火已有的 `Effects` 注入点上（`FoxfireEffectsMixin`：`damage` 两个入口、`followUp` 定下这一下是不是腐败，`hurt` 里把原版魔法来源换成腐败），不另开一组。
+- 治疗在 `CorruptionDamage` 的 `LivingIncomingDamageEvent`（最高优先级）里：来源是腐败、目标是腐败一方时取消伤害、按伤害量回血。
+- 换特效：`CorruptionSpellMixin` 在 `SpellRuntime.guard` 和 `tickForms` 里每个形体的 `tick` 外标出"正在执行腐败一方的法术"；施法者不是腐败一方时直接调原方法，不开闭包、不碰 ThreadLocal。`CorruptionVfxMixin` 在 Logos 发特效的最末一处看元素是不是生命、当前是不是腐败，是就交给 `QueenSpellEffects` 换成猩红的；注入失效时退回普通生命配色。
+- 测试：世界测试 `elven_blight_corruption_heals_its_own`（衍生物回血、普通生物挨腐败伤害、来源和特效都换了，普通生命伤害不受影响）。
+
 ## 腐败精灵森林的生成污染
 
 森林的 `blight_memory` 与腐败林土保留健康状态编号；`blight_node` 由原版 Feature 放置，在服务端分批将所在区块的生成污染登记进原网络。拆核心仍调用这里的消散、还原与运镜，不再另写一套蔓延算法。运行时显式认领 API 负责记下原状态；消散允许 `CorruptionBlock` 的子类还原，跳过玩家改建与其他活网络新认领的位置。所有消散共享每维度每刻 512 位置预算，未加载的部分继续等区块加载。
