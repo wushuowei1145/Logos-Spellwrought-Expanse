@@ -55,7 +55,7 @@ final class BlightReclamationTests {
         h.succeedWhen(RealTimeWait.paced(() -> {
             var data = CorruptionNetworks.get(f.world);
             if (!broken[0]) {
-                h.assertTrue(data.ofCore(f.core) != null && original == data.ofCore(f.core).original(first), "等待生成污染登记与健康材质记录");
+                h.assertTrue(data.ofCore(f.core) != null && data.at(first) == data.ofCore(f.core) && original == data.originalAt(f.world, first), "等待生成污染登记与健康材质记录");
                 f.world.setBlockAndUpdate(built, Blocks.DIAMOND_BLOCK.defaultBlockState());
                 f.world.removeBlock(f.core, false);
                 broken[0] = true;
@@ -115,8 +115,10 @@ final class BlightReclamationTests {
         h.assertTrue(!nodes.isEmpty(), "实际原版群系没有生成区域核心");
         h.succeedWhen(RealTimeWait.paced(() -> {
             h.assertTrue(nodes.stream().anyMatch(p -> {
-                var network = CorruptionNetworks.get(world).ofCore(p);
-                return network != null && network.size() >= 30 && java.util.stream.IntStream.rangeClosed(1, 8).anyMatch(d -> network.original(p.below(d)) != null);
+                var data = CorruptionNetworks.get(world);
+                var network = data.ofCore(p);
+                return network != null && network.size() >= 30 && java.util.stream.IntStream.rangeClosed(1, 8)
+                        .anyMatch(d -> data.at(p.below(d)) == network && data.originalAt(world, p.below(d)) != null);
             }), "自然区域核心未接上污染和原方块记录");
             for (ChunkPos chunk : forced) world.setChunkForced(chunk.x(), chunk.z(), false);
             h.succeed();
