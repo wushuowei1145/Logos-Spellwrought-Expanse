@@ -65,7 +65,10 @@ public final class QueenBossHud {
         int broken = Integer.bitCount(queen.brokenRoots());
         text(g, Component.translatable("gui.logos_dimension.queen.roots", broken), x + w * .73f, y + 40 * scale, .64f, queen.rootsOpen() ? 0xFFEFBAA6 : 0xFF967778);
         text(g, Component.literal(new String[]{"I", "II", "III"}[queen.phase() - 1] + " / III"), x + w * .26f, y + 40 * scale, .65f, 0xFFCBAC84);
-        event.setIncrement(Math.max(event.getIncrement(), h + 9));
+        // 核心庇护：周围还有几个腐败核心在供养她，拆掉一个少 3%（最多 60%）。
+        if (queen.ward() > 0) text(g, Component.translatable("gui.logos_dimension.queen.ward", queen.ward(), Math.min(60, queen.ward() * 3)),
+                g.guiWidth() / 2f, y + 50 * scale, .55f, 0xFFD98A8A);
+        event.setIncrement(Math.max(event.getIncrement(), h + (queen.ward() > 0 ? 15 : 9)));
     }
     private static void text(GuiGraphicsExtractor g, Component text, float center, float y, float scale, int color) {
         var font = Minecraft.getInstance().font; var pose = g.pose(); pose.pushMatrix();

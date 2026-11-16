@@ -1,5 +1,17 @@
 # 首版验证记录
 
+## 腐化女王重做第 3 步：腐败伤害、抗性表与核心庇护
+
+2026-11-16：分支 `feat/queen-core-battle`，Logos `dc3d381` / 0.7.0。腐败伤害做成生命的子类型（和狐火共用 `Effects` 注入点），打中腐败一方改为治疗；女王的抗性写进数据包 `creature_traits/corrupted_queen.json`（通用的 `combat/CreatureTraits`）；周围腐败核心给女王减伤，血条显示供养数；删掉包住所有法术的 `QueenSpellRuntimeMixin`、`QueenLifeVfxMixin`，换成只对腐败一方生效的 `CorruptionSpellMixin`、`CorruptionVfxMixin`。
+
+| 层级 | 结果 |
+|---|---|
+| 单元 | 全量 448 条、0 失败、1 跳过；新增 `CreatureTraitsTest`（抗性表数值、普通奥秘倍数不作用于狐火、庇护封顶 60%） |
+| 世界 | `elven_blight_*` 16/16，新增三条：`elven_blight_corruption_heals_its_own`（衍生物回血、普通生物挨腐败伤害且来源和命中特效都换了、普通生命伤害不受影响）、`elven_blight_queen_resistances`（用真实入口打：Logos 火 / 普通奥秘 / 狐火 / 冰霜 / 生命、原版魔法 / 原版火 / 普通近战，按表换算的硬直值逐项相符）、`elven_blight_queen_blight_ward`（新放 5 个核心计数加 5、减伤相符、`generic_kill` 不减）；`elven_blight_queen_logos_spells` 加查女王法术伤到玩家时是腐败来源。改了共用注入点，回归 `corruption_*` 16/16、`foxfire_*` 10/10 |
+| 实际客户端 | `queen_core_battle`、`elven_blight_queen` 2/2 场景、27/27 检查（含女王专属血条、猩红法阵），原版渲染 |
+| 未验证 | 血条上"供养 N"一行没有截图看过（测试场地附近没有核心）；光影包；多人 |
+
+
 ## 腐化女王：三阶段核心战、阶段结束动作与专属血条
 
 2026-11-15：`feat/queen-core-battle`，独立于尚未合并的美术 PR #271。三条生命各 400、Logos 魔抗 75%，女王六招加核心两招均由既有 `MoveRunner` 调度，真实 Logos 生命法术使用独立魔力池。原 11 段动作保留，新增九段含两个阶段结束动作，共 20 段；血条框与液面由代码绘制。机制、资源入口与复现命令见 [核心战说明](docs/QUEEN_CORE_BATTLE.md)。Logos 仍为未修改的 `dc3d381` / 0.7.0，不改版本号。

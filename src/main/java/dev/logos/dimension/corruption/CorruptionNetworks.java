@@ -162,6 +162,18 @@ public final class CorruptionNetworks extends SavedData {
         return networks.size();
     }
 
+    /** 水平 {@code radius} 格内还在的核心有几个（区域核心也算）。开销按核心总数算，调用方自己限频（女王每秒一次）。 */
+    public int coresWithin(BlockPos center, double radius) {
+        double r2 = radius * radius;
+        int n = 0;
+        for (LongIterator it = cores.keySet().iterator(); it.hasNext(); ) {
+            long key = it.nextLong();
+            double dx = BlockPos.getX(key) - center.getX(), dz = BlockPos.getZ(key) - center.getZ();
+            if (dx * dx + dz * dz <= r2) n++;
+        }
+        return n;
+    }
+
     /** {@code n} 现在有几个子核心（拆掉的不算）。 */
     public int satellites(Network n) {
         IntArrayList list = children().get(n.id);

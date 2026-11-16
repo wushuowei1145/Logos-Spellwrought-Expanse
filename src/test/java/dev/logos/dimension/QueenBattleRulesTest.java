@@ -16,7 +16,6 @@ class QueenBattleRulesTest {
         for (int i = 0; i < 3; i++) health -= QueenBattleRules.rootDamage(2);
         assertEquals(0, health, .0001);
         assertEquals(400, QueenBattleRules.HEALTH);
-        assertEquals(.75, QueenBattleRules.MAGIC_RESISTANCE);
     }
     @Test void exposedCoreRequiresAllThreeFinalSupplyLines() {
         for (int phase = 1; phase <= 3; phase++) for (int mask = 0; mask < 8; mask++)

@@ -43,6 +43,7 @@ public final class ElvenBlightGameTests {
         tests.put("elven_blight_three_stage_battle", QueenBattleTests::battle);
         tests.put("elven_blight_queen_purification", QueenBattleTests::restoration);
         tests.put("elven_blight_queen_logos_spells", QueenBattleTests::spells);
+        CorruptionDamageTests.register(tests);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent e) -> {

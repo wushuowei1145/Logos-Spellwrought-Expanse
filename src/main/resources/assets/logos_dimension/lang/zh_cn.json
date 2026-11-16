@@ -1800,5 +1800,6 @@
   "message.logos_dimension.queen.phase3": "她困住了核心！切断三条供养血管，再击碎核心。",
   "message.logos_dimension.queen.root_cut": "供养血管断裂。",
   "message.logos_dimension.queen.last_words": "「我的森林……还给我。」",
-  "gui.logos_dimension.queen.roots": "断链 %s/3"
+  "gui.logos_dimension.queen.roots": "断链 %s/3",
+  "gui.logos_dimension.queen.ward": "%s 个腐败核心供养 · 减伤 %s%%"
 }
