@@ -6,101 +6,97 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class HeartPurificationTest {
-    private static int ticksUntil(HeartPurification p, int phase, Event wanted) {
-        for (int t = 1; t < 5000; t++) if (p.tick(phase, true, false) == wanted) return t;
+    private static int ticksUntil(HeartPurification p, Event wanted) {
+        for (int t = 1; t < 5000; t++) if (p.tick(true, false) == wanted) return t;
         return -1;
     }
 
-    @Test void phaseTwoReachesBothThresholdsInAboutFiftySeconds() {
+    @Test void eachSegmentTakesAboutTwentySeconds() {
         var p = new HeartPurification(); p.reset(1);
-        int first = ticksUntil(p, 2, Event.OPENED);
-        assertEquals(500, first, 2);
-        assertEquals(.33f, p.progress(), 1e-6);
-        // 窗口里进度停住。
-        for (int i = 0; i < 50; i++) p.tick(2, true, false);
-        assertEquals(.33f, p.progress(), 1e-6);
-        while (p.open()) { p.hit(true, 0); p.settle(); }
+        assertEquals(HeartPurification.SEGMENT_TICKS, ticksUntil(p, Event.OPENED), 2);
+        assertEquals(.2f, p.progress(), 1e-6);
+        // 降下来时进度停住。
+        for (int i = 0; i < 50; i++) p.tick(true, false);
+        assertEquals(.2f, p.progress(), 1e-6);
+        assertEquals(Event.CLEARED, p.cut());
         assertEquals(1, p.cleared());
-        int second = ticksUntil(p, 2, Event.OPENED);
-        assertEquals(500, second, 2);
-        assertEquals(.66f, p.progress(), 1e-6);
+        assertEquals(HeartPurification.SEGMENT_TICKS, ticksUntil(p, Event.OPENED), 2);
+        assertEquals(.4f, p.progress(), 1e-6);
     }
 
-    @Test void phaseThreeIsFasterThanPhaseTwo() {
-        assertTrue(HeartPurification.rate(3) > HeartPurification.rate(2));
-        assertEquals(.34f / 500, HeartPurification.rate(3), 1e-9);
-    }
-
-    @Test void hitsArePercentOfMaxHealthAndCappedPerSegment() {
+    @Test void oneCutIsAFixedFifthAndOnlyWhileDown() {
         var p = new HeartPurification(); p.reset(1);
-        ticksUntil(p, 2, Event.OPENED);
-        assertEquals(900 * .06f, p.hit(true, 0), 1e-3);
-        assertEquals(900 * .02f, p.hit(false, 0), 1e-3);
-        // 核心庇护减 60% 时同样扣 40%。
-        assertEquals(900 * .06f * .4f, p.hit(true, .6), 1e-3);
-        int hits = 0;
-        while (p.settle() != Event.CLEARED && hits++ < 100) p.hit(true, 0);
-        assertEquals(1, p.cleared());
-        assertFalse(p.open());
-        assertEquals(300, p.segment(), 1e-3);
-        assertEquals(2f / 3, p.health(), 1e-6);
-    }
-
-    @Test void failedWindowSetsProgressBackAndKeepsDamage() {
-        var p = new HeartPurification(); p.reset(1);
-        ticksUntil(p, 2, Event.OPENED);
-        p.hit(true, 0);
-        float left = p.segment();
-        Event last = Event.NONE;
-        for (int i = 0; i < HeartPurification.WINDOW_TICKS && last != Event.FAILED; i++) last = p.tick(2, true, false);
-        assertEquals(Event.FAILED, last);
-        assertEquals(.33f - HeartPurification.FAIL_SETBACK, p.progress(), 1e-6);
-        assertEquals(left, p.segment(), 1e-6);
+        assertEquals(Event.NONE, p.cut(), "没降下来时砍不到");
         assertEquals(0, p.cleared());
-        // 涨回刻度时窗口重开。
-        assertTrue(ticksUntil(p, 2, Event.OPENED) > 0);
+        ticksUntil(p, Event.OPENED);
+        assertEquals(Event.CLEARED, p.cut());
+        assertFalse(p.open());
+        assertEquals(.8f, p.health(), 1e-6);
+        assertEquals(Event.NONE, p.cut(), "一次降下只能斩一段");
+        assertEquals(1, p.cleared());
+    }
+
+    @Test void missedWindowSetsProgressBack() {
+        var p = new HeartPurification(); p.reset(1);
+        ticksUntil(p, Event.OPENED);
+        Event last = Event.NONE;
+        for (int i = 0; i < HeartPurification.WINDOW_TICKS && last != Event.FAILED; i++) last = p.tick(true, false);
+        assertEquals(Event.FAILED, last);
+        assertEquals(Math.max(0, .2f - HeartPurification.FAIL_SETBACK), p.progress(), 1e-6);
+        assertEquals(0, p.cleared());
+        // 涨回刻度时重新降下。
+        assertTrue(ticksUntil(p, Event.OPENED) > 0);
     }
 
     @Test void downedPrincessDecaysAndSelfRiseSetsBack() {
         var p = new HeartPurification(); p.reset(1);
-        for (int i = 0; i < 300; i++) p.tick(2, true, false);
+        for (int i = 0; i < 300; i++) p.tick(true, false);
         float before = p.progress();
-        for (int i = 0; i < 20; i++) p.tick(2, false, true);
+        for (int i = 0; i < 20; i++) p.tick(false, true);
         assertEquals(before - .01f, p.progress(), 1e-5);
         p.setback(HeartPurification.SELF_RISE_SETBACK);
         assertEquals(Math.max(0, before - .01f - .25f), p.progress(), 1e-5);
     }
 
-    @Test void progressNeverFallsBelowTheLastClearedThreshold() {
+    @Test void progressNeverFallsBelowTheLastCut() {
         var p = new HeartPurification(); p.reset(1);
-        ticksUntil(p, 2, Event.OPENED);
-        while (p.settle() != Event.CLEARED) p.hit(true, 0);
-        assertEquals(.33f, p.floor(), 1e-6);
-        for (int i = 0; i < 2000; i++) p.tick(2, false, true);
-        assertEquals(.33f, p.progress(), 1e-6);
+        ticksUntil(p, Event.OPENED);
+        p.cut();
+        assertEquals(.2f, p.floor(), 1e-6);
+        for (int i = 0; i < 2000; i++) p.tick(false, true);
+        assertEquals(.2f, p.progress(), 1e-6);
         p.setback(HeartPurification.SELF_RISE_SETBACK);
-        assertEquals(.33f, p.progress(), 1e-6);
+        assertEquals(.2f, p.progress(), 1e-6);
     }
 
-    @Test void multiplayerScalesHealthNotHitCount() {
-        var solo = new HeartPurification(); solo.reset(1);
-        var duo = new HeartPurification(); duo.reset(1.5f);
-        assertEquals(1350, duo.maxHealth(), 1e-3);
-        ticksUntil(solo, 2, Event.OPENED); ticksUntil(duo, 2, Event.OPENED);
-        int a = 0, b = 0;
-        while (solo.settle() != Event.CLEARED) { solo.hit(true, 0); a++; }
-        while (duo.settle() != Event.CLEARED) { duo.hit(true, 0); b++; }
-        assertEquals(a, b);
-    }
-
-    @Test void lastWindowFinishes() {
+    @Test void ringClosesTowardTheNextDescent() {
         var p = new HeartPurification(); p.reset(1);
-        for (int w = 0; w < 3; w++) {
-            assertTrue(ticksUntil(p, w < 2 ? 2 : 3, Event.OPENED) > 0);
-            while (p.settle() != Event.CLEARED) p.hit(true, 0);
+        assertEquals(0, p.toNext(), 1e-6);
+        for (int i = 0; i < HeartPurification.SEGMENT_TICKS / 2; i++) p.tick(true, false);
+        assertEquals(.5f, p.toNext(), .01);
+        ticksUntil(p, Event.OPENED);
+        assertEquals(1, p.toNext(), 1e-6);
+        p.cut();
+        assertEquals(0, p.toNext(), 1e-6);
+    }
+
+    @Test void multiplayerScalesHealthNotCuts() {
+        var duo = new HeartPurification(); duo.reset(1.5f);
+        assertEquals(HeartPurification.SEGMENT * 1.5f * HeartPurification.SEGMENTS, duo.maxHealth(), 1e-3);
+        for (int w = 0; w < HeartPurification.SEGMENTS; w++) { ticksUntil(duo, Event.OPENED); duo.cut(); }
+        assertTrue(duo.done());
+    }
+
+    @Test void fiveCutsFinish() {
+        var p = new HeartPurification(); p.reset(1);
+        assertEquals(5, HeartPurification.SEGMENTS);
+        for (int w = 0; w < HeartPurification.SEGMENTS; w++) {
+            assertTrue(ticksUntil(p, Event.OPENED) > 0);
+            assertEquals(Event.CLEARED, p.cut());
         }
         assertTrue(p.done());
         assertEquals(0, p.health());
-        assertEquals(Event.NONE, p.tick(3, true, false));
+        assertEquals(1, p.toNext());
+        assertEquals(Event.NONE, p.tick(true, false));
     }
 }

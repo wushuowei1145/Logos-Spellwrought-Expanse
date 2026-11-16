@@ -1,7 +1,8 @@
 {
   "start": "queen_guard",
   "boss": {
-    "rotation": ["queen_sword_rain", "queen_thorns", "queen_life_fan", "queen_roots", "queen_life_ray"],
+    "rotation": ["queen_sword_rain", "queen_thorns", "queen_thorn_vein", "queen_life_fan", "queen_roots", "queen_thorn_pierce", "queen_life_ray"],
+    "spells": ["queen_thorn_pierce", "queen_life_fan", "queen_thorn_vein", "queen_life_ray", "queen_sword_rain"],
     "close": "queen_reap",
     "close_range": 5,
     "close_every": 3,
@@ -68,14 +69,9 @@
       "length": 6,
       "next": "queen_idle"
     },
-    "queen_aid": {
-      "clip": "queen_aid",
+    "queen_kneel": {
+      "clip": "queen_resist",
       "length": 6,
-      "next": "queen_idle"
-    },
-    "queen_bind": {
-      "clip": "queen_bind",
-      "length": 4,
       "playback": "loop"
     },
     "queen_sacrifice": {
@@ -103,6 +99,26 @@
       "spell": "ray",
       "mana": 40
     },
+    "queen_thorn_vein": {
+      "clip": "queen_thorns",
+      "length": 3.1,
+      "next": "queen_idle",
+      "contact": [1.7],
+      "damage": 1,
+      "shape": "spell",
+      "spell": "thorn_vein",
+      "mana": 40
+    },
+    "queen_thorn_pierce": {
+      "clip": "queen_life_ray",
+      "length": 3.4,
+      "next": "queen_idle",
+      "contact": [1.5],
+      "damage": 1,
+      "shape": "spell",
+      "spell": "thorn_pierce",
+      "mana": 100
+    },
     "queen_sword_rain": {
       "clip": "queen_sword_rain",
       "length": 4.5,
@@ -113,16 +129,6 @@
       "spell": "rain",
       "mana": 20,
       "reach": 4.5
-    },
-    "queen_chain_break": {
-      "clip": "queen_chain_break",
-      "length": 3,
-      "next": "queen_bind"
-    },
-    "queen_core_fall": {
-      "clip": "queen_core_fall",
-      "length": 3.2,
-      "next": "queen_bind"
     }
   }
 }

@@ -12,7 +12,8 @@ import org.spongepowered.asm.mixin.injection.At;
 
 /**
  * 标出腐败一方的法术在执行（docs/CORRUPTION.md「腐败伤害」）：符文执行、事件触发走 {@code guard}，飞行中的形体走
- * {@code tickForms} 里的 {@code tick}。只有施法者是腐败一方时才进上下文；别的法术直接调原方法，不多开闭包、不碰 ThreadLocal。
+ * {@code tickForms} 里的 {@code tick}。延迟和重复（{@code delay}、{@code repeat :every}）排进 {@code schedule} 的那一段
+ * 到点时不经过 {@code guard}，排进去的时候就包好。只有施法者是腐败一方时才进上下文；别的法术直接调原方法，不多开闭包、不碰 ThreadLocal。
  * 只为换特效（{@code CorruptionVfxMixin}），不改调度与伤害。
  */
 @Mixin(value = SpellRuntime.class, remap = false)
@@ -21,6 +22,12 @@ abstract class CorruptionSpellMixin {
     private static void logos_dimension$guard(SpellInstance inst, Runnable body, Operation<Void> original) {
         if (!CorruptionDamage.aligned(inst.caster)) { original.call(inst, body); return; }
         CorruptionDamage.inSpell(true, () -> original.call(inst, body));
+    }
+
+    @WrapMethod(method = "schedule", require = 0)
+    private static void logos_dimension$schedule(SpellInstance inst, int ticks, Runnable action, Operation<Void> original) {
+        if (!CorruptionDamage.aligned(inst.caster)) { original.call(inst, ticks, action); return; }
+        original.call(inst, ticks, (Runnable) () -> CorruptionDamage.inSpell(true, action));
     }
 
     @WrapOperation(method = "tickForms", at = @At(value = "INVOKE", target = "Ldev/logos/runtime/SpellObject;tick()V"), require = 0)

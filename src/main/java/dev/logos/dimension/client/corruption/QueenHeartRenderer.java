@@ -63,14 +63,15 @@ public class QueenHeartRenderer implements BlockEntityRenderer<QueenHeart, Queen
     @Override public void submit(State state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
         meshes();
         if (state.defeated) return;
-        float beat = Math.max(SuspendedHeart.beat(state.time * (state.phase >= 2 ? 1.6f : 1)),state.surge);
+        float beat = Math.max(SuspendedHeart.beat(state.time * (state.phase == 3 ? 3f : state.phase >= 2 ? 1.6f : 1)),state.surge);
         float scale = 3f * (1 + .035f * beat) / 16;
         pose.pushPose();
         pose.translate(.5, 0, .5);
         if (state.queen != null && state.phase < 4) {
             for (int i = 0; i < 3; i++) {
                 final int n = i;
-                float sever = state.phase == 3 ? dev.logos.dimension.elven.blight.QueenBattleRules.smooth((state.phaseAge - 20 - n * 4) / 22) : 0;
+                // 第五刀之后线一根根断开（狂乱一开始）。
+                float sever = state.phase == 3 ? dev.logos.dimension.elven.blight.QueenBattleRules.smooth((state.phaseAge - 2 - n * 3) / 12) : 0;
                 if (sever >= .999f) continue;
                 var top = new Vec3((n-1)*.7, 3.8 + state.drop, 0);
                 var end = state.queen.add((n-1)*.5, 3.4 - n*.5, 0).lerp(top, sever);
@@ -78,6 +79,8 @@ public class QueenHeartRenderer implements BlockEntityRenderer<QueenHeart, Queen
                         top, end, .075 * (1 - sever), state.time, state.lightCoords));
             }
         }
+        // 狂乱：整颗心在抖。
+        if (state.phase == 3) pose.translate(Math.sin(state.time * 2.3) * .07, Math.sin(state.time * 3.1) * .04, Math.cos(state.time * 1.9) * .07);
         pose.mulPose(Axis.YP.rotationDegrees(-state.yaw));
         collector.submitCustomGeometry(pose, TYPE, (p, buf) -> SuspendedHeart.draw(p, buf, state.lightCoords, state.time, false, state.drop, state.collapse, state.severed));
         pose.translate(0, state.drop, 0);

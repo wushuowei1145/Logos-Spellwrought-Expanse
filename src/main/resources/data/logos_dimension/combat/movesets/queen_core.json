@@ -1,29 +1,27 @@
 {
-  "start": "core_thorns",
+  "start": "core_pillar",
   "moves": {
-    "core_thorns": {
-      "length": 2.25,
+    "core_pillar": {
+      "length": 3.5,
       "attack_speed_base": 1,
-      "contact": [1.6],
+      "contact": [1.1],
       "damage": 12,
-      "shape": "line",
-      "reach": 20,
-      "width": 1.1,
+      "shape": "pillar",
+      "reach": 2.6,
+      "height": 3,
       "filth": 5,
-      "next": "core_wave"
+      "next": "core_pillar"
     },
-    "core_wave": {
-      "length": 1.8,
+    "core_frenzy": {
+      "length": 0.35,
       "attack_speed_base": 1,
-      "contact": [0.0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1.05, 1.2, 1.35, 1.5, 1.65],
+      "contact": [0.15],
       "damage": 10,
-      "shape": "ring",
-      "reach": 22,
-      "speed": 9,
-      "band": 0.65,
-      "gap": 24,
-      "height": 0.65,
-      "next": "core_thorns"
+      "shape": "pillar",
+      "reach": 2.2,
+      "height": 3,
+      "filth": 3,
+      "next": "core_frenzy"
     }
   }
 }

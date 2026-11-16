@@ -1,0 +1,9 @@
+; 荆棘穿刺：在女王锁定的敌人（foe，从不是公主）脚下圈出一块地，一秒后三轮、每轮三根荆棘从地里向上刺出。伤害同样是腐败伤害。
+(spell :name "荆棘穿刺" :mana 100 :trigger cast
+  (let $y2
+    (field :at (pos-of foe) :radius 2)
+    (delay 1
+      (repeat 3 :every 1
+        (repeat 3 :every 0.1
+          (ray :from (spot :in $y2 :ground) :dir up
+            (on-hit (damage target 5 life))))))))
