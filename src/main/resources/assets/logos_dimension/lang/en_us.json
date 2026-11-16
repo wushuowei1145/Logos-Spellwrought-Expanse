@@ -1253,6 +1253,7 @@
   "death.attack.logos_dimension.foxfire.player": "%1$s was consumed by foxfire while fighting %2$s",
   "death.attack.logos_dimension.foxfire.item": "%1$s was consumed by foxfire %2$s kindled with %3$s",
   "block.logos_dimension.fuda_desk": "Fuda Writing Desk",
+  "item.logos_dimension.fuda_desk": "Fuda Writing Desk",
   "item.logos_dimension.basic_reifu": "Washi Reifu",
   "item.logos_dimension.basic_inscribed_reifu": "Washi Reifu",
   "item.logos_dimension.crystal_reifu": "Wisteria Reifu",
