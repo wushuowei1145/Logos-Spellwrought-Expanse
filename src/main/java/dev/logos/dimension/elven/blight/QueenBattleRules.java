@@ -3,7 +3,6 @@ package dev.logos.dimension.elven.blight;
 /** 核心生命、断链和结局共用的时间表；不依赖客户端或帧率。 */
 public final class QueenBattleRules {
     public static final float HEALTH = 400;
-    public static final double MAGIC_RESISTANCE = .75;
     public static final int TETHERED = 1, REBELLION = 2, RECKONING = 3, ENDING = 4;
     public static final int ROOTS = 3, RESIST_TICKS = 120;
     public static final int EXPLODE = 80, WAVE_START = 100, WAVE_END = 260, END = 320;

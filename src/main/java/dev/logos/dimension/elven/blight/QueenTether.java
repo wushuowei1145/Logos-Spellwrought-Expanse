@@ -19,8 +19,10 @@ public final class QueenTether extends PathfinderMob {
     private int spawnPhase = 1;
     public QueenTether(EntityType<? extends QueenTether> type, Level level) {
         super(type, level); setNoAi(true); setNoGravity(true); setPersistenceRequired(); xpReward = 0;
+        // 根结是女王身体的一部分，抗性同女王（Logos 命中前读这些属性）。
+        if (level instanceof ServerLevel server) dev.logos.dimension.combat.CreatureTraits.of(server.getServer(), CorruptedElfQueen.TRAITS).apply(this);
     }
-    public static AttributeSupplier.Builder attributes() { return PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, 32).add(Attributes.KNOCKBACK_RESISTANCE, 1).add(dev.logos.runtime.SpellModifiers.SPELL_RESISTANCE, QueenBattleRules.MAGIC_RESISTANCE); }
+    public static AttributeSupplier.Builder attributes() { return PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, 32).add(Attributes.KNOCKBACK_RESISTANCE, 1); }
     @Override protected void defineSynchedData(SynchedEntityData.Builder b) { super.defineSynchedData(b); b.define(SLOT, 0); b.define(OWNER, -1); }
     public int slot() { return entityData.get(SLOT); }
     public int spawnPhase() { return spawnPhase; }
@@ -42,8 +44,8 @@ public final class QueenTether extends PathfinderMob {
     @Override public boolean hurtServer(ServerLevel world, DamageSource source, float amount) {
         var q = queen();
         if (q == null || spawnPhase != q.phase() || amount <= 0 || !Float.isFinite(amount) || !(source.getEntity() instanceof LivingEntity) || source.getEntity() == q) return false;
-        // Logos 在进入 hurtServer 前已读过法术抗性；只补原版及其他模组的魔法，避免双算。
-        if (source.is(net.minecraft.tags.DamageTypeTags.WITCH_RESISTANT_TO) && dev.logos.runtime.Effects.dealing() == null) amount *= (float) (1 - QueenBattleRules.MAGIC_RESISTANCE);
+        // Logos 在进入 hurtServer 前已按属性算过元素抗性；这里只补抗性表里的条件倍数和核心庇护，不重复算。
+        amount = q.incoming(world, source, amount);
         if (slot() == 3) {
             if (!QueenBattleRules.coreExposed(q.phase(), q.brokenRoots())) return false;
             setHealth(q.getHealth());
@@ -79,5 +81,6 @@ public final class QueenTether extends PathfinderMob {
     @Override protected void readAdditionalSaveData(ValueInput in) {
         super.readAdditionalSaveData(in); entityData.set(SLOT, Math.clamp(in.getIntOr("TetherSlot", 0), 0, 3)); spawnPhase = Math.clamp(in.getIntOr("CorePhase", 1), 1, 3);
         try { owner = UUID.fromString(in.getStringOr("Queen", "")); } catch (IllegalArgumentException ignored) { owner = null; }
+        if (level() instanceof ServerLevel server) dev.logos.dimension.combat.CreatureTraits.of(server.getServer(), CorruptedElfQueen.TRAITS).apply(this);
     }
 }

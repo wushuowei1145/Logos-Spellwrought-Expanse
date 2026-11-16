@@ -11,6 +11,9 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 /** 换色的网络边界。弹体模型继续走公开 Vfx 接口，叶片、花瓣与法阵由附属画。 */
 public final class QueenSpellEffects {
     private QueenSpellEffects() {}
+    private static long replaced;
+    /** 换成腐败特效的次数，只给测试看。 */
+    public static long replaced() { return replaced; }
     public static void register(IEventBus bus) { bus.addListener((RegisterPayloadHandlersEvent e) -> e.registrar("1").playToClient(QueenSpellPayload.TYPE, QueenSpellPayload.CODEC)); }
     public static void send(ServerLevel world, int kind, Vec3 at, Vec3 aux, float scale, int ticks) {
         var packet = new QueenSpellPayload(kind, at, aux, scale, ticks);
@@ -29,6 +32,7 @@ public final class QueenSpellEffects {
             case "BEAM" -> send(world, QueenSpellPayload.RAY, at, aux, 1, 14);
             default -> { return false; }
         }
+        replaced++;
         return true;
     }
 }

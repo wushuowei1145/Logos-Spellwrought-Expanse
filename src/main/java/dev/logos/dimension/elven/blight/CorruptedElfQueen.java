@@ -51,6 +51,10 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
     private static final EntityDataAccessor<Long> PHASE_TIME = SynchedEntityData.defineId(CorruptedElfQueen.class, EntityDataSerializers.LONG);
     private static final EntityDataAccessor<BlockPos> HEART_POS = SynchedEntityData.defineId(CorruptedElfQueen.class, EntityDataSerializers.BLOCK_POS);
     private static final EntityDataAccessor<Boolean> BOUND = SynchedEntityData.defineId(CorruptedElfQueen.class, EntityDataSerializers.BOOLEAN);
+    /** 周围还在供养她的腐败核心数（核心庇护），每秒刷新一次，同步给血条。 */
+    private static final EntityDataAccessor<Integer> WARD = SynchedEntityData.defineId(CorruptedElfQueen.class, EntityDataSerializers.INT);
+    /** 抗性表 data/logos_dimension/creature_traits/corrupted_queen.json，血管根结也用这一份。 */
+    public static final Identifier TRAITS = LogosDimension.id("corrupted_queen");
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final Set<UUID> struck = new HashSet<>();
     private @Nullable BlockPos heart;
@@ -74,16 +78,35 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         super(type, world);
         setPersistenceRequired();
         xpReward = 80;
+        if (world instanceof ServerLevel server) traits(server).apply(this);
     }
+
+    public CreatureTraits traits(ServerLevel world) { return CreatureTraits.of(world.getServer(), TRAITS); }
+    /** 正在供养她的腐败核心数。 */
+    public int ward() { return entityData.get(WARD); }
+    /** 数一次周围的腐败核心；平时每秒一次，测试可以直接调用。 */
+    public void refreshWard(ServerLevel world) {
+        var ward = traits(world).ward();
+        entityData.set(WARD, ward == null ? 0 : dev.logos.dimension.corruption.CorruptionNetworks.get(world).coresWithin(blockPosition(), ward.radius()));
+    }
+    /** 受到的伤害先按抗性表乘，再扣核心庇护（虚空等 {@code bypasses_blight_ward} 标签里的不扣）。血管根结也走这里。 */
+    public float incoming(ServerLevel world, DamageSource source, float amount) {
+        var traits = traits(world);
+        amount = traits.adjust(source, amount);
+        var ward = traits.ward();
+        if (ward != null && !source.is(BYPASSES_WARD)) amount *= (float) (1 - ward.reduction(ward()));
+        return amount;
+    }
+    public static final net.minecraft.tags.TagKey<net.minecraft.world.damagesource.DamageType> BYPASSES_WARD =
+            net.minecraft.tags.TagKey.create(Registries.DAMAGE_TYPE, LogosDimension.id("bypasses_blight_ward"));
 
     public static AttributeSupplier.Builder attributes() {
         return PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, QueenBattleRules.HEALTH).add(Attributes.MOVEMENT_SPEED, .28)
-                .add(dev.logos.runtime.SpellModifiers.SPELL_RESISTANCE, QueenBattleRules.MAGIC_RESISTANCE)
                 .add(Attributes.ARMOR, 6).add(Attributes.KNOCKBACK_RESISTANCE, 1).add(Attributes.FOLLOW_RANGE, 40).add(Attributes.STEP_HEIGHT, 1);
     }
 
     @Override protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        super.defineSynchedData(builder); builder.define(MOVE, ""); builder.define(PHASE, 1); builder.define(BROKEN, 0); builder.define(PHASE_TIME, 0L); builder.define(HEART_POS, BlockPos.ZERO); builder.define(BOUND, false);
+        super.defineSynchedData(builder); builder.define(MOVE, ""); builder.define(PHASE, 1); builder.define(BROKEN, 0); builder.define(PHASE_TIME, 0L); builder.define(HEART_POS, BlockPos.ZERO); builder.define(BOUND, false); builder.define(WARD, 0);
     }
 
     public void guard(BlockPos at) { heart = at.immutable(); entityData.set(HEART_POS, heart); entityData.set(BOUND, true); play("queen_guard"); }
@@ -105,6 +128,8 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
     public int phase() { return entityData.get(PHASE); }
     public float phaseAge(float partial) { return level().getGameTime() - entityData.get(PHASE_TIME) + partial; }
     public int brokenRoots() { return entityData.get(BROKEN); }
+    /** 控制韧性：阶段一、二里打她攒的硬直值（抗性和核心庇护算过之后）。 */
+    public float strain() { return strain; }
     public @Nullable BlockPos heartPosition() { return entityData.get(BOUND) ? entityData.get(HEART_POS) : heart; }
     public int endingTick() { return endingTick; }
     public boolean transitioning() { String move = entityData.get(MOVE); return move.startsWith("queen_chain_break|") || move.startsWith("queen_core_fall|"); }
@@ -224,9 +249,8 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
             boolean touches = line ? along > 0 && along < 20 && across < 1.1 && Math.abs(d.y) < 2
                     : Math.abs(Math.hypot(d.x, d.z) - radius) < .65 && d.y > -1 && d.y < .65;
             if (touches && hasLineOfSight(p) && pressureStruck.add(p.getUUID())) {
-                var source = new DamageSource(world.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(Corruption.DAMAGE), this);
                 float scale = world.getDifficulty() == net.minecraft.world.Difficulty.HARD ? 1.25f : world.getDifficulty() == net.minecraft.world.Difficulty.EASY ? .75f : 1;
-                if (p.hurtServer(world, source, (float) r.move().damage() * scale)) CorruptionContact.drainMana(p, 8);
+                corruptionHit(p, (float) r.move().damage() * scale, 8);
             }
         }
     }
@@ -300,6 +324,7 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         super.tick();
         if (!(level() instanceof ServerLevel world)) return;
         if (!isAlive()) return;
+        if (tickCount % 20 == 0) refreshWard(world);
         mana = Math.min(600, mana + .5);
         if (phase() == 4) { finale(world); return; }
         if (world.getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL) {
@@ -466,9 +491,14 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
     }
     private void hit(ServerLevel world, ServerPlayer player, float damage) {
         if (!struck.add(player.getUUID())) return;
-        var source = new DamageSource(world.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(Corruption.DAMAGE), this);
         float scale = switch (world.getDifficulty()) { case EASY -> .75f; case HARD -> 1.25f; default -> 1; };
-        if (player.hurtServer(world, source, damage * scale)) CorruptionContact.drainMana(player, 10);
+        corruptionHit(player, damage * scale, 10);
+    }
+    /** 女王和腐败之心的打击都是腐败伤害（生命的子类型）：走 Logos 的生命结算，真的掉了血再吸魔力。 */
+    private void corruptionHit(ServerPlayer player, float damage, double drain) {
+        float before = player.getHealth() + player.getAbsorptionAmount();
+        dev.logos.dimension.corruption.CorruptionDamage.hit(this, player, damage);
+        if (player.getHealth() + player.getAbsorptionAmount() < before) CorruptionContact.drainMana(player, drain);
     }
     private void ring(ServerLevel world, double radius, boolean warning) {
         int count = Math.max(12, (int) (radius * 8));
@@ -483,11 +513,11 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
 
     @Override public boolean hurtServer(ServerLevel world, DamageSource source, float amount) {
         // 招式损坏或缺失时允许原版伤害，不把女王锁在无法完成的免伤状态。
+        amount = incoming(world, source, amount);
         if (Movesets.get(world.getServer(), MOVESET) == null) return super.hurtServer(world, source, amount);
         if (action.equals("queen_guard") && source.getEntity() instanceof ServerPlayer player && canFight(player)) engage(player);
         if ((entering() || transitioning()) && !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
         if (!source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
-            if (source.is(net.minecraft.tags.DamageTypeTags.WITCH_RESISTANT_TO) && dev.logos.runtime.Effects.dealing() == null) amount *= (float) (1 - QueenBattleRules.MAGIC_RESISTANCE);
             if (phase() >= 3 || amount <= 0 || !Float.isFinite(amount) || !(source.getEntity() instanceof LivingEntity)) return false;
             if (invulnerableTime > 10) return false;
             invulnerableTime = 20;
@@ -528,7 +558,9 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
     }
     @Override protected void readAdditionalSaveData(ValueInput in) {
         super.readAdditionalSaveData(in);
-        if (!in.getBooleanOr("ThreeBars", false)) { getAttribute(Attributes.MAX_HEALTH).setBaseValue(QueenBattleRules.HEALTH); setHealth(QueenBattleRules.HEALTH); getAttribute(dev.logos.runtime.SpellModifiers.SPELL_RESISTANCE).setBaseValue(QueenBattleRules.MAGIC_RESISTANCE); }
+        if (!in.getBooleanOr("ThreeBars", false)) { getAttribute(Attributes.MAX_HEALTH).setBaseValue(QueenBattleRules.HEALTH); setHealth(QueenBattleRules.HEALTH); }
+        // 存档里带着旧版的属性基础值（例如 75% 法术抗性），读完按当前的抗性表重写。
+        if (level() instanceof ServerLevel server) traits(server).apply(this);
         mana = Math.clamp(in.getDoubleOr("QueenMana", 600), 0, 600);
         if (in.getInt("HeartY").isPresent()) heart = new BlockPos(in.getIntOr("HeartX", 0), in.getIntOr("HeartY", 0), in.getIntOr("HeartZ", 0));
         if (heart != null) { entityData.set(HEART_POS, heart); entityData.set(BOUND, true); }

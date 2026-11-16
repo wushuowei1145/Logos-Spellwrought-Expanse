@@ -31,8 +31,8 @@ public final class QueenSpells {
         if (!(queen.level() instanceof net.minecraft.server.level.ServerLevel world)) return false;
         Spell spell = spell(world.getServer(), id);
         if (spell == null || !queen.payMana(cost(id))) return false;
-        // 收到明确前摇后才进入真实施法，画面换色只作用于这名 Boss 的生命法术。
-        QueenSpellContext.run(queen, () -> Casting.castAs(queen, spell, cost(id), 0, target, from, true));
+        // 收到明确前摇后才进入真实施法；女王是腐败一方，她的生命法术就是腐败伤害，特效也换成腐败的。
+        dev.logos.dimension.corruption.CorruptionDamage.inSpell(true, () -> Casting.castAs(queen, spell, cost(id), 0, target, from, true));
         return true;
     }
 }
