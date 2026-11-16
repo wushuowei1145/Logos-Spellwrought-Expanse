@@ -56,7 +56,36 @@ public class ElvenBlightViews implements UIScenario {
                     if(level.getBlockState(point).getCollisionShape(level,point).isEmpty()) return false;
                 return true;
             })
+            .check("血管接头落在高台上方够得着的高度",ctx->{
+                var level=Minecraft.getInstance().level;
+                var pos=tree.pos(0,9,0);
+                long reachable=dev.logos.dimension.client.corruption.QueenHeartRenderer.attachmentPoints(pos,level.getBlockState(pos).getValue(QueenHeartBlock.FACING))
+                        .stream().filter(p->p.getY()-pos.getY()>=2&&p.getY()-pos.getY()<=6).count();
+                return reachable>=12;
+            })
+            .checkServer("扩大的战场：大厅、隧道、祭坛、高台和入口",ctx->{
+                var level=ctx.player().level();
+                java.util.function.Predicate<net.minecraft.core.BlockPos> solid=p->!level.getBlockState(p).getCollisionShape(level,p).isEmpty();
+                return level.getBlockState(tree.pos(-22,3,8)).isAir()                       // 半径 22 处仍是大厅
+                        && level.getBlockState(tree.pos(-27,3,0)).isAir()                    // 西侧出怪隧道
+                        && level.getBlockState(tree.pos(0,1,-20)).is(ElvenBlight.LUMEN.get())
+                        && solid.test(tree.pos(0,3,18)) && level.getBlockState(tree.pos(0,4,18)).is(ElvenBlight.LUMEN.get()) // 祭坛
+                        && solid.test(tree.pos(0,10,22)) && level.getBlockState(tree.pos(0,10,-22)).isAir()             // 高台，拱门上方断开
+                        && level.getBlockState(tree.pos(0,1,-35)).is(net.minecraft.world.level.block.Blocks.OAK_STAIRS); // 门口木阶
+            })
             .screenshot("suspended_corruption_heart")
+            .server("从高台看整个大厅",ctx->{
+                var eye=tree.pos(-3,11,22).getBottomCenter();
+                var d=tree.pos(0,4,-6).getCenter().subtract(eye.add(0,ctx.player().getEyeHeight(),0));
+                DimensionTravel.teleport(ctx.player(),ctx.player().level(),eye,
+                        (float)Math.toDegrees(Math.atan2(-d.x,d.z)),(float)-Math.toDegrees(Math.atan2(d.y,Math.hypot(d.x,d.z))));
+            }).ticks(8).screenshot("queen_arena_from_gallery")
+            .server("从入口看祭坛",ctx->{
+                var eye=tree.pos(0,2,-27).getBottomCenter();
+                var d=tree.pos(0,5,10).getCenter().subtract(eye.add(0,ctx.player().getEyeHeight(),0));
+                DimensionTravel.teleport(ctx.player(),ctx.player().level(),eye,
+                        (float)Math.toDegrees(Math.atan2(-d.x,d.z)),(float)-Math.toDegrees(Math.atan2(d.y,Math.hypot(d.x,d.z))));
+            }).ticks(8).screenshot("queen_arena_from_entrance")
             .server("观察战场地板纹路",ctx->{
                 var eye=tree.pos(0,15,-5).getBottomCenter();
                 var d=tree.pos(0,1,0).getBottomCenter().subtract(eye.add(0,ctx.player().getEyeHeight(),0));

@@ -38,22 +38,25 @@ final class SuspendedHeart {
         if (panels != null) return;
         panels = new ArrayList<>();
         attachments = new ArrayList<>();
+        // 接头扎进扩大后大厅（半径 24，见 tools/blighted_world_tree_arena.py）的墙里，落在环形高台上方一人高处，站在高台上能砍到。
         for (int i = 0; i < 8; i++) {
             double angle = i * Math.PI / 4 + .12;
             Vec3 start = radial(angle, 2.6, 4.2 + Math.sin(angle) * .5);
-            Vec3 end = anchor(angle, 14.8, 12 + i % 3 * 2.1);
-            Vec3 bend = radial(angle + .08, 8, 6.8 + i % 2);
-            tube(start, bend, end, .29, 10, i);
+            Vec3 end = anchor(angle, WALL, 2.6 + i % 3 * .8);
+            Vec3 bend = radial(angle + .08, 12, 7.4 + i % 2);
+            tube(start, bend, end, .29, 14, i);
             Vec3 fork = curve(start, bend, end, .62);
-            tube(fork, radial(angle - .17, 11, 10), anchor(angle - .27, 14.9, 16 + i % 2), .13, 6, i + 11);
+            tube(fork, radial(angle - .17, 18, 7.6), anchor(angle - .27, WALL + .2, 4.6 + i % 2 * .8), .13, 8, i + 11);
         }
         panels = List.copyOf(panels);
         attachments = List.copyOf(attachments);
     }
+    /** 接头离核心的水平距离：大厅墙面再往里一格，保证扎在实心树壁里。 */
+    private static final double WALL = 25;
     private static Vec3 anchor(double angle, double radius, double y) {
         Vec3 p = radial(angle,radius,y);
-        // 北侧有原世界树的高拱门，接头越过门洞再扎进上方树壁。
-        if (p.z < 0 && Math.abs(p.x) < 10) p = new Vec3(p.x, Math.max(30,y), p.z);
+        // 北侧是入口拱门（顶在核心上方 26 格），接头越过门洞再扎进上方树壁；这一段高台也是断开的。
+        if (p.z < 0 && Math.abs(p.x) < 10.5) p = new Vec3(p.x, Math.max(27.5,y), p.z);
         attachments.add(p);
         return p;
     }
