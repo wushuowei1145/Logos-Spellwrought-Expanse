@@ -1,5 +1,16 @@
 # 首版验证记录
 
+## 腐化女王重做第 1 步：改名与腐败森林的存储、放置开销
+
+2026-11-16：分支 `feat/corrupted-elven-intro`（维护者接手 #271），Logos `dc3d381` / 0.7.0，整合 main `418e1887`（含 #274）后测试。设计见 #273 分支的 `docs/CORRUPTED_QUEEN_REMAKE.md`。
+
+| 层级 | 结果 |
+|---|---|
+| 单元 | 全量 436 条、0 失败、1 跳过（#274 补上 `fuda_desk` 中文名后全量通过） |
+| 世界 | `elven_blight_*` 10/10（含区域清理、存档与旋转、自然区域核心三条，检查改为"网络记归属、原材质从方块状态取回"）；`corruption_*` 16/16（子网络索引、消散改动后的普通腐败回归） |
+| 实际客户端 | `elven_blight_cleanup`、`elven_blight_queen` 2/2 场景、16/16 检查，原版渲染 |
+| 未验证 | 大型旧存档里重复记下的原方块是否随重新登记全部清掉（只在测试世界里看过）；光影包；多人 |
+
 ## 乐团：打击乐组（大鼓、小军鼓、吊镲、三角铁）
 
 2026-11-15：分支 `feat/orchestra-percussion`（未提交），基于 main `a766e466`（#269），Logos jar `builds/orchestra-percussion-2026-11-15/logos-0.7.0-dc3d381.jar`

@@ -43,7 +43,7 @@ public class ElvenBlightCleanupViews implements UIScenario {
             })
             .waitUntilServer("区域原材质登记完成",ctx->{
                 var data=CorruptionNetworks.get(ctx.player().level());var network=data.ofCore(node);
-                return network!=null&&network.original(probe)==original&&!BlightReclamation.get(ctx.player().level()).pending();
+                return network!=null&&data.at(probe)==network&&data.originalAt(ctx.player().level(),probe)==original&&!BlightReclamation.get(ctx.player().level()).pending();
             }).ticks(40)
             .checkServer("确为自然污染且有健康底材",ctx->ctx.player().level().getBlockState(probe).getBlock() instanceof BlightMemoryBlock)
             .screenshot("crimson_region_before")
