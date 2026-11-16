@@ -11,6 +11,25 @@
 | 实际客户端 | `elven_blight_cleanup`、`elven_blight_queen` 2/2 场景、16/16 检查，原版渲染 |
 | 未验证 | 大型旧存档里重复记下的原方块是否随重新登记全部清掉（只在测试世界里看过）；光影包；多人 |
 
+## 同伴：契印第二到第四印、数值成长、攻击玩家、防困
+
+2026-11-16：分支 `feat/companion-seals`，基于 main `f0bba150`（#270）。Logos jar `MinecraftLogosMod/build-main/build/libs/logos-0.7.0.jar`（Logos main `755fcee`）。维护者 2026-11-15 定的：继承最高到 100%；保护类魔咒也继承；形代替身挡死时像不死图腾那样在眼前转出形代；她自己的生命、护甲、韧性随契印长；流火一开始低一点、满契不变；羁绊加生命和攻击；吃东西的效果同玩家、回血看饱食度和饱和度；第二印处决你的流火爆开、第三印狐火之言（接 Logos 的符文解锁）、第四印狐火弹更痛、减速、留狐火印；连着闪不回主人身边就回形代；残血被贴着只守不动的毛病；狐火灯改看主人脚下那一格的亮度；作战策略加「攻击玩家」。设计见 [白梅同伴](docs/SHIRAUME_COMPANION.md) 第 5.1、8.14、8.15 节。
+
+| 层级 | 结果 |
+| --- | --- |
+| 单元 | 同伴单元测试 **29/29**：继承比例三成起、每枚 8%、第九枚全部；她自己随契印长、九枚以后不再长；羁绊每段加生命、攻击；流火倍数 1.25 → 2.25，九尾全亮、基础攻击时一刀同玩家的流火；档案带「攻击玩家」和羁绊那一项，在网络上来回不走样 |
+| GameTest | `foxfire_word_*` **3/3**：玩家自己写的 foxfire 照旧报错；学会了狐火之言以后，书与笔真的誊得上、书灵的检查也过 |
+| 实际客户端 | `shiraume_companion` 一组 **20/20 场景、74/74 检查**（新加 `companion_seals`、`companion_pvp`）。`companion_seals`：盖四枚契印，第三枚教会狐火之言、客户端也知道；她生命上限 72.4（60 + 继承六成二）、护甲 8、韧性 2；狐火弹打中铁傀儡减速、留一枚狐火印；主人穿保护 IV 的鞘翅时她少挨的那一截同原版算法乘继承比例；金苹果给她生命恢复和伤害吸收、回 13.6；两成血被僵尸贴着，守 1.5 秒后闪到主人身后（主人挡在中间）；坐在船里，主人走到 29 格外，连着闪不回去五次后回形代。`companion_pvp`：另一个玩家打主人，开关关着时不当敌人，开着时当敌人；主人自己从来不打。`companion_execute`：没盖第二枚契印时主人打爆的不接，盖了就接。`companion_guard`：形代替身挡下致命一击，主人眼前转出一张形代。`companion_talk`：作战策略里多了「攻击玩家」，开、关都打勾、回话；露天白天不点狐火灯 |
+| 打神狐 | 两只寻常神狐三轮赢两轮（没盖契印时流火一刀从 9 降到 7.25，原来三轮全赢）；场景要求至少两轮 |
+| 改测试 | `companion_owner_target` 的「牛掉了刀伤的血」加 0.01 的浮点余量（牛正好掉了预期的血，17.400002 > 17.4 判失败） |
+| 没做 | 只在测试场地里看过，没进游戏试玩，没在光影包下看过；编纂台卡片库里那张「狐火」没在实际编纂台里点过（GameTest 走的是书与笔和书灵）；学会了的人在编纂台里打开一张狐火术式页，图里还是显示成奥秘（存回去就成了奥秘），同原来；玩家手里流火的伤害要不要跟羁绊、契印走，待讨论 |
+
+```text
+./gradlew --offline test --tests 'dev.logos.dimension.companion.*' -PlogosJar=/absolute/path/logos-0.7.0.jar
+./gradlew --offline runGameTestServer -PlogosJar=/absolute/path/logos-0.7.0.jar "-PdimensionTests=logos_dimension:foxfire_word_*"
+./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.7.0.jar "-PldTest=group:shiraume_companion" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 乐团：打击乐组（大鼓、小军鼓、吊镲、三角铁）
 
 2026-11-15：分支 `feat/orchestra-percussion`（未提交），基于 main `a766e466`（#269），Logos jar `builds/orchestra-percussion-2026-11-15/logos-0.7.0-dc3d381.jar`

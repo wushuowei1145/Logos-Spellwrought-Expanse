@@ -44,7 +44,7 @@ public final class TalkMenu {
 
     /** 通用选项的 ID。 */
     public static final String CHAT = "chat", POUCH = "pouch", TACTIC = "tactic", PLAN = "plan", STATS = "stats", BYE = "bye",
-            FOLLOW = "move.follow", STAY = "move.stay";
+            FOLLOW = "move.follow", STAY = "move.stay", PVP = "pvp";
 
     private static final Map<String, List<Option>> MENUS = new ConcurrentHashMap<>();
 
@@ -52,7 +52,7 @@ public final class TalkMenu {
 
     /**
      * 通用的顶层：聊天（{@code chat} 是这位同伴自己的话题，后面自动加「返回」）、包袱（{@code pouch} 为假时没有）、
-     * 作战策略（跟上 / 留在原地 / 行动策略）、详细数据、一会再聊。
+     * 作战策略（跟上 / 留在原地 / 行动策略 / 攻击玩家）、详细数据、一会再聊。
      */
     public static List<Option> standard(List<Option> chat, boolean pouch) {
         List<Option> topics = new ArrayList<>(chat);
@@ -64,7 +64,7 @@ public final class TalkMenu {
         root.add(new Option(CHAT, Kind.MENU, List.copyOf(topics), null));
         if (pouch) root.add(Option.server(POUCH));
         root.add(Option.menu(TACTIC, Option.server(FOLLOW, "staying=false"), Option.server(STAY, "staying=true"),
-                new Option(PLAN, Kind.MENU, List.copyOf(tactics), null), Option.back()));
+                new Option(PLAN, Kind.MENU, List.copyOf(tactics), null), Option.server(PVP, "pvp=true"), Option.back()));
         root.add(new Option(STATS, Kind.PANEL, List.of(), null));
         root.add(new Option(BYE, Kind.CLOSE, List.of(), null));
         return List.copyOf(root);
@@ -99,6 +99,7 @@ public final class TalkMenu {
             case "tactic" -> sheet.tactic().equals(value);
             case "staying" -> Boolean.toString(sheet.staying()).equals(value);
             case "outfit" -> sheet.outfit().equals(value);
+            case "pvp" -> Boolean.toString(sheet.pvp()).equals(value);
             default -> false;
         };
     }

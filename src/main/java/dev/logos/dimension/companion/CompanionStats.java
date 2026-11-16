@@ -23,12 +23,24 @@ import net.minecraft.world.entity.player.Player;
  * <li>只继承长期的属性：基础值和装备带来的。药水、信标这类状态效果给的加成剔掉（按状态效果自己登记的修饰 id）。
  * <li>攻击按打法折算：近战攻击和 Logos 法术强度折算成的攻击，取高的那个，用法术的主人不吃亏。
  * <li>在场时每隔几秒重算一次，换了装备不用重新召唤。
- * <li>继承比例随契印（白梅的叫尾之契）升高，最多 {@link #MAX_RATIO}。
+ * <li>继承比例随契印（白梅的叫尾之契）升高：三成起，每枚加八成里的一成（{@link #RATIO_STEP}），第九枚到 {@link #MAX_RATIO}（全部）。
+ * <li>她自己的生命、护甲、韧性也随契印长（{@link #SEAL_HEALTH} 等），羁绊每升一段再加一点生命和攻击（{@link #BOND_HEALTH} 等）。
+ * <li>主人盔甲上的保护类魔咒按同样的比例继承（{@link #protection}）：她挨打时按主人的魔咒对这一下算保护，再乘比例。
  * </ul>
  */
 public final class CompanionStats {
-    public static final double BASE_HEALTH = 40, BASE_ARMOR = 4, BASE_FOXFIRE = 4;
-    public static final double RATIO = .3, MAX_RATIO = .8;
+    /** 她自己的（没盖契印、生疏时）。 */
+    public static final double BASE_HEALTH = 40, BASE_ARMOR = 4, BASE_TOUGHNESS = 0, BASE_FOXFIRE = 4;
+    /** 每枚契印她自己多长的生命、护甲、韧性（到第 {@link #FULL_SEALS} 枚为止）。 */
+    public static final double SEAL_HEALTH = 5, SEAL_ARMOR = 1, SEAL_TOUGHNESS = .5;
+    /** 羁绊每升一段（生疏 → 熟悉 → 亲近 → 信赖 → 羁绊）多的生命、攻击。 */
+    public static final double BOND_HEALTH = 4, BOND_ATTACK = .5;
+    /** 继承比例：三成起，每枚契印加 {@link #RATIO_STEP}，最多全部继承。 */
+    public static final double RATIO = .3, RATIO_STEP = .08, MAX_RATIO = 1;
+    /** 九尾就是九阶：契印到这么多枚，她自己的成长和流火的倍数就到顶了。 */
+    public static final int FULL_SEALS = 9;
+    /** 流火一刀是攻击的几倍：没盖契印时 {@link #BLADE_MIN}，到第 {@link #FULL_SEALS} 枚时 {@link #BLADE_MAX}（基础攻击时和玩家手里的流火一刀一样）。 */
+    public static final double BLADE_MIN = 1.25, BLADE_MAX = 2.25;
     /** Logos 法术强度为 1 时折算成多少点攻击：一发普通的魔弹大约这么多。 */
     public static final double SPELL_ATTACK = 6;
     static final Identifier INHERIT = LogosDimension.id("companion_inherit");
@@ -41,20 +53,73 @@ public final class CompanionStats {
         }
     }
 
-    /** 她这一刻的数值。 */
+    /** 一项数值的三部分：她自己的（基础 + 契印）、羁绊给的、从主人那里继承的。 */
+    public record Part(double own, double bond, double inherited) {
+        public double total() {
+            return own + bond + inherited;
+        }
+    }
+
+    /** 她这一刻的数值（各项都是合计；分开的见 {@link #parts}）。{@code foxfire} 是她的攻击（一发狐火弹的基础伤害）。 */
     public record Stats(double ratio, double health, double armor, double toughness, double foxfire) {}
+
+    /** 分开的四项：生命、攻击、护甲、韧性。 */
+    public record Parts(double ratio, Part health, Part attack, Part armor, Part toughness) {
+        public Stats stats() {
+            return new Stats(ratio, health.total(), armor.total(), toughness.total(), attack.total());
+        }
+    }
 
     private CompanionStats() {}
 
     /** 盖了 {@code seals} 枚契印时的继承比例。 */
     public static double ratio(int seals) {
-        return Math.min(MAX_RATIO, RATIO + .05 * Math.max(0, seals));
+        return Math.min(MAX_RATIO, RATIO + RATIO_STEP * Math.max(0, seals));
     }
 
-    public static Stats of(Owner owner, int seals) {
+    /** 契印算到第几枚为止（她自己的成长、流火的倍数）。 */
+    static int grown(int seals) {
+        return Math.clamp(seals, 0, FULL_SEALS);
+    }
+
+    /** 流火一刀是攻击的几倍。 */
+    public static double blade(int seals) {
+        return BLADE_MIN + (BLADE_MAX - BLADE_MIN) * grown(seals) / FULL_SEALS;
+    }
+
+    /** 盖了 {@code seals} 枚契印、羁绊在第 {@code stage} 段（0 是生疏）时的各项。 */
+    public static Parts parts(Owner owner, int seals, int stage) {
         double r = ratio(seals);
-        return new Stats(r, BASE_HEALTH + r * owner.health(), BASE_ARMOR + r * owner.armor(), r * owner.toughness(),
-                BASE_FOXFIRE + r * owner.attack());
+        int g = grown(seals);
+        int b = Math.max(0, stage);
+        return new Parts(r,
+                new Part(BASE_HEALTH + SEAL_HEALTH * g, BOND_HEALTH * b, r * owner.health()),
+                new Part(BASE_FOXFIRE, BOND_ATTACK * b, r * owner.attack()),
+                new Part(BASE_ARMOR + SEAL_ARMOR * g, 0, r * owner.armor()),
+                new Part(BASE_TOUGHNESS + SEAL_TOUGHNESS * g, 0, r * owner.toughness()));
+    }
+
+    public static Stats of(Owner owner, int seals, int stage) {
+        return parts(owner, seals, stage).stats();
+    }
+
+    /** 生疏时的数值。 */
+    public static Stats of(Owner owner, int seals) {
+        return of(owner, seals, 0);
+    }
+
+    /** 主人的羁绊在第几段（0 是生疏）。 */
+    static int stage(Player owner) {
+        return CompanionBond.Stage.of(owner.getData(Companions.BOND).affection()).ordinal();
+    }
+
+    /**
+     * 继承来的魔咒保护：主人身上的保护、火焰保护、爆炸保护、弹射物保护……对 {@code source} 这一下合起来算多少（同原版），
+     * 乘继承比例。原版的规矩照旧：封顶 20 点（减八成），绕过魔咒的伤害不算。
+     */
+    public static float protection(net.minecraft.server.level.ServerLevel level, Player owner, net.minecraft.world.damagesource.DamageSource source, int seals) {
+        if (source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_ENCHANTMENTS) || source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_EFFECTS)) return 0;
+        return (float) (net.minecraft.world.item.enchantment.EnchantmentHelper.getDamageProtection(level, owner, source) * ratio(seals));
     }
 
     /** 读主人此刻的长期数值。 */
@@ -89,16 +154,21 @@ public final class CompanionStats {
         return value;
     }
 
-    /** 把继承来的那部分挂到她身上（生命上限、护甲、护甲韧性），狐火的伤害记在她身上。生命上限变了时按比例保留当前生命。 */
-    static Stats apply(ShiraumeCompanion c, Player owner, int seals) {
-        Stats s = of(read(owner), seals);
+    /**
+     * 把基础之外的那部分（契印、羁绊、继承）挂到她身上（生命上限、护甲、护甲韧性），攻击和契印数记在她身上。
+     * 生命上限变了时按比例保留当前生命。
+     */
+    static Parts apply(ShiraumeCompanion c, Player owner, int seals) {
+        Parts parts = parts(read(owner), seals, stage(owner));
+        Stats s = parts.stats();
         float before = c.getMaxHealth(), fraction = before > 0 ? c.getHealth() / before : 1;
         set(c, Attributes.MAX_HEALTH, s.health() - BASE_HEALTH);
         set(c, Attributes.ARMOR, s.armor() - BASE_ARMOR);
-        set(c, Attributes.ARMOR_TOUGHNESS, s.toughness());
+        set(c, Attributes.ARMOR_TOUGHNESS, s.toughness() - BASE_TOUGHNESS);
         if (Math.abs(c.getMaxHealth() - before) > 1e-3) c.setHealth(Math.max(1, fraction * c.getMaxHealth()));
         c.setFoxfireDamage((float) s.foxfire());
-        return s;
+        c.setSeals(seals);
+        return parts;
     }
 
     private static void set(LivingEntity e, Holder<Attribute> attribute, double amount) {
