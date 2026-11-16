@@ -88,6 +88,6 @@ public class QueenHeartRenderer implements BlockEntityRenderer<QueenHeart, Queen
         double angle = Math.toRadians(facing.toYRot()), c = Math.cos(angle), s = Math.sin(angle);
         return SuspendedHeart.attachments().stream().map(p -> net.minecraft.core.BlockPos.containing(core.getX()+.5+c*p.x-s*p.z,core.getY()+p.y,core.getZ()+.5+s*p.x+c*p.z)).toList();
     }
-    @Override public AABB getRenderBoundingBox(QueenHeart heart) { return new AABB(heart.getBlockPos()).inflate(16, 7, 16).expandTowards(0, 32, 0); }
+    @Override public AABB getRenderBoundingBox(QueenHeart heart) { return new AABB(heart.getBlockPos()).inflate(27, 7, 27).expandTowards(0, 30, 0); }
     @Override public int getViewDistance() { return 128; }
 }

@@ -3,6 +3,7 @@ import copy
 import json
 from pathlib import Path
 from blueprint_nbt import read_nbt, write_structure
+import blighted_world_tree_arena as arena
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / 'src/main/resources/data/logos_dimension'
@@ -48,11 +49,56 @@ HEART = (0, 9, 0)
 
 
 def protected_hall(x, y, z):
-    """保护树心净空、内侧壁和楼层；树冠及外露树皮不在这个范围。"""
+    """保护树心净空、内侧壁和楼层；树冠及外露树皮不在这个范围。下部是扩大后的战场大厅（见 blighted_world_tree_arena）。"""
     if not -4 <= y < 96:
         return False
     radius = 16 if y < 82 else 16 - (y - 82) * .22
+    if y <= arena.DOME_TOP:
+        radius = max(radius, float(arena.protected_radius(max(y, 2))))
     return x * x + z * z <= radius * radius
+
+
+HEARTWOOD = {'Name': NS + 'elven_heartwood', 'Properties': {'axis': 'y'}}
+
+
+def wall_state(at):
+    """加粗出来的树壁按原有规则腐化：内侧保持素净的腐败古木，外侧按位置长出腐败污秽，都记着健康古木。"""
+    state = corrupted(HEARTWOOD)
+    if protected_hall(*at):
+        return state
+    state = encrust(state, at)
+    return memory(HEARTWOOD, 1 if state['Name'] == NS + 'blighted_heartwood' else 0)
+
+
+ARENA_STATES = {
+    arena.AIR: {'Name': 'minecraft:air'},
+    arena.FEATURE: {'Name': NS + 'blighted_heartwood', 'Properties': {'axis': 'y'}},
+    arena.LUMEN: {'Name': NS + 'blighted_lumen'},
+    arena.STAIRS: {'Name': 'minecraft:oak_stairs', 'Properties': {'facing': 'south', 'half': 'bottom', 'shape': 'straight', 'waterlogged': 'false'}},
+}
+
+
+def apply_arena(cells, tags, size, offset, labels, walls):
+    """把战场形状写进这个部件；walls=True 只写树壁（在贴脉络之前），否则写空气、地板、祭坛等（在清空树心之后）。"""
+    lo = [max(0, (arena.X0, arena.Y0, arena.Z0)[i] - offset[i]) for i in range(3)]
+    hi = [min(size[i], (arena.X1, arena.Y1, arena.Z1)[i] - offset[i] + 1) for i in range(3)]
+    if any(lo[i] >= hi[i] for i in range(3)):
+        return 0
+    changed = 0
+    for x in range(lo[0], hi[0]):
+        for y in range(lo[1], hi[1]):
+            for z in range(lo[2], hi[2]):
+                at = (x + offset[0], y + offset[1], z + offset[2])
+                label = int(labels[at[0] - arena.X0, at[1] - arena.Y0, at[2] - arena.Z0])
+                if label == 0 or (label == arena.WALL) != walls:
+                    continue
+                # 计数包括跳过的拼接块：用来确认整片形状都落在已有的部件里。
+                changed += 1
+                if cells.get((x, y, z), {}).get('Name') == 'minecraft:jigsaw':
+                    continue
+                cells[x, y, z] = wall_state(at) if label == arena.WALL else copy.deepcopy(ARENA_STATES[label])
+                tags.pop((x, y, z), None)
+    return changed
 
 
 def cell_hash(x, y, z):
@@ -141,6 +187,8 @@ def corrupted(state):
 def templates():
     sources = sorted((DATA / 'structure/elven').glob('tile_*.nbt'))
     sources += [DATA / f'structure/elven/giant_{i}.nbt' for i in range(5)]
+    labels, markers = arena.build()
+    written = 0
     for path in sources:
         doc = read_nbt(path)
         world_tree = path.stem.startswith('tile_')
@@ -163,6 +211,9 @@ def templates():
             cells[pos] = state
             if 'nbt' in entry and state['Name'] != 'minecraft:air':
                 tags[pos] = rename(entry['nbt'])
+        if world_tree:
+            # 先写加粗的树壁，脉络才会贴到新的外表面上。
+            written += apply_arena(cells, tags, doc['size'], offset, labels, True)
         coat_surfaces(cells, doc['size'], offset, world_tree)
         if world_tree:
             for x in range(doc['size'][0]):
@@ -177,12 +228,17 @@ def templates():
                         elif 2 <= ay < 96 and ax * ax + az * az < (13 if ay < 82 else 13 - (ay - 82) * .22) ** 2:
                             cells[x, y, z] = {'Name': 'minecraft:air'}
                             tags.pop((x, y, z), None)
+            # 再写扩大的大厅、拱门、隧道、地板、祭坛、高台、坡道和树根，盖过上面的竖井清空。
+            written += apply_arena(cells, tags, doc['size'], offset, labels, False)
         if path.stem == 'tile_3_0_3':
             # 核心悬在黑色大厅上方，血管由同一个核心渲染器连接到树壁。
             local = (HEART[0] - offset[0], HEART[1] - offset[1], HEART[2] - offset[2])
             cells[local] = {'Name': NS + 'queen_heart', 'Properties': {'awakened': 'false', 'defeated': 'false'}}
             tags[local] = {'id': NS + 'queen_heart', 'GuardianDrop': 7}
         write_structure(DATA / 'structure/blighted_elven' / path.name, doc['size'], cells, tags, doc.get('DataVersion', 0))
+    expected = int((labels != 0).sum())
+    assert written == expected, f'战场形状只写进了 {written}/{expected} 格，可能缺了部件'
+    write(DATA / 'queen_arena.json', markers)
     for path in sorted((DATA / 'worldgen/template_pool/elven').glob('*.json')):
         doc = rename(load(path))
         if path.stem == 'giants':
