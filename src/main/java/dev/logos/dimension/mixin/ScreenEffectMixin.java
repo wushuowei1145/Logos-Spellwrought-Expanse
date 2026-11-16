@@ -29,7 +29,7 @@ public abstract class ScreenEffectMixin {
         WorldStyleRenderer.PROJECTION.set(projection);
         GlowBloom.begin();
         dev.logos.dimension.client.screenfx.PostVfx.begin(dev.logos.dimension.client.explosion.ExplosionClient.active()
-                || dev.logos.dimension.client.vfx.DawnvowScreen.active() || dev.logos.dimension.client.QueenEndingClient.active());
+                || dev.logos.dimension.client.vfx.DawnvowScreen.active() || dev.logos.dimension.client.WorldTintScreen.wanted());
         dev.logos.dimension.client.vfx.DawnvowScreen.beginFrame();
     }
 
@@ -48,8 +48,8 @@ public abstract class ScreenEffectMixin {
         // 白梅战的色散与红光：在泛光之后（红晕和刀光一起被分开、被染红），画风与黑白闪之前
         dev.logos.dimension.client.shiraume.ShiraumeScreen.draw();
         WorldStyleRenderer.draw();
-        // 净化作用于已经完成的世界画面，先于处决与最终蒙版；只在女王结局期间执行。
-        dev.logos.dimension.client.QueenPurificationScreen.draw(viewProjection);
+        // 世界球体着色（女王战的净化圈、搏动波、腐败漫开，结局的大范围净化）作用于已经完成的世界画面，先于处决与最终蒙版。
+        dev.logos.dimension.client.WorldTintScreen.draw(viewProjection);
         // 处决特写把整个画面换成平涂的颜色，黑白闪和蒙版还能叠在它上面
         dev.logos.dimension.client.execution.ExecutionRenderer.draw();
         ScreenEffectRenderer.draw();

@@ -58,11 +58,11 @@ public final class CorruptionDamageTests {
         h.succeed();
     }
 
+    /** 这一下进到女王身上的量（Logos 抗性、抗性表、核心庇护都算过，护甲之前）。 */
     private static float strainFrom(CorruptedElfQueen q, Runnable hit) {
         q.invulnerableTime = 0;
-        float before = q.strain();
         hit.run();
-        return q.strain() - before;
+        return q.lastIncoming();
     }
 
     private static void near(GameTestHelper h, float actual, double expected, String what) {

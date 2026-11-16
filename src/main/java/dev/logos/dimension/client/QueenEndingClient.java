@@ -32,6 +32,20 @@ public final class QueenEndingClient {
     public static boolean active() { var mc = Minecraft.getInstance(); return cue != null && mc.level == level && mc.player != null && mc.player.isAlive() && age() >= 0 && age() < QueenBattleRules.END; }
     public static Vec3 center() { return cue == null ? Vec3.ZERO : cue.floor().add(0, 2, 0); }
     public static void hold(@Nullable Float age) { held = age; }
+    /** 结局的大范围净化：波内显露已还原的地景，波外暂染腐败色（世界球体着色的显露模式）。 */
+    public static void tints(java.util.List<WorldTintScreen.Sphere> out) {
+        if (!active()) return;
+        float age = age();
+        if (age < QueenBattleRules.EXPLODE) return;
+        float fade = 1 - QueenBattleRules.smooth((age - 270) / 40), rim = QueenBattleRules.smooth((age - 98) / 12) * fade;
+        out.add(new WorldTintScreen.Sphere(center(), QueenBattleRules.radius(age), WorldTintScreen.Mode.REVEAL, fade, QueenBattleRules.PURIFY_RADIUS, rim));
+    }
+    /** 结局全局的一次收缩和眩光（爆开前后）。 */
+    public static WorldTintScreen.@Nullable Ending ending() {
+        if (!active() || age() < 45) return null;
+        float age = age();
+        return new WorldTintScreen.Ending((float) Math.exp(-Math.pow((age - 72) / 12, 2)), (float) Math.exp(-Math.pow((age - 84) / 7, 2)) * .55f, center());
+    }
     @SubscribeEvent static void tick(net.neoforged.neoforge.client.event.ClientTickEvent.Post e) {
         var mc = Minecraft.getInstance();
         if (level != null && (mc.level != level || mc.player == null || !mc.player.isAlive())) { level = null; cue = null; held = null; }
