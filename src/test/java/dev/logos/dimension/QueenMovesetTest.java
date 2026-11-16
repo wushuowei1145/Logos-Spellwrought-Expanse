@@ -45,7 +45,8 @@ class QueenMovesetTest {
     }
     @Test void phaseEndingsFinishBeforeOpeningTheNextWindow() throws IOException {
         var set = body(); var actor = new Actor(); var r = new MoveRunner(set, actor, 0);
-        for (var entry : Map.of("queen_chain_break", "queen_aid", "queen_core_fall", "queen_bind").entrySet()) {
+        // 挣断控制后直接束缚腐败之心（阶段三），不再回到援护。
+        for (var entry : Map.of("queen_chain_break", "queen_bind", "queen_core_fall", "queen_bind").entrySet()) {
             r.force(entry.getKey(), 0); var move = r.move();
             assertFalse(move.hasContact()); r.tick(move.length() * 20 - 1);
             assertEquals(entry.getKey(), r.move().name()); r.tick(move.length() * 20);

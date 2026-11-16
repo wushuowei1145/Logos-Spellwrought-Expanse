@@ -8,7 +8,8 @@
 | 全屏后期 | [SCREEN_EFFECTS.md](SCREEN_EFFECTS.md) | 黑白闪（冲击帧）、电影蒙版、泛光 `GlowBloom`、后期里画的特效 `PostVfx` |
 | 区域画风 | [WORLD_STYLES.md](WORLD_STYLES.md) | 门后、群系里的世界换一种画风（黑白、童话、国画），走进去时球形切换 |
 | 处决特写 | [EXECUTION_SHOTS.md](EXECUTION_SHOTS.md) | 投技、处决的两秒特写：抛起、黑白、刀光、红色重击、拍下；可交互版本 |
-| 各功能自己的通道 | [EXPLOSION_MAGIC.md](EXPLOSION_MAGIC.md)、[DAWNVOW_CHARGE.md](DAWNVOW_CHARGE.md)、[RAILGUN.md](RAILGUN.md)、[SHIRAUME_BOSS.md](SHIRAUME_BOSS.md)、[ORCHESTRA.md](ORCHESTRA.md)、[QUEEN_CORE_BATTLE.md](QUEEN_CORE_BATTLE.md) | 爆裂魔法、曦誓蓄力、超电磁炮、白梅战、乐团描边、树心净化各有一个全屏通道 |
+| 各功能自己的通道 | [EXPLOSION_MAGIC.md](EXPLOSION_MAGIC.md)、[DAWNVOW_CHARGE.md](DAWNVOW_CHARGE.md)、[RAILGUN.md](RAILGUN.md)、[SHIRAUME_BOSS.md](SHIRAUME_BOSS.md)、[ORCHESTRA.md](ORCHESTRA.md) | 爆裂魔法、曦誓蓄力、超电磁炮、白梅战、乐团描边各有一个全屏通道 |
+| 世界球体着色 | [QUEEN_CORE_BATTLE.md](QUEEN_CORE_BATTLE.md)「画面」 | 一次画多个世界坐标的球：染腐、净化、显露、搏动波；女王战和树心净化结局在用，别的功能也能交球 |
 
 ## 一、先选对工具
 
@@ -46,7 +47,7 @@
 6. `PartOutline`：乐团选中声部的描边
 7. `ShiraumeScreen`：白梅战的色散和红光
 8. `WorldStyleRenderer`：区域画风
-9. `QueenPurificationScreen`：女王结局的世界坐标球形净化，仅结局期间取 `PostVfx` 深度
+9. `WorldTintScreen`：世界球体着色，一次最多 8 个球（女王战的净化圈、搏动波、腐败漫开，树心净化结局）；有球时才取 `PostVfx` 深度
 10. `ExecutionRenderer`：处决特写，整个画面换成平涂的颜色
 11. `ScreenEffectRenderer`：黑白闪和电影蒙版，最后画
 
@@ -144,6 +145,17 @@
 
 - 效果没开时，通道在复制任何东西之前就返回。
 - 量 GPU 耗时要在通道前后 `glFinish`；只看帧间隔，量到的是 CPU 提交时间。
+
+### 世界球体着色：交球就行
+
+想在世界里某个球形范围染一层颜色（染腐、净化圈、显露、一道波），不用新开通道：在 `WorldTintScreen.collect` 里交一个 `Sphere`（中心、半径、模式、强度、宽度）。模式：
+
+- `TAINT`：球内压暗、染成腐败的暗红，边缘带世界噪声。
+- `PURIFY`：球内略提亮偏暖绿，边缘一圈淡绿光。
+- `REVEAL`：球外染腐（到 `width` 为止）、球内保持原样，边缘一圈净化光（`rim` 是光的强度）。
+- `PULSE`：半径处一圈很淡的去饱和波，`width` 是波的厚度。
+
+一帧最多 8 个，按交的顺序画；交不上的丢掉。噪声都按世界坐标取（`EyeWrapped` 折返到 4096 以内），遵守「不要贴在屏幕上的纹理」。只读颜色和 `PostVfx` 的不透明深度，天空不染。要不要留深度由 `WorldTintScreen.wanted()` 在世界开始画之前决定，新加的来源也要在那里报一声。
 
 ## 四、加一个新的全屏通道
 

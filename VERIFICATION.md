@@ -1,5 +1,17 @@
 # 首版验证记录
 
+## 腐化女王重做第 4 步：精灵公主、守护净化与窗口、世界球体着色
+
+2026-11-16：分支 `feat/queen-core-battle`，Logos `dc3d381` / 0.7.0。精灵公主战斗版（门口相遇、对话、交出自然之力、到场后女王才起身、倒地与扶起）；三阶段改成单挑 → 守护净化（窗口按百分比打腐败之心）→ 挣脱；衍生物从隧道出来、优先打公主；高台上七个血管接头；地上的战斗污秽；净化光束用 Logos 生命光束；命中形状、出招顺序、耗魔搬进招式文件（`QueenMoves`）；`QueenPurificationScreen` 换成通用的世界球体着色 `WorldTintScreen`；被计入核心庇护的核心朝世界树拱起供养血管。规则见 [docs/QUEEN_CORE_BATTLE.md](docs/QUEEN_CORE_BATTLE.md)。
+
+| 层级 | 结果 |
+|---|---|
+| 单元 | 全量 461 条（含新增 `HeartPurificationTest` 8 条、`QueenMovesTest` 3 条、`QueenBattleRulesTest` 重写 7 条），0 失败、1 跳过 |
+| 世界 | `elven_blight_*` 18/18，新增和重写：`elven_blight_three_stage_battle`（公主到场 → 阶段一打空停在 1 点 → 公主上祭坛、七个接头、砍断一条只记一次 → 第一个窗口普通命中扣 2%、生命命中打完一段 → 第二个窗口失败退 15% → 倒地每秒退 1%、扶起 → 第二个窗口打完挣脱 → 最后的窗口 → 结局清掉衍生物和污秽、净化启动；衍生物先找公主、窗口里腐败之心压低；阶段二和开着的窗口读档不丢）、`elven_blight_queen_battle_reset`、`elven_blight_princess_gate`（门口生成、战斗外打不伤、交弓只一次、公主没到场女王不起身、「走吧」、存档）、`elven_blight_natural_trigger`（加公主到场的条件）；`elven_blight_queen_resistances` 改为直接读进到女王身上的量 |
+| 回归 | `corruption_*` 16/16 |
+| 实际客户端 | `queen_core_battle`、`elven_blight_queen` 2/2 场景、27/27 检查，原版渲染。看过截图：公主跃上祭坛的镜头（遮幅）、Logos 生命光束连到腐败之心、血条下的净化进度和刻度、窗口倒计时、窗口里压低的腐败之心、隧道口的衍生物、高台上的血管接头、阶段三的束缚和净化圈、地上的污秽、结局的大范围净化（改由世界球体着色画）。场景里替玩家护住公主、窗口进度直接调到刻度 |
+| 未验证 | 光影包（新的世界球体着色通道没在 Iris、photon、Complementary 下跑过）；多人；真实的 50 秒进度和窗口手感、衍生物的压力（只按初值，没试玩）；公主的对话界面没截图；供养血管在真实森林里的样子（测试树附近核心数 16–26，但没专门截图）；Sodium |
+
 ## 腐化女王重做第 3 步：腐败伤害、抗性表与核心庇护
 
 2026-11-16：分支 `feat/queen-core-battle`，Logos `dc3d381` / 0.7.0。腐败伤害做成生命的子类型（和狐火共用 `Effects` 注入点），打中腐败一方改为治疗；女王的抗性写进数据包 `creature_traits/corrupted_queen.json`（通用的 `combat/CreatureTraits`）；周围腐败核心给女王减伤，血条显示供养数；删掉包住所有法术的 `QueenSpellRuntimeMixin`、`QueenLifeVfxMixin`，换成只对腐败一方生效的 `CorruptionSpellMixin`、`CorruptionVfxMixin`。

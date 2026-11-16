@@ -1,4 +1,4 @@
 ; 落剑：招式系统决定逐剑释放，Logos 负责真正的飞行、碰撞和生命伤害。
 (spell :name "猩红落剑" :mana 20 :players true
   (projectile :from (above here 12) :dir down :speed 0.9 :life 2 :size 0.22 :look &iron_sword
-    (on-hit (damage target 5 life))))
+    (on-hit (damage target 12 life))))

@@ -78,7 +78,13 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 return c;
             }, 18, .75f, -8, .68f, 0));
 
+    /** 精灵公主：林间的深绿和嫩叶绿，淡金线；纹是三叶。模型以后另做，面板里先展示森林精灵替身。 */
+    public static final CompanionStyle ELF_PRINCESS = new CompanionStyle(0xFFB8E6A0, 0xFF6FAE62, 0xFFE3D27A, 0xFFB9E2F2, 0xFFF2F4EE, 0xFFAFC0A8,
+            0xFF132219, 0xFF0A120D, 0xB40E1A12, CompanionUi::trefoil,
+            new Showcase((level, sheet) -> dev.logos.dimension.elven.blight.ElvenBlight.PRINCESS.get().create(level, EntitySpawnReason.LOAD), 18, .75f, -8, .68f, 0));
+
     static {
         register("shiraume", SHIRAUME);
+        register(dev.logos.dimension.elven.blight.ElfPrincess.TALK, ELF_PRINCESS);
     }
 }

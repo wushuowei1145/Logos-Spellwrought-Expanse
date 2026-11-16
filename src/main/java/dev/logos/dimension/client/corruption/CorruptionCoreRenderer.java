@@ -45,6 +45,36 @@ public class CorruptionCoreRenderer implements BlockEntityRenderer<CorruptionCor
         int stage;
         float bodyYaw, eyeYaw, eyePitch, blink, grown, time;
         boolean far;
+        /** 供养血管的另一头（相对这个方块），没有为 null。 */
+        @Nullable Vec3 supply;
+    }
+
+    /** 供养血管用腐败之心的调色板（和树心里的血管同一种颜色）。 */
+    private static final RenderType SUPPLY = RenderTypes.entityCutout(LogosDimension.id("textures/entity/queen_heart_palette.png"));
+
+    /**
+     * 核心庇护：这个核心在某棵还没净化的世界树的庇护范围里，就朝树干连一条细血管（docs/CORRUPTED_QUEEN_REMAKE.md 2.4）。
+     * 只按坐标算，不生成实体；玩家在林子里能顺着找到世界树，也看得出哪些核心在供养女王。返回相对这个方块的另一头。
+     */
+    static @Nullable Vec3 supply(net.minecraft.core.BlockPos core) {
+        var level = net.minecraft.client.Minecraft.getInstance().level;
+        if (level == null) return null;
+        net.minecraft.core.BlockPos best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (var heart : dev.logos.dimension.elven.blight.QueenHeart.LOADED_CLIENT) {
+            double dx = heart.getX() - core.getX(), dz = heart.getZ() - core.getZ(), d = dx * dx + dz * dz;
+            double radius = dev.logos.dimension.elven.blight.QueenBattleRules.WARD_RADIUS;
+            if (d > radius * radius || d < 34 * 34 || d >= bestDistance) continue;
+            var state = level.getBlockState(heart);
+            if (!state.hasProperty(dev.logos.dimension.elven.blight.QueenHeartBlock.DEFEATED) || state.getValue(dev.logos.dimension.elven.blight.QueenHeartBlock.DEFEATED)) continue;
+            best = heart; bestDistance = d;
+        }
+        if (best == null) return null;
+        Vec3 from = Vec3.atBottomCenterOf(best), to = Vec3.atBottomCenterOf(core);
+        Vec3 dir = to.subtract(from).multiply(1, 0, 1).normalize();
+        // 扎进树干外壁（大厅半径 24 再加上壁厚），高度在大厅地面上方几格。
+        Vec3 trunk = from.add(dir.scale(31)).add(0, -4, 0);
+        return trunk.subtract(Vec3.atLowerCornerOf(core));
     }
 
     public CorruptionCoreRenderer(BlockEntityRendererProvider.Context context) { this(context, TEXTURE); }
@@ -72,6 +102,7 @@ public class CorruptionCoreRenderer implements BlockEntityRenderer<CorruptionCor
         state.grown = core.grown(partial);
         state.time = core.age() + partial;
         state.far = camera.distanceToSqr(Vec3.atCenterOf(core.getBlockPos())) > FAR * FAR;
+        state.supply = supply(core.getBlockPos());
     }
 
     static CoreShape shape(int stage) {
@@ -111,6 +142,10 @@ public class CorruptionCoreRenderer implements BlockEntityRenderer<CorruptionCor
 
     @Override
     public void submit(State state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
+        if (state.supply != null) {
+            Vec3 to = state.supply;
+            collector.submitCustomGeometry(pose, SUPPLY, (p, buf) -> QueenTetherRenderer.arc(p, buf, new Vec3(.5, .9, .5), to, .07, state.time, state.lightCoords));
+        }
         CoreShape s = shape(state.stage);
         CoreMesh mesh = body(state.stage, state.far);
         float beat = beat(state.time);
@@ -143,6 +178,10 @@ public class CorruptionCoreRenderer implements BlockEntityRenderer<CorruptionCor
     /** 3 级连根有 3 格多宽、2 格多高。 */
     @Override
     public AABB getRenderBoundingBox(CorruptionCoreBlockEntity core) {
-        return new AABB(core.getBlockPos()).inflate(3.6, 0, 3.6).expandTowards(0, 3, 0);
+        AABB box = new AABB(core.getBlockPos()).inflate(3.6, 0, 3.6).expandTowards(0, 3, 0);
+        Vec3 to = supply(core.getBlockPos());
+        if (to == null) return box;
+        Vec3 end = Vec3.atLowerCornerOf(core.getBlockPos()).add(to);
+        return box.minmax(new AABB(end, end)).expandTowards(0, QueenTetherRenderer.arcHeight(to.horizontalDistance()), 0);
     }
 }

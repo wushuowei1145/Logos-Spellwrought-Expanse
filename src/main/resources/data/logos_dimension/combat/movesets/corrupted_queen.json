@@ -1,5 +1,12 @@
 {
   "start": "queen_guard",
+  "boss": {
+    "rotation": ["queen_sword_rain", "queen_thorns", "queen_life_fan", "queen_roots", "queen_life_ray"],
+    "close": "queen_reap",
+    "close_range": 5,
+    "close_every": 3,
+    "fallback": "queen_roots"
+  },
   "moves": {
     "queen_guard": {
       "clip": "queen_guard",
@@ -25,42 +32,36 @@
       "clip": "queen_reap",
       "length": 2.4,
       "next": "queen_idle",
-      "contact": [
-        1.2
-      ],
-      "damage": 8
+      "contact": [1.2],
+      "damage": 16,
+      "shape": "cone",
+      "reach": 5,
+      "cone": 60,
+      "height": 3
     },
     "queen_roots": {
       "clip": "queen_roots",
       "length": 3.8,
       "next": "queen_idle",
-      "contact": [
-        1.5,
-        1.6,
-        1.7,
-        1.8,
-        1.9,
-        2.0,
-        2.1,
-        2.2,
-        2.3,
-        2.4,
-        2.5,
-        2.6,
-        2.7,
-        2.8,
-        2.9
-      ],
-      "damage": 7
+      "contact": [1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9],
+      "damage": 14,
+      "shape": "ring",
+      "reach": 13,
+      "speed": 7.6,
+      "band": 0.65,
+      "height": 0.65,
+      "filth": 8
     },
     "queen_thorns": {
       "clip": "queen_thorns",
       "length": 3.1,
       "next": "queen_idle",
-      "contact": [
-        1.7
-      ],
-      "damage": 10
+      "contact": [1.7],
+      "damage": 18,
+      "shape": "line",
+      "reach": 17,
+      "width": 1.2,
+      "filth": 6
     },
     "queen_resist": {
       "clip": "queen_resist",
@@ -86,44 +87,37 @@
       "clip": "queen_life_fan",
       "length": 3,
       "next": "queen_idle",
-      "contact": [
-        1.3
-      ],
-      "damage": 1
+      "contact": [1.3],
+      "damage": 1,
+      "shape": "spell",
+      "spell": "fan",
+      "mana": 60
     },
     "queen_life_ray": {
       "clip": "queen_life_ray",
       "length": 3.4,
       "next": "queen_idle",
-      "contact": [
-        1.5
-      ],
-      "damage": 1
+      "contact": [1.5],
+      "damage": 1,
+      "shape": "spell",
+      "spell": "ray",
+      "mana": 40
     },
     "queen_sword_rain": {
       "clip": "queen_sword_rain",
       "length": 4.5,
       "next": "queen_idle",
-      "contact": [
-        1.8,
-        1.95,
-        2.1,
-        2.25,
-        2.4,
-        2.55,
-        2.7,
-        2.85,
-        3.0,
-        3.15,
-        3.3,
-        3.45
-      ],
-      "damage": 1
+      "contact": [1.8, 1.95, 2.1, 2.25, 2.4, 2.55, 2.7, 2.85, 3.0, 3.15, 3.3, 3.45],
+      "damage": 1,
+      "shape": "spell",
+      "spell": "rain",
+      "mana": 20,
+      "reach": 4.5
     },
     "queen_chain_break": {
       "clip": "queen_chain_break",
       "length": 3,
-      "next": "queen_aid"
+      "next": "queen_bind"
     },
     "queen_core_fall": {
       "clip": "queen_core_fall",
