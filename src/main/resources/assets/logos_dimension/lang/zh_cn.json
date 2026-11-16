@@ -1253,6 +1253,7 @@
   "death.attack.logos_dimension.foxfire.player": "%1$s 在躲避 %2$s 时被狐火吞没了",
   "death.attack.logos_dimension.foxfire.item": "%1$s 被 %2$s 用 %3$s 燃起的狐火吞没了",
   "block.logos_dimension.fuda_desk": "符札书案",
+  "item.logos_dimension.fuda_desk": "符札书案",
   "item.logos_dimension.basic_reifu": "和紙霊符",
   "item.logos_dimension.basic_inscribed_reifu": "和紙霊符",
   "item.logos_dimension.crystal_reifu": "藤紫霊符",
