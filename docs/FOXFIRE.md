@@ -120,6 +120,8 @@
 
 注入都是 `require = 0`。Logos 改了被注入的方法时注入不上，狐火退回普通的奥秘伤害，不会崩。
 
+腐败伤害（生命的子类型，见 [CORRUPTION.md](CORRUPTION.md)「腐败伤害」）共用 `FoxfireEffectsMixin` 的几个入口：每个入口同时定下这一下是不是狐火、是不是腐败，`hurt` 里先看狐火再看腐败。改这几个入口时两边一起测（`foxfire_*`、`elven_blight_corruption_heals_its_own`）。
+
 ## 8. 测试
 
 - **GameTest**：`-PdimensionTests=logos_dimension:foxfire_*`，10 个，每个单独一批（狐火横扫扫得到隔壁测试的生物）。

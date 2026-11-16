@@ -1,0 +1,27 @@
+{
+  "start": "core_pillar",
+  "moves": {
+    "core_pillar": {
+      "length": 3.5,
+      "attack_speed_base": 1,
+      "contact": [1.1],
+      "damage": 12,
+      "shape": "pillar",
+      "reach": 2.6,
+      "height": 3,
+      "filth": 5,
+      "next": "core_pillar"
+    },
+    "core_frenzy": {
+      "length": 0.35,
+      "attack_speed_base": 1,
+      "contact": [0.15],
+      "damage": 10,
+      "shape": "pillar",
+      "reach": 2.2,
+      "height": 3,
+      "filth": 3,
+      "next": "core_frenzy"
+    }
+  }
+}

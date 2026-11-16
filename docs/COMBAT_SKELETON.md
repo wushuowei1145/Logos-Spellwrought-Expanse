@@ -219,3 +219,24 @@ CombatWeapon.register(6, "glaive", "glaive", GLAIVE_MOVESET).withCone(90);
 4. 第 1 节第 10 条：检测其他玩家模型模组并退回。
 5. NPC 适配：在 `NpcRenderer.adjustModelBonesForRender` 里把姿势写进 GeckoLib 骨骼，扣除静止旋转、按胯高缩放、双手握柄 IK；战斗层只覆盖它接管的骨骼，腿可以继续用 GeckoLib 的行走动画。核对 GeckoLib 读取 Bedrock 旋转的符号与本页一致。
 6. 命中轨迹：离线烘焙每段动作的剑根、剑尖轨迹，服务端按体型缩放后做扫掠判定，玩家与 NPC 共用。
+
+## 9. 生物抗性表
+
+Boss 和 NPC 的抗性不写死在实体里，写进数据包 `data/<命名空间>/creature_traits/<名>.json`，由 `combat/CreatureTraits` 读（按资源管理器缓存，`/reload` 后重读）。腐化女王的是 `logos_dimension:corrupted_queen`。
+
+```json
+{
+  "attributes": { "logos:fire_spell_resistance": 0.5, "logos:life_spell_vulnerability": 0.3 },
+  "damage": [
+    { "element": "arcane", "unless_type": "logos_dimension:foxfire", "multiply": 0.3 },
+    { "spell": false, "tag": "minecraft:is_fire", "multiply": 0.5 }
+  ],
+  "blight_ward": { "radius": 64, "per_core": 0.03, "max": 0.6 }
+}
+```
+
+- `attributes`：属性 ID → 基础值。生物生成和读档时写上（会盖掉存档里旧版的基础值）。Logos 的各元素法术抗性、易伤在命中前按这些算；Logos 的抗性彼此相乘，所以要按元素给，不要给总的 `logos:spell_resistance`。
+- `damage`：属性分不开的情况再按条件乘。条件都满足才乘：`element`（正在结算的 Logos 元素，`Effects.dealing()`）、`spell`（是不是 Logos 的伤害）、`tag`、`type`、`unless_type`（伤害类型标签或 ID）。例如狐火和普通奥秘同属奥秘元素，只能靠伤害类型区分。实体在 `hurtServer` 一开头调 `traits.adjust(source, amount)`。
+- `blight_ward`：可选，周围腐败核心给的减伤（像末影龙的水晶），见 [QUEEN_CORE_BATTLE.md](QUEEN_CORE_BATTLE.md)。标签 `logos_dimension:bypasses_blight_ward` 里的伤害（虚空、`out_of_world`、`generic_kill`）不减。
+- 文件缺失或写错时记一条错误、按没有抗性处理，不让生物因此无法结算伤害。
+

@@ -1,0 +1,134 @@
+{
+  "start": "queen_guard",
+  "boss": {
+    "rotation": ["queen_sword_rain", "queen_thorns", "queen_thorn_vein", "queen_life_fan", "queen_roots", "queen_thorn_pierce", "queen_life_ray"],
+    "spells": ["queen_thorn_pierce", "queen_life_fan", "queen_thorn_vein", "queen_life_ray", "queen_sword_rain"],
+    "close": "queen_reap",
+    "close_range": 5,
+    "close_every": 3,
+    "fallback": "queen_roots"
+  },
+  "moves": {
+    "queen_guard": {
+      "clip": "queen_guard",
+      "length": 4,
+      "playback": "loop"
+    },
+    "queen_idle": {
+      "clip": "idle",
+      "length": 2,
+      "playback": "loop"
+    },
+    "queen_rise": {
+      "clip": "queen_rise",
+      "length": 2,
+      "next": "queen_idle"
+    },
+    "queen_entrance": {
+      "clip": "queen_entrance",
+      "length": 5,
+      "next": "queen_idle"
+    },
+    "queen_reap": {
+      "clip": "queen_reap",
+      "length": 2.4,
+      "next": "queen_idle",
+      "contact": [1.2],
+      "damage": 16,
+      "shape": "cone",
+      "reach": 5,
+      "cone": 60,
+      "height": 3
+    },
+    "queen_roots": {
+      "clip": "queen_roots",
+      "length": 3.8,
+      "next": "queen_idle",
+      "contact": [1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9],
+      "damage": 14,
+      "shape": "ring",
+      "reach": 13,
+      "speed": 7.6,
+      "band": 0.65,
+      "height": 0.65,
+      "filth": 8
+    },
+    "queen_thorns": {
+      "clip": "queen_thorns",
+      "length": 3.1,
+      "next": "queen_idle",
+      "contact": [1.7],
+      "damage": 18,
+      "shape": "line",
+      "reach": 17,
+      "width": 1.2,
+      "filth": 6
+    },
+    "queen_resist": {
+      "clip": "queen_resist",
+      "length": 6,
+      "next": "queen_idle"
+    },
+    "queen_kneel": {
+      "clip": "queen_resist",
+      "length": 6,
+      "playback": "loop"
+    },
+    "queen_sacrifice": {
+      "clip": "queen_sacrifice",
+      "length": 4,
+      "next": "queen_idle"
+    },
+    "queen_life_fan": {
+      "clip": "queen_life_fan",
+      "length": 3,
+      "next": "queen_idle",
+      "contact": [1.3],
+      "damage": 1,
+      "shape": "spell",
+      "spell": "fan",
+      "mana": 60
+    },
+    "queen_life_ray": {
+      "clip": "queen_life_ray",
+      "length": 3.4,
+      "next": "queen_idle",
+      "contact": [1.5],
+      "damage": 1,
+      "shape": "spell",
+      "spell": "ray",
+      "mana": 40
+    },
+    "queen_thorn_vein": {
+      "clip": "queen_thorns",
+      "length": 3.1,
+      "next": "queen_idle",
+      "contact": [1.7],
+      "damage": 1,
+      "shape": "spell",
+      "spell": "thorn_vein",
+      "mana": 40
+    },
+    "queen_thorn_pierce": {
+      "clip": "queen_life_ray",
+      "length": 3.4,
+      "next": "queen_idle",
+      "contact": [1.5],
+      "damage": 1,
+      "shape": "spell",
+      "spell": "thorn_pierce",
+      "mana": 100
+    },
+    "queen_sword_rain": {
+      "clip": "queen_sword_rain",
+      "length": 4.5,
+      "next": "queen_idle",
+      "contact": [1.8, 1.95, 2.1, 2.25, 2.4, 2.55, 2.7, 2.85, 3.0, 3.15, 3.3, 3.45],
+      "damage": 1,
+      "shape": "spell",
+      "spell": "rain",
+      "mana": 20,
+      "reach": 4.5
+    }
+  }
+}
