@@ -4,31 +4,30 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 
 /**
- * 公主净化腐败之心的进度和窗口（docs/CORRUPTED_QUEEN_REMAKE.md 第 5 节）。只是数，不碰世界，单元测试直接跑。
+ * 公主净化腐败之心的进度和降下（docs/CORRUPTED_QUEEN_REMAKE.md 第 5 节）。只是数，不碰世界，单元测试直接跑。
  *
  * <ul>
- * <li>公主在祭坛上引导时，进度按阶段的速度涨：阶段二 0 → 66% 约 50 秒，阶段三 66% → 100% 约 25 秒。
- * <li>涨到 33%、66%、100% 时开一次窗口（约 8 秒），进度停住。腐败之心的生命分三段，每个窗口最多打掉一段：
- * 每次命中按最大生命的百分比扣（生命伤害 {@link #LIFE_HIT}，其他 {@link #OTHER_HIT}），乘核心庇护剩下的那部分。
- * <li>窗口里打完这一段：窗口关、进度接着涨。没打完：进度退 15%，再涨到这个刻度时窗口重开；已经打掉的那部分不回。
- * <li>公主倒地时进度每秒退 1%；没人扶、她自己起来时再退 25%（{@link #setback}）。进度最低只退到上一个已经打通的刻度（{@link #floor}）。
+ * <li>公主在祭坛上引导时进度涨，每 20% 约 20 秒。涨到 20%、40%、60%、80%、100% 时腐败之心被压下来一次（约 8 秒），进度停住。
+ * <li>降下来时任何一个玩家砍中它一下（{@link #cut}）就斩掉一段：固定是最大生命的 20%，五刀砍完。
+ * <li>没人砍到：它升回去，进度退 15%，再涨到这个刻度时重新降下。
+ * <li>公主倒地时进度每秒退 1%；没人扶、她自己起来时再退 25%（{@link #setback}）。进度最低只退到上一个已经斩掉的刻度（{@link #floor}）。
  * </ul>
+ * 这些都不写在屏幕上：玩家看腐败之心周围那圈净化之光合拢、看它降下来，公主也会喊出来（{@link PrincessLines}）。
  */
 public final class HeartPurification {
-    /** 开窗口的进度。 */
-    public static final float[] THRESHOLDS = {.33f, .66f, 1f};
-    public static final int SEGMENTS = 3;
-    /** 单人时每段生命；多人按 {@link #scale} 乘。 */
-    public static final float SEGMENT = 300;
+    /** 降下来的进度。 */
+    public static final float[] THRESHOLDS = {.2f, .4f, .6f, .8f, 1f};
+    public static final int SEGMENTS = THRESHOLDS.length;
+    /** 单人时每段生命（只给血条上的数用）；多人按 {@link #scale} 乘。 */
+    public static final float SEGMENT = 200;
     public static final int WINDOW_TICKS = 160;
-    public static final float LIFE_HIT = .06f, OTHER_HIT = .02f;
+    /** 从一个刻度涨到下一个要多少刻。 */
+    public static final int SEGMENT_TICKS = 400;
     public static final float FAIL_SETBACK = .15f, DOWNED_DECAY = .01f / 20, SELF_RISE_SETBACK = .25f;
-    /** 阶段二、三各自涨完要的刻数。 */
-    public static final int PHASE2_TICKS = 1000, PHASE3_TICKS = 500;
 
     public enum Event { NONE, OPENED, FAILED, CLEARED }
 
-    private float progress, segment = SEGMENT, scale = 1;
+    private float progress, scale = 1;
     private int cleared, window;
 
     /** 新的一场：多人时生命按 {@code scale} 乘。 */
@@ -37,36 +36,40 @@ public final class HeartPurification {
         progress = 0;
         cleared = 0;
         window = 0;
-        segment = segmentMax();
     }
 
     public float progress() { return progress; }
-    /** 已经打掉几段。 */
+    /** 已经斩掉几段。 */
     public int cleared() { return cleared; }
-    /** 窗口还剩几刻，没开为 0。 */
+    /** 降下来还剩几刻，没降为 0。 */
     public int window() { return window; }
     public boolean open() { return window > 0; }
     public boolean done() { return cleared >= SEGMENTS; }
     public float scale() { return scale; }
-    public float segmentMax() { return SEGMENT * scale; }
-    public float maxHealth() { return segmentMax() * SEGMENTS; }
-    /** 当前这一段还剩多少。 */
-    public float segment() { return segment; }
+    public float maxHealth() { return SEGMENT * scale * SEGMENTS; }
     /** 腐败之心整体还剩几成（血条用）。 */
-    public float health() { return done() ? 0 : (SEGMENTS - cleared - 1 + segment / segmentMax()) / SEGMENTS; }
+    public float health() { return (SEGMENTS - Math.min(cleared, SEGMENTS)) / (float) SEGMENTS; }
     /** 公主身边净化圈的半径（格）。 */
     public static double circle(float progress) { return 3 + 9 * progress; }
 
-    /** 进度最低退到哪：上一个已经打通的刻度（打碎的段不会因为倒地、失败再「没打过」）。 */
+    /** 进度最低退到哪：上一个已经斩掉的刻度（斩掉的段不会因为倒地、没砍到再「没斩过」）。 */
     public float floor() { return cleared == 0 ? 0 : THRESHOLDS[Math.min(cleared, SEGMENTS) - 1]; }
 
-    /** 这一阶段每刻涨多少。 */
-    public static float rate(int phase) {
-        return phase >= 3 ? (THRESHOLDS[2] - THRESHOLDS[1]) / PHASE3_TICKS : THRESHOLDS[1] / PHASE2_TICKS;
+    /** 离下一次降下还差几成：0 刚斩完，1 正要降下（腐败之心周围那圈光按它合拢）。 */
+    public float toNext() {
+        if (done()) return 1;
+        if (open()) return 1;
+        float lo = floor(), hi = THRESHOLDS[cleared];
+        return Math.clamp((progress - lo) / Math.max(1e-6f, hi - lo), 0, 1);
+    }
+
+    /** 每刻涨多少。 */
+    public static float rate() {
+        return THRESHOLDS[0] / SEGMENT_TICKS;
     }
 
     /** 逐刻推进。{@code channeling}：公主正在祭坛上引导；{@code downed}：她倒地了。 */
-    public Event tick(int phase, boolean channeling, boolean downed) {
+    public Event tick(boolean channeling, boolean downed) {
         if (done()) return Event.NONE;
         if (window > 0) {
             if (--window > 0) return Event.NONE;
@@ -79,34 +82,24 @@ public final class HeartPurification {
         }
         if (!channeling) return Event.NONE;
         float cap = THRESHOLDS[cleared];
-        progress = Math.min(cap, progress + rate(phase));
+        progress = Math.min(cap, progress + rate());
         if (progress < cap - 1e-6f) return Event.NONE;
         progress = cap;
         window = WINDOW_TICKS;
         return Event.OPENED;
     }
 
-    /** 窗口里命中一下：按最大生命的百分比扣，最多扣到这一段为止；{@code ward} 是核心庇护的减伤（0–1）。返回实际扣了多少。 */
-    public float hit(boolean life, double ward) {
-        if (!open() || done()) return 0;
-        float amount = (float) (maxHealth() * (life ? LIFE_HIT : OTHER_HIT) * (1 - Math.clamp(ward, 0, 1)));
-        amount = Math.min(amount, segment);
-        segment -= amount;
-        return amount;
-    }
-
-    /** 这一段打完了没有（{@link #hit} 之后看）；打完就关窗口、换下一段。 */
-    public Event settle() {
-        if (!open() || segment > 1e-4f) return Event.NONE;
+    /** 降下来时砍中一刀：斩掉这一段，它升回去。没降下来时什么都不做。 */
+    public Event cut() {
+        if (!open() || done()) return Event.NONE;
         cleared++;
         window = 0;
-        segment = done() ? 0 : segmentMax();
         return Event.CLEARED;
     }
 
-    /** 测试和演示用：直接把进度调到 {@code value}（窗口开着时不动）。 */
+    /** 测试和演示用：直接把进度调到 {@code value}（降下来时不动）。 */
     public void debugProgress(float value) {
-        if (!open()) progress = Math.clamp(value, 0, THRESHOLDS[Math.min(cleared, SEGMENTS - 1)]);
+        if (!open() && !done()) progress = Math.clamp(value, floor(), THRESHOLDS[cleared]);
     }
 
     public void setback(float amount) {
@@ -116,24 +109,24 @@ public final class HeartPurification {
     public void save(ValueOutput out) {
         out.putFloat("PurifyProgress", progress);
         out.putInt("PurifyCleared", cleared);
-        out.putFloat("PurifySegment", segment);
         out.putInt("PurifyWindow", window);
         out.putFloat("PurifyScale", scale);
+        out.putInt("PurifySegments", SEGMENTS);
     }
 
     public void load(ValueInput in) {
         scale = Math.max(1, in.getFloatOr("PurifyScale", 1));
+        // 三段的旧存档（第 4 步初版）从头净化。
+        if (in.getIntOr("PurifySegments", 3) != SEGMENTS) { reset(scale); return; }
         progress = Math.clamp(in.getFloatOr("PurifyProgress", 0), 0, 1);
         cleared = Math.clamp(in.getIntOr("PurifyCleared", 0), 0, SEGMENTS);
-        segment = Math.clamp(in.getFloatOr("PurifySegment", segmentMax()), 0, segmentMax());
         window = Math.clamp(in.getIntOr("PurifyWindow", 0), 0, WINDOW_TICKS);
     }
 
-    /** 客户端用同步来的数还原（血条、净化圈）。 */
-    public void sync(float progress, int cleared, float segmentFraction, int window) {
+    /** 客户端用同步来的数还原（血条、净化之光）。 */
+    public void sync(float progress, int cleared, int window) {
         this.progress = progress;
         this.cleared = cleared;
-        this.segment = segmentFraction * segmentMax();
         this.window = window;
     }
 }

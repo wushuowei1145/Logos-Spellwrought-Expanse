@@ -8,6 +8,7 @@ import dev.logos.dimension.camera.CameraPoint;
 import dev.logos.dimension.camera.CameraShot;
 import dev.logos.dimension.camera.CameraShots;
 import dev.logos.dimension.combat.*;
+import dev.logos.dimension.companion.CompanionLines;
 import dev.logos.dimension.corruption.Corruption;
 import dev.logos.dimension.corruption.CorruptionContact;
 import dev.logos.dimension.corruption.CorruptionDamage;
@@ -17,14 +18,10 @@ import dev.logos.dimension.npc.NpcAnimated;
 import dev.logos.dimension.npc.NpcAnimations;
 import dev.logos.dimension.screenfx.ScreenEffects;
 import dev.logos.dimension.screenfx.ScreenFlash;
-import dev.logos.lang.Element;
-import dev.logos.runtime.Effects;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
@@ -69,18 +66,21 @@ import org.jspecify.annotations.Nullable;
  * 腐化女王（docs/CORRUPTED_QUEEN_REMAKE.md 第 5 节）。坐在腐败之心下，公主到场后才开战。
  *
  * <ul>
- * <li>阶段一（被操控）：单挑。近战加三种 Logos 腐败法术，范围招在地上留下腐败污秽。血量打空进入阶段二。
- * <li>阶段二（守护净化）：她跪地挣扎，公主跃上祭坛净化腐败之心（{@link HeartPurification}）。腐败之心放潮和荆棘、
- * 从三条隧道放衍生物；女王被控制着冲向祭坛，玩家打她攒硬直（生命伤害算两倍），满了把她压回中央。
- * 砍断高台上的血管接头让衍生物少一些、慢一些。进度到 33%、66% 开窗口打腐败之心。
- * <li>阶段三（挣脱）：第二个窗口打完，她挣断控制、回身用权杖束缚腐败之心；腐败之心狂乱，进度到 100% 开最后的窗口。
+ * <li>阶段一（被操控）：单挑。近战加五种 Logos 腐败法术，范围招在地上留下腐败污秽。血量打空进入阶段二。
+ * <li>阶段二（守护净化）：镜头切到祭坛，公主落下来开始净化腐败之心（{@link HeartPurification}）。女王被线吊着站在场地正中，
+ * 不再受伤，只朝玩家放攻击法术；腐败之心每隔几秒用腐败光柱轰击场地，落点铺上脉络；隧道里出衍生物，优先打公主，
+ * 砍断高台上的血管接头让它们少一些、慢一些。净化每到一个刻度腐败之心降下来，谁砍中它一刀就是一段处决（固定 20%）。
+ * <li>阶段三（狂乱）：第五刀斩断连着女王的线，她跪倒；腐败之心胡乱轰击，脉络从中央往外漫到快淹没祭坛，这时她站起来。
  * <li>阶段四：拥心共殒（结局，见 {@link QueenEndings}）。
  * </ul>
  * 命中由服务端结算，形状、出招顺序、耗魔在招式文件里（{@link QueenMoves}）；全部打击是腐败伤害（{@link CorruptionDamage}）。
+ * 屏幕上不写状态：玩家看画面，提示和数量都由公主说出来（{@link ElfPrincess#say}）。
  */
 public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, MoveRunner.Actor {
     public static final Identifier MOVESET = LogosDimension.id("corrupted_queen"), CORE_MOVESET = LogosDimension.id("queen_core");
     public static final int RISE_TICKS = 40;
+    /** 砍中腐败之心之后这么多刻里女王和腐败之心都不出招（处决的镜头）。 */
+    public static final int CUT_PAUSE = 34;
     private static final EntityDataAccessor<String> MOVE = SynchedEntityData.defineId(CorruptedElfQueen.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> PHASE = SynchedEntityData.defineId(CorruptedElfQueen.class, EntityDataSerializers.INT);
     /** 砍断的主血管（第 i 位是第 i 条）。 */
@@ -88,12 +88,11 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
     private static final EntityDataAccessor<Long> PHASE_TIME = SynchedEntityData.defineId(CorruptedElfQueen.class, EntityDataSerializers.LONG);
     private static final EntityDataAccessor<BlockPos> HEART_POS = SynchedEntityData.defineId(CorruptedElfQueen.class, EntityDataSerializers.BLOCK_POS);
     private static final EntityDataAccessor<Boolean> BOUND = SynchedEntityData.defineId(CorruptedElfQueen.class, EntityDataSerializers.BOOLEAN);
-    /** 周围还在供养她的腐败核心数（核心庇护），每秒刷新一次，同步给血条。 */
+    /** 周围还在供养她的腐败核心数（核心庇护），每秒刷新一次。 */
     private static final EntityDataAccessor<Integer> WARD = SynchedEntityData.defineId(CorruptedElfQueen.class, EntityDataSerializers.INT);
-    /** 净化进度、已打掉几段、这一段还剩几成、窗口还剩几刻：同步给血条、心脏升降和净化圈。 */
+    /** 净化进度、已经斩掉几段、降下来还剩几刻：同步给血条、腐败之心的升降和周围那圈光。 */
     private static final EntityDataAccessor<Float> PURIFY = SynchedEntityData.defineId(CorruptedElfQueen.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> CLEARED = SynchedEntityData.defineId(CorruptedElfQueen.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Float> SEGMENT = SynchedEntityData.defineId(CorruptedElfQueen.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> WINDOW = SynchedEntityData.defineId(CorruptedElfQueen.class, EntityDataSerializers.INT);
     /** 公主的实体编号（客户端画净化圈用），没有为 -1。 */
     private static final EntityDataAccessor<Integer> PRINCESS = SynchedEntityData.defineId(CorruptedElfQueen.class, EntityDataSerializers.INT);
@@ -102,6 +101,8 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
     public static final TagKey<DamageType> BYPASSES_WARD = TagKey.create(Registries.DAMAGE_TYPE, LogosDimension.id("bypasses_blight_ward"));
     /** 波次里的衍生物带这个标签，重置和结局时清掉。 */
     public static final String WAVE_TAG = "logos_dimension.queen_wave";
+    /** 字幕里女王名字的颜色。 */
+    public static final int NAME_COLOR = 0xE58FA6;
     private static final List<java.util.function.Supplier<? extends EntityType<? extends Mob>>> WAVE_TYPES = List.of(CorruptionMobs.FILTH_ZOMBIE,
             CorruptionMobs.FILTH_SKELETON, CorruptionMobs.FILTH_SLIME, CorruptionMobs.FILTH_ZOMBIE, CorruptionMobs.FILTH_SILVERFISH);
 
@@ -113,20 +114,22 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
     private @Nullable CombatMove clientMove;
     private int elapsed, wait = 20, sequence;
     private boolean introPlayed;
-    private float strain, scale = 1;
-    private int endingTick, absentTicks, waveTimer, waveCount;
+    private float scale = 1;
+    private int endingTick, absentTicks, waveTimer, waveCount, cutPause;
     private @Nullable MoveRunner runner, coreRunner;
     private boolean endingSent, purified, allowDeath;
     private final Set<UUID> endingViewers = new HashSet<>();
-    private final Set<UUID> pressureStruck = new HashSet<>();
-    private Vec3 pressureAim = Vec3.ZERO;
+    /** 这一下光柱的落点和已经打到的。 */
+    private final List<Vec3> pillarSpots = new ArrayList<>();
+    private final Set<UUID> pillarStruck = new HashSet<>();
     private Vec3 aim = Vec3.ZERO, origin = Vec3.ZERO, staggerFrom = Vec3.ZERO;
     private Vec3 spellPoint = Vec3.ZERO;
     private double mana = 600;
     private final HeartPurification purification = new HeartPurification();
     private final List<UUID> waveMobs = new ArrayList<>();
     private final LongOpenHashSet filth = new LongOpenHashSet();
-    private final Map<UUID, Long> heartHits = new HashMap<>();
+    /** 轰下来的光柱一共几道（测试用）。 */
+    private int pillarsFired;
     /** 最近一下伤害算过抗性表和核心庇护之后、护甲之前的量（测试用）。 */
     private float lastIncoming;
 
@@ -166,7 +169,7 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
     @Override protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(MOVE, ""); builder.define(PHASE, 1); builder.define(BROKEN, 0); builder.define(PHASE_TIME, 0L); builder.define(HEART_POS, BlockPos.ZERO);
-        builder.define(BOUND, false); builder.define(WARD, 0); builder.define(PURIFY, 0f); builder.define(CLEARED, 0); builder.define(SEGMENT, 1f);
+        builder.define(BOUND, false); builder.define(WARD, 0); builder.define(PURIFY, 0f); builder.define(CLEARED, 0);
         builder.define(WINDOW, 0); builder.define(PRINCESS, -1);
     }
 
@@ -175,15 +178,13 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
     public void guard(BlockPos at) { heart = at.immutable(); entityData.set(HEART_POS, heart); entityData.set(BOUND, true); play("queen_guard"); }
     public String action() { return action; }
     public int actionTick() { return elapsed; }
-    public boolean entering() { return action.equals("queen_rise") || action.equals("queen_entrance"); }
+    public boolean entering() { return action.equals("queen_rise") && phase() == 1 || action.equals("queen_entrance"); }
     public boolean introPlayed() { return introPlayed; }
     public double mana() { return mana; }
     public boolean payMana(double amount) { if (mana < amount) return false; mana -= amount; return true; }
     public int phase() { return entityData.get(PHASE); }
     public float phaseAge(float partial) { return level().getGameTime() - entityData.get(PHASE_TIME) + partial; }
     public int brokenRoots() { return entityData.get(BROKEN); }
-    /** 控制韧性：阶段二里打她攒的硬直值（抗性和核心庇护算过之后，生命伤害算两倍）。 */
-    public float strain() { return strain; }
     public float scale() { return scale; }
     public @Nullable BlockPos heartPosition() { return entityData.get(BOUND) ? entityData.get(HEART_POS) : heart; }
     public int endingTick() { return endingTick; }
@@ -191,20 +192,25 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
     /** 客户端和服务端都能读的净化状态。 */
     public float purifyProgress() { return entityData.get(PURIFY); }
     public int purifyCleared() { return entityData.get(CLEARED); }
-    public float purifySegment() { return entityData.get(SEGMENT); }
     public int purifyWindow() { return entityData.get(WINDOW); }
+    /** 离下一次降下还差几成（客户端画腐败之心周围那圈光合拢到哪儿）。 */
+    public float purifyToNext() {
+        var view = new HeartPurification();
+        view.sync(purifyProgress(), purifyCleared(), purifyWindow());
+        return view.toNext();
+    }
     public int princessId() { return entityData.get(PRINCESS); }
     public List<UUID> waveMobs() { return List.copyOf(waveMobs); }
     public int filthCount() { return filth.size(); }
+    public int pillarsFired() { return pillarsFired; }
     /** 测试用：最近一下伤害算过 Logos 抗性、抗性表和核心庇护之后（护甲之前）的量。 */
     public float lastIncoming() { return lastIncoming; }
-    /** 阶段转换的动作（挣断控制）或阶段二开头公主跃上祭坛的那几秒：这时她不出招、不受伤。 */
-    public boolean transitioning() {
-        String move = entityData.get(MOVE);
-        return move.startsWith("queen_chain_break|") || phase() == 2 && phaseAge(0) < QueenBattleRules.INTRO;
-    }
+    /** 阶段二开头镜头切到祭坛、公主落下来的那几秒：这时她不出招、不受伤。 */
+    public boolean transitioning() { return phase() == 2 && phaseAge(0) < QueenBattleRules.INTRO; }
     /** 血管接头这时能砍。 */
-    public boolean veinsOpen() { return (phase() == 2 || phase() == 3) && !transitioning(); }
+    public boolean veinsOpen() { return phase() == 2 && !transitioning(); }
+    /** 刚砍中腐败之心、镜头在看处决（谁都不出招）。 */
+    public boolean cutting() { return cutPause > 0; }
     public Vec3 arena() {
         var at = heartPosition();
         return at != null && level().getBlockEntity(at) instanceof QueenHeart core ? core.guardianPosition() : level().isClientSide() ? position() : origin;
@@ -214,7 +220,14 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         if (at != null) { var state = level().getBlockState(at); if (state.hasProperty(QueenHeartBlock.FACING)) return state.getValue(QueenHeartBlock.FACING); }
         return Direction.SOUTH;
     }
-    /** 腐败之心（悬吊模型的底面中心）这一刻的位置：窗口里压低，阶段三被她拉下来一点。 */
+    /** 树根祭坛（公主站的地方）。 */
+    public Vec3 altar() {
+        var at = heartPosition();
+        return at == null ? arena() : QueenArena.at(at, facing(), level() instanceof ServerLevel world ? QueenArena.get(world.getServer()).altar() : QueenArena.DEFAULT.altar());
+    }
+    /** 狂乱时脉络最远漫到离中央多远：快到祭坛（留 {@link QueenBattleRules#ALTAR_CLEAR} 格）。 */
+    public double frenzyLimit() { return Math.max(4, altar().subtract(arena()).horizontalDistance() - QueenBattleRules.ALTAR_CLEAR + 1); }
+    /** 腐败之心（悬吊模型的底面中心）这一刻的位置：降下来时压低。 */
     public Vec3 corePosition(float partial) {
         var at = heartPosition();
         Vec3 top = at == null ? arena().add(0, 7, 0) : at.getBottomCenter();
@@ -222,6 +235,8 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         float left = window <= 0 ? 0 : window - partial, age = window <= 0 ? 0 : HeartPurification.WINDOW_TICKS - window + partial;
         return top.add(0, QueenBattleRules.coreDrop(phase(), phaseAge(partial), age, left), 0);
     }
+    /** 腐败之心的中心（光束、光柱从这里出来）。 */
+    public Vec3 coreCenter(float partial) { return corePosition(partial).add(0, 2.6, 0); }
     public @Nullable ElfPrincess princess(ServerLevel world) {
         return heart != null && world.getBlockEntity(heart) instanceof QueenHeart core ? core.princess(world) : null;
     }
@@ -239,7 +254,13 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         purification.reset(scale);
         syncPurification();
         var princess = princess(world);
-        if (princess != null) { princess.arrive(world); princess.resetCounts(); }
+        if (princess != null) {
+            princess.arrive(world);
+            princess.resetCounts();
+            // 外面还剩几个核心在护着她，公主看得出来，玩家看不出来。
+            refreshWard(world);
+            if (ward() > 0) princess.say("ward", ward()); else princess.say("ward_none");
+        }
         boolean first = !introPlayed;
         introPlayed = true;
         play(first ? "queen_entrance" : "queen_rise");
@@ -249,51 +270,79 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
 
     private void changePhase(int phase) {
         entityData.set(PHASE, phase); entityData.set(PHASE_TIME, level().getGameTime());
-        strain = 0; coreRunner = null; struck.clear();
+        coreRunner = null; struck.clear(); pillarSpots.clear(); cutPause = 0;
     }
 
-    private void message(ServerLevel world, String key, Object... args) {
-        for (ServerPlayer p : world.players()) if (p.distanceToSqr(arena()) < 48 * 48)
-            p.sendOverlayMessage(Component.translatable("message.logos_dimension.queen." + key, args));
+    private List<ServerPlayer> fighters(ServerLevel world, double range) {
+        return world.players().stream().filter(p -> canFight(p) && p.distanceToSqr(arena()) < range * range).toList();
     }
 
-    /** 阶段一打空：跪地挣扎，公主跃上祭坛，开始守护净化。 */
+    /**
+     * 阶段一打空：被线拽回中央，公主落到祭坛上开始净化。镜头直接切到祭坛，看她从上面落进画面、蹲着落地、站起来施法。
+     */
     private void beginPurification(ServerLevel world) {
         setHealth(1);
         changePhase(2);
         play("queen_resist");
         staggerFrom = position();
-        waveTimer = QueenBattleRules.INTRO + 40;
-        message(world, "phase2");
+        mana = 600;
+        waveTimer = QueenBattleRules.INTRO + 80;
         var princess = princess(world);
         if (princess != null) {
             princess.leap(world);
-            // 几秒的镜头：从大厅中央一侧看公主跃上祭坛。
-            Vec3 altar = QueenArena.at(heart, facing(), QueenArena.get(world.getServer()).altar());
-            Vec3 toCenter = arena().subtract(altar).multiply(1, 0, 1).normalize();
-            Vec3 from = CameraShots.reach(world, altar.add(0, 2, 0), altar.add(toCenter.scale(9)).add(toCenter.cross(new Vec3(0, 1, 0)).scale(4)).add(0, 4, 0));
-            var shot = CameraShot.of(CameraPoint.world(from), CameraPoint.on(princess, new Vec3(0, 1, 0))).timing(10, 45, 15).letterbox();
-            for (ServerPlayer p : world.players()) if (canFight(p) && p.distanceToSqr(arena()) < 48 * 48) CameraShots.play(p, shot);
+            Vec3 altar = altar(), toCenter = arena().subtract(altar).multiply(1, 0, 1).normalize();
+            Vec3 look = altar.add(0, 1.1, 0);
+            Vec3 from = CameraShots.reach(world, look, altar.add(toCenter.scale(7.5)).add(toCenter.cross(new Vec3(0, 1, 0)).scale(2.5)).add(0, 1.6, 0));
+            var shot = CameraShot.of(CameraPoint.world(from), CameraPoint.world(look)).timing(0, QueenBattleRules.INTRO + 4, 14).letterbox();
+            for (ServerPlayer p : fighters(world, 48)) CameraShots.play(p, shot);
         }
         ensureVeins(world);
     }
 
-    /** 第二个窗口打完：挣断控制，回身束缚腐败之心。 */
-    private void breakFree(ServerLevel world) {
-        changePhase(3);
-        play("queen_chain_break");
+    /** 第五刀：连着她的线断了，她跪倒；腐败之心狂乱。 */
+    private void beginFrenzy(ServerLevel world) {
+        changePhase(QueenBattleRules.FRENZY);
+        play("queen_kneel");
         setTarget(null);
         getNavigation().stop();
-        Vec3 at = arena().add(QueenArena.direction(facing(), new Vec3(0, 0, -3.5)));
-        setPos(at);
-        face(arena());
-        message(world, "phase3");
+        for (UUID id : waveMobs) if (world.getEntity(id) instanceof LivingEntity e) e.discard();
+        waveMobs.clear();
+        for (QueenTether t : tethers(world)) t.discard();
+        if (bar != null) bar.removeAllPlayers();
+        sound(world, SoundEvents.CHAIN_BREAK, .55f);
+        sound(world, SoundEvents.WARDEN_ROAR, .7f);
+        var princess = princess(world);
+        if (princess != null) princess.say("severed");
     }
 
-    /** 最后一段打完：拥心共殒。 */
+    /** 狂乱：腐败之心胡乱轰击，脉络从中央往外漫；快淹到祭坛时女王站起来，拥心。 */
+    private void frenzy(ServerLevel world, @Nullable ElfPrincess princess) {
+        int age = (int) phaseAge(0);
+        if (princess != null) princess.aim(coreCenter(0));
+        if (age == QueenBattleRules.FRENZY_LINE && princess != null) princess.say("frenzy");
+        if (age == QueenBattleRules.FRENZY_RISE) {
+            play("queen_rise");
+            if (princess != null) princess.say("embrace");
+        }
+        if (age >= QueenBattleRules.FRENZY_TICKS) { sacrifice(world); return; }
+        coreAttack(world);
+        // 脉络从中央往外漫，越漫越快，一直到快淹没祭坛。
+        double reach = QueenBattleRules.frenzyReach(age, frenzyLimit());
+        List<Vec3> spots = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            double a = random.nextDouble() * Math.PI * 2, d = reach * Math.sqrt(.35 + .65 * random.nextDouble());
+            spots.add(arena().add(Math.cos(a) * d, 0, Math.sin(a) * d));
+        }
+        leaveFilth(world, spots, QueenBattleRules.FRENZY_FILTH_CAP);
+        if (age % 20 == 0) sound(world, SoundEvents.SCULK_BLOCK_SPREAD, .6f);
+    }
+
+    /** 拥心共殒。脉络留到她自爆、净化开始的那一刻。 */
     private void sacrifice(ServerLevel world) {
-        cleanup(world);
-        changePhase(4);
+        for (UUID id : waveMobs) if (world.getEntity(id) instanceof LivingEntity e) e.discard();
+        waveMobs.clear();
+        for (QueenTether t : tethers(world)) t.discard();
+        changePhase(QueenBattleRules.ENDING);
         endingTick = 0;
         play("queen_sacrifice");
         var princess = princess(world);
@@ -314,26 +363,28 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         if (bar != null) bar.removeAllPlayers();
         absentTicks = 0; sequence = 0; waveCount = 0;
         var princess = princess(world);
-        if (princess != null) { princess.returnToGate(world); princess.goAhead(world); princess.arrive(world); }
+        if (princess != null) { princess.returnToGate(world); princess.goAhead(world); princess.arrive(world); princess.resetCounts(); }
     }
 
     /** 清掉战斗里放出的衍生物、地上的污秽和血管接头。 */
     private void cleanup(ServerLevel world) {
         for (UUID id : waveMobs) if (world.getEntity(id) instanceof LivingEntity e) e.discard();
         waveMobs.clear();
+        clearAllFilth(world);
+        for (QueenTether t : tethers(world)) t.discard();
+    }
+
+    private void clearAllFilth(ServerLevel world) {
         for (long key : filth) {
             BlockPos at = BlockPos.of(key);
             if (world.isLoaded(at) && world.getBlockState(at).is(Corruption.VEIN.get())) world.removeBlock(at, false);
         }
         filth.clear();
-        for (QueenTether t : tethers(world)) t.discard();
-        heartHits.clear();
     }
 
     private void syncPurification() {
         entityData.set(PURIFY, purification.progress());
         entityData.set(CLEARED, purification.cleared());
-        entityData.set(SEGMENT, purification.segmentMax() <= 0 ? 0 : purification.segment() / purification.segmentMax());
         entityData.set(WINDOW, purification.window());
     }
 
@@ -372,50 +423,63 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         world.addFreshEntity(proxy);
     }
 
-    /** 血管接头被砍断（只结算一次）。 */
+    /** 还连着、够得着的血管有几条。 */
+    public int veinsLeft() { return QueenBattleRules.reachableVeins() - Integer.bitCount(brokenRoots()); }
+
+    /** 血管接头被砍断（只结算一次）。还剩几条由公主说出来。 */
     public void sever(int slot, DamageSource source) {
         if (!(level() instanceof ServerLevel world) || slot < 0 || slot >= HeartVeins.MAIN || !veinsOpen() || QueenBattleRules.severed(brokenRoots(), slot)) return;
         entityData.set(BROKEN, brokenRoots() | 1 << slot);
-        message(world, "vein_cut", Integer.bitCount(brokenRoots()), QueenBattleRules.reachableVeins());
         sound(world, SoundEvents.WOOD_BREAK, .6f);
+        var princess = princess(world);
+        if (princess != null) { if (veinsLeft() > 0) princess.say("vein_cut", veinsLeft()); else princess.say("veins_done"); }
     }
 
     /**
-     * 窗口里命中腐败之心一下：按最大生命的百分比扣（生命伤害多），乘核心庇护剩下的部分。同一个人 8 刻内只算一下，
-     * 多人可以一起打。返回扣到了没有。
+     * 降下来时砍中腐败之心一刀（近战、箭、法术都算，只要是玩家打的）：处决特写，固定斩掉一段（最大生命的 20%），它升回去。
+     * 返回这一下算了没有。
      */
     public boolean heartHit(ServerLevel world, DamageSource source) {
-        if (!purification.open() || !(source.getEntity() instanceof LivingEntity attacker) || CorruptionDamage.aligned(attacker)) return false;
-        long now = world.getGameTime();
-        Long last = heartHits.get(attacker.getUUID());
-        if (last != null && now - last < 8) return false;
-        heartHits.put(attacker.getUUID(), now);
-        boolean life = Effects.dealing() == Element.LIFE;
-        float dealt = purification.hit(life, source.is(BYPASSES_WARD) ? 0 : wardReduction(world));
-        Vec3 c = corePosition(0).add(0, 2.5, 0);
-        world.sendParticles(life ? ParticleTypes.HAPPY_VILLAGER : ParticleTypes.CRIMSON_SPORE, c.x, c.y, c.z, life ? 14 : 8, 1.4, 1.4, 1.4, .05);
-        sound(world, life ? SoundEvents.AMETHYST_BLOCK_HIT : SoundEvents.SCULK_BLOCK_HIT, life ? 1.2f : .8f);
-        if (purification.settle() == HeartPurification.Event.CLEARED) cleared(world);
+        if (!purification.open() || cutting() || !(source.getEntity() instanceof ServerPlayer attacker) || !canFight(attacker)) return false;
+        if (purification.cut() != HeartPurification.Event.CLEARED) return false;
         syncPurification();
-        return dealt > 0;
-    }
-
-    private void cleared(ServerLevel world) {
-        heartHits.clear();
         for (QueenTether t : tethers(world)) if (t.slot() == QueenTether.HEART) t.discard();
-        sound(world, SoundEvents.WARDEN_HEARTBEAT, .5f);
-        if (purification.done()) { sacrifice(world); return; }
-        message(world, "window_cleared", purification.cleared(), HeartPurification.SEGMENTS);
-        if (purification.cleared() == 2) breakFree(world);
+        heartCut(world, attacker);
+        var princess = princess(world);
+        if (purification.done()) { beginFrenzy(world); return true; }
+        cutPause = CUT_PAUSE;
+        if (princess != null) princess.say("cut_" + purification.cleared());
+        return true;
     }
 
-    private void windowOpened(ServerLevel world) {
-        message(world, "window_open");
+    /**
+     * 一刀的处决：砍的人镜头切到腐败之心跟前（遮幅），一次黑白闪，一道刀光斜着劈过它，被劈开的那一侧喷出腐败的汁液。
+     * 别人在世界里看到刀光和喷出来的汁液。
+     */
+    private void heartCut(ServerLevel world, ServerPlayer attacker) {
+        Vec3 c = coreCenter(0);
+        Vec3 toward = attacker.getEyePosition().subtract(c).multiply(1, 0, 1);
+        toward = toward.lengthSqr() < 1e-4 ? new Vec3(0, 0, 1) : toward.normalize();
+        Vec3 side = toward.cross(new Vec3(0, 1, 0));
+        double tilt = random.nextBoolean() ? 1 : -1;
+        // 刀从左上劈到右下（或反过来）；汁液从刀口朝刀走的那一侧喷出去。
+        Vec3 slash = side.scale(tilt).add(0, -.75, 0).normalize();
+        // 刀口在朝着砍的人的那一面（中心在心里面，画在那儿会被心挡住）。
+        Vec3 gash = c.add(toward.scale(3));
+        Vec3 from = CameraShots.reach(world, c, c.add(toward.scale(8)).add(side.scale(2.2 * tilt)).add(0, -.8, 0));
+        CameraShots.play(attacker, CameraShot.of(CameraPoint.world(from), CameraPoint.world(c)).timing(0, CUT_PAUSE - 10, 10).letterbox());
+        for (ServerPlayer p : fighters(world, 48)) ScreenEffects.flash(p, ScreenFlash.at(CameraPoint.world(c)));
+        QueenSpellEffects.send(world, QueenSpellPayload.CUT, gash, slash, 2.6f, 40);
+        world.playSound(null, BlockPos.containing(c), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.4f, .7f);
+        world.playSound(null, BlockPos.containing(c), SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.2f, .6f);
+        world.playSound(null, BlockPos.containing(c), SoundEvents.HONEY_BLOCK_BREAK, SoundSource.HOSTILE, 1.6f, .6f);
+        world.playSound(null, BlockPos.containing(c), SoundEvents.WARDEN_HEARTBEAT, SoundSource.HOSTILE, 1.4f, .5f);
+    }
+
+    private void windowOpened(ServerLevel world, @Nullable ElfPrincess princess) {
         sound(world, SoundEvents.WARDEN_SONIC_CHARGE, 1.3f);
-        Vec3 c = corePosition(0).add(0, -2.5, 0);
-        // 一次黑白闪（客户端遵守「隐藏闪电的闪烁」）；一个窗口只闪一次，远低于每秒三次的上限。
-        for (ServerPlayer p : world.players()) if (canFight(p) && p.distanceToSqr(arena()) < 48 * 48) ScreenEffects.flash(p, ScreenFlash.at(CameraPoint.world(c)));
         ensureHeartProxy(world);
+        if (princess != null) princess.say("window");
     }
 
     // ---------------------------------------------------------------- 每刻
@@ -447,17 +511,19 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         LivingEntity target = getTarget();
         aim = target == null ? getLookAngle().multiply(1, 0, 1).normalize() : target.position().subtract(position()).multiply(1, 0, 1).normalize();
         if (aim.lengthSqr() < .01) aim = new Vec3(0, 0, 1);
-        if (!move.name().equals("queen_bind") && !move.name().equals("queen_chain_break")) { setYRot((float) Math.toDegrees(Math.atan2(-aim.x, aim.z))); yBodyRot = getYRot(); }
+        if (!move.name().equals("queen_kneel") && !move.name().equals("queen_resist")) { setYRot((float) Math.toDegrees(Math.atan2(-aim.x, aim.z))); yBodyRot = getYRot(); }
         setXRot(0);
         entityData.set(MOVE, move.clip() + "|" + (long) r.start() + "|" + (float) r.rate() + "|" + (move.playback() == Moveset.Playback.LOOP));
-        if (move.name().equals("queen_sword_rain")) {
-            spellPoint = target == null ? position().add(aim.scale(9)) : target.position();
-            if (level() instanceof ServerLevel world) QueenSpellEffects.send(world, QueenSpellPayload.SIGIL, spellPoint.add(0, 12, 0), Vec3.ZERO, 6, (int) (move.length() * 20));
-        } else if (move.name().startsWith("queen_life_")) {
-            spellPoint = target == null ? getEyePosition().add(aim.scale(12)) : target.getEyePosition();
-            if (level() instanceof ServerLevel world) QueenSpellEffects.send(world, QueenSpellPayload.CAST, getEyePosition(), Vec3.ZERO, 1.4f, (int) (move.contact() * 20));
+        if (level() instanceof ServerLevel world && "spell".equals(moves(world).shape(move.name()).kind())) {
+            if (move.name().equals("queen_sword_rain")) {
+                spellPoint = target == null ? position().add(aim.scale(9)) : target.position();
+                QueenSpellEffects.send(world, QueenSpellPayload.SIGIL, spellPoint.add(0, 12, 0), Vec3.ZERO, 6, (int) (move.length() * 20));
+            } else {
+                spellPoint = target == null ? getEyePosition().add(aim.scale(12)) : target.getEyePosition();
+                QueenSpellEffects.send(world, QueenSpellPayload.CAST, getEyePosition(), Vec3.ZERO, 1.4f, (int) (move.contact() * 20));
+            }
         }
-        if (action.isEmpty()) wait = phase() >= 2 ? 18 : 32;
+        if (action.isEmpty()) wait = phase() >= 2 ? 22 : 32;
         if (level() instanceof ServerLevel world && move.hasContact())
             sound(world, action.equals("queen_roots") ? SoundEvents.EVOKER_PREPARE_SUMMON : SoundEvents.EVOKER_PREPARE_ATTACK, .7f);
     }
@@ -468,13 +534,14 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         if (!isAlive()) return;
         if (tickCount % 20 == 0) refreshWard(world);
         mana = Math.min(600, mana + .5);
+        if (cutPause > 0) cutPause--;
         var princess = princess(world);
         entityData.set(PRINCESS, princess == null ? -1 : princess.getId());
-        if (phase() == 4) { finale(world); return; }
+        if (phase() == QueenBattleRules.ENDING) { finale(world); return; }
         if (world.getDifficulty() == Difficulty.PEACEFUL) {
             getNavigation().stop();
             setTarget(null);
-            if (runner != null) runner.force(action.equals("queen_guard") ? "queen_guard" : phase() == 3 ? "queen_bind" : "queen_idle", world.getGameTime());
+            if (runner != null) runner.force(action.equals("queen_guard") ? "queen_guard" : phase() == 3 ? "queen_kneel" : "queen_idle", world.getGameTime());
             coreRunner = null;
             if (bar != null) bar.removeAllPlayers();
             return;
@@ -494,22 +561,24 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         r.tick(world.getGameTime());
         elapsed = (int) r.age(world.getGameTime());
         if (action.equals("queen_guard")) { guarding(world); return; }
-        updateBar(world);
-        // 所有人战死或离开 40 格超过 30 秒：重置。
-        if (world.players().stream().noneMatch(p -> canFight(p) && p.distanceToSqr(arena()) < 40 * 40)) {
-            if (++absentTicks >= QueenBattleRules.ABSENT && heart != null) { resetBattle(world); return; }
-        } else absentTicks = 0;
-        if (phase() >= 2) battle(world, princess);
-        if (transitioning()) {
+        if (phase() == QueenBattleRules.FRENZY) {
+            // 跪着，不再攻击；狂乱是腐败之心的事。
             getNavigation().stop(); setDeltaMovement(0, getDeltaMovement().y, 0);
-            if (elapsed == 12 || elapsed == 30) sound(world, elapsed == 12 ? SoundEvents.WOOD_BREAK : SoundEvents.EVOKER_CAST_SPELL, .55f);
-            if (elapsed % 4 == 0) world.sendParticles(new DustParticleOptions(0xB7233C, 1.2f), getX(), getY() + 3, getZ(), 6, 1, 1.4, 1, .01);
+            face(arena().add(QueenArena.direction(facing(), new Vec3(0, 0, 3))));
+            frenzy(world, princess);
             return;
         }
-        if (phase() == 3) {
-            // 束缚着腐败之心，不再攻击；站在中央北侧看着它。
+        updateBar(world);
+        // 所有人战死或离开 40 格超过 30 秒：重置。
+        if (fighters(world, 40).isEmpty()) {
+            if (++absentTicks >= QueenBattleRules.ABSENT && heart != null) { resetBattle(world); return; }
+        } else absentTicks = 0;
+        if (phase() == 2) guarding2(world, princess);
+        if (transitioning()) {
+            // 被线拽回中央。
             getNavigation().stop(); setDeltaMovement(0, getDeltaMovement().y, 0);
-            if (!action.equals("queen_bind") && !action.equals("queen_chain_break")) play("queen_bind");
+            if (elapsed <= 30) setPos(staggerFrom.lerp(arena(), QueenBattleRules.smooth(elapsed / 30f)));
+            if (elapsed % 4 == 0) world.sendParticles(new DustParticleOptions(0xB4286E, 1.2f), getX(), getY() + 3, getZ(), 6, 1, 1.4, 1, .01);
             return;
         }
         if (entering()) {
@@ -522,98 +591,94 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         }
         if (!action.isEmpty()) {
             getNavigation().stop();
-            if (action.equals("queen_resist") || action.equals("queen_aid")) {
-                // 阶段二被压回中央：挣扎的同时被推回去。
-                if (phase() == 2 && elapsed <= 30) setPos(staggerFrom.lerp(arena(), QueenBattleRules.smooth(elapsed / 30f)));
-                return;
-            }
+            if (action.equals("queen_resist")) return;
             setYRot((float) Math.toDegrees(Math.atan2(-aim.x, aim.z)));
             yBodyRot = getYRot();
             attackFrame(world, r);
             return;
         }
-        fight(world, princess);
+        if (cutting()) { getNavigation().stop(); return; }
+        fight(world);
     }
 
     private void guarding(ServerLevel world) {
         getNavigation().stop();
         for (ServerPlayer p : world.players()) {
             if (!canFight(p) || p.distanceToSqr(this) >= 14 * 14 || !hasLineOfSight(p)) continue;
-            // 绕路进来也跳不过公主：她不到场，女王不起身。
-            if (heart != null && world.getBlockEntity(heart) instanceof QueenHeart core && !core.princessReady(world)) {
-                if (tickCount % 100 == 0) p.sendOverlayMessage(Component.translatable("message.logos_dimension.queen.need_princess"));
-                return;
-            }
+            // 绕路进来也跳不过公主：她不到场，女王不起身（坐着一动不动，门口的公主会喊住走近的人）。
+            if (heart != null && world.getBlockEntity(heart) instanceof QueenHeart core && !core.princessReady(world)) return;
             engage(p);
             return;
         }
     }
 
-    /** 阶段二、三：净化进度、窗口、波次、腐败之心的攻击、地上的污秽。 */
-    private void battle(ServerLevel world, @Nullable ElfPrincess princess) {
+    /** 阶段二：净化进度、降下、波次、腐败之心的光柱、地上的污秽、公主的提醒。 */
+    private void guarding2(ServerLevel world, @Nullable ElfPrincess princess) {
+        int age = (int) phaseAge(0);
         if (princess != null) {
             for (int n = princess.takeSetbacks(); n > 0; n--) purification.setback(HeartPurification.SELF_RISE_SETBACK);
-            princess.aim(corePosition(0).add(0, 2.6, 0));
+            princess.aim(coreCenter(0));
+            if (age == QueenBattleRules.INTRO + 6) princess.say("land");
+            if (age == QueenBattleRules.INTRO + 170 && veinsLeft() > 0) princess.say("veins", veinsLeft());
         }
-        if (!transitioning() || phase() == 2) {
-            var event = purification.tick(phase(), princess != null && princess.channeling(), princess != null && princess.downed());
+        if (!transitioning()) {
+            var event = purification.tick(princess != null && princess.channeling(), princess != null && princess.downed());
             switch (event) {
-                case OPENED -> windowOpened(world);
+                case OPENED -> windowOpened(world, princess);
                 case FAILED -> {
-                    message(world, "window_failed");
                     sound(world, SoundEvents.WARDEN_ROAR, 1.4f);
                     for (QueenTether t : tethers(world)) if (t.slot() == QueenTether.HEART) t.discard();
+                    if (princess != null) princess.say("window_failed");
                 }
                 default -> { }
             }
             if (purification.open()) ensureHeartProxy(world);
             syncPurification();
         }
-        if (phase() >= 4) return;
         if (princess != null && tickCount % 10 == 0) clearFilth(world, princess.position(), HeartPurification.circle(purification.progress()));
         if (tickCount % 20 == 0) ensureVeins(world);
         if (transitioning()) return;
         waves(world, princess);
-        if (!purification.open()) coreAttack(world);
-        // 狂乱：污秽从中心往外漫。
-        if (phase() == 3 && tickCount % 40 == 0) {
-            double reach = Math.min(16, 4 + phaseAge(0) / 40);
-            List<Vec3> spots = new ArrayList<>();
-            for (int i = 0; i < 3; i++) {
-                double a = random.nextDouble() * Math.PI * 2, d = 3 + random.nextDouble() * reach;
-                spots.add(arena().add(Math.cos(a) * d, 0, Math.sin(a) * d));
-            }
-            leaveFilth(world, spots);
-        }
+        if (!purification.open() && !cutting()) coreAttack(world);
     }
 
-    /** 没在出招时：挑目标、走过去、按出招顺序出招。阶段二优先冲向祭坛打断公主。 */
-    private void fight(ServerLevel world, @Nullable ElfPrincess princess) {
-        LivingEntity target;
-        if (phase() == 2 && princess != null && princess.channeling()) target = princess;
-        else target = world.players().stream().filter(p -> canFight(p) && p.distanceToSqr(this) < 40 * 40)
+    /**
+     * 没在出招时：挑最近的玩家（从不挑公主），按出招顺序出招。阶段一走过去打；阶段二被线吊在场地正中，只放攻击法术。
+     */
+    private void fight(ServerLevel world) {
+        LivingEntity target = world.players().stream().filter(p -> canFight(p) && p.distanceToSqr(this) < 40 * 40)
                 .min(java.util.Comparator.comparingDouble(p -> p.distanceToSqr(this))).orElse(null);
         setTarget(target);
         if (target == null) { getNavigation().stop(); return; }
         getLookControl().setLookAt(target, 20, 20);
-        double close = target instanceof ElfPrincess ? 3.5 : 4;
-        if (distanceToSqr(target) > close * close) getNavigation().moveTo(target, target instanceof ElfPrincess ? 1.15 : 1);
+        var plan = moves(world).plan();
+        if (phase() == 2) {
+            getNavigation().stop();
+            if (position().distanceToSqr(arena()) > 1) setPos(position().lerp(arena(), .2));
+            if (--wait > 0 || !hasLineOfSight(target)) return;
+            // 魔力不够的法术跳过，都不够就等一会儿回魔。
+            for (int i = 0; i < Math.max(1, plan.spells().size()); i++) {
+                String next = plan.spell(sequence++);
+                if (next.isEmpty()) return;
+                if (mana >= cost(world, next)) { play(next); return; }
+            }
+            wait = 20;
+            return;
+        }
+        if (distanceToSqr(target) > 16) getNavigation().moveTo(target, 1);
         else getNavigation().stop();
         if (--wait > 0 || !hasLineOfSight(target)) return;
-        var plan = moves(world).plan();
-        String next;
-        if (target instanceof ElfPrincess) {
-            if (distanceToSqr(target) > 5 * 5 || plan.close() == null) return;
-            next = plan.close();
-        } else {
-            next = plan.pick(sequence, distanceTo(target));
-            var shape = moves(world).shape(next);
-            var move = runner == null ? null : runner.moveset().move(next);
-            double cost = shape.mana() * (move == null ? 1 : Math.max(1, move.contacts().size()));
-            if (cost > 0 && mana < cost && plan.fallback() != null) next = plan.fallback();
-        }
+        String next = plan.pick(sequence, distanceTo(target));
+        if (mana < cost(world, next) && plan.fallback() != null) next = plan.fallback();
         play(next);
         sequence++;
+    }
+
+    /** 这一招一共要多少魔力（每次接触各付一次）。 */
+    private double cost(ServerLevel world, String move) {
+        var shape = moves(world).shape(move);
+        var m = runner == null ? null : runner.moveset().move(move);
+        return shape.mana() * (m == null ? 1 : Math.max(1, m.contacts().size()));
     }
 
     private static boolean canFight(Player p) { return p.isAlive() && !p.isCreative() && !p.isSpectator(); }
@@ -651,13 +716,16 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         } else {
             Vec3 direction = spellPoint.subtract(getEyePosition()).normalize();
             setYRot((float) Math.toDegrees(Math.atan2(-direction.x, direction.z))); yBodyRot = getYRot();
-            setXRot((float) -Math.toDegrees(Math.atan2(direction.y, Math.hypot(direction.x, direction.z))));
+            // 贴地的荆棘沿地面走，不朝下压。
+            float pitch = shape.spell().startsWith("thorn") ? 0 : (float) -Math.toDegrees(Math.atan2(direction.y, Math.hypot(direction.x, direction.z)));
+            setXRot(pitch);
         }
         QueenSpells.cast(this, shape.spell(), from, getTarget(), shape.mana());
     }
 
     @Override public void contact(MoveRunner r) {
-        if (!(level() instanceof ServerLevel world)) return;
+        // 处决的镜头里不出手（砍的人正看着特写）。
+        if (!(level() instanceof ServerLevel world) || cutting()) return;
         var shape = moves(world).shape(r.move().name());
         if (shape.kind().equals("spell")) { castMagic(world, shape, r); return; }
         if (shape.kind().isEmpty()) return;
@@ -674,18 +742,18 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
             case "cone" -> sound(world, SoundEvents.PLAYER_ATTACK_SWEEP, .65f);
             default -> { }
         }
-        for (LivingEntity victim : victims(world, origin, shape.reach() + 2, true)) {
+        for (LivingEntity victim : victims(world, origin, shape.reach() + 2)) {
             if (shape.hits(origin, aim, victim.position(), seconds) && hasLineOfSight(victim)) hit(world, victim, (float) r.move().damage());
         }
-        if (r.contactIndex() == r.move().contacts().size() - 1 && shape.filth() > 0) leaveFilth(world, filthSpots(shape, origin, aim));
+        if (r.contactIndex() == r.move().contacts().size() - 1 && shape.filth() > 0) leaveFilth(world, filthSpots(shape, origin, aim), QueenBattleRules.FILTH_CAP);
     }
 
-    /** 范围里能被打到的：能打的玩家、在祭坛上的公主、腐败衍生物（腐败伤害给它们回血）。 */
-    private List<LivingEntity> victims(ServerLevel world, Vec3 center, double range, boolean princess) {
+    /** 范围里能被打到的：能打的玩家、腐败衍生物（腐败伤害给它们回血）。女王从不打公主，打她的只有衍生物。 */
+    private List<LivingEntity> victims(ServerLevel world, Vec3 center, double range) {
         List<LivingEntity> out = new ArrayList<>();
         for (ServerPlayer p : world.players()) if (canFight(p) && p.distanceToSqr(center) <= range * range) out.add(p);
         for (LivingEntity e : world.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(center, center).inflate(range, 4, range),
-                e -> e.isAlive() && e != this && !(e instanceof QueenTether) && (CorruptionMobs.isCorrupted(e) || princess && e instanceof ElfPrincess p && !p.calm() && !p.downed()))) out.add(e);
+                e -> e.isAlive() && e != this && !(e instanceof QueenTether) && CorruptionMobs.isCorrupted(e))) out.add(e);
         return out;
     }
 
@@ -705,64 +773,104 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         if (victim instanceof ServerPlayer player && player.getHealth() + player.getAbsorptionAmount() < before) CorruptionContact.drainMana(player, drain);
     }
 
-    // ---------------------------------------------------------------- 腐败之心的攻击
+    // ---------------------------------------------------------------- 腐败之心的光柱
 
-    /** 腐败之心也是普通 MoveRunner：阶段三狂乱时出招快一半。 */
+    /** 腐败之心也是普通 MoveRunner：阶段二隔几秒一下 {@code core_pillar}，狂乱时一直 {@code core_frenzy}。 */
     private final MoveRunner.Actor coreActor = new MoveRunner.Actor() {
-        @Override public double attackSpeed() { return phase() == 3 ? 1.5 : 1; }
+        @Override public double attackSpeed() { return 1; }
         @Override public void moveStarted(MoveRunner r) {
-            pressureStruck.clear();
+            pillarStruck.clear();
+            pillarSpots.clear();
             if (!(level() instanceof ServerLevel world)) return;
-            if ("ring".equals(moves(world, CORE_MOVESET).shape(r.move().name()).kind())) {
-                // 腐败潮带一个缺口，每一波换个方向。
-                double a = random.nextDouble() * Math.PI * 2;
-                pressureAim = new Vec3(Math.cos(a), 0, Math.sin(a));
-                return;
+            var fighters = fighters(world, 32);
+            boolean frenzy = phase() == QueenBattleRules.FRENZY;
+            // 每个人头上都可能来一下（最多三处）；狂乱时整片场地胡乱落。
+            int count = frenzy ? 1 : Math.clamp(fighters.size(), 1, 3);
+            for (int i = 0; i < count; i++) {
+                Vec3 spot = pillarSpot(world, frenzy || fighters.isEmpty() ? null : fighters.get(random.nextInt(fighters.size())));
+                if (spot == null) continue;
+                pillarSpots.add(spot);
+                int telegraph = Math.max(2, (int) (r.move().contact() * 20 / r.rate()));
+                var shape = moves(world, CORE_MOVESET).shape(r.move().name());
+                QueenSpellEffects.send(world, QueenSpellPayload.PILLAR_MARK, spot, Vec3.ZERO, (float) shape.reach(), telegraph);
             }
-            var target = world.players().stream().filter(p -> canFight(p) && p.distanceToSqr(arena()) < 32 * 32)
-                    .min(java.util.Comparator.comparingDouble(p -> p.distanceToSqr(arena()))).orElse(null);
-            if (target != null) pressureAim = target.position().subtract(arena()).multiply(1, 0, 1).normalize();
+            if (!frenzy && !pillarSpots.isEmpty()) {
+                var princess = princess(world);
+                if (princess != null) princess.sayOnce("pillar_warn");
+            }
         }
-        @Override public void contact(MoveRunner r) { if (level() instanceof ServerLevel world) coreContact(world, r); }
+        @Override public void contact(MoveRunner r) { if (level() instanceof ServerLevel world) pillarContact(world, r); }
     };
 
     private QueenMoves.Set moves(ServerLevel world, Identifier set) { return QueenMoves.of(world.getServer(), set); }
 
-    private void coreAttack(ServerLevel world) {
-        if (world.players().stream().noneMatch(p -> canFight(p) && p.distanceToSqr(arena()) < 32 * 32)) { coreRunner = null; return; }
-        var set = Movesets.get(world.getServer(), CORE_MOVESET);
-        if (set == null) { coreRunner = null; return; }
-        if (coreRunner == null || coreRunner.moveset() != set) coreRunner = new MoveRunner(set, coreActor, world.getGameTime());
-        coreRunner.tick(world.getGameTime());
-        int t = (int) coreRunner.age(world.getGameTime());
-        var shape = moves(world, CORE_MOVESET).shape(coreRunner.move().name());
-        if ("line".equals(shape.kind()) && t < coreRunner.move().contact() * 20 / coreRunner.rate() && t % 4 == 0)
-            for (int i = 1; i < shape.reach(); i++) warning(world, arena().add(pressureAim.scale(i)), .12);
+    /** 光柱落点：在 {@code near} 身边 4 格内（没有就整片场地里随便一处），不落在祭坛附近，贴着地面。 */
+    private @Nullable Vec3 pillarSpot(ServerLevel world, @Nullable ServerPlayer near) {
+        Vec3 altar = altar(), center = arena();
+        double hall = heart == null ? 20 : QueenArena.get(world.getServer()).hallRadius() - 2;
+        for (int attempt = 0; attempt < 8; attempt++) {
+            Vec3 at;
+            if (near != null) {
+                double a = random.nextDouble() * Math.PI * 2, d = random.nextDouble() * 4;
+                at = near.position().add(Math.cos(a) * d, 0, Math.sin(a) * d);
+            } else {
+                double a = random.nextDouble() * Math.PI * 2, d = 2 + Math.sqrt(random.nextDouble()) * (hall - 2);
+                at = center.add(Math.cos(a) * d, 0, Math.sin(a) * d);
+            }
+            if (at.subtract(center).multiply(1, 0, 1).length() > hall) continue;
+            if (at.subtract(altar).multiply(1, 0, 1).length() < QueenBattleRules.ALTAR_CLEAR) continue;
+            Vec3 ground = ground(world, at);
+            if (ground != null) return ground;
+        }
+        return null;
     }
 
-    private void coreContact(ServerLevel world, MoveRunner r) {
-        Vec3 center = arena();
+    /** {@code at} 这一竖列在场地地面上下 4 格内最高的能站的地方。 */
+    private @Nullable Vec3 ground(ServerLevel world, Vec3 at) {
+        int top = Mth.floor(arena().y) + 4;
+        for (int y = top; y >= top - 8; y--) {
+            BlockPos below = BlockPos.containing(at.x, y - 1, at.z), here = below.above();
+            if (world.getBlockState(here).getCollisionShape(world, here).isEmpty() && world.getBlockState(below).isFaceSturdy(world, below, Direction.UP))
+                return new Vec3(at.x, y, at.z);
+        }
+        return null;
+    }
+
+    private void coreAttack(ServerLevel world) {
+        boolean frenzy = phase() == QueenBattleRules.FRENZY;
+        if (!frenzy && fighters(world, 32).isEmpty()) { coreRunner = null; return; }
+        var set = Movesets.get(world.getServer(), CORE_MOVESET);
+        if (set == null) { coreRunner = null; return; }
+        String want = frenzy ? "core_frenzy" : "core_pillar";
+        if (coreRunner == null || coreRunner.moveset() != set) {
+            coreRunner = new MoveRunner(set, coreActor, world.getGameTime());
+            if (set.move(want) != null) coreRunner.force(want, world.getGameTime());
+        }
+        if (!coreRunner.move().name().equals(want) && set.move(want) != null) coreRunner.force(want, world.getGameTime());
+        coreRunner.tick(world.getGameTime());
+    }
+
+    private void pillarContact(ServerLevel world, MoveRunner r) {
         var shape = moves(world, CORE_MOVESET).shape(r.move().name());
-        double seconds = r.move().contacts().get(r.contactIndex()) - r.move().contact();
-        if ("line".equals(shape.kind())) {
-            for (int i = 1; i < shape.reach(); i++) {
-                Vec3 p = center.add(pressureAim.scale(i));
-                world.sendParticles(new DustParticleOptions(0xB7233C, 1), p.x, p.y + .6, p.z, 2, .25, .6, .25, .01);
+        Vec3 from = coreCenter(0).add(0, -2.2, 0);
+        for (Vec3 spot : pillarSpots) {
+            pillarsFired++;
+            QueenSpellEffects.send(world, QueenSpellPayload.PILLAR, from, spot, (float) shape.reach(), 14);
+            world.playSound(null, BlockPos.containing(spot), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, .45f, 1.6f);
+            world.playSound(null, BlockPos.containing(spot), SoundEvents.PLAYER_SPLASH_HIGH_SPEED, SoundSource.HOSTILE, 1.1f, .6f);
+            for (LivingEntity victim : victims(world, spot, shape.reach() + 1)) {
+                if (shape.hits(spot, Vec3.ZERO, victim.position(), 0) && pillarStruck.add(victim.getUUID()))
+                    corruptionHit(victim, (float) r.move().damage() * difficulty(world), 8);
             }
-            sound(world, SoundEvents.EVOKER_CAST_SPELL, .5f);
-        } else {
-            double radius = shape.ring(seconds), gap = Math.cos(Math.toRadians(shape.gap()));
-            for (int i = 0; i < 48; i++) {
-                double a = i * Math.PI / 24, x = Math.cos(a), z = Math.sin(a);
-                if (shape.gap() > 0 && x * pressureAim.x + z * pressureAim.z >= gap) continue;
-                world.sendParticles(ParticleTypes.CRIMSON_SPORE, center.x + x * radius, center.y + .15, center.z + z * radius, 1, 0, 0, 0, 0);
+            if (shape.filth() > 0) {
+                List<Vec3> spots = new ArrayList<>();
+                for (int i = 0; i < shape.filth(); i++) {
+                    double a = random.nextDouble() * Math.PI * 2, d = random.nextDouble() * shape.reach();
+                    spots.add(spot.add(Math.cos(a) * d, 0, Math.sin(a) * d));
+                }
+                leaveFilth(world, spots, phase() == QueenBattleRules.FRENZY ? QueenBattleRules.FRENZY_FILTH_CAP : QueenBattleRules.FILTH_CAP);
             }
         }
-        for (LivingEntity victim : victims(world, center, shape.reach() + 2, false)) {
-            if (shape.hits(center, pressureAim, victim.position(), seconds) && pressureStruck.add(victim.getUUID()) && hasLineOfSight(victim))
-                corruptionHit(victim, (float) r.move().damage() * difficulty(world), 8);
-        }
-        if (r.contactIndex() == r.move().contacts().size() - 1 && shape.filth() > 0) leaveFilth(world, filthSpots(shape, center, pressureAim));
     }
 
     // ---------------------------------------------------------------- 污秽
@@ -780,11 +888,13 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
     }
 
     /** 在地面上留几块腐败污秽（贴地的腐败脉络）。只放在空气里、下面是实心地面的格子；记下来，重置、结局时清掉。 */
-    private void leaveFilth(ServerLevel world, List<Vec3> spots) {
+    private void leaveFilth(ServerLevel world, List<Vec3> spots, int cap) {
         var state = Corruption.VEIN.get().defaultBlockState().setValue(MultifaceBlock.getFaceProperty(Direction.DOWN), true);
         int floor = Mth.floor(arena().y + .2);
         for (Vec3 s : spots) {
-            if (filth.size() >= QueenBattleRules.FILTH_CAP) return;
+            if (filth.size() >= cap) return;
+            // 不铺到祭坛上（公主站的地方）。
+            if (s.subtract(altar()).multiply(1, 0, 1).length() < 2.5) continue;
             for (int dy = 0; dy <= 1; dy++) {
                 BlockPos at = BlockPos.containing(s.x, floor + dy, s.z);
                 BlockPos below = at.below();
@@ -829,9 +939,8 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         }
         if (--waveTimer > 0) return;
         int cut = Integer.bitCount(brokenRoots());
-        waveTimer = (int) ((QueenBattleRules.WAVE_INTERVAL + QueenBattleRules.WAVE_DELAY_PER_VEIN * cut) * (phase() == 3 ? .8 : 1));
-        long fighters = world.players().stream().filter(p -> canFight(p) && p.distanceToSqr(arena()) < 40 * 40).count();
-        int count = Math.min(QueenBattleRules.waveSize((int) fighters, cut), QueenBattleRules.WAVE_CAP - waveMobs.size());
+        waveTimer = QueenBattleRules.WAVE_INTERVAL + QueenBattleRules.WAVE_DELAY_PER_VEIN * cut;
+        int count = Math.min(QueenBattleRules.waveSize(fighters(world, 40).size(), cut), QueenBattleRules.WAVE_CAP - waveMobs.size());
         var tunnels = QueenArena.get(world.getServer()).tunnels();
         for (int i = 0; i < count && heart != null; i++) {
             Vec3 at = QueenArena.at(heart, facing(), tunnels.get((waveCount + i) % tunnels.size())).add(random.nextDouble() - .5, 0, random.nextDouble() - .5);
@@ -848,7 +957,10 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
             }
         }
         waveCount += Math.max(1, count);
-        if (count > 0) sound(world, SoundEvents.SCULK_SHRIEKER_SHRIEK, 1.4f);
+        if (count > 0) {
+            sound(world, SoundEvents.SCULK_SHRIEKER_SHRIEK, 1.4f);
+            if (princess != null) princess.sayOnce("wave");
+        }
     }
 
     // ---------------------------------------------------------------- 结局
@@ -859,13 +971,15 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         if (!endingSent) { QueenEndings.join(this, endingTick, endingViewers); endingSent = true; }
         // 重连与后来进入现场的人只接续余下时长，不重播或重新清理世界。
         if (endingTick % 10 == 0) QueenEndings.join(this, endingTick, endingViewers);
-        if (endingTick == 35) message(world, "last_words");
+        if (endingTick == 35) CompanionLines.speak(this, "entity.logos_dimension.corrupted_elf_queen", NAME_COLOR, "line.logos_dimension.corrupted_elf_queen.last_words", 70);
         if (endingTick >= QueenBattleRules.EXPLODE) {
             setInvisible(true);
             if (endingTick == QueenBattleRules.EXPLODE) {
                 sound(world, SoundEvents.GENERIC_EXPLODE.value(), .65f);
                 world.sendParticles(ParticleTypes.ENCHANT, getX(), getY() + 2, getZ(), 64, 2.5, 2, 2.5, .2);
                 world.sendParticles(ParticleTypes.CHERRY_LEAVES, getX(), getY() + 2, getZ(), 36, 2, 1.8, 2, .02);
+                // 漫了一地的脉络随着她一起散掉。
+                clearAllFilth(world);
             }
             if (heart != null && world.getBlockEntity(heart) instanceof QueenHeart core && !core.getBlockState().getValue(QueenHeartBlock.DEFEATED)) core.defeated(getUUID());
         }
@@ -916,18 +1030,14 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         if (entering() || transitioning() || phase() >= 3) return false;
         if (amount <= 0 || !Float.isFinite(amount) || !(source.getEntity() instanceof LivingEntity attacker) || CorruptionDamage.aligned(attacker)) return false;
         if (phase() == 2) {
-            // 被操控着：伤的是控制韧性，满了把她压回中央。
+            // 被腐败之心用线吊着：打不动她，只溅起一点腐败。公主会提醒一次（隔半分钟才再说）。
             if (invulnerableTime > 10) return false;
             invulnerableTime = 20;
-            strain += Math.min(amount * (Effects.dealing() == Element.LIFE ? 2 : 1), 12);
-            world.broadcastEntityEvent(this, (byte) 2);
-            if (strain >= QueenBattleRules.STRAIN_MAX && !action.equals("queen_resist")) {
-                strain = 0;
-                staggerFrom = position();
-                play("queen_resist");
-                message(world, "pushed_back");
-            }
-            return true;
+            world.sendParticles(new DustParticleOptions(0xB4286E, 1), getX(), getY() + 1.4, getZ(), 8, .5, .8, .5, .02);
+            world.playSound(null, blockPosition(), SoundEvents.SHIELD_BLOCK.value(), SoundSource.HOSTILE, .8f, .6f);
+            var princess = princess(world);
+            if (princess != null && attacker instanceof Player) princess.sayEvery("queen_shielded", 600);
+            return false;
         }
         boolean hurt = super.hurtServer(world, source, amount);
         if (phase() == 1 && getHealth() <= 1 && heart != null && isAlive()) beginPurification(world);
@@ -955,7 +1065,7 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
     private void updateBar(ServerLevel world) {
         if (bar == null) bar = new ServerBossEvent(getUUID(), Component.translatable("entity.logos_dimension.corrupted_elf_queen"), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS);
         bar.setProgress(Mth.clamp(phase() == 1 ? getHealth() / getMaxHealth() : purification.health(), 0, 1));
-        bar.setName(Component.translatable("boss.logos_dimension.queen.phase" + Math.min(3, phase())));
+        bar.setName(Component.translatable("boss.logos_dimension.queen.phase" + Math.min(2, phase())));
         for (ServerPlayer p : List.copyOf(bar.getPlayers())) if (p.level() != world || !p.isAlive() || p.distanceToSqr(this) > 48 * 48) bar.removePlayer(p);
         for (ServerPlayer p : world.players()) if (!p.isSpectator() && p.distanceToSqr(this) < 40 * 40) bar.addPlayer(p);
     }
@@ -963,6 +1073,9 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
     @Override public void stopSeenByPlayer(ServerPlayer player) { super.stopSeenByPlayer(player); if (bar != null) bar.removePlayer(player); }
 
     // ---------------------------------------------------------------- 存档
+
+    /** 存档版本：5 是五刀处决和狂乱（第 4 步返工）；更早的存档从阶段一重来。 */
+    private static final int REMAKE = 5;
 
     @Override protected void addAdditionalSaveData(ValueOutput out) {
         super.addAdditionalSaveData(out);
@@ -972,10 +1085,10 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         out.putBoolean("Entrance", action.equals("queen_entrance"));
         out.putBoolean("IntroPlayed", introPlayed);
         out.putInt("EmergenceTick", elapsed);
-        out.putInt("CorePhase", phase()); out.putInt("BrokenVeins", brokenRoots()); out.putFloat("ControlStrain", strain);
+        out.putInt("CorePhase", phase()); out.putInt("BrokenVeins", brokenRoots());
         out.putInt("QueenSequence", sequence); out.putInt("EndingTick", endingTick); out.putBoolean("Purified", purified);
         out.putLong("PhaseTime", entityData.get(PHASE_TIME)); out.putLong("QueenPhaseAge", Math.max(0, level().getGameTime() - entityData.get(PHASE_TIME))); out.putString("QueenAction", action);
-        out.putInt("Remake", 4); out.putDouble("QueenMana", mana); out.putFloat("BattleScale", scale);
+        out.putInt("Remake", REMAKE); out.putDouble("QueenMana", mana); out.putFloat("BattleScale", scale);
         out.putInt("WaveTimer", waveTimer); out.putInt("WaveCount", waveCount);
         out.putString("WaveMobs", String.join(",", waveMobs.stream().map(UUID::toString).toList()));
         var spots = out.list("BattleFilth", com.mojang.serialization.Codec.LONG);
@@ -984,8 +1097,8 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
     }
     @Override protected void readAdditionalSaveData(ValueInput in) {
         super.readAdditionalSaveData(in);
-        // 重做前的存档（三段断链）直接从阶段一重来，不沿用旧的生命和阶段。
-        boolean remake = in.getIntOr("Remake", 0) >= 4;
+        // 旧版的存档（三段断链、第 4 步初版的三个窗口）直接从阶段一重来，不沿用旧的生命和阶段。
+        boolean remake = in.getIntOr("Remake", 0) >= REMAKE;
         scale = Math.max(1, in.getFloatOr("BattleScale", 1));
         if (!remake) { getAttribute(Attributes.MAX_HEALTH).setBaseValue(QueenBattleRules.HEALTH); setHealth(QueenBattleRules.HEALTH); }
         // 存档里带着旧版的属性基础值（例如 75% 法术抗性），读完按当前的抗性表重写。
@@ -995,7 +1108,7 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         if (heart != null) { entityData.set(HEART_POS, heart); entityData.set(BOUND, true); }
         introPlayed = in.getBooleanOr("IntroPlayed", in.getBooleanOr("Emerging", false));
         entityData.set(PHASE, remake ? Math.clamp(in.getIntOr("CorePhase", 1), 1, 4) : 1);
-        entityData.set(BROKEN, remake ? in.getIntOr("BrokenVeins", 0) & 0xFF : 0); strain = in.getFloatOr("ControlStrain", 0);
+        entityData.set(BROKEN, remake ? in.getIntOr("BrokenVeins", 0) & 0xFF : 0);
         sequence = Math.max(0, in.getIntOr("QueenSequence", 0)); endingTick = Math.clamp(in.getIntOr("EndingTick", 0), 0, QueenBattleRules.END);
         purified = in.getBooleanOr("Purified", false);
         waveTimer = in.getIntOr("WaveTimer", 0); waveCount = in.getIntOr("WaveCount", 0);
@@ -1011,10 +1124,9 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
         // 读档后重建相对时钟，卸载期间不让核心下降或收缩演出在后台快进。
         long phaseAge = Math.max(0, in.getLongOr("QueenPhaseAge", phase() == 4 ? endingTick : level().getGameTime() - in.getLongOr("PhaseTime", level().getGameTime())));
         entityData.set(PHASE_TIME, level().getGameTime() - phaseAge);
-        runner = null; coreRunner = null; pressureStruck.clear();
+        runner = null; coreRunner = null; pillarSpots.clear();
         String savedMove = in.getStringOr("QueenAction", "");
-        if (savedMove.equals("queen_chain_break")) { restoreMove(savedMove, Math.clamp(in.getIntOr("EmergenceTick", 0), 0, 60)); return; }
-        if (phase() >= 3) { restoreMove(phase() == 4 ? "queen_sacrifice" : "queen_bind", phase() == 4 ? endingTick : 0); return; }
+        if (phase() >= 3) { restoreMove(phase() == 4 ? "queen_sacrifice" : phaseAge >= QueenBattleRules.FRENZY_RISE ? "queen_rise" : "queen_kneel", phase() == 4 ? endingTick : 0); return; }
         if (!remake || in.getBooleanOr("Guarding", false)) play("queen_guard");
         else if (in.getBooleanOr("Emerging", false)) { boolean entrance = in.getBooleanOr("Entrance", false); restoreMove(entrance ? "queen_entrance" : "queen_rise", Mth.clamp(in.getIntOr("EmergenceTick", 0), 0, entrance ? QueenEntrances.TICKS : RISE_TICKS)); }
         else if (savedMove.equals("queen_resist")) restoreMove(savedMove, Math.clamp(in.getIntOr("EmergenceTick", 0), 0, QueenBattleRules.RESIST_TICKS));
@@ -1031,7 +1143,7 @@ public class CorruptedElfQueen extends PathfinderMob implements NpcAnimated, Mov
             clientAction = current;
             String[] parts = current.split("\\|");
             clientMove = parts.length < 2 ? null : new CombatMove(parts[0], Long.parseLong(parts[1]), parts.length > 2 ? Float.parseFloat(parts[2]) : 1,
-                    parts.length > 3 ? Boolean.parseBoolean(parts[3]) : parts[0].equals("queen_guard") || parts[0].equals("queen_bind"));
+                    parts.length > 3 ? Boolean.parseBoolean(parts[3]) : parts[0].equals("queen_guard"));
         }
         return clientMove;
     }

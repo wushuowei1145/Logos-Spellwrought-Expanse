@@ -23,10 +23,16 @@ class QueenMovesTest {
         assertEquals("line", thorns.kind()); assertEquals(17, thorns.reach()); assertTrue(thorns.filth() > 0);
         assertEquals("ring", set.shape("queen_roots").kind());
         assertEquals("ray", set.shape("queen_life_ray").spell()); assertEquals(40, set.shape("queen_life_ray").mana());
-        assertEquals(5, set.plan().rotation().size());
+        assertEquals(7, set.plan().rotation().size());
         assertEquals("queen_reap", set.plan().close());
         assertEquals("queen_roots", set.plan().fallback());
         for (String move : set.plan().rotation()) assertNotEquals("", set.shape(move).kind(), move + " 没有形状");
+        // 阶段二站在中央只放攻击法术。
+        assertEquals(5, set.plan().spells().size());
+        for (String move : set.plan().spells()) assertEquals("spell", set.shape(move).kind(), move + " 不是法术");
+        assertEquals("thorn_vein", set.shape("queen_thorn_vein").spell());
+        assertEquals("thorn_pierce", set.shape("queen_thorn_pierce").spell()); assertEquals(100, set.shape("queen_thorn_pierce").mana());
+        assertEquals(set.plan().spells().get(1), set.plan().spell(6));
     }
 
     @Test void coneLineAndRingHitTests() {
@@ -50,9 +56,14 @@ class QueenMovesTest {
         assertFalse(ring.hits(o, aim, new Vec3(-10, 1, 0), 1));
     }
 
-    @Test void coreMovesetHasAGappedTide() throws Exception {
+    @Test void coreMovesetIsPillars() throws Exception {
         var set = load("queen_core");
-        assertTrue(set.shape("core_wave").gap() > 0);
-        assertEquals("line", set.shape("core_thorns").kind());
+        var pillar = set.shape("core_pillar");
+        assertEquals("pillar", pillar.kind()); assertTrue(pillar.filth() > 0);
+        assertEquals("pillar", set.shape("core_frenzy").kind());
+        Vec3 spot = new Vec3(4, 0, 4);
+        assertTrue(pillar.hits(spot, Vec3.ZERO, spot.add(2, 0, 0), 0));
+        assertFalse(pillar.hits(spot, Vec3.ZERO, spot.add(pillar.reach() + .5, 0, 0), 0));
+        assertFalse(pillar.hits(spot, Vec3.ZERO, spot.add(0, pillar.height() + 1, 0), 0));
     }
 }

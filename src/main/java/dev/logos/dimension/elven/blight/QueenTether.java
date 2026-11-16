@@ -13,7 +13,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * 腐败之心身上能被原版近战、动作武器、投射物和法术打到的部分：第 0–7 号是高台上的主血管接头（{@link HeartVeins}），
- * 第 {@link #HEART} 号是窗口里压低的腐败之心本体（命中按百分比扣，见 {@link CorruptedElfQueen#heartHit}）。
+ * 第 {@link #HEART} 号是降下来的腐败之心本体（玩家砍中一刀斩掉一段，见 {@link CorruptedElfQueen#heartHit}）。
  */
 public final class QueenTether extends PathfinderMob {
     public static final int HEART = HeartVeins.MAIN;
@@ -55,7 +55,7 @@ public final class QueenTether extends PathfinderMob {
         var q = queen();
         if (q == null || amount <= 0 || !Float.isFinite(amount) || !(source.getEntity() instanceof LivingEntity) || source.getEntity() == q) return false;
         if (heart()) {
-            // 窗口里的腐败之心不按伤害量扣，按最大生命的百分比扣；本体不掉血，只给命中反馈。
+            // 降下来的腐败之心不按伤害量扣：玩家砍中一刀就斩掉一段；本体不掉血，只给命中反馈。
             if (!q.heartHit(world, source)) return false;
             world.broadcastEntityEvent(this, (byte) 2);
             return true;
@@ -78,7 +78,7 @@ public final class QueenTether extends PathfinderMob {
         if (q == null) { if (++missing > 200) discard(); return; }
         missing = 0;
         entityData.set(OWNER, q.getId());
-        boolean keep = q.isAlive() && (q.phase() == 2 || q.phase() == 3)
+        boolean keep = q.isAlive() && q.phase() == 2
                 && (heart() ? q.purification().open() : !QueenBattleRules.severed(q.brokenRoots(), slot()));
         if (!keep) { discard(); return; }
         if (heart()) setPos(q.corePosition(0));

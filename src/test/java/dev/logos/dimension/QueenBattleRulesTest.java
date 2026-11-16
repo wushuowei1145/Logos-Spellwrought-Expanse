@@ -45,9 +45,24 @@ class QueenBattleRulesTest {
         // 开合各 1 秒，不瞬移。
         assertTrue(QueenBattleRules.coreDrop(2, 100, 5, 155) > -2);
         assertTrue(QueenBattleRules.coreDrop(2, 100, 155, 5) > -2);
-        assertEquals(-2, QueenBattleRules.coreDrop(3, 200, 0, 0), 1e-9);
-        assertEquals(-5, QueenBattleRules.coreDrop(3, 200, 80, 80), 1e-9);
+        // 狂乱时它不降，只在原处发抖（客户端画）。
+        assertEquals(0, QueenBattleRules.coreDrop(3, 200, 0, 0), 1e-9);
         assertEquals(-6, QueenBattleRules.coreDrop(4, 0, 0, 0));
+    }
+    @Test void frenzySpreadsFasterAndFasterUpToTheAltar() {
+        double limit = 14, previous = 0, step = 0;
+        for (int t = 0; t <= QueenBattleRules.FRENZY_SPREAD; t += 20) {
+            double r = QueenBattleRules.frenzyReach(t, limit);
+            assertTrue(r >= previous && r <= limit + 1e-9);
+            if (t > 40) assertTrue(r - previous >= step - 1e-9, "越漫越快");
+            step = r - previous; previous = r;
+        }
+        assertEquals(2, QueenBattleRules.frenzyReach(0, limit), 1e-9);
+        assertEquals(limit, QueenBattleRules.frenzyReach(QueenBattleRules.FRENZY_SPREAD, limit), 1e-9);
+        assertEquals(limit, QueenBattleRules.frenzyReach(QueenBattleRules.FRENZY_TICKS, limit), 1e-9);
+        // 公主先喊，女王在快淹到祭坛时站起来，再拥心。
+        assertTrue(QueenBattleRules.FRENZY_LINE < QueenBattleRules.FRENZY_RISE && QueenBattleRules.FRENZY_SPREAD <= QueenBattleRules.FRENZY_RISE
+                && QueenBattleRules.FRENZY_RISE + 40 <= QueenBattleRules.FRENZY_TICKS);
     }
     @Test void endingCuePreservesWorldClockAndCoordinates() {
         var cue = new QueenEndingPayload(new BlockPos(-4097, 87, 140), new Vec3(-4096.5, 80, 140.5), new Vec3(0, 0, -1), 18000);

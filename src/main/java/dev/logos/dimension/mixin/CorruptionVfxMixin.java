@@ -20,6 +20,8 @@ abstract class CorruptionVfxMixin {
     @Inject(method = "send(Lnet/minecraft/server/level/ServerLevel;Ldev/logos/net/FxPayload$Kind;Ldev/logos/lang/Element;ILnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;FILdev/logos/runtime/Vfx$Guise;)V",
             at = @At("HEAD"), cancellable = true, require = 0)
     private static void logos_dimension$life(ServerLevel world, FxPayload.Kind kind, Element element, int variant, Vec3 at, Vec3 aux, float scale, int id, Vfx.Guise guise, CallbackInfo ci) {
-        if (element == Element.LIFE && CorruptionDamage.visual() && QueenSpellEffects.replace(world, kind.name(), variant, at, aux, scale, id, guise)) ci.cancel();
+        // 生命特效换成腐败的；领域没有自己的元素（荆棘穿刺圈的那块地），腐败一方放的一律换成腐败的法阵。
+        boolean field = kind.name().startsWith("FIELD_");
+        if ((element == Element.LIFE || field) && CorruptionDamage.visual() && QueenSpellEffects.replace(world, kind.name(), variant, at, aux, scale, id, guise)) ci.cancel();
     }
 }
