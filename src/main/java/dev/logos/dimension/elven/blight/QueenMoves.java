@@ -22,7 +22,8 @@ public final class QueenMoves {
     /**
      * 一招的命中形状。{@code kind}：{@code cone}（扇形：半径 {@code reach}、半角 {@code cone} 度）、{@code ring}（从中心往外扩的环：
      * 每秒扩 {@code speed} 格、环宽 {@code band}，最远 {@code reach}，朝向两侧 {@code gap} 度内是缺口）、{@code line}（直线：长 {@code reach}、半宽 {@code width}）、
-     * {@code spell}（交给 Logos 载页 {@code spell}，耗魔 {@code mana}）。{@code filth}：打完在地上留几块腐败污秽。
+     * {@code spell}（交给 Logos 载页 {@code spell}，耗魔 {@code mana}）、{@code pillar}（腐败之心的光柱：落点半径 {@code reach}、高 {@code height} 内）。
+     * {@code filth}：打完在地上留几块腐败污秽。
      */
     public record Shape(String kind, double reach, double cone, double width, double speed, double band, double gap, double height,
                         @Nullable String spell, double mana, int filth) {
@@ -45,6 +46,7 @@ public final class QueenMoves {
                 case "cone" -> flat <= reach && (flat < .5 || (d.x * aim.x + d.z * aim.z) / flat >= Math.cos(Math.toRadians(cone)));
                 case "ring" -> Math.abs(flat - ring(seconds)) < band && (gap <= 0 || flat < .5
                         || (d.x * aim.x + d.z * aim.z) / flat < Math.cos(Math.toRadians(gap)));
+                case "pillar" -> flat <= reach;
                 case "line" -> {
                     double along = d.x * aim.x + d.z * aim.z, across = Math.abs(d.x * aim.z - d.z * aim.x);
                     yield along > 0 && along < reach && across < width;
@@ -54,9 +56,18 @@ public final class QueenMoves {
         }
     }
 
-    /** 出招顺序：贴身时每隔 {@code closeEvery} 次出 {@code close}，平时按 {@code rotation} 轮换，魔力不够时出 {@code fallback}。 */
-    public record Plan(List<String> rotation, @Nullable String close, double closeRange, int closeEvery, @Nullable String fallback) {
-        public static final Plan NONE = new Plan(List.of(), null, 0, 1, null);
+    /**
+     * 出招顺序：阶段一贴身时每隔 {@code closeEvery} 次出 {@code close}，平时按 {@code rotation} 轮换，魔力不够时出 {@code fallback}；
+     * 阶段二她站在中央，只按 {@code spells} 轮换攻击法术。
+     */
+    public record Plan(List<String> rotation, @Nullable String close, double closeRange, int closeEvery, @Nullable String fallback, List<String> spells) {
+        public static final Plan NONE = new Plan(List.of(), null, 0, 1, null, List.of());
+
+        /** 阶段二的第 {@code sequence} 招（没写 {@code spells} 时退回 {@code rotation}）。 */
+        public String spell(int sequence) {
+            List<String> list = spells.isEmpty() ? rotation : spells;
+            return list.isEmpty() ? "" : list.get(Math.floorMod(sequence, list.size()));
+        }
 
         public String pick(int sequence, double distance) {
             if (close != null && distance < closeRange && sequence % Math.max(1, closeEvery) == 0) return close;
@@ -101,8 +112,10 @@ public final class QueenMoves {
             JsonObject b = json.getAsJsonObject("boss");
             List<String> rotation = new ArrayList<>();
             if (b.has("rotation")) for (var v : b.getAsJsonArray("rotation")) rotation.add(v.getAsString());
+            List<String> spells = new ArrayList<>();
+            if (b.has("spells")) for (var v : b.getAsJsonArray("spells")) spells.add(v.getAsString());
             plan = new Plan(List.copyOf(rotation), b.has("close") ? b.get("close").getAsString() : null, number(b, "close_range", 0),
-                    (int) number(b, "close_every", 1), b.has("fallback") ? b.get("fallback").getAsString() : null);
+                    (int) number(b, "close_every", 1), b.has("fallback") ? b.get("fallback").getAsString() : null, List.copyOf(spells));
         }
         return new Set(Map.copyOf(shapes), plan);
     }

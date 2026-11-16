@@ -21,11 +21,14 @@
 | 一下冲击：黑白闪 | 服务端 `ScreenEffects.flash(player, ScreenFlash.at(CameraPoint.world(pos)))` | 每次命中都闪 |
 | 某块区域的世界换画风 | 服务端 `StyleRealms.add(level, realm)` | 第二镜头、渲染到贴图再贴到门上 |
 | 投技、处决特写 | `ExecutionShots.play`；玩家逐刀点击的用 `InteractiveExecutions.start` | 自己拼运镜加闪 |
+| 角色说一句话（战斗里的提醒、喊话） | 服务端 `CompanionLines.speak(speaker, 名字键, 颜色, 台词键, 刻数, 参数…)`，画面下方带名字的字幕，过场里也看得见 | 动作栏、聊天栏、血条下面写状态 |
 | 让发光的特效泛光 | `GlowBloom` | 按亮度挑像素来泛光（会把天空、雪地一起糊掉） |
 | 画面被调暗、调色后仍然亮着的特效；雾和光影包外也要看得见 | `PostVfx.add` / `PostVfx.blend` | 在世界里画了再想办法提亮 |
 | 一种新的全屏效果 | 照第四节加一个通道 | 占原版 `GameRenderer.setPostEffect` 的槽 |
 
 原版只有一个后期槽：附身苦力怕的视角就在用它，参数也只在加载时读一次。这里所有效果都不碰它。
+
+腐化女王处决腐败之心的一刀是个例外，没走 `ExecutionShots`：目标是悬吊的方块模型，抛不起来、也没有跟着身体转的盒子。它由一次 `CameraShots.play`（遮幅、硬切进去）、一次 `ScreenEffects.flash` 和世界坐标里画的刀光与汁液（`CorruptionFx`）拼成，一刀只闪一次，见 [QUEEN_CORE_BATTLE.md](QUEEN_CORE_BATTLE.md)「净化与降下」。
 
 ## 二、共同的结构
 

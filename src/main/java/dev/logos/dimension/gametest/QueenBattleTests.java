@@ -3,7 +3,6 @@ package dev.logos.dimension.gametest;
 import dev.logos.dimension.elven.blight.*;
 import dev.logos.dimension.item.NaturesForceItem;
 import dev.logos.lang.Element;
-import dev.logos.runtime.Effects;
 import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -15,7 +14,10 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.storage.*;
 import net.minecraft.world.phys.Vec3;
 
-/** 用真实实体走完重做后的女王战：公主到场、阶段一打空、守护净化的窗口（打通、失败）、倒地、挣脱、拥心共殒，以及重置和门口相遇。 */
+/**
+ * 用真实实体走完重做后的女王战：公主到场、阶段一打空、公主落到祭坛、五次降下（砍中、没砍到）、倒地、狂乱、拥心共殒，
+ * 以及重置和门口相遇。公主该说的提醒都要说出来（屏幕上不写状态）。
+ */
 public final class QueenBattleTests {
     private QueenBattleTests() {}
 
@@ -50,10 +52,20 @@ public final class QueenBattleTests {
         }
     }
 
-    /** 用自然之力同一条路（Logos 生命伤害）打窗口里的腐败之心一下。 */
-    public static boolean lifeHit(CorruptedElfQueen q, ServerPlayer player) {
-        for (var t : q.tethers(player.level())) if (t.heart()) { float before = q.purification().segment(); Effects.damage(player, t, 4, Element.LIFE); return q.purification().segment() < before || q.purification().cleared() > 0; }
+    /** 降下来的腐败之心砍一刀（普通近战，客户端场景也用）。返回斩掉了一段没有。 */
+    public static boolean cutHeart(CorruptedElfQueen q, ServerPlayer player) {
+        var world = player.level();
+        for (var t : q.tethers(world)) if (t.heart()) {
+            int before = q.purification().cleared();
+            t.invulnerableTime = 0;
+            t.hurtServer(world, world.damageSources().playerAttack(player), 4);
+            return q.purification().cleared() > before;
+        }
         return false;
+    }
+
+    private static boolean said(ElfPrincess p, String line) {
+        return dev.logos.dimension.companion.CompanionLines.said(p, "line.logos_dimension.elf_princess." + line);
     }
 
     private static void snapshot(GameTestHelper h, CorruptedElfQueen q, String what) {
@@ -71,10 +83,11 @@ public final class QueenBattleTests {
         var f = ElvenBlightGameTests.fixture(h, new BlockPos(100000, 200, 100000)); var world = h.getLevel();
         pads(world, f.pos());
         f.player().getAbilities().invulnerable = true;
-        // 0 阶段一 → 1 等公主上祭坛 → 2 第一个窗口打通 → 3 第二个窗口失败 → 4 倒地与扶起 → 5 第二个窗口打通 → 6 第三个窗口 → 7 结局
+        // 0 阶段一 → 1 等公主落到祭坛 → 2 第一刀 → 3 第二次降下没砍到 → 4 倒地与扶起 → 5 剩下四刀 → 6 狂乱 → 7 结局
         int[] stage = {0};
         long[] mark = {0};
-        boolean[] seen = new boolean[4]; // 衍生物出现、优先打公主、窗口里腐败之心被压低、非生命命中只扣 2%
+        int[] maxFilth = {0};
+        boolean[] seen = new boolean[4]; // 衍生物出现、优先打公主、降下来时腐败之心被压低、光柱轰下来过
         CorruptedElfQueen[] queen = {null};
         ElfPrincess[] princess = {null};
         h.onEachTick(() -> {
@@ -85,92 +98,102 @@ public final class QueenBattleTests {
                 princess[0] = Objects.requireNonNull(f.heart().princess(world), "开战时公主不在");
                 h.assertTrue(princess[0].role() == ElfPrincess.Role.WAITING, "开战时公主没在大厅入口等着：" + princess[0].role());
                 h.assertTrue(queen[0].getMaxHealth() == QueenBattleRules.HEALTH && Math.abs(dev.logos.runtime.SpellModifiers.taken(queen[0], Element.LIFE) - 1.3) < 1e-9, "阶段一生命或生命易伤不对");
+                h.assertTrue(said(princess[0], "ward") || said(princess[0], "ward_none"), "开战时公主没说外面的核心");
                 return;
             }
             var q = queen[0];
             var p = princess[0];
             if (q.entering() || !q.isAlive()) return;
-            f.player().setPos(q.arena().add(0, 0, 6));
+            if (q.phase() < 3) f.player().setPos(q.arena().add(0, 0, 6));
             // 公主保持满血（这里测流程，不测她扛不扛得住）；倒地测试那一段自己控制。
             if (stage[0] != 4) { p.setHealth(p.getMaxHealth()); if (p.downed()) p.forceRevive(); }
             if (!q.waveMobs().isEmpty()) seen[0] = true;
             if (!seen[1]) seen[1] = q.waveMobs().stream().map(world::getEntity).anyMatch(e -> e instanceof net.minecraft.world.entity.Mob m && m.getTarget() == p);
             if (q.purification().open() && q.corePosition(0).y < f.pos().getY() - 4.5) seen[2] = true;
+            if (q.pillarsFired() > 0) seen[3] = true;
+            maxFilth[0] = Math.max(maxFilth[0], q.filthCount());
             switch (stage[0]) {
                 case 0 -> {
                     q.invulnerableTime = 0;
                     q.hurtServer(world, world.damageSources().playerAttack(f.player()), 5000);
                     h.assertTrue(q.isAlive() && q.getHealth() == 1 && q.phase() == 2, "阶段一打空没有进入阶段二：" + q.phase() + " / " + q.getHealth());
+                    h.assertTrue(p.role() == ElfPrincess.Role.LEAP && p.getY() > q.altar().y + 3, "公主没有从祭坛上方落下：" + p.role() + " " + p.position());
                     stage[0] = 1;
                 }
                 case 1 -> {
                     if (!p.channeling() || q.transitioning()) return;
+                    h.assertTrue(p.position().distanceTo(q.altar()) < 1, "公主没落在祭坛上");
+                    h.assertTrue(q.position().subtract(q.arena()).horizontalDistance() < 1.5, "阶段二女王没被拽回场地中央");
                     h.assertTrue(q.tethers(world).stream().filter(t -> !t.heart()).count() == QueenBattleRules.reachableVeins(), "高台上的血管接头数不对");
+                    // 阶段二打不动女王。
+                    q.invulnerableTime = 0;
+                    h.assertTrue(!q.hurtServer(world, world.damageSources().playerAttack(f.player()), 50) && q.getHealth() == 1, "阶段二女王还能被打伤");
+                    h.assertTrue(said(p, "queen_shielded"), "打女王时公主没提醒打不动");
                     snapshot(h, q, "阶段二");
                     var vein = q.tethers(world).stream().filter(t -> !t.heart()).findFirst().orElseThrow();
                     int slot = vein.slot();
                     vein.invulnerableTime = 0;
                     vein.hurtServer(world, world.damageSources().playerAttack(f.player()), 1000);
                     h.assertTrue(QueenBattleRules.severed(q.brokenRoots(), slot) && Integer.bitCount(q.brokenRoots()) == 1, "砍断血管没有记下");
+                    h.assertTrue(said(p, "vein_cut"), "砍断血管后公主没说还剩几根");
                     q.sever(slot, world.damageSources().playerAttack(f.player()));
                     h.assertTrue(Integer.bitCount(q.brokenRoots()) == 1, "同一条血管被重复结算");
-                    q.purification().debugProgress(.329f);
+                    q.purification().debugProgress(.199f);
                     stage[0] = 2;
                 }
                 case 2 -> {
                     if (!q.purification().open()) return;
-                    if (mark[0] == 0) {
-                        // 窗口里先用普通近战打一下：只扣最大生命的 2%。
-                        float before = q.purification().segment();
-                        var heart = q.tethers(world).stream().filter(QueenTether::heart).findFirst().orElseThrow();
-                        heart.hurtServer(world, world.damageSources().playerAttack(f.player()), 50);
-                        seen[3] = Math.abs(before - q.purification().segment() - q.purification().maxHealth() * HeartPurification.OTHER_HIT) < 1e-3;
-                        mark[0] = world.getGameTime();
-                        return;
-                    }
-                    if ((world.getGameTime() - mark[0]) % 9 == 0) lifeHit(q, f.player());
-                    if (q.purification().cleared() == 1) {
-                        h.assertTrue(!q.purification().open() && q.phase() == 2, "打完第一段后窗口没关或阶段不对");
-                        q.purification().debugProgress(.659f);
-                        stage[0] = 3; mark[0] = 0;
-                    }
+                    h.assertTrue(said(p, "window"), "腐败之心降下来时公主没喊");
+                    h.assertTrue(cutHeart(q, f.player()), "降下来的腐败之心砍了一刀没有斩掉一段");
+                    h.assertTrue(q.purification().cleared() == 1 && !q.purification().open() && q.cutting() && q.phase() == 2, "一刀之后没有升回去或没有处决的停顿");
+                    h.assertTrue(Math.abs(q.purification().health() - .8f) < 1e-6, "一刀不是固定 20%");
+                    q.purification().debugProgress(.399f);
+                    stage[0] = 3; mark[0] = 0;
                 }
                 case 3 -> {
-                    if (q.purification().open()) { if (mark[0] == 0) { mark[0] = 1; snapshot(h, q, "开着的窗口"); } return; }
+                    if (q.purification().open()) { if (mark[0] == 0) { mark[0] = 1; snapshot(h, q, "降下来的时候"); } return; }
                     if (mark[0] == 0) return;
-                    // 窗口过了没打完：进度退 15%。
-                    h.assertTrue(Math.abs(q.purification().progress() - (.66f - HeartPurification.FAIL_SETBACK)) < .01, "窗口失败没有退进度：" + q.purification().progress());
+                    // 没人砍到：它升回去，进度退 15%。
+                    h.assertTrue(Math.abs(q.purification().progress() - (.4f - HeartPurification.FAIL_SETBACK)) < .01, "没砍到时没有退进度：" + q.purification().progress());
+                    h.assertTrue(said(p, "window_failed"), "没砍到时公主没说");
                     p.forceDown();
+                    h.assertTrue(said(p, "downed_first"), "公主第一次倒下没说要人拉她");
                     mark[0] = world.getGameTime();
                     stage[0] = 4;
                 }
                 case 4 -> {
                     h.assertTrue(p.downed(), "公主没有倒地");
                     if (world.getGameTime() - mark[0] < 40) return;
-                    h.assertTrue(q.purification().progress() < .66f - HeartPurification.FAIL_SETBACK - .015f, "公主倒地时进度没有回退");
+                    h.assertTrue(q.purification().progress() < .4f - HeartPurification.FAIL_SETBACK - .015f, "公主倒地时进度没有回退");
                     p.forceRevive();
                     h.assertTrue(p.channeling() && p.revives() == 1, "扶起后公主没有接着净化");
-                    q.purification().debugProgress(.659f);
+                    q.purification().debugProgress(.399f);
                     stage[0] = 5; mark[0] = 0;
                 }
                 case 5 -> {
-                    if (!q.purification().open()) return;
-                    if (mark[0] == 0) mark[0] = world.getGameTime();
-                    if ((world.getGameTime() - mark[0]) % 9 == 0) lifeHit(q, f.player());
-                    if (q.purification().cleared() == 2) { stage[0] = 6; mark[0] = 0; }
+                    if (q.phase() == QueenBattleRules.FRENZY) { stage[0] = 6; mark[0] = 0; return; }
+                    if (q.purification().open()) { cutHeart(q, f.player()); return; }
+                    // 每段只调一次进度：每刻都调的话会被按回去，永远涨不到刻度。
+                    int c = q.purification().cleared();
+                    if (mark[0] != c + 1 && !q.cutting() && c < HeartPurification.SEGMENTS) { q.purification().debugProgress(HeartPurification.THRESHOLDS[c] - .001f); mark[0] = c + 1; }
                 }
                 case 6 -> {
-                    if (q.phase() == 4) { stage[0] = 7; return; }
-                    if (q.phase() != 3 || q.transitioning() || !q.action().equals("queen_bind")) return;
-                    // 只调一次：每刻都调的话进度会被按回去，永远涨不到刻度。
-                    if (mark[0] == 0) { q.purification().debugProgress(.999f); mark[0] = 1; return; }
-                    if (!q.purification().open()) return;
-                    if ((world.getGameTime() % 9) == 0) lifeHit(q, f.player());
+                    if (mark[0] == 0) {
+                        h.assertTrue(q.purification().done() && q.waveMobs().isEmpty() && q.tethers(world).isEmpty(), "第五刀后衍生物或血管还在");
+                        h.assertTrue(q.action().equals("queen_kneel") && said(p, "severed"), "第五刀后女王没跪倒或公主没说线断了");
+                        mark[0] = 1;
+                    }
+                    if (q.phase() == QueenBattleRules.ENDING) {
+                        h.assertTrue(said(p, "frenzy") && said(p, "embrace"), "狂乱时公主没喊出来");
+                        h.assertTrue(maxFilth[0] > 80, "狂乱时脉络没有漫开：" + maxFilth[0]);
+                        stage[0] = 7;
+                    }
                 }
                 case 7 -> {
                     h.assertTrue(p.role() == ElfPrincess.Role.AFTER, "结局时公主没有收起净化");
-                    h.assertTrue(q.waveMobs().isEmpty() && q.filthCount() == 0, "结局时没有清掉衍生物和污秽");
+                    h.assertTrue(q.waveMobs().isEmpty(), "结局时没有清掉衍生物");
                     if (q.endingTick() >= 100) {
+                        h.assertTrue(q.filthCount() == 0, "自爆后漫开的脉络没有散掉");
                         h.assertTrue(WorldTreePurification.get(world).started(f.pos()), "结局没有启动世界树净化");
                         stage[0] = 8;
                     }
@@ -179,11 +202,13 @@ public final class QueenBattleTests {
             }
         });
         h.succeedWhen(RealTimeWait.paced(() -> {
-            h.assertTrue(stage[0] == 8, "等待战斗走完，现在在第 " + stage[0] + " 步" + (queen[0] == null ? "" : "（阶段 " + queen[0].phase() + "，进度 " + queen[0].purification().progress() + "）"));
+            h.assertTrue(stage[0] == 8, "等待战斗走完，现在在第 " + stage[0] + " 步" + (queen[0] == null ? "" : "（阶段 " + queen[0].phase() + "，进度 "
+                    + queen[0].purification().progress() + "，已斩 " + queen[0].purification().cleared() + "，降下 " + queen[0].purification().window() + "，停顿 " + queen[0].cutting()
+                    + "，心 " + queen[0].tethers(world).stream().filter(QueenTether::heart).count() + "，玩家活着 " + f.player().isAlive() + "，公主 " + princess[0].role() + "）"));
             try {
                 h.assertTrue(seen[0] && seen[1], "衍生物没有出现或没有先找公主");
-                h.assertTrue(seen[2], "窗口里腐败之心没有被压低");
-                h.assertTrue(seen[3], "窗口里普通命中没有按 2% 扣");
+                h.assertTrue(seen[2], "降下来时腐败之心没有被压低");
+                h.assertTrue(seen[3], "腐败之心的光柱没有轰下来过");
                 h.assertTrue(f.heart().getBlockState().getValue(QueenHeartBlock.DEFEATED), "自爆后核心没有永久击败标记");
                 h.succeed();
             } finally { f.close(h); unpads(world, f.pos()); }
@@ -214,7 +239,7 @@ public final class QueenBattleTests {
             if (q.phase() == 1) { q.invulnerableTime = 0; q.hurtServer(world, world.damageSources().playerAttack(f.player()), 5000); return; }
             if (q.waveMobs().isEmpty() || q.tethers(world).isEmpty()) return;
             var mobs = q.waveMobs();
-            q.purification().debugProgress(.2f);
+            q.purification().debugProgress(.15f);
             q.resetBattle(world);
             h.assertTrue(q.phase() == 1 && q.action().equals("queen_guard") && q.getHealth() == q.getMaxHealth(), "女王没有回到坐姿和满血");
             h.assertTrue(q.purification().progress() == 0 && q.brokenRoots() == 0, "净化进度或血管没有清零");
@@ -293,21 +318,36 @@ public final class QueenBattleTests {
 
     static void spells(GameTestHelper h) {
         var f = ElvenBlightGameTests.fixture(h); var world = h.getLevel();
-        try {
-            var q = Objects.requireNonNull(f.heart().awaken(f.player()));
-            for (String id : List.of("fan", "ray", "rain")) h.assertTrue(QueenSpells.spell(world.getServer(), id) != null, "载页不能编译：" + id);
-            var moves = QueenMoves.of(world.getServer(), CorruptedElfQueen.MOVESET);
-            h.assertTrue(moves.shape("queen_life_ray").mana() == 40 && moves.plan().rotation().size() == 5, "招式文件里的耗魔或出招顺序没读到");
-            var to = f.player().getEyePosition().subtract(q.getEyePosition()).normalize();
-            q.setYRot((float) Math.toDegrees(Math.atan2(-to.x, to.z))); q.setXRot((float) -Math.toDegrees(Math.atan2(to.y, Math.hypot(to.x, to.z))));
-            float before = f.player().getHealth(); double mana = q.mana();
-            h.assertTrue(QueenSpells.cast(q, "ray", q.getEyePosition(), f.player(), 40), "无法通过 Logos 运行时施法");
-            h.assertTrue(f.player().getHealth() < before && q.mana() == mana - 40, "真实载页未伤到玩家或没有付费");
-            h.assertTrue(f.player().getLastDamageSource() != null && f.player().getLastDamageSource().is(dev.logos.dimension.corruption.Corruption.DAMAGE), "女王的生命法术不是腐败伤害");
-            q.payMana(q.mana());
-            h.assertTrue(!QueenSpells.cast(q, "fan", q.getEyePosition(), f.player(), 60) && q.mana() == 0, "魔力不足仍然施法");
-            h.succeed();
-        } finally { f.close(h); }
+        var q = Objects.requireNonNull(f.heart().awaken(f.player()));
+        for (String id : List.of("fan", "ray", "rain", "thorn_vein", "thorn_pierce")) h.assertTrue(QueenSpells.spell(world.getServer(), id) != null, "载页不能编译：" + id);
+        var moves = QueenMoves.of(world.getServer(), CorruptedElfQueen.MOVESET);
+        h.assertTrue(moves.shape("queen_life_ray").mana() == 40 && moves.plan().rotation().size() == 7 && moves.plan().spells().size() == 5, "招式文件里的耗魔或出招顺序没读到");
+        h.assertTrue(moves.shape("queen_thorn_pierce").mana() == 100 && "thorn_pierce".equals(moves.shape("queen_thorn_pierce").spell()), "荆棘穿刺没写进招式文件");
+        var to = f.player().getEyePosition().subtract(q.getEyePosition()).normalize();
+        q.setYRot((float) Math.toDegrees(Math.atan2(-to.x, to.z))); q.setXRot((float) -Math.toDegrees(Math.atan2(to.y, Math.hypot(to.x, to.z))));
+        float before = f.player().getHealth(); double mana = q.mana();
+        h.assertTrue(QueenSpells.cast(q, "ray", q.getEyePosition(), f.player(), 40), "无法通过 Logos 运行时施法");
+        h.assertTrue(f.player().getHealth() < before && q.mana() == mana - 40, "真实载页未伤到玩家或没有付费");
+        h.assertTrue(f.player().getLastDamageSource() != null && f.player().getLastDamageSource().is(dev.logos.dimension.corruption.Corruption.DAMAGE), "女王的生命法术不是腐败伤害");
+        // 腐化荆棘：游脉画成腐败荆棘（先给客户端打个招呼）。
+        long cues = QueenSpellEffects.replaced(), thorns = QueenSpellEffects.thorns();
+        q.setXRot(0);
+        h.assertTrue(QueenSpells.cast(q, "thorn_vein", q.getEyePosition(), f.player(), 40), "腐化荆棘放不出来");
+        // 荆棘穿刺的目标是她锁定的敌人（foe）：锁定玩家时圈在玩家脚下。
+        q.setTarget(f.player());
+        h.assertTrue(QueenSpells.cast(q, "thorn_pierce", q.getEyePosition(), f.player(), 100), "荆棘穿刺放不出来");
+        long started = world.getGameTime();
+        h.succeedWhen(RealTimeWait.paced(() -> {
+            h.assertTrue(QueenSpellEffects.replaced() > cues + 1, "腐化荆棘或荆棘穿刺没有换成腐败的样子");
+            h.assertTrue(world.getGameTime() - started > 30, "等荆棘穿刺的三轮刺完");
+            h.assertTrue(QueenSpellEffects.thorns() >= thorns + 9, "荆棘穿刺的射线没有全画成向上刺出的荆棘：" + (QueenSpellEffects.thorns() - thorns));
+            h.assertTrue(QueenSpellEffects.lastField().distanceTo(f.player().position()) < 2.5, "荆棘穿刺没圈在她锁定的玩家脚下：" + QueenSpellEffects.lastField() + " 玩家 " + f.player().position() + " 女王 " + q.position());
+            try {
+                q.payMana(q.mana());
+                h.assertTrue(!QueenSpells.cast(q, "fan", q.getEyePosition(), f.player(), 60) && q.mana() == 0, "魔力不足仍然施法");
+                h.succeed();
+            } finally { f.close(h); }
+        }));
     }
     static void restoration(GameTestHelper h) {
         var world = h.getLevel();

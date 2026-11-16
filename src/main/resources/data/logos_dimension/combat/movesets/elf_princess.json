@@ -8,8 +8,13 @@
     },
     "princess_leap": {
       "clip": "jump",
-      "length": 1.6,
-      "next": "princess_idle"
+      "length": 0.75,
+      "playback": "loop"
+    },
+    "princess_land": {
+      "clip": "princess_land",
+      "length": 1.5,
+      "next": "princess_channel"
     },
     "princess_channel": {
       "clip": "heal_ring",

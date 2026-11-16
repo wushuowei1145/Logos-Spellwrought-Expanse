@@ -46,6 +46,8 @@ public final class QueenCrimsonFx {
         if (level == null) return;
         if (shown != level) { LIVE.clear(); shown = level; }
         received++;
+        // 荆棘、领域、光柱、处决这些腐败一方自己的特效另外画。
+        if (cue.kind() >= QueenSpellPayload.VEIN) { CorruptionFx.receive(cue); return; }
         if (cue.kind() == QueenSpellPayload.SIGIL) sigils++;
         if (cue.kind() != QueenSpellPayload.SIGIL && emittedThisTick++ < 32) {
             var runtime = (cue.kind() == QueenSpellPayload.TRAIL ? TRAIL : BURST).createRuntime();

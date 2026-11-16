@@ -7,6 +7,7 @@ import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.combat.MoveRunner;
 import dev.logos.dimension.combat.Moveset;
 import dev.logos.dimension.combat.Movesets;
+import dev.logos.dimension.companion.CompanionLines;
 import dev.logos.dimension.companion.CompanionSheet;
 import dev.logos.dimension.companion.CompanionTactic;
 import dev.logos.dimension.companion.CompanionTalk;
@@ -29,7 +30,6 @@ import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -63,8 +63,10 @@ import org.jspecify.annotations.Nullable;
  * <ul>
  * <li>由腐败之心在世界树门口生成（{@link QueenHeart}），每棵树一位。门口和她说话：讲腐败之心和外面供养女王的核心，交出自然之力；
  * 选「走吧」她先进大厅，在入口等着。她不到场，女王坐着不起身。
- * <li>阶段一她留在入口；阶段二跃上树根祭坛，用 Logos 的生命光束净化腐败之心（进度在女王身上，见 {@link HeartPurification}）。
+ * <li>阶段一她留在入口；阶段二镜头切到树根祭坛，她从上面落下来、蹲着落地、站起来，用 Logos 的生命光束净化腐败之心
+ * （进度在女王身上，见 {@link HeartPurification}）。
  * <li>战斗外打不死她；战斗里玩家也伤不到她。生命掉光时倒地，不会死：有人在身边按住使用键 3 秒扶起，没人扶 20 秒后自己起来。
+ * <li>战斗里的提示都由她说出来（{@link #say}，画面下方的字幕），不往屏幕上写状态。
  * <li>外观先用固定的一套森林精灵零件（模型以后另做）；动作走招式文件 {@code combat/movesets/elf_princess.json}。
  * </ul>
  * 打赢后的同伴版是另一种实体（第 5 步）。
@@ -74,8 +76,13 @@ public class ElfPrincess extends PathfinderMob implements NpcAnimated, NpcPartsH
     private static final Identifier MOVESET = LogosDimension.id("elf_princess");
     private static final Identifier ASSET = LogosDimension.id("forest_elf");
     public static final float MAX_HEALTH = 120;
-    /** 扶起要按住的刻数、没人扶自己起来的刻数、防御脉冲的冷却、跃上祭坛的刻数。 */
-    public static final int REVIVE_TICKS = 60, SELF_RISE_TICKS = 400, PULSE_COOLDOWN = 200, LEAP_TICKS = 32;
+    /** 扶起要按住的刻数、没人扶自己起来的刻数、防御脉冲的冷却。 */
+    public static final int REVIVE_TICKS = 60, SELF_RISE_TICKS = 400, PULSE_COOLDOWN = 200;
+    /** 从祭坛上方多高落下、落多少刻、落地后蹲着再站起来多少刻（落地动作 {@code princess_land}）。 */
+    public static final double DROP_HEIGHT = 7;
+    public static final int FALL_TICKS = 12, LAND_TICKS = 30, LEAP_TICKS = FALL_TICKS + LAND_TICKS;
+    /** 字幕里她名字的颜色（同对话界面的嫩绿）。 */
+    public static final int NAME_COLOR = 0xB8E6A0;
     /** 公主暂用的森林精灵外观（模型做好后替换）。 */
     private static final Map<String, String> LOOK = Map.of("hair", "hair_priestess_braids", "headwear", "headwear_twig_crown", "ears", "ear_long",
             "eyes", "eyes_droopy", "mouth", "mouth_smile", "outfit", "outfit_floral_gown");
@@ -113,6 +120,8 @@ public class ElfPrincess extends PathfinderMob implements NpcAnimated, NpcPartsH
     /** 自己起来过、还没报给女王扣进度的次数。 */
     private int pendingSetbacks;
     private @Nullable UUID talking;
+    /** 在门口喊过的玩家（不存档：重进世界再喊一次也无妨）。 */
+    private final Set<UUID> called = new HashSet<>();
 
     public ElfPrincess(EntityType<? extends ElfPrincess> type, Level level) {
         super(type, level);
@@ -207,20 +216,43 @@ public class ElfPrincess extends PathfinderMob implements NpcAnimated, NpcPartsH
         if (heart != null) face(Vec3.atBottomCenterOf(heart));
     }
 
-    /** 跃上祭坛开始净化（阶段二开始时女王叫她）。 */
+    /**
+     * 落到祭坛上开始净化（阶段二开始时女王叫她）：镜头这时已经切到祭坛（{@link CorruptedElfQueen}），
+     * 她从祭坛正上方 {@link #DROP_HEIGHT} 格落进画面，蹲着落地，再站起来施法。
+     */
     public void leap(ServerLevel world) {
         if (role() == Role.LEAP || role() == Role.CHANNEL || role() == Role.DOWNED) return;
         stopBeam(world);
         getNavigation().stop();
-        leapFrom = position();
         leapTo = marker(world, arena(world).altar());
+        leapFrom = leapTo.add(0, DROP_HEIGHT, 0);
         leapTick = 0;
         noPhysics = true;
         setNoGravity(true);
+        setPos(leapFrom);
+        if (heart != null) face(Vec3.atBottomCenterOf(heart).add(0, getEyeHeight(), 0));
         role(Role.LEAP);
         play("princess_leap");
-        world.playSound(null, blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.NEUTRAL, 1, 1.2f);
     }
+
+    /** 她说一句（画面下方的字幕，48 格内的玩家看得到）：{@code line.logos_dimension.elf_princess.<id>}。 */
+    public void say(String id, Object... args) {
+        CompanionLines.speak(this, key("name"), NAME_COLOR, line(id), 80, args);
+    }
+
+    /** 同上，但这一场里只说一次。返回这次说了没有。 */
+    public boolean sayOnce(String id, Object... args) {
+        if (CompanionLines.said(this, line(id))) return false;
+        say(id, args);
+        return true;
+    }
+
+    /** 同上，但 {@code gap} 刻内不重复。 */
+    public boolean sayEvery(String id, int gap, Object... args) {
+        return CompanionLines.speakEvery(this, key("name"), NAME_COLOR, line(id), 80, gap, args);
+    }
+
+    private static String line(String id) { return "line.logos_dimension." + TALK + "." + id; }
 
     /** 战斗打完：收起光束，站在原地（结局的蹲看、对话在第 5 步）。 */
     public void finish(ServerLevel world) {
@@ -258,7 +290,7 @@ public class ElfPrincess extends PathfinderMob implements NpcAnimated, NpcPartsH
         if (r != null) r.tick(world.getGameTime());
         if (pulseCooldown > 0) pulseCooldown--;
         switch (role()) {
-            case GATE -> holdAt(world, marker(world, arena(world).gate()));
+            case GATE -> { holdAt(world, marker(world, arena(world).gate())); callOut(world); }
             case AHEAD -> walkAhead(world);
             case WAITING -> holdAt(world, marker(world, arena(world).entrance()));
             case LEAP -> leaping(world);
@@ -267,6 +299,17 @@ public class ElfPrincess extends PathfinderMob implements NpcAnimated, NpcPartsH
             case AFTER -> getNavigation().stop();
         }
         if (reviver != null && world.getGameTime() - reviveLast > 8) { reviver = null; reviveTicks = 0; }
+    }
+
+    /** 有人第一次走近门口：她朝那边喊一声（玩家就知道该和她说话，不用屏幕上写）。 */
+    private void callOut(ServerLevel world) {
+        if (tickCount % 10 != 0 || talking != null) return;
+        for (ServerPlayer p : world.players()) {
+            if (!p.isAlive() || p.isSpectator() || p.distanceToSqr(this) > 16 * 16 || met.contains(p.getUUID()) || !called.add(p.getUUID())) continue;
+            say("call_out");
+            getLookControl().setLookAt(p, 30, 30);
+            return;
+        }
     }
 
     private void holdAt(ServerLevel world, Vec3 at) {
@@ -284,22 +327,35 @@ public class ElfPrincess extends PathfinderMob implements NpcAnimated, NpcPartsH
         if (++stuck > 400) arrive(world);
     }
 
+    /** 落下（越落越快）→ 落地蹲住 → 站起来抬手，然后开始引导。 */
     private void leaping(ServerLevel world) {
-        float t = Math.min(1, ++leapTick / (float) LEAP_TICKS);
-        Vec3 at = leapFrom.lerp(leapTo, t).add(0, 6 * t * (1 - t), 0);
-        setPos(at);
+        leapTick++;
         setDeltaMovement(Vec3.ZERO);
-        face(leapTo.add(leapTo.subtract(leapFrom).multiply(1, 0, 1)));
-        if (leapTick % 3 == 0) world.sendParticles(ParticleTypes.CHERRY_LEAVES, getX(), getY() + .8, getZ(), 3, .3, .4, .3, .01);
-        if (t >= 1) {
-            noPhysics = false;
-            setNoGravity(false);
-            setPos(leapTo);
+        fallDistance = 0;
+        if (leapTick <= FALL_TICKS) {
+            float t = leapTick / (float) FALL_TICKS;
+            setPos(leapFrom.lerp(leapTo, t * t));
+            if (leapTick % 2 == 0) world.sendParticles(ParticleTypes.CHERRY_LEAVES, getX(), getY() + 1.2, getZ(), 2, .25, .5, .25, .01);
+            if (leapTick == FALL_TICKS) land(world);
+            return;
+        }
+        setPos(leapTo);
+        if (leapTick >= LEAP_TICKS) {
             role(Role.CHANNEL);
             play("princess_channel");
-            world.sendParticles(ParticleTypes.HAPPY_VILLAGER, getX(), getY() + .2, getZ(), 24, 1.2, .2, 1.2, .02);
             world.playSound(null, blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.NEUTRAL, 1.2f, 1);
         }
+    }
+
+    private void land(ServerLevel world) {
+        noPhysics = false;
+        setNoGravity(false);
+        setPos(leapTo);
+        play("princess_land");
+        world.sendParticles(ParticleTypes.CHERRY_LEAVES, getX(), getY() + .15, getZ(), 26, 1.1, .1, 1.1, .06);
+        world.sendParticles(ParticleTypes.HAPPY_VILLAGER, getX(), getY() + .2, getZ(), 16, 1.2, .15, 1.2, .02);
+        world.playSound(null, blockPosition(), SoundEvents.AZALEA_LEAVES_FALL, SoundSource.NEUTRAL, 1.4f, .9f);
+        world.playSound(null, blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.NEUTRAL, 1, 1.2f);
     }
 
     private void channel(ServerLevel world) {
@@ -323,7 +379,14 @@ public class ElfPrincess extends PathfinderMob implements NpcAnimated, NpcPartsH
         getNavigation().stop();
         stopBeam(world);
         if (++downedTicks % 20 == 0) world.sendParticles(ParticleTypes.HAPPY_VILLAGER, getX(), getY() + .3, getZ(), 2, .4, .1, .4, 0);
-        if (downedTicks >= SELF_RISE_TICKS) { selfRises++; pendingSetbacks++; rise(world); }
+        // 有人在扶：她身边的光一点点亮起来（扶到哪儿了，看光就知道）。
+        if (reviver != null && reviveTicks > 0 && tickCount % 3 == 0) {
+            int glow = 1 + reviveTicks * 6 / REVIVE_TICKS;
+            world.sendParticles(ParticleTypes.HAPPY_VILLAGER, getX(), getY() + .5, getZ(), glow, .45, .4, .45, .01);
+            if (tickCount % 15 == 0) world.playSound(null, blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.NEUTRAL, .5f,
+                    .8f + reviveTicks * .8f / REVIVE_TICKS);
+        }
+        if (downedTicks >= SELF_RISE_TICKS) { selfRises++; pendingSetbacks++; rise(world); say("self_rise"); }
     }
 
     private void down(ServerLevel world) {
@@ -338,8 +401,8 @@ public class ElfPrincess extends PathfinderMob implements NpcAnimated, NpcPartsH
         reviveTicks = 0;
         play("princess_downed");
         world.playSound(null, blockPosition(), SoundEvents.PLAYER_HURT, SoundSource.NEUTRAL, 1, 1.3f);
-        for (ServerPlayer p : world.players()) if (p.distanceToSqr(this) < 48 * 48)
-            p.sendOverlayMessage(Component.translatable("message.logos_dimension.princess.downed"));
+        // 第一次倒下说清楚要人拉她一把（按住使用键），之后简短一点。
+        if (!sayOnce("downed_first")) say("downed");
     }
 
     private void rise(ServerLevel world) {
@@ -428,8 +491,7 @@ public class ElfPrincess extends PathfinderMob implements NpcAnimated, NpcPartsH
             if (!p.getUUID().equals(reviver) || now - reviveLast > 8) { reviver = p.getUUID(); reviveTicks = 0; }
             else reviveTicks += (int) (now - reviveLast);
             reviveLast = now;
-            p.sendOverlayMessage(Component.translatable("message.logos_dimension.princess.reviving", Math.min(100, reviveTicks * 100 / REVIVE_TICKS)));
-            if (reviveTicks >= REVIVE_TICKS) { revives++; rise(world); p.sendOverlayMessage(Component.translatable("message.logos_dimension.princess.revived")); }
+            if (reviveTicks >= REVIVE_TICKS) { revives++; rise(world); say("revived"); }
             return InteractionResult.SUCCESS;
         }
         if (canTalk(p)) { CompanionTalk.begin(p, this); return InteractionResult.SUCCESS; }
@@ -556,5 +618,5 @@ public class ElfPrincess extends PathfinderMob implements NpcAnimated, NpcPartsH
     }
 
     /** 测试用：这一场的计数清零（战斗重置时女王也会清）。 */
-    public void resetCounts() { downs = 0; revives = 0; selfRises = 0; pendingSetbacks = 0; }
+    public void resetCounts() { downs = 0; revives = 0; selfRises = 0; pendingSetbacks = 0; CompanionLines.forget(this); }
 }

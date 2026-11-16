@@ -43,22 +43,26 @@ class QueenMovesetTest {
         r.tick(100); assertTrue(actor.hits.isEmpty()); assertEquals("queen_resist", r.move().name());
         r.tick(140); assertEquals("queen_idle", r.move().name());
     }
-    @Test void phaseEndingsFinishBeforeOpeningTheNextWindow() throws IOException {
+    @Test void kneelHoldsThroughTheFrenzy() throws IOException {
         var set = body(); var actor = new Actor(); var r = new MoveRunner(set, actor, 0);
-        // 挣断控制后直接束缚腐败之心（阶段三），不再回到援护。
-        for (var entry : Map.of("queen_chain_break", "queen_bind", "queen_core_fall", "queen_bind").entrySet()) {
-            r.force(entry.getKey(), 0); var move = r.move();
-            assertFalse(move.hasContact()); r.tick(move.length() * 20 - 1);
-            assertEquals(entry.getKey(), r.move().name()); r.tick(move.length() * 20);
-            assertEquals(entry.getValue(), r.move().name());
-        }
+        // 第五刀之后她跪着，直到狂乱快结束时被叫起来。
+        r.force("queen_kneel", 0);
+        for (int t = 0; t <= 300; t++) r.tick(t);
+        assertEquals("queen_kneel", r.move().name());
+        r.force("queen_rise", 300); r.tick(341);
+        assertEquals("queen_idle", r.move().name());
         assertTrue(actor.hits.isEmpty());
     }
     @Test void coreUsesTheSameRunnerAndRepeatsItsDataDefinedChain() throws IOException {
         var set = Moveset.parse(resource("/data/logos_dimension/combat/movesets/queen_core.json"));
         var actor = new Actor(); var r = new MoveRunner(set, actor, 0);
         for (int t = 0; t <= 200; t++) r.tick(t);
-        assertEquals(3, actor.hits.stream().filter(s -> s.startsWith("core_thorns")).count());
-        assertEquals(24, actor.hits.stream().filter(s -> s.startsWith("core_wave")).count());
+        // 阶段二：3.5 秒一下，1.1 秒前摇。
+        assertEquals(3, actor.hits.stream().filter(s -> s.startsWith("core_pillar")).count());
+        actor.hits.clear();
+        r.force("core_frenzy", 200);
+        for (int t = 200; t <= 270; t++) r.tick(t);
+        // 狂乱：一秒三下。
+        assertEquals(10, actor.hits.stream().filter(s -> s.startsWith("core_frenzy")).count(), 1);
     }
 }
