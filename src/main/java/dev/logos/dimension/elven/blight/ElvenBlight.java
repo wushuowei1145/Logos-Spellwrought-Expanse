@@ -47,6 +47,10 @@ public final class ElvenBlight {
     public static final Supplier<EntityType<QueenTether>> TETHER = ENTITIES.register("queen_tether", () ->
             EntityType.Builder.of(QueenTether::new, MobCategory.MISC).sized(1.4f, 1.6f).clientTrackingRange(10)
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("queen_tether"))));
+    /** 精灵公主（战斗版）：森林精灵的身材，外观先用固定的一套森林精灵零件。 */
+    public static final Supplier<EntityType<ElfPrincess>> PRINCESS = ENTITIES.register("elf_princess", () ->
+            EntityType.Builder.of(ElfPrincess::new, MobCategory.MISC).sized(0.6f, 1.5f).eyeHeight(1.26f).clientTrackingRange(10)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("elf_princess"))));
 
     private static DeferredBlock<CorruptionGrowthBlock> growth(String id) {
         return DimensionBlocks.BLOCKS.registerBlock(id, CorruptionGrowthBlock::new,
@@ -64,5 +68,6 @@ public final class ElvenBlight {
         ENTITIES.register(bus);
         bus.addListener((EntityAttributeCreationEvent e) -> e.put(QUEEN.get(), CorruptedElfQueen.attributes().build()));
         bus.addListener((EntityAttributeCreationEvent e) -> e.put(TETHER.get(), QueenTether.attributes().build()));
+        bus.addListener((EntityAttributeCreationEvent e) -> e.put(PRINCESS.get(), ElfPrincess.attributes().build()));
     }
 }

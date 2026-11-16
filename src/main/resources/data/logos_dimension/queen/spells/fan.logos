@@ -2,4 +2,4 @@
 (spell :name "猩枝矢" :mana 60 :players true
   (split 3 :spread 28
     (projectile :speed 0.8 :life 2.5 :size 0.25 :look &iron_sword
-      (on-hit (damage target 6 life)))))
+      (on-hit (damage target 12 life)))))

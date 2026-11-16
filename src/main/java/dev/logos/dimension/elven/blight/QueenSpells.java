@@ -8,13 +8,13 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.Nullable;
 
-/** 代码只做选页与付费，弹丸、射线、碰撞和元素伤害全部交给 Logos 载页运行时。 */
+/** 代码只做选页与付费，弹丸、射线、碰撞和元素伤害全部交给 Logos 载页运行时；耗魔写在招式文件里（{@link QueenMoves}）。 */
 public final class QueenSpells {
     private static ResourceManager manager;
     private static final Map<String, Optional<Spell>> SPELLS = new HashMap<>();
     private QueenSpells() {}
-    public static double cost(String id) { return id.equals("fan") ? 60 : id.equals("ray") ? 40 : 20; }
     public static Spell spell(MinecraftServer server, String id) {
         var resources = server.getResourceManager();
         if (manager != resources) { manager = resources; SPELLS.clear(); }
@@ -27,12 +27,12 @@ public final class QueenSpells {
             }
         }).orElse(null);
     }
-    public static boolean cast(CorruptedElfQueen queen, String id, Vec3 from, LivingEntity target) {
+    public static boolean cast(CorruptedElfQueen queen, String id, Vec3 from, @Nullable LivingEntity target, double cost) {
         if (!(queen.level() instanceof net.minecraft.server.level.ServerLevel world)) return false;
         Spell spell = spell(world.getServer(), id);
-        if (spell == null || !queen.payMana(cost(id))) return false;
+        if (spell == null || !queen.payMana(cost)) return false;
         // 收到明确前摇后才进入真实施法；女王是腐败一方，她的生命法术就是腐败伤害，特效也换成腐败的。
-        dev.logos.dimension.corruption.CorruptionDamage.inSpell(true, () -> Casting.castAs(queen, spell, cost(id), 0, target, from, true));
+        dev.logos.dimension.corruption.CorruptionDamage.inSpell(true, () -> Casting.castAs(queen, spell, cost, 0, target, from, true));
         return true;
     }
 }

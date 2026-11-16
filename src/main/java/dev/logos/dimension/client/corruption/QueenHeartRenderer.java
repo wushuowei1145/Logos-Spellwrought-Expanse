@@ -29,13 +29,15 @@ public class QueenHeartRenderer implements BlockEntityRenderer<QueenHeart, Queen
     private static final RenderType TYPE = RenderTypes.entityCutout(LogosDimension.id("textures/entity/queen_heart_palette.png"));
     private static CoreMesh shell;
     private static CoreShape shape;
-    public static class State extends BlockEntityRenderState { float time, yaw, surge, collapse, phaseAge; boolean defeated; double drop; Vec3 queen; int phase; }
+    public static class State extends BlockEntityRenderState { float time, yaw, surge, collapse, phaseAge; boolean defeated; double drop; Vec3 queen; int phase, severed; }
     public QueenHeartRenderer(BlockEntityRendererProvider.Context context) {}
     @SubscribeEvent static void register(EntityRenderersEvent.RegisterRenderers e) {
         e.registerBlockEntityRenderer(ElvenBlight.HEART_ENTITY.get(), QueenHeartRenderer::new);
         e.registerBlockEntityRenderer(ElvenBlight.NODE_ENTITY.get(), c -> new CorruptionCoreRenderer(c, LogosDimension.id("textures/entity/blight_node_palette.png")));
         e.registerEntityRenderer(ElvenBlight.QUEEN.get(), dev.logos.dimension.client.QueenRenderer::new);
         e.registerEntityRenderer(ElvenBlight.TETHER.get(), QueenTetherRenderer::new);
+        // 公主的模型以后另做；现在用森林精灵的渲染器和动画（外观由实体给的零件决定）。
+        e.registerEntityRenderer(ElvenBlight.PRINCESS.get(), ctx -> new dev.logos.dimension.client.NpcRenderer<>(ctx, "forest_elf"));
     }
     private static void meshes() {
         if (shell != null) return;
@@ -49,10 +51,10 @@ public class QueenHeartRenderer implements BlockEntityRenderer<QueenHeart, Queen
         state.yaw = heart.getBlockState().getValue(QueenHeartBlock.FACING).toYRot();
         state.surge=dev.logos.dimension.client.QueenEntranceClient.corePulse(heart.getBlockPos());
         state.defeated = heart.getBlockState().getValue(QueenHeartBlock.DEFEATED);
-        state.drop = 0; state.queen = null; state.phase = 1; state.collapse = 0;
+        state.drop = 0; state.queen = null; state.phase = 1; state.collapse = 0; state.severed = 0;
         var level = net.minecraft.client.Minecraft.getInstance().level;
         if (level != null) for (var e : level.entitiesForRendering()) if (e instanceof dev.logos.dimension.elven.blight.CorruptedElfQueen q && heart.getBlockPos().equals(q.heartPosition())) {
-            state.phase = q.phase(); state.phaseAge = q.phaseAge(partial); state.drop = q.corePosition(partial).y - heart.getBlockPos().getY();
+            state.phase = q.phase(); state.phaseAge = q.phaseAge(partial); state.drop = q.corePosition(partial).y - heart.getBlockPos().getY(); state.severed = q.brokenRoots();
             if (q.phase() == 4) state.collapse = dev.logos.dimension.elven.blight.QueenBattleRules.smooth(q.phaseAge(partial) / 80);
             if (q.transitioning()) state.surge = Math.max(state.surge, (float) Math.exp(-Math.pow((state.phaseAge - 24) / 10, 2)));
             state.queen = q.getPosition(partial).subtract(heart.getBlockPos().getBottomCenter()); break;
@@ -77,7 +79,7 @@ public class QueenHeartRenderer implements BlockEntityRenderer<QueenHeart, Queen
             }
         }
         pose.mulPose(Axis.YP.rotationDegrees(-state.yaw));
-        collector.submitCustomGeometry(pose, TYPE, (p, buf) -> SuspendedHeart.draw(p, buf, state.lightCoords, state.time, false, state.drop, state.collapse));
+        collector.submitCustomGeometry(pose, TYPE, (p, buf) -> SuspendedHeart.draw(p, buf, state.lightCoords, state.time, false, state.drop, state.collapse, state.severed));
         pose.translate(0, state.drop, 0);
         pose.scale(scale, scale * (state.defeated ? .8f : 1), scale);
         pose.translate(-shape.n, 0, -shape.n);

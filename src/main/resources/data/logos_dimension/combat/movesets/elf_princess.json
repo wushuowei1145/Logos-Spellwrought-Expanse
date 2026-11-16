@@ -1,0 +1,37 @@
+{
+  "start": "princess_idle",
+  "moves": {
+    "princess_idle": {
+      "clip": "idle",
+      "length": 4,
+      "playback": "loop"
+    },
+    "princess_leap": {
+      "clip": "jump",
+      "length": 1.6,
+      "next": "princess_idle"
+    },
+    "princess_channel": {
+      "clip": "heal_ring",
+      "length": 1.3,
+      "playback": "loop",
+      "attack_speed_base": 1.6
+    },
+    "princess_pulse": {
+      "clip": "heal_ring",
+      "length": 1.3,
+      "contact": [0.55],
+      "next": "princess_channel"
+    },
+    "princess_downed": {
+      "clip": "death",
+      "length": 30,
+      "next": "princess_downed"
+    },
+    "princess_rise": {
+      "clip": "heal_touch",
+      "length": 0.8,
+      "next": "princess_channel"
+    }
+  }
+}
