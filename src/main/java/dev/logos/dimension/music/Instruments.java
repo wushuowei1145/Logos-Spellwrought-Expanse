@@ -268,7 +268,7 @@ public final class Instruments {
         }
         if (clean.isEmpty()) return;
         Vec3 at = be.soundCenter();
-        PacketDistributor.sendToPlayersNear((ServerLevel) player.level(), player, at.x, at.y, at.z, be.hearingRange(),
+        dev.logos.dimension.net.ToClients.near((ServerLevel) player.level(), player, at.x, at.y, at.z, be.hearingRange(),
             new MusicPayloads.LiveNotesOut(be.getBlockPos(), player.getId(), false, clean));
     }
 
@@ -292,7 +292,7 @@ public final class Instruments {
             }
             if (clean.isEmpty()) return;
         }
-        PacketDistributor.sendToPlayersNear((ServerLevel) player.level(), player, player.getX(), player.getY(), player.getZ(),
+        dev.logos.dimension.net.ToClients.near((ServerLevel) player.level(), player, player.getX(), player.getY(), player.getZ(),
             kind.broadcastRange(), new MusicPayloads.HeldNotesOut(player.getId(), kind.ordinal(), p.allOff(), clean));
     }
 
@@ -301,7 +301,7 @@ public final class Instruments {
         be.setPerformer(null);
         if (be.getLevel() instanceof ServerLevel level) {
             Vec3 at = be.soundCenter();
-            PacketDistributor.sendToPlayersNear(level, null, at.x, at.y, at.z, be.hearingRange(),
+            dev.logos.dimension.net.ToClients.near(level, null, at.x, at.y, at.z, be.hearingRange(),
                 new MusicPayloads.LiveNotesOut(be.getBlockPos(), player == null ? -1 : player.getId(), true, List.of()));
         }
     }
@@ -361,7 +361,7 @@ public final class Instruments {
         // 和实时演奏共用令牌桶：一次请求算 16 个事件，避免被刷
         if (!take(player, 16, player.level().getGameTime())) return;
         byte[] data = RollStore.load(p.id());
-        PacketDistributor.sendToPlayer(player, new MusicPayloads.RollData(p.id(), data == null ? new byte[0] : data));
+        dev.logos.dimension.net.ToClients.player(player, new MusicPayloads.RollData(p.id(), data == null ? new byte[0] : data));
     }
 
     // —— 纸带上传 ——

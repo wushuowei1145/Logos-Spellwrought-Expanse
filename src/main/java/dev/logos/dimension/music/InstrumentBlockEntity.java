@@ -285,9 +285,9 @@ public class InstrumentBlockEntity extends BlockEntity {
         MusicPayloads.Playback p = new MusicPayloads.Playback(worldPosition, playing, playingHash, positionMs(),
             playing != null && pausedAt < 0, partMask);
         if (to != null) {
-            PacketDistributor.sendToPlayer(to, p);
+            dev.logos.dimension.net.ToClients.player(to, p);
         } else {
-            PacketDistributor.sendToPlayersTrackingChunk(server, ChunkPos.containing(worldPosition), p);
+            dev.logos.dimension.net.ToClients.trackingChunk(server, ChunkPos.containing(worldPosition), p);
         }
     }
 
