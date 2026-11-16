@@ -22,11 +22,30 @@ public final class CompanionTalkClient {
     @SubscribeEvent
     static void packets(RegisterClientPayloadHandlersEvent event) {
         event.register(CompanionTalk.Update.TYPE, (payload, context) -> context.enqueueWork(() -> receive(payload)));
+        event.register(dev.logos.dimension.companion.CompanionGuard.Saved.TYPE, (payload, context) -> context.enqueueWork(CompanionTalkClient::saved));
+        // 狐火之言（白梅第三印）：编纂台在客户端编图、列卡片，问本机玩家学会了没有
+        dev.logos.dimension.foxfire.Foxfire.viewerKnows = () -> Minecraft.getInstance().player != null
+                && dev.logos.dimension.foxfire.Foxfire.knows(Minecraft.getInstance().player);
     }
 
     @SubscribeEvent
     static void logout(ClientPlayerNetworkEvent.LoggingOut event) {
         hideGui(false);
+    }
+
+    /** 形代替身挡下了致命一击：同原版不死图腾，眼前转着飞出一张形代（写着你的名字）。花瓣由服务端在形代燃尽的地方放。 */
+    static void saved() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        mc.gameRenderer.displayItemActivation(dev.logos.dimension.companion.KatashiroItem.bound(mc.player));
+        savedShown++;
+    }
+
+    /** 测试用：画过几次。 */
+    private static int savedShown;
+
+    public static int savedShown() {
+        return savedShown;
     }
 
     static void receive(CompanionTalk.Update u) {

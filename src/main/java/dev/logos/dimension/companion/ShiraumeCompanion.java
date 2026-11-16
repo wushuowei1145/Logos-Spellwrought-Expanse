@@ -39,6 +39,8 @@ import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
@@ -97,6 +99,9 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
     /** 给主人缠的狐火：每下附带她狐火伤害的这么多，缠这么多秒，之后冷却。 */
     static final double KINDLE_SHARE = .5, KINDLE_SECONDS = 30;
     static final int KINDLE_COOLDOWN = 1200;
+    /** 第四印（{@link CompanionBond#BRAND_SEAL}）：狐火弹伤害乘多少；打中减速多久（刻，缓慢 II）。 */
+    public static final double BRAND_DAMAGE = 1.3;
+    public static final int BRAND_SLOW = 60;
     /** 吃东西（eat，2.4 秒）：三口、咽下去；摘浆果（pick，1.2 秒）：第 0.5 秒摘下来。与动画的时间标记一致。 */
     static final int EAT_TICKS = 48, EAT_SWALLOW = 35, PICK_TICKS = 24, PICK_PLUCK = 10;
     static final int[] EAT_BITES = {12, 20, 28};
@@ -119,6 +124,8 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
     private @Nullable CompanionMind mind;
     private @Nullable UUID owner;
     private float foxfireDamage = (float) CompanionStats.BASE_FOXFIRE;
+    /** 主人盖了几枚契印（{@link CompanionStats#apply} 记下来，刀和狐火弹按它算）。 */
+    private int seals;
     private boolean staying, soaking;
     /** 正在和她说话的人（对话界面开着，{@link CompanionTalk}）；她自己选的装束（对话里让她换的，打完仗会换回这一套）。 */
     private @Nullable UUID talkWith;
@@ -251,9 +258,20 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
 
     /** 她能不能伤到这个东西：不伤玩家、主人的宠物和使魔，也不伤别的白梅。 */
     public boolean canHarm(Entity e) {
-        if (e == this || e instanceof Player || e instanceof ShiraumeCompanion) return false;
+        if (e == this || e instanceof ShiraumeCompanion) return false;
+        if (e instanceof Player target) return mayFight(target);
         if (owner != null && e instanceof TamableAnimal pet && pet.getOwner() != null && owner.equals(pet.getOwner().getUUID())) return false;
         return owner == null || !owner.equals(LogosMagicBridge.masterOf(e));
+    }
+
+    /**
+     * 别的玩家她打不打（作战策略里的「攻击玩家」）：开着才打，主人自己、创造和旁观的不打；服务器关了 PvP、和主人同队不许互伤时也不打
+     * （同主人自己能不能打他）。打谁还是照心智挑的：打主人的、主人在打的、打她的，不会去找路过的玩家。
+     */
+    boolean mayFight(Player target) {
+        if (owner == null || target.getUUID().equals(owner) || target.isCreative() || target.isSpectator()) return false;
+        ServerPlayer p = ownerPlayer();
+        return p != null && p.getData(Companions.BOND).pvp() && p.canHarmPlayer(target);
     }
 
     /**
@@ -501,26 +519,39 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
         mood.tick(now);
     }
 
+    /** 主人脚下那一格的亮度不超过这么多就点狐火灯（0–15）。 */
+    static final int LANTERN_DARK = 7;
+
     /**
-     * 狐火灯：主人在洞里或屋里（头顶有方块）而且暗的时候，她身边飘起一团淡粉的狐火，周围亮起来（第 8.6 节；火由客户端画，
-     * 位置见 {@link #lanternOffset}）。露天看高度图，不看天光：天光要等光照引擎算完，刚改过的地方会读错。
-     * 点着以后只要还在顶下就不灭（她自己的光会把周围照亮）。
+     * 狐火灯：主人脚下那一格暗的时候，她身边飘起一团淡粉的狐火，周围亮起来（第 8.6 节；火由客户端画，位置见 {@link #lanternOffset}）。
+     * 亮度同原版的算法：天光按现在的时辰减暗，和方块光取亮的那个。所以洞里、屋里，还有露天的夜里都会点，白天露天不点。
+     * 点着以后她自己的光也照到主人脚下：脚下的方块光不比她那盏照过来的亮，就当作是她自己的，不算（不然一点就灭、一灭又点）。
      */
     private void lantern(ServerLevel level, ServerPlayer p) {
         if (soaking || distanceTo(p) > 12 || mood.curled()) {
             setLantern(false);
             return;
         }
-        BlockPos at = p.blockPosition();
-        // 露天：头顶那一格往上没有挡着的方块。脚下那一格可以是半砖、土径（站在上面时脚在那一格里），
-        // 脚底也可能差一点点陷进下面那一格（浮点误差），所以和脚下那一格往上一格比，不和脚下那一格比
-        boolean open = level.getHeight(Heightmap.Types.MOTION_BLOCKING, at.getX(), at.getZ()) <= at.getY() + 1;
-        if (open || !lanternOn() && level.getBrightness(LightLayer.BLOCK, at) > 7) {
+        // 脚所在的那一格；脚底可能差一点点陷进地面（浮点误差），往上抬一点再取，不然取到的是地面那一格（实心方块里没有光）
+        BlockPos feet = BlockPos.containing(p.getX(), p.getY() + .2, p.getZ());
+        if (lanternBrightness(level, feet) > LANTERN_DARK) {
             setLantern(false);
             return;
         }
         BlockPos head = blockPosition().above();
         setLantern(CompanionLight.hold(level, head) || CompanionLight.hold(level, blockPosition()));
+    }
+
+    /** 主人脚下 {@code feet} 有多亮，她自己那盏灯照过来的不算。 */
+    int lanternBrightness(ServerLevel level, BlockPos feet) {
+        int sky = Math.max(0, level.getBrightness(LightLayer.SKY, feet) - level.getSkyDarken());
+        int block = level.getBrightness(LightLayer.BLOCK, feet);
+        if (lanternOn()) {
+            BlockPos head = blockPosition().above();
+            int mine = CompanionLight.LEVEL - Math.min(head.distManhattan(feet), blockPosition().distManhattan(feet));
+            if (block <= mine) block = 0;
+        }
+        return Math.max(sky, block);
     }
 
     // ---------------------------------------------------------------- 装束
@@ -577,6 +608,31 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
         foxfireDamage = damage;
     }
 
+    public int seals() {
+        return seals;
+    }
+
+    void setSeals(int n) {
+        seals = n;
+    }
+
+    /** 流火一刀的伤害：攻击 × 随契印涨的倍数（{@link CompanionStats#blade}）。 */
+    public float bladeDamage() {
+        return (float) (foxfireDamage * CompanionStats.blade(seals));
+    }
+
+    /** 一发狐火弹的伤害：攻击；第四印以后再乘 {@link #BRAND_DAMAGE}。 */
+    public float boltDamage() {
+        return (float) (foxfireDamage * (CompanionBond.unlocked(seals, CompanionBond.BRAND_SEAL) ? BRAND_DAMAGE : 1));
+    }
+
+    /** 第四印：狐火弹打中 {@code victim} 以后减速，留一枚狐火印（满了爆开，和流火的刀攒的是同一种）。 */
+    public void brand(LivingEntity victim) {
+        if (!CompanionBond.unlocked(seals, CompanionBond.BRAND_SEAL) || !victim.isAlive()) return;
+        victim.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, BRAND_SLOW, 1), this);
+        dev.logos.dimension.ryuka.FoxMarks.add(this, victim);
+    }
+
     public boolean casting() {
         return castStart >= 0;
     }
@@ -613,7 +669,7 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
             return;
         }
         Vec3 aim = target.position().add(0, target.getBbHeight() * .55, 0).subtract(from);
-        FoxfireBolt.companion(level, this, from, aim, target, foxfireDamage);
+        FoxfireBolt.companion(level, this, from, aim, target, boltDamage());
         casts++;
         level.playSound(null, getX(), getY(), getZ(), SoundEvents.FIRECHARGE_USE, SoundSource.NEUTRAL, .45f, 1.9f);
     }
@@ -652,7 +708,8 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
         }
         if (t == EAT_SWALLOW && p != null) {
             CompanionFood.Taste taste = CompanionFood.taste(eating);
-            heal(CompanionFood.nutrition(eating) * 1.5f);
+            heal(CompanionFood.heal(eating));
+            CompanionFood.effects(level, this, eating);
             var b = p.getData(Companions.BOND);
             long day = level.getOverworldClockTime() / 24000;
             float gain = eatShared ? CompanionBond.meal(taste == CompanionFood.Taste.FAVORITE, b.mealsOn(day), b.satiety()) : 0;
@@ -811,7 +868,8 @@ public class ShiraumeCompanion extends PathfinderMob implements NpcAnimated, Fox
                 CompanionLines.say(sp, "refuse", 40);
                 return InteractionResult.SUCCESS;
             }
-            if (sp.getData(Companions.BOND).satiety() >= CompanionBond.SATIETY_MAX - .5f && taste != CompanionFood.Taste.FAVORITE) {
+            if (sp.getData(Companions.BOND).satiety() >= CompanionBond.SATIETY_MAX - .5f && taste != CompanionFood.Taste.FAVORITE
+                    && !CompanionFood.always(held)) {
                 CompanionLines.say(sp, "full", 40);
                 return InteractionResult.SUCCESS;
             }

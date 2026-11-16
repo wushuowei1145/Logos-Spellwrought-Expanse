@@ -113,7 +113,7 @@ public final class BlightReclamation extends SavedData {
             if (chunk == null || cell == null) { finish(scan); continue; }
             var sections = chunk.getSections();
             var positions = new LongArrayList();
-            var originals = new Long2ObjectOpenHashMap<BlockState>();
+            var networks = CorruptionNetworks.get(level);
             while (budget > 0 && scan.section < sections.length) {
                 var section = sections[scan.section];
                 if (scan.index == 0 && (section.hasOnlyAir() || !section.getStates().maybeHas(BlightReclamation::generated))) { scan.section++; continue; }
@@ -122,16 +122,13 @@ public final class BlightReclamation extends SavedData {
                 budget--;
                 if (generated(state)) {
                     BlockPos pos = new BlockPos(scan.chunk.getMinBlockX() + x, (level.getSectionYFromSectionIndex(scan.section) << 4) + y, scan.chunk.getMinBlockZ() + z);
-                    BlockState original = state.getBlock() instanceof BlightMemoryBlock ? BlightMemoryBlock.original(state) : null;
-                    if (cell.active()) CorruptionNetworks.get(level).adoptGenerated(level, cell.core(), pos, original);
-                    else {
-                        positions.add(pos.asLong());
-                        if (original != null) originals.put(pos.asLong(), original);
-                    }
+                    // 原材质记在腐败污秽的方块状态里，网络只记归属。
+                    if (cell.active()) networks.adoptGenerated(level, cell.core(), pos);
+                    else positions.add(pos.asLong());
                 }
                 if (scan.index == 4096) { scan.index = 0; scan.section++; }
             }
-            if (!positions.isEmpty()) CorruptionNetworks.get(level).fadeGenerated(level, cell.core(), positions, originals);
+            if (!positions.isEmpty()) networks.fadeGenerated(level, cell.core(), positions);
             if (scan.section >= sections.length) finish(scan);
         }
     }
@@ -148,10 +145,13 @@ public final class BlightReclamation extends SavedData {
         if (!e.getItemStack().is(ItemTags.HOES)) return;
         BlockState state = e.getLevel().getBlockState(e.getPos());
         if (!(state.getBlock() instanceof BlightMemoryBlock)) return;
+        // 出生点保护、冒险模式等不能改方块的地方，照原版锄地一样不动。
+        var face = e.getFace() == null ? net.minecraft.core.Direction.UP : e.getFace();
+        if (!e.getLevel().mayInteract(e.getEntity(), e.getPos()) || !e.getEntity().mayUseItemAt(e.getPos(), face, e.getItemStack())) return;
         e.setCanceled(true);
         e.setCancellationResult(InteractionResult.SUCCESS);
         if (e.getLevel() instanceof ServerLevel level) {
-            Dissolving.replace(level, List.of(e.getPos()), List.of(BlightMemoryBlock.original(state)), DissolveShape.noise(), 24, 0xA91F32);
+            Dissolving.replace(level, List.of(e.getPos()), List.of(BlightMemoryBlock.original(state)), DissolveShape.noise(), 24, CorruptionNetworks.GENERATED_FADE_COLOR);
             e.getItemStack().hurtAndBreak(1, e.getEntity(), e.getHand() == InteractionHand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
         }
     }

@@ -16,6 +16,12 @@ public final class CompanionBond {
     public static final int PATS_PER_DAY = 5;
     /** 第一印的机制：形代替身。 */
     public static final int GUARD_SEAL = 1;
+    /** 第二印：主人的流火打出的狐火印爆开后，她也接处决（之前只处决她自己打爆的）。 */
+    public static final int CHAIN_SEAL = 2;
+    /** 第三印：主人学会狐火之言，自己写的术式里可以写 {@code foxfire}。 */
+    public static final int FOXFIRE_SEAL = 3;
+    /** 第四印：狐火弹更痛、打中减速，并且留狐火印（同流火的刀，攒满爆开）。 */
+    public static final int BRAND_SEAL = 4;
 
     private CompanionBond() {}
 

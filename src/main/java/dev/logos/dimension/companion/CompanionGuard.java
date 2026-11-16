@@ -26,7 +26,29 @@ public final class CompanionGuard {
     /** 离主人的身体多近算打中（格）。 */
     public static final double HIT_MARGIN = .45;
 
+    /** 测试用：形代替身挡下过几次。 */
+    private static int saves;
+
     private CompanionGuard() {}
+
+    public static int saves() {
+        return saves;
+    }
+
+    /**
+     * 形代替身生效了（发给主人自己）：客户端像原版不死图腾那样，在主人眼前转着飞出一张形代。
+     * 只有主人看得到那张转着的形代（同原版：图腾的那一下只画给用的人）。
+     */
+    public record Saved() implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+        public static final Type<Saved> TYPE = new Type<>(dev.logos.dimension.LogosDimension.id("katashiro_saved"));
+        public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, Saved> CODEC =
+                net.minecraft.network.codec.StreamCodec.unit(new Saved());
+
+        @Override
+        public Type<Saved> type() {
+            return TYPE;
+        }
+    }
 
     /** 主人要死了：形代替身生效就返回真（调用方取消这次死亡）。 */
     static boolean saveOwner(ServerPlayer p, DamageSource source) {
@@ -43,6 +65,8 @@ public final class CompanionGuard {
         Katashiro.drop(level, p.position().add(p.getLookAngle().multiply(1, 0, 1).normalize().scale(.6)));
         level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.TOTEM_USE, SoundSource.PLAYERS, .6f, 1.6f);
         CompanionLines.say(p, "guarded", 70);
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(p, new Saved());
+        saves++;
         return true;
     }
 

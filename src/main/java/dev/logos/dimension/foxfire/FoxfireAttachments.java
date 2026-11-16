@@ -51,6 +51,10 @@ public final class FoxfireAttachments {
 
     public static final Supplier<AttachmentType<Wrap>> WRAP = TYPES.register("foxfire_wrap",
             () -> AttachmentType.builder(() -> Wrap.NONE).serialize(Wrap.CODEC).sync(Wrap.STREAM).build());
+    /** 学会了狐火之言（白梅的第三印）：自己写的术式里可以写 {@code foxfire}。死了也记得，只同步给本人（编纂台画卡片用）。 */
+    public static final Supplier<AttachmentType<Boolean>> KNOWN = TYPES.register("foxfire_known",
+            () -> AttachmentType.builder(() -> false).serialize(Codec.BOOL.fieldOf("known")).copyOnDeath()
+                    .sync((holder, to) -> holder == to, ByteBufCodecs.BOOL).build());
     public static final Supplier<AttachmentType<Burn>> BURN = TYPES.register("foxfire_burn",
             () -> AttachmentType.builder(() -> Burn.NONE).sync(Burn.STREAM).build());
 

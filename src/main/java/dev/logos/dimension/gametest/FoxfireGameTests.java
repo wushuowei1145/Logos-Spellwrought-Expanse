@@ -255,13 +255,15 @@ public final class FoxfireGameTests {
         h.succeed();
     }
 
-    /** 书与笔誊写载页（真的走 Logos 的载页右键）：写 foxfire 誊不上，写 arcane 照常。 */
+    /** 书与笔誊写载页（真的走 Logos 的载页右键）：写 foxfire 誊不上，写 arcane 照常；学会了狐火之言（白梅第三印）以后 foxfire 也誊得上。 */
     @SuppressWarnings("removal")
     private static void wordRefusedInBookPage(GameTestHelper h) {
         var player = h.makeMockServerPlayerInLevel();
         try {
             h.assertTrue(!inscribe(h, player, "(spell :name \"书上的狐火\" (damage caster 1 foxfire))"), "书上写的 foxfire 誊上了载页");
             h.assertTrue(inscribe(h, player, "(spell :name \"书上的奥秘\" (damage caster 1 arcane))"), "书上写的 arcane 誊不上（测试本身有问题）");
+            Foxfire.teach(player);
+            h.assertTrue(inscribe(h, player, "(spell :name \"学会了的狐火\" (damage caster 1 foxfire))"), "学会了狐火之言，书上写的 foxfire 还是誊不上");
         } finally {
             h.getLevel().getServer().getPlayerList().remove(player);
         }
@@ -295,6 +297,10 @@ public final class FoxfireGameTests {
             spell.setAccessible(true);
             h.assertTrue(spell.invoke(refused) == null, "书灵写的 foxfire 通过了检查");
             h.assertTrue(spell.invoke(accepted) != null, "书灵写的 arcane 没通过检查（测试本身有问题）");
+            // 搭档学会了狐火之言：书灵拿到的键里有 element:foxfire，照常认得
+            runes.add(Foxfire.UNLOCK);
+            Object learned = check.invoke(null, "(spell :name \"书灵的狐火二\" (damage caster 1 foxfire))", runes, 1000);
+            h.assertTrue(spell.invoke(learned) != null, "搭档学会了狐火之言，书灵写的 foxfire 还是没通过");
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("当前 Logos 没有 SageAgent.check", e);
         }

@@ -278,7 +278,7 @@ public abstract class CompanionLifeViews extends CompanionViews {
                     .screenshot("companion_owner_target")
                     .checkServer("牛掉了刀伤的血", ctx -> {
                         System.out.println("[companion] owner target: cow " + cow.getHealth() + "/30, " + CompanionBlade.tally());
-                        return cow.getHealth() <= 30 - 1 - 2 * c.foxfireDamage() * CompanionBlade.BLADE * .8;
+                        return cow.getHealth() <= 30 - 1 - 2 * c.bladeDamage() * .8 + .01;
                     })
                     .teardown("恢复界面", ctx -> Minecraft.getInstance().options.hideGui = false);
         }
@@ -353,7 +353,7 @@ public abstract class CompanionLifeViews extends CompanionViews {
                             if (won) wins++;
                             System.out.println("[companion] round " + r + (won ? " WON" : " LOST") + ": " + ticks + " ticks, her health " + c.getHealth() + "/"
                                     + c.getMaxHealth() + ", foxes " + foxes.stream().map(f -> f.isAlive() ? (f.fleeing() ? "fled " : "") + f.getHealth() : "dead").toList()
-                                    + ", blade damage " + c.foxfireDamage() * CompanionBlade.BLADE + ", " + CompanionBlade.tally());
+                                    + ", blade damage " +  c.bladeDamage() + ", " + CompanionBlade.tally());
                         });
             }
             s.checkServer("三轮里至少赢两轮", ctx -> wins >= WINS)
@@ -379,7 +379,7 @@ public abstract class CompanionLifeViews extends CompanionViews {
     @LDLRegisterClient(name = "companion_guard", group = "shiraume_companion", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
     public static class Guard extends CompanionLifeViews {
         private static final Vec3 EYE = new Vec3(-4.5, FLOOR + 2.62, -1.5), LOOK = new Vec3(4.5, FLOOR + 1.5, 2.5);
-        private int before;
+        private int before, saves, shown;
         private Mob skeleton;
         private ShiraumeCompanion c;
 
@@ -414,6 +414,26 @@ public abstract class CompanionLifeViews extends CompanionViews {
                     .screenshot("companion_guard_deflect")
                     .waitUntilServer("再去收拾射手：定为目标", ctx -> c.mind().foe() == skeleton)
                     .waitUntilServer("射手挨了她的打", ctx -> skeleton.getHealth() < skeleton.getMaxHealth())
+                    // 第一印：形代替身。像原版不死图腾那样，主人眼前转着飞出一张形代
+                    .server("盖一枚契印，身上带着写名字的形代；主人挨了致命一击", ctx -> {
+                        ServerLevel level = ctx.server().overworld();
+                        ServerPlayer p = ctx.player();
+                        skeleton.discard();
+                        Companions.grantPact(p);
+                        Companions.addSeal(p);
+                        if (!dev.logos.dimension.companion.KatashiroItem.carries(p)) p.getInventory().add(dev.logos.dimension.companion.KatashiroItem.bound(p));
+                        p.removeEffect(MobEffects.RESISTANCE);
+                        p.setHealth(2);
+                        p.invulnerableTime = 0;
+                        saves = dev.logos.dimension.companion.CompanionGuard.saves();
+                        shown = dev.logos.dimension.client.companion.CompanionTalkClient.savedShown();
+                        p.hurtServer(level, level.damageSources().magic(), 50);
+                    })
+                    .checkServer("形代替身挡下了，主人还活着", ctx -> dev.logos.dimension.companion.CompanionGuard.saves() > saves && ctx.player().isAlive())
+                    .waitUntil("主人眼前转出一张形代（同不死图腾）", ctx -> dev.logos.dimension.client.companion.CompanionTalkClient.savedShown() > shown)
+                    .step("露出界面（图腾那一下只在不藏界面时画）", ctx -> Minecraft.getInstance().options.hideGui = false)
+                    .ticks(10)
+                    .screenshot("companion_katashiro_saved")
                     .teardown("恢复界面", ctx -> Minecraft.getInstance().options.hideGui = false);
         }
     }
@@ -440,6 +460,12 @@ public abstract class CompanionLifeViews extends CompanionViews {
                         for (int i = 0; i < FoxMarks.FULL; i++) FoxMarks.add(ctx.player(), ravager);
                     })
                     .checkServer("可以处决了", ctx -> FoxMarks.executable(ravager))
+                    .ticks(40)
+                    .checkServer("还没盖第二枚契印：主人打爆的她不接", ctx -> CompanionBlade.executions() == before && FoxMarks.executable(ravager))
+                    .server("盖两枚契印（第二印：连携处决）", ctx -> {
+                        Companions.addSeal(ctx.player());
+                        Companions.addSeal(ctx.player());
+                    })
                     .waitUntilServer("她接上处决", ctx -> CompanionBlade.executions() > before)
                     .ticks(14)
                     .screenshot("companion_execute")

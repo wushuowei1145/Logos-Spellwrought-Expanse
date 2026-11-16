@@ -35,4 +35,30 @@ public final class CompanionFood {
         FoodProperties food = stack.get(DataComponents.FOOD);
         return food == null ? 1 : Math.max(1, food.nutrition());
     }
+
+    /** 吃下去回多少血：玩家吃它回的饱食度加饱和度（甜浆果 2.4，面包 11，牛排 20.8，金苹果 13.6）。 */
+    public static float heal(ItemStack stack) {
+        FoodProperties food = stack.get(DataComponents.FOOD);
+        return food == null ? 1 : Math.max(1, food.nutrition() + food.saturation());
+    }
+
+    /** 饱着也吃得下（同玩家：金苹果、紫颂果这类随时能吃的）。 */
+    public static boolean always(ItemStack stack) {
+        FoodProperties food = stack.get(DataComponents.FOOD);
+        return food != null && food.canAlwaysEat();
+    }
+
+    /**
+     * 吃下去的效果和玩家吃它一样：金苹果的生命恢复和伤害吸收、迷之炖菜的状态效果、蜂蜜瓶解毒、紫颂果随机传送……
+     * （物品的食用组件里写的那些）。饱食度那一项只对玩家有用，她的饱腹另算，不走它（也就不再多放一次咀嚼声）。
+     */
+    public static void effects(net.minecraft.server.level.ServerLevel level, net.minecraft.world.entity.LivingEntity eater, ItemStack stack) {
+        net.minecraft.world.item.component.Consumable consumable = stack.get(DataComponents.CONSUMABLE);
+        if (consumable == null) return;
+        ItemStack one = stack.copyWithCount(1);
+        one.getAllOfType(net.minecraft.world.item.component.ConsumableListener.class).forEach(l -> {
+            if (!(l instanceof FoodProperties)) l.onConsume(level, eater, one, consumable);
+        });
+        consumable.onConsumeEffects().forEach(effect -> effect.apply(level, one, eater));
+    }
 }

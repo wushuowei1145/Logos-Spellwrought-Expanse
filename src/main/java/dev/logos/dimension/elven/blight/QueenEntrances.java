@@ -55,4 +55,6 @@ public final class QueenEntrances {
             return p==null||!protectedNow(p);
         });
     }
+    /** 单人游戏退出世界时清空，旧世界不会被这张表留在内存里。 */
+    @SubscribeEvent static void stopped(net.neoforged.neoforge.event.server.ServerStoppedEvent e){VIEWERS.clear();}
 }
