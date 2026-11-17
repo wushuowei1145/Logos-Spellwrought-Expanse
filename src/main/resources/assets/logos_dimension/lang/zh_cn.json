@@ -1501,5 +1501,8 @@
   "block.logos_dimension.taixuan_dark_iron": "玄铁块",
   "item.logos_dimension.taixuan_dark_iron": "玄铁块",
   "block.logos_dimension.taixuan_abyss_mist": "渊雾",
-  "item.logos_dimension.taixuan_abyss_mist": "渊雾"
+  "item.logos_dimension.taixuan_abyss_mist": "渊雾",
+  "item.logos_dimension.worldtree_bow": "世界树之弓",
+  "entity.logos_dimension.worldtree_arrow": "世界树之箭",
+  "subtitles.logos_dimension.worldtree_bow.lock": "世界树之弓：锁定"
 }

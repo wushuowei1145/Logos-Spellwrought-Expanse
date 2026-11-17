@@ -1,0 +1,166 @@
+{
+ "model": {
+  "type": "minecraft:condition",
+  "property": "logos_dimension:worldtree_sideways",
+  "on_true": {
+   "type": "minecraft:composite",
+   "models": [
+    {
+     "type": "minecraft:range_dispatch",
+     "property": "minecraft:use_duration",
+     "scale": 0.05,
+     "fallback": {
+      "type": "minecraft:model",
+      "model": "logos_dimension:item/worldtree_bow_side_pulling_0"
+     },
+     "entries": [
+      {
+       "threshold": 0.65,
+       "model": {
+        "type": "minecraft:model",
+        "model": "logos_dimension:item/worldtree_bow_side_pulling_1"
+       }
+      },
+      {
+       "threshold": 0.9,
+       "model": {
+        "type": "minecraft:model",
+        "model": "logos_dimension:item/worldtree_bow_side_pulling_2"
+       }
+      }
+     ]
+    },
+    {
+     "type": "logos_dimension:worldtree_arrows",
+     "base": "logos_dimension:item/worldtree_bow_side_pulling_0",
+     "thresholds": [
+      0.65,
+      0.9
+     ],
+     "stages": [
+      {
+       "nock": [
+        -1.368,
+        10.742,
+        8.715
+       ],
+       "tip": [
+        20.967,
+        10.742,
+        8.715
+       ]
+      },
+      {
+       "nock": [
+        -5.41,
+        10.74,
+        8.715
+       ],
+       "tip": [
+        16.925,
+        10.74,
+        8.715
+       ]
+      },
+      {
+       "nock": [
+        -8.699,
+        10.739,
+        8.715
+       ],
+       "tip": [
+        13.636,
+        10.739,
+        8.715
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "on_false": {
+   "type": "minecraft:composite",
+   "models": [
+    {
+     "type": "minecraft:condition",
+     "property": "minecraft:using_item",
+     "on_false": {
+      "type": "minecraft:model",
+      "model": "logos_dimension:item/worldtree_bow"
+     },
+     "on_true": {
+      "type": "minecraft:range_dispatch",
+      "property": "minecraft:use_duration",
+      "scale": 0.05,
+      "fallback": {
+       "type": "minecraft:model",
+       "model": "logos_dimension:item/worldtree_bow_pulling_0"
+      },
+      "entries": [
+       {
+        "threshold": 0.65,
+        "model": {
+         "type": "minecraft:model",
+         "model": "logos_dimension:item/worldtree_bow_pulling_1"
+        }
+       },
+       {
+        "threshold": 0.9,
+        "model": {
+         "type": "minecraft:model",
+         "model": "logos_dimension:item/worldtree_bow_pulling_2"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "type": "logos_dimension:worldtree_arrows",
+     "base": "logos_dimension:item/worldtree_bow_pulling_0",
+     "thresholds": [
+      0.65,
+      0.9
+     ],
+     "stages": [
+      {
+       "nock": [
+        -1.368,
+        10.742,
+        8.715
+       ],
+       "tip": [
+        20.967,
+        10.742,
+        8.715
+       ]
+      },
+      {
+       "nock": [
+        -5.41,
+        10.74,
+        8.715
+       ],
+       "tip": [
+        16.925,
+        10.74,
+        8.715
+       ]
+      },
+      {
+       "nock": [
+        -8.699,
+        10.739,
+        8.715
+       ],
+       "tip": [
+        13.636,
+        10.739,
+        8.715
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

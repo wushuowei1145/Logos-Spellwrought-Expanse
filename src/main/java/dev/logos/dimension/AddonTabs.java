@@ -119,7 +119,7 @@ public final class AddonTabs {
             "elf_spear", "pack_oath_spear",
             "fox_naginata_standard_wood", "fox_naginata_standard_ink", "fox_naginata_standard_vermilion", "fox_naginata_standard_indigo", "fox_naginata_slender_wood", "fox_naginata_slender_ink", "fox_naginata_slender_vermilion", "fox_naginata_slender_indigo", "fox_naginata_broad_wood", "fox_naginata_broad_ink", "fox_naginata_broad_vermilion", "fox_naginata_broad_indigo",
             // 弓
-            "natures_force", "fox_yumi_bamboo", "fox_yumi_vermilion", "fox_yumi_indigo", "fox_yumi_chestnut",
+            "natures_force", "fox_yumi_bamboo", "fox_yumi_vermilion", "fox_yumi_indigo", "fox_yumi_chestnut", "worldtree_bow",
             // 盾
             "ancient_embrace",
             // 法杖
