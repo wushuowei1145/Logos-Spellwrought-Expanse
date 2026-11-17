@@ -5,7 +5,7 @@ config="logos_dimension.mixins.json"
 
 [[mods]]
 modId="logos_dimension"
-version="0.11.0"
+version="0.12.0"
 displayName="Logos: The Alchemical Crucible"
 description='''
 Native data-driven terrain: finite UUID cauldron worlds and a seasonal journey continent with dense woodlands, glades and sparse medieval settlements. Requires Logos.
@@ -34,6 +34,14 @@ ordering="AFTER"
 side="BOTH"
 
 [[dependencies.logos_dimension]]
+modId="starbloom_orchestra"
+type="required"
+reason="乐器、乐团与指挥：附属的精灵、神狐、灵猫当乐手"
+versionRange="[0.1.0,)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.logos_dimension]]
 modId="photon"
 type="required"
 reason="附属自己的法术特效"
@@ -44,7 +52,7 @@ side="BOTH"
 [[dependencies.logos_dimension]]
 modId="touhou_little_maid"
 type="optional"
-reason="女仆坐上星辰花琴凳、乐器工位时的演奏姿势"
+reason="女仆用爆裂魔杖（女仆的演奏姿势在星辰花乐团里）"
 versionRange="[2.0.0,)"
 ordering="AFTER"
 side="BOTH"

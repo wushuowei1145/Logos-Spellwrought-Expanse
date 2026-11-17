@@ -8,12 +8,13 @@ version = mod_version
 base { archivesName = mod_id }
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
-// 车万女仆是可选的（女仆坐上琴凳、工位时的演奏姿势，docs/ORCHESTRA.md 第 16 节）。26.1 版还没上任何 Maven，
-// 编译时用本地的 jar：-Ptlm_jar=<路径> 或 libs/touhoulittlemaid.jar；没有 jar 时兼容的代码不参与编译，游戏照常（同 Logos）。
+// 车万女仆是可选的（女仆用爆裂魔杖；女仆在音乐厅里演奏的测试场景 MaidHallViews）。26.1 版还没上任何 Maven，
+// 编译时用本地的 jar：-Ptlm_jar=<路径> 或 libs/touhoulittlemaid.jar；没有 jar 时那个场景不参与编译，游戏照常（同 Logos）。
+// 女仆的演奏姿势本身在星辰花乐团里（MaidMusicians），那边的发布 jar 要带着女仆的 jar 编译。
 def tlmJar = file(project.findProperty('tlm_jar') ?: 'libs/touhoulittlemaid.jar')
 if (!tlmJar.exists()) {
     logger.lifecycle("Touhou Little Maid compat left out: no jar at ${tlmJar} (pass -Ptlm_jar=<path>)")
-    sourceSets.main.java { exclude 'dev/logos/dimension/client/music/MaidMusicians.java', 'dev/logos/dimension/client/music/MaidHallViews.java' }
+    sourceSets.main.java { exclude 'dev/logos/dimension/client/music/MaidHallViews.java' }
 }
 
 repositories {
@@ -63,6 +64,13 @@ dependencies {
         throw new GradleException('缺少 -PlogosJar=/absolute/path/logos-x.y.z.jar：附属编译期依赖 Logos，见 docs/VFX.md')
     }
     implementation files(logosJar.get())
+    // 乐器在独立的模组「星辰花乐团」（starbloom_orchestra）里，附属依赖它：NPC 乐手（NpcMusician）、音乐厅的测试场景
+    // 直接用它的类。jar 路径用 -PorchestraJar 传，或写进 ~/.gradle/gradle.properties；玩家自己装（附属的 jar 里不含它）
+    def orchestraJar = providers.gradleProperty('orchestraJar')
+    if (!orchestraJar.isPresent()) {
+        throw new GradleException('缺少 -PorchestraJar=/absolute/path/starbloom_orchestra-x.y.z.jar：附属依赖星辰花乐团（乐器），见 README')
+    }
+    implementation files(orchestraJar.get())
     implementation "com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:${ldlib2_version}"
     // 附属自己的 Photon 特效直接编译 Photon；版本跟 Logos 的 gradle.properties 保持一致
     implementation("com.lowdragmc.photon:photon-neoforge-26.1:${photon_version}") { transitive = false }
@@ -81,10 +89,6 @@ dependencies {
 tasks.named('test', Test) {
     useJUnitPlatform()
     testLogging { events 'passed', 'failed' }
-    // SampleMapTest 核对「音乐厅音源」资源包；测试 JVM 的工作目录不是项目根目录，路径从这里传
-    systemProperty 'logos_dimension.concert_hall_pack', file('resourcepacks/concert_hall').absolutePath
-    // 管风琴新旧合成的试听：-PorganDemo=<输出目录> 时 OrganDemoTest 渲染 wav，否则跳过
-    systemProperty 'logos_dimension.organ_demo', providers.gradleProperty('organDemo').getOrElse('')
 }
 // 测试 JVM 的工作目录由模组测试器决定；通过测试资源读取预设，避免依赖当前目录。
 tasks.named('processTestResources') {
@@ -95,17 +99,6 @@ tasks.named('processTestResources') {
 }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 
-// 「音乐厅音源」资源包：乐器的录音采样不进模组的 jar（本体只带合成音源），单独打成 zip 发布，装上即换成录音。
-// 见 docs/INSTRUMENT_SAMPLES.md。./gradlew concertHallPack → build/libs/<mod_id>-concert_hall-<版本>.zip
-tasks.register('concertHallPack', Zip) {
-    group = 'build'
-    description = 'Zips resourcepacks/concert_hall, the recorded instrument samples, as a separate resource pack.'
-    from 'resourcepacks/concert_hall'
-    archiveFileName = "${mod_id}-concert_hall-${version}.zip"
-    destinationDirectory = layout.buildDirectory.dir('libs')
-    preserveFileTimestamps = false
-    reproducibleFileOrder = true
-}
 
 if (file('gradle/ldlib2-uitest.gradle').exists()) {
     apply from: 'gradle/ldlib2-uitest.gradle'
