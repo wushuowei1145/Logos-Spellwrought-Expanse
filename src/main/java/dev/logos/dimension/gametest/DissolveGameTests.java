@@ -42,6 +42,7 @@ public final class DissolveGameTests {
         tests.put("dissolve_blocks_leave_at_once", DissolveGameTests::blocks);
         tests.put("dissolve_held_clears_the_hand_when_done", DissolveGameTests::held);
         tests.put("dissolve_command_takes_blocks", DissolveGameTests::command);
+        tests.put("dissolve_killed_slime_splits_once", DissolveGameTests::killedSlime);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -64,6 +65,43 @@ public final class DissolveGameTests {
         check(h, pig.isNoAi(), "消散时应当站住不动");
         h.runAfterDelay(TICKS / 2, () -> check(h, pig.isAlive(), "还没放完不能拿走"));
         h.succeedWhen(() -> check(h, !pig.isAlive(), "放完应当拿走"));
+    }
+
+    /** 正在看的那只史莱姆、它分裂了几次、有没有分出空的（以前就是这个空的让服务器崩溃）。 */
+    private static net.minecraft.world.entity.monster.Slime watched;
+    private static int splits;
+    private static boolean nullChild, listening;
+
+    /**
+     * 流火斩杀会让尸体消散（花散）。大史莱姆被打死后原版 20 刻时自己移除并分裂；消散比这长时，到点再拿走一次不能让它再分裂：
+     * 以前第二次分裂时它已经被移除，分出来的全是空的，原版把空的交给 addFreshEntity，服务器崩溃。
+     * 测试服务器把这个异常记进日志后接着跑，所以这里看 NeoForge 的分裂事件：只分裂一次，没有空的。
+     */
+    private static void killedSlime(GameTestHelper h) {
+        if (!listening) {
+            listening = true;
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.living.MobSplitEvent event) -> {
+                if (event.getParent() != watched) return;
+                splits++;
+                if (event.getChildren().contains(null)) nullChild = true;
+            });
+        }
+        var slime = h.spawn(EntityType.SLIME, new BlockPos(2, 2, 2));
+        slime.setSize(4, true);
+        watched = slime;
+        splits = 0;
+        nullChild = false;
+        slime.hurtServer(h.getLevel(), h.getLevel().damageSources().genericKill(), Float.MAX_VALUE);
+        check(h, slime.isDeadOrDying(), "史莱姆没被打死");
+        Dissolving.entity(slime, DissolveShape.noise(), 10, Dissolving.EMBER);
+        // 原版在死后第 20 刻做的事（移除并分裂）。直接做，不等实体刻：测试里实体什么时候开始走刻不一定，等的话有时消散先到点，就碰不到这个问题
+        slime.remove(net.minecraft.world.entity.Entity.RemovalReason.KILLED);
+        h.runAfterDelay(20, () -> {
+            check(h, slime.isRemoved(), "史莱姆没有被拿走");
+            check(h, splits == 1 && !nullChild, "应当只分裂一次、不分出空的：分裂 " + splits + " 次" + (nullChild ? "，分出了空的" : ""));
+            watched = null;
+            h.succeed();
+        });
     }
 
     private static void blocks(GameTestHelper h) {
