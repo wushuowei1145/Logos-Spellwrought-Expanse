@@ -74,6 +74,10 @@
     "logos_dimension:journey_tall_seagrass",
     "logos_dimension:journey_glow_seagrass",
     "logos_dimension:journey_kelp",
-    "logos_dimension:journey_kelp_plant"
+    "logos_dimension:journey_kelp_plant",
+    "logos_dimension:blighted_canopy",
+    "logos_dimension:corruption_bud",
+    "logos_dimension:corruption_spines",
+    "logos_dimension:corruption_ribs"
   ]
 }

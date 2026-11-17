@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "appearance=0": {
+      "model": "logos_dimension:block/blight_memory_0"
+    },
+    "appearance=1": {
+      "model": "logos_dimension:block/blight_memory_1"
+    },
+    "appearance=2": {
+      "model": "logos_dimension:block/blight_memory_2"
+    },
+    "appearance=3": {
+      "model": "logos_dimension:block/blight_memory_3"
+    }
+  }
+}

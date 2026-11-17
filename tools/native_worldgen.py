@@ -413,3 +413,4 @@ runpy.run_path(str(ROOT/'tools/tall_trees.py'))
 
 runpy.run_path(str(ROOT/'tools/settlements.py'))
 runpy.run_path(str(ROOT/'tools/elven_forest.py'),run_name='__main__')
+runpy.run_path(str(ROOT/'tools/blighted_elven_forest.py'),run_name='__main__')

@@ -77,7 +77,7 @@ public class CorruptionCoreBlock extends Block implements EntityBlock {
         return (l, p, s, be) -> ((CorruptionCoreBlockEntity) be).clientTick();
     }
 
-    @Override protected MapCodec<CorruptionCoreBlock> codec() { return CODEC; }
+    @Override protected MapCodec<? extends CorruptionCoreBlock> codec() { return CODEC; }
 
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState old, boolean movedByPiston) {

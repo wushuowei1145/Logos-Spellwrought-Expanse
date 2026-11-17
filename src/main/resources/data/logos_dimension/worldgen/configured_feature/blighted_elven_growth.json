@@ -1,0 +1,49 @@
+{
+  "type": "minecraft:simple_block",
+  "config": {
+    "to_place": {
+      "type": "minecraft:weighted_state_provider",
+      "entries": [
+        {
+          "data": {
+            "Name": "logos_dimension:corruption_bud"
+          },
+          "weight": 3
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:corruption_spines"
+          },
+          "weight": 3
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:corruption_ribs"
+          },
+          "weight": 2
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:corruption"
+          },
+          "weight": 2
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:corruption_vein",
+            "Properties": {
+              "down": "true",
+              "up": "false",
+              "north": "false",
+              "south": "false",
+              "east": "false",
+              "west": "false",
+              "waterlogged": "false"
+            }
+          },
+          "weight": 6
+        }
+      ]
+    }
+  }
+}
