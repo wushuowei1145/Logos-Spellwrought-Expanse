@@ -1,6 +1,6 @@
 # 白梅（少女形态）：玩家的同伴
 
-整理时间：2026-11-10。和维护者讨论后定下的方向，加上第一版的做法。模型在仓库外 `MinecraftLogosMod/fox_model/nine_tailed_fox_companion`；Boss 战见 [SHIRAUME_BOSS.md](SHIRAUME_BOSS.md)，狐火见 [FOXFIRE.md](FOXFIRE.md)。
+整理时间：2026-11-10。和维护者讨论后定下的方向，加上第一版的做法。模型在仓库外 `MinecraftLogosMod/fox_model/nine_tailed_fox_companion`；Boss 战见 [SHIRAUME_BOSS.md](SHIRAUME_BOSS.md)，狐火见 [FOXFIRE.md](FOXFIRE.md)。同伴有哪些系统、哪些是公共的、做下一位同伴照什么做，见 [同伴系统](COMPANIONS.md)。
 
 标了「补充」的是维护者没有提、我加的设定，不要的直接删。
 
@@ -477,9 +477,12 @@ Logos 新增 `LastingCompanion` 接口（属于 `KeptFamiliar` 的一种，Logos
 - **契印第五印以后的机制**：前四印定了（第 8.15 节），后面的还没定。
 - **玩家手里流火的伤害要不要跟羁绊、契印走**：维护者提的方向，待讨论。
 - **重复打的 Boss 要不要跟着她的阶数变强。**
-- **往事的文字**：第 8.13 节的十段是草稿，等维护者改；第二印以后的力量定了以后，面板里的「？？？」换成真的能力。
+- **往事的文字**：第 8.13 节的十段是草稿，等维护者改；第五印以后的力量定了以后，面板里的「？？？」换成真的能力。
+- **状态文字**：跟上、留在原地、缠火、盖契印、倒下、困住、学会狐火之言这几处还用 actionbar 或聊天栏报，违反全项目「不显示状态文字」的规矩，要改成她说出来（见 [同伴系统](COMPANIONS.md) 第 6 节）。
 
 ## 10. 实现
+
+哪些是所有同伴共用的、哪些只写了白梅，见 [同伴系统](COMPANIONS.md) 第 2 节。
 
 | 部分 | 文件 |
 |---|---|
