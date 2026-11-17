@@ -77,9 +77,6 @@ public final class LogosDimension {
         dev.logos.dimension.economy.Economy.register(bus);
         dev.logos.dimension.tarot.TarotCards.register(bus);
         dev.logos.dimension.paint.PaintSystem.register(bus);
-        dev.logos.dimension.music.Instruments.register(bus);
-        dev.logos.dimension.music.orchestra.Orchestra.register(bus);
-        dev.logos.dimension.music.Benches.register(bus);
         dev.logos.dimension.npc.NpcEntities.register(bus);
         dev.logos.dimension.shiraume.ShiraumeEntities.register(bus);
         dev.logos.dimension.companion.Companions.register(bus);
@@ -89,10 +86,6 @@ public final class LogosDimension {
         DimensionGameTests.register(bus);
         dev.logos.dimension.gametest.CloudseaGameTests.register(bus);
         dev.logos.dimension.gametest.CreativeTabGameTests.register(bus);
-        dev.logos.dimension.gametest.InstrumentGameTests.register(bus);
-        dev.logos.dimension.gametest.OrchestraGameTests.register(bus);
-        dev.logos.dimension.gametest.BenchGameTests.register(bus);
-        dev.logos.dimension.gametest.OrganGameTests.register(bus);
         dev.logos.dimension.gametest.FoxfireGameTests.register(bus);
         dev.logos.dimension.gametest.ShiraumeGameTests.register(bus);
         dev.logos.dimension.gametest.ReifuGameTests.register(bus);
@@ -150,15 +143,6 @@ public final class LogosDimension {
         NeoForge.EVENT_BUS.addListener(IslandSanctum::position);
         NeoForge.EVENT_BUS.addListener(UnderIslandHaunt::tick);
         NeoForge.EVENT_BUS.addListener(UnderIslandHaunt::death);
-        // 车万女仆（可选）：女仆的演奏姿势只在装了女仆模组的客户端注册。那个类只在有女仆模组的 jar 时才编译进来，
-        // 所以按名字找；它要接的 DefaultGeckoAnimationEvent 很早就发，女仆模组的文档要求在模组初始化时手动注册
-        if (net.neoforged.fml.loading.FMLEnvironment.getDist().isClient() && net.neoforged.fml.ModList.get().isLoaded("touhou_little_maid")) {
-            try {
-                Class.forName("dev.logos.dimension.client.music.MaidMusicians").getMethod("init", IEventBus.class).invoke(null, bus);
-            } catch (ReflectiveOperationException e) {
-                com.mojang.logging.LogUtils.getLogger().warn("Touhou Little Maid musician poses not available", e);
-            }
-        }
     }
     public static Identifier id(String path) { return Identifier.fromNamespaceAndPath(ID, path); }
     public static boolean isCrucible(ResourceKey<Level> dimension) {

@@ -45,6 +45,14 @@ from elven_habitation import fix_connectable_blockstates  # noqa: E402
 R = ROOT / "src/main/resources"
 D = R / "data/logos_dimension"
 NS = "logos_dimension:"
+# 乐器在星辰花乐团（starbloom_orchestra）里；大厅本身的装饰（太玄黄铜、精灵家具、星辰花）还是附属的
+ORCH = "starbloom_orchestra:"
+MUSIC = set("""starbloom_grand_piano hexen_concert_harp hexen_organ_console organ_wind_chest organ_tin_pipe organ_wood_pipe organ_trumpet_pipe hexen_harpsichord hexen_celesta hexen_glockenspiel hexen_tubular_bells hexen_cello hexen_double_bass hexen_timpani hexen_bass_drum hexen_snare_drum hexen_suspended_cymbal hexen_triangle hexen_music_stand hexen_podium starbloom_bench starbloom_duet_bench hexen_violin hexen_viola hexen_flute hexen_oboe hexen_bassoon hexen_trumpet hexen_baton music_roll blank_music_roll""".split())
+
+
+def ns(name):
+    """不带命名空间的方块名：乐器归星辰花乐团，其余归附属。"""
+    return (ORCH if name in MUSIC else NS) + name
 DATA_VERSION = 4790
 
 # 乐团舞台唯一专用地板方块（严禁在舞台地板以外的任何地方使用）
@@ -78,7 +86,7 @@ def write_json(path: Path, value):
 
 
 def state(name: str, **props) -> dict:
-    full = name if ":" in name else NS + name
+    full = name if ":" in name else ns(name)
     if not props:
         return {"Name": full}
     return {"Name": full, "Properties": {k: str(v).lower() for k, v in props.items()}}
@@ -156,7 +164,7 @@ class HallBuilder:
         self.put(x + rx, y, z + rz, "hexen_podium", facing=facing, side="true", score="false")
         self.podium_pos = (x, y, z)
         self.entities[(x, y, z)] = {
-            "id": "logos_dimension:podium",
+            "id": "starbloom_orchestra:podium",
             "origin": pack_block_pos(x, y, z),
             "members": [],
             "masks": [],
@@ -170,7 +178,7 @@ class HallBuilder:
 
     def _inst_be(self, x: int, y: int, z: int, extra: dict | None = None, bind: bool = True):
         be = {
-            "id": "logos_dimension:instrument",
+            "id": "starbloom_orchestra:instrument",
             "part_mask": 65535,
             "stop_with_signal": False,
             "powered": False,
@@ -255,7 +263,7 @@ class HallBuilder:
         self.put(x, y, z, "hexen_music_stand", facing=facing, holds=holds)
         extra = None
         if holds != "none":
-            extra = {"instrument": {"id": f"logos_dimension:hexen_{holds}", "count": 1}}
+            extra = {"instrument": {"id": f"starbloom_orchestra:hexen_{holds}", "count": 1}}
         self._inst_be(x, y, z, extra, bind=bind and holds != "none")
         self.instrument_placements.append(
             {"kind": f"hexen_music_stand[{holds}]", "section": section, "pos": [x, y, z], "facing": facing, "bound": bind and holds != "none"}
@@ -824,15 +832,15 @@ def build_pipe_organ(b: HallBuilder):
     # 3a. 导风主干（Z = -21..-23, X = 0, Y = 7，并在 Z = -23 升至 Y = 8），直接紧贴演奏台上半格 (0, 7, -20) 的北侧面，
     #     并在 (0, 8, -25) 处向上托起主立面风箱横梁，保留 (0, 9, -24) 的正中皇家簧管！
     for z in (-21, -22, -23):
-        b.put(0, 7, z, "logos_dimension:organ_wind_chest")
-    b.put(0, 8, -23, "logos_dimension:organ_wind_chest")
-    b.put(0, 8, -25, "logos_dimension:organ_wind_chest")
+        b.put(0, 7, z, "starbloom_orchestra:organ_wind_chest")
+    b.put(0, 8, -23, "starbloom_orchestra:organ_wind_chest")
+    b.put(0, 8, -25, "starbloom_orchestra:organ_wind_chest")
 
     # 3b. 前排水平齐奏皇家簧管风箱（Trompette en chamade）：Z = -24, Y = 8, X = -3 .. +3（共 7 格）
     #     其正上方 Y = 9 放置朝南横伸的黄金簧管（organ_trumpet_pipe[facing=south]）
     for x in range(-3, 4):
-        b.put(x, 8, -24, "logos_dimension:organ_wind_chest")
-        b.put(x, 9, -24, "logos_dimension:organ_trumpet_pipe", facing="south")
+        b.put(x, 8, -24, "starbloom_orchestra:organ_wind_chest")
+        b.put(x, 9, -24, "starbloom_orchestra:organ_trumpet_pipe", facing="south")
         b.instrument_placements.append(
             {"kind": "organ_trumpet_pipe", "section": "管风琴水平皇家簧管排 (Chamade Reeds)", "pos": [x, 9, -24], "facing": "south"}
         )
@@ -850,7 +858,7 @@ def build_pipe_organ(b: HallBuilder):
         9: 9, 10: 9,            # 东侧 16' 低音大塔 (East Pedal Tower)
     }
     for x, h in sorted(tin_heights.items()):
-        b.put(x, 9, -25, "logos_dimension:organ_wind_chest")
+        b.put(x, 9, -25, "starbloom_orchestra:organ_wind_chest")
         b.place_organ_pipe_column(x, 10, -25, "tin", h, facing="south")
         b.instrument_placements.append(
             {"kind": "organ_tin_pipe", "section": "管风琴正面锡管立面 (Tin Principal Facade)", "pos": [x, 10, -25], "height": h, "facing": "south"}
@@ -859,7 +867,7 @@ def build_pipe_organ(b: HallBuilder):
     # 3d. 后排木管音栓阵列（Swell & Bourdon Wood Rank）：Z = -26, Y = 9, X = -5 .. +5（共 11 格）
     wood_heights = {-5: 3, -4: 4, -3: 4, -2: 5, -1: 5, 0: 6, 1: 5, 2: 5, 3: 4, 4: 4, 5: 3}
     for x, h in sorted(wood_heights.items()):
-        b.put(x, 9, -26, "logos_dimension:organ_wind_chest")
+        b.put(x, 9, -26, "starbloom_orchestra:organ_wind_chest")
         b.place_organ_pipe_column(x, 10, -26, "wood", h, facing="south")
         b.instrument_placements.append(
             {"kind": "organ_wood_pipe", "section": "管风琴后排木管阵列 (Wood Flute/Bourdon Rank)", "pos": [x, 10, -26], "height": h, "facing": "south"}
@@ -1053,7 +1061,7 @@ def verify_and_audit(b: HallBuilder) -> dict:
     assert b.cells.get((-1, 3, -5)) == state("hexen_podium", facing="north", side="false", score="false")
     assert b.cells.get((0, 3, -5)) == state("hexen_podium", facing="north", side="true", score="false")
     podium_be = b.entities.get((-1, 3, -5), {})
-    assert podium_be.get("id") == "logos_dimension:podium", f"指挥台方块实体缺失: {podium_be}"
+    assert podium_be.get("id") == "starbloom_orchestra:podium", f"指挥台方块实体缺失: {podium_be}"
     assert len(b.bound_members) == 32, f"指挥台绑定乐器数量必须等于 32: {len(b.bound_members)}"
     assert len(podium_be.get("members", [])) == 32, "指挥台 NBT members 长度必须等于 32"
 
@@ -1076,7 +1084,7 @@ def verify_and_audit(b: HallBuilder) -> dict:
     console_main = (0, 6, -20)
     console_cells = [(x, y, -20) for x in (-1, 0, 1) for y in (6, 7)]
     for c in console_cells:
-        assert b.cells.get(c, {}).get("Name") == "logos_dimension:hexen_organ_console", f"缺失演奏台格子: {c}"
+        assert b.cells.get(c, {}).get("Name") == "starbloom_orchestra:hexen_organ_console", f"缺失演奏台格子: {c}"
 
     seen = set(console_cells)
     queue = deque()
@@ -1095,7 +1103,7 @@ def verify_and_audit(b: HallBuilder) -> dict:
         px, py, pz = p
         if abs(px - console_main[0]) > 24 or abs(py - console_main[1]) > 24 or abs(pz - console_main[2]) > 24:
             continue
-        if b.cells.get(p, {}).get("Name") != "logos_dimension:organ_wind_chest":
+        if b.cells.get(p, {}).get("Name") != "starbloom_orchestra:organ_wind_chest":
             continue
         chests += 1
         budget -= 1
@@ -1104,11 +1112,11 @@ def verify_and_audit(b: HallBuilder) -> dict:
                 break
             up = (px, py + h, pz)
             up_name = b.cells.get(up, {}).get("Name")
-            if up_name == "logos_dimension:organ_tin_pipe":
+            if up_name == "starbloom_orchestra:organ_tin_pipe":
                 tin += 1
-            elif up_name == "logos_dimension:organ_wood_pipe":
+            elif up_name == "starbloom_orchestra:organ_wood_pipe":
                 wood += 1
-            elif up_name == "logos_dimension:organ_trumpet_pipe":
+            elif up_name == "starbloom_orchestra:organ_trumpet_pipe":
                 reed += 1
             else:
                 break
@@ -1116,10 +1124,10 @@ def verify_and_audit(b: HallBuilder) -> dict:
         for dx, dy, dz in dirs:
             queue.append((px + dx, py + dy, pz + dz))
 
-    total_chests_in_hall = sum(1 for s in b.cells.values() if s["Name"] == "logos_dimension:organ_wind_chest")
-    total_tin_in_hall = sum(1 for s in b.cells.values() if s["Name"] == "logos_dimension:organ_tin_pipe")
-    total_wood_in_hall = sum(1 for s in b.cells.values() if s["Name"] == "logos_dimension:organ_wood_pipe")
-    total_reed_in_hall = sum(1 for s in b.cells.values() if s["Name"] == "logos_dimension:organ_trumpet_pipe")
+    total_chests_in_hall = sum(1 for s in b.cells.values() if s["Name"] == "starbloom_orchestra:organ_wind_chest")
+    total_tin_in_hall = sum(1 for s in b.cells.values() if s["Name"] == "starbloom_orchestra:organ_tin_pipe")
+    total_wood_in_hall = sum(1 for s in b.cells.values() if s["Name"] == "starbloom_orchestra:organ_wood_pipe")
+    total_reed_in_hall = sum(1 for s in b.cells.values() if s["Name"] == "starbloom_orchestra:organ_trumpet_pipe")
 
     assert chests == total_chests_in_hall and chests > 0, f"风箱未全部连通: scanned={chests}, total={total_chests_in_hall}"
     assert tin == total_tin_in_hall and tin > 0, f"锡管未全部连通: scanned={tin}, total={total_tin_in_hall}"
@@ -1134,7 +1142,7 @@ def verify_and_audit(b: HallBuilder) -> dict:
     assert b.bench_placements, "未放置任何星辰花琴凳"
     for bench in b.bench_placements:
         bx, by, bz = bench["pos"]
-        name = NS + ("starbloom_duet_bench" if bench["duet"] else "starbloom_bench")
+        name = ORCH + ("starbloom_duet_bench" if bench["duet"] else "starbloom_bench")
         seats = [(bx, by, bz)]
         if bench["duet"]:
             sx, sz = HallBuilder._cw(bench["look_dir"])
@@ -1149,7 +1157,7 @@ def verify_and_audit(b: HallBuilder) -> dict:
         dx, dz = step[bench["look_dir"]]
         for sx, sy, sz in seats:
             front = b.cells.get((sx + dx, sy, sz + dz), {})
-            assert front.get("Name") == NS + bench["link"], f"琴凳前面不是要关联的乐器: {bench} -> {front}"
+            assert front.get("Name") == ns(bench["link"]), f"琴凳前面不是要关联的乐器: {bench} -> {front}"
             facing = front.get("Properties", {}).get("facing")
             expected = bench["look_dir"] if bench["link"] in ("hexen_concert_harp", "hexen_timpani") else opposite[bench["look_dir"]]
             assert facing == expected, f"琴凳不在乐器的演奏那一面: {bench}, instrument facing={facing}, expected={expected}"

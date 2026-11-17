@@ -1,5 +1,7 @@
 package dev.logos.dimension.client.music;
 
+import dev.starbloom.orchestra.client.music.*;
+
 import com.geckolib.animatable.GeoAnimatable;
 import com.geckolib.cache.model.BakedGeoModel;
 import com.geckolib.cache.model.GeoBone;
@@ -11,8 +13,8 @@ import com.geckolib.renderer.base.RenderPassInfo;
 import com.geckolib.renderer.layer.GeoRenderLayer;
 import com.geckolib.renderer.layer.builtin.BlockAndItemGeoLayer;
 import com.mojang.blaze3d.vertex.PoseStack;
-import dev.logos.dimension.music.InstrumentKind;
-import dev.logos.dimension.music.StarbloomBenchBlock;
+import dev.starbloom.orchestra.music.InstrumentKind;
+import dev.starbloom.orchestra.music.StarbloomBenchBlock;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;

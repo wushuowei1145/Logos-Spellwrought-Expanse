@@ -1,19 +1,21 @@
 package dev.logos.dimension.client.music;
 
+import dev.starbloom.orchestra.client.music.*;
+
 import com.lowdragmc.lowdraglib2.registry.RegistrationEnvironment;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegisterClient;
 import com.lowdragmc.lowdraglib2.uitest.ScenarioBuilder;
 import com.lowdragmc.lowdraglib2.uitest.UIScenario;
-import dev.logos.dimension.music.InstrumentKind;
-import dev.logos.dimension.music.Instruments;
-import dev.logos.dimension.music.orchestra.PodiumBlockEntity;
+import dev.starbloom.orchestra.music.InstrumentKind;
+import dev.starbloom.orchestra.music.Instruments;
+import dev.starbloom.orchestra.music.orchestra.PodiumBlockEntity;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 
 /**
- * 车万女仆在音乐厅里（docs/ORCHESTRA.md 第 16 节；要用 -Ptlm 把女仆模组加进开发环境）：基岩版的默认模型坐在钢琴、
+ * 车万女仆在音乐厅里（StarbloomOrchestra 的 docs/ORCHESTRA.md 第 16 节；要用 -Ptlm 把女仆模组加进开发环境）：基岩版的默认模型坐在钢琴、
  * 空的小提琴凳（拿小提琴）、大提琴、低音提琴、钟琴、定音鼓前；GeckoLib 的酒狐坐在钢片琴前、到大提琴、管钟的工位上。
  */
 @LDLRegisterClient(name = "orchestra_maids_ui", group = "instrument", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)

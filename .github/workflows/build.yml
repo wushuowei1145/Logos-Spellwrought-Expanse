@@ -8,6 +8,8 @@ on:
     inputs:
       logos_ref:
         description: 用于构建的 MinecraftLogosMod 分支、标签或提交（默认取 LOGOS_REF）
+      orchestra_ref:
+        description: 用于构建的 StarbloomOrchestra 分支、标签或提交（默认取 ORCHESTRA_REF）
 
 permissions:
   contents: read
@@ -15,6 +17,8 @@ permissions:
 env:
   # 本 Mod 编译所依赖的 Logos 提交；需要更新的 Logos 代码时改这一行。
   LOGOS_REF: dc3d381f7171760c7003a84fcdada24096e8435a
+  # 乐器在星辰花乐团（starbloom_orchestra）里，附属编译、测试都要它的 jar；乐器那边的接口改了时改这一行。
+  ORCHESTRA_REF: ca57e94bca1c5e428f7f285f819ce8c8742f0aaa
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -61,11 +65,38 @@ jobs:
           mkdir -p ~/.cache/logos-jar
           cp build/libs/logos-*.jar ~/.cache/logos-jar/logos.jar
 
+      # 星辰花乐团同样没有发布版本，从源码构建
+      - name: Check out Starbloom Orchestra
+        uses: actions/checkout@v7
+        with:
+          repository: MagicFoxDemon/StarbloomOrchestra
+          ref: ${{ inputs.orchestra_ref || env.ORCHESTRA_REF }}
+          path: orchestra-src
+
+      - name: Resolve Starbloom Orchestra commit
+        id: orchestra-sha
+        run: echo "sha=$(git -C orchestra-src rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Starbloom Orchestra jar
+        id: orchestra-jar
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/orchestra-jar
+          key: orchestra-jar-${{ steps.orchestra-sha.outputs.sha }}
+
+      - name: Build Starbloom Orchestra jar
+        if: steps.orchestra-jar.outputs.cache-hit != 'true'
+        working-directory: orchestra-src
+        run: |
+          sh ./gradlew jar
+          mkdir -p ~/.cache/orchestra-jar
+          cp build/libs/starbloom_orchestra-*.jar ~/.cache/orchestra-jar/orchestra.jar
+
       - name: Test and build
-        run: ./gradlew test build "-PlogosJar=$HOME/.cache/logos-jar/logos.jar"
+        run: ./gradlew test build "-PlogosJar=$HOME/.cache/logos-jar/logos.jar" "-PorchestraJar=$HOME/.cache/orchestra-jar/orchestra.jar"
 
       - name: Run GameTests
-        run: ./gradlew runGameTestServer "-PlogosJar=$HOME/.cache/logos-jar/logos.jar"
+        run: ./gradlew runGameTestServer "-PlogosJar=$HOME/.cache/logos-jar/logos.jar" "-PorchestraJar=$HOME/.cache/orchestra-jar/orchestra.jar"
 
       - name: Upload test reports
         if: ${{ !cancelled() }}

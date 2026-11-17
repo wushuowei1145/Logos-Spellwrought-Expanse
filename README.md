@@ -89,7 +89,9 @@
 
 ## 安装与进出
 
-将本附属与 Logos 及其依赖一起放入 `mods`，本包不内嵌主模组或第三方 JAR。
+将本附属与 Logos 及其依赖、[星辰花乐团（Starbloom Orchestra）](https://github.com/MagicFoxDemon/StarbloomOrchestra)一起放入 `mods`，本包不内嵌主模组或第三方 JAR。
+
+乐器（钢琴、竖琴、管风琴、弦乐、木管铜管、打击乐、打孔纸带、MIDI、乐团与指挥）从 0.12.0 起拆成独立的模组星辰花乐团，附属依赖它，附属里的精灵、神狐、灵猫可以坐上它的琴凳、站上它的工位演奏。老存档里的乐器读档时自动换成星辰花乐团的，放下的乐器、手里的纸带和指挥棒都在；乐器的客户端设置（MIDI 键盘、音量上限）要在 `starbloom_orchestra-client.toml` 里重新设一次，录音的「音乐厅音源」资源包换成星辰花乐团发布的那个。见 [乐器](docs/INSTRUMENTS.md)。
 
 8 块玻璃围住 `logos:tainted_mana_shard` 合成炼金漩涡，再与原版炼药锅合成炼金釜。**跳入釜内液面**进入独立世界，默认寻找外围以太区安全地面；首次到达在旁边自动生成回程漩涡，右键返回原釜旁，重入复用出口。
 
@@ -124,9 +126,9 @@
 20,000 格限制由原版世界边界实现；管理员越界命令仍可能生成边界外区块，不承诺边界外为空。区块按需生成，不预生成整张地图。
 
 ```text
-./gradlew test runGameTestServer build -PlogosJar=/absolute/path/logos.jar
-./gradlew runClient -PlogosJar=/absolute/path/logos.jar -PldTest=group:journey -PldTestHeadless -PldTestWindow=1280x720
-./gradlew runClient -PlogosJar=/absolute/path/logos.jar -PldTest=group:cauldron_instances -PldTestHeadless -PldTestWindow=1280x720
+./gradlew test runGameTestServer build -PlogosJar=/absolute/path/logos.jar -PorchestraJar=/absolute/path/starbloom_orchestra.jar
+./gradlew runClient -PlogosJar=/absolute/path/logos.jar -PorchestraJar=/absolute/path/starbloom_orchestra.jar -PldTest=group:journey -PldTestHeadless -PldTestWindow=1280x720
+./gradlew runClient -PlogosJar=/absolute/path/logos.jar -PorchestraJar=/absolute/path/starbloom_orchestra.jar -PldTest=group:cauldron_instances -PldTestHeadless -PldTestWindow=1280x720
 ```
 
 验证结果见 [VERIFICATION.md](VERIFICATION.md)，生态方向见 [远行大陆](docs/TEMPERATE_JOURNEY.md)。`tools/native_worldgen.py` 输出的 JSON/NBT/PNG 已提交，普通构建不需要运行资源脚本。

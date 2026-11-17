@@ -1,5 +1,7 @@
 package dev.logos.dimension.client.music;
 
+import dev.starbloom.orchestra.client.music.*;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.lowdragmc.lowdraglib2.registry.RegistrationEnvironment;
@@ -8,17 +10,17 @@ import com.lowdragmc.lowdraglib2.uitest.ScenarioBuilder;
 import com.lowdragmc.lowdraglib2.uitest.ScenarioOptions;
 import com.lowdragmc.lowdraglib2.uitest.UIScenario;
 import dev.logos.dimension.DimensionTravel;
-import dev.logos.dimension.music.BenchSeat;
-import dev.logos.dimension.music.Benches;
-import dev.logos.dimension.music.InstrumentBlock;
-import dev.logos.dimension.music.InstrumentBlockEntity;
-import dev.logos.dimension.music.InstrumentKind;
-import dev.logos.dimension.music.MusicRoll;
-import dev.logos.dimension.music.Instruments;
-import dev.logos.dimension.music.MusicStandBlock;
-import dev.logos.dimension.music.StarbloomBenchBlock;
-import dev.logos.dimension.music.orchestra.Orchestra;
-import dev.logos.dimension.music.orchestra.PodiumBlockEntity;
+import dev.starbloom.orchestra.music.BenchSeat;
+import dev.starbloom.orchestra.music.Benches;
+import dev.starbloom.orchestra.music.InstrumentBlock;
+import dev.starbloom.orchestra.music.InstrumentBlockEntity;
+import dev.starbloom.orchestra.music.InstrumentKind;
+import dev.starbloom.orchestra.music.MusicRoll;
+import dev.starbloom.orchestra.music.Instruments;
+import dev.starbloom.orchestra.music.MusicStandBlock;
+import dev.starbloom.orchestra.music.StarbloomBenchBlock;
+import dev.starbloom.orchestra.music.orchestra.Orchestra;
+import dev.starbloom.orchestra.music.orchestra.PodiumBlockEntity;
 import dev.logos.dimension.npc.NpcEntities;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -51,7 +53,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 /**
- * 生物加入合奏的客户端场景（docs/ORCHESTRA.md 第 14 节），在维护者的灵猫大音乐厅里（{@code tools/concert_hall.py --full-only}
+ * 生物加入合奏的客户端场景（StarbloomOrchestra 的 docs/ORCHESTRA.md 第 14 节），在维护者的灵猫大音乐厅里（{@code tools/concert_hall.py --full-only}
  * 生成的 build/concert_hall/concert_hall.nbt；没有这个文件时场景失败并说明怎么生成）：
  * 乐谱架后的琴凳上坐着拿小提琴、中提琴、长笛、双簧管、巴松管、小号的僵尸、骷髅、尸壳、流髑和森林精灵；
  * 钢琴、钢片琴、竖琴、管风琴前坐着森林精灵，大键琴前坐着神狐（同一副骨架）。核对琴凳演奏什么、谁在弹什么、管风琴连上了全部音管；
@@ -129,7 +131,7 @@ public abstract class HallViews implements UIScenario {
         mob.setNoAi(true);
         mob.setSilent(true);
         level.addFreshEntity(mob);
-        if (!dev.logos.dimension.music.InstrumentPosts.take(level, main, mob)) throw new IllegalStateException("could not post " + type + " at " + main);
+        if (!dev.starbloom.orchestra.music.InstrumentPosts.take(level, main, mob)) throw new IllegalStateException("could not post " + type + " at " + main);
         MUSICIANS.add(mob.getId());
         return mob;
     }
@@ -469,7 +471,7 @@ public abstract class HallViews implements UIScenario {
     /** 让出工位、琴凳：上面的生物下来并消失（给玩家、女仆腾地方）。 */
     static void vacate(ServerLevel level, BlockPos benchOrPost) {
         Entity who = level.getBlockState(benchOrPost).getBlock() instanceof StarbloomBenchBlock
-            ? StarbloomBenchBlock.occupant(level, benchOrPost) : dev.logos.dimension.music.InstrumentPosts.occupant(level, benchOrPost);
+            ? StarbloomBenchBlock.occupant(level, benchOrPost) : dev.starbloom.orchestra.music.InstrumentPosts.occupant(level, benchOrPost);
         if (who != null) {
             who.stopRiding();
             MUSICIANS.remove((Integer) who.getId());
@@ -504,7 +506,7 @@ public abstract class HallViews implements UIScenario {
                 })
                 .waitUntil("I stand at the glockenspiel's post", ctx -> {
                     var me = Minecraft.getInstance().player;
-                    return me.getVehicle() instanceof dev.logos.dimension.music.InstrumentSeat seat
+                    return me.getVehicle() instanceof dev.starbloom.orchestra.music.InstrumentSeat seat
                         && seat.getType() == Instruments.STANDING_POST.get() && seat.instrument().equals(GLOCKENSPIEL);
                 })
                 .waitUntil("my two mallets follow the glockenspiel and strike", ctx -> {
@@ -555,7 +557,7 @@ public abstract class HallViews implements UIScenario {
         }
     }
 
-    // —— 打击乐组（docs/ORCHESTRA.md 第 20 节）：管钟两边的三角铁、小军鼓、大鼓、吊镲，站在乐器北面、面朝指挥 ——
+    // —— 打击乐组（StarbloomOrchestra 的 docs/ORCHESTRA.md 第 20 节）：管钟两边的三角铁、小军鼓、大鼓、吊镲，站在乐器北面、面朝指挥 ——
 
     static final BlockPos TRIANGLE = at(2, 6, -19), SNARE = at(3, 6, -19), BASS_DRUM = at(6, 6, -19), CYMBAL = at(4, 6, -19);
     static int bassDrummer, snareDrummer, cymbalist, triangler;
@@ -608,7 +610,7 @@ public abstract class HallViews implements UIScenario {
                 .waitUntil("the four percussionists stand at their posts", ctx -> {
                     for (int id : new int[]{bassDrummer, snareDrummer, cymbalist, triangler}) {
                         Entity e = Minecraft.getInstance().level.getEntity(id);
-                        if (e == null || !(e.getVehicle() instanceof dev.logos.dimension.music.InstrumentSeat)) return false;
+                        if (e == null || !(e.getVehicle() instanceof dev.starbloom.orchestra.music.InstrumentSeat)) return false;
                     }
                     return true;
                 })
@@ -680,7 +682,7 @@ public abstract class HallViews implements UIScenario {
     }
 
     /**
-     * 谱台前坐着乐手（docs/ORCHESTRA.md 第 19 节）：第一小提琴前排外侧的僵尸拿着小提琴坐在琴凳上，空手右键它面前的乐谱架，
+     * 谱台前坐着乐手（StarbloomOrchestra 的 docs/ORCHESTRA.md 第 19 节）：第一小提琴前排外侧的僵尸拿着小提琴坐在琴凳上，空手右键它面前的乐谱架，
      * 打开的是那张琴凳的乐器界面；弹三个音琴凳出声；拿着纸带右键乐谱架，纸带进了琴凳，放起来僵尸拉琴；
      * 拿走僵尸的小提琴，界面关掉，再右键乐谱架不再打开。
      */

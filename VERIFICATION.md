@@ -1,5 +1,27 @@
 # 首版验证记录
 
+## 乐器拆成独立模组星辰花乐团，附属 0.12.0 依赖它
+
+2026-11-17：分支 `refactor/starbloom-orchestra-split`，基于 main `f80f7d05`（#275）。Logos jar `builds/orchestra-percussion-2026-11-15/logos-0.7.0-dc3d381.jar`，
+星辰花乐团 [`MagicFoxDemon/StarbloomOrchestra`](https://github.com/MagicFoxDemon/StarbloomOrchestra) 提交 `ca57e94` 构建的 `starbloom_orchestra-0.1.0.jar`
+（带车万女仆兼容）。维护者定：乐器做成独立模组（名字星辰花乐团、mod ID `starbloom_orchestra`、MIT、MagicFoxDemon 名下的公开仓库），
+附属依赖它，以后的乐器和玩法都加在那边。说明见 [docs/INSTRUMENTS.md](docs/INSTRUMENTS.md)，星辰花乐团那边的记录见它的 VERIFICATION.md。
+
+| 层级 | 结果 |
+|---|---|
+| 搬走 | 1281 个文件删掉（乐器的代码、测试、资源、资源包、工具、五份文档），两种语言各 265 条翻译、9 个手势枚举扩展、7 个 mixin、7 项客户端设置和 2 项服务端设置随之去掉；附属留下 `NpcMusician`、`HallViews`、`MaidHallViews`、`tools/concert_hall.py`（乐器写成 `starbloom_orchestra:*`，大厅装饰仍是附属的方块，审核的数目不变：绑定 32 件、台上可演奏 49 件） |
+| 编译 | 带 `-PorchestraJar` 编译通过（附属用到的 `HeldRig`、`VoiceBank`、`StationPoses.toolHead` 等在星辰花乐团那边改成公开）；附属 jar 从约 26 MB 降到 21.9 MB，里面没有乐器的类和资源 |
+| 单元 | 354 个全过 |
+| 世界测试 | 250 个过 249 个；失败的 `lingxiao_mana`（凌霄御剑每秒耗魔差一刻的自然回魔）在拆分前的代码上重复 10 次也失败 3 次，按偶发记，和拆分无关；`creative_tabs_cover_items` 通过（乐器不在附属的物品栏里了） |
+| 实际客户端 | 音乐厅场景：`orchestra_hall_ui` + `orchestra_player_mallets_ui` 2/2（11 项检查）、`orchestra_percussion_ui` + `orchestra_stand_player_ui` 2/2（4 项）、`-Ptlm` 下的 `orchestra_maids_ui` 1/1（3 项）；看过截图：精灵弹钢琴、神狐弹大键琴、女仆拉大提琴，手都在琴上 |
+| 未验证 | 拿真的老存档进游戏（旧 ID 由星辰花乐团的世界测试 `legacy_addon_ids_resolve` 核对）；光影包；多人、专用服务器 |
+
+```text
+./gradlew test runGameTestServer -PlogosJar=/absolute/path/logos-0.7.0.jar -PorchestraJar=/absolute/path/starbloom_orchestra-0.1.0.jar
+./gradlew runClient -PlogosJar=/absolute/path/logos-0.7.0.jar -PorchestraJar=/absolute/path/starbloom_orchestra-0.1.0.jar "-PldTest=orchestra_hall_ui,orchestra_player_mallets_ui" -PldTestHeadless -PldTestWindow=1280x720
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -Ptlm_jar=/absolute/path/touhoulittlemaid.jar -Ptlm "-PldTest=orchestra_maids_ui" -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 同伴：契印第二到第四印、数值成长、攻击玩家、防困
 
 2026-11-16：分支 `feat/companion-seals`，基于 main `f0bba150`（#270）。Logos jar `MinecraftLogosMod/build-main/build/libs/logos-0.7.0.jar`（Logos main `755fcee`）。维护者 2026-11-15 定的：继承最高到 100%；保护类魔咒也继承；形代替身挡死时像不死图腾那样在眼前转出形代；她自己的生命、护甲、韧性随契印长；流火一开始低一点、满契不变；羁绊加生命和攻击；吃东西的效果同玩家、回血看饱食度和饱和度；第二印处决你的流火爆开、第三印狐火之言（接 Logos 的符文解锁）、第四印狐火弹更痛、减速、留狐火印；连着闪不回主人身边就回形代；残血被贴着只守不动的毛病；狐火灯改看主人脚下那一格的亮度；作战策略加「攻击玩家」。设计见 [白梅同伴](docs/SHIRAUME_COMPANION.md) 第 5.1、8.14、8.15 节。
@@ -22,7 +44,7 @@
 ## 乐团：打击乐组（大鼓、小军鼓、吊镲、三角铁）
 
 2026-11-15：分支 `feat/orchestra-percussion`（未提交），基于 main `a766e466`（#269），Logos jar `builds/orchestra-percussion-2026-11-15/logos-0.7.0-dc3d381.jar`
-（Logos dc3d381，同 CI 的 `LOGOS_REF`）。说明见 [docs/ORCHESTRA.md](docs/ORCHESTRA.md) 第 20 节。
+（Logos dc3d381，同 CI 的 `LOGOS_REF`）。说明见 [docs/ORCHESTRA.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/ORCHESTRA.md) 第 20 节。
 
 | 层级 | 结果 |
 |---|---|
@@ -83,7 +105,7 @@ Logos #430 把 `PlayerMagic.maxMana` 字段改名为 `baseMaxMana`（实际上�
 ## 谱台前的乐手：右键乐谱架打开琴凳上乐手的乐器
 
 2026-11-14：分支 `feat/stand-seated-player`，基于 main `b82ee991`（#262；测试在 #260 的 `46cf6cd3` 上跑，变基后编译通过），Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`。
-说明见 [docs/ORCHESTRA.md](docs/ORCHESTRA.md) 第 19 节。
+说明见 [docs/ORCHESTRA.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/ORCHESTRA.md) 第 19 节。
 
 | 层级 | 结果 |
 |---|---|
@@ -154,7 +176,7 @@ Logos #430 把 `PlayerMagic.maxMana` 字段改名为 `baseMaxMana`（实际上�
 ## 指挥：按到拍子上的金色点击效果
 
 2026-11-14：分支 `fix/conducting-click`，基于 main `7125db8a`（#258，#255 之后），Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`。
-说明见 [docs/ORCHESTRA.md](docs/ORCHESTRA.md) 第 18.2 节。平时指挥不再显示 PERFECT / GREAT / GOOD / MISS 和连击（底下照样算，留给音游玩法），按到拍子上（80 毫秒以内）准星上一个小的金色点击效果。
+说明见 [docs/ORCHESTRA.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/ORCHESTRA.md) 第 18.2 节。平时指挥不再显示 PERFECT / GREAT / GOOD / MISS 和连击（底下照样算，留给音游玩法），按到拍子上（80 毫秒以内）准星上一个小的金色点击效果。
 
 | 层级 | 结果 |
 |---|---|
@@ -166,7 +188,7 @@ Logos #430 把 `PlayerMagic.maxMana` 字段改名为 `baseMaxMana`（实际上�
 ## 乐器美术重做
 
 2026-11-14：分支 `feat/instrument-art`（未提交），基于 main `52e94cfc`（#257），Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`。
-规范与结果见 [docs/INSTRUMENT_ART.md](docs/INSTRUMENT_ART.md)。
+规范与结果见 [docs/INSTRUMENT_ART.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/INSTRUMENT_ART.md)。
 
 | 层级 | 结果 |
 |---|---|
@@ -187,7 +209,7 @@ uv run --no-project --with pillow --with numpy python tools/instrument_models/ru
 ## 教堂管风琴：重做合成音效
 
 2026-11-14：分支 `feat/organ-synth`，在 main `87b08488`（#254）上做完下表的检查，再变基到 `50a86a04`（#256）后重新编译、重跑管风琴单元测试（13/13）和 `organ_play_ui`、`organ_reload_ui`、`organ_views`（3/3、7/7 检查）。Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`。
-说明见 [docs/PIPE_ORGAN.md](docs/PIPE_ORGAN.md) 第 3、4、9 节。维护者给了 Aeolus、Aeolus 插件、Caecilia、zita-rev1 四份参考，请我们做出更好听的合成管风琴；
+说明见 [docs/PIPE_ORGAN.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/PIPE_ORGAN.md) 第 3、4、9 节。维护者给了 Aeolus、Aeolus 插件、Caecilia、zita-rev1 四份参考，请我们做出更好听的合成管风琴；
 新写的加法合成（每个泛音各自起音、管列微失谐与慢起伏、气声、对齐的相位）和 8 路反馈延迟网络混响（烘进采样，另有松键尾音），只借思路、没用它们的代码和数据（Aeolus、zita-rev1 是 GPL）。
 新旧对比试听在 `builds/organ-synth-2026-11-13/试听`，维护者听了三稿后定稿；试玩包同目录。
 
@@ -224,7 +246,7 @@ uv run --no-project --with pillow --with numpy python tools/instrument_models/ru
 ## 乐团：指挥打拍子、右键选声部、滚轮调力度、节拍器与判定
 
 2026-11-13：分支 `feat/orchestra-conducting`（未提交），基于 main `87b08488`（#254），Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`
-（main 现在要 `ManaVessels`，旧的 lasting-companion jar 编译不过）。说明见 [docs/ORCHESTRA.md](docs/ORCHESTRA.md) 第 17、18 节。
+（main 现在要 `ManaVessels`，旧的 lasting-companion jar 编译不过）。说明见 [docs/ORCHESTRA.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/ORCHESTRA.md) 第 17、18 节。
 
 | 层级 | 结果 |
 | --- | --- |
@@ -244,7 +266,7 @@ uv run --no-project --with pillow --with numpy python tools/instrument_models/ru
 ## 乐团：声部分派重写、钢琴曲拆声部、手动休息
 
 2026-11-13：分支 `fix/orchestra-arranger`（未提交），基于 main `00baa48d`（#253），Logos jar `builds/explosion-maid-2026-11-12/logos-0.6.0-main-aa4168c.jar`
-（main 合进爆裂魔杖女仆支持后要这一版）。说明见 [docs/ORCHESTRA.md](docs/ORCHESTRA.md) 第 5 节、第 9 节。
+（main 合进爆裂魔杖女仆支持后要这一版）。说明见 [docs/ORCHESTRA.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/ORCHESTRA.md) 第 5 节、第 9 节。
 
 | 层级 | 结果 |
 | --- | --- |
@@ -295,7 +317,7 @@ uv run --no-project --with pillow --with numpy python tools/instrument_models/ru
 ## 乐团：玩家拿琴槌、车万女仆演奏姿势
 
 2026-11-12：分支 `feat/orchestra-strikes-maids`（未提交），基于 main `12a69c94`（#248），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`，
-车万女仆 `touhoulittlemaid-2.0.0-neoforge+mc26.1.2-snapshot.jar`（拷成 `libs/touhoulittlemaid.jar`）。说明见 [docs/ORCHESTRA.md](docs/ORCHESTRA.md) 第 16 节。
+车万女仆 `touhoulittlemaid-2.0.0-neoforge+mc26.1.2-snapshot.jar`（拷成 `libs/touhoulittlemaid.jar`）。说明见 [docs/ORCHESTRA.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/ORCHESTRA.md) 第 16 节。
 
 | 层级 | 结果 |
 | --- | --- |
@@ -317,7 +339,7 @@ cp <女仆模组 jar> libs/touhoulittlemaid.jar
 ## 乐团：工位（大提琴、低音提琴、钟琴、管钟、定音鼓）
 
 2026-11-12：分支 `feat/orchestra-stations`（未提交），基于 main `8e1c61fc`（#247），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。
-说明见 [docs/ORCHESTRA.md](docs/ORCHESTRA.md) 第 15 节。
+说明见 [docs/ORCHESTRA.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/ORCHESTRA.md) 第 15 节。
 
 | 层级 | 结果 |
 | --- | --- |
@@ -338,7 +360,7 @@ uv run --no-project --with pillow --with numpy python tools/concert_hall.py --fu
 ## 乐团：生物加入合奏（星辰花琴凳）
 
 2026-11-12：分支 `feat/orchestra-musicians`（未提交），基于 main `2ff5bcb8`（#245），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。
-说明见 [docs/ORCHESTRA.md](docs/ORCHESTRA.md) 第 14 节。
+说明见 [docs/ORCHESTRA.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/ORCHESTRA.md) 第 14 节。
 
 | 层级 | 结果 |
 | --- | --- |
@@ -362,7 +384,7 @@ uv run --no-project --with pillow --with numpy python tools/concert_hall.py --fu
 ## 乐团：指挥台、指挥棒与统一演奏（第一版）
 
 2026-11-11：分支 `docs/orchestra`（未提交），基于 main `533c749d`（#244），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。
-说明见 [docs/ORCHESTRA.md](docs/ORCHESTRA.md)。
+说明见 [docs/ORCHESTRA.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/ORCHESTRA.md)。
 
 | 层级 | 结果 |
 | --- | --- |
@@ -375,7 +397,7 @@ uv run --no-project --with pillow --with numpy python tools/concert_hall.py --fu
 
 ## 合奏哑音、管风琴不出声与音高错乱（#243）
 
-2026-11-11：同在分支 `feat/concert-hall`（未提交），接着上一节。原因和改法见 [docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md) 第 17 节。
+2026-11-11：同在分支 `feat/concert-hall`（未提交），接着上一节。原因和改法见 [docs/HEXENWALD_INSTRUMENTS.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/HEXENWALD_INSTRUMENTS.md) 第 17 节。
 
 | 层级 | 结果 |
 | --- | --- |
@@ -387,7 +409,7 @@ uv run --no-project --with pillow --with numpy python tools/concert_hall.py --fu
 
 ## 音乐厅音源资源包与第六轮乐器
 
-2026-11-11：分支 `feat/concert-hall`，基于 main `4a1cbccd`（#242），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/INSTRUMENT_SAMPLES.md](docs/INSTRUMENT_SAMPLES.md)、[docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md) 第 16 节。
+2026-11-11：分支 `feat/concert-hall`，基于 main `4a1cbccd`（#242），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/INSTRUMENT_SAMPLES.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/INSTRUMENT_SAMPLES.md)、[docs/HEXENWALD_INSTRUMENTS.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/HEXENWALD_INSTRUMENTS.md) 第 16 节。
 
 | 层级 | 结果 |
 | --- | --- |
@@ -409,7 +431,7 @@ uv run --no-project --with pillow python tools/instrument_art.py
 ```
 ## 乐器换用录音采样
 
-2026-11-11：分支 `feat/recorded-samples`，基于 main `7a98e0e0`（#241），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/INSTRUMENT_SAMPLES.md](docs/INSTRUMENT_SAMPLES.md)、[docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md) 第 15 节。
+2026-11-11：分支 `feat/recorded-samples`，基于 main `7a98e0e0`（#241），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/INSTRUMENT_SAMPLES.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/INSTRUMENT_SAMPLES.md)、[docs/HEXENWALD_INSTRUMENTS.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/HEXENWALD_INSTRUMENTS.md) 第 15 节。
 
 | 层级 | 结果 |
 | --- | --- |
@@ -477,7 +499,7 @@ uv run --no-project --with numpy --with scipy python tools/instrument_sources.py
 
 ## 手持乐器与乐谱架：小提琴、长笛、王室小号
 
-2026-11-11：分支 `feat/handheld-instruments`，基于 main `a8540e68`（#240），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md) 第 14 节。
+2026-11-11：分支 `feat/handheld-instruments`，基于 main `a8540e68`（#240），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/HEXENWALD_INSTRUMENTS.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/HEXENWALD_INSTRUMENTS.md) 第 14 节。
 
 | 层级 | 结果 |
 | --- | --- |
@@ -494,7 +516,7 @@ uv run --no-project --with numpy --with scipy python tools/instrument_sources.py
 
 ## 第二批方块乐器：钟琴、钢片琴、管钟、大键琴
 
-2026-11-11：分支 `feat/mallet-instruments`，基于 main `6a1642be`（#239），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md) 第 13 节。
+2026-11-11：分支 `feat/mallet-instruments`，基于 main `6a1642be`（#239），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/HEXENWALD_INSTRUMENTS.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/HEXENWALD_INSTRUMENTS.md) 第 13 节。
 
 | 层级 | 结果 |
 | --- | --- |
@@ -513,7 +535,7 @@ uv run --no-project --with numpy python tools/instrument_samples.py --ffmpeg <ff
 
 ## 电子琴（MIDI 键盘）输入
 
-2026-11-11：分支 `feat/midi-keyboard`，基于 main `9001a6a0`（#238），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md) 第 12 节。
+2026-11-11：分支 `feat/midi-keyboard`，基于 main `9001a6a0`（#238），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。说明见 [docs/HEXENWALD_INSTRUMENTS.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/HEXENWALD_INSTRUMENTS.md) 第 12 节。
 
 | 层级 | 结果 |
 | --- | --- |
@@ -556,7 +578,7 @@ uv run --no-project --with numpy python tools/instrument_samples.py --ffmpeg <ff
 ```
 ## 教堂管风琴（第一版）
 
-2026-11-11：分支 `feat/pipe-organ`，基于 main `b70ec0f5`（#235），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。设计与实现说明见 [docs/PIPE_ORGAN.md](docs/PIPE_ORGAN.md)。演奏台（2×2）、风箱、锡音管、木音管、号角管；十个音栓（预设 + 自由开关，全开也只占一路声音）；音色在客户端合成，不放 ogg；混响按房间自动判断，另有关 / 小厅 / 教堂三档。
+2026-11-11：分支 `feat/pipe-organ`，基于 main `b70ec0f5`（#235），Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`。设计与实现说明见 [docs/PIPE_ORGAN.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/PIPE_ORGAN.md)。演奏台（2×2）、风箱、锡音管、木音管、号角管；十个音栓（预设 + 自由开关，全开也只占一路声音）；音色在客户端合成，不放 ogg；混响按房间自动判断，另有关 / 小厅 / 教堂三档。
 
 | 层级 | 结果 |
 | --- | --- |
@@ -586,7 +608,7 @@ uv run --no-project --with numpy python tools/instrument_samples.py --ffmpeg <ff
 
 ## 魔女之森乐器（第一版）
 
-2026-11-10：分支 `feat/hexenwald-instruments`，在 main `64d4481f`（#232）上做完后 rebase 到 main `f3ea2b44`（#234），下表是 rebase 后重跑的结果，Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`（main 合了 #234，要用这个构建）。设计与实现说明见 [docs/HEXENWALD_INSTRUMENTS.md](docs/HEXENWALD_INSTRUMENTS.md)。星辰花三角钢琴（2×2）、灵猫竖琴（两格高）、空白纸带与打孔纸带；采样全部由 `tools/instrument_samples.py` 合成（钢琴 30 个、竖琴 27 个，约 1.6 MB）。
+2026-11-10：分支 `feat/hexenwald-instruments`，在 main `64d4481f`（#232）上做完后 rebase 到 main `f3ea2b44`（#234），下表是 rebase 后重跑的结果，Logos jar `builds/shiraume-pact-r2-2026-11-10/logos-0.6.0-lasting-companion.jar`（main 合了 #234，要用这个构建）。设计与实现说明见 [docs/HEXENWALD_INSTRUMENTS.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/HEXENWALD_INSTRUMENTS.md)。星辰花三角钢琴（2×2）、灵猫竖琴（两格高）、空白纸带与打孔纸带；采样全部由 `tools/instrument_samples.py` 合成（钢琴 30 个、竖琴 27 个，约 1.6 MB）。
 
 | 层级 | 结果 |
 | --- | --- |
