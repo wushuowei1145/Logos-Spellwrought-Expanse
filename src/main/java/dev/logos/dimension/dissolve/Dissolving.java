@@ -51,7 +51,11 @@ public final class Dissolving {
     public static void entity(Entity entity, DissolveShape shape, int ticks, int color) {
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(entity, new DissolvePayload(DissolvePayload.ENTITY, entity.getId(), List.of(), List.of(), shape, ticks, color));
         if (entity instanceof Mob mob) mob.setNoAi(true);
-        if (!(entity instanceof Player)) after(entity.level().getServer(), ticks, entity::discard);
+        // 被打死的生物原版 20 刻后自己移除（史莱姆这时分裂）；消散比这长时它已经不在了，再 discard 一次会让大史莱姆再分裂一回，
+        // 而这次 convertTo 因为它已被移除只返回 null，原版把 null 交给 addFreshEntity，服务器崩溃。已经移除的就不再管。
+        if (!(entity instanceof Player)) after(entity.level().getServer(), ticks, () -> {
+            if (!entity.isRemoved()) entity.discard();
+        });
     }
 
     /** {@code holder} 这只手上的东西，放完从手上清掉。人不消散。 */
