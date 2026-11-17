@@ -1501,5 +1501,8 @@
   "block.logos_dimension.taixuan_dark_iron": "Block of Dark Iron",
   "item.logos_dimension.taixuan_dark_iron": "Block of Dark Iron",
   "block.logos_dimension.taixuan_abyss_mist": "Abyss Mist",
-  "item.logos_dimension.taixuan_abyss_mist": "Abyss Mist"
+  "item.logos_dimension.taixuan_abyss_mist": "Abyss Mist",
+  "item.logos_dimension.worldtree_bow": "Worldtree Bow",
+  "entity.logos_dimension.worldtree_arrow": "Worldtree Arrow",
+  "subtitles.logos_dimension.worldtree_bow.lock": "Worldtree Bow locks on"
 }

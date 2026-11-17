@@ -42,6 +42,8 @@ public final class LogosDimension {
         dev.logos.dimension.item.UchigatanaItem.init();
         dev.logos.dimension.item.OathSpearItem.init();
         dev.logos.dimension.item.YumiItem.init();
+        dev.logos.dimension.item.WorldtreeBowItem.init();
+        dev.logos.dimension.worldtree.Worldtree.register(bus);
         dev.logos.dimension.item.RyukaItem.init();
         dev.logos.dimension.ryuka.Ryuka.register(bus);
         dev.logos.dimension.item.NaginataItem.init();

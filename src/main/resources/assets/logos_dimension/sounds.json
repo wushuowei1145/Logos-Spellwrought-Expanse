@@ -178,5 +178,101 @@
       "logos_dimension:entity/divine_fox/death_5e0ece4a",
       "logos_dimension:entity/divine_fox/death_808fd280"
     ]
+  },
+  "item.worldtree_bow.lock_01": {
+    "subtitle": "subtitles.logos_dimension.worldtree_bow.lock",
+    "sounds": [
+      "logos_dimension:item/worldtree_bow/lock_01"
+    ]
+  },
+  "item.worldtree_bow.lock_02": {
+    "subtitle": "subtitles.logos_dimension.worldtree_bow.lock",
+    "sounds": [
+      "logos_dimension:item/worldtree_bow/lock_02"
+    ]
+  },
+  "item.worldtree_bow.lock_03": {
+    "subtitle": "subtitles.logos_dimension.worldtree_bow.lock",
+    "sounds": [
+      "logos_dimension:item/worldtree_bow/lock_03"
+    ]
+  },
+  "item.worldtree_bow.lock_04": {
+    "subtitle": "subtitles.logos_dimension.worldtree_bow.lock",
+    "sounds": [
+      "logos_dimension:item/worldtree_bow/lock_04"
+    ]
+  },
+  "item.worldtree_bow.lock_05": {
+    "subtitle": "subtitles.logos_dimension.worldtree_bow.lock",
+    "sounds": [
+      "logos_dimension:item/worldtree_bow/lock_05"
+    ]
+  },
+  "item.worldtree_bow.lock_06": {
+    "subtitle": "subtitles.logos_dimension.worldtree_bow.lock",
+    "sounds": [
+      "logos_dimension:item/worldtree_bow/lock_06"
+    ]
+  },
+  "item.worldtree_bow.lock_07": {
+    "subtitle": "subtitles.logos_dimension.worldtree_bow.lock",
+    "sounds": [
+      "logos_dimension:item/worldtree_bow/lock_07"
+    ]
+  },
+  "item.worldtree_bow.lock_08": {
+    "subtitle": "subtitles.logos_dimension.worldtree_bow.lock",
+    "sounds": [
+      "logos_dimension:item/worldtree_bow/lock_08"
+    ]
+  },
+  "item.worldtree_bow.lock_09": {
+    "subtitle": "subtitles.logos_dimension.worldtree_bow.lock",
+    "sounds": [
+      "logos_dimension:item/worldtree_bow/lock_09"
+    ]
+  },
+  "item.worldtree_bow.lock_10": {
+    "subtitle": "subtitles.logos_dimension.worldtree_bow.lock",
+    "sounds": [
+      "logos_dimension:item/worldtree_bow/lock_10"
+    ]
+  },
+  "item.worldtree_bow.lock_11": {
+    "subtitle": "subtitles.logos_dimension.worldtree_bow.lock",
+    "sounds": [
+      "logos_dimension:item/worldtree_bow/lock_11"
+    ]
+  },
+  "item.worldtree_bow.lock_12": {
+    "subtitle": "subtitles.logos_dimension.worldtree_bow.lock",
+    "sounds": [
+      "logos_dimension:item/worldtree_bow/lock_12"
+    ]
+  },
+  "item.worldtree_bow.lock_13": {
+    "subtitle": "subtitles.logos_dimension.worldtree_bow.lock",
+    "sounds": [
+      "logos_dimension:item/worldtree_bow/lock_13"
+    ]
+  },
+  "item.worldtree_bow.lock_14": {
+    "subtitle": "subtitles.logos_dimension.worldtree_bow.lock",
+    "sounds": [
+      "logos_dimension:item/worldtree_bow/lock_14"
+    ]
+  },
+  "item.worldtree_bow.lock_15": {
+    "subtitle": "subtitles.logos_dimension.worldtree_bow.lock",
+    "sounds": [
+      "logos_dimension:item/worldtree_bow/lock_15"
+    ]
+  },
+  "item.worldtree_bow.lock_16": {
+    "subtitle": "subtitles.logos_dimension.worldtree_bow.lock",
+    "sounds": [
+      "logos_dimension:item/worldtree_bow/lock_16"
+    ]
   }
 }
