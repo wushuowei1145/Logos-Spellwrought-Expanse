@@ -103,9 +103,9 @@ public final class AddonTabs {
             // 运镜的测试方块
             "camera_test_block"));
 
-    /** 道具：画具、绘马与签纸、空白霊符、白梅的形代、空白纸带。 */
+    /** 道具：画具、绘马与签纸、空白霊符、白梅的形代、精灵公主的袋装世界树、空白纸带。 */
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TOOLS = tab("tools", FUNCTIONAL, "paint_brush", out -> {
-        ids(out, "paint_brush", "paint_palette", "journey_ema", "journey_omikuji", "shiraume_katashiro");
+        ids(out, "paint_brush", "paint_palette", "journey_ema", "journey_omikuji", "shiraume_katashiro", "bagged_world_tree");
         Reifu.REIFU.values().forEach(r -> out.accept(r.blank().get()));
     });
 

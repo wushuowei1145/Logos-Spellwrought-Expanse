@@ -12,7 +12,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 /**
  * 同伴的台词：服务端发一句（语言键），客户端在画面下方像字幕一样显示「白梅：……」一段时间（{@code CompanionLinesHud}）。
- * 台词都在语言文件里（{@code line.logos_dimension.shiraume.*}），好改。
+ * 台词都在语言文件里（{@code line.logos_dimension.<同伴>.*}），好改；字幕上的名字取 {@code talk.logos_dimension.<同伴>.name}，颜色取她的主色。
  */
 public final class CompanionLines {
     public record Line(String key, int ticks) implements CustomPacketPayload {
@@ -35,9 +35,17 @@ public final class CompanionLines {
         bus.addListener((RegisterPayloadHandlersEvent event) -> event.registrar("1").playToClient(Line.TYPE, Line.CODEC));
     }
 
-    /** 给 {@code player} 看一句台词：{@code line.logos_dimension.shiraume.<id>}，显示 {@code ticks} 刻。 */
+    /** 给 {@code player} 看白梅的一句台词：{@code line.logos_dimension.shiraume.<id>}，显示 {@code ticks} 刻。 */
     public static void say(ServerPlayer player, String id, int ticks) {
-        String key = "line.logos_dimension.shiraume." + id;
+        send(player, "line.logos_dimension.shiraume." + id, ticks);
+    }
+
+    /** {@code c} 说一句：{@code line.logos_dimension.<同伴>.<id>}（字幕上的名字和颜色也按这一位）。 */
+    public static void say(CompanionEntity c, ServerPlayer player, String id, int ticks) {
+        send(player, "line.logos_dimension." + c.def().id() + "." + id, ticks);
+    }
+
+    private static void send(ServerPlayer player, String key, int ticks) {
         last = player.getUUID() + "|" + key;
         if (player.connection.hasChannel(Line.TYPE)) PacketDistributor.sendToPlayer(player, new Line(key, ticks));
     }

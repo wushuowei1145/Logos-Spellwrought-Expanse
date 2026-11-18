@@ -78,7 +78,32 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 return c;
             }, 18, .75f, -8, .68f, 0));
 
+    /**
+     * 精灵公主：夜里的林子（深绿到墨绿），薄荷绿当主色，金线，被动能力用荷花粉；纹是世界树的叶（一圈细环、四片菱形的叶、正中一颗生命晶）。
+     * 面板里她拿着世界树之弓，安心地笑着，身子往左侧一点、脸朝着你。
+     */
+    public static final CompanionStyle PRINCESS = new CompanionStyle(0xFF8CD9B0, 0xFF4FA07C, 0xFFE3C27A, 0xFFF2C4C1, 0xFFF1F6EE, 0xFFA8C2B4,
+            0xFF0F2A21, 0xFF07140F, 0xB40B1C16, CompanionStyle::worldTree,
+            new Showcase((level, sheet) -> {
+                var c = Companions.ELF_PRINCESS.get().create(level, EntitySpawnReason.LOAD);
+                if (c != null) c.showcase("face_content");
+                return c;
+            }, 18, .75f, -8, .68f, 0));
+
+    /** 世界树的叶纹：一圈细环，四片菱形的叶，正中一颗生命晶。 */
+    static void worldTree(GuiGraphicsExtractor g, float cx, float cy, float r, int color) {
+        CompanionUi.ring(g, cx, cy, r, Math.max(1, r * .12f), color);
+        int leaf = Math.max(1, Math.round(r * .3f));
+        float d = r * .55f;
+        CompanionUi.diamond(g, Math.round(cx), Math.round(cy - d), leaf, color);
+        CompanionUi.diamond(g, Math.round(cx - d), Math.round(cy), leaf, color);
+        CompanionUi.diamond(g, Math.round(cx + d), Math.round(cy), leaf, color);
+        CompanionUi.diamond(g, Math.round(cx), Math.round(cy + d), leaf, color);
+        CompanionUi.disc(g, cx, cy, Math.max(1, r * .16f), color);
+    }
+
     static {
         register("shiraume", SHIRAUME);
+        register("elf_princess", PRINCESS);
     }
 }

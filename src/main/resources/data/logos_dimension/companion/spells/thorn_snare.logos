@@ -1,0 +1,13 @@
+; 荆棘缠绕（精灵公主的第三印，docs/ELF_PRINCESS_COMPANION.md 第 4 节）：在她要困住的强敌脚边，用游脉绕着它长出一圈荆棘，
+; 荆棘留在地上十秒；碰到的受生命伤害，被往圈中间拉。伤害按她的法术强度乘（她身上的 logos:spell_power）。
+; 底稿是维护者给的那一页。改了三处：圈心是施放时交给她的那一点（here，代码传的是她在对付的那个强敌脚下；
+; 启式是 cast 时最外层没有 target，foe 对使魔来说又是主人点名的目标）；先把圈心记下来（$c），往记下的圈心拉；
+; 绕满一圈（:spread 360）。「攻击玩家」开着时代码在 :trigger cast 后面加上 :players true。
+(spell :name "荆棘缠绕" :mana 500 :trigger cast
+  (let $c here
+    (vein :from $c :motion sweep :radius 3.5 :spread 360 :speed 1
+      :height 2
+      :linger 10
+      (on-hit
+        (damage target 5 life)
+        (pull target 2 :to $c)))))

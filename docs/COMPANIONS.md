@@ -1,17 +1,20 @@
 # 同伴：有哪些系统，做下一位照着做
 
-白梅是第一位同伴。这份文档把同伴的系统一项项列出来，并说明每项现在是不是公共的，下一位同伴照着做。
-白梅自己的设定、数值和每印的机制见 [白梅同伴](SHIRAUME_COMPANION.md)；方向见 [二游式角色](SHIRAUME_COMPANION.md#1-核心做角色不做定制)：性格鲜明、羁绊随时间长、有自己的本事，不做女仆式的定制。
+白梅是第一位同伴，精灵公主是第二位。这份文档把同伴的系统一项项列出来，并说明每项现在是不是公共的，下一位同伴照着做。
+白梅自己的设定、数值和每印的机制见 [白梅同伴](SHIRAUME_COMPANION.md)，精灵公主的见 [精灵公主](ELF_PRINCESS_COMPANION.md)；方向见 [二游式角色](SHIRAUME_COMPANION.md#1-核心做角色不做定制)：性格鲜明、羁绊随时间长、有自己的本事，不做女仆式的定制。
 
-## 1. 现状（2026-11-17，main `f80f7d05`）
+## 1. 现状（2026-11-18，精灵公主加入时）
 
-系统都按「以后别的同伴也用」设计过，但真正写成公共代码的只有一部分：
+做精灵公主之前把第 4 节的抽取做了：
 
-- **公共，可以直接用**：对话（会话、选项树、打断）、角色档案、行动策略和「攻击玩家」的菜单与存储，客户端的对话界面、角色面板、画法和样式表。
-- **设计成公共，代码只写了白梅**：契（羁绊、饱腹、契印……）、数值成长和继承、心智、表情、台词字幕、包袱、召唤收回、信物、接 Logos、命令。这些类直接收 `ShiraumeCompanion`，或者把 `shiraume` 写在 ID 里。第二位同伴开工前，要先把它们抽出来（第 4 节）。
-- **白梅独有**：流火、狐火、狐火灯、温泉、摘浆果、怕狗、立契过场、两套装束、契印第一到第四印的机制、往事。
+- **公共**：召唤收回休息、契（每位一份）、羁绊和契印的规矩、数值成长和继承、饱腹和吃东西、包袱、心智的框架和通用行为、表情和小动作的播放、
+  台词字幕、对话、角色档案、对话界面和角色面板、接 Logos、防困。代码按「同伴」写：基类 `CompanionEntity`、每位一份定义 `CompanionDef`。
+- **每位自己写**：信物、加入方式、打法、生活、挑哪个表情和小动作（`ShiraumeMood` / `PrincessMood`）、心智里她自己的行为（`ShiraumeMind` / `PrincessMind`）、
+  对话的内容（`ShiraumeTalk` / `PrincessTalk`）、面板样式。
+- **白梅独有**：流火、狐火、狐火灯、温泉、摘浆果、怕狗、截箭、处决、立契过场、两套装束、形代替身。
+- **精灵公主独有**：世界树之弓的锁定和散射、生命涌动（治疗、护盾、缠绕、荆棘、万分之一）、撤退（代替倒下）、袋装世界树。
 
-白梅这边还没做的，都在她自己的文档里：第五印以后的机制、往事十段的定稿、玩家手里流火的伤害要不要跟羁绊和契印走。
+还没做的：命令只有白梅那一组是老写法（精灵公主的在 `princess` 下面）。
 
 ## 2. 系统一览
 
@@ -19,28 +22,28 @@
 
 | # | 系统 | 做什么 | 状态 | 代码 |
 |---|---|---|---|---|
-| 1 | 召唤、收回、休息 | 用信物召唤、收回；倒下后歇一段时间才能再叫；主人下线、死亡、换维度时悄悄收起，回来后自动叫回 | 待抽 | `Companions`（`summon`、`dismiss`、`stow`、`fell`、`REST_TICKS`） |
-| 2 | 信物 | 第一次立契给写着主人名字的（绑定），召唤用；之后得到的是空白的，右键她盖一枚契印；丢了拿纸找她补 | 待抽（每位同伴一种信物） | `KatashiroItem`、`Katashiro` |
+| 1 | 召唤、收回、休息 | 用信物召唤、收回；倒下后歇一段时间才能再叫；主人下线、死亡、换维度时悄悄收起，回来后自动叫回 | **公共** | `Companions`（`summon`、`dismiss`、`stow`、`fell`，都按 `CompanionDef`）；歇多久在定义里 |
+| 2 | 信物 | 写着主人名字的（绑定）召唤用；空白的右键她盖一枚契印；丢了找她补 | 独有（每位一种，用法照这个） | 白梅 `KatashiroItem`（丢了拿纸）；精灵公主 `BaggedWorldTreeItem`（丢了拿树苗） |
 | 3 | 加入方式 | 怎么成为同伴 | 独有 | 白梅：打倒狐形白梅后在封印之间立契，`ShiraumePact` |
-| 4 | 契 | 存在主人身上：立契没有、在外面的是谁、休息到哪、要不要自动叫回、契印、好感、饱腹、每天的次数、行动策略、攻击玩家 | 待抽（现在一个玩家只有一份，附件名 `shiraume_bond`） | `Companions.Bond` |
+| 4 | 契 | 存在主人身上：立契没有、在外面的是谁、休息到哪、要不要自动叫回、契印、好感、饱腹、每天的次数、行动策略、攻击玩家 | **公共**（每位一份附件 `<同伴>_bond`，白梅的还是 `shiraume_bond`） | `Companions.Bond`、`CompanionDef.bond` |
 | 5 | 羁绊 | 五段：生疏 → 熟悉 → 亲近 → 信赖 → 羁绊。一起吃饭、摸头、泡温泉、挡死都加好感，同一件事一天里头几次加得多、之后很少，不能刷 | 规矩公共（纯函数），数是白梅的 | `CompanionBond` |
 | 6 | 契印 | 重复获得：每多一枚，继承多一点、她自己长一点，第 n 枚解锁第 n 个机制。每位同伴给它起名字（白梅叫「尾之契」） | 计数和公式公共，机制独有 | `CompanionBond.unlocked`、`CompanionStats.ratio` |
-| 7 | 数值 | 本身（基础 + 契印成长）+ 羁绊 + 继承。只继承长期属性（装备、基础属性、盔甲上的保护类魔咒，不算药水）；攻击取近战和法强折算后高的那个；在场时 5 秒刷新一次，面板开着时每秒刷新 | 公式公共，常量是白梅的，`apply` 只收白梅 | `CompanionStats`；保护魔咒在 `Companions.onProtect` |
-| 8 | 饱腹、吃东西 | 饱腹随时间降，饿了先吃包袱里的；喂她吃的效果同玩家吃，回的血 = 饱食度 + 饱和度；有喜欢的、不吃的 | 吃的效果和回血公共，口味标签是白梅的 | `CompanionFood`；吃的动作在 `ShiraumeCompanion.tickEating` |
-| 9 | 包袱 | 她替你背一个小箱子，饿了从里面拿吃的，捡的东西也放进去；从对话里打开 | 待抽 | `CompanionPouch`、`Companions.POUCH` |
-| 10 | 心智 | 效用 AI：每刻先过反射层（截箭、掉队闪回、掉岩浆、防困），每 10 刻给各种行为打分，挑最高的做（第 2.1 节） | 结构公共，类绑白梅；行为一半通用一半独有 | `CompanionMind`、`OwnerWatch` |
+| 7 | 数值 | 本身（基础 + 契印成长）+ 羁绊 + 继承。只继承长期属性（装备、基础属性、盔甲上的保护类魔咒，不算药水）；攻击取近战和法强折算后高的那个；用法术打的同伴另有法术强度；在场时 5 秒刷新一次，面板开着时每秒刷新 | **公共**（数在每位的 `CompanionDef.Growth`） | `CompanionStats`；保护魔咒在 `Companions.onProtect` |
+| 8 | 饱腹、吃东西 | 饱腹随时间降，饿了先吃包袱里的；喂她吃的效果同玩家吃，回的血 = 饱食度 + 饱和度；有喜欢的、不吃的 | **公共**（口味标签 `<同伴>_favorite_food` / `_refused_food`） | `CompanionFood`；吃的动作在 `CompanionEntity` |
+| 9 | 包袱 | 她替你背一个小箱子，饿了从里面拿吃的，捡的东西也放进去；从对话里打开 | **公共**（每位一份附件 `<同伴>_pouch`） | `CompanionPouch`、`CompanionDef.pouch` |
+| 10 | 心智 | 效用 AI：每刻先过反射层（掉队闪回、掉岩浆、防困，加她自己的），每 10 刻给各种行为打分，挑最高的做（第 2.1 节） | **公共**框架和通用行为；她自己的在子类 | `CompanionMind`（`ShiraumeMind`、`PrincessMind`）、`OwnerWatch` |
 | 11 | 行动策略、攻击玩家 | 随机应变、优先远程、优先近战、不参与攻击；攻击玩家开关（第 3.4 节） | 菜单和存储公共，「怎么打」每位自己写 | `CompanionTactic`；`Bond.tactic`、`Bond.pvp`；`CompanionMind` |
 | 12 | 护主 | 截下射向主人的弹射物，再去收拾射手；第一印替主人挡死（眼前转出信物，同不死图腾） | 弹道判断公共，挡死用的是形代 | `CompanionGuard` |
-| 13 | 防困 | 连着五次闪不回主人身边（矿车、船、座位）就回信物里 | 逻辑通用，写在白梅的心智里 | `CompanionMind.stuckInSeat` |
-| 14 | 表情、小动作 | 每半秒按处境挑一种表情（`face_*`），遇事插一个小动作（`act_*`） | 待抽（动画名是她模型的） | `CompanionMood` |
-| 15 | 台词字幕 | 她说话：名字 + 一句，屏幕下方字幕 | 待抽（键前缀写死 `line.logos_dimension.shiraume.`） | `CompanionLines`、`client/companion/CompanionLinesHud` |
+| 13 | 防困 | 连着五次闪不回主人身边（矿车、船、座位）就回信物里 | **公共** | `CompanionMind.stuckInSeat` |
+| 14 | 表情、小动作 | 每半秒按处境挑一种表情（`face_*`），遇事插一个小动作（`act_*`） | 播放公共，挑哪一个每位自己写 | `CompanionMood`（`ShiraumeMood`、`PrincessMood`） |
+| 15 | 台词字幕 | 她说话：名字 + 一句，屏幕下方字幕（名字取 `talk.logos_dimension.<同伴>.name`，颜色取她的主色） | **公共** | `CompanionLines.say(她, 主人, 键)`、`client/companion/CompanionLinesHud` |
 | 16 | 对话 | 潜行右键打开；一人同时只和一位说话；走开八格、来了敌人就断；看包袱时先放下，关上回来 | **公共** | `CompanionTalk`（`Talker`）、`TalkMenu`；白梅的在 `ShiraumeTalk` |
 | 17 | 角色档案 | 对话和面板显示的一切：数值、能力、契印、羁绊、饱腹、策略、往事 | **公共** | `CompanionSheet` |
 | 18 | 对话界面、角色面板 | 打字机文字、右边一列选项；面板三页（属性、契印 · 能力、往事），左边她本人可拖动转身 | **公共**（每位注册一份样式） | `client/companion/CompanionTalkScreen`、`CompanionPanelScreen`、`CompanionUi`、`CompanionStyle` |
-| 19 | 接 Logos | 她是 Logos 的长期同伴：主人用 `sic` 点名、`goto` 派差事、`dismiss` 收回 | 待抽 | `LogosCompanionBridge` |
-| 20 | 战斗 | 怎么打 | 独有 | 白梅：狐火弹（`shiraume/FoxfireBolt`）、流火（`CompanionBlade`，招式文件 `shiraume_companion`）、缠火、处决 |
+| 19 | 接 Logos | 她是 Logos 的长期同伴：主人用 `sic` 点名、`goto` 派差事、`dismiss` 收回 | **公共** | `LogosCompanionBridge` |
+| 20 | 战斗 | 怎么打 | 独有 | 白梅：狐火弹（`shiraume/FoxfireBolt`）、流火（`CompanionBlade`，招式文件 `shiraume_companion`）、缠火、处决；精灵公主：世界树之弓（`PrincessBow`）、生命涌动（`PrincessMagic`） |
 | 21 | 生活 | 日常小事 | 独有 | 白梅：狐火灯（`CompanionLight`）、温泉、摘浆果、怕狗、装束（`CompanionOutfit`） |
-| 22 | 命令 | `/alchemy companion …`：召唤、收回、看数、清休息、盖契印、设饱腹、换装 | 待抽（只认白梅） | `CompanionCommands` |
+| 22 | 命令 | `/alchemy companion …`：召唤、收回、看数、清休息、盖契印、设饱腹、换装 | 白梅的在最上一层，精灵公主的在 `princess` 下面 | `CompanionCommands` |
 
 ### 2.1 心智里的行为
 
@@ -117,16 +120,18 @@
 | 攻击 | 近战攻击和法强折算后取高的那个（法强 1 折 6 点） | |
 | 吃东西 | 效果同玩家，回的血 = 饱食度 + 饱和度 | |
 
-## 4. 第二位同伴之前要先抽出来的
+## 4. 抽出来的公共部分（精灵公主加入时做的）
 
-照第 2 节「待抽」那几项，建议这样拆（还没做，做之前和维护者确认）：
-
-1. **同伴基类**：把 `ShiraumeCompanion` 里通用的部分（主人、契、数值、表情和台词的接口、对话、信物、休息、闪回和防困）提成一个基类或接口，`CompanionMind`、`CompanionStats.apply`、`CompanionMood`、`LogosCompanionBridge`、`CompanionCommands` 改收它。
-2. **每位同伴一份定义**：基础数值、每枚契印的成长、羁绊加成、继承起点和步长、满契枚数、信物、口味标签、台词前缀、包袱名，都从定义里读，不写死在类里。
-3. **契按同伴分开**：附件里存「同伴 ID → 契」，一个玩家可以和几位立契。附件 ID `shiraume_bond` 不改（改了旧存档读不出来），读的时候把它当作白梅那一份。
-4. **同时在外面几位**：Logos 的长期同伴一次只认一位，所以现在是一次一位。要不要放宽，待定。
-5. **心智拆开**：第 2.1 节里通用的行为放基类，各位的战斗和生活行为由同伴自己加。打分和反射层的框架不变。
-6. **台词前缀、光源存档名、命令**：按同伴 ID 走，命令多一个同伴参数。
+1. **同伴基类** `CompanionEntity`：主人、契、数值、表情和台词的接口、对话、吃东西、摸头、盖契印、信物补做、召唤和收回、闪回和防困。
+   子类给定义（`def()`）、表情（`createMood`）、心智（`createMind`）、入场长度、现身和散去的样子、信物，按需改钩子
+   （`tickSpecial`、`tickActions`、`interactSpecial`、`immune`、`blocked`、`statsApplied`……）。
+2. **每位同伴一份定义** `CompanionDef`：ID、实体、契和包袱的附件、数值成长（`Growth`）、歇多久、契印几枚。`Companions.ALL` 列着所有同伴。
+3. **契按同伴分开**：没有用「同伴 ID → 契」的表，而是每位一份附件 `<同伴>_bond`、`<同伴>_pouch`——白梅的就是原来的 `shiraume_bond`、
+   `shiraume_pouch`，旧存档不用迁移。一个玩家可以和几位分别立契。
+4. **同时在外面几位**：同一位同伴一人一个，不同的可以一起在外面，最多 4 位（Logos 的使魔上限 `maxFamiliars`，多叫一位时最早出来的那位回去）。
+   这条规矩在 Logos 的 `Familiars.bindCompanion`（MagicFoxDemon/MinecraftLogosMod#467；旧的 Logos 是一人一位，叫出另一位时前一位被送回去）。
+5. **心智拆开**：通用的在 `CompanionMind`，白梅的在 `ShiraumeMind`，精灵公主的在 `PrincessMind`；行为种类 `Kind` 一张表列全，各自只打自己的分。
+6. **台词前缀、口味、包袱标题** 按同伴 ID 走；`TalkMenu` 同一个 ID 只能登记一份（后登记的会报错，免得悄悄盖掉）。
 
 ## 5. 新同伴清单
 

@@ -147,6 +147,8 @@ public class WorldtreeArrow extends AbstractArrow {
 
     @Override
     protected boolean canHitEntity(Entity entity) {
+        // 精灵公主射的箭不伤主人、主人的宠物和使魔、别的同伴（穿透的扇形箭会扫过一路上的东西）
+        if (getOwner() instanceof dev.logos.dimension.companion.CompanionEntity companion && !companion.canHarm(entity)) return false;
         // 追踪箭只打自己锁定的目标，穿过路上的其他东西；穿透箭不再伤同一个目标
         if (phantom() && target >= 0) return entity.getId() == target && super.canHitEntity(entity);
         if (pierce && struck.contains(entity.getId())) return false;

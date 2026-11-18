@@ -60,7 +60,92 @@ public final class CompanionCommands {
                     Companions.setSatiety(p, FloatArgumentType.getFloat(c, "value"));
                     return 1;
                 })))
-                .then(outfits());
+                .then(outfits())
+                .then(princess());
+    }
+
+    /**
+     * {@code princess ...}：精灵公主（docs/ELF_PRINCESS_COMPANION.md）。
+     * <pre>
+     * /alchemy companion princess summon        召出她（顺带立契，给一袋写着你名字的袋装世界树）
+     * /alchemy companion princess dismiss       收回
+     * /alchemy companion princess info          她的数值、法术强度、心智、弓和施法
+     * /alchemy companion princess rest          清掉撤退后的休息时间
+     * /alchemy companion princess seal [枚数]   盖叶之契
+     * /alchemy companion princess satiety 值    设她的饱腹
+     * /alchemy companion princess withdraw      让她撤退（试撤退的样子）
+     * </pre>
+     */
+    private static LiteralArgumentBuilder<CommandSourceStack> princess() {
+        CompanionDef d = Companions.PRINCESS_DEF;
+        return Commands.literal("princess")
+                .then(Commands.literal("summon").executes(c -> {
+                    ServerPlayer p = c.getSource().getPlayerOrException();
+                    Companions.grantPact(p, d);
+                    if (!BaggedWorldTreeItem.carries(p)) {
+                        var bag = BaggedWorldTreeItem.bound(p);
+                        if (!p.getInventory().add(bag)) p.drop(bag, false);
+                    }
+                    Component failed = Companions.summon(p, d, null);
+                    if (failed != null) c.getSource().sendFailure(failed);
+                    return failed == null ? 1 : 0;
+                }))
+                .then(Commands.literal("dismiss").executes(c -> Companions.dismiss(c.getSource().getPlayerOrException(), d) ? 1 : 0))
+                .then(Commands.literal("rest").executes(c -> {
+                    ServerPlayer p = c.getSource().getPlayerOrException();
+                    Companions.wake(p, d);
+                    p.getCooldowns().removeCooldown(p.getCooldowns().getCooldownGroup(BaggedWorldTreeItem.blank()));
+                    c.getSource().sendSuccess(() -> Component.literal("精灵公主不用再休息了"), false);
+                    return 1;
+                }))
+                .then(Commands.literal("seal").executes(c -> princessSeal(c.getSource(), 1))
+                        .then(Commands.argument("count", IntegerArgumentType.integer(1, 20)).executes(c ->
+                                princessSeal(c.getSource(), IntegerArgumentType.getInteger(c, "count")))))
+                .then(Commands.literal("satiety").then(Commands.argument("value", FloatArgumentType.floatArg(0, CompanionBond.SATIETY_MAX)).executes(c -> {
+                    Companions.setSatiety(c.getSource().getPlayerOrException(), d, FloatArgumentType.getFloat(c, "value"));
+                    return 1;
+                })))
+                .then(Commands.literal("withdraw").executes(c -> {
+                    ElfPrincessCompanion e = Companions.princess(c.getSource().getPlayerOrException());
+                    if (e == null || !(e.level() instanceof net.minecraft.server.level.ServerLevel level)) {
+                        c.getSource().sendFailure(Component.literal("精灵公主不在外面"));
+                        return 0;
+                    }
+                    e.startWithdraw(level);
+                    return 1;
+                }))
+                .then(Commands.literal("info").executes(c -> princessInfo(c.getSource())));
+    }
+
+    private static int princessSeal(CommandSourceStack src, int count) throws CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        Companions.grantPact(p, Companions.PRINCESS_DEF);
+        int n = 0;
+        for (int i = 0; i < count; i++) n = Companions.addSeal(p, Companions.PRINCESS_DEF);
+        int seals = n;
+        src.sendSuccess(() -> Component.literal("叶之契 " + seals + " 枚"), false);
+        return 1;
+    }
+
+    private static int princessInfo(CommandSourceStack src) throws CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        CompanionDef d = Companions.PRINCESS_DEF;
+        var bond = Companions.bond(p, d);
+        CompanionStats.Part power = CompanionStats.power(d.growth(), ElfPrincessCompanion.ownerPower(p), bond.seals(),
+                CompanionBond.Stage.of(bond.affection()).ordinal());
+        src.sendSuccess(() -> Component.literal(String.format("立契 %s，叶之契 %d，继承 %.0f%%；好感 %.1f（%s），饱腹 %.1f；你的生命法强 ×%.2f；她的法强 ×%.2f（自己 %.2f 羁绊 %.2f 继承 %.2f）；休息还剩 %d 秒",
+                bond.pact() ? "是" : "否", bond.seals(), d.growth().ratio(bond.seals()) * 100, bond.affection(), CompanionBond.Stage.of(bond.affection()),
+                bond.satiety(), ElfPrincessCompanion.ownerPower(p), power.total(), power.own(), power.bond(), power.inherited(),
+                (Companions.restLeft(p, d) + 19) / 20)), false);
+        ElfPrincessCompanion c = Companions.princess(p);
+        if (c == null) {
+            src.sendSuccess(() -> Component.literal("她现在不在外面"), false);
+            return 1;
+        }
+        CompanionMind mind = c.mind();
+        src.sendSuccess(() -> Component.literal(String.format("生命 %.1f/%.1f；表情 %s；心智：%s", c.getHealth(), c.getMaxHealth(),
+                c.npcMiscAnimation(), mind == null ? "-" : mind.describe())), false);
+        return 1;
     }
 
     /** {@code outfit <装束>}：给外面的她换上（浴衣照常穿一阵、一打起来换回巫女服）。 */

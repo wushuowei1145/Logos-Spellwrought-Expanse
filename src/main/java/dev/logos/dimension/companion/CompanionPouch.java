@@ -11,7 +11,7 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * 白梅的包袱（docs/SHIRAUME_COMPANION.md 第 8.8 节）：两行 18 格，挂在主人身上（玩家附件），
+ * 同伴的包袱（白梅的见 docs/SHIRAUME_COMPANION.md 第 8.8 节）：两行 18 格，挂在主人身上（玩家附件），
  * 所以她倒下、被收回、换维度都不会丢，也不会掉出来。主人给的、她捡的、她摘的都在这里。
  */
 public final class CompanionPouch extends SimpleContainer {
@@ -28,18 +28,18 @@ public final class CompanionPouch extends SimpleContainer {
         return p;
     }
 
-    /** 主人潜行、空手右键她：打开包袱。 */
-    static void open(ServerPlayer owner) {
-        CompanionPouch pouch = Companions.pouch(owner);
+    /** 从对话里打开 {@code c} 的包袱（标题 {@code container.logos_dimension.<同伴>_pouch}）。 */
+    static void open(ServerPlayer owner, CompanionEntity c) {
+        CompanionPouch pouch = c.pouch(owner);
         owner.openMenu(new SimpleMenuProvider((id, inventory, player) -> new ChestMenu(MenuType.GENERIC_9x2, id, inventory, pouch, 2),
-                Component.translatable("container.logos_dimension.shiraume_pouch")));
+                Component.translatable("container.logos_dimension." + c.def().id() + "_pouch")));
     }
 
-    /** 包袱里一样她愿意吃的东西所在的格子，喜欢的优先；没有返回 -1。 */
-    int foodSlot() {
+    /** 包袱里一样 {@code companion} 愿意吃的东西所在的格子，喜欢的优先；没有返回 -1。 */
+    int foodSlot(String companion) {
         int liked = -1;
         for (int i = 0; i < getContainerSize(); i++) {
-            CompanionFood.Taste t = CompanionFood.taste(getItem(i));
+            CompanionFood.Taste t = CompanionFood.taste(companion, getItem(i));
             if (t == CompanionFood.Taste.FAVORITE) return i;
             if (t == CompanionFood.Taste.LIKED && liked < 0) liked = i;
         }

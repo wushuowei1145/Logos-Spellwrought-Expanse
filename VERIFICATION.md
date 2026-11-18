@@ -1,5 +1,40 @@
 # 首版验证记录
 
+## 精灵公主同伴（第二位同伴；同伴的公共部分抽出来）
+
+2026-11-18：分支 `feat/elf-princess-companion`，基于 main `76b85203`（#278）。Logos jar `builds/logos-0.7.1-release/logos-0.7.1.jar`，星辰花乐团 `builds/starbloom-orchestra-split-2026-11-17/starbloom_orchestra-0.1.0.jar`。设计见 [精灵公主](docs/ELF_PRINCESS_COMPANION.md)，公共部分见 [同伴](docs/COMPANIONS.md) 第 1、4 节。维护者定的：用袋装世界树（代码画的 16×16 图标：布袋子里一捧土，土上长着一株迷你世界树）召唤；武器是世界树之弓，在她手里蓄力更快；敌人远时锁定（不锁主人、主人的宠物和同伴，攻击玩家开着时锁敌对的玩家），近身时快速散射并后跳；生命涌动（给主人缠上生命之力、治疗和护盾、荆棘缠绕困住强敌，部分随契印解锁）；伤害和治疗按她自己的法术强度算（继承主人、随契印长）；不会死，撑不住时撤退。
+
+| 层级 | 结果 |
+|---|---|
+| 单元 | 同伴 **36/36**（原有 29 + 新加 `PrincessTest` 7：游戏用到的动画都在模型里、施法 / 撤退 / 入场 / 后跳的时间点对得上模型的标记、法术强度的成长、台词和面板的语言键中英文都齐、荆棘缠绕的载页两种都编得过、两位同伴各有自己的契）；`LangCoverageTest` 2/2 |
+| 实际客户端（她） | `group:elf_princess_companion` **6/6 场景、15/15 检查**（改完粒子、给僵尸戴上帽子以后又跑了一遍，仍然全过）：用空白袋子立契并叫出来、入场的花苞、再用收回；拉弓锁定放追踪箭打倒两只戴着帽子的僵尸（白天不会晒着，倒下只能是她射的）、一只贴脸时横着拉弓散射并跳开、主人没挨她的箭；主人四成血时治疗、三成血被盯上时先给护盾；四枚叶之契：对劫掠兽放荆棘缠绕、给主人的手缠上生命之力、万分之一回一半血且一天一次；致命一击不死而撤退（打不到、播完回袋子、歇五分钟、袋子转冷却、叫不出来）；中文对话和面板（生命 38、法术强度 1） |
+| 实际客户端（白梅回归） | `group:shiraume_companion` **20/20 场景、74/74 检查**，和抽取前一样（两组一起跑：26/26 场景、89/89 检查）（抽公共部分前是 20/20 场景、74/74 检查） |
+| 人工看截图 | 入场（花苞、开花、散开、回神）、拉弓时弓上的虚影箭、荆棘一圈、撤退（荷花合拢、沉下去）、对话、面板三页。治疗、护盾、万分之一的粒子第一版落在主人胸口，第一人称里糊满屏幕；改成主人脚边一圈（离开一格多），给主人的那道光流不画 |
+| 没做 | 没进游戏试玩；没在光影包下看过；多人（别的玩家看到她拉弓）、专用服务器；攻击玩家开着时她的箭对玩家的伤害（Logos 对使魔的阵营规则）没试；往事十段是草稿 |
+
+```text
+./gradlew test --tests 'dev.logos.dimension.companion.*' --tests 'dev.logos.dimension.LangCoverageTest' -PlogosJar=/absolute/path/logos-0.7.1.jar -PorchestraJar=/absolute/path/starbloom_orchestra-0.1.0.jar
+./gradlew runClient -PlogosJar=... -PorchestraJar=... "-PldTest=group:shiraume_companion,group:elf_princess_companion" -PldTestHeadless -PldTestWindow=1280x720
+```
+
+### 第二轮（同一天，维护者的反馈）
+
+维护者要的：能和白梅同时在外面（「长期同伴只能一个」是同一个角色只能一个，在场最多 4 个＝Logos 的使魔上限）；眼睛中间的白线（维护者在 `_4` 里挪了 eyelid）、
+高光不画在瞳孔上而是像白梅那样独立；被击败时不说话（同白梅）；加强辅助而不是攻击，更倾向于和敌人保持距离、辅助队友。
+
+- 「一人一个」的规矩在 **Logos 本体** `Familiars.bindCompanion`，不在附属：Logos PR [MagicFoxDemon/MinecraftLogosMod#467](https://github.com/MagicFoxDemon/MinecraftLogosMod/pull/467)（分支 `fix/companions-one-per-kind`，基于 main `494ef48`）改成同一个实体类型一人一位、
+  不同的最多 `maxFamiliars` 位。这一轮的 Logos jar 是这个分支编的；它和 0.7.1 正式版只差 `Familiars`、`LastingCompanion` 两个类（逐字节比过）。
+- 模型 `_5`（`tools/revision_4.py` 从维护者的 `_4` 来）：高光移到独立的高光面；顺带修了 Blockbench 保存 `_4` 时 6 块箱式 UV 被重算到贴图外的问题。导出检查通过，动画和 `_3` 的导出一致。
+
+| 层级 | 结果 |
+|---|---|
+| Logos | `./gradlew test runGameTestServer`：单元测试过；世界内测试第一次 1310/1311（`familiar_gather` 超时，和同伴无关的寻路测试），重跑 **1311/1311**。新测试 `companion_one_per_kind`、`companion_kinds_together`、`companion_cap_at_familiar_limit` |
+| 单元 | 同伴 **36/36**、`LangCoverageTest` 2/2（台词键里去掉了撤退那句；技能键里加了常青之息） |
+| 实际客户端（她） | `group:elf_princess_companion` **7/7 场景、17/17 检查**（新场景 `princess_with_shiraume`：先叫白梅再叫她，白梅没被送回去、Logos 认两位都是主人的长期同伴；白梅掉到一半血，她给白梅治疗。`princess_heal` 加了常青之息；`princess_bow` 加了她站到主人身后、离僵尸比主人远） |
+| 实际客户端（白梅回归） | `group:shiraume_companion` 19/20：`companion_vs_foxes`（三轮里赢两轮）没过。单独重跑，新 jar 五次赢 1、3、1、1、3 轮，0.7.1 正式版五次赢 3、2、3、1、2 轮——两边都会不过，近战有随机（场景自己的注释也这么说），这一轮的改动不碰她打架的代码（单独一位同伴时 `bindCompanion` 的行为没变） |
+| 人工看截图 | 和白梅一起、给白梅治疗、面板能力页（常青之息在被动里）、模型眼睛第 4 / 5 版离线对比 |
+| 没做 | 同上一轮；另外没进游戏看辅助站位的手感（只有场景里的检查） |
+
 ## 世界树之弓（精灵公主的弓）
 
 2026-11-18：分支 `feat/worldtree-bow`，基于 main `9eb614bf`（#277）。Logos jar `builds/logos-0.7.1-release/logos-0.7.1.jar`，星辰花乐团 `builds/starbloom-orchestra-split-2026-11-17/starbloom_orchestra-0.1.0.jar`。说明见 [docs/WORLDTREE_BOW.md](docs/WORLDTREE_BOW.md)。

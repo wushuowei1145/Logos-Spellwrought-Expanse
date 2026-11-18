@@ -104,7 +104,7 @@ class CompanionPactTest {
         JsonObject pick = anims.getAsJsonObject("pick");
         assertEquals(ShiraumeCompanion.PICK_PLUCK, Math.round(marker(pick.getAsJsonObject("timeline"), "pluck") * 20));
         for (String name : new String[]{"eat", "pick", "refuse"}) {
-            assertEquals((long) CompanionMood.LENGTH.get(name), Math.round(anims.getAsJsonObject(name).get("animation_length").getAsDouble() * 20), name);
+            assertEquals((long) ShiraumeMood.LENGTH.get(name), Math.round(anims.getAsJsonObject(name).get("animation_length").getAsDouble() * 20), name);
         }
         for (String loop : new String[]{"pact_wait", "soak"}) assertTrue(anims.getAsJsonObject(loop).get("loop").getAsBoolean(), loop + " 要循环");
     }
