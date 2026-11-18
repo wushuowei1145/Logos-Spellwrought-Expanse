@@ -17,7 +17,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
 /**
- * 白梅的数值：自己的基础值，加上从主人继承的一部分（docs/SHIRAUME_COMPANION.md 第 5.1 节）。
+ * 同伴的数值：自己的基础值，加上从主人继承的一部分（docs/COMPANIONS.md 第 3.5 节；白梅的数见 docs/SHIRAUME_COMPANION.md 第 5.1 节）。
+ * 规矩每位同伴一样，数是每位自己的（{@link CompanionDef.Growth}）；下面的常量是白梅的。
  *
  * <ul>
  * <li>只继承长期的属性：基础值和装备带来的。药水、信标这类状态效果给的加成剔掉（按状态效果自己登记的修饰 id）。
@@ -44,6 +45,9 @@ public final class CompanionStats {
     /** Logos 法术强度为 1 时折算成多少点攻击：一发普通的魔弹大约这么多。 */
     public static final double SPELL_ATTACK = 6;
     static final Identifier INHERIT = LogosDimension.id("companion_inherit");
+    /** 白梅的数（上面那些常量；法术强度她不用，狐火弹按攻击算）。 */
+    public static final CompanionDef.Growth SHIRAUME = new CompanionDef.Growth(BASE_HEALTH, BASE_ARMOR, BASE_TOUGHNESS, BASE_FOXFIRE, 0,
+            SEAL_HEALTH, SEAL_ARMOR, SEAL_TOUGHNESS, 0, BOND_HEALTH, BOND_ATTACK, 0, RATIO, RATIO_STEP, MAX_RATIO, FULL_SEALS);
 
     /** 主人的长期数值（继承前）。 */
     public record Owner(double health, double armor, double toughness, double melee, double spellPower) {
@@ -72,14 +76,14 @@ public final class CompanionStats {
 
     private CompanionStats() {}
 
-    /** 盖了 {@code seals} 枚契印时的继承比例。 */
+    /** 盖了 {@code seals} 枚契印时白梅的继承比例。 */
     public static double ratio(int seals) {
-        return Math.min(MAX_RATIO, RATIO + RATIO_STEP * Math.max(0, seals));
+        return SHIRAUME.ratio(seals);
     }
 
     /** 契印算到第几枚为止（她自己的成长、流火的倍数）。 */
     static int grown(int seals) {
-        return Math.clamp(seals, 0, FULL_SEALS);
+        return SHIRAUME.grown(seals);
     }
 
     /** 流火一刀是攻击的几倍。 */
@@ -87,16 +91,29 @@ public final class CompanionStats {
         return BLADE_MIN + (BLADE_MAX - BLADE_MIN) * grown(seals) / FULL_SEALS;
     }
 
-    /** 盖了 {@code seals} 枚契印、羁绊在第 {@code stage} 段（0 是生疏）时的各项。 */
+    /** 白梅盖了 {@code seals} 枚契印、羁绊在第 {@code stage} 段（0 是生疏）时的各项。 */
     public static Parts parts(Owner owner, int seals, int stage) {
-        double r = ratio(seals);
-        int g = grown(seals);
+        return parts(SHIRAUME, owner, seals, stage);
+    }
+
+    /** 按 {@code g} 这位同伴的数，盖了 {@code seals} 枚契印、羁绊在第 {@code stage} 段时的各项。 */
+    public static Parts parts(CompanionDef.Growth g, Owner owner, int seals, int stage) {
+        double r = g.ratio(seals);
+        int n = g.grown(seals);
         int b = Math.max(0, stage);
         return new Parts(r,
-                new Part(BASE_HEALTH + SEAL_HEALTH * g, BOND_HEALTH * b, r * owner.health()),
-                new Part(BASE_FOXFIRE, BOND_ATTACK * b, r * owner.attack()),
-                new Part(BASE_ARMOR + SEAL_ARMOR * g, 0, r * owner.armor()),
-                new Part(BASE_TOUGHNESS + SEAL_TOUGHNESS * g, 0, r * owner.toughness()));
+                new Part(g.health() + g.sealHealth() * n, g.bondHealth() * b, r * owner.health()),
+                new Part(g.attack(), g.bondAttack() * b, r * owner.attack()),
+                new Part(g.armor() + g.sealArmor() * n, 0, r * owner.armor()),
+                new Part(g.toughness() + g.sealToughness() * n, 0, r * owner.toughness()));
+    }
+
+    /**
+     * 她的法术强度（倍数）：她自己的（基础 + 每枚契印长的）、羁绊给的、继承主人的（主人的长期法强乘继承比例）。
+     * {@code ownerPower} 是主人不算药水的法术强度（{@link #spellPower}）。
+     */
+    public static Part power(CompanionDef.Growth g, double ownerPower, int seals, int stage) {
+        return new Part(g.spellPower() + g.sealSpellPower() * g.grown(seals), g.bondSpellPower() * Math.max(0, stage), g.ratio(seals) * ownerPower);
     }
 
     public static Stats of(Owner owner, int seals, int stage) {
@@ -108,9 +125,13 @@ public final class CompanionStats {
         return of(owner, seals, 0);
     }
 
-    /** 主人的羁绊在第几段（0 是生疏）。 */
+    /** 主人和白梅的羁绊在第几段（0 是生疏）。 */
     static int stage(Player owner) {
-        return CompanionBond.Stage.of(owner.getData(Companions.BOND).affection()).ordinal();
+        return stage(owner, Companions.SHIRAUME_DEF);
+    }
+
+    static int stage(Player owner, CompanionDef d) {
+        return CompanionBond.Stage.of(Companions.bond(owner, d).affection()).ordinal();
     }
 
     /**
@@ -118,23 +139,44 @@ public final class CompanionStats {
      * 乘继承比例。原版的规矩照旧：封顶 20 点（减八成），绕过魔咒的伤害不算。
      */
     public static float protection(net.minecraft.server.level.ServerLevel level, Player owner, net.minecraft.world.damagesource.DamageSource source, int seals) {
+        return protection(level, owner, source, ratio(seals));
+    }
+
+    /** 同上，继承比例直接给（各位同伴的比例不一样）。 */
+    public static float protection(net.minecraft.server.level.ServerLevel level, Player owner, net.minecraft.world.damagesource.DamageSource source, double ratio) {
         if (source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_ENCHANTMENTS) || source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_EFFECTS)) return 0;
-        return (float) (net.minecraft.world.item.enchantment.EnchantmentHelper.getDamageProtection(level, owner, source) * ratio(seals));
+        return (float) (net.minecraft.world.item.enchantment.EnchantmentHelper.getDamageProtection(level, owner, source) * ratio);
     }
 
     /** 读主人此刻的长期数值。 */
     public static Owner read(Player owner) {
+        Set<Identifier> temporary = temporary(owner);
+        return new Owner(lasting(owner, Attributes.MAX_HEALTH, temporary), lasting(owner, Attributes.ARMOR, temporary),
+                lasting(owner, Attributes.ARMOR_TOUGHNESS, temporary), lasting(owner, Attributes.ATTACK_DAMAGE, temporary),
+                spellPower(owner, "spell_power", "arcane_spell_power"));
+    }
+
+    /**
+     * 主人不算药水、信标的法术强度：Logos 属性 {@code ids}（{@code spell_power}、{@code life_spell_power}……）相乘。
+     * 白梅的狐火算奥秘，精灵公主的生命之力算生命。
+     */
+    public static double spellPower(Player owner, String... ids) {
+        Set<Identifier> temporary = temporary(owner);
+        double power = 1;
+        for (String id : ids) {
+            Optional<Holder.Reference<Attribute>> attr = BuiltInRegistries.ATTRIBUTE.get(Identifier.fromNamespaceAndPath("logos", id));
+            if (attr.isPresent()) power *= lasting(owner, attr.get(), temporary);
+        }
+        return power;
+    }
+
+    /** 状态效果给的修饰（继承时剔掉）。 */
+    private static Set<Identifier> temporary(Player owner) {
         Set<Identifier> temporary = new HashSet<>();
         for (MobEffectInstance effect : owner.getActiveEffects()) {
             effect.getEffect().value().createModifiers(effect.getAmplifier(), (attribute, modifier) -> temporary.add(modifier.id()));
         }
-        double power = 1;
-        for (String id : new String[] {"spell_power", "arcane_spell_power"}) {
-            Optional<Holder.Reference<Attribute>> attr = BuiltInRegistries.ATTRIBUTE.get(Identifier.fromNamespaceAndPath("logos", id));
-            if (attr.isPresent()) power *= lasting(owner, attr.get(), temporary);
-        }
-        return new Owner(lasting(owner, Attributes.MAX_HEALTH, temporary), lasting(owner, Attributes.ARMOR, temporary),
-                lasting(owner, Attributes.ARMOR_TOUGHNESS, temporary), lasting(owner, Attributes.ATTACK_DAMAGE, temporary), power);
+        return temporary;
     }
 
     /** 不算 {@code skip} 里那些修饰（状态效果给的）时，这项属性的值。没有这项属性时是它的默认值。 */
@@ -158,20 +200,25 @@ public final class CompanionStats {
      * 把基础之外的那部分（契印、羁绊、继承）挂到她身上（生命上限、护甲、护甲韧性），攻击和契印数记在她身上。
      * 生命上限变了时按比例保留当前生命。
      */
-    static Parts apply(ShiraumeCompanion c, Player owner, int seals) {
-        Parts parts = parts(read(owner), seals, stage(owner));
+    static Parts apply(CompanionEntity c, Player owner, int seals) {
+        CompanionDef d = c.def();
+        CompanionDef.Growth g = d.growth();
+        int stage = stage(owner, d);
+        Parts parts = parts(g, read(owner), seals, stage);
         Stats s = parts.stats();
         float before = c.getMaxHealth(), fraction = before > 0 ? c.getHealth() / before : 1;
-        set(c, Attributes.MAX_HEALTH, s.health() - BASE_HEALTH);
-        set(c, Attributes.ARMOR, s.armor() - BASE_ARMOR);
-        set(c, Attributes.ARMOR_TOUGHNESS, s.toughness() - BASE_TOUGHNESS);
+        set(c, Attributes.MAX_HEALTH, s.health() - g.health());
+        set(c, Attributes.ARMOR, s.armor() - g.armor());
+        set(c, Attributes.ARMOR_TOUGHNESS, s.toughness() - g.toughness());
         if (Math.abs(c.getMaxHealth() - before) > 1e-3) c.setHealth(Math.max(1, fraction * c.getMaxHealth()));
-        c.setFoxfireDamage((float) s.foxfire());
+        c.setAttack((float) s.foxfire());
         c.setSeals(seals);
+        c.statsApplied(owner, seals, stage);
         return parts;
     }
 
-    private static void set(LivingEntity e, Holder<Attribute> attribute, double amount) {
+    /** 把 {@code attribute} 上「继承」那一份修饰设成 {@code amount}（加在基础值上）。 */
+    static void set(LivingEntity e, Holder<Attribute> attribute, double amount) {
         AttributeInstance i = e.getAttribute(attribute);
         if (i == null) return;
         AttributeModifier old = i.getModifier(INHERIT);

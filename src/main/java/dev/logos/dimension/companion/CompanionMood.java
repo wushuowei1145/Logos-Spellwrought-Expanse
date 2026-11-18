@@ -8,43 +8,44 @@ import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 /**
- * 白梅的表情和小动作（docs/SHIRAUME_COMPANION.md 第 7.3 节）：每半秒按处境挑一种情绪（{@code face_*}，循环），
+ * 同伴的表情和小动作（docs/COMPANIONS.md 第 2 节第 14 项）：每半秒按处境挑一种情绪（{@code face_*}，循环），
  * 遇到事情时插一个小动作（{@code act_*}，播一次）。都走 {@code misc} 控制器，优先级：
- * 入场 / 小动作 → 蜷着睡 → 姿势（泡温泉、跪坐歇着）→ 情绪。小动作有长短，播完自动交回情绪。
+ * 入场 / 小动作 → 睡着 → 姿势 → 情绪。小动作有长短，播完自动交回情绪。
  *
- * <p>情绪和小动作的意思见模型 README「第 5 版」，这里只决定什么时候用哪一个。
+ * <p>这里是每位都一样的部分（播、排队、记下发生过什么）；什么时候用哪一个表情、哪一个小动作，每位同伴自己写
+ * （{@link #react}、{@link #chooseFace}），因为各自模型里的动画不一样（白梅：{@link ShiraumeMood}；精灵公主：{@link PrincessMood}）。
  */
-final class CompanionMood {
-    /** 每段 misc 动画的长度（刻），与动画文件一致。 */
-    static final Map<String, Integer> LENGTH = Map.ofEntries(Map.entry("summon", 56), Map.entry("act_petted", 60), Map.entry("act_proud", 60),
-            Map.entry("act_sleeve_laugh", 52), Map.entry("act_stretch", 72), Map.entry("act_startle", 32), Map.entry("act_wave", 48),
-            Map.entry("act_head_tilt", 36), Map.entry("act_sneeze", 36), Map.entry("eat", 48), Map.entry("pick", 24), Map.entry("refuse", 20),
-            Map.entry("pact", 192));
+abstract class CompanionMood {
     /** 两个小动作之间至少隔这么久，免得一直在演。 */
     static final int ACT_GAP = 200;
 
-    private final ShiraumeCompanion c;
+    protected final CompanionEntity c;
+    /** 每段 misc 动画的长度（刻），与她的动画文件一致。 */
+    private final Map<String, Integer> lengths;
     private @Nullable String act, face, pose;
-    private long actUntil, faceUntil, nextAct;
+    private long actUntil;
+    protected long nextAct;
     private boolean curled;
-    private long pettedAt = -10_000, poutAt = -10_000, surprisedAt = -10_000, curiousUntil = -10_000, delightUntil = -10_000, afraidUntil = -10_000;
-    private long nextHungry;
+    protected long pettedAt = -10_000, poutAt = -10_000, surprisedAt = -10_000, curiousUntil = -10_000, delightUntil = -10_000, afraidUntil = -10_000;
+    protected long nextHungry;
     /** 说着话时的表情（对话里她回话时定），到哪一刻。 */
-    private @Nullable String talkFace;
-    private long talkFaceUntil;
-    private int pets;
-    private long strongKillSeen, fallSeen, stretchDay = -1, nextTilt, nextSneeze;
-    private long farSince = -1;
-    private int lookedAt;
-    private @Nullable Holder<Biome> biome;
-    private boolean content;
+    protected @Nullable String talkFace;
+    protected long talkFaceUntil;
+    protected int pets;
+    protected long farSince = -1;
+    protected @Nullable Holder<Biome> biome;
 
-    CompanionMood(ShiraumeCompanion c) {
+    protected CompanionMood(CompanionEntity c, Map<String, Integer> lengths) {
         this.c = c;
+        this.lengths = lengths;
     }
 
-    private long now() {
+    protected long now() {
         return c.level().getGameTime();
+    }
+
+    int length(String name) {
+        return lengths.getOrDefault(name, 40);
     }
 
     /** 立刻播 {@code name}，长 {@code ticks} 刻。 */
@@ -57,12 +58,25 @@ final class CompanionMood {
     /** 播一个小动作（入场还没播完时不打断）。 */
     void act(String name) {
         if (act != null && act.equals("summon") && now() < actUntil) return;
-        play(name, LENGTH.getOrDefault(name, 40));
-        nextAct = now() + LENGTH.getOrDefault(name, 40) + ACT_GAP;
+        play(name, length(name));
+        nextAct = now() + length(name) + ACT_GAP;
     }
 
     boolean acting() {
         return act != null && now() < actUntil;
+    }
+
+    /** 掐掉正在播的小动作（她要出手了）。入场不掐。 */
+    void cut() {
+        if (act != null && !act.equals("summon")) {
+            act = null;
+            actUntil = 0;
+        }
+    }
+
+    /** 正在播的小动作（没有为 null）。 */
+    @Nullable String playing() {
+        return acting() ? act : null;
     }
 
     /** 入场动画还在播。 */
@@ -77,15 +91,17 @@ final class CompanionMood {
     void curl(boolean on) {
         if (curled == on) return;
         curled = on;
-        // 睡醒伸个懒腰
-        if (!on) act("act_stretch");
+        if (!on) wokeUp();
     }
+
+    /** 睡醒的那一下（白梅：伸个懒腰）。 */
+    protected void wokeUp() {}
 
     boolean curled() {
         return curled;
     }
 
-    /** 整身姿势（{@code soak} 泡温泉、{@code pact_wait} 跪坐歇着）；null 收起。小动作播完回到它。 */
+    /** 整身姿势（白梅：{@code soak} 泡温泉、{@code pact_wait} 跪坐歇着）；null 收起。小动作播完回到它。 */
     void pose(@Nullable String name) {
         pose = name;
     }
@@ -99,7 +115,7 @@ final class CompanionMood {
         delightUntil = now + 200;
     }
 
-    /** 附近有狗（狼）：慌一阵，耳朵压低（日本传说里狐狸怕狗）。 */
+    /** 怕了一阵（白梅：附近有狗）。 */
     void afraid(long now) {
         afraidUntil = now + 40;
     }
@@ -126,118 +142,56 @@ final class CompanionMood {
             ServerPlayer owner = c.ownerPlayer();
             if (owner != null) {
                 if (!acting() && !curled && now >= nextAct) react(owner, now);
-                chooseFace(owner, now);
+                face = chooseFace(owner, now);
             }
         }
-        String misc = act != null ? act : curled ? "sleep" : pose != null ? pose : face == null ? "" : face;
+        String misc = act != null ? act : curled ? sleepAnimation() : pose != null ? pose : face == null ? "" : face;
         c.setMisc(misc);
     }
 
-    // ---------------------------------------------------------------- 遇到事情：小动作
-
-    private void react(ServerPlayer owner, long now) {
-        OwnerWatch w = OwnerWatch.of(owner);
-        boolean engaged = c.mind() != null && c.mind().engaged();
-        double dist = owner.distanceTo(c);
-        // 主人从远处回来：挥手
-        if (dist > 20) {
-            if (farSince < 0) farSince = now;
-        } else if (dist < 6) {
-            if (farSince >= 0 && now - farSince > 200 && !engaged) {
-                farSince = -1;
-                act("act_wave");
-                return;
-            }
-            farSince = -1;
-        }
-        if (w.lastStrongKill > strongKillSeen && now - w.lastStrongKill < 40) {
-            strongKillSeen = w.lastStrongKill;
-            act("act_proud");
-            return;
-        }
-        if (now - w.lastHurt < 10 && w.lastHurtAmount >= 8 && w.lastHurt > surprisedAt) {
-            surprisedAt = now;
-            if (!engaged) {
-                act("act_startle");
-                return;
-            }
-        }
-        if (w.lastFall > fallSeen && now - w.lastFall < 30 && owner.getHealth() > owner.getMaxHealth() * .5f && !engaged) {
-            fallSeen = w.lastFall;
-            // 主人摔了一跤：掩着袖子笑
-            act("act_sleeve_laugh");
-            return;
-        }
-        if (engaged) return;
-        // 饿了：隔一阵提一句
-        var bond = owner.getData(Companions.BOND);
-        if (bond.satiety() < CompanionBond.HUNGRY && now >= nextHungry && dist < 10) {
-            nextHungry = now + 3600;
-            CompanionLines.say(owner, "hungry", 50);
-            act("act_head_tilt");
-            return;
-        }
-        long clock = c.level().getOverworldClockTime(), day = clock / 24000, time = clock % 24000;
-        if (time < 1500 && day != stretchDay && dist < 10) {
-            stretchDay = day;
-            act("act_stretch");
-            return;
-        }
-        if (lookingAtMe(owner) && w.still(now) > 20) {
-            lookedAt += 10;
-            if (lookedAt >= 40 && now >= nextTilt) {
-                lookedAt = 0;
-                nextTilt = now + 1200;
-                act("act_head_tilt");
-                return;
-            }
-        } else {
-            lookedAt = 0;
-        }
-        // 淋着雨：偶尔打个喷嚏
-        if (now >= nextSneeze && c.getRandom().nextInt(120) == 0 && c.level().isRainingAt(c.blockPosition().above())) {
-            nextSneeze = now + 2400;
-            act("act_sneeze");
-        }
+    /** 睡着时的动画。 */
+    protected String sleepAnimation() {
+        return "sleep";
     }
 
-    private boolean lookingAtMe(ServerPlayer owner) {
+    /** 遇到事情：该插一个小动作就 {@link #act}。 */
+    protected abstract void react(ServerPlayer owner, long now);
+
+    /** 这半秒该是什么表情（null 是平常的样子）。 */
+    protected abstract @Nullable String chooseFace(ServerPlayer owner, long now);
+
+    /** 正在打（迎战、护主……）。 */
+    protected boolean engaged() {
+        return c.mind() != null && c.mind().engaged();
+    }
+
+    /** 主人正看着她（7 格内，视线偏不过 12°）。 */
+    protected boolean lookingAtMe(ServerPlayer owner) {
         Vec3 to = c.getEyePosition().subtract(owner.getEyePosition());
         double d = to.length();
         return d < 7 && d > .5 && owner.getViewVector(1).dot(to.scale(1 / d)) > Math.cos(Math.toRadians(12));
     }
 
-    // ---------------------------------------------------------------- 平时：情绪
-
-    private void chooseFace(ServerPlayer owner, long now) {
-        OwnerWatch w = OwnerWatch.of(owner);
+    /** 走进了另一种生物群系：好奇一阵（{@link #curiousUntil}）。 */
+    protected void noticeBiome(long now) {
         Holder<Biome> here = c.level().getBiome(c.blockPosition());
         if (biome != null && !here.is(biome) && now > 200) curiousUntil = now + 100;
         biome = here;
-        boolean engaged = c.mind() != null && c.mind().engaged();
-        String want;
-        if (engaged) want = "face_angry";
-        else if (c.talking()) want = now < talkFaceUntil && talkFace != null ? talkFace : "face_content";
-        else if (now < afraidUntil) want = "face_flustered";
-        else if (now - surprisedAt < 30) want = "face_surprised";
-        else if (now < delightUntil) want = "face_happy";
-        else if (owner.getHealth() < owner.getMaxHealth() * .35f) want = "face_sad";
-        else if (now - pettedAt < 200) want = pets >= 3 ? "face_shy" : "face_happy";
-        else if (now - poutAt < 300) want = "face_pout";
-        else if (now < curiousUntil) want = "face_curious";
-        else if (night(c.level()) && w.activity(now, owner.isSleeping()).ordinal() >= OwnerWatch.Activity.IDLE.ordinal()) want = "face_sleepy";
-        else {
-            // 没什么事：多数时候是平常的样子，有时眯起眼安心地笑
-            if (now >= faceUntil) {
-                content = c.getRandom().nextFloat() < .35f;
-                faceUntil = now + 300 + c.getRandom().nextInt(200);
-            }
-            want = content ? "face_content" : null;
-        }
-        face = want;
     }
 
-    private static boolean night(net.minecraft.world.level.Level level) {
+    /** 主人从远处回来：返回真时该挥手了（离开 20 格以上 10 秒，又回到 6 格内）。 */
+    protected boolean ownerReturned(double dist, long now) {
+        if (dist > 20) {
+            if (farSince < 0) farSince = now;
+        } else if (dist < 6) {
+            boolean back = farSince >= 0 && now - farSince > 200;
+            farSince = -1;
+            return back;
+        }
+        return false;
+    }
+
+    protected static boolean night(net.minecraft.world.level.Level level) {
         return level.isDarkOutside();
     }
 }

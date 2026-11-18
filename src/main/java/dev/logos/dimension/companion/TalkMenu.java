@@ -71,8 +71,13 @@ public final class TalkMenu {
     }
 
     /** 登记 {@code companion} 的选项树（实体类加载时登记，两边都有）。 */
+    /**
+     * 登记一位同伴的选项树。同一个 ID 只能有一份：两个地方用了同一个 ID（例如女王之战里那位临时的精灵公主和同伴的她），
+     * 后登记的会悄悄盖掉前一个，所以直接报错。
+     */
     public static void register(String companion, List<Option> root) {
-        MENUS.put(companion, root);
+        List<Option> old = MENUS.putIfAbsent(companion, root);
+        if (old != null && !old.equals(root)) throw new IllegalStateException("对话 ID " + companion + " 已经登记过另一份选项树");
     }
 
     public static List<Option> of(String companion) {

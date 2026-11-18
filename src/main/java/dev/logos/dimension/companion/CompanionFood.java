@@ -9,7 +9,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * 白梅吃什么（docs/SHIRAUME_COMPANION.md 第 8.7 节）。喜欢和不吃的都是物品标签，以后做出油揚げ、稲荷寿司、狐うどん，
+ * 同伴吃什么（白梅的见 docs/SHIRAUME_COMPANION.md 第 8.7 节）。喜欢和不吃的都是物品标签，以后做出油揚げ、稲荷寿司、狐うどん，
  * 往 {@code shiraume_favorite_food} 里加一行就行。
  */
 public final class CompanionFood {
@@ -22,12 +22,29 @@ public final class CompanionFood {
 
     private CompanionFood() {}
 
+    /** 白梅的口味。 */
     public static Taste taste(ItemStack stack) {
+        return taste(FAVORITE, REFUSED, stack);
+    }
+
+    /** 每位同伴的口味：标签 {@code <同伴>_favorite_food}、{@code <同伴>_refused_food}。 */
+    public static Taste taste(String companion, ItemStack stack) {
+        return taste(TAGS.computeIfAbsent(companion + "_favorite_food", CompanionFood::tag), TAGS.computeIfAbsent(companion + "_refused_food", CompanionFood::tag),
+                stack);
+    }
+
+    private static final java.util.Map<String, TagKey<Item>> TAGS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static TagKey<Item> tag(String path) {
+        return TagKey.create(Registries.ITEM, LogosDimension.id(path));
+    }
+
+    private static Taste taste(TagKey<Item> favorite, TagKey<Item> refused, ItemStack stack) {
         if (stack.isEmpty()) return Taste.NOT_FOOD;
-        if (stack.is(FAVORITE)) return Taste.FAVORITE;
+        if (stack.is(favorite)) return Taste.FAVORITE;
         FoodProperties food = stack.get(DataComponents.FOOD);
         if (food == null) return Taste.NOT_FOOD;
-        return stack.is(REFUSED) ? Taste.REFUSED : Taste.LIKED;
+        return stack.is(refused) ? Taste.REFUSED : Taste.LIKED;
     }
 
     /** 这一口有多少饱腹（至少 1）。 */

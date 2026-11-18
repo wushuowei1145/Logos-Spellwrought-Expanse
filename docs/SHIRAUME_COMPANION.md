@@ -372,7 +372,7 @@ Logos 本来就是「说出的道理」。玩家用术式编辑器那种节点�
 
 ### 8.12 接 Logos：长期同伴
 
-Logos 新增 `LastingCompanion` 接口（属于 `KeptFamiliar` 的一种，Logos 另开 PR）：每个玩家同时只能有一个，没有时限。
+Logos 新增 `LastingCompanion` 接口（属于 `KeptFamiliar` 的一种，Logos 另开 PR）：没有时限；同一个角色每个玩家只能有一个（不同的角色可以一起在外面，最多 4 位，见 [同伴](COMPANIONS.md) 第 4 节）。
 
 - Logos 把她当使魔：主人的法术不伤她，她的击杀算主人的，`gather`、`stance`、`sic` 都能下到她身上；
 - Logos 不替她跟随、拉回、消散或收走，这些由她自己的心智来做；

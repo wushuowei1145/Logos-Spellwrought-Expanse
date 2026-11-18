@@ -177,7 +177,7 @@ final class ShiraumeTalk {
                 return Reply.closing();
             }
             case TalkMenu.POUCH -> {
-                CompanionPouch.open(p);
+                CompanionPouch.open(p, c);
                 return Reply.away();
             }
             case TalkMenu.FOLLOW -> {

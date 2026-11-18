@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import dev.logos.dimension.companion.ElfPrincessCompanion;
 import dev.logos.dimension.companion.Katashiro;
 import dev.logos.dimension.companion.ShiraumeCompanion;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -49,6 +50,7 @@ public final class CompanionClient {
     @SubscribeEvent
     static void renderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(Companions.SHIRAUME.get(), CompanionRenderer::new);
+        event.registerEntityRenderer(Companions.ELF_PRINCESS.get(), PrincessRenderer::new);
         event.registerEntityRenderer(Companions.KATASHIRO.get(), KatashiroRenderer::new);
     }
 
@@ -186,6 +188,47 @@ public final class CompanionClient {
             float sword = info.getOrDefaultGeckolibData(SWORD, -2f);
             RyukaOnBone.submit(info.poseStack(), out, info.packedLight(), new Vector3f(), sword >= 0 ? sword : -1,
                     info.getGeckolibData(FIRE), "companion" + info.getOrDefaultGeckolibData(ID, 0), SWORD_SCALE);
+        }
+    }
+
+    /**
+     * 精灵公主（docs/ELF_PRINCESS_COMPANION.md）：NPC 的通用渲染（手里的世界树之弓画在手部挂点上，拉弓时两臂跟着视线抬）。
+     * 入场最初几刻不画；睡着、撤退时不叠加视线。入场的荷花苞（{@code SummonBud}）只在入场、撤退时画：平时它在动画里已经缩到 0，
+     * 这里连带子骨骼一起跳过，省下那几十块方块。
+     */
+    public static class PrincessRenderer<R extends LivingEntityRenderState & GeoRenderState> extends NpcRenderer<ElfPrincessCompanion, R> {
+        private static final DataTicket<String> MISC = DataTicket.create("logos_dimension_princess_misc", String.class);
+
+        public PrincessRenderer(EntityRendererProvider.Context context) {
+            super(context, "elf_princess_companion");
+        }
+
+        @Override
+        public boolean shouldRender(ElfPrincessCompanion entity, Frustum frustum, double x, double y, double z) {
+            return !entity.hiddenForSummon() && super.shouldRender(entity, frustum, x, y, z);
+        }
+
+        @Override
+        public void addRenderData(ElfPrincessCompanion animatable, Void relatedObject, R state, float partialTick) {
+            super.addRenderData(animatable, relatedObject, state, partialTick);
+            if (animatable.curled()) {
+                state.xRot = 0;
+                state.yRot = 0;
+            }
+            String misc = animatable.npcMiscAnimation();
+            state.addGeckolibData(MISC, misc == null ? "" : misc);
+        }
+
+        @Override
+        public void adjustModelBonesForRender(RenderPassInfo<R> info, BoneSnapshots snapshots) {
+            super.adjustModelBonesForRender(info, snapshots);
+            String misc = info.getOrDefaultGeckolibData(MISC, "");
+            if (!"summon".equals(misc) && !"withdraw".equals(misc)) {
+                snapshots.ifPresent("SummonBud", s -> {
+                    s.skipRender(true);
+                    s.skipChildrenRender(true);
+                });
+            }
         }
     }
 

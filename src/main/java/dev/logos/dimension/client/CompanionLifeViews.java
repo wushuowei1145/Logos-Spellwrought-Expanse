@@ -8,6 +8,7 @@ import dev.logos.dimension.companion.CompanionBlade;
 import dev.logos.dimension.companion.CompanionLight;
 import dev.logos.dimension.companion.CompanionLines;
 import dev.logos.dimension.companion.CompanionMind;
+import dev.logos.dimension.companion.ShiraumeMind;
 import dev.logos.dimension.companion.Companions;
 import dev.logos.dimension.companion.KatashiroItem;
 import dev.logos.dimension.companion.ShiraumeCompanion;
@@ -235,7 +236,7 @@ public abstract class CompanionLifeViews extends CompanionViews {
                         long ticks = ctx.server().overworld().getGameTime() - began;
                         System.out.println("[companion] melee: " + ticks + " ticks, thrusts=" + t + " other cuts=" + o);
                         // 每记突刺后面至少接 COMBO_AFTER_THRUST 刀（刀砍得进去以后尸壳倒得快，一记突刺加两刀就够了）
-                        return t <= 1 + ticks / CompanionMind.THRUST_GAP && o >= CompanionMind.COMBO_AFTER_THRUST * Math.max(1, t);
+                        return t <= 1 + ticks / ShiraumeMind.THRUST_GAP && o >= ShiraumeMind.COMBO_AFTER_THRUST * Math.max(1, t);
                     })
                     .waitUntilServer("没敌人了，收刀", ctx -> !c.blade().drawn())
                     .ticks(5)
@@ -403,13 +404,13 @@ public abstract class CompanionLifeViews extends CompanionViews {
                     .server("骷髅朝主人放一箭", ctx -> {
                         ServerLevel level = ctx.server().overworld();
                         ServerPlayer p = ctx.player();
-                        before = CompanionMind.intercepts();
+                        before = ShiraumeMind.intercepts();
                         var arrow = new net.minecraft.world.entity.projectile.arrow.Arrow(level, skeleton, new ItemStack(Items.ARROW), new ItemStack(Items.BOW));
                         Vec3 to = p.position().add(0, p.getBbHeight() * .6, 0).subtract(arrow.position());
                         arrow.shoot(to.x, to.y + to.horizontalDistance() * .05, to.z, 1.6f, 0);
                         level.addFreshEntity(arrow);
                     })
-                    .waitUntilServer("她截下这支射向主人的箭", ctx -> CompanionMind.intercepts() > before)
+                    .waitUntilServer("她截下这支射向主人的箭", ctx -> ShiraumeMind.intercepts() > before)
                     .ticks(2)
                     .screenshot("companion_guard_deflect")
                     .waitUntilServer("再去收拾射手：定为目标", ctx -> c.mind().foe() == skeleton)
@@ -576,11 +577,11 @@ public abstract class CompanionLifeViews extends CompanionViews {
                     .waitUntilServer("她也下到深池里泡着", ctx -> c.soaking() && "soak".equals(c.npcMiscAnimation()) && c.getX() > 1)
                     .ticks(30)
                     .checkServer("浮在水里，水面停在肩头（不沉到池底）", ctx -> {
-                        System.out.println("[companion] soak deep: y=" + (c.getY() - FLOOR) + " want " + (SURFACE - CompanionMind.SOAK_WATERLINE - FLOOR));
-                        return Math.abs(c.getY() - (SURFACE - CompanionMind.SOAK_WATERLINE)) < .05;
+                        System.out.println("[companion] soak deep: y=" + (c.getY() - FLOOR) + " want " + (SURFACE - ShiraumeMind.SOAK_WATERLINE - FLOOR));
+                        return Math.abs(c.getY() - (SURFACE - ShiraumeMind.SOAK_WATERLINE)) < .05;
                     })
                     .server("回头看她", ctx -> {
-                        ends = CompanionMind.soakEnds();
+                        ends = ShiraumeMind.soakEnds();
                         aim(ctx.player(), IN_DEEP.add(0, ctx.player().getEyeHeight(), 0), c.position().add(0, .7, 0));
                     })
                     .step("对准", ctx -> aimClient(clientCompanions().get(0).position().add(0, .7, 0)))
@@ -588,7 +589,7 @@ public abstract class CompanionLifeViews extends CompanionViews {
                     .screenshot("companion_soak")
                     // 呛水要 15 秒（300 刻）：泡过这么久还在泡，也没呛着
                     .ticks(320)
-                    .checkServer("一直泡着没起身，也没呛水", ctx -> c.soaking() && CompanionMind.soakEnds() == ends && c.getAirSupply() == c.getMaxAirSupply()
+                    .checkServer("一直泡着没起身，也没呛水", ctx -> c.soaking() && ShiraumeMind.soakEnds() == ends && c.getAirSupply() == c.getMaxAirSupply()
                             && c.getHealth() >= c.getMaxHealth())
                     .server("主人换到浅池", ctx -> aim(ctx.player(), IN_SHALLOW.add(0, ctx.player().getEyeHeight(), 0), new Vec3(2.5, FLOOR + 1, 1.5)))
                     .waitUntilServer("她起身走过去，在浅池里泡", ctx -> c.soaking() && c.getX() < 0)

@@ -62,7 +62,10 @@ public final class CompanionLinesHud {
         if (age > line.ticks()) return;
         float alpha = Mth.clamp(Math.min(age / 4f, (line.ticks() - age) / FADE), 0, 1);
         if (alpha <= .02f) return;
-        Component name = Component.translatable("entity.logos_dimension.shiraume_companion");
+        // 键是 line.logos_dimension.<同伴>.……：名字和颜色按那一位找
+        String[] parts = line.key().split("[.]");
+        String who = parts.length > 2 ? parts[2] : "shiraume";
+        Component name = Component.translatable("talk.logos_dimension." + who + ".name");
         Component text = Component.translatable(line.key());
         var font = mc.font;
         int w = g.guiWidth(), h = g.guiHeight();
@@ -71,7 +74,7 @@ public final class CompanionLinesHud {
         int x = (w - total) / 2, y = h - 72;
         int a = Math.round(alpha * 255);
         g.fill(x - 6, y - 4, x + total + 6, y + 12, (Math.round(alpha * 0x90) << 24) | 0x101014);
-        g.text(font, name, x, y, (a << 24) | 0xF7B6D6);
+        g.text(font, name, x, y, (a << 24) | (CompanionStyle.of(who).accent() & 0xFFFFFF));
         g.text(font, text, x + nameW + gap, y, (a << 24) | 0xF2EEE6);
     }
 }

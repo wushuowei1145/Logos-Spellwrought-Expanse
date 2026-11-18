@@ -89,7 +89,7 @@ public final class OwnerWatch {
 
     void killed(long now, LivingEntity dead) {
         lastKill = now;
-        if (dead.getMaxHealth() >= ShiraumeCompanion.STRONG) lastStrongKill = now;
+        if (dead.getMaxHealth() >= CompanionEntity.STRONG) lastStrongKill = now;
     }
 
     /** 心智每次思考时取一次样：主人挪了多少、站着不动了多久。 */
