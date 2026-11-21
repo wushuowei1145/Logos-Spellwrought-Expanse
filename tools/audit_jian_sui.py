@@ -42,6 +42,7 @@ def audit():
             seen.add(parent)
             bone = bones[parent]
     require(not bones['Weapon'].get('cubes'), '武器挂点不应包含持剑几何')
+    require(bones['Skirt'].get('cubes') and all(f'WaistBridge{i}' in bones for i in range(8)), '腰部零件缺失')
 
     image = Image.open(ASSETS / 'textures/entity/jian_sui.png').convert('RGBA')
     require(image.size == (512, 224), '贴图尺寸不符')
@@ -69,7 +70,7 @@ def audit():
 
     animations = load(ASSETS / 'geckolib/animations/entity/jian_sui.animation.json')
     require(animations['format_version'] == '1.8.0', '动画格式不符')
-    expected = {'collapse': 2, 'cloth_stress_test': 4.8, 'idle': 2, 'attack_1': 1.5, 'attack_2': 1.8, 'attack_3': 1.8}
+    expected = {'collapse': 2, 'idle': 2, 'attack_1': 1.5, 'attack_2': 1.8, 'attack_3': 1.8}
     require(set(animations['animations']) == set(expected), '动画清单不符')
     events = load(ROOT / 'docs/jian_sui/animation_events.json')
     for name, animation in animations['animations'].items():
@@ -90,6 +91,10 @@ def audit():
                     require(ordered[0][1] == ordered[-1][1], '循环动画首尾不一致')
         for time in animation.get('timeline', {}):
             require(0 <= float(time) <= length, '事件超出动画时长')
+        if name in ('idle', 'collapse') or name.startswith('attack_'):
+            require('Weapon' in animation['bones'], '剑没有跟手：动画缺 Weapon 轨道')
+        if name == 'collapse':
+            require({'Skirt', *(f'WaistBridge{i}' for i in range(8))} <= animation['bones'].keys(), '散架漏了腰部零件')
         if name.startswith('attack_'):
             actual = {time: [s.strip() for s in script.rstrip(';').split(';') if s.strip()] for time, script in animation['timeline'].items()}
             require(actual == events[name]['timeline'], '事件记录与正式动画不一致')
