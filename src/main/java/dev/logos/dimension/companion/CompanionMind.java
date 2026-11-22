@@ -58,7 +58,7 @@ public abstract class CompanionMind extends Goal {
      * 精灵公主的：MEND 治疗、护盾，BLESS 给主人缠上生命之力，ENSNARE 用荆棘困住强敌。
      */
     public enum Kind { FOLLOW, STAY, ENGAGE, COVER, KINDLE, RETREAT, REST, IDLE, EXECUTE, FORAGE, SCAVENGE, SOAK, HIDE, ERRAND, TALK,
-        MEND, BLESS, ENSNARE }
+        MEND, BLESS, ENSNARE, WARD, HISS }
 
     protected final CompanionEntity c;
     protected Kind current = Kind.IDLE;

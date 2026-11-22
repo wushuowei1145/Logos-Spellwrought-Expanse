@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "logos_dimension:item/cat_sovereign",
+    "layer1": "logos_dimension:item/paw_sovereign_paw"
+  }
+}

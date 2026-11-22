@@ -1,0 +1,21 @@
+{
+  "values": [
+    "#logos:wood_wands",
+    "#logos:wood_staffs",
+    "#logos:blade_staffs",
+    "logos:wand",
+    "logos:echo_wand",
+    "logos:adept_wand",
+    "logos:chalk_wand",
+    "logos:master_wand",
+    "logos:sage_wand",
+    "logos:principle_wand",
+    "logos:crystal_staff",
+    "logos:echo_staff",
+    "logos:transmuted_staff",
+    "logos:chalk_staff",
+    "logos:firmament_staff",
+    "logos:sage_staff",
+    "logos:principle_staff"
+  ]
+}
