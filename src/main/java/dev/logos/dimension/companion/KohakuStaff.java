@@ -51,6 +51,9 @@ final class KohakuStaff {
     private boolean yours;
     /** 杖里存着的魔力。 */
     private double store;
+    /** 你给的这根杖上她能放的页（{@link KohakuSpells#yours}），换杖、Logos 重新编译术式以后重算。 */
+    private java.util.List<KohakuSpells.Yours> yoursPages = java.util.List.of();
+    private int pagesGeneration = -1;
 
     KohakuStaff(KohakuCompanion c) {
         this.c = c;
@@ -62,6 +65,16 @@ final class KohakuStaff {
 
     boolean yours() {
         return yours;
+    }
+
+    /** 你给的这根杖上她能放的页；她自己的杖上没有（她自己的术式不挂在杖上）。 */
+    java.util.List<KohakuSpells.Yours> yoursPages() {
+        if (!yours) return java.util.List.of();
+        if (pagesGeneration != dev.logos.runtime.Casting.generation()) {
+            pagesGeneration = dev.logos.runtime.Casting.generation();
+            yoursPages = KohakuSpells.yours(held);
+        }
+        return yoursPages;
     }
 
     double store() {
@@ -156,6 +169,7 @@ final class KohakuStaff {
         double ratio = capacity() > 0 ? store / capacity() : 0;
         held = stack;
         yours = fromYou;
+        pagesGeneration = -1;
         // 换杖时杖里的魔力照比例带过去（她自己往新杖里倒），免得一换就空
         store = Math.min(capacity(), ratio * capacity());
         c.holdStaff();
@@ -170,6 +184,7 @@ final class KohakuStaff {
     void force(ItemStack stack, boolean fromYou) {
         held = stack.copyWithCount(1);
         yours = fromYou;
+        pagesGeneration = -1;
         store = Math.min(store, capacity());
         c.holdStaff();
     }

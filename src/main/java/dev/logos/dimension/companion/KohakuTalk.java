@@ -64,19 +64,35 @@ final class KohakuTalk {
                 new CompanionSheet.Skill("one_drop", CompanionSheet.NORMAL, 0, true, List.of(num(7 * sp), num(KohakuSpells.ONE_DROP.cooldown() / 20f))),
                 new CompanionSheet.Skill("ward", CompanionSheet.SPECIAL, 0, true, List.of(num(KohakuMagic.wardMultiplier(seals)),
                         num(c.magic.wardAmount()), num(KohakuMagic.WARD_COST * 100), num(KohakuMagic.WARD_REFORM / 20f))),
+                page(KohakuSpells.CAT_EYE, seals, "120", "16"),
+                page(KohakuSpells.BOILING_FLASK, seals, num(5 * sp), "3", "3"),
+                page(KohakuSpells.NAP_WARD, seals, "4", "6"),
+                page(KohakuSpells.GREENHOUSE, seals, num(1.5 * sp), "8"),
+                page(KohakuSpells.QUICK_ENCHANT, seals, num(2 * sp), "30"),
+                page(KohakuSpells.TIME_AMBER, seals, "3"),
+                page(KohakuSpells.MISTY_UMBRELLA, seals, num(6 * sp), "6"),
+                page(KohakuSpells.STARBLOOM, seals, num(12 * sp), "5"),
+                new CompanionSheet.Skill("your_pages", CompanionSheet.PASSIVE, 0, true, List.of(String.valueOf(c.staff.yoursPages().size()))),
                 new CompanionSheet.Skill("staff", CompanionSheet.PASSIVE, 0, true, List.of("#" + staff.getItem().getDescriptionId(),
                         num(c.staff.capacity()), c.staff.yours() ? "#talk.logos_dimension.kohaku.skill.staff.yours" : "#talk.logos_dimension.kohaku.skill.staff.own")),
                 new CompanionSheet.Skill("mana", CompanionSheet.PASSIVE, 0, true, List.of(num(c.maxMana()), num(c.regenPerSecond()))),
                 new CompanionSheet.Skill("genius", CompanionSheet.PASSIVE, 0, true, List.of(num(sp))),
                 new CompanionSheet.Skill("withdraw", CompanionSheet.PASSIVE, 0, true, List.of(num(KohakuCompanion.REST_TICKS / 1200f)))));
-        // 之后的术式还没做进游戏，先写「？？？」
-        if (seals < MAX_SEALS) skills.add(new CompanionSheet.Skill("sealed", CompanionSheet.SPECIAL, seals + 1, false, List.of(String.valueOf(seals + 1))));
+        // 第九印（两个人的猫步）和猫步一起做，先写「？？？」
+        if (seals < MAX_SEALS) skills.add(new CompanionSheet.Skill("sealed", CompanionSheet.SPECIAL, MAX_SEALS, false, List.of(String.valueOf(MAX_SEALS))));
         CompanionBond.Stage st = CompanionBond.Stage.of(bond.affection());
         CompanionBond.Stage[] all = CompanionBond.Stage.values();
         float progress = st.ordinal() + 1 >= all.length ? 1 : (bond.affection() - st.from) / (all[st.ordinal() + 1].from - st.from);
         return new CompanionSheet(c.getId(), ID, OUTFIT, stats, List.copyOf(skills), seals, MAX_SEALS, st.name(), progress,
                 bond.satiety(), CompanionBond.SATIETY_MAX, c.staying(), bond.tactic(), bond.pvp(), memories(seals), MEMORY_LINES.length,
                 (float) KohakuCompanion.GROWTH.ratio(bond.seals()));
+    }
+
+    /** 她自己的一页：第几枚解锁、会了没有；说明里的数（最后一个总是冷却秒数）。 */
+    private static CompanionSheet.Skill page(KohakuSpells s, int seals, String... args) {
+        List<String> a = new ArrayList<>(List.of(args));
+        a.add(num(s.cooldown() / 20f));
+        return new CompanionSheet.Skill(s.id(), CompanionSheet.SPECIAL, s.seal(), s.unlocked(seals), a);
     }
 
     private static CompanionSheet.Stat stat(String id, float value, CompanionStats.Part part, float current) {

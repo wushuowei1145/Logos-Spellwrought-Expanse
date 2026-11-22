@@ -1,12 +1,20 @@
 package dev.logos.dimension.companion;
 
+import dev.logos.lang.Intent;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 琥珀的心智（docs/KOHAKU_COMPANION.md 第 7 节）：通用的那些在 {@link CompanionMind}，这里是她自己的。
@@ -15,6 +23,12 @@ import net.minecraft.world.phys.Vec3;
  *   <li>迎战（ENGAGE）就是施法：她更喜欢拉开距离——站到主人身后、和敌人隔开，站定了再放；被贴近了先往外退。</li>
  *   <li>HISS 哈气：不参与攻击时她不出手，可敌人冲过来她还是会朝它哈气（{@code act_guard}）。</li>
  *   <li>幻翼：同原版的猫，幻翼靠近她、冲着主人来时她哈一口气，幻翼就不敢扑下来（{@link #scarePhantoms}）。</li>
+ *   <li>SUPPORT 支援：一打起来随机放一个支援（守护、强化、治疗，包括你给的这几类页），给你或最需要的那位；有余力时
+ *       （魔力五成以上、护膜还在、身边没有冲着她来的）照顾你、你的使魔和宠物、别的同伴：谁伤得重就给谁治疗或护盾。
+ *       精灵公主也在外面时，治疗让给公主，她只放护盾。魔力少时不放。</li>
+ *   <li>UTILITY 猫眼药剂：你周围暗、又没有夜视时递给你一瓶。</li>
+ *   <li>攻击按处境挑页（{@link #castAt}）：强敌先封进琥珀，扎堆的放炼成阵、午睡结界、沸腾烧瓶，不然一滴就够；
+ *       每一种意图都先看你给的杖上有没有这一类的页，有就用你的。魔力少时只放一滴就够。</li>
  * </ul>
  *
  * <p>行动策略在她身上的意思（第 7.5 节）：随机应变隔开 {@link #KEEP} 格；优先远程隔得更远；优先近战站得近一点（她还是法师，不冲上去）；
@@ -38,6 +52,17 @@ public final class KohakuMind extends CompanionMind {
     static final double SIDE_OFFSET = 2.5, CLEAR = 1.0;
     /** 敌人近到这里就先退开（之后凝辉在这里接手）；冲着她来的近过「隔开」也退。 */
     static final double CLOSE = 3.5;
+    /** 支援的分：开场那一个（比迎战高，比护膜低）；有余力时照顾别人；猫眼药剂（打起来时不比迎战高）。 */
+    static final double SUPPORT_SCORE = .9, CARE_SCORE = .6, UTILITY_SCORE = .55, UTILITY_FIGHT_SCORE = .45;
+    /** 有余力：魔力至少几成；照顾别人：血低于几成的；走过去够得着的距离。 */
+    static final double SPARE_MANA = .5, CARE_BELOW = .6, REACH = 12;
+    /** 敌人扎堆：离她在打的那个多近的算一堆；一堆几个算多。 */
+    static final double CLUSTER = 3.5;
+    static final int CROWD = 3;
+    /** 范围攻击（你给的页）落点离你近过这里不放，免得炸到你。 */
+    static final double AREA_SAFE = 5;
+    /** 没有敌人多久算一场打完（下一场再放开场的支援）。 */
+    static final int CALM_RESET = 100;
     /** 测试用：哈过几次气、吓走过几次幻翼。 */
     static int hisses, phantomsScared;
 
@@ -46,6 +71,13 @@ public final class KohakuMind extends CompanionMind {
     /** 站在主人哪一侧（1 或 -1，进入战斗时按她当时在哪边定）。 */
     private int side = 1;
     private boolean sideChosen;
+    /** 这一场开场的支援放过了没有；最近一次有敌人是哪一刻。 */
+    private boolean opened;
+    private long lastFoe = -10_000;
+    /** 打算放的那一个支援（或猫眼药剂）：她的页或你的页、给谁、落在哪。 */
+    private record Plan(@Nullable KohakuSpells own, KohakuSpells.@Nullable Yours yours, LivingEntity target, Vec3 at, boolean opening) {}
+
+    private @Nullable Plan plan;
 
     KohakuMind(KohakuCompanion c) {
         super(c);
@@ -54,7 +86,7 @@ public final class KohakuMind extends CompanionMind {
 
     @Override
     protected boolean engagedOwn(Kind k) {
-        return k == Kind.WARD;
+        return k == Kind.WARD || k == Kind.SUPPORT && foe != null;
     }
 
     /** 撤退、法阵还在转开时什么都不做。 */
@@ -67,6 +99,8 @@ public final class KohakuMind extends CompanionMind {
 
     @Override
     protected void beforeScore(ServerLevel level, ServerPlayer p, long now) {
+        if (foe != null) lastFoe = now;
+        else if (now - lastFoe > CALM_RESET) opened = false;
         scarePhantoms(level, p, now);
     }
 
@@ -82,6 +116,146 @@ public final class KohakuMind extends CompanionMind {
         boolean hissing = current == Kind.HISS && "act_guard".equals(c.mood.playing());
         boolean near = foe != null && (foe.distanceTo(c) < HISS_AT || foe.distanceTo(p) < HISS_AT);
         scores.put(Kind.HISS, hissing ? 1 : s.holdBack() && near && now >= nextHiss ? HISS_SCORE : 0);
+        // 支援：正在放的就放完；开场随机一个；有余力时照顾伤得重的
+        boolean supporting = m.casting() && (current == Kind.SUPPORT || current == Kind.UTILITY);
+        if (!supporting) plan = null;
+        double support = 0, utility = 0;
+        if (supporting) {
+            support = current == Kind.SUPPORT ? 1.05 : 0;
+            utility = current == Kind.UTILITY ? 1.05 : 0;
+        } else if (!m.low() && !m.casting()) {
+            if (foe != null && !opened) {
+                plan = opening(level, p, now);
+                if (plan == null) opened = true;
+                else support = SUPPORT_SCORE;
+            }
+            if (plan == null && spare(level, now)) {
+                plan = care(level, p, now);
+                if (plan != null) support = CARE_SCORE;
+            }
+            if (plan == null) {
+                plan = catEye(level, p, now);
+                if (plan != null) utility = foe == null ? UTILITY_SCORE : UTILITY_FIGHT_SCORE;
+            }
+        }
+        scores.put(Kind.SUPPORT, support);
+        scores.put(Kind.UTILITY, utility);
+    }
+
+    // ---------------------------------------------------------------- 支援
+
+    /** 有余力（第 7.3 节）：魔力（身上的加杖里存的）五成以上、护膜还在（打着的时候）、6 格内没有冲着她来的敌人。 */
+    private boolean spare(ServerLevel level, long now) {
+        if (c.available() < c.maxMana() * SPARE_MANA || !c.magic.wardUp() && foe != null) return false;
+        return level.getEntitiesOfClass(Mob.class, c.getBoundingBox().inflate(6), m -> m.isAlive() && m.getTarget() == c).isEmpty();
+    }
+
+    /** 精灵公主也在外面：治疗让给她。 */
+    private boolean princessOut(ServerPlayer p) {
+        return Companions.princess(p) != null;
+    }
+
+    /** 身边血最少、低于 {@code below} 成的同伴（她自己只在别人都不急时才排上）。 */
+    private @Nullable LivingEntity wounded(ServerLevel level, ServerPlayer p, double below) {
+        LivingEntity best = null;
+        double worst = below;
+        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, c.getBoundingBox().inflate(REACH + 4), e -> KohakuMagic.ally(e, p, c))) {
+            double f = e.getHealth() / Math.max(1, e.getMaxHealth()) + (e == c ? .15 : 0);
+            if (f < worst) {
+                worst = f;
+                best = e;
+            }
+        }
+        return best;
+    }
+
+    /**
+     * 开场的支援（维护者定的：随机一个）：她会的守护、强化、治疗页和你给的这几类页里随机挑一页。守护给你（伞罩住你身边的同伴），
+     * 强化给你（你手上已经缠着东西时不给），治疗给最需要的那位（都满血时不算）。
+     */
+    private @Nullable Plan opening(ServerLevel level, ServerPlayer p, long now) {
+        List<Plan> options = new ArrayList<>();
+        LivingEntity hurt = princessOut(p) ? null : wounded(level, p, .85);
+        for (KohakuSpells.Yours y : yoursPages()) {
+            if (!c.magic.ready(y, now)) continue;
+            LivingEntity t = y.aim() == KohakuSpells.Aim.SELF ? selfTarget(y.intent()) : supportTarget(y.intent(), p, hurt);
+            if (t != null) options.add(new Plan(null, y, t, t.position(), true));
+        }
+        for (KohakuSpells s : List.of(KohakuSpells.MISTY_UMBRELLA, KohakuSpells.QUICK_ENCHANT, KohakuSpells.GREENHOUSE)) {
+            if (!c.magic.usable(s, now)) continue;
+            LivingEntity t = supportTarget(s.intent(), p, hurt);
+            if (t != null) options.add(new Plan(s, null, t, t.position(), true));
+        }
+        return options.isEmpty() ? null : options.get(c.getRandom().nextInt(options.size()));
+    }
+
+    /** 只作用自己的那一页（你写给自己的守护、治疗）：守护在她护膜碎了时，治疗在她伤着时，给她自己。 */
+    private @Nullable LivingEntity selfTarget(Intent intent) {
+        return switch (intent) {
+            case WARD -> c.magic.wardUp() ? null : c;
+            case HEAL -> c.getHealth() < c.getMaxHealth() * .85f ? c : null;
+            default -> null;
+        };
+    }
+
+    /** 这一类支援给谁：守护、强化给你（强化在你手上空着时），治疗给伤着的那位。 */
+    private @Nullable LivingEntity supportTarget(Intent intent, ServerPlayer p, @Nullable LivingEntity hurt) {
+        return switch (intent) {
+            case WARD -> p;
+            case EMPOWER -> PrincessMagic.wrapped(p) ? null : p;
+            case HEAL -> hurt;
+            default -> null;
+        };
+    }
+
+    /** 有余力时照顾伤得重的那位（六成血以下）：先治疗（公主在外面时不治），没有治疗页就给护盾。你给的页先。 */
+    private @Nullable Plan care(ServerLevel level, ServerPlayer p, long now) {
+        LivingEntity t = wounded(level, p, CARE_BELOW);
+        if (t == null) return null;
+        boolean heal = !princessOut(p);
+        for (Intent want : heal ? List.of(Intent.HEAL, Intent.WARD) : List.of(Intent.WARD)) {
+            for (KohakuSpells.Yours y : yoursPages()) {
+                if (y.intent() != want || !c.magic.ready(y, now)) continue;
+                if (y.aim() == KohakuSpells.Aim.SELF && t != c) continue;
+                return new Plan(null, y, t, t.position(), false);
+            }
+            KohakuSpells own = want == Intent.HEAL ? KohakuSpells.GREENHOUSE : KohakuSpells.MISTY_UMBRELLA;
+            if (c.magic.usable(own, now)) return new Plan(own, null, t, t.position(), false);
+        }
+        return null;
+    }
+
+    /** 猫眼药剂：你周围暗（亮度不到 6）、又没有夜视时递给你一瓶。 */
+    private @Nullable Plan catEye(ServerLevel level, ServerPlayer p, long now) {
+        if (!c.magic.usable(KohakuSpells.CAT_EYE, now) || p.hasEffect(MobEffects.NIGHT_VISION)) return null;
+        if (level.getMaxLocalRawBrightness(BlockPos.containing(p.getEyePosition())) >= 6) return null;
+        return new Plan(KohakuSpells.CAT_EYE, null, p, p.position(), false);
+    }
+
+    /** 走到够得着的地方（{@link #REACH} 格内、看得见），朝那位拄杖放出去。 */
+    private void support(long now) {
+        if (c.magic.casting()) {
+            c.getNavigation().stop();
+            return;
+        }
+        Plan pl = plan;
+        if (pl == null || !pl.target().isAlive()) return;
+        LivingEntity t = pl.target();
+        if (t != c && (c.distanceTo(t) > REACH || !c.hasLineOfSight(t))) {
+            if (now % THINK == 0 || c.getNavigation().isDone()) c.getNavigation().moveTo(t, 1.3);
+            return;
+        }
+        c.getNavigation().stop();
+        if (t != c) face(t);
+        Vec3 at = pl.target().position();
+        boolean ok = pl.own() != null ? c.magic.startPage(pl.own(), t, at, now) : pl.yours() != null && c.magic.startYours(pl.yours(), t, at, now);
+        if (ok && pl.opening()) opened = true;
+        if (!ok) plan = null;
+    }
+
+    /** 你给她的那根杖上她能放的页（不是你给的杖时没有）。 */
+    private List<KohakuSpells.Yours> yoursPages() {
+        return c.staff.yours() ? c.staff.yoursPages() : List.of();
     }
 
     @Override
@@ -106,6 +280,7 @@ public final class KohakuMind extends CompanionMind {
                 if (!c.magic.casting()) c.magic.startWard(now);
             }
             case HISS -> hiss(level, now);
+            case SUPPORT, UTILITY -> support(now);
             default -> idle(p, now, true);
         }
     }
@@ -204,18 +379,79 @@ public final class KohakuMind extends CompanionMind {
         c.getLookControl().setLookAt(target, 40, 40);
     }
 
-    /** 看得见、够得着、弹道上没有主人就放一页单体攻击（现在是一滴就够）；弹道上有主人就往旁边挪一步。 */
+    /**
+     * 按处境挑一页打 {@code target}（第 5、7 节）：
+     * <ol>
+     *   <li>魔力少：只放一滴就够；</li>
+     *   <li>强敌：先封进琥珀（控制）；</li>
+     *   <li>强敌或扎堆三个以上：炼成阵·星辰花（范围），再是午睡结界（控制）；</li>
+     *   <li>扎堆两个以上：沸腾烧瓶（范围）；</li>
+     *   <li>不然一滴就够（单体）。</li>
+     * </ol>
+     * 每一步都先看你给的杖上有没有这一类的页，有就用你的（范围页落点离你太近时不放你的）。直线飞的弹道上有主人就往旁边挪一步。
+     */
     private void castAt(LivingEntity target, long now) {
-        if (!c.hasLineOfSight(target) || c.distanceTo(target) > KohakuMagic.RANGE) return;
-        if (owner != null && !clearShot(c, owner, target)) {
-            Vec3 line = target.position().subtract(c.position()).multiply(1, 0, 1);
-            Vec3 perp = line.lengthSqr() < 1e-4 ? new Vec3(1, 0, 0) : new Vec3(-line.z, 0, line.x).normalize();
-            Vec3 to = c.position().add(perp.scale(side * 2));
-            c.getNavigation().moveTo(to.x, to.y, to.z, 1.2);
+        if (!c.hasLineOfSight(target) || c.distanceTo(target) > KohakuMagic.RANGE || c.magic.casting()) return;
+        KohakuMagic m = c.magic;
+        boolean clear = owner == null || clearShot(c, owner, target);
+        if (m.low()) {
+            if (clear) m.startPage(KohakuSpells.ONE_DROP, target, now);
+            else sidestep(target);
             return;
         }
-        KohakuSpells strike = KohakuSpells.ONE_DROP;
-        if (c.magic.ready(strike, now)) c.magic.startPage(strike, target, now);
+        List<Mob> crowd = c.level().getEntitiesOfClass(Mob.class, target.getBoundingBox().inflate(CLUSTER),
+                e -> e.isAlive() && c.canHarm(e) && (e instanceof Enemy || e == target || c.hostileTo(e)));
+        Vec3 center = target.position();
+        if (crowd.size() > 1) {
+            Vec3 sum = Vec3.ZERO;
+            for (Mob e : crowd) sum = sum.add(e.position());
+            center = sum.scale(1.0 / crowd.size());
+        }
+        boolean strong = PrincessMagic.strong(target, threats);
+        if (strong && (tryYours(Intent.CONTROL, target, center, now, clear) || m.startPage(KohakuSpells.TIME_AMBER, target, now))) return;
+        if ((strong || crowd.size() >= CROWD) && (tryYours(Intent.AREA, target, center, now, clear)
+                || m.startPage(KohakuSpells.STARBLOOM, target, center, now) || m.startPage(KohakuSpells.NAP_WARD, target, center, now))) return;
+        if (crowd.size() >= 2 && m.startPage(KohakuSpells.BOILING_FLASK, target, center, now)) return;
+        if (tryYours(Intent.STRIKE, target, center, now, clear)) return;
+        if (!clear) {
+            sidestep(target);
+            return;
+        }
+        m.startPage(KohakuSpells.ONE_DROP, target, now);
+    }
+
+    /** 你给的页里有没有 {@code intent} 这一类、冷却好了的，有就放（直线的要弹道干净，范围的落点要离你够远）。 */
+    private boolean tryYours(Intent intent, LivingEntity target, Vec3 center, long now, boolean clear) {
+        for (KohakuSpells.Yours y : yoursPages()) {
+            if (y.intent() != intent || !c.magic.ready(y, now)) continue;
+            if (y.aim() == KohakuSpells.Aim.FOE && !clear) continue;
+            if (y.aim() == KohakuSpells.Aim.CLUSTER && owner != null && center.distanceTo(owner.position()) < AREA_SAFE) continue;
+            if (c.magic.startYours(y, target, y.aim() == KohakuSpells.Aim.CLUSTER ? center : null, now)) return true;
+        }
+        return false;
+    }
+
+    /** 弹道上有主人：往旁边挪一步。 */
+    private void sidestep(LivingEntity target) {
+        Vec3 line = target.position().subtract(c.position()).multiply(1, 0, 1);
+        Vec3 perp = line.lengthSqr() < 1e-4 ? new Vec3(1, 0, 0) : new Vec3(-line.z, 0, line.x).normalize();
+        Vec3 to = c.position().add(perp.scale(side * 2));
+        c.getNavigation().moveTo(to.x, to.y, to.z, 1.2);
+    }
+
+    /**
+     * 要对付的那一个：通用的那些之外，有余力时她也去打围着你的使魔、宠物、别的同伴的（第 7.3 节：谁被围就去打围着谁的）。
+     */
+    @Override
+    protected @Nullable LivingEntity pickFoe(ServerLevel level, ServerPlayer p, OwnerWatch w, long now) {
+        LivingEntity best = super.pickFoe(level, p, w, now);
+        if (best != null || c.staying() || tactic == CompanionTactic.PASSIVE) return best;
+        Mob pick = null;
+        for (Mob m : level.getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(16), m -> m.isAlive() && c.canHarm(m) && m.getTarget() != null
+                && m.getTarget() != p && KohakuMagic.ally(m.getTarget(), p, c))) {
+            if (pick == null || m.distanceToSqr(c) < pick.distanceToSqr(c)) pick = m;
+        }
+        return pick;
     }
 
     /** 后撤（血少了，或不参与攻击时敌人近了）：退到主人身后；站好了、没在躲的话照常施法。 */

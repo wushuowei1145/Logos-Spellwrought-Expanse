@@ -152,6 +152,36 @@ class KohakuTest {
         }
     }
 
+    /** 八种意图里她自己会的（第九印的位移和猫步一起做）：每枚爪之契一页，第一到第八印都有。 */
+    @Test void herPagesCoverTheIntentsAndSeals() {
+        java.util.Set<dev.logos.lang.Intent> intents = java.util.EnumSet.noneOf(dev.logos.lang.Intent.class);
+        for (KohakuSpells s : KohakuSpells.ALL) intents.add(s.intent());
+        for (var i : dev.logos.lang.Intent.values()) {
+            if (i != dev.logos.lang.Intent.MOVE) assertTrue(intents.contains(i), "没有 " + i + " 的页");
+        }
+        for (int seal = 0; seal <= 8; seal++) {
+            int n = seal;
+            assertTrue(KohakuSpells.ALL.stream().anyMatch(s -> s.seal() == n), "第 " + seal + " 枚没有新的页");
+        }
+    }
+
+    /** 你给的页：召唤、附身这类非玩家用不了的符文的页她不放；按意图决定怎么放，位移、杂务她不自己放。 */
+    @Test void yourPagesAreCheckedAndAimedByIntent() {
+        assertTrue(KohakuSpells.playerOnly(Casting.compile("(spell :name \"附身\" :mana 50 :trigger cast (possess (foe) 5))")));
+        assertTrue(KohakuSpells.playerOnly(Casting.compile("(spell :name \"藏在里面\" :mana 50 :trigger cast (projectile (on-hit (possess target 5))))")));
+        assertFalse(KohakuSpells.playerOnly(Casting.compile("(spell :name \"弹\" :mana 50 :trigger cast (projectile (on-hit (damage target 3 arcane))))")));
+        assertEquals(KohakuSpells.Aim.FOE, KohakuSpells.aimFor(dev.logos.lang.Intent.STRIKE));
+        assertEquals(KohakuSpells.Aim.CLUSTER, KohakuSpells.aimFor(dev.logos.lang.Intent.AREA));
+        assertEquals(KohakuSpells.Aim.ALLY, KohakuSpells.aimFor(dev.logos.lang.Intent.HEAL));
+        assertNull(KohakuSpells.aimFor(dev.logos.lang.Intent.MOVE));
+        assertNull(KohakuSpells.aimFor(dev.logos.lang.Intent.UTILITY));
+        // 支援页按作用对象：群体的落在那位脚下，单体的对着那位放，只作用自己的给她自己，写给自己的强化她不放
+        var self = java.util.Set.of(dev.logos.lang.Reach.SELF);
+        assertEquals(KohakuSpells.Aim.AT, KohakuSpells.aimFor(dev.logos.lang.Intent.WARD, java.util.Set.of(dev.logos.lang.Reach.ONE)));
+        assertEquals(KohakuSpells.Aim.SELF, KohakuSpells.aimFor(dev.logos.lang.Intent.HEAL, self));
+        assertNull(KohakuSpells.aimFor(dev.logos.lang.Intent.EMPOWER, self));
+    }
+
     /** 台词、对话、面板用到的语言键，中英文都有。 */
     @Test void everyLineAndPanelKeyIsInBothLanguages() throws Exception {
         List<String> keys = new ArrayList<>(List.of("entity.logos_dimension.kohaku_companion", "item.logos_dimension.paw_sovereign",
@@ -162,7 +192,8 @@ class KohakuTest {
         TalkMenu.Option chat = TalkMenu.find(KohakuTalk.MENU, TalkMenu.CHAT);
         assertNotNull(chat);
         for (TalkMenu.Option o : chat.children()) if (o.id().startsWith("chat.")) keys.add(TALK + "option." + o.id());
-        for (String s : new String[]{"one_drop", "ward", "staff", "mana", "genius", "withdraw", "sealed"}) {
+        for (String s : new String[]{"one_drop", "ward", "staff", "mana", "genius", "withdraw", "sealed", "cat_eye", "boiling_flask", "nap_ward",
+                "greenhouse", "quick_enchant", "time_amber", "misty_umbrella", "starbloom", "your_pages"}) {
             for (String part : new String[]{"name", "icon", "desc"}) keys.add(TALK + "skill." + s + "." + part);
         }
         for (int n = 0; n < KohakuTalk.MEMORY_LINES.length; n++) {
