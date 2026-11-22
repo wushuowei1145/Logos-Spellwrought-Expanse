@@ -129,6 +129,8 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
     static {
         register("shiraume", SHIRAUME);
         register("elf_princess", PRINCESS);
+        // 腐化女王之战里的她（对话菜单另一个 ID，样子还是她）
+        register(dev.logos.dimension.elven.blight.ElfPrincess.TALK, PRINCESS);
         register("kohaku", KOHAKU);
     }
 }

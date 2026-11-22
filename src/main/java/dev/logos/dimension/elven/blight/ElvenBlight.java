@@ -49,7 +49,7 @@ public final class ElvenBlight {
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("queen_tether"))));
     /** 精灵公主（战斗版）：森林精灵的身材，外观先用固定的一套森林精灵零件。 */
     public static final Supplier<EntityType<ElfPrincess>> PRINCESS = ENTITIES.register("elf_princess", () ->
-            EntityType.Builder.of(ElfPrincess::new, MobCategory.MISC).sized(0.6f, 1.5f).eyeHeight(1.26f).clientTrackingRange(10)
+            EntityType.Builder.of(ElfPrincess::new, MobCategory.MISC).sized(.6f, 1.35f).eyeHeight(1.02f).clientTrackingRange(10)
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("elf_princess"))));
 
     private static DeferredBlock<CorruptionGrowthBlock> growth(String id) {
