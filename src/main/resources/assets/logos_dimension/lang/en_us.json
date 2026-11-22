@@ -1888,5 +1888,14 @@
   "block.logos_dimension.blight_node": "Regional Corruption Core",
   "item.logos_dimension.blight_node": "Regional Corruption Core",
   "gui.logos_dimension.queen.title_zh": "腐化女王",
-  "gui.logos_dimension.queen.title_en": "The Corrupted Queen"
+  "gui.logos_dimension.queen.title_en": "The Corrupted Queen",
+  "talk.logos_dimension.kohaku.option.chat.outfit": "How about a change of clothes?",
+  "talk.logos_dimension.kohaku.option.outfit.daisy": "Daisy Stroll",
+  "talk.logos_dimension.kohaku.option.outfit.velvet": "Velvet Serenade",
+  "talk.logos_dimension.kohaku.option.outfit.swimsuit": "Swimsuit",
+  "line.logos_dimension.kohaku.talk.outfit_cardigan": "...This one again. Plenty of pockets for flasks and coins.",
+  "line.logos_dimension.kohaku.talk.outfit_daisy": "A walk? ...Fine. I'll call it sunbathing.",
+  "line.logos_dimension.kohaku.talk.outfit_velvet": "Velvet... are we going to a concert? Then you're getting me a front-row seat.",
+  "line.logos_dimension.kohaku.talk.outfit_swimsuit": "...A swimsuit? Let's be clear: if the water's cold, I'm not going in.",
+  "line.logos_dimension.kohaku.talk.outfit_same": "I'm already wearing it."
 }

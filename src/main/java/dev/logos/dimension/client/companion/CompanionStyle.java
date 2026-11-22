@@ -3,6 +3,7 @@ package dev.logos.dimension.client.companion;
 import dev.logos.dimension.companion.CompanionOutfit;
 import dev.logos.dimension.companion.CompanionSheet;
 import dev.logos.dimension.companion.Companions;
+import dev.logos.dimension.companion.KohakuOutfit;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
@@ -98,7 +99,7 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
             0xFF2A1C14, 0xFF140D09, 0xB41E140E, CompanionStyle::paw,
             new Showcase((level, sheet) -> {
                 var c = Companions.KOHAKU.get().create(level, EntitySpawnReason.LOAD);
-                if (c != null) c.showcase("face_lazy", sheet.seals());
+                if (c != null) c.showcase("face_lazy", sheet.seals(), KohakuOutfit.byId(sheet.outfit()));
                 return c;
             }, 18, .75f, -8, .68f, 0));
 

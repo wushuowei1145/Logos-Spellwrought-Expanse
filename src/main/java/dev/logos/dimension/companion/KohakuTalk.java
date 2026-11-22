@@ -32,14 +32,21 @@ final class KohakuTalk {
     /** 往事：第 0 段本来就记得，之后每盖一枚爪之契她多讲一段，一共十段；每段几句。角色面板的「往事」一页可以重读。 */
     static final int[] MEMORY_LINES = {3, 2, 2, 2, 2, 2, 2, 2, 3, 3};
     /** 现在穿的是开衫制服（别的几套装束以后做）。 */
-    static final String OUTFIT = "cardigan";
 
     /** 聊天里她自己的话题；其余（包袱、作战策略、详细数据、一会再聊）是通用的。 */
     static final List<Option> MENU = TalkMenu.standard(List.of(
             Option.server("chat.coin"), Option.server("chat.food"), Option.server("chat.alchemy"), Option.server("chat.critique"),
             Option.server("chat.lazy"), Option.server("chat.city"), Option.server("chat.money"), Option.server("chat.allowance"),
             Option.server("chat.enforcers"), Option.server("chat.past"), Option.server("chat.seals"), Option.server("chat.us"),
-            Option.server("chat.rest")), true);
+            Option.menu("chat.outfit", outfits()), Option.server("chat.rest")), true);
+
+    /** 「换身衣服吧」：四套都有，穿着的那一套打勾。 */
+    private static Option[] outfits() {
+        List<Option> out = new ArrayList<>();
+        for (KohakuOutfit o : KohakuOutfit.values()) out.add(Option.server("outfit." + o.id, "outfit=" + o.id));
+        out.add(Option.back());
+        return out.toArray(Option[]::new);
+    }
     /** 帮你看载页：一天第一次加多少羁绊。注入的魔力比一次花的多出这么多倍、又多出这么多点，算浪费。 */
     static final float CRITIQUE_BOND = 2;
     static final double WASTE_RATIO = 3, WASTE_MIN = 40;
@@ -108,7 +115,7 @@ final class KohakuTalk {
         CompanionBond.Stage st = CompanionBond.Stage.of(bond.affection());
         CompanionBond.Stage[] all = CompanionBond.Stage.values();
         float progress = st.ordinal() + 1 >= all.length ? 1 : (bond.affection() - st.from) / (all[st.ordinal() + 1].from - st.from);
-        return new CompanionSheet(c.getId(), ID, OUTFIT, stats, List.copyOf(skills), seals, MAX_SEALS, st.name(), progress,
+        return new CompanionSheet(c.getId(), ID, c.outfit().id, stats, List.copyOf(skills), seals, MAX_SEALS, st.name(), progress,
                 bond.satiety(), CompanionBond.SATIETY_MAX, c.staying(), bond.tactic(), bond.pvp(), memories(seals), MEMORY_LINES.length,
                 (float) KohakuCompanion.GROWTH.ratio(bond.seals()));
     }
@@ -252,6 +259,7 @@ final class KohakuTalk {
             default -> {
             }
         }
+        if (option.startsWith("outfit.")) return dress(c, p, KohakuOutfit.byId(option.substring("outfit.".length())), now);
         if (option.startsWith("tactic.")) {
             CompanionTactic t = CompanionTactic.byId(option.substring("tactic.".length()));
             c.setBond(p, bond.withTactic(t));
@@ -264,6 +272,26 @@ final class KohakuTalk {
             return Reply.say(line("tactic_" + t.id));
         }
         return Reply.NONE;
+    }
+
+    /**
+     * 「换身衣服吧」：换上 {@code o}，记在你身上（收回再叫出来还是这一套）。各有各的反应：开衫懒洋洋、雏菊开心、天鹅绒行个音乐会的礼、
+     * 泳装不好意思；已经穿着就说一声。
+     */
+    private static Reply dress(KohakuCompanion c, ServerPlayer p, KohakuOutfit o, long now) {
+        if (c.outfit() == o) {
+            c.mood.talk("face_bored", now, 60);
+            return Reply.say(line("outfit_same"));
+        }
+        p.setData(Companions.KOHAKU_DAYS, KohakuLife.days(p).withOutfit(o));
+        c.dress(o, false);
+        switch (o) {
+            case DAISY -> c.mood.talk("face_happy", now, 80);
+            case VELVET -> c.mood.act("act_concert_curtsey");
+            case SWIMSUIT -> c.mood.talk("face_flustered", now, 80);
+            default -> c.mood.talk("face_lazy", now, 60);
+        }
+        return Reply.say(line("outfit_" + o.id));
     }
 
     /** 我弄丢了爪印金镑：还在身上就笑你；不然要一枚真的灵猫金镑（创造模式不用），给你再压一枚。 */

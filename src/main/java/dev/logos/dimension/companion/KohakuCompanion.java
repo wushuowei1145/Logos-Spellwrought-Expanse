@@ -77,6 +77,8 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
     private static final EntityDataAccessor<Integer> CIRCLE_LENGTH = SynchedEntityData.defineId(KohakuCompanion.class, EntityDataSerializers.INT);
     /** 撑着伞没有：0 没有、1 她自己的、2 大的（把你也罩进去）。客户端照着在杖头上画伞面（{@code KohakuUmbrella}）。 */
     private static final EntityDataAccessor<Integer> UMBRELLA = SynchedEntityData.defineId(KohakuCompanion.class, EntityDataSerializers.INT);
+    /** 穿哪一套（{@link KohakuOutfit}）：客户端按它隐藏别的几套。 */
+    private static final EntityDataAccessor<String> OUTFIT = SynchedEntityData.defineId(KohakuCompanion.class, EntityDataSerializers.STRING);
 
     final KohakuStaff staff = new KohakuStaff(this);
     final KohakuMagic magic = new KohakuMagic(this);
@@ -98,6 +100,21 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
         builder.define(CIRCLE_AT, -1L);
         builder.define(CIRCLE_LENGTH, 0);
         builder.define(UMBRELLA, 0);
+        builder.define(OUTFIT, KohakuOutfit.CARDIGAN.id);
+    }
+
+    public KohakuOutfit outfit() {
+        return KohakuOutfit.byId(entityData.get(OUTFIT));
+    }
+
+    /** 换上 {@code o}：身边一小团琥珀色的光点和一声轻响，像炼成一样一下子换好（{@code quiet}：叫出来时直接穿上，不放）。 */
+    void dress(KohakuOutfit o, boolean quiet) {
+        if (outfit() == o) return;
+        entityData.set(OUTFIT, o.id);
+        if (quiet || !(level() instanceof ServerLevel level)) return;
+        level.sendParticles(new DustParticleOptions(AMBER, 1.1f), getX(), getY() + .8, getZ(), 22, .3, .5, .3, 0);
+        level.sendParticles(ParticleTypes.POOF, getX(), getY() + .7, getZ(), 2, .15, .25, .15, .005);
+        level.playSound(null, getX(), getY(), getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.NEUTRAL, .6f, 1.25f);
     }
 
     void setUmbrella(int size) {
@@ -349,6 +366,8 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
     @Override
     void bind(ServerPlayer player) {
         super.bind(player);
+        // 你上次给她换的那一套
+        dress(KohakuOutfit.byId(player.getData(Companions.KOHAKU_DAYS).outfit()), true);
         staff.equipNow(player);
         mana = maxMana;
     }
@@ -769,8 +788,9 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
         return KohakuTalk.back(this, p);
     }
 
-    /** 角色面板里展示的那一位（客户端临时造的）：拄着长杖，表情 {@code face}。 */
-    public void showcase(String face, int seals) {
+    /** 角色面板、友人帐里展示的那一位（客户端临时造的）：穿 {@code outfit}，拄着长杖，表情 {@code face}。 */
+    public void showcase(String face, int seals, KohakuOutfit outfit) {
+        entityData.set(OUTFIT, outfit.id);
         entityData.set(MISC, face);
         entityData.set(MOVE, "");
         setItemSlot(EquipmentSlot.MAINHAND, KohakuStaff.own(seals));
@@ -790,6 +810,7 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
         super.addAdditionalSaveData(output);
         output.putDouble("Mana", mana);
         output.putDouble("StaffStore", staff.store());
+        output.putString("Outfit", outfit().id);
     }
 
     @Override
@@ -797,5 +818,6 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
         super.readAdditionalSaveData(input);
         mana = input.getDoubleOr("Mana", MANA);
         staff.setStore(input.getDoubleOr("StaffStore", 0));
+        entityData.set(OUTFIT, KohakuOutfit.byId(input.getStringOr("Outfit", KohakuOutfit.CARDIGAN.id)).id);
     }
 }
