@@ -76,6 +76,7 @@ public final class CompanionCommands {
      * /alchemy companion kohaku satiety 值    设她的饱腹
      * /alchemy companion kohaku mana 值       设她的魔力（试魔力少时的打法）
      * /alchemy companion kohaku withdraw      让她撤退（试倒下、法阵卷走的样子）
+     * /alchemy companion kohaku outfit 衣服   换衣服：cardigan、daisy、velvet、swimsuit（同对话里换，记在你身上）
      * </pre>
      */
     private static LiteralArgumentBuilder<CommandSourceStack> kohaku() {
@@ -126,7 +127,23 @@ public final class CompanionCommands {
                     e.startWithdraw(level);
                     return 1;
                 }))
+                .then(kohakuOutfits())
                 .then(Commands.literal("info").executes(c -> kohakuInfo(c.getSource())));
+    }
+
+    /** {@code kohaku outfit <衣服>}：记在你身上，她在外面就当场换上。 */
+    private static LiteralArgumentBuilder<CommandSourceStack> kohakuOutfits() {
+        LiteralArgumentBuilder<CommandSourceStack> node = Commands.literal("outfit");
+        for (KohakuOutfit o : KohakuOutfit.values()) {
+            node.then(Commands.literal(o.id).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                p.setData(Companions.KOHAKU_DAYS, KohakuLife.days(p).withOutfit(o));
+                KohakuCompanion e = Companions.kohaku(p);
+                if (e != null) e.dress(o, false);
+                return 1;
+            }));
+        }
+        return node;
     }
 
     private static int kohakuSeal(CommandSourceStack src, int count) throws CommandSyntaxException {

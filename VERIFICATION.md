@@ -2,8 +2,8 @@
 
 ## 友人帐
 
-2026-11-23：分支 `feat/companion-book`，从 main `a55a4d6a`。设计见 [同伴](docs/COMPANIONS.md) 第 7 节。琥珀换衣服（`feat/kohaku-outfits`）是另一个 PR；
-这里琥珀那一页先画开衫，两个都合进去以后改成你给她换的那一套。
+2026-11-23：分支 `feat/companion-book`，从 main `a55a4d6a`。设计见 [同伴](docs/COMPANIONS.md) 第 7 节。琥珀换衣服（#293）先合进了 main，
+合并 main 时接上了：琥珀那一页画你给她换的那一套（场景里换上雏菊散步，友人帐里、叫出来都是雏菊）。
 
 | 层级 | 结果 |
 |---|---|
@@ -14,6 +14,22 @@
 
 ```text
 ./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:companion_book -PldTestHeadless -PldTestWindow=1280x720
+```
+
+## 琥珀同伴（第六步：换衣服）
+
+2026-11-23：分支 `feat/kohaku-outfits`，从 main `a55a4d6a`。设计见 [琥珀](docs/KOHAKU_COMPANION.md) 第 19 节。友人帐（`feat/companion-book`）是另一个 PR。
+
+| 层级 | 结果 |
+|---|---|
+| 单元 | `KohakuTest` **22/22**（新加两个：四套衣服都在模型里、穿哪一套都不藏公共骨骼、对话里四套加返回；换的那一套记在你身上，旧存档读出来是开衫），同伴其余 37 个、`LangCoverageTest` 2/2 |
+| 实际客户端 | `group:kohaku_companion` 跑过一遍（和友人帐一起，拆开之前）：只有 `kohaku_talk` 的「她自己的话题」要加上新的「换身衣服吧」，改了以后单独重跑通过；拆开以后在这个分支上重跑 `kohaku_outfit`、`kohaku_talk`，2/2 通过。新场景 `kohaku_outfit`：四套挨个换、穿着的打勾、再选同一套她说已经穿着、收回再叫出来还是泳装、面板里也是泳装 |
+| 人工看截图 | 四套衣服都对，换的时候琥珀色光点和一小朵烟（测试客户端是英文） |
+| 没做 | 没进游戏试玩；多人、专用服务器；按场合自己换衣服（维护者说先不做） |
+
+```text
+./gradlew test --tests 'dev.logos.dimension.companion.*' --tests 'dev.logos.dimension.LangCoverageTest' -PlogosJar=/absolute/path/logos.jar -PorchestraJar=/absolute/path/starbloom_orchestra-0.1.0.jar
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:kohaku_companion -PldTestHeadless -PldTestWindow=1280x720
 ```
 
 ## 腐化女王重做第 2 步：扩大树心战场

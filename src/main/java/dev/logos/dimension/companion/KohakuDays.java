@@ -14,23 +14,25 @@ import net.minecraft.core.GlobalPos;
  * @param foodDay      最近一次塞给你吃的那一天；{@code foods} 是那天塞了几次
  * @param critiqueDay  最近一次帮你看载页、加了羁绊的那一天
  * @param allowanceDay 最近一次收你零花钱的那一天（第二天早上的礼物里稀有的那一档翻倍，第五步）
+ * @param outfit       她穿哪一套（{@link KohakuOutfit}，对话里换的；收回再叫出来还是这一套）
  */
-public record KohakuDays(Optional<GlobalPos> rug, long rugNapDay, long foodDay, int foods, long critiqueDay, long allowanceDay) {
-    public static final KohakuDays NONE = new KohakuDays(Optional.empty(), -1, -1, 0, -1, -1);
+public record KohakuDays(Optional<GlobalPos> rug, long rugNapDay, long foodDay, int foods, long critiqueDay, long allowanceDay, String outfit) {
+    public static final KohakuDays NONE = new KohakuDays(Optional.empty(), -1, -1, 0, -1, -1, KohakuOutfit.CARDIGAN.id);
     static final Codec<KohakuDays> CODEC = RecordCodecBuilder.create(i -> i.group(
             GlobalPos.CODEC.optionalFieldOf("rug").forGetter(KohakuDays::rug),
             Codec.LONG.optionalFieldOf("rug_nap_day", -1L).forGetter(KohakuDays::rugNapDay),
             Codec.LONG.optionalFieldOf("food_day", -1L).forGetter(KohakuDays::foodDay),
             Codec.INT.optionalFieldOf("foods", 0).forGetter(KohakuDays::foods),
             Codec.LONG.optionalFieldOf("critique_day", -1L).forGetter(KohakuDays::critiqueDay),
-            Codec.LONG.optionalFieldOf("allowance_day", -1L).forGetter(KohakuDays::allowanceDay)).apply(i, KohakuDays::new));
+            Codec.LONG.optionalFieldOf("allowance_day", -1L).forGetter(KohakuDays::allowanceDay),
+            Codec.STRING.optionalFieldOf("outfit", KohakuOutfit.CARDIGAN.id).forGetter(KohakuDays::outfit)).apply(i, KohakuDays::new));
 
     KohakuDays withRug(Optional<GlobalPos> at) {
-        return new KohakuDays(at, rugNapDay, foodDay, foods, critiqueDay, allowanceDay);
+        return new KohakuDays(at, rugNapDay, foodDay, foods, critiqueDay, allowanceDay, outfit);
     }
 
     KohakuDays withRugNap(long day) {
-        return new KohakuDays(rug, day, foodDay, foods, critiqueDay, allowanceDay);
+        return new KohakuDays(rug, day, foodDay, foods, critiqueDay, allowanceDay, outfit);
     }
 
     /** 今天塞过几次吃的（不是今天的记录就是 0）。 */
@@ -39,14 +41,18 @@ public record KohakuDays(Optional<GlobalPos> rug, long rugNapDay, long foodDay, 
     }
 
     KohakuDays withFood(long day) {
-        return new KohakuDays(rug, rugNapDay, day, foodsOn(day) + 1, critiqueDay, allowanceDay);
+        return new KohakuDays(rug, rugNapDay, day, foodsOn(day) + 1, critiqueDay, allowanceDay, outfit);
     }
 
     KohakuDays withCritique(long day) {
-        return new KohakuDays(rug, rugNapDay, foodDay, foods, day, allowanceDay);
+        return new KohakuDays(rug, rugNapDay, foodDay, foods, day, allowanceDay, outfit);
     }
 
     KohakuDays withAllowance(long day) {
-        return new KohakuDays(rug, rugNapDay, foodDay, foods, critiqueDay, day);
+        return new KohakuDays(rug, rugNapDay, foodDay, foods, critiqueDay, day, outfit);
+    }
+
+    public KohakuDays withOutfit(KohakuOutfit o) {
+        return new KohakuDays(rug, rugNapDay, foodDay, foods, critiqueDay, allowanceDay, o.id);
     }
 }

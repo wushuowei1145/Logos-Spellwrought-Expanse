@@ -9,13 +9,14 @@ import dev.logos.dimension.companion.CompanionBook;
 import dev.logos.dimension.companion.CompanionDef;
 import dev.logos.dimension.companion.Companions;
 import dev.logos.dimension.companion.KohakuCompanion;
+import dev.logos.dimension.companion.KohakuOutfit;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.GameType;
 import org.jspecify.annotations.Nullable;
 
 /**
  * 实际客户端检查友人帐（{@link CompanionBook}，docs/COMPANIONS.md 第 7 节），一组 {@code companion_book}。{@code companion_book}：
- * 只和琥珀立了契时另外两页是黑窗；在友人帐里叫她出来、再打开是「收回」、收回；三位都立了契；
+ * 只和琥珀立了契时另外两页是黑窗；在友人帐里叫她出来（穿着你给她换的雏菊散步）、再打开是「收回」、收回；三位都立了契；
  * 琥珀撤退以后那一页写着还要歇几秒、按了不算。
  */
 public abstract class CompanionBookViews extends KohakuViews {
@@ -45,22 +46,23 @@ public abstract class CompanionBookViews extends KohakuViews {
         @Override
         public void define(ScenarioBuilder s) {
             kohakuStage(s, GameType.SURVIVAL).runCommand("difficulty peaceful")
-                    .server("三位都没立契；只和琥珀立契", ctx -> {
+                    .server("三位都没立契；只和琥珀立契，给她换上雏菊散步", ctx -> {
                         ServerPlayer p = ctx.player();
                         clearAll(p);
                         Companions.grantPact(p, Companions.KOHAKU_DEF);
+                        p.setData(Companions.KOHAKU_DAYS, p.getData(Companions.KOHAKU_DAYS).withOutfit(KohakuOutfit.DAISY));
                     })
                     .step("按 K（翻开友人帐）", ctx -> CompanionBookClient.open())
                     .waitUntil("友人帐翻开了", ctx -> book() != null).ticks(10)
-                    .check("琥珀那一页立过契；白梅、精灵公主是黑窗", ctx -> {
+                    .check("琥珀那一页立过契、穿着雏菊；白梅、精灵公主是黑窗", ctx -> {
                         var k = page("kohaku");
-                        return k != null && k.pact() && !k.out() && !page("shiraume").pact()
+                        return k != null && k.pact() && !k.out() && KohakuOutfit.DAISY.id.equals(k.outfit()) && !page("shiraume").pact()
                                 && !page("elf_princess").pact();
                     })
                     .screenshot("companion_book_one")
                     .step("按琥珀那一页的「召唤」", ctx -> book().press("kohaku"))
                     .waitUntil("友人帐合上", ctx -> book() == null)
-                    .waitUntilServer("她出来了", ctx -> (c = Companions.kohaku(ctx.player())) != null)
+                    .waitUntilServer("她出来了，穿着雏菊散步", ctx -> (c = Companions.kohaku(ctx.player())) != null && c.outfit() == KohakuOutfit.DAISY)
                     .waitUntilServer("入场播完", ctx -> arrived(c))
                     .step("再翻开", ctx -> CompanionBookClient.open())
                     .waitUntil("友人帐翻开了", ctx -> book() != null).ticks(6)

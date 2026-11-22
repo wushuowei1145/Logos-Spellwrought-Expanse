@@ -46,7 +46,7 @@
 | 18 | 对话界面、角色面板 | 打字机文字、右边一列选项；面板三页（属性、契印 · 能力、往事），左边她本人可拖动转身 | **公共**（每位注册一份样式） | `client/companion/CompanionTalkScreen`、`CompanionPanelScreen`、`CompanionUi`、`CompanionStyle` |
 | 19 | 接 Logos | 她是 Logos 的长期同伴：主人用 `sic` 点名、`goto` 派差事、`dismiss` 收回 | **公共** | `LogosCompanionBridge` |
 | 20 | 战斗 | 怎么打 | 独有 | 白梅：狐火弹（`shiraume/FoxfireBolt`）、流火（`CompanionBlade`，招式文件 `shiraume_companion`）、缠火、处决；精灵公主：世界树之弓（`PrincessBow`）、生命涌动（`PrincessMagic`） |
-| 21 | 生活 | 日常小事 | 独有 | 白梅：狐火灯（`CompanionLight`）、温泉、摘浆果、怕狗、装束（`CompanionOutfit`） |
+| 21 | 生活 | 日常小事 | 独有 | 白梅：狐火灯（`CompanionLight`）、温泉、摘浆果、怕狗、装束（`CompanionOutfit`）；琥珀：四套衣服，对话里换、记在你身上（`KohakuOutfit`） |
 | 22 | 命令 | `/alchemy companion …`：召唤、收回、看数、清休息、盖契印、设饱腹、换装 | 白梅的在最上一层，精灵公主的在 `princess` 下面 | `CompanionCommands` |
 | 23 | 友人帐 | 按键（默认 K）翻开：所有同伴一人一页，立过契的画本人，没立契的是黑窗；在里面叫出来、收回（第 7 节） | **公共**（`Companions.ALL` 里的都在） | `CompanionBook`、`client/companion/CompanionBookClient`、`CompanionBookScreen` |
 
