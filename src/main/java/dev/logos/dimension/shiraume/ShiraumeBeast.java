@@ -1,5 +1,6 @@
 package dev.logos.dimension.shiraume;
 
+import dev.logos.dimension.combat.BossMoves;
 import com.geckolib.animatable.instance.AnimatableInstanceCache;
 import com.geckolib.animatable.manager.AnimatableManager;
 import com.geckolib.util.GeckoLibUtil;
@@ -164,8 +165,8 @@ public class ShiraumeBeast extends PathfinderMob implements NpcAnimated, MoveRun
         return runner == null || runner.cleared() ? "" : runner.move().name();
     }
 
-    private ShiraumeMoves.Extra extra(String move) {
-        return level() instanceof ServerLevel level ? ShiraumeMoves.of(level.getServer(), MOVESET, move) : ShiraumeMoves.Extra.NONE;
+    private BossMoves.Extra extra(String move) {
+        return level() instanceof ServerLevel level ? BossMoves.of(level.getServer(), MOVESET, move) : BossMoves.Extra.NONE;
     }
 
     private double clipTime(long now) {
@@ -252,7 +253,7 @@ public class ShiraumeBeast extends PathfinderMob implements NpcAnimated, MoveRun
             }
             default -> { }
         }
-        ShiraumeMoves.Extra extra = extra(name);
+        BossMoves.Extra extra = extra(name);
         double reach = extra.reach() > 0 ? extra.reach() : 4.2;
         double cone = move.cone() > 0 ? move.cone() : 120;
         for (LivingEntity e : ShiraumeStrike.targets(this, reach, cone)) {
@@ -267,8 +268,8 @@ public class ShiraumeBeast extends PathfinderMob implements NpcAnimated, MoveRun
      * 一下打到 {@code e}：招式文件写了能弹反的（咬击甩刀、前爪）照常能弹反，格挡下来却没弹反就破盾；其余只能挡。
      * 打中再推开一点。
      */
-    private void hit(ServerLevel level, LivingEntity e, float damage, double knock, ShiraumeMoves.Extra extra) {
-        boolean parryable = extra.parry() != ShiraumeMoves.ParryKind.NONE;
+    private void hit(ServerLevel level, LivingEntity e, float damage, double knock, BossMoves.Extra extra) {
+        boolean parryable = extra.parry() != BossMoves.ParryKind.NONE;
         ShiraumeStrike.Result result = ShiraumeStrike.strike(this, this, e, damage, parryable, extra.guardBreak(), extra.purge());
         if (result == ShiraumeStrike.Result.HIT) {
             Vec3 away = e.position().subtract(position());
@@ -287,8 +288,8 @@ public class ShiraumeBeast extends PathfinderMob implements NpcAnimated, MoveRun
     @Override
     public boolean parried(LivingEntity by) {
         if (runner == null || scripted || resting) return false;
-        ShiraumeMoves.Extra extra = extra(move());
-        if (extra.parry() == ShiraumeMoves.ParryKind.NONE) return false;
+        BossMoves.Extra extra = extra(move());
+        if (extra.parry() == BossMoves.ParryKind.NONE) return false;
         imbalance = Math.min(Shiraume.IMBALANCE_MAX * 1.5f, imbalance + Shiraume.IMBALANCE_SINGLE);
         imbalanceAt = level().getGameTime();
         play(extra.parried() != null ? extra.parried() : "recoil");
@@ -437,8 +438,8 @@ public class ShiraumeBeast extends PathfinderMob implements NpcAnimated, MoveRun
         play("pounce_land");
         MoveRunner r = runner;
         Moveset.Move move = r == null ? null : r.move();
-        ShiraumeMoves.Extra extra = extra("pounce_land");
-        boolean parryable = extra.parry() != ShiraumeMoves.ParryKind.NONE;
+        BossMoves.Extra extra = extra("pounce_land");
+        boolean parryable = extra.parry() != BossMoves.ParryKind.NONE;
         float damage = (float) (14 * Shiraume.difficultyScale(level));
         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(POUNCE_RADIUS, 1, POUNCE_RADIUS),
                 e -> e != this && e.isAlive() && !(e instanceof ShiraumeBoss) && e.distanceToSqr(this) < (POUNCE_RADIUS + 1.3) * (POUNCE_RADIUS + 1.3))) {
@@ -634,7 +635,7 @@ public class ShiraumeBeast extends PathfinderMob implements NpcAnimated, MoveRun
     }
 
     private void motion(ServerLevel level, String name, double before, double after, long now) {
-        ShiraumeMoves.Extra extra = extra(name);
+        BossMoves.Extra extra = extra(name);
         if (extra.eyeFlash() >= 0 && before < extra.eyeFlash() && after >= extra.eyeFlash()) {
             ShiraumeCue.near(level, position(), 96, ShiraumeCue.eyes(this));
             level.playSound(null, getX(), getEyeY(), getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.HOSTILE, 2.0f, 1.5f);
@@ -725,7 +726,7 @@ public class ShiraumeBeast extends PathfinderMob implements NpcAnimated, MoveRun
             return;
         }
         if (!m.equals("idle_combat")) {
-            ShiraumeMoves.Extra extra = extra(m);
+            BossMoves.Extra extra = extra(m);
             double t = clipTime(now);
             if (extra.eyeFlash() >= 0 && t < extra.eyeFlash()) face(target, 9);
             // 跳闪时一直看着目标，落地就能出招

@@ -27,7 +27,7 @@ public abstract class RyukaBurstMixin {
         if (kind != Vfx.Burst.DAMAGE) return;
         if (Ryuka.striking()) { Ryuka.quieted(); ci.cancel(); }
         // 白梅的刀和牙也是奥秘伤害，同样不放这团命中特效（docs/SHIRAUME_BOSS.md 第 4.3 节）
-        else if (dev.logos.dimension.shiraume.ShiraumeStrike.striking()) ci.cancel();
+        else if (dev.logos.dimension.combat.BossStrike.striking()) ci.cancel();
         else if (Foxfire.current() instanceof Foxfire.Context fox) {
             ci.cancel();
             if (fox.rules()) FoxfireCue.hit(level, entity, at, fox.flame());

@@ -1,5 +1,6 @@
 package dev.logos.dimension.shiraume;
 
+import dev.logos.dimension.combat.CasterCounter;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +21,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * 对付术师（docs/SHIRAUME_BOSS.md 第 4.8 节）：同一个玩家的术式在 {@link #WINDOW} 刻里打中她 {@link #HITS} 次，她就盯上这个人
- * （他头上浮起一点淡粉的狐火，动作栏提示）。之后这个人一蓄力，她就冲过去挥出满是狐火的一刀「斩法」：
+ * （他头上浮起一点淡粉的狐火，不出文字）。之后这个人一蓄力，她就冲过去挥出满是狐火的一刀「斩法」：
  * 伤害等于他已经蓄进去的魔力，不看护甲，盾也挡不住；蓄力被打断，蓄进去的魔力散成游离魔力。
  * 斩完隔 {@link #AGAIN} 刻才会再斩；被盯上的人死了、走远了或换了维度就放开。两种形态各有一份，变身时人形的交给狐形。
  */
@@ -62,7 +63,6 @@ public final class ShiraumeCounter {
         locked = p.getUUID();
         hits.clear();
         ShiraumeCue.near(level, p.position(), 96, ShiraumeCue.lock(p, true));
-        p.sendOverlayMessage(Component.translatable("message.logos_dimension.shiraume.locked").withStyle(ChatFormatting.LIGHT_PURPLE));
         level.playSound(null, boss.getX(), boss.getEyeY(), boss.getZ(), SoundEvents.FOX_SCREECH, SoundSource.HOSTILE, 1.6f, 1.5f);
     }
 
@@ -123,7 +123,8 @@ public final class ShiraumeCounter {
         if (Math.sqrt(to.x * to.x + to.z * to.z) > reach) return false;
         Charging.Charge c = Charging.of(p);
         double m = Math.max(mana, c == null ? 0 : c.injected);
-        if (c != null) Charging.interrupt(p);
+        // 不出提示地打断：蓄进去的魔力散成游离魔力（同 Logos 的规矩），没有动作栏文字
+        CasterCounter.interrupt(p);
         float damage = (float) Math.max(MIN_DAMAGE, m);
         p.invulnerableTime = 0;
         p.hurtServer(level, ShiraumeStrike.counter(level, boss, m), damage);

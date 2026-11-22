@@ -19,18 +19,29 @@ SOIL={'minecraft:grass_block','minecraft:dirt','minecraft:moss_block','minecraft
 NOT_FLOOR=HEADROOM|{'minecraft:water','minecraft:structure_void','minecraft:vine','minecraft:lantern','minecraft:soul_lantern'}
 
 
+def tiles(manifest):
+    """每一块模板：(文件, 模板原点在画布上的位置, 应有的尺寸)。常规 28³；场地下面空洞那一层是 28×35×28，从画布 y=bottom 起。"""
+    tile_size=manifest['tile_size'];cav=manifest['abyss']['cavity']
+    for path in sorted((D/'structure/taixuan').glob('tile_*.nbt')):
+        tile=tuple(map(int,path.stem.split('_')[1:]))
+        yield path,tuple(tile[i]*tile_size for i in range(3)),[tile_size]*3
+    for path in sorted((D/'structure/taixuan').glob('cavity_*.nbt')):
+        tx,tz=map(int,path.stem.split('_')[1:])
+        yield path,(tx*tile_size,cav['bottom'],tz*tile_size),[tile_size,-cav['bottom'],tile_size]
+
+
 def audit():
     manifest=json.loads((D/'taixuan_manifest.json').read_text('utf-8'))
     sx,sy,sz=manifest['canvas_size'];tile_size=manifest['tile_size']
+    bottom=manifest['abyss']['cavity']['bottom']
     cells={};tags={};materials=Counter();pieces=0
-    for path in sorted((D/'structure/taixuan').glob('tile_*.nbt')):
-        tile=tuple(map(int,path.stem.split('_')[1:]))
+    for path,origin,size in tiles(manifest):
         data=read_nbt(path);pieces+=1
-        assert data['size']==[tile_size]*3,path
+        assert data['size']==size,path
         assert not data['entities'],('结构不应生成实体',path)
         for block in data['blocks']:
-            p=tuple(tile[i]*tile_size+block['pos'][i] for i in range(3))
-            assert 0<=p[0]<sx and 0<=p[1]<sy and 0<=p[2]<sz,p
+            p=tuple(origin[i]+block['pos'][i] for i in range(3))
+            assert 0<=p[0]<sx and bottom<=p[1]<sy and 0<=p[2]<sz,p
             state=data['palette'][block['state']]
             if state['Name']=='minecraft:jigsaw':
                 tag=block['nbt'];tags[p]=tag
@@ -39,7 +50,8 @@ def audit():
                 if pool!='minecraft:empty':
                     assert (D/'worldgen/template_pool'/f'{pool.split(":")[1]}.json').is_file(),pool
             cells[p]=state;materials[state['Name']]+=1
-    assert pieces==manifest['tiles']==(sx//tile_size)*(sy//tile_size)*(sz//tile_size),pieces
+    assert pieces==manifest['tiles']==(sx//tile_size)*(sy//tile_size)*(sz//tile_size)+manifest['cavity_tiles'],pieces
+    assert manifest['cavity_tiles']==9,manifest['cavity_tiles']
     assert sum(t['pool'].endswith('/footings') for t in tags.values())==len(manifest['footings'])
     inputs=Counter(t['name'] for t in tags.values())
     outgoing=[t for t in tags.values() if t['pool']!='minecraft:empty' and not t['pool'].endswith('/footings')]
@@ -145,10 +157,68 @@ def audit():
     assert not loose,('悬空的依附方块',len(loose),loose[:8])
     assert not any(n in materials for n in ('minecraft:gravel','minecraft:sand','minecraft:red_sand'))
     assert materials['minecraft:air']>10000
+    stage=cavity(manifest,cells,name,solid)
     print(json.dumps({'tiles':pieces,'components':manifest['components'],'rooms':len(manifest['rooms']),
         'native_footings':len(manifest['footings']),'blocks':sum(materials.values()),'entities':0,
         'mist':len(mist),'routes':walked,'waterfalls':len(manifest['abyss']['waterfalls']),
-        'pines':len(manifest['landscape']['pines']),'ponds':len(manifest['landscape']['ponds'])},ensure_ascii=False))
+        'pines':len(manifest['landscape']['pines']),'ponds':len(manifest['landscape']['ponds']),'cavity':stage},ensure_ascii=False))
+
+
+def cavity(manifest,cells,name,solid):
+    """场地下面的空洞：封得住（洞底、洞顶、石壁），里面没有水和岩浆，碎块踩得住、跳得过去，起点、落脚台、顶块都在。"""
+    cav=manifest['abyss']['cavity'];c=manifest['canvas_center']
+    r,lining=cav['radius'],cav['lining'];lo,hi=cav['air']
+    leaks=[];inside=Counter()
+    for k in range(48):
+        a=k*math.pi/24
+        for y in range(lo,hi+1,2):
+            for d in range(r+1,r+lining+1):
+                x,z=c+int(round(d*math.cos(a))),c+int(round(d*math.sin(a)))
+                if r+.5<math.hypot(x-c,z-c)<=r+lining and not solid((x,y,z)):leaks.append(('石壁',x,y,z,name((x,y,z))))
+    for x in range(c-r,c+r+1,3):
+        for z in range(c-r,c+r+1,3):
+            if math.hypot(x-c,z-c)>r:continue
+            for y in cav['floor']+[cav['ceiling']]:
+                if not solid((x,y,z)):leaks.append(('洞底或洞顶',x,y,z,name((x,y,z))))
+            for y in range(lo,hi+1):
+                n=name((x,y,z))
+                assert n is not None,('空洞里有没写的格子（会留下原地形）',x,y,z)
+                inside[n]+=1
+    assert not leaks,('空洞没封住',len(leaks),leaks[:6])
+    assert not any(n in inside for n in ('minecraft:water','minecraft:lava')),'空洞里有水或岩浆'
+    def walkable(stone):
+        x0,y,z0=stone['top']
+        for x,z in stone['cells']:
+            if not solid((x,y,z)):return f'{x},{y},{z} 脚下空'
+            for dy in (1,2):
+                if name((x,y+dy,z)) not in AIR|{'minecraft:light','minecraft:soul_lantern'}:return f'{x},{y+dy},{z} 头顶 {name((x,y+dy,z))}'
+        return None
+    stones=[cav['start']]+cav['route']
+    bad=[(i,walkable(s)) for i,s in enumerate(stones) if walkable(s)]
+    for k,d in cav['detours'].items():bad+=[(f'绕路{k}.{i}',walkable(s)) for i,s in enumerate(d['stones']) if walkable(s)]
+    assert not bad,('碎块踩不住',bad[:6])
+    # 主路每一跳：高差和距离（格边到格边）
+    def gap(a,b):
+        return min(math.hypot(max(0,abs(ax-bx)-1),max(0,abs(az-bz)-1)) for ax,az in a['cells'] for bx,bz in b['cells'])
+    for i in range(1,len(stones)):
+        rise=stones[i]['feet']-stones[i-1]['feet'];g=gap(stones[i-1],stones[i])
+        assert rise<=2 and 1<=g<=(1.2 if rise==2 else 2.2 if rise==1 else 3.2),('跳不过去',i,rise,g)
+        assert (rise==2)==(i in cav['steps']),('要借剑格的地方不对',i)
+    for k,d in cav['detours'].items():
+        chain=[stones[d['from']]]+d['stones']+[stones[d['to']]]
+        for i in range(1,len(chain)):
+            rise=chain[i]['feet']-chain[i-1]['feet'];g=gap(chain[i-1],chain[i])
+            assert rise<=1 and 1<=g<=2.2,('绕路跳不过去',k,i,rise,g)
+        assert d['from']<int(k)<=d['to'],('绕路没有绕过那一跳',k)
+    # 顶块：闪长岩带玄铁心；起点、落脚台的光源和魂灯
+    tx,ty,tz=cav['top']['center']
+    assert name((tx,ty,tz+3))=='minecraft:polished_diorite' and name(tuple(cav['top']['heart']))=='logos_dimension:taixuan_dark_iron','顶块不对'
+    assert all(name(tuple(l[:3]))=='minecraft:light' for l in cav['lights']),'光源丢了'
+    assert all(name(tuple(p))=='minecraft:soul_lantern' for p in cav['lanterns']) and len(cav['lanterns'])==len(cav['checkpoints'])
+    assert all(stones[k]['kind']=='checkpoint' for k in cav['checkpoints'])
+    assert cav['void_feet']<cav['start']['feet']-2,'起点碎块离掉下去的判定太近'
+    return {'stones':len(stones),'detours':sum(len(d['stones']) for d in cav['detours'].values()),'lights':len(cav['lights']),
+            'cells':dict(inside.most_common(4))}
 
 
 if __name__=='__main__':audit()

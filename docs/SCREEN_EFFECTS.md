@@ -46,6 +46,16 @@ CameraShots.play(player, CameraShot.of(from, lookAt).cinema().letterbox());
 
 旧的两拍 `WHITE`（白底黑）和 `BLACK`（黑底白）还在，只看颜色的明暗，不用深度，可以自己排进拍子里。
 
+## 全屏白、全屏黑
+
+`ScreenEffects.cover(player, ScreenCover.white(盖上, 停, 退去))`（黑屏用 `ScreenCover.black`），三段都按游戏刻算：
+盖满的那几刻（`fullAt()` 到 `fullUntil()`）里服务端可以传送、换场景，玩家看不到。盖上、退去都至少 6 刻，
+是一次缓慢的变化，不算闪烁；开了「隐藏闪电的闪烁」时，盖上的那一段先慢后快，盖满的时刻不变。
+
+客户端 `ScreenCoverRenderer` 画在界面层最上面（运镜藏界面时也画），盖满时把界面一起藏起来；换维度、换世界时作废。
+客户端场景用 `ScreenCoverRenderer.hold(刻)` 停在某一刻。试：`/alchemy jiansui cover white|black [盖上] [停] [退去]`。
+剑祟的裂地白屏、掉进虚空的黑屏用它（docs/JIAN_SUI_BOSS.md）。
+
 ## 和 Sodium、光影的关系
 
 通道只读主画面最终的颜色和半透明之前的深度，不碰光影包的缓冲，也不在世界渲染过程中画任何东西，所以不需要走 `ShaderPackOverlay`。

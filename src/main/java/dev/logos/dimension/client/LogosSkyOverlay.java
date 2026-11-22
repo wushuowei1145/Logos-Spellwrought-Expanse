@@ -4,7 +4,7 @@ import java.lang.reflect.Method;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 
 /** Use the installed Logos shader bridge without packaging its classes or depending on Iris. */
-final class LogosSkyOverlay {
+public final class LogosSkyOverlay {
     private static final Method COLLECTOR = findCollector();
 
     private static Method findCollector() {
@@ -17,7 +17,8 @@ final class LogosSkyOverlay {
         }
     }
 
-    static SubmitNodeCollector collector(SubmitNodeCollector out) {
+    /** 开着光影包时，发光的自定义几何改交给 Logos 的叠加层（AGENTS.md：与 ShaderPackOverlay 共用收集器）；没开时原样返回。 */
+    public static SubmitNodeCollector collector(SubmitNodeCollector out) {
         if (COLLECTOR == null) return out;
         try {
             return (SubmitNodeCollector) COLLECTOR.invoke(null, out);

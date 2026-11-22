@@ -82,6 +82,7 @@ public final class DimensionCommands {
         root.then(execution());
         root.then(dissolve());
         root.then(dev.logos.dimension.shiraume.ShiraumeCommands.build());
+        root.then(dev.logos.dimension.jiansui.JianSuiCommands.build());
         root.then(dev.logos.dimension.companion.CompanionCommands.build());
         root.then(dev.logos.dimension.foxfire.FoxfireCommands.build());
         // 试爆裂魔法：不吟唱，直接在准星指的地方放一次（半径和是否破坏地形照服务端配置）
@@ -184,6 +185,7 @@ public final class DimensionCommands {
      * /alchemy execution [目标] [刀数] [beats|every|steady] [black]：试处决特写，自己看。不给目标时处决自己。
      * {@code beats}（默认）只在节拍上对调，{@code every} 每刀都对调（第一版），{@code steady} 不对调；
      * {@code black} 换成黑底白身。只是画面，不扣血。
+     * /alchemy execution &lt;目标&gt; thrust：自己飞身刺向目标（飞身刺），自己看。目标不被定住。
      */
     private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.minecraft.commands.CommandSourceStack> execution() {
         var slashes = Commands.argument("slashes", IntegerArgumentType.integer(dev.logos.dimension.execution.ExecutionShot.MIN_SLASHES, dev.logos.dimension.execution.ExecutionShot.MAX_SLASHES))
@@ -199,7 +201,20 @@ public final class DimensionCommands {
                 .executes(c -> execution(c, dev.logos.dimension.execution.ExecutionShot.DEFAULT_SLASHES, false, dev.logos.dimension.execution.ExecutionShot.Swaps.BEATS))
                 .then(Commands.argument("target", net.minecraft.commands.arguments.EntityArgument.entity())
                         .executes(c -> execution(c, dev.logos.dimension.execution.ExecutionShot.DEFAULT_SLASHES, false, dev.logos.dimension.execution.ExecutionShot.Swaps.BEATS))
+                        .then(Commands.literal("thrust").executes(DimensionCommands::thrust))
                         .then(slashes));
+    }
+
+    /** 飞身刺：发命令的人出手，目标是给的那个生物（不能是自己）。 */
+    private static int thrust(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        var actor = c.getSource().getPlayerOrException();
+        if (!(net.minecraft.commands.arguments.EntityArgument.getEntity(c, "target") instanceof net.minecraft.world.entity.LivingEntity target) || target == actor) {
+            c.getSource().sendFailure(Component.literal("飞身刺只能刺向别的生物。"));
+            return 0;
+        }
+        var shot = dev.logos.dimension.execution.ExecutionShot.thrust(actor.getRandom().nextInt());
+        dev.logos.dimension.execution.ExecutionShots.play(java.util.List.of(actor), actor, actor, target, shot);
+        return 1;
     }
 
     private static int execution(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> c, int slashes, boolean black, dev.logos.dimension.execution.ExecutionShot.Swaps swaps) throws com.mojang.brigadier.exceptions.CommandSyntaxException {

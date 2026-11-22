@@ -20,7 +20,9 @@ class TaixuanDataTest {
         var size = manifest.getAsJsonArray("canvas_size");int tile = manifest.get("tile_size").getAsInt();
         int nx = size.get(0).getAsInt() / tile, ny = size.get(1).getAsInt() / tile, nz = size.get(2).getAsInt() / tile;
         assertEquals(28, tile);
-        assertEquals(nx * ny * nz, manifest.get("tiles").getAsInt());
+        // 整齐的网格，加上场地下面空洞那一层（中间 3×3 列，28×35×28）
+        assertEquals(9, manifest.get("cavity_tiles").getAsInt());
+        assertEquals(nx * ny * nz + 9, manifest.get("tiles").getAsInt());
         assertTrue(manifest.get("depth").getAsInt() < 19, "拼接深度超过原版上限");
         assertEquals(0, manifest.get("entities").getAsInt());
         var structure = data("worldgen/structure/taixuan_sanctuary");
@@ -35,6 +37,11 @@ class TaixuanDataTest {
             assertNotNull(getClass().getResource("/data/logos_dimension/structure/taixuan/" + name + ".nbt"), name);
             assertEquals("logos_dimension:taixuan/" + name, data("worldgen/template_pool/taixuan/" + name)
                 .getAsJsonArray("elements").get(0).getAsJsonObject().getAsJsonObject("element").get("location").getAsString());
+        }
+        for (int x = 3; x <= 5; x++) for (int z = 3; z <= 5; z++) {
+            String name = "cavity_" + x + "_" + z;
+            assertNotNull(getClass().getResource("/data/logos_dimension/structure/taixuan/" + name + ".nbt"), name);
+            assertNotNull(getClass().getResource("/data/logos_dimension/worldgen/template_pool/taixuan/" + name + ".json"), name);
         }
     }
 
@@ -71,6 +78,12 @@ class TaixuanDataTest {
         var mist = heights.getAsJsonArray("mist");
         assertTrue(heights.get("arena").getAsInt() < mist.get(0).getAsInt() && mist.get(1).getAsInt() < heights.get("platform").getAsInt()
             && heights.get("platform").getAsInt() < heights.get("lining_top").getAsInt() && heights.get("lining_top").getAsInt() < heights.get("rim").getAsInt());
+        // 场地下面的空洞：洞顶在雾底地板两层深板岩下面，洞底不碰会出基岩的那几层（世界 -60 以下），整层模板不出世界底
+        var cavity = manifest.getAsJsonObject("abyss").getAsJsonObject("cavity");
+        assertEquals(heights.get("arena").getAsInt() - 3, cavity.get("ceiling").getAsInt());
+        assertTrue(cavity.get("bottom").getAsInt() + offset >= -59 && cavity.get("bottom").getAsInt() + offset >= minY, "空洞那一层进了基岩层");
+        assertTrue(cavity.getAsJsonArray("air").get(1).getAsInt() < cavity.get("ceiling").getAsInt());
+        assertTrue(cavity.get("void_feet").getAsInt() < cavity.getAsJsonObject("start").get("feet").getAsInt());
     }
 
     @Test void theSectAbyssAndRoutesAreRecorded() throws Exception {

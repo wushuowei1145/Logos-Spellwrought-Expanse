@@ -14,6 +14,11 @@ import java.util.Random;
  * <p>可交互的处决（{@link ExecutionShot#interactive}）：第一刀的时刻起留 {@link ExecutionShot#window} 刻让处决的人自己点，
  * 刀在点到时由 {@link #add} 一刀刀加进来；重击、拍下、落地的时刻只看这段时长，和砍了几刀无关，所以两端仍能各算一遍。
  * 机位在这段的三分之一、三分之二处切，节拍是第一刀和每次切机位后的第一刀。
+ * <p>飞身刺（{@link ExecutionShot.Choreo#THRUST}）没有刀，时刻是固定的（下面 {@code THRUST_} 开头的几个，整刻，服务端可以直接拿来排事）：
+ * <pre>
+ * 原画顿帧 ─ 黑白：蹲下蓄势 ─ 起跳 ─ 刺中 ─ 刺着不动 ─ 定格（不读深度，服务端趁这时换场景）─ 接着演的彩色过场接手
+ * </pre>
+ * 阶段只有 {@link Phase#LAUNCH}（原画顿帧）、{@link Phase#INK}（黑白）、{@link Phase#AFTER}（定格的尾巴）；不对调、不变红、落地不白。
  */
 public final class ExecutionTimeline {
     /** 画面按 24 帧一拍地换（和黑白闪一样），一拍是多少刻。身体的动作也一拍一拍地跳，像动画里的「一拍一张」。 */
@@ -46,6 +51,30 @@ public final class ExecutionTimeline {
     public static final int BLEND_IN = 4, BLEND_OUT = 11;
     /** 节拍上的两次对调至少隔多久（0.35 秒）：这样任何一秒里都不会超过三次全屏黑白交替。 */
     public static final float MIN_BEAT_GAP = 7;
+
+    // 飞身刺的时刻：客户端从收到包起算的刻数（服务端发包那一刻起算也一样，同一条连接上后面的包延迟相同）
+
+    /** 飞身刺：打中后原画顿帧到这一刻，镜头同时切到侧面；然后画面变黑白（第一下明暗变化）。 */
+    public static final int THRUST_INK = 3;
+    /** 出手的人在目标前方几格外蹲下蓄势，从这一刻起。 */
+    public static final int THRUST_CROUCH = 3;
+    /** 起跳，沿一道弧线飞过去。 */
+    public static final int THRUST_LEAP = 6;
+    /** 刺中胸口：一笔直的刺光、火花、视角猛推一下、镜头抖；目标下一拍往后一仰。 */
+    public static final int THRUST_CONTACT = 11;
+    /** 从这一刻起画面定格：一直放这一刻画出来的那一帧，不再读深度，服务端趁这时把人和目标传送走也看不出来。 */
+    public static final int THRUST_FREEZE = 14;
+    /**
+     * 接着演的一方最晚在这一刻换场景（传送人和目标）：服务端的实体追踪最多晚两刻发出去，远处的实体再插值 3 刻，
+     * 都要在 {@link #THRUST_COLOUR} 之前落定。旁观的人（没有定格）也在这一刻不再按特写摆人。
+     */
+    public static final int THRUST_SWAP = THRUST_FREEZE + 2;
+    /** 接着演的彩色过场该在这一刻接手（它的运镜一到，黑白就结束：第二下明暗变化）。 */
+    public static final int THRUST_COLOUR = 22;
+    /** 到了 {@link #THRUST_COLOUR} 还没接手时再定格多久：网络慢一点也不会先回到玩家。 */
+    public static final int THRUST_TAIL = 8;
+    /** 飞身刺的镜头离两人多远（格）：出手的人自己看得近，旁边看特写的人看得远一些。 */
+    public static final double THRUST_NEAR = 5.5, THRUST_FAR = 8.5;
 
     public enum Phase {
         /** 抛起，还是原画。 */
@@ -103,6 +132,17 @@ public final class ExecutionTimeline {
     public ExecutionTimeline(ExecutionShot shot) {
         this.shot = shot;
         Random random = new Random(shot.seed());
+        if (shot.choreo() == ExecutionShot.Choreo.THRUST) {
+            // 没有刀：刺中的那一笔客户端自己画。重击、落地都放在黑白结束的那一刻，阶段里不出现红色和落地白
+            slashes = List.of();
+            beats = List.of();
+            finisher = new Slash(THRUST_CONTACT - STROKE * CONTACT, 0, 0, 0, 1, 1, 0);
+            finalHit = slamStart = impact = THRUST_COLOUR;
+            returnAt = THRUST_COLOUR + THRUST_TAIL;
+            // 只有一个机位：在两人连线的哪一侧由种子定
+            cuts = List.of(new Cut(0, random.nextBoolean() ? 1 : -1, 0, 0, THRUST_NEAR, 0));
+            return;
+        }
         if (shot.interactive()) {
             slashes = new ArrayList<>();
             beats = new ArrayList<>();
@@ -182,8 +222,18 @@ public final class ExecutionTimeline {
         return shot.interactive();
     }
 
-    /** 可交互时：点击窗口在哪一刻关上（之后不再收刀，静一会儿就是重击）；不可交互时是最后一刀划完的时刻。 */
+    public ExecutionShot.Choreo choreo() {
+        return shot.choreo();
+    }
+
+    /** 是飞身刺。 */
+    public boolean thrust() {
+        return shot.choreo() == ExecutionShot.Choreo.THRUST;
+    }
+
+    /** 可交互时：点击窗口在哪一刻关上（之后不再收刀，静一会儿就是重击）；不可交互时是最后一刀划完的时刻；飞身刺是刺中的时刻。 */
     public float windowEnd() {
+        if (thrust()) return THRUST_CONTACT;
         return shot.interactive() ? FIRST_SLASH + shot.window() : slashes.getLast().start() + STROKE;
     }
 
@@ -211,8 +261,9 @@ public final class ExecutionTimeline {
         return slash;
     }
 
-    /** 第 {@code i} 刀划过时是否对调。 */
+    /** 第 {@code i} 刀划过时是否对调。飞身刺从不对调。 */
     public boolean swaps(int i) {
+        if (thrust()) return false;
         return switch (shot.swaps()) {
             case EVERY -> true;
             case BEATS -> beats.contains(i);
@@ -220,8 +271,9 @@ public final class ExecutionTimeline {
         };
     }
 
-    /** 已经有几成的刀划过了身体（0 到 1）：镜头越推越近、速度线越来越密，按它走。 */
+    /** 已经有几成的刀划过了身体（0 到 1）：镜头越推越近、速度线越来越密，按它走。飞身刺刺中之前是 0，之后是 1。 */
     public float buildUp(float age) {
+        if (thrust()) return age >= THRUST_CONTACT ? 1 : 0;
         int done = 0;
         for (Slash s : slashes) if (s.contact() <= age) done++;
         if (shot.interactive()) return Math.min(1, done / (float) LIVE_BUILD);
@@ -263,12 +315,37 @@ public final class ExecutionTimeline {
 
     /** 镜头在特写机位上停多少整刻（不含切进来的那几刻）。 */
     public int hold() {
+        if (thrust()) return duration() - THRUST_INK;
         return (int) Math.ceil(returnAt) - BLEND_IN;
     }
 
-    /** 整段（含镜头回到玩家）一共多少刻。服务端按它定住目标。 */
+    /**
+     * 整段（含镜头回到玩家）一共多少刻。服务端按它定住目标。
+     * 飞身刺只到黑白结束：一般由接着演的过场接手；没人接手时镜头之后再用 {@link #blendOut} 刻回到玩家。
+     */
     public int duration() {
+        if (thrust()) return THRUST_COLOUR + THRUST_TAIL;
         return BLEND_IN + hold() + BLEND_OUT;
+    }
+
+    /** 镜头切进来用几刻：飞身刺正好是原画顿帧的那几刻。 */
+    public int blendIn() {
+        return thrust() ? THRUST_INK : BLEND_IN;
+    }
+
+    /** 镜头回到玩家用几刻。 */
+    public int blendOut() {
+        return BLEND_OUT;
+    }
+
+    /** 飞身刺刺中、抛起的样式重击打中的那一刻。 */
+    public float contact() {
+        return thrust() ? THRUST_CONTACT : finalHit;
+    }
+
+    /** 飞身刺这一刻是不是定格（放定格那一帧，不读深度）：从 {@link #THRUST_FREEZE} 到黑白结束，包括等接手的尾巴。 */
+    public boolean freezing(float age) {
+        return thrust() && age >= THRUST_FREEZE && age < THRUST_COLOUR + THRUST_TAIL;
     }
 
     public List<Cut> cuts() {
@@ -283,6 +360,12 @@ public final class ExecutionTimeline {
     }
 
     public Phase phase(float age) {
+        if (thrust()) {
+            // 飞身刺：原画顿帧、黑白、定格等接手的尾巴
+            if (age < THRUST_INK) return Phase.LAUNCH;
+            if (age < THRUST_COLOUR) return Phase.INK;
+            return age < duration() ? Phase.AFTER : Phase.DONE;
+        }
         if (age < INK) return Phase.LAUNCH;
         if (age < finalHit) return Phase.INK;
         if (age < impact) return Phase.RED;
