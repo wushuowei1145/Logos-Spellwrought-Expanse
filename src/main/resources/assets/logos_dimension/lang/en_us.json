@@ -1897,5 +1897,13 @@
   "line.logos_dimension.kohaku.talk.outfit_daisy": "A walk? ...Fine. I'll call it sunbathing.",
   "line.logos_dimension.kohaku.talk.outfit_velvet": "Velvet... are we going to a concert? Then you're getting me a front-row seat.",
   "line.logos_dimension.kohaku.talk.outfit_swimsuit": "...A swimsuit? Let's be clear: if the water's cold, I'm not going in.",
-  "line.logos_dimension.kohaku.talk.outfit_same": "I'm already wearing it."
+  "line.logos_dimension.kohaku.talk.outfit_same": "I'm already wearing it.",
+  "key.logos_dimension.companion_book": "Book of Friends",
+  "key.category.logos_dimension.companions": "Companions",
+  "gui.logos_dimension.companion_book.title": "Book of Friends",
+  "gui.logos_dimension.companion_book.call": "Call",
+  "gui.logos_dimension.companion_book.dismiss": "Send back",
+  "gui.logos_dimension.companion_book.resting": "Resting · %ss",
+  "gui.logos_dimension.companion_book.unknown": "???",
+  "gui.logos_dimension.companion_book.with_you": "With you"
 }

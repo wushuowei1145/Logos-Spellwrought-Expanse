@@ -48,6 +48,7 @@
 | 20 | 战斗 | 怎么打 | 独有 | 白梅：狐火弹（`shiraume/FoxfireBolt`）、流火（`CompanionBlade`，招式文件 `shiraume_companion`）、缠火、处决；精灵公主：世界树之弓（`PrincessBow`）、生命涌动（`PrincessMagic`） |
 | 21 | 生活 | 日常小事 | 独有 | 白梅：狐火灯（`CompanionLight`）、温泉、摘浆果、怕狗、装束（`CompanionOutfit`）；琥珀：四套衣服，对话里换、记在你身上（`KohakuOutfit`） |
 | 22 | 命令 | `/alchemy companion …`：召唤、收回、看数、清休息、盖契印、设饱腹、换装 | 白梅的在最上一层，精灵公主的在 `princess` 下面 | `CompanionCommands` |
+| 23 | 友人帐 | 按键（默认 K）翻开：所有同伴一人一页，立过契的画本人，没立契的是黑窗；在里面叫出来、收回（第 7 节） | **公共**（`Companions.ALL` 里的都在） | `CompanionBook`、`client/companion/CompanionBookClient`、`CompanionBookScreen` |
 
 ### 2.1 心智里的行为
 
@@ -156,3 +157,15 @@
 - **只继承长期属性**，继承最多全部，不让同伴比主人强到主人只需要站着（第 3.5 节）。
 - **不做定制**：不像车万女仆那样换皮肤、改性格；每位同伴是一个固定的角色。
 - **主人永远打不到**：主人打她不疼（会闹别扭）；她也从不打主人和主人的宠物、使魔。
+
+## 7. 友人帐
+
+信物丢了以后只能用命令叫同伴，所以加了友人帐（维护者 2026-11-23 提的）。
+
+- **翻开**：按键「友人帐」（「同伴」一栏，默认 K，可以改）。客户端问服务端要每一页（`CompanionBook.Ask`），回来了就翻开（`CompanionBook.State`）。
+- **每一页**按 `Companions.ALL` 的顺序排成一排（放不下就换行）：
+  - 立过契：画她本人的半身（同角色面板的展示 `CompanionStyle.Showcase`，放大到窗里只看得到头和肩；穿着她现在那一套），配色和纹照她的对话和面板；下面是名字、
+    羁绊段（在外面时写「在你身边」），最底下一个按钮：召唤、收回，或者「歇着 · N 秒」（倒下、撤退后，按了不算）。
+  - 没立契：一扇黑窗，名字是「？？？」。
+- **召唤、收回**走的是信物同一套（`Companions.summon` / `dismiss`）：在外面就收回，不然叫出来；成了就合上友人帐，好看她出来。只在这里叫、不立契（立契还是靠各自的加入方式）。
+- **新同伴**：加进 `Companions.ALL`、注册了 `CompanionStyle` 就自动有一页；画她时穿哪一套在 `CompanionBook.outfit` 里加一行。
