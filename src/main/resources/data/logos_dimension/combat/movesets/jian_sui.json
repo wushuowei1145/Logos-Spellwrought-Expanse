@@ -1,0 +1,28 @@
+{
+  "_comment": "剑祟（docs/JIAN_SUI_BOSS.md 第 6 节）。时刻都是动作时间（秒），与 jian_sui.animation.json 一致；damage 是不挡时一刀的伤害（Boss 的基础伤害为 1）。Boss 专用字段同白梅（combat/BossMoves）：eye_flash 出手前双眼闪光的时刻，parry 被弹反时怎么办（single 播 parried 那一招，combo 接着砍，none 弹不开），reach 够得到多远（格，从身体中心算），lunge [起, 止, 格数] 这段时间往前冲，leap [时刻, 后退格数, 上跳速度]，guard_break 挡下却没弹反就破盾。三招剑招是 PR #280 的动作，维护者定不改；其余动作由 tools/jian_sui_moves.py 生成。",
+  "start": "idle",
+  "moves": {
+    "idle": {"length": 2.0, "playback": "loop"},
+    "tafeng": {"clip": "attack_1", "length": 1.5, "contact": 0.7667, "next": "idle", "damage": 9, "cone": 120,
+      "eye_flash": 0.62, "parry": "single", "parried": "parried", "reach": 2.8, "lunge": [0.4, 0.75, 1.2]},
+    "huifeng": {"clip": "attack_2", "length": 1.8, "contact": [0.7, 0.9], "next": "idle", "damage": 8, "cone": 180,
+      "eye_flash": 0.56, "parry": "combo", "reach": 2.3, "guard_break": true},
+    "feiyan": {"clip": "attack_3", "length": 1.8, "contact": 0.7, "next": "idle", "damage": 13, "cone": 140,
+      "eye_flash": 0.56, "parry": "single", "parried": "parried", "reach": 3.0, "lunge": [0.3, 0.68, 2.0], "guard_break": true},
+    "parried": {"length": 1.8, "next": "idle"},
+    "stagger": {"length": 0.5, "next": "stagger_hold"},
+    "stagger_hold": {"length": 2.0, "playback": "loop"},
+    "stagger_rise": {"length": 0.7, "contact": 0.42, "next": "backstep", "damage": 7, "cone": 160,
+      "eye_flash": 0.3, "parry": "combo", "reach": 2.6},
+    "backstep": {"length": 0.6, "next": "idle", "leap": [0.06, 4.0, 0.12]},
+    "deflect": {"length": 0.4, "next": "idle"},
+    "collapse": {"clip": "collapse", "length": 600, "next": "collapse", "_note": "散架停在最后一帧（客户端非循环的招式停在末帧），由场地移除"},
+    "collapse_noaxial": {"length": 600, "next": "collapse_noaxial"},
+    "remains": {"length": 600, "next": "remains"},
+    "reassemble": {"length": 3.0, "next": "idle"},
+    "plunge": {"length": 1.8, "next": "plunge_hold"},
+    "plunge_hold": {"length": 2.0, "playback": "loop"},
+    "point": {"length": 1.2, "next": "idle"},
+    "pried": {"length": 600, "next": "pried"}
+  }
+}

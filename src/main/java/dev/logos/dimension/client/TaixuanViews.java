@@ -14,11 +14,11 @@ import net.minecraft.world.phys.Vec3;
 
 /** 开发客户端在真实的云岫峰林候选点放置原版结构，记录浮空宗门、深渊、链台、雾层、镇渊柱、雾底场地和栈道的画面。 */
 public abstract class TaixuanViews implements UIScenario {
-    /** 机位（画布坐标，脚下那格）和看向的点：0 宗门全景 1 深渊口 2 链台 3 雾层 4 镇渊柱与铁链 5 雾底场地 7 浮岛底下；6 栈道按路线取。 */
+    /** 机位（画布坐标，脚下那格）和看向的点：0 宗门全景 1 深渊口 2 链台 3 雾层 4 镇渊柱与铁链 5 雾底场地 7 浮岛底下；6 栈道按路线取；8 场地下面的空洞按起点碎块取。 */
     private static final int[][] EYES = {{300, 236, 320}, {126, 121, 196}, {150, 100, 160}, {126, 91, 110}, {126, 150, 140}, {150, 10, 150}, {0, 0, 0}, {126, 140, 98}};
     private static final int[][] TARGETS = {{126, 190, 126}, {126, 72, 112}, {126, 87, 126}, {126, 42, 72}, {185, 165, 185}, {126, 11, 126}, {0, 0, 0}, {126, 196, 126}};
     private static final String[] NAMES = {"taixuan_floating_sect", "taixuan_abyss_rim", "taixuan_chain_platform", "taixuan_mist_layer",
-        "taixuan_tower_chain", "taixuan_fog_arena", "taixuan_plank_walk", "taixuan_island_underside"};
+        "taixuan_tower_chain", "taixuan_fog_arena", "taixuan_plank_walk", "taixuan_island_underside", "taixuan_cavity"};
     private TaixuanGameTests.Site site;
     private Vec3 look;
     protected int view() { return 0; }
@@ -35,6 +35,19 @@ public abstract class TaixuanViews implements UIScenario {
             {target.get(0).getAsInt(), target.get(1).getAsInt() + 1, target.get(2).getAsInt()}};
     }
 
+    /** 空洞机位：站在起点碎块上，看最高处的顶块。 */
+    private static int[][] cavity() {
+        var cav = TaixuanGameTests.manifest().getAsJsonObject("abyss").getAsJsonObject("cavity");
+        var start = cav.getAsJsonObject("start");var top = start.getAsJsonArray("top");
+        var center = cav.getAsJsonObject("top").getAsJsonArray("center");
+        return new int[][]{{(int) Math.floor(top.get(0).getAsDouble()), start.get("feet").getAsInt(), (int) Math.floor(top.get(2).getAsDouble())},
+            {center.get(0).getAsInt(), center.get(1).getAsInt() + 3, center.get(2).getAsInt()}};
+    }
+
+    private int[][] eyeAndTarget() {
+        return view() == 6 ? walk() : view() == 8 ? cavity() : new int[][]{EYES[view()], TARGETS[view()]};
+    }
+
     @Override public void define(ScenarioBuilder scenario) {
         scenario.setGameMode(GameType.CREATIVE).runCommand("difficulty peaceful")
             .step("设置太玄灵境机位", ctx -> {
@@ -47,14 +60,14 @@ public abstract class TaixuanViews implements UIScenario {
             .server("在云岫峰林候选点拼装地标", ctx -> {
                 var level = ctx.server().getLevel(LogosDimension.CLOUDSEA);
                 site = TaixuanGameTests.placeStudy(level);
-                int[] e = view() == 6 ? walk()[0] : EYES[view()], t = view() == 6 ? walk()[1] : TARGETS[view()];
+                int[] e = eyeAndTarget()[0], t = eyeAndTarget()[1];
                 var eye = site.pos(e[0], e[1], e[2]).getBottomCenter();
                 look = site.pos(t[0], t[1], t[2]).getCenter();
                 var direction = look.subtract(eye.add(0, ctx.player().getEyeHeight(), 0));
                 float yaw = (float) Math.toDegrees(Math.atan2(-direction.x, direction.z));
                 float pitch = (float) -Math.toDegrees(Math.atan2(direction.y, Math.hypot(direction.x, direction.z)));
                 DimensionTravel.teleport(ctx.player(), level, eye, yaw, pitch);
-                ctx.player().getAbilities().flying = true;ctx.player().onUpdateAbilities();
+                ctx.player().getAbilities().flying = view() != 8;ctx.player().onUpdateAbilities();
                 level.clockManager().setTotalTicks(level.registryAccess().lookupOrThrow(Registries.WORLD_CLOCK)
                     .getOrThrow(JourneySeasons.CLOCK), JourneySeasons.SEASON_TICKS + 6000);
                 level.getWeatherData().setRaining(false);level.getWeatherData().setThundering(false);
@@ -98,4 +111,6 @@ public abstract class TaixuanViews implements UIScenario {
     public static class PlankWalk extends TaixuanViews { @Override protected int view() { return 6; } }
     @LDLRegisterClient(name="taixuan_island_underside", group="taixuan", registry=UIScenario.REGISTRY, environment=RegistrationEnvironment.DEV_ONLY)
     public static class IslandUnderside extends TaixuanViews { @Override protected int view() { return 7; } }
+    @LDLRegisterClient(name="taixuan_cavity", group="taixuan", registry=UIScenario.REGISTRY, environment=RegistrationEnvironment.DEV_ONLY)
+    public static class Cavity extends TaixuanViews { @Override protected int view() { return 8; } }
 }

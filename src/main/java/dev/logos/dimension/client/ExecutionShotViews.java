@@ -19,9 +19,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
@@ -30,6 +32,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 /**
@@ -358,6 +361,171 @@ public abstract class ExecutionShotViews implements UIScenario {
                 ctx.check("仍然有黑白和重击", log.sequence().contains(Phase.INK) && log.sequence().contains(Phase.RED));
                 restored(ctx);
             });
+            cleanup(s);
+        }
+    }
+
+    /**
+     * 飞身刺的检查：拿着原版铁剑，用命令刺向前方四格一只不动的僵尸（戴着头盔免得被太阳晒着火，转过身来正对着玩家）。
+     * 飞身刺不定住目标，所以僵尸关掉 AI，截图时才站得住。
+     */
+    public abstract static class ThrustViews extends ExecutionShotViews {
+        int zombie;
+
+        void dummy(ScenarioBuilder s) {
+            s.server("放一只僵尸", ctx -> {
+                ServerLevel level = ctx.server().overworld();
+                var e = EntityType.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
+                e.snapTo(.5, GROUND + 1, 4.5, 180, 0);
+                e.setYBodyRot(180);
+                e.setYHeadRot(180);
+                e.setNoAi(true);
+                e.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
+                e.setPersistenceRequired();
+                level.addFreshEntity(e);
+                zombie = e.getId();
+            }).ticks(10);
+        }
+
+        void thrust(ScenarioBuilder s) {
+            s.step("输入命令", ctx -> Minecraft.getInstance().player.connection.sendCommand("alchemy execution @e[type=minecraft:zombie,limit=1,sort=nearest] thrust"));
+            s.waitUntil("特写开始", ctx -> ExecutionClient.active());
+        }
+
+        @Nullable Entity target() {
+            return Minecraft.getInstance().level.getEntity(zombie);
+        }
+
+        /** 特写结束：镜头、操作、两个人的身体都还回来了。 */
+        void ended(ScenarioBuilder s) {
+            s.waitUntil("特写结束", ctx -> !ExecutionClient.active() && !CameraDirector.active()).ticks(5);
+            s.step("检查收尾", ctx -> {
+                restored(ctx);
+                var e = target();
+                ctx.check("僵尸的身体回到原样", e != null && !ExecutionClient.posing(e));
+            });
+            s.server("清场", ctx -> {
+                var e = ctx.server().overworld().getEntity(zombie);
+                if (e != null) e.discard();
+            });
+        }
+
+        static void hand(HumanoidArm arm) {
+            var mc = Minecraft.getInstance();
+            mc.options.mainHand().set(arm);
+            mc.options.broadcastOptions();
+        }
+    }
+
+    /** 飞身刺：蹲下蓄势、飞身、刺中、定格各停一拍截图。两个人都按特写摆，黑白不对调，目标不被定住，定格时直接贴存下的那一帧。 */
+    @LDLRegisterClient(name = "execution_shot_thrust", group = "execution_shot", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class Thrust extends ThrustViews {
+        @Override public void define(ScenarioBuilder s) {
+            arrive(s, GameType.CREATIVE);
+            dummy(s);
+            long[] passes = new long[1], held = new long[1];
+            s.screenshot("thrust_before");
+            thrust(s);
+            s.step("停住", ctx -> {
+                ExecutionClient.hold(0f);
+                passes[0] = ExecutionRenderer.passes();
+            });
+            still(s, "thrust_crouch", 4);
+            s.step("蹲下蓄势", ctx -> {
+                var mc = Minecraft.getInstance();
+                var e = target();
+                ctx.check("这一拍是黑白", ExecutionClient.phase() == Phase.INK);
+                ctx.check("黑白不对调", !ExecutionClient.swapped());
+                ctx.check("全屏通道在画", ExecutionRenderer.passes() > passes[0]);
+                ctx.check("镜头离开了玩家", CameraDirector.weight() == 1 && mc.gameRenderer.getMainCamera().isDetached());
+                ctx.check("自己按特写摆", ExecutionClient.posing(mc.player));
+                ctx.check("僵尸按特写摆", e != null && ExecutionClient.posing(e));
+                ctx.check("操作被锁住", CameraDirector.locked());
+            });
+            s.server("目标照常走刻", ctx -> {
+                var e = ctx.server().overworld().getEntity(zombie);
+                ctx.check("飞身刺不定住目标", e != null && !ExecutionShots.frozen(e));
+            });
+            still(s, "thrust_leap", 8);
+            still(s, "thrust_contact", 11);
+            s.step("记下定格前", ctx -> held[0] = ExecutionRenderer.held());
+            still(s, "thrust_freeze", 16);
+            s.step("定格", ctx -> {
+                ctx.check("定格时仍是黑白", ExecutionClient.phase() == Phase.INK);
+                ctx.check("定格时直接贴存下的那一帧", ExecutionRenderer.held() > held[0]);
+            });
+            s.step("放开", ctx -> ExecutionClient.hold(null));
+            ended(s);
+            s.screenshot("thrust_after");
+            cleanup(s);
+        }
+    }
+
+    /** 左撇子飞身刺：主手是左手，四肢整个镜像，镜头换到另一侧，拿剑的手仍朝着镜头。飞身和刺中各截一张。 */
+    @LDLRegisterClient(name = "execution_shot_thrust_left", group = "execution_shot", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class ThrustLeft extends ThrustViews {
+        @Override public void define(ScenarioBuilder s) {
+            arrive(s, GameType.CREATIVE);
+            s.step("换成左手", ctx -> hand(HumanoidArm.LEFT))
+                    .waitUntil("主手是左手", ctx -> Minecraft.getInstance().player.getMainArm() == HumanoidArm.LEFT);
+            s.teardown("换回右手", ctx -> hand(HumanoidArm.RIGHT));
+            dummy(s);
+            thrust(s);
+            still(s, "thrust_left_leap", 8);
+            still(s, "thrust_left_contact", 11);
+            s.step("放开", ctx -> ExecutionClient.hold(null));
+            ended(s);
+            cleanup(s);
+        }
+    }
+
+    /**
+     * 飞身刺真放一次，按帧记下阶段：原画顿帧 → 黑白 → 定格的尾巴，黑白约 1.15 秒，从不对调，定格的那几刻是贴上去的；
+     * 打开「隐藏闪电的闪烁」后也一样（本来就不对调）。
+     */
+    @LDLRegisterClient(name = "execution_shot_thrust_timing", group = "execution_shot", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class ThrustTiming extends ThrustViews {
+        private final Timing.Frames log = new Timing.Frames();
+
+        /** 黑白（含定格的尾巴）从第一帧到最后一帧多少秒。 */
+        private double inkSeconds() {
+            long first = -1, last = -1;
+            for (int i = 0; i < log.phases.size(); i++) {
+                Phase p = log.phases.get(i);
+                if (p != Phase.INK && p != Phase.AFTER) continue;
+                if (first < 0) first = log.at.get(i);
+                last = log.at.get(i);
+            }
+            return (last - first) / 1e9;
+        }
+
+        @Override public void define(ScenarioBuilder s) {
+            arrive(s, GameType.CREATIVE);
+            dummy(s);
+            for (boolean gentle : new boolean[] {false, true}) {
+                long[] held = new long[1];
+                s.step(gentle ? "打开隐藏闪烁的选项" : "开始记录", ctx -> {
+                    Minecraft.getInstance().options.hideLightningFlash().set(gentle);
+                    log.clear();
+                    held[0] = ExecutionRenderer.held();
+                    NeoForge.EVENT_BUS.register(log);
+                });
+                thrust(s);
+                s.waitUntil("特写结束", ctx -> !ExecutionClient.active() && !CameraDirector.active()).ticks(5);
+                s.step(gentle ? "检查第二次" : "检查这一次", ctx -> {
+                    NeoForge.EVENT_BUS.unregister(log);
+                    Minecraft.getInstance().options.hideLightningFlash().set(false);
+                    LOG.info("[execution] thrust: sequence {}, {} swaps, ink {} s, {} held frames of {}", log.sequence(), log.swapRuns(), inkSeconds(),
+                            ExecutionRenderer.held() - held[0], log.phases.size());
+                    ctx.check("阶段依次出现", log.sequence().equals(List.of(Phase.LAUNCH, Phase.INK, Phase.AFTER)));
+                    ctx.check("从不对调", log.swapRuns() == 0);
+                    ctx.check("黑白约 1.15 秒", inkSeconds() > .9 && inkSeconds() < 1.6);
+                    ctx.check("定格的那几刻是贴上去的", ExecutionRenderer.held() > held[0]);
+                    ctx.check("自己没有被挪动", Minecraft.getInstance().player.position().distanceTo(FEET) < .01);
+                    restored(ctx);
+                });
+            }
+            ended(s);
             cleanup(s);
         }
     }

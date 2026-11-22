@@ -7,7 +7,7 @@
 | 运镜 | [CAMERA_SHOTS.md](CAMERA_SHOTS.md) | 镜头暂时离开玩家，看完平滑回来，可带遮幅和电影蒙版 |
 | 全屏后期 | [SCREEN_EFFECTS.md](SCREEN_EFFECTS.md) | 黑白闪（冲击帧）、电影蒙版、泛光 `GlowBloom`、后期里画的特效 `PostVfx` |
 | 区域画风 | [WORLD_STYLES.md](WORLD_STYLES.md) | 门后、群系里的世界换一种画风（黑白、童话、国画），走进去时球形切换 |
-| 处决特写 | [EXECUTION_SHOTS.md](EXECUTION_SHOTS.md) | 投技、处决的两秒特写：抛起、黑白、刀光、红色重击、拍下；可交互版本 |
+| 处决特写 | [EXECUTION_SHOTS.md](EXECUTION_SHOTS.md) | 投技、处决的两秒特写：抛起、黑白、刀光、红色重击、拍下；可交互版本；飞身刺（两人的剪影，刺中后定格，定格时换场景） |
 | 各功能自己的通道 | [EXPLOSION_MAGIC.md](EXPLOSION_MAGIC.md)、[DAWNVOW_CHARGE.md](DAWNVOW_CHARGE.md)、[RAILGUN.md](RAILGUN.md)、[SHIRAUME_BOSS.md](SHIRAUME_BOSS.md)、[ORCHESTRA.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/ORCHESTRA.md) | 爆裂魔法、曦誓蓄力、超电磁炮、白梅战、乐团描边各有一个全屏通道 |
 
 ## 一、先选对工具
@@ -18,8 +18,11 @@
 | 镜头在停留期间切机位、抖动、歪画面 | 客户端 `CameraDirector.play(shot, rig)`，`Rig` 逐帧给机位 | 自己写 Mixin 改 `Camera` |
 | 运镜时上下黑边、电影感调色 | `CameraShot.letterbox()`、`CameraShot.cinema()` | 自己画黑条 |
 | 一下冲击：黑白闪 | 服务端 `ScreenEffects.flash(player, ScreenFlash.at(CameraPoint.world(pos)))` | 每次命中都闪 |
+| 全屏白、全屏黑盖住传送、换场景 | 服务端 `ScreenEffects.cover(player, ScreenCover.white(in, hold, out))`，按刻计时，盖满的那几刻里换 | 用黑白闪遮（最多 8 帧，开了「隐藏闪电的闪烁」会跳过） |
+| 镜头一直很轻地平移颤动（下坠） | 客户端每刻 `CameraJitter.want(强度)` | 改镜头角度的抖动冒充平移 |
 | 某块区域的世界换画风 | 服务端 `StyleRealms.add(level, realm)` | 第二镜头、渲染到贴图再贴到门上 |
 | 投技、处决特写 | `ExecutionShots.play`；玩家逐刀点击的用 `InteractiveExecutions.start` | 自己拼运镜加闪 |
+| 黑白里刺中、定格的那一下换场景，再接彩色过场 | `ExecutionShot.thrust` 加出手的人：定格的那几刻贴存下的一帧、不读深度，在里面传送；彩色运镜一到黑白就结束 | 剪影还在读深度时传送（地形扫进盒子，远处的实体插值滑过方块） |
 | 让发光的特效泛光 | `GlowBloom` | 按亮度挑像素来泛光（会把天空、雪地一起糊掉） |
 | 画面被调暗、调色后仍然亮着的特效；雾和光影包外也要看得见 | `PostVfx.add` / `PostVfx.blend` | 在世界里画了再想办法提亮 |
 | 一种新的全屏效果 | 照第四节加一个通道 | 占原版 `GameRenderer.setPostEffect` 的槽 |
@@ -46,7 +49,7 @@
 6. `PartOutline`：乐团选中声部的描边
 7. `ShiraumeScreen`：白梅战的色散和红光
 8. `WorldStyleRenderer`：区域画风
-9. `ExecutionRenderer`：处决特写，整个画面换成平涂的颜色
+9. `ExecutionRenderer`：处决特写，整个画面换成平涂的颜色；飞身刺定格时直接贴存下的那一帧
 10. `ScreenEffectRenderer`：黑白闪和电影蒙版，最后画
 
 新通道按「要处理谁的结果」决定放哪：
@@ -78,6 +81,7 @@
 
 - 每个通道自己留一份：一个和主画面同尺寸的 `TextureTarget`，尺寸变了就 `resize`，`useStencil` 和主画面不一样时重建。
 - 只在效果开着的帧复制，平常一帧不花。
+- 要在效果里遮住传送（深度里的东西一下子全变了）：把画好的一帧存下来，之后几刻直接贴回主画面，不再读深度（飞身刺的定格）。从活动的画面到它定住的那一帧画面不变，不算一次明暗变化。
 - 要和 `PostVfx` 共用那一份，就在它的 `begin(active)` 里把自己算进去，并用 `PostVfx.depth()` 取。
 
 ### 用深度还原位置
@@ -162,7 +166,7 @@
 
 - **单元测试**放时间表、编解码这类纯逻辑：时长、顺序、每秒闪几次、同一个种子在两端算出一样的结果。
 - **客户端场景**（LDLib2 uitest，`@LDLRegisterClient`，`DEV_ONLY`）放画面：
-  - 截图要停在某一拍上。已有的停住钩子：`ScreenEffectRenderer.hold`、`CameraDirector.hold`、`ExecutionClient.hold`。新效果也留一个。
+  - 截图要停在某一拍上。已有的停住钩子：`ScreenEffectRenderer.hold`、`CameraDirector.hold`、`ExecutionClient.hold`（飞身刺也是，停在定格里时贴的是定格开始那一刻的画面，`ExecutionRenderer.held()` 数贴了几帧）。新效果也留一个。
   - 时长、顺序另外真放一次，在 `RenderFrameEvent.Post` 里逐帧记录来查。
   - 运镜按缓动曲线的最大速度逐帧查有没有跳变（`CameraShotViews.FrameLog`）。
 - **测试框架的坑**：

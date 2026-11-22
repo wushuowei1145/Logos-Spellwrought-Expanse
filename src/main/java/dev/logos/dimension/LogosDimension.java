@@ -81,6 +81,7 @@ public final class LogosDimension {
         dev.logos.dimension.paint.PaintSystem.register(bus);
         dev.logos.dimension.npc.NpcEntities.register(bus);
         dev.logos.dimension.shiraume.ShiraumeEntities.register(bus);
+        dev.logos.dimension.jiansui.JianSuiEntities.register(bus);
         dev.logos.dimension.companion.Companions.register(bus);
         dev.logos.dimension.foxfire.Foxfire.register(bus);
         dev.logos.dimension.reifu.Reifu.register(bus);
@@ -99,6 +100,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.SettlementGameTests.register(bus);
         dev.logos.dimension.gametest.ElvenForestGameTests.register(bus);
         dev.logos.dimension.gametest.TaixuanGameTests.register(bus);
+        dev.logos.dimension.gametest.JianSuiGameTests.register(bus);
         dev.logos.dimension.gametest.FallenLogGameTests.register(bus);
         dev.logos.dimension.gametest.MushroomGameTests.register(bus);
         dev.logos.dimension.gametest.TurfGameTests.register(bus);

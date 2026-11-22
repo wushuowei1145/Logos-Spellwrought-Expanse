@@ -63,7 +63,8 @@ public final class TaixuanGameTests {
             "taixuan_native_assembly", TaixuanGameTests::assembly,
             "taixuan_template_blocks", TaixuanGameTests::templateBlocks,
             "taixuan_natural_habitat", TaixuanGameTests::habitat,
-            "taixuan_abyss_and_sect", TaixuanGameTests::living);
+            "taixuan_abyss_and_sect", TaixuanGameTests::living,
+            "taixuan_cavity", TaixuanGameTests::cavity);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -390,6 +391,73 @@ public final class TaixuanGameTests {
         }
         var details = DATA.getAsJsonObject("abyss").getAsJsonObject("details");
         helper.assertTrue(isPlatformCenter(level.getBlockState(site.pos(details.getAsJsonObject("platform").getAsJsonArray("center")))), "链台中心缺太极");
+        helper.assertTrue(level.getBlockState(site.pos(details.getAsJsonObject("arena").getAsJsonArray("dais"))).is(TaixuanBlocks.DARK_IRON.get()), "雾底石台缺玄铁心");
+        helper.succeed();
+    }
+
+    /**
+     * 场地下面的空洞（剑祟第三阶段）：石壁、洞底、洞顶封得住，里面没有水和岩浆、没有残留的原地形；
+     * 起点、主路、绕路的碎块踩得住（脚下有碰撞，头顶两格没有），光源和顶块的玄铁心都在。返回不对的地方，最多 limit 条。
+     */
+    public static List<String> cavityProblems(Level level, Site site, int limit) {
+        var cav = DATA.getAsJsonObject("abyss").getAsJsonObject("cavity");
+        int r = cav.get("radius").getAsInt(), lining = cav.get("lining").getAsInt();
+        int lo = cav.getAsJsonArray("air").get(0).getAsInt(), hi = cav.getAsJsonArray("air").get(1).getAsInt();
+        var bad = new ArrayList<String>();
+        java.util.function.BiConsumer<String, BlockPos> add = (what, at) -> { if (bad.size() < limit) bad.add(what + " " + at + "=" + name(level, at)); };
+        for (int k = 0; k < 32; k++) {
+            double a = k * Math.PI / 16;
+            for (int y = lo; y <= hi; y += 3) for (double d = r + 1; d <= r + lining; d++) {
+                int x = 126 + (int) Math.round(d * Math.cos(a)), z = 126 + (int) Math.round(d * Math.sin(a));
+                double dist = Math.hypot(x - 126, z - 126);
+                if (dist <= r + .5 || dist > r + lining) continue;
+                var p = site.pos(x, y, z);
+                if (!level.getBlockState(p).isSolid()) add.accept("石壁有缺口", p);
+            }
+        }
+        for (int x = 126 - r; x <= 126 + r; x += 2) for (int z = 126 - r; z <= 126 + r; z += 2) {
+            if (Math.hypot(x - 126, z - 126) > r) continue;
+            for (var y : List.of(cav.getAsJsonArray("floor").get(0).getAsInt(), cav.getAsJsonArray("floor").get(1).getAsInt(), cav.get("ceiling").getAsInt())) {
+                var p = site.pos(x, y, z);
+                if (!level.getBlockState(p).isSolid()) add.accept("洞底或洞顶有缺口", p);
+            }
+            for (int y = lo; y <= hi; y++) {
+                var p = site.pos(x, y, z);var state = level.getBlockState(p);
+                if (!state.getFluidState().isEmpty()) add.accept("空洞里有水或岩浆", p);
+                else if (state.is(Blocks.STONE) || state.is(Blocks.DIRT) || state.is(Blocks.GRAVEL) || state.is(Blocks.GRANITE)) add.accept("空洞里有原地形", p);
+            }
+        }
+        var stones = new ArrayList<JsonObject>();
+        stones.add(cav.getAsJsonObject("start"));
+        cav.getAsJsonArray("route").forEach(e -> stones.add(e.getAsJsonObject()));
+        for (var d : cav.getAsJsonObject("detours").entrySet()) d.getValue().getAsJsonObject().getAsJsonArray("stones").forEach(e -> stones.add(e.getAsJsonObject()));
+        for (var stone : stones) {
+            int y = stone.getAsJsonArray("top").get(1).getAsInt();
+            for (var cell : stone.getAsJsonArray("cells")) {
+                var c = cell.getAsJsonArray();var p = site.pos(c.get(0).getAsInt(), y, c.get(1).getAsInt());
+                if (level.getBlockState(p).getCollisionShape(level, p).isEmpty()) add.accept("碎块踩不住", p);
+                for (int dy = 1; dy <= 2; dy++) {
+                    var q = p.above(dy);var state = level.getBlockState(q);
+                    if (!state.getCollisionShape(level, q).isEmpty() && !state.is(Blocks.SOUL_LANTERN)) add.accept("碎块头顶有东西", q);
+                }
+            }
+        }
+        for (var light : cav.getAsJsonArray("lights")) {
+            var l = light.getAsJsonArray();var p = site.pos(l.get(0).getAsInt(), l.get(1).getAsInt(), l.get(2).getAsInt());
+            if (!level.getBlockState(p).is(Blocks.LIGHT)) add.accept("光源丢了", p);
+        }
+        var heart = site.pos(cav.getAsJsonObject("top").getAsJsonArray("heart"));
+        if (!level.getBlockState(heart).is(TaixuanBlocks.DARK_IRON.get())) add.accept("顶块缺玄铁心", heart);
+        return bad;
+    }
+
+    private static void cavity(GameTestHelper helper) {
+        var level = level(helper);var site = placeStudy(level);
+        var problems = cavityProblems(level, site, 12);
+        System.out.println("TAIXUAN_CAVITY anchor=" + site.anchor() + " rotation=" + site.rotation() + " problems=" + problems.size());
+        helper.assertTrue(problems.isEmpty(), "场地下面的空洞不对：" + problems);
+        // 雾底场地本身不受影响：石台、地面还在
+        var details = DATA.getAsJsonObject("abyss").getAsJsonObject("details");
         helper.assertTrue(level.getBlockState(site.pos(details.getAsJsonObject("arena").getAsJsonArray("dais"))).is(TaixuanBlocks.DARK_IRON.get()), "雾底石台缺玄铁心");
         helper.succeed();
     }

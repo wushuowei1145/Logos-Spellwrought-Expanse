@@ -1,4 +1,4 @@
-package dev.logos.dimension.shiraume;
+package dev.logos.dimension.combat;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -14,11 +14,11 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 /**
- * Boss 招式文件里只有 Boss 用的字段（通用的招式状态机不认识它们，照常忽略）：
+ * Boss 招式文件里只有 Boss 用的字段（通用的招式状态机不认识它们，照常忽略），白梅、剑祟共用：
  * 双眼红光的时刻、被弹反时怎么办、够得到多远、往前冲的一段、后跳、破盾、清除增益。
  * 和 {@link dev.logos.dimension.combat.Movesets} 读同一个文件，按资源管理器缓存，{@code /reload} 后重新读。
  */
-public final class ShiraumeMoves {
+public final class BossMoves {
     private static final Logger LOGGER = LogUtils.getLogger();
     /** 被弹反时：播自己的被弹反动作（独立招式）、接着下一刀（连续招式）、弹不开。 */
     public enum ParryKind { SINGLE, COMBO, NONE }
@@ -30,13 +30,13 @@ public final class ShiraumeMoves {
      */
     public record Extra(double eyeFlash, ParryKind parry, @Nullable String parried, @Nullable String follow, double reach,
                         double damage, double cone, double @Nullable [] lunge, double @Nullable [] leap, boolean guardBreak, int purge) {
-        static final Extra NONE = new Extra(-1, ParryKind.NONE, null, null, 0, 0, 0, null, null, false, 0);
+        public static final Extra NONE = new Extra(-1, ParryKind.NONE, null, null, 0, 0, 0, null, null, false, 0);
     }
 
     private static ResourceManager cachedFor;
     private static final Map<Identifier, Optional<Map<String, Extra>>> CACHE = new HashMap<>();
 
-    private ShiraumeMoves() {}
+    private BossMoves() {}
 
     /** 这一招的专用字段；文件缺失或没有这一招时返回 {@link Extra#NONE}。 */
     public static Extra of(MinecraftServer server, Identifier moveset, String move) {

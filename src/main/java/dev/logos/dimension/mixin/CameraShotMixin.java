@@ -1,6 +1,7 @@
 package dev.logos.dimension.mixin;
 
 import dev.logos.dimension.client.camera.CameraDirector;
+import dev.logos.dimension.client.camera.CameraJitter;
 import net.minecraft.client.Camera;
 import net.minecraft.world.phys.Vec3;
 import org.objectweb.asm.Opcodes;
@@ -12,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * 运镜改镜头的唯一入口。{@code alignWithEntity} 之后的视锥、投影、地形剔除、雾和声音都按镜头算，
- * 所以只要在这里换掉位姿，其余都会跟上。
+ * 所以只要在这里换掉位姿，其余都会跟上。镜头的平移颤动（{@link CameraJitter}）也在这里加。
  */
 @Mixin(Camera.class)
 public abstract class CameraShotMixin {
@@ -27,8 +28,12 @@ public abstract class CameraShotMixin {
     @Inject(method = "alignWithEntity", at = @At("TAIL"))
     private void cameraShotApply(float partialTicks, CallbackInfo ci) {
         CameraDirector.Pose pose = CameraDirector.frame((Camera) (Object) this, partialTicks);
-        if (pose == null) return;
-        setPosition(pose.pos());
-        setRotation(pose.yaw(), pose.pitch(), pose.roll());
+        if (pose != null) {
+            setPosition(pose.pos());
+            setRotation(pose.yaw(), pose.pitch(), pose.roll());
+        }
+        // 平移颤动加在最后：运镜摆好的机位上也照样抖
+        Vec3 jitter = CameraJitter.offset(partialTicks);
+        if (jitter != null) setPosition(((Camera) (Object) this).position().add(jitter));
     }
 }

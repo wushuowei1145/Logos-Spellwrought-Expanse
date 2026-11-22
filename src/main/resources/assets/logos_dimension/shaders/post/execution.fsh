@@ -1,10 +1,12 @@
 #version 330
 
 // 处决特写的全屏画面。整个画面换成平涂的两色：背景一色，目标的剪影一色；刀光、刀痕和速度线压在上面。
-// 只读最终画面的颜色和半透明实体画完之后的深度，不碰光影包的缓冲。
+// 飞身刺多一个出手的人的盒子，剪影是两个盒子合起来；刺中时多一笔直的刺光。
+// 只读最终画面的颜色和半透明实体画完之后的深度，不碰光影包的缓冲。飞身刺另读一份只画了方块时的深度，盒子里的方块不算身体。
 
 uniform sampler2D InSampler;
 uniform sampler2D DepthSampler;
+uniform sampler2D TerrainSampler;
 
 layout(std140) uniform Execution {
     mat4 InvViewProj;   // 裁剪空间还原到相对镜头的坐标
@@ -19,6 +21,10 @@ layout(std140) uniform Execution {
     vec4 Bend[4];       // x 这一刀弯多少
     vec4 Scar[24];      // 已经划过的刀痕：x 角度，y 离中心多远，z 弯曲，w 它一侧的身体沿刀错开多少
     vec4 Spark[4];      // 受击火花：xy 位置（相对身体中心，按画面高度），z 半径，w 随机种子
+    mat4 ActorInv;      // 飞身刺：相对镜头的坐标换到出手的人的盒子的坐标（原点在盒子中心，跟着他转，连朝向一起）
+    vec4 ActorBox;      // xyz 出手的人的盒子的半边长（0 是没有这个人），w 他的地面
+    vec4 Thrust;        // 刺光：xy 刀尾，zw 刀尖（相对身体中心，按画面高度）
+    vec4 ThrustLook;    // x 刺光最粗的地方的半宽（0 没有），y 是否拿只画了方块时的深度分开方块和实体
 };
 
 in vec2 texCoord;
@@ -47,14 +53,21 @@ vec3 positionAt(vec2 uv, float depth) {
     return p.xyz / p.w;
 }
 
-// 这个像素是不是目标身上：深度还原出的位置落在身体的盒子里。天空、远处的地形都在盒子外面。
+// 这一点在不在盒子里：换到盒子自己的坐标比较，盒子的地面以下的不算。半边长为 0 是没有这个盒子
+float inBox(vec3 p, mat4 inv, vec4 box) {
+    if (box.x <= 0.0 || p.y < box.w) return 0.0;
+    vec3 q = abs((inv * vec4(p, 1.0)).xyz) - box.xyz;
+    return max(q.x, max(q.y, q.z)) <= 0.0 ? 1.0 : 0.0;
+}
+
+// 这个像素是不是身上：深度还原出的位置落在目标身体的盒子里，或者落在出手的人的盒子里（飞身刺）。天空、远处的地形都在盒子外面。
 float bodyAt(vec2 uv) {
     float depth = texture(DepthSampler, uv).r;
     if (depth >= 1.0) return 0.0;
+    // 飞身刺：方块先画、实体后画。和只画了方块时一样深的像素是方块（盒子里扫进来的玄铁心、台阶），不算身体
+    if (ThrustLook.y > 0.5 && depth >= texture(TerrainSampler, uv).r) return 0.0;
     vec3 p = positionAt(uv, depth);
-    if (p.y < Box.w) return 0.0;
-    vec3 q = abs((BodyInv * vec4(p, 1.0)).xyz) - Box.xyz;
-    return max(q.x, max(q.y, q.z)) <= 0.0 ? 1.0 : 0.0;
+    return max(inBox(p, BodyInv, Box), inBox(p, ActorInv, ActorBox));
 }
 
 // x 身体的覆盖（边缘和四邻平均一下，不发毛），y 身体内部的分界线（手臂压在身体前面的地方），画成细白线
@@ -138,6 +151,19 @@ float spark(vec2 p, vec4 s) {
     return step(r, max(len * pow(tip, 2.4), s.z * 0.22));
 }
 
+// 飞身刺的刺光：一笔直的，从刀尾到刀尖，靠近刀尖的地方最粗、刀尖收成一点，刀尾拖得很长；中间一条细线连着两头
+float thrust(vec2 p) {
+    vec2 d = Thrust.zw - Thrust.xy;
+    float len = length(d);
+    if (len < 1e-4) return 0.0;
+    vec2 dir = d / len;
+    float u = dot(p - Thrust.xy, dir) / len;
+    float across = abs(dot(p - Thrust.xy, vec2(-dir.y, dir.x)));
+    float shape = u < 0.82 ? pow(max(u, 0.0) / 0.82, 1.4) : pow(max(1.0 - u, 0.0) / 0.18, 0.6);
+    float w = u > 0.0 && u < 1.0 ? ThrustLook.x * shape : 0.0;
+    return max(step(across, w), step(across, LINE) * step(0.0, u) * step(u, 1.0));
+}
+
 // 刀光、刀痕、火花：压在什么颜色上就是它的反色
 float cuts(vec2 p) {
     float cover = 0.0;
@@ -158,6 +184,7 @@ float cuts(vec2 p) {
         vec2 s = stroke(p, Finisher.x, 0.0, Look.w, Finisher.z, Finisher.y);
         cover = max(cover, max(s.x, s.y));
     }
+    if (ThrustLook.x > 0.0) cover = max(cover, thrust(p));
     return cover;
 }
 

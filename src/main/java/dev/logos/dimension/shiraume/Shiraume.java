@@ -1,5 +1,6 @@
 package dev.logos.dimension.shiraume;
 
+import dev.logos.dimension.combat.BossMoves;
 import com.geckolib.animatable.instance.AnimatableInstanceCache;
 import com.geckolib.animatable.manager.AnimatableManager;
 import com.geckolib.util.GeckoLibUtil;
@@ -53,7 +54,7 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>招式由服务端的招式状态机（{@link MoveRunner}，招式文件 {@code shiraume}）驱动，动作按名字同步给客户端的 combat 控制器
  * （动画名加 {@code ryuka_} 前缀）。AI 是 {@link #think} 里一个简单的决策：远了冲过去接连招，近了挑一招砍，中距离绕着走。
- * 招式里的 Boss 专用字段（红光、被弹反怎么办、够多远、往前冲）见 {@link ShiraumeMoves}。
+ * 招式里的 Boss 专用字段（红光、被弹反怎么办、够多远、往前冲）见 {@link BossMoves}。
  *
  * <p>第一阶段不会死：血掉到 1 时停住，交给场地开始变身（{@link ShiraumeFight#transform}）。
  */
@@ -183,8 +184,8 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
         return runner == null || runner.cleared() ? "" : runner.move().name();
     }
 
-    private ShiraumeMoves.Extra extra(String move) {
-        return level() instanceof ServerLevel level ? ShiraumeMoves.of(level.getServer(), MOVESET, move) : ShiraumeMoves.Extra.NONE;
+    private BossMoves.Extra extra(String move) {
+        return level() instanceof ServerLevel level ? BossMoves.of(level.getServer(), MOVESET, move) : BossMoves.Extra.NONE;
     }
 
     /** 当前招式已经播到的动作时间（秒）。 */
@@ -240,7 +241,7 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
             level.playSound(null, getX(), getY() + 2, getZ(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.HOSTILE, 1.6f, .6f);
             return;
         }
-        ShiraumeMoves.Extra extra = extra(name);
+        BossMoves.Extra extra = extra(name);
         double reach = extra.reach() > 0 ? extra.reach() : 4.5;
         // 转身横扫一整圈（招式文件里的 cone 最大 180，这里按 360 算）
         double cone = name.equals("turn_sweep") ? 360 : move.cone() > 0 ? move.cone() : 110;
@@ -348,7 +349,7 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
     public boolean parried(LivingEntity by) {
         if (runner == null || scripted) return false;
         String name = runner.move().name();
-        ShiraumeMoves.Extra extra = extra(name);
+        BossMoves.Extra extra = extra(name);
         long now = level().getGameTime();
         switch (extra.parry()) {
             case SINGLE -> {
@@ -586,7 +587,7 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
 
     /** 招式里按动作时间发生的事：双眼红光、往前冲、后跳、冲刺。 */
     private void motion(ServerLevel level, String name, double before, double after, long now) {
-        ShiraumeMoves.Extra extra = extra(name);
+        BossMoves.Extra extra = extra(name);
         if (extra.eyeFlash() >= 0 && before < extra.eyeFlash() && after >= extra.eyeFlash()) eyes(level);
         Vec3 forward = forward();
         if (extra.lunge() != null) {
@@ -708,7 +709,7 @@ public class Shiraume extends PathfinderMob implements NpcAnimated, MoveRunner.A
         }
         if (!m.equals("idle") && !m.equals("deflect")) {
             // 起手时慢慢转向目标，红光之后锁定方向（看准了能闪开）
-            ShiraumeMoves.Extra extra = extra(m);
+            BossMoves.Extra extra = extra(m);
             double t = clipTime(now);
             double commit = extra.eyeFlash() >= 0 ? extra.eyeFlash() : contactTime(m) - .2;
             if (t < commit) face(target, 10);
