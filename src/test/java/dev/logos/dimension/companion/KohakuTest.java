@@ -330,7 +330,7 @@ class KohakuTest {
     @Test void everyLineAndPanelKeyIsInBothLanguages() throws Exception {
         List<String> keys = new ArrayList<>(List.of("entity.logos_dimension.kohaku_companion", "item.logos_dimension.paw_sovereign",
                 "container.logos_dimension.kohaku_pouch", "gui.logos_dimension.companion.stat.spell_power", "gui.logos_dimension.companion.stat.mana",
-                TALK + "name", TALK + "kana", TALK + "epithet", TALK + "seal_name", TALK + "option.outfit." + KohakuTalk.OUTFIT,
+                TALK + "name", TALK + "kana", TALK + "epithet", TALK + "seal_name", LINE + "talk.outfit_same",
                 TALK + "skill.staff.yours", TALK + "skill.staff.own", "effect.logos_dimension.kohaku_company"));
         for (String t : new String[]{"blank", "blank_use", "owner", "use"}) keys.add("tooltip.logos_dimension.paw_sovereign." + t);
         TalkMenu.Option chat = TalkMenu.find(KohakuTalk.MENU, TalkMenu.CHAT);
@@ -361,10 +361,52 @@ class KohakuTest {
                 "critique_none", "critique_blank", "critique_broken", "critique_unstable", "critique_costly", "critique_short", "critique_dead",
                 "critique_waste", "critique_recursive", "critique_good_strike", "critique_good"}) keys.add(LINE + "talk." + l);
         for (CompanionTactic t : CompanionTactic.values()) keys.add(LINE + "talk.tactic_" + t.id);
+        for (KohakuOutfit o : KohakuOutfit.values()) {
+            keys.add(TALK + "option.outfit." + o.id);
+            keys.add(LINE + "talk.outfit_" + o.id);
+        }
         for (String locale : new String[]{"zh_cn", "en_us"}) {
             JsonObject lang = read("/assets/logos_dimension/lang/" + locale + ".json");
             for (String k : keys) assertTrue(lang.has(k), locale + " 缺 " + k);
         }
+    }
+
+    /** 四套衣服都在模型里（组名 outfit_<id>_<骨骼>，挂在公共骨骼下），模型里没有别的套；穿哪一套都不会藏掉公共的骨骼。对话里四套都能选。 */
+    @Test void herFourOutfitsAreInTheModel() throws Exception {
+        var geo = read("/assets/logos_dimension/geckolib/models/entity/kohaku_companion.geo.json");
+        java.util.Map<String, String> parent = new java.util.HashMap<>();
+        for (var b : geo.getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject().getAsJsonArray("bones")) {
+            var o = b.getAsJsonObject();
+            parent.put(o.get("name").getAsString(), o.has("parent") ? o.get("parent").getAsString() : null);
+        }
+        for (KohakuOutfit o : KohakuOutfit.values()) {
+            assertTrue(parent.keySet().stream().anyMatch(n -> n.startsWith(CompanionOutfit.PREFIX + o.id + "_")), o.id + " 不在模型里");
+        }
+        for (var e : parent.entrySet()) {
+            String bone = e.getKey();
+            boolean outfit = bone.startsWith(CompanionOutfit.PREFIX);
+            if (outfit && !e.getValue().startsWith(CompanionOutfit.PREFIX)) {
+                assertTrue(java.util.Arrays.stream(KohakuOutfit.values()).anyMatch(o -> bone.startsWith(CompanionOutfit.PREFIX + o.id + "_")), bone);
+            }
+            for (KohakuOutfit o : KohakuOutfit.values()) if (!outfit) assertFalse(o.hides(bone), o.id + " 藏掉了公共的 " + bone);
+        }
+        TalkMenu.Option menu = TalkMenu.find(KohakuTalk.MENU, "chat.outfit");
+        assertNotNull(menu);
+        assertEquals(KohakuOutfit.values().length + 1, menu.children().size(), "四套加返回");
+    }
+
+    /** 换的那一套记在你身上：旧存档没有这一项时是开衫；存了再读回来不变。 */
+    @Test void herOutfitIsKeptOnYou() {
+        var old = new com.google.gson.JsonObject();
+        old.addProperty("foods", 2);
+        KohakuDays read = KohakuDays.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, old).getOrThrow();
+        assertEquals(KohakuOutfit.CARDIGAN.id, read.outfit());
+        assertEquals(2, read.foods());
+        KohakuDays swim = read.withOutfit(KohakuOutfit.SWIMSUIT).withFood(5);
+        var saved = KohakuDays.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, swim).getOrThrow();
+        assertEquals(swim, KohakuDays.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, saved).getOrThrow());
+        assertEquals(KohakuOutfit.SWIMSUIT, KohakuOutfit.byId(swim.outfit()));
+        assertEquals(KohakuOutfit.CARDIGAN, KohakuOutfit.byId("nonsense"));
     }
 
     /** 三位同伴各有自己的契和包袱。 */

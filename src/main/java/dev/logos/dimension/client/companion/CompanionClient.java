@@ -24,6 +24,7 @@ import java.util.Map;
 import dev.logos.dimension.companion.ElfPrincessCompanion;
 import dev.logos.dimension.companion.Katashiro;
 import dev.logos.dimension.companion.KohakuCompanion;
+import dev.logos.dimension.companion.KohakuOutfit;
 import dev.logos.dimension.companion.ShiraumeCompanion;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -236,12 +237,13 @@ public final class CompanionClient {
 
     /**
      * 琥珀（docs/KOHAKU_COMPANION.md）：NPC 的通用渲染，长杖画在手部挂点上。法阵还在转开时不画（她还没出来）；睡着、倒下时不叠加视线。
-     * 模型里有四套装束（{@code outfit_<id>_*}），现在只穿开衫制服，别的几套连同子骨骼都不画。
+     * 模型里有四套装束（{@code outfit_<id>_*}），按她穿的那一套（{@link KohakuOutfit}）把别的几套连同子骨骼都不画。
      */
     public static class KohakuRenderer<R extends LivingEntityRenderState & GeoRenderState> extends NpcRenderer<KohakuCompanion, R> {
-        static final String OUTFIT = "cardigan";
+        /** 她穿哪一套；每套要隐藏的组（别的几套的 outfit_* 顶层组），按模型缓存（资源重载后模型换了就重算）。 */
+        private static final DataTicket<KohakuOutfit> OUTFIT = DataTicket.create("logos_dimension_kohaku_outfit", KohakuOutfit.class);
         private BakedGeoModel outfitModel;
-        private List<String> hidden = List.of();
+        private final Map<KohakuOutfit, List<String>> hidden = new EnumMap<>(KohakuOutfit.class);
 
         public KohakuRenderer(EntityRendererProvider.Context context) {
             super(context, "kohaku_companion");
@@ -291,6 +293,7 @@ public final class CompanionClient {
             }
             state.addGeckolibData(UMBRELLA, umbrella);
             state.addGeckolibData(UMBRELLA_WIDE, animatable.umbrella() == 2);
+            state.addGeckolibData(OUTFIT, animatable.outfit());
         }
 
         @Override
@@ -329,15 +332,18 @@ public final class CompanionClient {
             super.adjustModelBonesForRender(info, snapshots);
             if (info.model() != outfitModel) {
                 outfitModel = info.model();
+                hidden.clear();
+            }
+            KohakuOutfit outfit = info.getOrDefaultGeckolibData(OUTFIT, KohakuOutfit.CARDIGAN);
+            List<String> groups = hidden.computeIfAbsent(outfit, o -> {
                 List<String> out = new ArrayList<>();
                 for (GeoBone bone : info.model().boneLookup().get().values()) {
-                    String n = bone.name();
                     boolean top = bone.parent() == null || !bone.parent().name().startsWith(CompanionOutfit.PREFIX);
-                    if (top && n.startsWith(CompanionOutfit.PREFIX) && !n.startsWith(CompanionOutfit.PREFIX + OUTFIT + "_")) out.add(n);
+                    if (top && o.hides(bone.name())) out.add(bone.name());
                 }
-                hidden = List.copyOf(out);
-            }
-            for (String group : hidden) {
+                return List.copyOf(out);
+            });
+            for (String group : groups) {
                 snapshots.ifPresent(group, s -> {
                     s.skipRender(true);
                     s.skipChildrenRender(true);

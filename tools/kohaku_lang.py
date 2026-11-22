@@ -27,6 +27,8 @@ ZH = {
     T + 'option.chat.enforcers': '魔法院的执法官', T + 'option.chat.past': '以前的事', T + 'option.chat.seals': '爪之契',
     T + 'option.chat.us': '你觉得我怎么样？', T + 'option.chat.rest': '回去歇着吧', T + 'option.outfit.cardigan': '开衫制服',
     T + 'option.chat.critique': '帮我看看这张', T + 'option.chat.allowance': '给你零花钱',
+    T + 'option.chat.outfit': '换身衣服吧', T + 'option.outfit.daisy': '雏菊散步', T + 'option.outfit.velvet': '天鹅绒小夜曲',
+    T + 'option.outfit.swimsuit': '泳装',
     'effect.logos_dimension.kohaku_company': '琥珀相伴',
     T + 'skill.company.name': '琥珀相伴', T + 'skill.company.icon': '伴',
     T + 'skill.company.desc': '和她一起睡醒以后的 %s 分钟里：魔力回复 +%s%%、汇集快 %s%%。羁绊越深，回得越快。',
@@ -152,6 +154,9 @@ TALK_ZH = {
     'critique_good_strike': '……还行。打得到，也打得痛。没什么好挑的。', 'critique_good': '……还行。没什么好挑的。别得意。',
     'allowance_given': '零花钱？……嗯，收下了。别指望我说谢谢。', 'allowance_change': '一枚金镑？太多了。……找你十九先令，我只要一先令。',
     'allowance_today': '今天的已经收过了。贪心的雇主可不讨人喜欢。', 'allowance_none': '……你身上一枚猫币都没有。零花钱要先有钱才能给哦。',
+    'outfit_cardigan': '……还是这件。口袋多，装得下烧瓶和猫币。', 'outfit_daisy': '出去走走？……行吧，就当是去晒太阳。',
+    'outfit_velvet': '天鹅绒的……要去听音乐会？那你得带我坐前排。', 'outfit_swimsuit': '……泳装？先说好，水凉的话我可不下去。',
+    'outfit_same': '我现在穿的就是这件啊。',
 }
 EN = {
     'entity.logos_dimension.kohaku_companion': 'Kohaku',
@@ -169,6 +174,8 @@ EN = {
     T + 'option.chat.enforcers': "The academy's enforcers", T + 'option.chat.past': 'Your past', T + 'option.chat.seals': 'Paw Seals',
     T + 'option.chat.us': 'What do you think of me?', T + 'option.chat.rest': 'Go and rest', T + 'option.outfit.cardigan': 'Cardigan Uniform',
     T + 'option.chat.critique': 'Take a look at this page', T + 'option.chat.allowance': 'Pocket money for you',
+    T + 'option.chat.outfit': 'How about a change of clothes?', T + 'option.outfit.daisy': 'Daisy Stroll',
+    T + 'option.outfit.velvet': 'Velvet Serenade', T + 'option.outfit.swimsuit': 'Swimsuit',
     'effect.logos_dimension.kohaku_company': "Kohaku's Company",
     T + 'skill.company.name': "Kohaku's Company", T + 'skill.company.icon': 'K',
     T + 'skill.company.desc': 'For %s minutes after waking up beside her: mana regeneration +%s%%, channelling %s%% faster. The deeper the bond, the faster it comes back.',
@@ -312,6 +319,11 @@ TALK_EN = {
     'allowance_change': "A whole sovereign? Too much. ...Nineteen shillings back. I only want one.",
     'allowance_today': "I've already had today's. Greedy employers aren't popular.",
     'allowance_none': "...You don't have a single cat coin on you. Pocket money needs money first.",
+    'outfit_cardigan': '...This one again. Plenty of pockets for flasks and coins.',
+    'outfit_daisy': "A walk? ...Fine. I'll call it sunbathing.",
+    'outfit_velvet': "Velvet... are we going to a concert? Then you're getting me a front-row seat.",
+    'outfit_swimsuit': "...A swimsuit? Let's be clear: if the water's cold, I'm not going in.",
+    'outfit_same': "I'm already wearing it.",
 }
 
 
