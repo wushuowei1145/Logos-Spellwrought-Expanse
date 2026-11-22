@@ -1,6 +1,8 @@
 package dev.logos.dimension;
 
+import dev.logos.dimension.execution.ExecutionPayload;
 import dev.logos.dimension.execution.ExecutionShot;
+import dev.logos.dimension.execution.ExecutionShot.Choreo;
 import dev.logos.dimension.execution.ExecutionShot.Swaps;
 import dev.logos.dimension.execution.ExecutionTimeline;
 import dev.logos.dimension.execution.ExecutionTimeline.Phase;
@@ -217,5 +219,125 @@ class ExecutionTimelineTest {
     @Test void scriptedShotsRefuseExtraSlashes() {
         assertFalse(DEFAULT.interactive());
         assertThrows(IllegalStateException.class, () -> new ExecutionTimeline(ExecutionShot.of(1)).add(10));
+    }
+
+    private static final ExecutionTimeline THRUST = new ExecutionTimeline(ExecutionShot.thrust(42));
+
+    /** 飞身刺：白底、不对调、带遮幅、不能交互，改别的设定也不丢样式；服务端不定住它的目标。原来的样式默认还是抛起。 */
+    @Test void thrustShotDefaults() {
+        var shot = ExecutionShot.thrust(42);
+        assertEquals(Choreo.THRUST, shot.choreo());
+        assertFalse(shot.blackGround());
+        assertEquals(Swaps.NONE, shot.swaps());
+        assertTrue(shot.letterbox());
+        assertFalse(shot.interactive());
+        assertFalse(shot.live(40, 0xF7B6D6).interactive(), "飞身刺没有点击窗口");
+        assertEquals(Choreo.THRUST, shot.onBlack().noLetterbox().slashes(5).swaps(Swaps.BEATS).choreo());
+        assertFalse(Choreo.THRUST.freezes());
+        assertTrue(Choreo.LAUNCH.freezes());
+        assertEquals(Choreo.LAUNCH, ExecutionShot.of(1).choreo());
+        assertEquals(Choreo.LAUNCH, ExecutionShot.of(1).live(40, 0).slashes(3).choreo());
+        assertFalse(DEFAULT.thrust());
+    }
+
+    /** 顺序：原画顿帧 → 黑白（蹲下、起跳、刺中、定格）→ 定格的尾巴 → 结束；不变红、落地不白。蓄势、飞身各有好几拍。 */
+    @Test void thrustPhasesInOrder() {
+        assertTrue(THRUST.thrust());
+        assertEquals(Phase.LAUNCH, THRUST.phase(0));
+        assertEquals(Phase.LAUNCH, THRUST.phase(ExecutionTimeline.THRUST_INK - .01f));
+        for (int t : new int[] {ExecutionTimeline.THRUST_INK, ExecutionTimeline.THRUST_CROUCH, ExecutionTimeline.THRUST_LEAP,
+                ExecutionTimeline.THRUST_CONTACT, ExecutionTimeline.THRUST_FREEZE, ExecutionTimeline.THRUST_COLOUR - 1}) {
+            assertEquals(Phase.INK, THRUST.phase(t), "第 " + t + " 刻");
+        }
+        assertEquals(Phase.AFTER, THRUST.phase(ExecutionTimeline.THRUST_COLOUR));
+        assertEquals(Phase.DONE, THRUST.phase(THRUST.duration()));
+        for (float a = 0; a < THRUST.duration() + 2; a += .25f) {
+            assertNotEquals(Phase.RED, THRUST.phase(a));
+            assertNotEquals(Phase.IMPACT, THRUST.phase(a));
+        }
+        assertTrue(ExecutionTimeline.THRUST_INK <= ExecutionTimeline.THRUST_CROUCH && ExecutionTimeline.THRUST_CROUCH < ExecutionTimeline.THRUST_LEAP
+                && ExecutionTimeline.THRUST_LEAP < ExecutionTimeline.THRUST_CONTACT && ExecutionTimeline.THRUST_CONTACT < ExecutionTimeline.THRUST_FREEZE
+                && ExecutionTimeline.THRUST_FREEZE < ExecutionTimeline.THRUST_COLOUR);
+        assertTrue(ExecutionTimeline.frame(ExecutionTimeline.THRUST_LEAP) - ExecutionTimeline.frame(ExecutionTimeline.THRUST_CROUCH) >= 3, "蓄势至少三拍");
+        assertTrue(ExecutionTimeline.frame(ExecutionTimeline.THRUST_CONTACT) - ExecutionTimeline.frame(ExecutionTimeline.THRUST_LEAP) >= 5, "飞身至少五拍");
+        assertEquals(ExecutionTimeline.THRUST_CONTACT, THRUST.contact(), 1e-6);
+        assertEquals(DEFAULT.finalHit(), DEFAULT.contact(), 1e-6);
+    }
+
+    /**
+     * 定格在刺中以后、黑白里面，一直到尾巴结束：服务端在发包后第 {@code FREEZE + 3} 刻换场景，客户端收到后对面的实体还要插值三刻，
+     * 前后都落在定格里，各留了余量。彩色过场接手的那一刻也在定格里。
+     */
+    @Test void thrustFreezeCoversTheSwap() {
+        assertFalse(THRUST.freezing(ExecutionTimeline.THRUST_FREEZE - .01f));
+        assertTrue(THRUST.freezing(ExecutionTimeline.THRUST_FREEZE));
+        assertTrue(THRUST.freezing(ExecutionTimeline.THRUST_COLOUR));
+        assertTrue(THRUST.freezing(ExecutionTimeline.THRUST_COLOUR + ExecutionTimeline.THRUST_TAIL - .01f));
+        assertFalse(THRUST.freezing(THRUST.duration()));
+        assertTrue(ExecutionTimeline.THRUST_FREEZE - ExecutionTimeline.THRUST_CONTACT >= 2, "刺中后至少两刻看得清");
+        int swap = ExecutionTimeline.THRUST_SWAP;
+        for (int t = swap - 2; t <= swap + 2 + 3 + 1; t++) assertTrue(THRUST.freezing(t), "第 " + t + " 刻不在定格里");
+        // 实体追踪最多晚两刻发、远处的实体插值 3 刻：落定之后到接手之间还有余量
+        assertTrue(ExecutionTimeline.THRUST_COLOUR - (swap + 2 + 3) >= 1, "插值完了到接手之间还有余量");
+        for (float a = 0; a < 80; a += .5f) assertFalse(DEFAULT.freezing(a), "抛起的样式不定格");
+    }
+
+    /** 时长只到黑白结束（约 1.3 秒），镜头切进来的那几刻正好是原画顿帧。 */
+    @Test void thrustDuration() {
+        assertEquals(ExecutionTimeline.THRUST_COLOUR + ExecutionTimeline.THRUST_TAIL, THRUST.duration());
+        assertEquals(30, THRUST.duration());
+        assertEquals(ExecutionTimeline.THRUST_INK, THRUST.blendIn());
+        assertEquals(THRUST.duration(), THRUST.blendIn() + THRUST.hold());
+        assertEquals(ExecutionTimeline.BLEND_IN, DEFAULT.blendIn());
+        assertEquals(ExecutionTimeline.BLEND_OUT, DEFAULT.blendOut());
+        assertEquals(new ExecutionTimeline(ExecutionShot.thrust(43)).duration(), THRUST.duration(), "和种子无关");
+    }
+
+    /** 不对调、没有刀；那些按刀算的方法也不出错、不出 NaN。 */
+    @Test void thrustHasNoSwapsOrSlashes() {
+        for (var t : List.of(THRUST, new ExecutionTimeline(ExecutionShot.thrust(7).swaps(Swaps.EVERY)))) {
+            assertTrue(t.slashes().isEmpty());
+            assertTrue(t.beats().isEmpty());
+            assertEquals(0, t.swapFrames());
+            for (float a = 0; a < t.duration() + 1; a += .1f) {
+                assertFalse(t.swapped(a));
+                assertTrue(Float.isFinite(t.buildUp(a)));
+            }
+            assertEquals(0, t.buildUp(0));
+            assertEquals(1, t.buildUp(ExecutionTimeline.THRUST_CONTACT));
+            assertEquals(ExecutionTimeline.THRUST_CONTACT, t.windowEnd(), 1e-6);
+            assertTrue(Float.isFinite(t.finalHit()) && Float.isFinite(t.slamStart()) && Float.isFinite(t.impact()) && Float.isFinite(t.returnAt()));
+            assertNotNull(t.cut(5));
+            assertNotNull(t.finisher());
+            assertFalse(t.interactive());
+            assertFalse(t.open(8));
+            assertThrows(IllegalStateException.class, () -> t.add(8));
+        }
+    }
+
+    /** 样式和出手的人在网络上来回一趟不变；抛起的样式编出来的字节和以前一样（标志字节的第 4、5 位是 0）。 */
+    @Test void thrustSurvivesTheWire() {
+        var thrust = ExecutionShot.thrust(-77);
+        var buffer = Unpooled.buffer();
+        ExecutionShot.CODEC.encode(buffer, thrust);
+        assertEquals(thrust, ExecutionShot.CODEC.decode(buffer));
+        assertEquals(0, buffer.readableBytes());
+        var launch = Unpooled.buffer();
+        ExecutionShot.CODEC.encode(launch, ExecutionShot.of(5));
+        assertEquals(5, launch.readInt());
+        assertEquals(ExecutionShot.DEFAULT_SLASHES, launch.readByte());
+        assertEquals(8, launch.readByte(), "抛起的样式只有遮幅那一位");
+        assertEquals(0, launch.readShort());
+        assertEquals(0xFFFFFF, launch.readInt());
+        assertEquals(0, launch.readableBytes());
+        for (int actor : new int[] {1234, -1}) {
+            var payload = new ExecutionPayload(99, thrust, 135.5f, true, true, actor);
+            var buf = Unpooled.buffer();
+            ExecutionPayload.CODEC.encode(buf, payload);
+            assertEquals(payload, ExecutionPayload.CODEC.decode(buf));
+            assertEquals(0, buf.readableBytes());
+        }
+        assertEquals(-1, new ExecutionPayload(1, ExecutionShot.of(1), 0, false).actor(), "没有出手的人");
+        assertEquals(-1, new ExecutionPayload(1, ExecutionShot.of(1), 0, true, true).actor());
     }
 }

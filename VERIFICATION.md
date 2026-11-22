@@ -1,15 +1,5 @@
 # 首版验证记录
 
-## 剑祟模型与三组剑招（手臂修订）
-
-2026-11-19：基于 main `3ce82584`（#279）。仅新增模型、动画、贴图与审查预览；未修改 Java、前置或版本号。设计与接入边界见 [剑祟](docs/JIAN_SUI.md)。
-
-| 层级 | 结果 |
-|---|---|
-| 离线数据与 Blockbench | 12 项检查通过，865 方块、3724 有效四边面、152 骨骼；静态总高四格（2 倍制作，显示缩放 0.5）。整段 105 帧采样，持剑肘弯曲约 35–58°、左肘约 39–65°，待机首尾一致 |
-| 实际时间轴核对 | Blockbench 5.2.2 打开模型，贴图错误数 0；三组动作共 18 个时刻，每刻六块关键衣片，与预览矩阵最大顶点偏差 0.00002705 制作单位；几何和完整动画使用其原生编解码器导出 |
-| 资源审计 | `python tools/audit_jian_sui.py` 通过：资源格式、骨骼与通道引用、方块/面数、UV、透明度、关键帧时长、循环首尾及正式导出事件时间 |
-| 未验证 | 未接入实体注册、MoveRunner、武器挂接、伤害或自然生成；未执行 GeckoLib 解析烘焙、Minecraft/TLM 客户端、光影包或世界测试。本 PR 不是可召唤 Boss 的实现 |
 ## 琥珀同伴（第四步：日常）
 
 2026-11-22：分支 `feat/kohaku-life`，接在第三步 `feat/kohaku-blink`（#285，还没合并）后面。Logos jar 同前几步（Logos main `5fdd33e` 现场编的）。
@@ -86,6 +76,16 @@ uv run --with numpy --with pillow python tools/import_vesperglass.py --preview
 ./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:kohaku_companion -PldTestHeadless -PldTestWindow=1280x720
 ./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=companion_talk,companion_tactics,princess_talk,princess_heal,princess_withdraw -PldTestHeadless -PldTestWindow=1280x720
 ```
+## 剑祟模型与三组剑招（手臂修订）
+
+2026-11-19：基于 main `3ce82584`（#279）。仅新增模型、动画、贴图与审查预览；未修改 Java、前置或版本号。设计与接入边界见 [剑祟](docs/JIAN_SUI.md)。
+
+| 层级 | 结果 |
+|---|---|
+| 离线数据与 Blockbench | 12 项检查通过，865 方块、3724 有效四边面、152 骨骼；静态总高四格（2 倍制作，显示缩放 0.5）。整段 105 帧采样，持剑肘弯曲约 35–58°、左肘约 39–65°，待机首尾一致 |
+| 实际时间轴核对 | Blockbench 5.2.2 打开模型，贴图错误数 0；三组动作共 18 个时刻，每刻六块关键衣片，与预览矩阵最大顶点偏差 0.00002705 制作单位；几何和完整动画使用其原生编解码器导出 |
+| 资源审计 | `python tools/audit_jian_sui.py` 通过：资源格式、骨骼与通道引用、方块/面数、UV、透明度、关键帧时长、循环首尾及正式导出事件时间 |
+| 未验证 | 未接入实体注册、MoveRunner、武器挂接、伤害或自然生成；未执行 GeckoLib 解析烘焙、Minecraft/TLM 客户端、光影包或世界测试。本 PR 不是可召唤 Boss 的实现 |
 
 ## 精灵公主同伴（第二位同伴；同伴的公共部分抽出来）
 

@@ -15,6 +15,7 @@ from taixuan_buildings import hall, gate, pagoda
 import taixuan_terrain as terrain
 import taixuan_landscape as landscape
 import taixuan_abyss as abyss
+import taixuan_cavity as cavity
 import taixuan_details as details
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -207,8 +208,10 @@ def build_abyss(c,islands):
     q=(gx-12,gy,gz)
     bridge(c,p,q,3,2,abyss.ROUTES.setdefault('tower_bridge',[]))
     abyss.basin_floor(c)
+    # 雾底场地正下方的空洞（剑祟第三阶段）
+    stage=cavity.build(c)
     return {'towers':towers,'chain_links':links,'island_chains':hanging,'waterfalls':falls,
-            'tower_bridge':{'from':list(p),'to':list(q)},'details':abyss.REPORT}
+            'tower_bridge':{'from':list(p),'to':list(q)},'details':abyss.REPORT,'cavity':stage}
 
 
 def clearance(c):
@@ -238,12 +241,33 @@ def pool(name):
              'processors':NS+'taixuan_preserve','override_liquid_settings':'ignore_waterlogging','projection':'rigid'}}]})
 
 
+def tile_y(ty):
+    """这一层模板在画布上的 y 范围：常规一层 28 格；最底下空洞那一层（ty=-1）35 格，从画布 -35 到 -1。"""
+    return (cavity.BOTTOM,0) if ty<0 else (ty*TILE,(ty+1)*TILE)
+
+
+def tile_size(key):
+    return [TILE,cavity.HEIGHT if key[1]<0 else TILE,TILE]
+
+
+def tile_key(pos):
+    """画布坐标所在的模板和模板里的局部坐标。"""
+    x,y,z=pos
+    if y<0:return (x//TILE,-1,z//TILE),(x%TILE,y-cavity.BOTTOM,z%TILE)
+    return (x//TILE,y//TILE,z//TILE),(x%TILE,y%TILE,z%TILE)
+
+
+def tile_name(key):
+    return f'cavity_{key[0]}_{key[2]}' if key[1]<0 else 'tile_'+'_'.join(map(str,key))
+
+
 def tile_air(key):
-    """这一块模板里要显式写空气的格子：深渊竖井、浮岛上方的列、铁链周围。"""
+    """这一块模板里要显式写空气的格子：深渊竖井、浮岛上方的列、铁链周围、场地下面的空洞。"""
     tx,ty,tz=key
-    xs=np.arange(tx*TILE,(tx+1)*TILE);ys=np.arange(ty*TILE,(ty+1)*TILE);zs=np.arange(tz*TILE,(tz+1)*TILE)
+    y0,y1=tile_y(ty)
+    xs=np.arange(tx*TILE,(tx+1)*TILE);ys=np.arange(y0,y1);zs=np.arange(tz*TILE,(tz+1)*TILE)
     X,Y,Z=np.meshgrid(xs,ys,zs,indexing='ij')
-    mask=abyss.in_shaft(X,Y,Z)|abyss.in_basin(X,Y,Z)
+    mask=abyss.in_shaft(X,Y,Z)|abyss.in_basin(X,Y,Z)|cavity.in_cavity(X,Y,Z)
     floor=np.full((TILE,TILE),SIZE_Y,dtype=np.int64)
     for i,x in enumerate(xs):
         for k,z in enumerate(zs):
@@ -262,33 +286,40 @@ def export(c):
     root=ROOT_TILE;parent={root:None};queue=deque([root]);order=[]
     directions=[((1,0,0),'east'),((-1,0,0),'west'),((0,1,0),'up'),((0,-1,0),'down'),((0,0,1),'south'),((0,0,-1),'north')]
     limits=(GRID_XZ,GRID_Y,GRID_XZ)
+    # 整齐的 9×11×9 网格，加上最底下中间 3×3 列下面那一层空洞模板（ty=-1）
+    under={(x,-1,z) for x,z in cavity.TILES}
+    def inside(q):return all(0<=q[i]<limits[i] for i in range(3)) or q in under
     while queue:
         p=queue.popleft();order.append(p)
         for delta,face in directions:
             q=tuple(p[i]+delta[i] for i in range(3))
-            if all(0<=q[i]<limits[i] for i in range(3)) and q not in parent:parent[q]=(p,face);queue.append(q)
+            if inside(q) and q not in parent:parent[q]=(p,face);queue.append(q)
     tiles={p:({}, {}) for p in order}
     for pos,s in c.cells.items():
-        assert 0<=pos[0]<SIZE and 0<=pos[1]<SIZE_Y and 0<=pos[2]<SIZE,('超出原版结构范围',pos,s)
-        key=(pos[0]//TILE,pos[1]//TILE,pos[2]//TILE)
-        tiles[key][0][(pos[0]%TILE,pos[1]%TILE,pos[2]%TILE)]=s
+        assert 0<=pos[0]<SIZE and cavity.BOTTOM<=pos[1]<SIZE_Y and 0<=pos[2]<SIZE,('超出原版结构范围',pos,s)
+        key,local=tile_key(pos)
+        assert key in tiles,('空洞那一层只有中间 3×3 列',pos,s)
+        tiles[key][0][local]=s
     air=0
     for key,(cells,_) in tiles.items():
         for x,y,z in zip(*tile_air(key)):
-            local=(int(x)%TILE,int(y)%TILE,int(z)%TILE)
+            _,local=tile_key((int(x),int(y),int(z)))
             if local not in cells:cells[local]=AIR;air+=1
-    ports={'east':(TILE-1,1,1),'west':(0,1,1),'up':(1,TILE-1,1),'down':(1,0,1),'south':(1,1,TILE-1),'north':(1,1,0)}
+    def ports(key):
+        h=tile_size(key)[1]
+        return {'east':(TILE-1,1,1),'west':(0,1,1),'up':(1,h-1,1),'down':(1,0,1),'south':(1,1,TILE-1),'north':(1,1,0)}
     opposite={'east':'west','west':'east','up':'down','down':'up','north':'south','south':'north'}
     depth={root:0}
     for child,relation in parent.items():
         if relation is None:continue
-        p,face=relation;name='tile_'+'_'.join(map(str,child));depth[child]=depth[p]+1
-        connector(*tiles[p],ports[face],face,'out_'+name,'in_'+name,name)
-        connector(*tiles[child],ports[opposite[face]],opposite[face],'in_'+name,'none',None)
+        p,face=relation;name=tile_name(child);depth[child]=depth[p]+1
+        connector(*tiles[p],ports(p)[face],face,'out_'+name,'in_'+name,name)
+        connector(*tiles[child],ports(child)[opposite[face]],opposite[face],'in_'+name,'none',None)
     connector(*tiles[root],ANCHOR_LOCAL,'up','taixuan_anchor','none',None)
     # 镇渊柱底座外缘、深渊口平台的边：往下接地到实地
     foundations=[]
     for x,y,z in sorted(set(abyss.FOOTINGS)):
+        assert y>=0,('接地石基不进空洞那一层',x,y,z)
         if y%TILE==TILE-1:
             # 接地子件放在拼接块上面一格；拼接块在模板顶层的话，那一格落进上面那块模板，原版拼接会因为碰撞扔掉它。
             # 往下挪一格，原来那格补成石头，石柱照样从支撑下面接下去
@@ -301,18 +332,19 @@ def export(c):
         if local in tags:continue
         connector(cells,tags,local,'up','foundation','minecraft:bottom','footings')
         foundations.append([x,y,z])
-    for path in (D/'structure/taixuan').glob('tile_*.nbt'):path.unlink()
-    for path in (D/'worldgen/template_pool/taixuan').glob('tile_*.json'):path.unlink()
+    for pattern in ('tile_*','cavity_*'):
+        for path in (D/'structure/taixuan').glob(pattern+'.nbt'):path.unlink()
+        for path in (D/'worldgen/template_pool/taixuan').glob(pattern+'.json'):path.unlink()
     for key,(cells,tags) in tiles.items():
-        name='tile_'+'_'.join(map(str,key))
-        write_structure(D/'structure/taixuan'/f'{name}.nbt',[TILE]*3,cells,tags,data_version=4790,entities=[])
+        name=tile_name(key)
+        write_structure(D/'structure/taixuan'/f'{name}.nbt',tile_size(key),cells,tags,data_version=4790,entities=[])
         pool(name)
     for path in (D/'structure/taixuan/components').glob('*.nbt'):path.unlink()
     for name,module in COMPONENTS.items():
         size,cells=module.normalized()
         write_structure(D/'structure/taixuan/components'/f'{name}.nbt',size,cells,data_version=4790,entities=[])
-    return {'tiles':len(tiles),'tile_size':TILE,'canvas_center':CENTER,'canvas_size':[SIZE,SIZE_Y,SIZE],
-            'depth':max(depth.values()),'root':'tile_'+'_'.join(map(str,root)),'anchor':list(ANCHOR_LOCAL),
+    return {'tiles':len(tiles),'cavity_tiles':len(under),'tile_size':TILE,'canvas_center':CENTER,'canvas_size':[SIZE,SIZE_Y,SIZE],
+            'depth':max(depth.values()),'root':tile_name(root),'anchor':list(ANCHOR_LOCAL),
             'anchor_canvas':list(ANCHOR_CANVAS),'start_height':START_HEIGHT,'world_y_offset':abyss.Y0,
             'footings':foundations,'components':len(COMPONENTS),'explicit_air':air}
 
@@ -444,6 +476,9 @@ def main():
                         'towers':[abyss.TOWER_BASE,abyss.TOWER_TOP],'anchor':abyss.ANCHOR},
              'routes':abyss.ROUTES,
              'generation':'minecraft:noise / minecraft:multi_noise / minecraft:jigsaw (site check: TaixuanStructure)'}
+    # 只看的碎块（方块清单和摆放）只给客户端画，单独一份；manifest 里留空洞的布局
+    cavity.write_debris(A/'jian_sui/fall_debris.json',deep['cavity'].pop('debris'))
+    summary['heights']['cavity']={'air':deep['cavity']['air'],'floor':deep['cavity']['floor'],'ceiling':deep['cavity']['ceiling']}
     summary.update(export(c));resources()
     write(D/'taixuan_manifest.json',summary)
     if args.study:

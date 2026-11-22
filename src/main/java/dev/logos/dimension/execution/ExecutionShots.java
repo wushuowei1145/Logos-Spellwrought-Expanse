@@ -14,13 +14,14 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 处决特写的服务端入口：投技、处决、Boss 抓住玩家时在服务端调 {@link #play}。
  * 抛起、挨打、拍下都只是画出来的样子，目标的位置和判定不动；不是玩家的目标这段时间被定住（不走 AI、不移动），
  * 玩家目标在看特写时按键被锁住。伤害、击退这些由调用方自己在合适的时候做，{@link #play} 返回的时长和
  * {@link ExecutionTimeline} 里的各个时刻可以用来对齐。用法见 docs/EXECUTION_SHOTS.md。
- * 由玩家点左键出刀的处决见 {@link InteractiveExecutions}。
+ * 由玩家点左键出刀的处决见 {@link InteractiveExecutions}；飞身刺（{@link ExecutionShot#thrust}）带上出手的人，见五个参数的 {@link #play}。
  */
 public final class ExecutionShots {
     /** 被定住的目标和到哪一刻为止（游戏时间）。只在服务端线程上用。 */
@@ -32,7 +33,7 @@ public final class ExecutionShots {
 
     public static void register(IEventBus bus) {
         bus.addListener((RegisterPayloadHandlersEvent event) -> {
-            var registrar = event.registrar("2");
+            var registrar = event.registrar("3");
             registrar.playToClient(ExecutionPayload.TYPE, ExecutionPayload.CODEC);
             registrar.playToClient(ExecutionPayload.Slash.TYPE, ExecutionPayload.Slash.CODEC);
             registrar.playToServer(ExecutionPayload.Click.TYPE, ExecutionPayload.Click.CODEC, (payload, context) -> {
@@ -57,14 +58,26 @@ public final class ExecutionShots {
      *
      * @return 整段多少刻（含镜头回到玩家）
      */
-    public static int play(Collection<ServerPlayer> viewers, ServerPlayer clicker, LivingEntity target, ExecutionShot shot) {
+    public static int play(Collection<ServerPlayer> viewers, @Nullable ServerPlayer clicker, LivingEntity target, ExecutionShot shot) {
+        return play(viewers, clicker, null, target, shot);
+    }
+
+    /**
+     * 同上，{@code actor}（可以为 null）是飞身刺（{@link ExecutionShot#thrust}）里出手的人：每个收到的客户端也按特写摆他的身体，
+     * 从目标前方几格外飞身刺进它的胸口。{@code clicker} 是出手的那名玩家时，他的镜头离得近些。
+     * 飞身刺不定住目标：Boss 由调用方的过场自己安排，照常走刻。
+     *
+     * @return 整段多少刻；飞身刺只到黑白结束（{@link ExecutionTimeline#THRUST_COLOUR} 加上 {@link ExecutionTimeline#THRUST_TAIL}）
+     */
+    public static int play(Collection<ServerPlayer> viewers, @Nullable ServerPlayer clicker, @Nullable Entity actor, LivingEntity target, ExecutionShot shot) {
         var timeline = new ExecutionTimeline(shot);
         float yaw = target.getYRot();
-        for (ServerPlayer viewer : viewers) send(viewer, new ExecutionPayload(target.getId(), shot, yaw, true, viewer == clicker));
+        int by = actor == null || actor == target ? -1 : actor.getId();
+        for (ServerPlayer viewer : viewers) send(viewer, new ExecutionPayload(target.getId(), shot, yaw, true, viewer == clicker, by));
         if (target.level() instanceof ServerLevel level) {
-            var watching = new ExecutionPayload(target.getId(), shot, yaw, false);
+            var watching = new ExecutionPayload(target.getId(), shot, yaw, false, false, by);
             for (ServerPlayer other : watchers(level, target, viewers)) send(other, watching);
-            if (!(target instanceof Player)) FROZEN.put(target, level.getGameTime() + timeline.duration());
+            if (!(target instanceof Player) && shot.choreo().freezes()) FROZEN.put(target, level.getGameTime() + timeline.duration());
         }
         return timeline.duration();
     }

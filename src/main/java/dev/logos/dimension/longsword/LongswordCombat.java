@@ -11,8 +11,10 @@ import dev.logos.dimension.combat.Parry;
 import dev.logos.dimension.dawnvow.DawnvowCharge;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -20,6 +22,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
@@ -51,6 +54,8 @@ import net.neoforged.neoforge.network.registration.NetworkRegistry;
 @EventBusSubscriber(modid = LogosDimension.ID)
 public final class LongswordCombat {
     private static final Map<UUID, State> STATES = new HashMap<>();
+    /** 暂停了战斗骨架的玩家（{@link #pause}）。只在服务端，不存档。 */
+    private static final Set<UUID> PAUSED = new HashSet<>();
     private static final ThreadLocal<Boolean> CONTACT = ThreadLocal.withInitial(() -> false);
     /** 这一刀要暴击的目标（准星正对着的），由暴击事件读。 */
     private static final ThreadLocal<Entity> CRIT = new ThreadLocal<>();
@@ -80,7 +85,7 @@ public final class LongswordCombat {
         @Override public double attackSpeed() { return player.getAttributeValue(Attributes.ATTACK_SPEED); }
         @Override public void moveStarted(MoveRunner runner) { sync(player, payload(runner)); }
         @Override public void contact(MoveRunner runner) {
-            if (!selected(player, this)) return;
+            if (!selected(player, this) || PAUSED.contains(player.getUUID())) return;
             DawnvowCharge.contact(player, runner.move().name());
             LongswordCombat.contact(player, this);
         }
@@ -114,7 +119,24 @@ public final class LongswordCombat {
         var state = STATES.get(player.getUUID());
         return state == null ? null : state.runner.move().name();
     }
+    /**
+     * 暂停这名玩家的战斗骨架：所有客户端马上退回原版手臂和原版持物（同收剑后的样子），服务端不再收他的出招、蓄力、格挡，
+     * 招式到了接触时刻也不结算；招式状态机照走，只是不同步。只给过场用（剑祟终结里摆人形的撬剑姿势，手里拿什么都照原版画，
+     * 见 docs/COMBAT_SKELETON.md 第 1 节第 7 条的例外）。用完必须 {@link #resume}；下线、死亡、关服时自己清掉。
+     */
+    public static void pause(ServerPlayer player) {
+        if (PAUSED.add(player.getUUID())) sync(player, LongswordPayload.clear(player.getUUID()));
+    }
+    /** 恢复：把当前招式重发一次（不从暂停前的样子过渡，最好在镜头往回走时调）。没有暂停时不动。 */
+    public static void resume(ServerPlayer player) {
+        if (PAUSED.remove(player.getUUID())) sync(player, pose(player));
+    }
+    public static boolean paused(Player player) {
+        return PAUSED.contains(player.getUUID());
+    }
     private static void sync(ServerPlayer player, LongswordPayload payload) {
+        // 暂停时只发「动作结束」
+        if (!payload.cleared() && PAUSED.contains(player.getUUID())) return;
         // 模拟玩家没有协商客户端通道；只给观看此区块且支持动作包的连接同步。
         for (var viewer : player.level().players()) if ((viewer == player || viewer.getChunkTrackingView().contains(player.chunkPosition()))
                 && NetworkRegistry.hasChannel(viewer.connection, LongswordPayload.TYPE.id())) PacketDistributor.sendToPlayer(viewer, payload);
@@ -126,7 +148,7 @@ public final class LongswordCombat {
     private static Moveset moveset(ServerPlayer player, CombatWeapon weapon) { return Movesets.get(player.level().getServer(), weapon.moveset()); }
     private static State active(ServerPlayer player) {
         var state = STATES.get(player.getUUID());
-        return state == null || !selected(player, state) ? null : state;
+        return state == null || !selected(player, state) || PAUSED.contains(player.getUUID()) ? null : state;
     }
     public static void attack(ServerPlayer player) {
         var state = active(player);
@@ -142,7 +164,9 @@ public final class LongswordCombat {
     }
     /** 直接切到招式文件里的 {@code move}（施法剑按施放结果选收势）；没有持剑动作或招式文件里没有这个招式时不动。 */
     public static void force(ServerPlayer player, String move) {
-        var state = active(player);
+        // 暂停时也切（落地、施放结果这类一次性的收势丢了会卡在循环的招式里）；同步照样压着，恢复时一起发
+        var state = STATES.get(player.getUUID());
+        if (state != null && !selected(player, state)) state = null;
         if (state != null) state.runner.force(move, player.level().getGameTime());
     }
     public static boolean charge(ServerPlayer player) {
@@ -158,7 +182,7 @@ public final class LongswordCombat {
         if (!event.getBlocked() || !(event.getEntity() instanceof ServerPlayer player)) return;
         var state = active(player);
         // 弹不开的攻击（白梅狐形等，伤害类型带 logos_dimension:unparryable）：只算挡下，不进弹刀
-        boolean parryable = !event.getDamageSource().is(dev.logos.dimension.shiraume.ShiraumeStrike.UNPARRYABLE);
+        boolean parryable = !event.getDamageSource().is(dev.logos.dimension.combat.BossStrike.UNPARRYABLE);
         boolean parried = false;
         if (state != null && parryable && state.runner.input(Moveset.Input.BLOCK, player.level().getGameTime())
                 && CombatEffects.PARRY.equals(state.runner.move().effect())) {
@@ -201,6 +225,7 @@ public final class LongswordCombat {
     }
     private static void tick(ServerPlayer player) {
         var state = STATES.get(player.getUUID());
+        if (!player.isAlive()) PAUSED.remove(player.getUUID());
         if (!player.isAlive() || player.isSpectator() || state != null && state.level != player.level()) { clear(player); return; }
         double now = player.level().getGameTime();
         if (state != null && !selected(player, state)) {
@@ -350,11 +375,12 @@ public final class LongswordCombat {
     @SubscribeEvent static void tracking(PlayerEvent.StartTracking event) {
         if (event.getEntity() instanceof ServerPlayer viewer && event.getTarget() instanceof ServerPlayer target
                 && NetworkRegistry.hasChannel(viewer.connection, LongswordPayload.TYPE.id()))
-            PacketDistributor.sendToPlayer(viewer, pose(target));
+            PacketDistributor.sendToPlayer(viewer, paused(target) ? LongswordPayload.clear(target.getUUID()) : pose(target));
     }
     @SubscribeEvent static void logout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) DawnvowCharge.end(player);
         STATES.remove(event.getEntity().getUUID());
+        PAUSED.remove(event.getEntity().getUUID());
     }
-    @SubscribeEvent static void stopped(ServerStoppedEvent event) { STATES.clear(); CONTACT.remove(); MOVE.remove(); TARGET.remove(); }
+    @SubscribeEvent static void stopped(ServerStoppedEvent event) { STATES.clear(); PAUSED.clear(); CONTACT.remove(); MOVE.remove(); TARGET.remove(); }
 }

@@ -5,6 +5,7 @@ import net.minecraft.network.codec.StreamCodec;
 
 /**
  * 一次处决特写的设定：目标被抛起，画面变黑白，刀光一道道穿过它，最后一刀把背景打成红色，再把它拍到地上。
+ * 另一种样式是飞身刺（{@link Choreo#THRUST}、{@link #thrust}）：出手的人从几格外飞身刺进目标的胸口，两人都是剪影，刺中后定格。
  * 时间表见 {@link ExecutionTimeline}；发给玩家见 {@link ExecutionShots#play}。只是一份描述，两端都能用。
  *
  * @param seed 刀光的角度、位置和身体的反应都由它随机出来，同一个种子每次、每个客户端都一样
@@ -13,24 +14,42 @@ import net.minecraft.network.codec.StreamCodec;
  * @param swaps 刀划过时什么时候黑白对调
  * @param letterbox 上下加遮幅
  * @param window 大于 0 时是可交互的处决（{@link InteractiveExecutions}）：重击之前留这么多刻让处决的人自己点左键砍，
- *               砍几刀、什么时候砍都由点击决定，刀是一刀刀发过来的；为 0 时刀数和时刻都由种子定好
+ *               砍几刀、什么时候砍都由点击决定，刀是一刀刀发过来的；为 0 时刀数和时刻都由种子定好。飞身刺总是 0
  * @param tint 可交互处决时，旁人在世界里看到的刀光颜色（RGB）
+ * @param choreo 演哪一种
  */
-public record ExecutionShot(int seed, int slashes, boolean blackGround, Swaps swaps, boolean letterbox, int window, int tint) {
+public record ExecutionShot(int seed, int slashes, boolean blackGround, Swaps swaps, boolean letterbox, int window, int tint, Choreo choreo) {
     public static final int MIN_SLASHES = 1, MAX_SLASHES = 24, DEFAULT_SLASHES = 12;
     /** 可交互处决留给点击的时长上限（刻）。 */
     public static final int MAX_WINDOW = 200;
+    /** 标志字节：第 0 位黑底，1、2 位对调的方式，3 位遮幅，4、5 位演哪一种（{@link Choreo}）。 */
     public static final StreamCodec<ByteBuf, ExecutionShot> CODEC = StreamCodec.of((b, s) -> {
         b.writeInt(s.seed);
         b.writeByte(s.slashes);
-        b.writeByte((s.blackGround ? 1 : 0) | s.swaps.ordinal() << 1 | (s.letterbox ? 8 : 0));
+        b.writeByte((s.blackGround ? 1 : 0) | s.swaps.ordinal() << 1 | (s.letterbox ? 8 : 0) | s.choreo.ordinal() << 4);
         b.writeShort(s.window);
         b.writeInt(s.tint);
     }, b -> {
         int seed = b.readInt(), slashes = b.readByte(), flags = b.readByte(), window = b.readShort(), tint = b.readInt();
         return new ExecutionShot(seed, slashes, (flags & 1) != 0, Swaps.values()[Math.min(flags >> 1 & 3, Swaps.values().length - 1)], (flags & 8) != 0,
-                window, tint);
+                window, tint, Choreo.values()[Math.min(flags >> 4 & 3, Choreo.values().length - 1)]);
     });
+
+    /** 演哪一种。网络上按序号传，不要挪位置。 */
+    public enum Choreo {
+        /** 目标被抛起，刀光一道道穿过，红色重击，拍到地上（默认）。 */
+        LAUNCH,
+        /**
+         * 飞身刺：出手的人（{@link ExecutionShots#play} 的 {@code actor}）在目标前方几格外蹲下蓄势，飞身刺进它的胸口，刺中后定格。
+         * 只演到黑白结束，后面由接着演的过场接手；目标不被定住，由调用方自己安排它。
+         */
+        THRUST;
+
+        /** 服务端要不要把不是玩家的目标定住。 */
+        public boolean freezes() {
+            return this == LAUNCH;
+        }
+    }
 
     /** 刀划过时什么时候黑白对调。网络上按序号传，不要挪位置。 */
     public enum Swaps {
@@ -52,8 +71,13 @@ public record ExecutionShot(int seed, int slashes, boolean blackGround, Swaps sw
 
     public ExecutionShot {
         slashes = Math.clamp(slashes, MIN_SLASHES, MAX_SLASHES);
-        window = Math.clamp(window, 0, MAX_WINDOW);
+        // 飞身刺没有点击窗口
+        window = choreo == Choreo.THRUST ? 0 : Math.clamp(window, 0, MAX_WINDOW);
         tint &= 0xFFFFFF;
+    }
+
+    public ExecutionShot(int seed, int slashes, boolean blackGround, Swaps swaps, boolean letterbox, int window, int tint) {
+        this(seed, slashes, blackGround, swaps, letterbox, window, tint, Choreo.LAUNCH);
     }
 
     public ExecutionShot(int seed, int slashes, boolean blackGround, Swaps swaps, boolean letterbox) {
@@ -65,17 +89,25 @@ public record ExecutionShot(int seed, int slashes, boolean blackGround, Swaps sw
         return new ExecutionShot(seed, DEFAULT_SLASHES, false, Swaps.BEATS, true);
     }
 
+    /**
+     * 飞身刺：白底黑剪影，带遮幅；不对调黑白，全程只有进黑白、出黑白这两下明暗变化。
+     * 出手的人在 {@link ExecutionShots#play} 里给。
+     */
+    public static ExecutionShot thrust(int seed) {
+        return new ExecutionShot(seed, MIN_SLASHES, false, Swaps.NONE, true, 0, 0xFFFFFF, Choreo.THRUST);
+    }
+
     public ExecutionShot slashes(int count) {
-        return new ExecutionShot(seed, count, blackGround, swaps, letterbox, window, tint);
+        return new ExecutionShot(seed, count, blackGround, swaps, letterbox, window, tint, choreo);
     }
 
     /** 黑底白身。 */
     public ExecutionShot onBlack() {
-        return new ExecutionShot(seed, slashes, true, swaps, letterbox, window, tint);
+        return new ExecutionShot(seed, slashes, true, swaps, letterbox, window, tint, choreo);
     }
 
     public ExecutionShot swaps(Swaps style) {
-        return new ExecutionShot(seed, slashes, blackGround, style, letterbox, window, tint);
+        return new ExecutionShot(seed, slashes, blackGround, style, letterbox, window, tint, choreo);
     }
 
     /** 刀划过时不对调黑白。 */
@@ -84,12 +116,12 @@ public record ExecutionShot(int seed, int slashes, boolean blackGround, Swaps sw
     }
 
     public ExecutionShot noLetterbox() {
-        return new ExecutionShot(seed, slashes, blackGround, swaps, false, window, tint);
+        return new ExecutionShot(seed, slashes, blackGround, swaps, false, window, tint, choreo);
     }
 
-    /** 可交互：重击之前留 {@code ticks} 刻让处决的人点左键砍；旁人在世界里看到的刀光是 {@code tint} 色。 */
+    /** 可交互：重击之前留 {@code ticks} 刻让处决的人点左键砍；旁人在世界里看到的刀光是 {@code tint} 色。飞身刺不能交互，不起作用。 */
     public ExecutionShot live(int ticks, int tint) {
-        return new ExecutionShot(seed, slashes, blackGround, swaps, letterbox, Math.max(1, ticks), tint);
+        return new ExecutionShot(seed, slashes, blackGround, swaps, letterbox, Math.max(1, ticks), tint, choreo);
     }
 
     public boolean interactive() {
