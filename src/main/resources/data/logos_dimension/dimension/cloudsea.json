@@ -4087,7 +4087,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_silk_folds",
+          "biome": "logos_dimension:cloudsea_blue_bell_steps",
           "parameters": {
             "temperature": -0.4,
             "humidity": -0.8,
@@ -4099,7 +4099,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_rose_dunes",
+          "biome": "logos_dimension:cloudsea_blue_bell_steps",
           "parameters": {
             "temperature": -0.4,
             "humidity": -0.8,
@@ -4123,7 +4123,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_silk_folds",
+          "biome": "logos_dimension:cloudsea_blue_bell_steps",
           "parameters": {
             "temperature": -0.4,
             "humidity": -0.8,
@@ -4135,7 +4135,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_rose_dunes",
+          "biome": "logos_dimension:cloudsea_blue_bell_steps",
           "parameters": {
             "temperature": -0.4,
             "humidity": -0.8,
@@ -4267,7 +4267,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_silk_folds",
+          "biome": "logos_dimension:cloudsea_blue_bell_steps",
           "parameters": {
             "temperature": -0.4,
             "humidity": -0.8,
@@ -4279,7 +4279,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_rose_dunes",
+          "biome": "logos_dimension:cloudsea_blue_bell_steps",
           "parameters": {
             "temperature": -0.4,
             "humidity": -0.8,
@@ -4303,7 +4303,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_silk_folds",
+          "biome": "logos_dimension:cloudsea_blue_bell_steps",
           "parameters": {
             "temperature": -0.4,
             "humidity": -0.8,
@@ -4315,7 +4315,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_rose_dunes",
+          "biome": "logos_dimension:cloudsea_blue_bell_steps",
           "parameters": {
             "temperature": -0.4,
             "humidity": -0.8,
@@ -7687,7 +7687,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_rose_dunes",
+          "biome": "logos_dimension:cloudsea_silk_folds",
           "parameters": {
             "temperature": 0,
             "humidity": -0.8,
@@ -7699,7 +7699,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_blue_bell_steps",
+          "biome": "logos_dimension:cloudsea_silk_folds",
           "parameters": {
             "temperature": 0,
             "humidity": -0.8,
@@ -7723,7 +7723,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_rose_dunes",
+          "biome": "logos_dimension:cloudsea_silk_folds",
           "parameters": {
             "temperature": 0,
             "humidity": -0.8,
@@ -7735,7 +7735,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_blue_bell_steps",
+          "biome": "logos_dimension:cloudsea_silk_folds",
           "parameters": {
             "temperature": 0,
             "humidity": -0.8,
@@ -7867,7 +7867,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_rose_dunes",
+          "biome": "logos_dimension:cloudsea_silk_folds",
           "parameters": {
             "temperature": 0,
             "humidity": -0.8,
@@ -7879,7 +7879,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_blue_bell_steps",
+          "biome": "logos_dimension:cloudsea_silk_folds",
           "parameters": {
             "temperature": 0,
             "humidity": -0.8,
@@ -7903,7 +7903,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_rose_dunes",
+          "biome": "logos_dimension:cloudsea_silk_folds",
           "parameters": {
             "temperature": 0,
             "humidity": -0.8,
@@ -7915,7 +7915,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_blue_bell_steps",
+          "biome": "logos_dimension:cloudsea_silk_folds",
           "parameters": {
             "temperature": 0,
             "humidity": -0.8,
@@ -11287,7 +11287,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_blue_bell_steps",
+          "biome": "logos_dimension:cloudsea_silk_folds",
           "parameters": {
             "temperature": 0.4,
             "humidity": -0.8,
@@ -11311,7 +11311,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_rose_dunes",
+          "biome": "logos_dimension:cloudsea_silk_folds",
           "parameters": {
             "temperature": 0.4,
             "humidity": -0.8,
@@ -11323,7 +11323,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_blue_bell_steps",
+          "biome": "logos_dimension:cloudsea_silk_folds",
           "parameters": {
             "temperature": 0.4,
             "humidity": -0.8,
@@ -11467,7 +11467,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_blue_bell_steps",
+          "biome": "logos_dimension:cloudsea_silk_folds",
           "parameters": {
             "temperature": 0.4,
             "humidity": -0.8,
@@ -11491,7 +11491,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_rose_dunes",
+          "biome": "logos_dimension:cloudsea_silk_folds",
           "parameters": {
             "temperature": 0.4,
             "humidity": -0.8,
@@ -11503,7 +11503,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_blue_bell_steps",
+          "biome": "logos_dimension:cloudsea_silk_folds",
           "parameters": {
             "temperature": 0.4,
             "humidity": -0.8,
@@ -14887,7 +14887,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_silk_folds",
+          "biome": "logos_dimension:cloudsea_rose_dunes",
           "parameters": {
             "temperature": 0.8,
             "humidity": -0.8,
@@ -14911,7 +14911,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_blue_bell_steps",
+          "biome": "logos_dimension:cloudsea_rose_dunes",
           "parameters": {
             "temperature": 0.8,
             "humidity": -0.8,
@@ -14923,7 +14923,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_silk_folds",
+          "biome": "logos_dimension:cloudsea_rose_dunes",
           "parameters": {
             "temperature": 0.8,
             "humidity": -0.8,
@@ -15067,7 +15067,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_silk_folds",
+          "biome": "logos_dimension:cloudsea_rose_dunes",
           "parameters": {
             "temperature": 0.8,
             "humidity": -0.8,
@@ -15091,7 +15091,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_blue_bell_steps",
+          "biome": "logos_dimension:cloudsea_rose_dunes",
           "parameters": {
             "temperature": 0.8,
             "humidity": -0.8,
@@ -15103,7 +15103,7 @@
           }
         },
         {
-          "biome": "logos_dimension:cloudsea_silk_folds",
+          "biome": "logos_dimension:cloudsea_rose_dunes",
           "parameters": {
             "temperature": 0.8,
             "humidity": -0.8,
@@ -18002,6 +18002,33 @@
             "continentalness": 0.75,
             "erosion": 0.65,
             "weirdness": 0.8,
+            "depth": 0,
+            "offset": 0
+          }
+        },
+        {
+          "biome": "logos_dimension:cloudsea_silk_folds",
+          "parameters": {
+            "temperature": [
+              -0.35,
+              0.55
+            ],
+            "humidity": [
+              -0.6,
+              0.2
+            ],
+            "continentalness": [
+              0,
+              1.0
+            ],
+            "erosion": [
+              0.15,
+              1.2
+            ],
+            "weirdness": [
+              -1.2,
+              1.2
+            ],
             "depth": 0,
             "offset": 0
           }

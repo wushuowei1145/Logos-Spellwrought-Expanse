@@ -1,5 +1,27 @@
 # 首版验证记录
 
+## 长风平原：连片地形、宽叶草簇与随风弯曲
+
+2026-11-22：分支 `feat/changfeng-grass-wind`，已 rebase 到 main `b270b089`（#286）。Logos 使用 CI 固定提交 `5fdd33e` 构建的 0.7.2，星辰花乐团固定提交 `ca57e94` 构建的 0.1.0；没有改主模组版本或源码。说明见 [长风平原与草浪](docs/CHANGFENG_WIND.md)。
+
+| 层级 | 结果 |
+|---|---|
+| 构建与单元 | rebase 后 `test build` 通过，全部 **393/393**。风动新增 6 项：根部权重、双层接缝、无风、负坐标及远坐标相位、远景渐变、风越强编码摆幅越大；同时更新草原气候与短草权重检查 |
+| 原版世界生成 | 原版密度函数、连续多噪声气候范围和植物放置数据；没有新增 Java 地形或种草器。脚本重复运行不叠加密度混合层 |
+| 实际客户端 | `group:grass_wind` 两个场景：实际原版植物放置特征在固定 32×32 样地生成 **812/1024=79.296875%** 草覆盖；自然生成样地 `(352,75,-832)` 的 32 格九点高度采样高差 **0**。覆盖率是固定样本，不保证每块地精确八成 |
+| 风动回归 | 草已进入缓存并提交，四边面预算不超过 12,000；挖去两层草后没有残影缓存，关闭后缓存清空，再次开启恢复。样地与自然地形合计 **2/2 场景、9/9 检查** |
+| 光影检查 | main `fabe1c1a` 上的最终 16×16 贴图和草片几何在 Iris + Sodium + Photon 1.3b、Complementary Reimagined r5.9.3 下各 **2/2 场景、9/9 检查**；人工查看两套光影的测试台与自然俯瞰截图，地面完整可见，近景草没有重叠的静态层 |
+| 贴图与面数 | `tools/changfeng_grass_art.py` 代码绘制三种株型；9 张贴图逐个检查为 **16×16**，高草上下两张。短草四面，高草上下合计八面；模型同时用于静态与风动，不叠加静态草 |
+| 画面检查与修正 | 早期测试台截图存在尚未显示的地面区段，补上地面到达检查并延长等待；自然镜头额外等待周围区块，补俯瞰画面。双面模型的风动管线开启背面剔除，避免把同一草片的前后纹理同时画出来 |
+| 尚未验证 | 没有测 FPS 或 GPU 耗时，没有测试专用服务器与联机。风动使用自有光照和共享后期收集器，草不会完整继承光影包的材质、阴影与色调；仍可能看出近景风动与远景静态的明暗差异。之前的普通渲染器与纯 Sodium 检查在最终宽叶模型调整之前，不能代替最终外观验证 |
+
+```text
+./gradlew test build -PlogosJar=/absolute/path/logos-0.7.2.jar -PorchestraJar=/absolute/path/starbloom_orchestra-0.1.0.jar
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:grass_wind -PldTestHeadless -PldTestWindow=1280x720 -PldTestSeedDir=/absolute/path/shader-seed
+python tools/changfeng_plains.py
+python tools/changfeng_grass_art.py
+```
+
 ## 琥珀同伴（第四步：日常）
 
 2026-11-22：分支 `feat/kohaku-life`，接在第三步 `feat/kohaku-blink`（#285，还没合并）后面。Logos jar 同前几步（Logos main `5fdd33e` 现场编的）。

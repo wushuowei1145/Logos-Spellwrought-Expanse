@@ -8,31 +8,25 @@
           "data": {
             "Name": "minecraft:tall_grass"
           },
-          "weight": 48
+          "weight": 64
         },
         {
           "data": {
             "Name": "minecraft:short_grass"
           },
-          "weight": 12
-        },
-        {
-          "data": {
-            "Name": "minecraft:short_grass"
-          },
-          "weight": 14
+          "weight": 16
         },
         {
           "data": {
             "Name": "logos_dimension:journey_meadow_grass_young"
           },
-          "weight": 8
+          "weight": 4
         },
         {
           "data": {
             "Name": "minecraft:oxeye_daisy"
           },
-          "weight": 7
+          "weight": 6
         },
         {
           "data": {
@@ -41,7 +35,7 @@
               "season": "0"
             }
           },
-          "weight": 6
+          "weight": 4
         },
         {
           "data": {
@@ -50,7 +44,7 @@
               "season": "0"
             }
           },
-          "weight": 5
+          "weight": 4
         },
         {
           "data": {
@@ -59,7 +53,7 @@
               "season": "0"
             }
           },
-          "weight": 4
+          "weight": 2
         }
       ]
     }

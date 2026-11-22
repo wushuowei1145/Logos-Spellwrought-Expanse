@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:add",
+  "argument1": {
+    "type": "minecraft:mul",
+    "argument1": "logos_dimension:changfeng/original_depth",
+    "argument2": {
+      "type": "minecraft:add",
+      "argument1": 1,
+      "argument2": {
+        "type": "minecraft:mul",
+        "argument1": -1,
+        "argument2": "logos_dimension:changfeng/region"
+      }
+    }
+  },
+  "argument2": {
+    "type": "minecraft:mul",
+    "argument1": {
+      "type": "minecraft:y_clamped_gradient",
+      "from_y": -64,
+      "to_y": 320,
+      "from_value": 2.15625,
+      "to_value": -3.84375
+    },
+    "argument2": "logos_dimension:changfeng/region"
+  }
+}

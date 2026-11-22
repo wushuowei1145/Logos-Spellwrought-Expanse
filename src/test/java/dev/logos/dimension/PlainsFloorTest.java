@@ -111,7 +111,7 @@ class PlainsFloorTest {
 
     /** 删除矮草后必须使用原版 ID，并保留合并后的短草总权重。 */
     @Test void plainsShortGrassUsesVanillaRegistryId()throws Exception{
-        for(var entry:Map.of(SILK,26,"cloudsea_dawn_ribbons",56,"cloudsea_rose_dunes",28).entrySet()){
+        for(var entry:Map.of(SILK,16,"cloudsea_dawn_ribbons",56,"cloudsea_rose_dunes",28).entrySet()){
             var w=weights(entry.getKey()+"_floor");
             assertEquals(entry.getValue(),w.get("minecraft:short_grass"),entry.getKey()+" 短草 ID 或总权重错误");
             assertFalse(w.containsKey("logos_dimension:short_grass"),"短草属于 minecraft 命名空间");

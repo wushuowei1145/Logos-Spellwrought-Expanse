@@ -1,0 +1,60 @@
+{
+  "type": "minecraft:add",
+  "argument1": {
+    "type": "minecraft:mul",
+    "argument1": "logos_dimension:changfeng/original",
+    "argument2": {
+      "type": "minecraft:add",
+      "argument1": 1,
+      "argument2": {
+        "type": "minecraft:mul",
+        "argument1": -1,
+        "argument2": {
+          "type": "minecraft:mul",
+          "argument1": "logos_dimension:changfeng/region",
+          "argument2": {
+            "type": "minecraft:y_clamped_gradient",
+            "from_y": 48,
+            "to_y": 64,
+            "from_value": 0,
+            "to_value": 1
+          }
+        }
+      }
+    }
+  },
+  "argument2": {
+    "type": "minecraft:mul",
+    "argument1": {
+      "type": "minecraft:add",
+      "argument1": {
+        "type": "minecraft:y_clamped_gradient",
+        "from_y": 60,
+        "to_y": 88,
+        "from_value": 0.7,
+        "to_value": -0.7
+      },
+      "argument2": {
+        "type": "minecraft:mul",
+        "argument1": 0.08,
+        "argument2": {
+          "type": "minecraft:noise",
+          "noise": "minecraft:surface",
+          "xz_scale": 0.02,
+          "y_scale": 0
+        }
+      }
+    },
+    "argument2": {
+      "type": "minecraft:mul",
+      "argument1": "logos_dimension:changfeng/region",
+      "argument2": {
+        "type": "minecraft:y_clamped_gradient",
+        "from_y": 48,
+        "to_y": 64,
+        "from_value": 0,
+        "to_value": 1
+      }
+    }
+  }
+}
