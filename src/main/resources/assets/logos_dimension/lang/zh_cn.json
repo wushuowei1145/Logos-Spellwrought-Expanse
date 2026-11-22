@@ -1888,5 +1888,13 @@
   "block.logos_dimension.blight_node": "区域腐败核心",
   "item.logos_dimension.blight_node": "区域腐败核心",
   "gui.logos_dimension.queen.title_zh": "腐化女王",
-  "gui.logos_dimension.queen.title_en": "The Corrupted Queen"
+  "gui.logos_dimension.queen.title_en": "The Corrupted Queen",
+  "key.logos_dimension.companion_book": "友人帐",
+  "key.category.logos_dimension.companions": "同伴",
+  "gui.logos_dimension.companion_book.title": "友人帐",
+  "gui.logos_dimension.companion_book.call": "召唤",
+  "gui.logos_dimension.companion_book.dismiss": "收回",
+  "gui.logos_dimension.companion_book.resting": "歇着 · %s 秒",
+  "gui.logos_dimension.companion_book.unknown": "？？？",
+  "gui.logos_dimension.companion_book.with_you": "在你身边"
 }

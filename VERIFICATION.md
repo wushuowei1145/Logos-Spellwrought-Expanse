@@ -1,5 +1,21 @@
 # 首版验证记录
 
+## 友人帐
+
+2026-11-23：分支 `feat/companion-book`，从 main `a55a4d6a`。设计见 [同伴](docs/COMPANIONS.md) 第 7 节。琥珀换衣服（`feat/kohaku-outfits`）是另一个 PR；
+这里琥珀那一页先画开衫，两个都合进去以后改成你给她换的那一套。
+
+| 层级 | 结果 |
+|---|---|
+| 单元 | `KohakuTest` **21/21**（加一个：友人帐的每一页在网络上来回不走样；按键、友人帐的字中英文都有），同伴其余 37 个照旧，`LangCoverageTest` 2/2 |
+| 实际客户端 | `group:companion_book` 的 `companion_book`：只和琥珀立契时另两页是黑窗；在友人帐里叫她出来、再翻开是「在你身边 / 收回」、收回；三位都立契；撤退以后那一页写着歇几秒、按了不算。拆开之前和 `group:kohaku_companion` 一起跑过一遍，拆开以后在这个分支上重跑 1/1 |
+| 人工看截图 | 三页各是自己的配色和纹，半身像头和耳朵都在窗里；黑窗、「歇着 · 300 秒」对（测试客户端是英文） |
+| 没做 | 没进游戏试玩；多人、专用服务器；只能按键翻开（没放进物品栏界面或手记） |
+
+```text
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:companion_book -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 腐化女王重做第 2 步：扩大树心战场
 
 2026-11-16：分支 `feat/corrupted-elven-intro`，Logos `dc3d381` / 0.7.0。腐化世界树加粗，大厅扩到直径约 48，加祭坛、三个出怪壁龛、环形高台、坡道和树根掩体；血管接头移到高台上方。见 [docs/BLIGHTED_ELVEN_FOREST.md](docs/BLIGHTED_ELVEN_FOREST.md)「树心战场」。

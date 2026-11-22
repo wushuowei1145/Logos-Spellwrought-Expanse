@@ -476,6 +476,11 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
     /** 测试用：撤退回去过几次。 */
     private static int withdrawn;
 
+    /** 测试用：让她撤退（倒下、被法阵卷走，之后歇着）。 */
+    public void withdrawForTest() {
+        if (level() instanceof ServerLevel level) startWithdraw(level);
+    }
+
     public static int withdrawn() {
         return withdrawn;
     }

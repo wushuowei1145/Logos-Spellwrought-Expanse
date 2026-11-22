@@ -361,10 +361,24 @@ class KohakuTest {
                 "critique_none", "critique_blank", "critique_broken", "critique_unstable", "critique_costly", "critique_short", "critique_dead",
                 "critique_waste", "critique_recursive", "critique_good_strike", "critique_good"}) keys.add(LINE + "talk." + l);
         for (CompanionTactic t : CompanionTactic.values()) keys.add(LINE + "talk.tactic_" + t.id);
+        for (String k : new String[]{"title", "call", "dismiss", "resting", "unknown", "with_you"}) keys.add("gui.logos_dimension.companion_book." + k);
+        keys.add("key.logos_dimension.companion_book");
+        keys.add("key.category.logos_dimension.companions");
         for (String locale : new String[]{"zh_cn", "en_us"}) {
             JsonObject lang = read("/assets/logos_dimension/lang/" + locale + ".json");
             for (String k : keys) assertTrue(lang.has(k), locale + " 缺 " + k);
         }
+    }
+
+    /** 友人帐的每一页在网络上来回不走样。 */
+    @Test void bookPagesSurviveTheNetwork() {
+        var state = new CompanionBook.State(List.of(new CompanionBook.Page("shiraume", false, false, 0, "", 0, ""),
+                new CompanionBook.Page("kohaku", true, true, 42, "cardigan", 5, "TRUSTED")), CompanionBook.OPEN);
+        io.netty.buffer.ByteBuf buf = io.netty.buffer.Unpooled.buffer();
+        CompanionBook.State.CODEC.encode(buf, state);
+        CompanionBook.State back = CompanionBook.State.CODEC.decode(buf);
+        assertEquals(state, back);
+        assertTrue(back.opens() && !back.done());
     }
 
     /** 三位同伴各有自己的契和包袱。 */

@@ -229,6 +229,7 @@ public final class Companions {
         KohakuCompany.register(bus);
         CompanionLines.register(bus);
         CompanionTalk.register(bus);
+        CompanionBook.register(bus);
         ShiraumeTalk.init();
         PrincessTalk.init();
         KohakuTalk.init();
