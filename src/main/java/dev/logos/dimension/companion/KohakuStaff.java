@@ -180,6 +180,15 @@ final class KohakuStaff {
         level.playSound(null, c.getX(), c.getY(), c.getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.NEUTRAL, .8f, 1.5f);
     }
 
+    /** 叫出来那一刻就拿上该拿的杖（包袱里你给的，没有就她自己的），魔力上限马上算上它。 */
+    void equipNow(ServerPlayer p) {
+        ItemStack fromPouch = best(c.pouch(p));
+        held = fromPouch.isEmpty() ? own(c.seals()) : fromPouch.copyWithCount(1);
+        yours = !fromPouch.isEmpty();
+        pagesGeneration = -1;
+        c.holdStaff();
+    }
+
     /** 测试用：直接换上 {@code stack}（不看包袱）。 */
     void force(ItemStack stack, boolean fromYou) {
         held = stack.copyWithCount(1);

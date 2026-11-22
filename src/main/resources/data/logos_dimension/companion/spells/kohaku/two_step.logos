@@ -1,0 +1,5 @@
+; 两个人的猫步（第九枚爪之契，第 5.1 节）：你快撑不住、身边又围着敌人时，她拉着你一起闪到开阔的地方。一场战斗一次（代码管）。
+; 落点是代码算好的 here；挪你（施法者以外的玩家）要 :players true。注入 120。
+(spell :name "两个人的猫步" :mana 120 :trigger cast :intent move :players true
+  (blink here)
+  (blink here (master)))

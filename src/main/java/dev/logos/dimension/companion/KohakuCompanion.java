@@ -78,6 +78,7 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
 
     final KohakuStaff staff = new KohakuStaff(this);
     final KohakuMagic magic = new KohakuMagic(this);
+    final KohakuMoves moves = new KohakuMoves(this);
     private float spellPower = 1;
     private CompanionStats.Part power = new CompanionStats.Part(1, 0, 0);
     private double mana, maxMana = MANA;
@@ -264,6 +265,8 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
      * 施法时不收。
      */
     boolean staffStowed() {
+        // 凝辉：右手凝剑（手里是杖剑时直接用它砍，不收）；猫步：一跃一落，杖收着
+        if (moves.busy()) return !(moves.sweeping() && staff.blade());
         if (magic.casting()) return false;
         return withdrawing() || mood.playing() != null || mood.curled();
     }
@@ -291,7 +294,17 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
 
     @Override
     protected boolean busyHands() {
-        return magic.casting();
+        return magic.casting() || moves.busy();
+    }
+
+    /** 凝辉的战斗武器编号（客户端按它取网格画剑）。 */
+    public static int vesperglassWeapon() {
+        return KohakuMoves.VESPERGLASS.id();
+    }
+
+    /** 手里是杖剑（凝辉直接用它的剑刃砍，客户端不另外画剑）。 */
+    public static boolean bladeStaff(ItemStack stack) {
+        return KohakuMoves.bladeIn(stack);
     }
 
     /** 点杖施法时两臂跟着视线抬（杖尖对准她在打的那个）。 */
@@ -313,10 +326,11 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
         openCircle(summonAt, SUMMON_CIRCLE);
     }
 
-    /** 新叫出来的她魔力是满的（读档的照存档）。 */
+    /** 新叫出来的她魔力是满的（读档的照存档）：先拿上杖，上限算上杖的，再加满。 */
     @Override
     void bind(ServerPlayer player) {
         super.bind(player);
+        staff.equipNow(player);
         mana = maxMana;
     }
 
@@ -348,6 +362,7 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
         if (tickCount % 20 == 0) refreshCap();
         mana = Math.min(maxMana, mana + regenPerSecond() / 20);
         magic.tick(level, now);
+        moves.tick(level, now);
         tickStaffInHand(level);
     }
 
@@ -395,6 +410,7 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
         withdrawAt = level.getGameTime();
         setHealth(1);
         magic.cancel();
+        moves.cancel();
         stopEating();
         setMove("");
         getNavigation().stop();
@@ -464,11 +480,33 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
         return KohakuMagic.yoursCasts;
     }
 
+    /** 测试用：凝辉横扫过几次、打中过几个；猫步闪过几次；两个人一起闪过几次。 */
+    public static int sweeps() {
+        return KohakuMoves.sweeps;
+    }
+
+    public static int sweepHits() {
+        return KohakuMoves.sweepHits;
+    }
+
+    public static int blinks() {
+        return KohakuMoves.blinks;
+    }
+
+    public static int carries() {
+        return KohakuMoves.carries;
+    }
+
     /** 测试用：魔力加满、杖里充满（大术式要两边加起来才放得出）。 */
     public void topUp() {
         refreshCap();
         mana = maxMana;
         staff.setStore(staff.capacity());
+    }
+
+    /** 测试用：让她留在原地（不跟着主人走），好从远处拍。 */
+    public void stayForTest(boolean on) {
+        setStaying(on);
     }
 
     /** 测试用：你给的杖上她能放几页。 */
@@ -497,6 +535,7 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
     @Override
     protected void onDie() {
         magic.cancel();
+        moves.cancel();
     }
 
     /** 整个人由 misc 动画摆（睡着、倒下）：客户端这时不叠加视线。 */
@@ -530,6 +569,7 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
     @Override
     protected void onLeave() {
         magic.cancel();
+        moves.cancel();
     }
 
     @Override

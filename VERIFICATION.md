@@ -1,5 +1,26 @@
 # 首版验证记录
 
+## 琥珀同伴（第三步：凝辉、猫步）
+
+2026-11-22：分支 `feat/kohaku-blink`，基于 main `fabe1c1a`（#284）。Logos jar 同前两步（Logos main `5fdd33e` 现场编的）。
+设计见 [琥珀](docs/KOHAKU_COMPANION.md) 第 6、7.4 节和第 18 节的第三步。模型第 7 版（`MinecraftLogosMod/kohaku_companion`，不在仓库里）加了
+`conjure_sweep`、`blink_out`、`blink_in`。
+
+| 层级 | 结果 |
+|---|---|
+| 单元 | `KohakuTest` **14/14**（新加两个：凝辉招式文件能照常解析、出手时刻和动作标记一致；凝辉网格合并以后 113 块、贴图坐标都在贴图里、原点在剑柄上。另外改了两个：八种意图现在都有她的页、第一到第九印每枚都有新的页；动作时刻加上凝辉和猫步的标记），同伴其余照旧全过；`LangCoverageTest` 2/2 |
+| 实际客户端 | `group:kohaku_companion` **14/14 场景、30/30 检查**（前两步的 11 个照旧全过，新加 3 个）：一只僵尸贴到她跟前——长杖收起、右手凝出凝辉、横扫打中它（受了奥术伤害）、推开，她往后跳开，又拄着长杖；三只僵尸把她围住——她蹲身一跃，落在 7 格以外、落点附近敌人不超过一个；九枚爪之契、主人两成血、身边两只僵尸——她拉着主人一起闪走，主人离开原地 6 格以上、她就在主人身边 |
+| 人工看截图 | 凝辉第一版画得只有她身高的三分之一（比例照美术稿 1:1），放大到 2.4 倍（同白梅的流火）以后长度和她身高差不多；凝聚、横扫、碎掉、往后跳；猫步的爪印、落地 |
+| 网格对比 | `tools/import_vesperglass.py --preview` 离线光栅化合并前后（`art/vesperglass/slim_compare.png`）：剑身、剑柄、萼托看不出差别；花瓣和露滴剑首第一次合得太狠（弧线变折线），收严容差以后和原来一样 |
+| 场景里踩到的 | 招式文件的 cone 最多 180°，凝辉的 220° 写进去整份解析失败（张角挪到代码里，单元测试加了解析）；叫出来时先按没拿杖的上限加满魔力，拿上杖以后差一截（改成先拿杖再加满）；被围猫步在整组里跑第一个时有一次没起跳，没找到原因，加了近一点的备选落点以后连跑三遍都过 |
+| 没做 | 没进游戏试玩；猫步用 Logos 的 `blink`，原地那团紫色的虚空闪光是 Logos 的样子，要全琥珀色得改成代码瞬移，等维护者定；多人、专用服务器；第四、五步 |
+
+```text
+./gradlew test --tests 'dev.logos.dimension.companion.*' --tests 'dev.logos.dimension.LangCoverageTest' -PlogosJar=/absolute/path/logos.jar -PorchestraJar=/absolute/path/starbloom_orchestra-0.1.0.jar
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:kohaku_companion -PldTestHeadless -PldTestWindow=1280x720
+uv run --with numpy --with pillow python tools/import_vesperglass.py --preview
+```
+
 ## 琥珀同伴（第二步：术式）
 
 2026-11-22：分支 `feat/kohaku-spells`，基于 main `8f3739ac`（#282 琥珀第一步、#283 精灵公主的缠绕）。Logos jar 同第一步（Logos main `5fdd33e` 现场编的）。

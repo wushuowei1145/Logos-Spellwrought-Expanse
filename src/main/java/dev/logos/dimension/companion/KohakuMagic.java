@@ -132,7 +132,7 @@ final class KohakuMagic {
 
     /** 凝护膜：长杖往地上一拄。 */
     boolean startWard(long now) {
-        if (!wardReady(now) || c.eating()) return false;
+        if (!wardReady(now) || c.eating() || c.moves.busy()) return false;
         c.mood.cut();
         casting = Kind.WARD;
         spell = null;
@@ -176,7 +176,7 @@ final class KohakuMagic {
      * （大术式要先把杖充满才放得出）；加起来也不够就不放（返回假，不说话也不显示文字）。
      */
     private boolean start(Spell sp, PageTier t, KohakuSpells.Aim a, String k, int cd, LivingEntity who, @Nullable Vec3 at, long now) {
-        if (casting() || c.eating()) return false;
+        if (casting() || c.eating() || c.moves.busy()) return false;
         double mana = Casting.injection(sp, t, 0).mana();
         boolean ally = a == KohakuSpells.Aim.ALLY || a == KohakuSpells.Aim.AT || a == KohakuSpells.Aim.SELF;
         int at0 = ally ? WARD_AT : CAST_AT, length = ally ? WARD_TICKS : CAST_TICKS;
