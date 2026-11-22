@@ -1,5 +1,25 @@
 # 首版验证记录
 
+## 琥珀同伴（第三位同伴，第一步：进游戏）
+
+2026-11-22：分支 `feat/kohaku-companion`，基于 main `3ce82584`（#279）。Logos jar 用 Logos main `5fdd33e`（#485：`Runes.safeSpot` 公开；含 #484 杖剑）现场编的，
+星辰花乐团 `builds/starbloom-orchestra-split-2026-11-17/starbloom_orchestra-0.1.0.jar`。CI 的 `LOGOS_REF` 跟着改到 `5fdd33e`（原来的 `dc3d381` 没有杖剑，编不过）。
+设计见 [琥珀](docs/KOHAKU_COMPANION.md)，分五步做（第 18 节），这是第一步。模型是维护者的 `_5` 加三段动画的 `_6`（`MinecraftLogosMod/kohaku_companion`，不在仓库里）。
+
+| 层级 | 结果 |
+|---|---|
+| 单元 | 同伴 **46/46**（原有 36 + 新加 `KohakuTest` 10：游戏用到的动画都在模型里、施法 / 入场 / 倒下的时间点对得上标记、法强 / 生命 / 魔力 / 护膜的成长、护甲不继承而白梅照样继承、她自己的长杖随契印换、载页编得过且注入量不超过当时长杖的容量、语言键中英文都齐、三位同伴各有自己的契）；`LangCoverageTest` 2/2 |
+| 实际客户端（她） | `group:kohaku_companion` **7/7 场景、19/19 检查**：空白金镑立契，炼成阵转开、她蹦出来、入场时长杖收着、落地后拄着紫晶长杖，再用收回；两只戴帽子的僵尸冲主人来，她先拄杖凝护膜（一倍生命上限）、站到主人斜后方用一滴就够打倒它们，主人没挨她的打；不参与攻击时朝冲来的僵尸哈气（长杖收起、没施法），幻翼扑向主人时被她吓走；包袱里放回响魔杖她换上、拿走换回、盖三枚换成炼金长杖（魔力上限算上杖的）；致命一击不死，倒下、法阵转开、光柱把她卷走，歇五分钟、金镑转冷却；叫出来时魔力是满的；中文对话和面板（生命 28、法强 1.2、魔力一行、护甲 0、能力、往事） |
+| 实际客户端（回归） | 白梅 `companion_talk`、`companion_tactics`，精灵公主 `princess_talk`、`princess_heal`、`princess_withdraw`：**5/5 场景、28/28 检查**（面板的数值页改成按档案画、数值规则加了两个选项，所以跑这几个） |
+| 人工看截图 | 拄杖的角度（偏离竖直 8°，杖脚落在脚边）、点杖施法、护膜、换杖的光、哈气时收杖、炼成阵（第一版白天在浅色地面上冲成一片奶白，改成先用半透明深琥珀画纹样再叠光）、撤退的光柱（第一版太白、带着粉色花瓣，调暗、去掉花瓣）、面板三页 |
+| 没做 | 没进游戏试玩；法阵没在夜里、光影包下看过；多人、专用服务器；第二到第五步的东西（第一到第九印的术式、凝辉、猫步、日常、睡觉）；往事十段是草稿 |
+
+```text
+./gradlew test --tests 'dev.logos.dimension.companion.*' --tests 'dev.logos.dimension.LangCoverageTest' -PlogosJar=/absolute/path/logos.jar -PorchestraJar=/absolute/path/starbloom_orchestra-0.1.0.jar
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:kohaku_companion -PldTestHeadless -PldTestWindow=1280x720
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=companion_talk,companion_tactics,princess_talk,princess_heal,princess_withdraw -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 精灵公主同伴（第二位同伴；同伴的公共部分抽出来）
 
 2026-11-18：分支 `feat/elf-princess-companion`，基于 main `76b85203`（#278）。Logos jar `builds/logos-0.7.1-release/logos-0.7.1.jar`，星辰花乐团 `builds/starbloom-orchestra-split-2026-11-17/starbloom_orchestra-0.1.0.jar`。设计见 [精灵公主](docs/ELF_PRINCESS_COMPANION.md)，公共部分见 [同伴](docs/COMPANIONS.md) 第 1、4 节。维护者定的：用袋装世界树（代码画的 16×16 图标：布袋子里一捧土，土上长着一株迷你世界树）召唤；武器是世界树之弓，在她手里蓄力更快；敌人远时锁定（不锁主人、主人的宠物和同伴，攻击玩家开着时锁敌对的玩家），近身时快速散射并后跳；生命涌动（给主人缠上生命之力、治疗和护盾、荆棘缠绕困住强敌，部分随契印解锁）；伤害和治疗按她自己的法术强度算（继承主人、随契印长）；不会死，撑不住时撤退。

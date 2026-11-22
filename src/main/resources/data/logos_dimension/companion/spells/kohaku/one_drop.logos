@@ -1,0 +1,9 @@
+; 一滴就够（琥珀本来就会，docs/KOHAKU_COMPANION.md 第 5.1 节）：杖尖弹出一滴琥珀色的奥术，直线、快、穿透一个。
+; 「能用一页解决就不用两页」：她最省力的一下，魔力少的时候也只放它。伤害按她的法术强度乘（她身上的 logos:spell_power）。
+; 弹射物不分敌我：碰到的先看是不是敌人（主人、主人的使魔和宠物不算），只打敌人。
+; 「攻击玩家」开着时代码在 :trigger cast 后面加上 :players true。注入 120，紫晶长杖（第 2 档，容量 150）就放得满。
+(spell :name "一滴就够" :mana 120 :trigger cast
+  (projectile :speed 2.4 :pierce 1 :size 0.2
+    (on-hit
+      (if (is target (kind enemies))
+        (damage target 7 arcane)))))

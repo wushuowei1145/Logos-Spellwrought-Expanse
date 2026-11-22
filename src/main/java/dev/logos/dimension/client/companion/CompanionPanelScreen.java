@@ -64,6 +64,12 @@ public final class CompanionPanelScreen extends Screen {
         return Component.translatable("gui.logos_dimension.companion." + key, args);
     }
 
+    /** 这一位自己的说法（{@code talk.logos_dimension.<同伴>.<key>}）；没有就用通用的（继承那段：白梅的「九尾」不适合别人）。 */
+    private Component ownOr(String key, Object... args) {
+        String k = "talk.logos_dimension." + id() + "." + key;
+        return net.minecraft.client.resources.language.I18n.exists(k) ? Component.translatable(k, args) : tr(key, args);
+    }
+
     /** 这位同伴自己的键（talk.logos_dimension.<id>.<key>）。 */
     private Component own(String key, Object... args) {
         return Component.translatable("talk.logos_dimension." + id() + "." + key, args);
@@ -257,14 +263,13 @@ public final class CompanionPanelScreen extends Screen {
 
     // ---------------------------------------------------------------- 属性
 
-    private static final String[] STATS = {"health", "attack", "armor", "toughness"};
-
     private void drawStats(GuiGraphicsExtractor g) {
         CompanionSheet s = sheet();
         int x = left(), r = right(), y = top() + 2;
         int valueX = x + 58;
-        for (String id : STATS) {
-            CompanionSheet.Stat st = s.stat(id);
+        // 按她的档案给的顺序画（白梅：生命、攻击、护甲、韧性；精灵公主把攻击换成法术强度；琥珀还多一行魔力）
+        for (CompanionSheet.Stat st : s.stats()) {
+            String id = st.id();
             g.text(font, tr("stat." + id), x, y, style.dim(), false);
             String value = st.current() >= 0 ? num(st.current()) + " / " + num(st.value()) : num(st.value());
             CompanionUi.bigText(g, font, Component.literal(value), valueX, y - 1, style.ink(), 1.25f, false);
@@ -284,8 +289,8 @@ public final class CompanionPanelScreen extends Screen {
         y += 10;
         CompanionUi.fadeLine(g, x, r, y, CompanionUi.alpha(style.gold(), .5f));
         y += 6;
-        y = wrapped(g, tr("inherit", num(s.ratio() * 100)), x, y, r - x, style.ink());
-        y = wrapped(g, tr("inherit_hint"), x, y, r - x, style.dim()) + 6;
+        y = wrapped(g, ownOr("inherit", num(s.ratio() * 100)), x, y, r - x, style.ink());
+        y = wrapped(g, ownOr("inherit_hint"), x, y, r - x, style.dim()) + 6;
         CompanionUi.fadeLine(g, x, r, y, CompanionUi.alpha(style.gold(), .5f));
         y += 7;
         // 羁绊、饱腹、现在

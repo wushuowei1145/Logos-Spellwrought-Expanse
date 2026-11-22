@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import dev.logos.dimension.companion.ElfPrincessCompanion;
 import dev.logos.dimension.companion.Katashiro;
+import dev.logos.dimension.companion.KohakuCompanion;
 import dev.logos.dimension.companion.ShiraumeCompanion;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -51,6 +52,7 @@ public final class CompanionClient {
     static void renderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(Companions.SHIRAUME.get(), CompanionRenderer::new);
         event.registerEntityRenderer(Companions.ELF_PRINCESS.get(), PrincessRenderer::new);
+        event.registerEntityRenderer(Companions.KOHAKU.get(), KohakuRenderer::new);
         event.registerEntityRenderer(Companions.KATASHIRO.get(), KatashiroRenderer::new);
     }
 
@@ -225,6 +227,83 @@ public final class CompanionClient {
             String misc = info.getOrDefaultGeckolibData(MISC, "");
             if (!"summon".equals(misc) && !"withdraw".equals(misc)) {
                 snapshots.ifPresent("SummonBud", s -> {
+                    s.skipRender(true);
+                    s.skipChildrenRender(true);
+                });
+            }
+        }
+    }
+
+    /**
+     * 琥珀（docs/KOHAKU_COMPANION.md）：NPC 的通用渲染，长杖画在手部挂点上。法阵还在转开时不画（她还没出来）；睡着、倒下时不叠加视线。
+     * 模型里有四套装束（{@code outfit_<id>_*}），现在只穿开衫制服，别的几套连同子骨骼都不画。
+     */
+    public static class KohakuRenderer<R extends LivingEntityRenderState & GeoRenderState> extends NpcRenderer<KohakuCompanion, R> {
+        static final String OUTFIT = "cardigan";
+        private BakedGeoModel outfitModel;
+        private List<String> hidden = List.of();
+
+        public KohakuRenderer(EntityRendererProvider.Context context) {
+            super(context, "kohaku_companion");
+        }
+
+        /** 她这一帧藏着没有（法阵还在转开）、炼成阵转开了多少刻（-1 没有）、一共多久、是不是来卷走她的；此刻的时钟。 */
+        private static final DataTicket<Boolean> HIDDEN = DataTicket.create("logos_dimension_kohaku_hidden", Boolean.class);
+        private static final DataTicket<Float> CIRCLE = DataTicket.create("logos_dimension_kohaku_circle", Float.class);
+        private static final DataTicket<Integer> CIRCLE_LENGTH = DataTicket.create("logos_dimension_kohaku_circle_length", Integer.class);
+        private static final DataTicket<Boolean> WITHDRAW = DataTicket.create("logos_dimension_kohaku_withdraw", Boolean.class);
+        private static final DataTicket<Float> CLOCK = DataTicket.create("logos_dimension_kohaku_clock", Float.class);
+
+        @Override
+        public boolean shouldRender(KohakuCompanion entity, Frustum frustum, double x, double y, double z) {
+            // 法阵还在转开时她不画，阵照样要画
+            return entity.circleAge(0) >= 0 || !entity.hiddenForSummon() && super.shouldRender(entity, frustum, x, y, z);
+        }
+
+        @Override
+        public void addRenderData(KohakuCompanion animatable, Void relatedObject, R state, float partialTick) {
+            super.addRenderData(animatable, relatedObject, state, partialTick);
+            if (animatable.curled()) {
+                state.xRot = 0;
+                state.yRot = 0;
+            }
+            state.addGeckolibData(HIDDEN, animatable.hiddenForSummon());
+            state.addGeckolibData(CIRCLE, animatable.circleAge(partialTick));
+            state.addGeckolibData(CIRCLE_LENGTH, animatable.circleLength());
+            state.addGeckolibData(WITHDRAW, animatable.circleWithdraws());
+            state.addGeckolibData(CLOCK, animatable.tickCount + partialTick);
+        }
+
+        @Override
+        public void submit(R state, PoseStack pose, SubmitNodeCollector out, CameraRenderState camera) {
+            if (!state.getOrDefaultGeckolibData(HIDDEN, false)) super.submit(state, pose, out, camera);
+            float age = state.getOrDefaultGeckolibData(CIRCLE, -1f);
+            if (age < 0) return;
+            boolean withdraw = state.getOrDefaultGeckolibData(WITHDRAW, false);
+            // 传进来的是以她为原点的；移回世界原点，阵按世界坐标画（光柱要朝着镜头）
+            pose.pushPose();
+            pose.translate(-state.x, -state.y, -state.z);
+            KohakuCircle.submit(pose, out, camera, new Vec3(state.x, state.y, state.z), withdraw ? KohakuCompanion.WITHDRAW_RADIUS
+                    : KohakuCompanion.CIRCLE_RADIUS, age, state.getOrDefaultGeckolibData(CIRCLE_LENGTH, 1), withdraw,
+                    state.getOrDefaultGeckolibData(CLOCK, 0f));
+            pose.popPose();
+        }
+
+        @Override
+        public void adjustModelBonesForRender(RenderPassInfo<R> info, BoneSnapshots snapshots) {
+            super.adjustModelBonesForRender(info, snapshots);
+            if (info.model() != outfitModel) {
+                outfitModel = info.model();
+                List<String> out = new ArrayList<>();
+                for (GeoBone bone : info.model().boneLookup().get().values()) {
+                    String n = bone.name();
+                    boolean top = bone.parent() == null || !bone.parent().name().startsWith(CompanionOutfit.PREFIX);
+                    if (top && n.startsWith(CompanionOutfit.PREFIX) && !n.startsWith(CompanionOutfit.PREFIX + OUTFIT + "_")) out.add(n);
+                }
+                hidden = List.copyOf(out);
+            }
+            for (String group : hidden) {
+                snapshots.ifPresent(group, s -> {
                     s.skipRender(true);
                     s.skipChildrenRender(true);
                 });
