@@ -72,7 +72,7 @@ public final class AddonTabs {
         ids(out, "cloudsea_stem");
         for (var b : CloudseaBiome.values()) out.accept(CloudseaBlocks.TRUNKS.get(b).get());
         for (var b : CloudseaBiome.values()) out.accept(CloudseaBlocks.LEAVES.get(b).get());
-        ids(out, "elven_canopy",
+        ids(out, "elven_canopy", "blighted_heartwood", "blighted_canopy", "blighted_loam", "blighted_lumen", "corruption_bud", "corruption_spines", "corruption_ribs", "queen_heart", "blight_node", "blight_memory",
                 // 云海植物
                 "cloudsea_lantern_bud", "cloudsea_hanging_root", "cloudsea_eye_fern", "cloudsea_demon_reed",
                 // 林地与原野的草和花

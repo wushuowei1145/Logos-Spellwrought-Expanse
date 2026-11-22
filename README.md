@@ -1,5 +1,7 @@
 # 维度-咒械原
 
+开发分支新增远行大陆群系「腐败精灵森林」：约占精灵森林的五分之一，外围地表与巨木大面积被腐败覆盖；世界树内厅拆空，黑色地面上方以分叉血管悬吊缓慢搏动的巨型核心。四格高的华服腐化女王手执墨绿树枝权杖，坐在下面守护，玩家靠近后起身迎战；首次有五秒镜头前景入场，血管薄膜退开、斜侧推镜后交还控制。新增可还原的猩红污染与区域核心，拆核心逐片收复森林，锄右键剥除残污；击败女王停止源头供养，残留核心保留。定位与机制见 [腐败精灵森林](docs/BLIGHTED_ELVEN_FOREST.md)。
+
 **Logos: Spellwrought Expanse**，Logos 的独立维度附属 Mod，Mod ID：`logos_dimension`。当前开发版本 **0.11.0**，已公开正式安装包为 **0.10.0**。目标为 Minecraft **26.1.2**、NeoForge **26.1.2.112**、Java **25**，开发版需要 Logos **0.7.0** 或更新版本。
 
 **安装包：[下载 logos_dimension-0.10.0.jar](https://github.com/wushuowei1145/Logos-Spellwrought-Expanse/releases/download/v0.10.0/logos_dimension-0.10.0.jar)** · [正式发布页与校验文件](https://github.com/wushuowei1145/Logos-Spellwrought-Expanse/releases/tag/v0.10.0)。联机时服务端和客户端都需安装同版附属；停服替换旧版后重新启动。Code → Download ZIP 和发布页的 Source code 是源码，需要构建后才能安装。

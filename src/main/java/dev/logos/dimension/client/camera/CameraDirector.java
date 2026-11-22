@@ -137,6 +137,9 @@ public final class CameraDirector {
         if (locked) KeyMapping.releaseAll();
     }
 
+    /** 给已收到的服务端镜头附加机位轨迹，不重置时钟、遮幅或输入锁。 */
+    public static void attachRig(Rig next) { if (shot != null) rig = next; }
+
     public static boolean active() {
         return shot != null;
     }

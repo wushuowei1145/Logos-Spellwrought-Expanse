@@ -2,6 +2,12 @@
   "replace": false,
   "values": [
     "logos_dimension:corruption",
-    "logos_dimension:corruption_vein"
+    "logos_dimension:corruption_vein",
+    "logos_dimension:blighted_canopy",
+    "logos_dimension:corruption_bud",
+    "logos_dimension:corruption_spines",
+    "logos_dimension:corruption_ribs",
+    "logos_dimension:blight_memory",
+    "logos_dimension:blighted_loam"
   ]
 }
