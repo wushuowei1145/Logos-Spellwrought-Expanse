@@ -57,6 +57,7 @@ public abstract class KohakuViews extends CompanionViews {
             p.setData(Companions.KOHAKU_POUCH, new dev.logos.dimension.companion.CompanionPouch());
             p.setData(Companions.KOHAKU_DAYS, dev.logos.dimension.companion.KohakuDays.NONE);
             KohakuCompanion.luckyForTest(false);
+            KohakuCompanion.sleepForTest(null, null);
             p.getCooldowns().removeCooldown(p.getCooldowns().getCooldownGroup(PawSovereignItem.blank()));
             p.getInventory().clearContent();
             p.removeAllEffects();

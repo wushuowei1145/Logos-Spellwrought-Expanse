@@ -540,6 +540,30 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
         return KohakuLife.sunFulls;
     }
 
+    /** 测试用：一起睡过几整夜、给过几次醒来的礼物、你挂机时在床上打过几次盹。 */
+    public static int fullNights() {
+        return KohakuSleep.fullNights;
+    }
+
+    public static int morningGifts() {
+        return KohakuSleep.morningGifts;
+    }
+
+    public static int bedNaps() {
+        return KohakuSleep.bedNaps;
+    }
+
+    /** 测试用：强行定睡姿（curl / loaf / belly，null 照常判）、睡哪（floor / spare / shiraume / yours，null 照常判）。 */
+    public static void sleepForTest(@Nullable String pose, @Nullable String where) {
+        KohakuSleep.forcePose = pose == null ? null : KohakuLife.Pose.valueOf(pose.toUpperCase(java.util.Locale.ROOT));
+        KohakuSleep.forceWhere = where == null ? null : KohakuSleep.Where.valueOf(where.toUpperCase(java.util.Locale.ROOT));
+    }
+
+    /** 测试用：这一晚睡在哪（没在跟你睡为空）。 */
+    public String sleepWhereForTest() {
+        return life.sleep.where();
+    }
+
     /** 测试用：给你吃的、叼战利品都必成（不看概率）。 */
     public static void luckyForTest(boolean on) {
         KohakuLife.lucky = on;

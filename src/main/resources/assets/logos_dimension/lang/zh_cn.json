@@ -1860,5 +1860,10 @@
   "entity.logos_dimension.jian_sui_fall_stage": "坠渊",
   "commands.logos_dimension.jiansui.no_site": "不在太玄灵境里。",
   "entity.logos_dimension.jian_sui": "剑祟",
-  "entity.logos_dimension.jian_sui.bar": "剑祟"
+  "entity.logos_dimension.jian_sui.bar": "剑祟",
+  "effect.logos_dimension.kohaku_company": "琥珀相伴",
+  "talk.logos_dimension.kohaku.skill.company.name": "琥珀相伴",
+  "talk.logos_dimension.kohaku.skill.company.icon": "伴",
+  "talk.logos_dimension.kohaku.skill.company.desc": "和她一起睡醒以后的 %s 分钟里：魔力回复 +%s%%、汇集快 %s%%。羁绊越深，回得越快。",
+  "line.logos_dimension.kohaku.morning_gift": "……早。这个给你，顺手拿的。"
 }

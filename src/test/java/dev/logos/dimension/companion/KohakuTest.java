@@ -67,9 +67,9 @@ class KohakuTest {
                 "act_petted", "act_groom", "act_shake", "act_guard", "act_wave", "act_head_tilt", "pre_parallel0", "pre_parallel1", "pre_parallel2",
                 "pick", "give", "act_yawn", "face_rain"));
         for (KohakuLife.Pose p : KohakuLife.Pose.values()) {
-            if (p.loop == null) continue;
-            used.addAll(List.of(p.down, p.loop, p.up));
+            for (String n : new String[] {p.down, p.loop, p.up}) if (n != null) used.add(n);
         }
+        used.addAll(List.of("wake_linger", "face_sleepy"));
         for (String name : used) assertTrue(anims.has(name), "模型里没有 " + name);
     }
 
@@ -102,11 +102,16 @@ class KohakuTest {
     @Test void posesMatchTheModel() throws Exception {
         JsonObject anims = animations();
         for (KohakuLife.Pose p : KohakuLife.Pose.values()) {
-            if (p.loop == null) continue;
-            assertEquals(p.downTicks, ticks(anims.getAsJsonObject(p.down)), p.down);
+            if (p == KohakuLife.Pose.NONE) continue;
+            if (p.down != null) assertEquals(p.downTicks, ticks(anims.getAsJsonObject(p.down)), p.down);
             assertEquals(p.upTicks, ticks(anims.getAsJsonObject(p.up)), p.up);
-            assertTrue(anims.getAsJsonObject(p.loop).get("loop").getAsBoolean(), p.loop + " 要循环");
+            if (p.loop != null) assertTrue(anims.getAsJsonObject(p.loop).get("loop").getAsBoolean(), p.loop + " 要循环");
         }
+        // 侧卧躺下以后交给 misc 的 sleep；赖床那一段的长度、撑起来的那一刻
+        assertNull(KohakuLife.Pose.CURL.loop);
+        JsonObject linger = anims.getAsJsonObject("wake_linger");
+        assertEquals(KohakuLife.WAKE_LINGER, ticks(linger));
+        assertEquals(KohakuLife.WAKE_RISE, marker(linger, "rise"));
         JsonObject give = anims.getAsJsonObject("give");
         assertEquals(KohakuLife.GIVE_TICKS, ticks(give));
         assertEquals(KohakuLife.GIVE_AT, marker(give, "give"));
@@ -121,6 +126,39 @@ class KohakuTest {
         assertEquals(0, KohakuLife.foodIndex(29));
         assertEquals(1, KohakuLife.foodIndex(30));
         assertEquals(5, KohakuLife.foodIndex(99));
+    }
+
+    /** 睡姿（第 9.2 节）：羁绊到「信赖」或第五枚爪之契以后四成露肚皮；猫饼三成；不然侧卧。 */
+    @Test void sleepPoseFollowsTheBond() {
+        var stranger = CompanionBond.Stage.STRANGER;
+        assertEquals(KohakuLife.Pose.CURL, KohakuSleep.pose(stranger, 0, 0, .9f));
+        assertEquals(KohakuLife.Pose.LOAF, KohakuSleep.pose(stranger, 0, 0, .1f), "露肚皮要羁绊或契印够了才有");
+        assertEquals(KohakuLife.Pose.BELLY, KohakuSleep.pose(CompanionBond.Stage.TRUSTED, 0, .2f, .9f));
+        assertEquals(KohakuLife.Pose.BELLY, KohakuSleep.pose(stranger, 5, .2f, .9f));
+        assertEquals(KohakuLife.Pose.CURL, KohakuSleep.pose(CompanionBond.Stage.BONDED, 9, .5f, .9f));
+    }
+
+    /**
+     * 醒来的礼物（第 9.4 节）：七成起、羁绊每段 +5%、最多九成；药水 45、猫币 30、稀有 25（收了零花钱的第二天早上稀有翻倍）；
+     * 稀有里的几样加起来一百。琥珀相伴：魔力回复 +50% 起，羁绊每段 +10%。
+     */
+    @Test void morningGiftAndCompanyAsTheDocSays() {
+        assertEquals(.7f, KohakuSleep.giftChance(0), 1e-6);
+        assertEquals(.9f, KohakuSleep.giftChance(4), 1e-6);
+        assertEquals(.9f, KohakuSleep.giftChance(9), 1e-6);
+        assertEquals(100, KohakuSleep.total(false));
+        assertEquals(125, KohakuSleep.total(true));
+        int[] count = new int[3];
+        for (int roll = 0; roll < KohakuSleep.total(true); roll++) count[KohakuSleep.category(roll, true)]++;
+        assertArrayEquals(new int[] {45, 30, 50}, count, "零花钱：稀有那一档翻倍");
+        assertEquals(100, KohakuSleep.sum(KohakuSleep.RARE_WEIGHTS));
+        assertEquals(0, KohakuSleep.pick(KohakuSleep.RARE_WEIGHTS, 39));
+        assertEquals(1, KohakuSleep.pick(KohakuSleep.RARE_WEIGHTS, 40));
+        assertEquals(5, KohakuSleep.pick(KohakuSleep.RARE_WEIGHTS, 99));
+        assertEquals(.5, KohakuCompany.regen(0), 1e-9);
+        assertEquals(.9, KohakuCompany.regen(CompanionBond.Stage.BONDED.ordinal()), 1e-9);
+        // 拓本只拓你也能用的页：不用「主人」
+        for (KohakuSpells s : KohakuSleep.COPIES) assertNotEquals(KohakuSpells.Aim.SELF, s.aim(), s.id());
     }
 
     /** 一天的事一天算：今天塞了几次吃的，到了第二天从零数；地毯、零花钱各记各的。 */
@@ -293,13 +331,13 @@ class KohakuTest {
         List<String> keys = new ArrayList<>(List.of("entity.logos_dimension.kohaku_companion", "item.logos_dimension.paw_sovereign",
                 "container.logos_dimension.kohaku_pouch", "gui.logos_dimension.companion.stat.spell_power", "gui.logos_dimension.companion.stat.mana",
                 TALK + "name", TALK + "kana", TALK + "epithet", TALK + "seal_name", TALK + "option.outfit." + KohakuTalk.OUTFIT,
-                TALK + "skill.staff.yours", TALK + "skill.staff.own"));
+                TALK + "skill.staff.yours", TALK + "skill.staff.own", "effect.logos_dimension.kohaku_company"));
         for (String t : new String[]{"blank", "blank_use", "owner", "use"}) keys.add("tooltip.logos_dimension.paw_sovereign." + t);
         TalkMenu.Option chat = TalkMenu.find(KohakuTalk.MENU, TalkMenu.CHAT);
         assertNotNull(chat);
         for (TalkMenu.Option o : chat.children()) if (o.id().startsWith("chat.")) keys.add(TALK + "option." + o.id());
         for (String s : new String[]{"one_drop", "ward", "staff", "mana", "genius", "withdraw", "cat_eye", "boiling_flask", "nap_ward",
-                "greenhouse", "quick_enchant", "time_amber", "misty_umbrella", "starbloom", "your_pages", "conjure", "cat_step", "two_step"}) {
+                "greenhouse", "quick_enchant", "time_amber", "misty_umbrella", "starbloom", "your_pages", "conjure", "cat_step", "two_step", "company"}) {
             for (String part : new String[]{"name", "icon", "desc"}) keys.add(TALK + "skill." + s + "." + part);
         }
         for (int n = 0; n < KohakuTalk.MEMORY_LINES.length; n++) {
@@ -313,7 +351,7 @@ class KohakuTest {
             keys.add(LINE + "talk.greet_" + s + "_2");
         }
         for (String l : new String[]{"stay", "follow", "refuse", "full", "stuck", "hungry", "seal", "remake", "two_step", "talk.bye", "talk.danger",
-                "talk.rest", "rug_claim", "sunned", "give_food", "fetch"}) {
+                "talk.rest", "rug_claim", "sunned", "give_food", "fetch", "morning_gift"}) {
             keys.add(LINE + l);
         }
         for (String l : new String[]{"greet_hurt", "greet_hungry", "greet_night", "food_1", "food_2", "food_hungry", "alchemy_1", "alchemy_2",
