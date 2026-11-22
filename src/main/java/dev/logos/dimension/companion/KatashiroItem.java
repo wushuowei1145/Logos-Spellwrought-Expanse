@@ -33,6 +33,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  * <ul>
  *   <li>写着名字的（绑定）：立契时给的，召唤她的道具。右键叫她出来或收回，潜行右键让她待命或跟上；
  *   <li>空白的：已经立契的人再打倒一块杀生石的残影时得到，拿着它右键她就盖一枚契印（用掉）；可以送给别的已经立契的人。
+ *       还没立契的人右键用它，这一张就写上他的名字，她第一次从里面出来（同爪印金镑、袋装世界树；创造模式物品栏里拿的就是空白的）。
  * </ul>
  */
 public class KatashiroItem extends Item {
@@ -92,9 +93,22 @@ public class KatashiroItem extends Item {
         ItemStack stack = player.getItemInHand(hand);
         Owner o = stack.get(OWNER.get());
         if (o == null) {
-            sp.sendOverlayMessage(Component.translatable(sp.getData(Companions.BOND).pact()
-                    ? "message.logos_dimension.katashiro.blank_hint" : "message.logos_dimension.katashiro.unknown"));
-            return InteractionResult.CONSUME;
+            // 还没立契：这一张写上他的名字，她第一次从里面出来。已经立契了：空白的形代是拿去给她盖契印的
+            if (sp.getData(Companions.BOND).pact()) {
+                sp.sendOverlayMessage(Component.translatable("message.logos_dimension.katashiro.blank_hint"));
+                return InteractionResult.CONSUME;
+            }
+            Companions.grantPact(sp);
+            ItemStack mine = bound(sp);
+            if (stack.getCount() == 1) {
+                player.setItemInHand(hand, mine);
+            } else {
+                stack.shrink(1);
+                if (!sp.getInventory().add(mine)) sp.drop(mine, false);
+            }
+            Companions.summon(sp, false);
+            sp.getCooldowns().addCooldown(stack, 20);
+            return InteractionResult.SUCCESS;
         }
         if (!o.id().equals(sp.getUUID())) {
             sp.sendOverlayMessage(Component.translatable("message.logos_dimension.katashiro.not_yours", o.name()));
