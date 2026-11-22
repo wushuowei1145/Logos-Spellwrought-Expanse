@@ -14,7 +14,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * 琥珀同伴（docs/KOHAKU_COMPANION.md）：游戏里用到的动画都在她的模型里、时间点和模型的标记一致；法术强度、生命、魔力、护膜的成长；
- * 护甲不继承；长杖随爪之契换；她的载页编得过；台词、对话、面板的语言键中英文都齐；三位同伴各有自己的契。
+ * 护甲不继承；长杖随爪之契换；她的载页编得过；日常的姿势和过渡、给你吃的概率、帮你看载页怎么评、一天的事一天算；
+ * 台词、对话、面板的语言键中英文都齐；三位同伴各有自己的契。
  */
 class KohakuTest {
     private static final String TALK = "talk.logos_dimension.kohaku.", LINE = "line.logos_dimension.kohaku.";
@@ -63,7 +64,12 @@ class KohakuTest {
                 "hold_mainhand#logos_dimension:companion_staffs", "cast_staff", "cast_ward", "conjure_sweep", "blink_out", "blink_in",
                 "face_lazy", "face_bored", "face_focus", "face_smug", "face_content", "face_happy", "face_guard", "face_flustered",
                 "face_surprised", "face_sleepy", "face_sad", "face_curious", "act_cat_stretch", "act_sigh", "act_coin_flip", "act_formula",
-                "act_petted", "act_groom", "act_shake", "act_guard", "act_wave", "act_head_tilt", "pre_parallel0", "pre_parallel1", "pre_parallel2"));
+                "act_petted", "act_groom", "act_shake", "act_guard", "act_wave", "act_head_tilt", "pre_parallel0", "pre_parallel1", "pre_parallel2",
+                "pick", "give", "act_yawn", "face_rain"));
+        for (KohakuLife.Pose p : KohakuLife.Pose.values()) {
+            if (p.loop == null) continue;
+            used.addAll(List.of(p.down, p.loop, p.up));
+        }
         for (String name : used) assertTrue(anims.has(name), "模型里没有 " + name);
     }
 
@@ -87,6 +93,68 @@ class KohakuTest {
         assertEquals(KohakuMoves.HOP_AT, marker(sweep, "hop"));
         assertEquals(KohakuMoves.VANISH_AT, marker(anims.getAsJsonObject("blink_out"), "vanish"));
         assertEquals(KohakuMoves.LAND_TICKS, ticks(anims.getAsJsonObject("blink_in")));
+    }
+
+    /**
+     * 日常的姿势（第 8 版）：坐下、趴下、撑伞那一段的长度和代码等它播完的刻数一致，循环的那一段真的循环；起身那一段同理。
+     * 递东西在 give 标记那一刻交出去。
+     */
+    @Test void posesMatchTheModel() throws Exception {
+        JsonObject anims = animations();
+        for (KohakuLife.Pose p : KohakuLife.Pose.values()) {
+            if (p.loop == null) continue;
+            assertEquals(p.downTicks, ticks(anims.getAsJsonObject(p.down)), p.down);
+            assertEquals(p.upTicks, ticks(anims.getAsJsonObject(p.up)), p.up);
+            assertTrue(anims.getAsJsonObject(p.loop).get("loop").getAsBoolean(), p.loop + " 要循环");
+        }
+        JsonObject give = anims.getAsJsonObject("give");
+        assertEquals(KohakuLife.GIVE_TICKS, ticks(give));
+        assertEquals(KohakuLife.GIVE_AT, marker(give, "give"));
+    }
+
+    /** 给你吃的（第 8.3 节）：六样加起来正好一百，按概率落到对应的那一样。 */
+    @Test void foodTableMatchesTheDoc() {
+        assertArrayEquals(new int[] {30, 30, 25, 8, 5, 2}, KohakuLife.FOOD_WEIGHTS);
+        int[] count = new int[KohakuLife.FOOD_WEIGHTS.length];
+        for (int roll = 0; roll < 100; roll++) count[KohakuLife.foodIndex(roll)]++;
+        assertArrayEquals(KohakuLife.FOOD_WEIGHTS, count);
+        assertEquals(0, KohakuLife.foodIndex(29));
+        assertEquals(1, KohakuLife.foodIndex(30));
+        assertEquals(5, KohakuLife.foodIndex(99));
+    }
+
+    /** 一天的事一天算：今天塞了几次吃的，到了第二天从零数；地毯、零花钱各记各的。 */
+    @Test void daysCountByTheDay() {
+        KohakuDays d = KohakuDays.NONE.withFood(10).withFood(10);
+        assertEquals(2, d.foodsOn(10));
+        assertEquals(0, d.foodsOn(11));
+        assertEquals(1, d.withFood(11).foodsOn(11));
+        d = d.withAllowance(10).withCritique(10).withRugNap(9);
+        assertEquals(10, d.allowanceDay());
+        assertEquals(10, d.critiqueDay());
+        assertEquals(9, d.rugNapDay());
+        assertEquals(2, d.foodsOn(10), "别的记录不动吃的次数");
+    }
+
+    /**
+     * 帮你看载页（第 10 节第 6 条）：纸撑不住、你的魔力放不起、注入的不够花、有一段永远走不到（条件写死）、注入的大半用不上、
+     * 都还行（打人的另说一句）。
+     */
+    @Test void critiqueReadsThePage() {
+        String bolt = "(spell :name \"弹\" :mana %s :trigger cast (projectile (on-hit (damage target 3 arcane))))";
+        var probe = Casting.compile(String.format(bolt, 100));
+        double use = probe.profile().estimate();
+        assertTrue(use > 2 && use < 60, "一发弹大约花 " + use);
+        var fit = Casting.compile(String.format(bolt, (int) Math.ceil(use) + 1));
+        assertEquals("good_strike", KohakuTalk.verdict(fit, 1000, 1000));
+        assertEquals("unstable", KohakuTalk.verdict(fit, 0, 1000));
+        assertEquals("costly", KohakuTalk.verdict(fit, 1000, use / 2));
+        assertEquals("short", KohakuTalk.verdict(Casting.compile(String.format(bolt, 1)), 1000, 1000));
+        assertEquals("waste", KohakuTalk.verdict(Casting.compile(String.format(bolt, 400)), 1000, 1000));
+        var dead = Casting.compile("(spell :name \"死路\" :mana 60 :trigger cast (projectile (on-hit (if true (damage target 3 arcane) (damage target 1 arcane)))))");
+        assertTrue(KohakuTalk.dead(dead.body()));
+        assertFalse(KohakuTalk.dead(fit.body()));
+        assertEquals("dead", KohakuTalk.verdict(dead, 1000, 1000));
     }
 
     /** 凝辉的招式文件：出手时刻和动作的 sweep 标记一致，伤害、张角同代码里的备用数。 */
@@ -245,13 +313,15 @@ class KohakuTest {
             keys.add(LINE + "talk.greet_" + s + "_2");
         }
         for (String l : new String[]{"stay", "follow", "refuse", "full", "stuck", "hungry", "seal", "remake", "two_step", "talk.bye", "talk.danger",
-                "talk.rest"}) {
+                "talk.rest", "rug_claim", "sunned", "give_food", "fetch"}) {
             keys.add(LINE + l);
         }
         for (String l : new String[]{"greet_hurt", "greet_hungry", "greet_night", "food_1", "food_2", "food_hungry", "alchemy_1", "alchemy_2",
                 "alchemy_3", "lazy_1", "lazy_2", "city_1", "city_2", "city_3", "money_1", "money_2", "enforcers_1", "enforcers_2", "past_more",
                 "seals_none_1", "seals_none_2", "seals_1", "seals_2", "seals_full", "follow", "stay", "pvp_on", "pvp_off", "pvp_off_server",
-                "coin_have", "coin_need", "coin_given", "pouch_back"}) keys.add(LINE + "talk." + l);
+                "coin_have", "coin_need", "coin_given", "pouch_back", "allowance_given", "allowance_change", "allowance_today", "allowance_none",
+                "critique_none", "critique_blank", "critique_broken", "critique_unstable", "critique_costly", "critique_short", "critique_dead",
+                "critique_waste", "critique_recursive", "critique_good_strike", "critique_good"}) keys.add(LINE + "talk." + l);
         for (CompanionTactic t : CompanionTactic.values()) keys.add(LINE + "talk.tactic_" + t.id);
         for (String locale : new String[]{"zh_cn", "en_us"}) {
             JsonObject lang = read("/assets/logos_dimension/lang/" + locale + ".json");

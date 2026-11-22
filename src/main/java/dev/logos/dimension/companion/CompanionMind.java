@@ -55,10 +55,12 @@ public abstract class CompanionMind extends Goal {
 
     /**
      * 行为。前面这些每位都有；白梅的：KINDLE 缠火、EXECUTE 处决、SOAK 泡温泉、HIDE 躲狗（FORAGE 她还会去摘浆果）；
-     * 精灵公主的：MEND 治疗、护盾，BLESS 给主人缠上生命之力，ENSNARE 用荆棘困住强敌。
+     * 精灵公主的：MEND 治疗、护盾，BLESS 给主人缠上生命之力，ENSNARE 用荆棘困住强敌；
+     * 琥珀的：WARD 护膜、HISS 哈气、SUPPORT 支援、UTILITY 猫眼药剂、BLINK 猫步、CARRY 两个人的猫步，LOUNGE 闲着陪你（坐、趴、撑伞）、
+     * GIFT 给你吃的、FETCH 叼战利品给你。
      */
     public enum Kind { FOLLOW, STAY, ENGAGE, COVER, KINDLE, RETREAT, REST, IDLE, EXECUTE, FORAGE, SCAVENGE, SOAK, HIDE, ERRAND, TALK,
-        MEND, BLESS, ENSNARE, WARD, HISS, SUPPORT, UTILITY, BLINK, CARRY }
+        MEND, BLESS, ENSNARE, WARD, HISS, SUPPORT, UTILITY, BLINK, CARRY, LOUNGE, GIFT, FETCH }
 
     protected final CompanionEntity c;
     protected Kind current = Kind.IDLE;

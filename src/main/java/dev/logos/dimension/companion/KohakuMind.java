@@ -29,6 +29,8 @@ import org.jspecify.annotations.Nullable;
  *   <li>UTILITY 猫眼药剂：你周围暗、又没有夜视时递给你一瓶。</li>
  *   <li>攻击按处境挑页（{@link #castAt}）：强敌先封进琥珀，扎堆的放炼成阵、午睡结界、沸腾烧瓶，不然一滴就够；
  *       每一种意图都先看你给的杖上有没有这一类的页，有就用你的。魔力少时只放一滴就够。</li>
+ *   <li>日常（{@link KohakuLife}）：LOUNGE 你站着不动时凑过来陪你（下雨撑伞、在家去她的地毯、晴天晒太阳、不然在你身边坐着），
+ *       GIFT 你饿了递给你吃的，FETCH 一场打完把最有意思的掉落叼到你脚边。</li>
  * </ul>
  *
  * <p>行动策略在她身上的意思（第 7.5 节）：随机应变隔开 {@link #KEEP} 格；优先远程隔得更远；优先近战站得近一点（她还是法师，不冲上去）；
@@ -72,6 +74,13 @@ public final class KohakuMind extends CompanionMind {
     /** 两个人的猫步：你血少于几成、身边几格内有两个以上敌人。 */
     static final float CARRY_BELOW = .25f;
     static final double CARRY_NEAR = 5;
+    /**
+     * 闲着陪你的分：在家去地毯（要比「离主人远了就跟上」高）、撑伞和晒太阳、在你身边打盹（比挂机时的休息高）、在你身边坐着
+     * （比跟着站在你身边多一点，跟随正在做时还有 {@link #HYSTERESIS}）；附近有掉落要捡时先捡（{@link #LOUNGE_AFTER_LOOT}）。
+     */
+    static final double LOUNGE_RUG = .75, LOUNGE_NEAR = .5, LOUNGE_NAP = .55, LOUNGE_SIT = .45, LOUNGE_AFTER_LOOT = .3;
+    /** 给你吃的、叼战利品（叼在嘴里时更急）。 */
+    static final double GIFT_SCORE = .8, FETCH_SCORE = .5, FETCH_CARRY = .8;
     /** 测试用：哈过几次气、吓走过几次幻翼。 */
     static int hisses, phantomsScared;
 
@@ -98,10 +107,10 @@ public final class KohakuMind extends CompanionMind {
         return k == Kind.WARD || k == Kind.BLINK || k == Kind.CARRY || k == Kind.SUPPORT && foe != null;
     }
 
-    /** 撤退、法阵还在转开、正在凝辉横扫或猫步时什么都不做（动作自己走完）。 */
+    /** 撤退、法阵还在转开、正在凝辉横扫或猫步、正在起身或递东西时什么都不做（动作自己走完）。 */
     @Override
     protected boolean busy(ServerLevel level, ServerPlayer p, long now) {
-        if (!c.withdrawing() && !c.inCircle() && !c.moves.busy()) return false;
+        if (!c.withdrawing() && !c.inCircle() && !c.moves.busy() && !c.life.busy(now)) return false;
         c.getNavigation().stop();
         return true;
     }
@@ -114,6 +123,8 @@ public final class KohakuMind extends CompanionMind {
             carried = false;
         }
         scarePhantoms(level, p, now);
+        c.life.watchFight(level, p, now, foe != null);
+        c.life.rollFood(level, p, now, foe == null);
     }
 
     // ---------------------------------------------------------------- 打分
@@ -162,6 +173,19 @@ public final class KohakuMind extends CompanionMind {
                 && p.distanceTo(c) < 16 && c.available() >= KohakuMoves.CARRY_MANA && !c.moves.busy()
                 && level.getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(CARRY_NEAR), e -> e.isAlive() && threatens(e)).size() >= 2;
         scores.put(Kind.CARRY, carry ? CARRY_SCORE : 0);
+        // 日常：没在打的时候
+        KohakuLife life = c.life;
+        KohakuLife.Plan lounge = life.choose(level, p, w, now, s.calm(), s.order());
+        double loungeScore = lounge == null ? 0 : switch (lounge.spot()) {
+            case RUG -> LOUNGE_RUG;
+            case UMBRELLA, SUN -> LOUNGE_NEAR;
+            case BESIDE -> lounge.nap() ? LOUNGE_NAP : LOUNGE_SIT;
+        };
+        // 还没坐下、附近有掉落：先捡完
+        if (!life.posed() && scores.getOrDefault(Kind.SCAVENGE, 0.0) > 0) loungeScore = Math.min(loungeScore, LOUNGE_AFTER_LOOT);
+        scores.put(Kind.LOUNGE, loungeScore);
+        scores.put(Kind.GIFT, s.calm() && life.giftPending() ? GIFT_SCORE : 0);
+        scores.put(Kind.FETCH, s.calm() && life.fetching() ? life.inHand().isEmpty() ? FETCH_SCORE : FETCH_CARRY : 0);
     }
 
     /** 她当作威胁的：她能伤的、敌对生物或冲着她和主人来的。 */
@@ -311,6 +335,12 @@ public final class KohakuMind extends CompanionMind {
         return !c.magic.casting() && !c.moves.busy();
     }
 
+    /** 坐着、撑着伞时你和她说话：她不站起来，就这样说（打着盹时先醒过来）。 */
+    @Override
+    protected boolean talkBlocked() {
+        return c.life.posed() && !c.life.napping();
+    }
+
     // ---------------------------------------------------------------- 做
 
     @Override
@@ -326,6 +356,9 @@ public final class KohakuMind extends CompanionMind {
             case SUPPORT, UTILITY -> support(now);
             case BLINK -> blink(level, p, now);
             case CARRY -> carry(level, p, now);
+            case LOUNGE -> c.life.lounge(level, p, now);
+            case GIFT -> c.life.gift(p, now);
+            case FETCH -> c.life.fetch(level, p, now);
             default -> idle(p, now, true);
         }
     }
@@ -553,6 +586,10 @@ public final class KohakuMind extends CompanionMind {
     protected void switched(Kind from, Kind to, long now) {
         // 打完一仗再打下一仗时，重新按她在哪边定站位
         if (to != Kind.ENGAGE && to != Kind.WARD) sideChosen = false;
+        if (!(c.level() instanceof ServerLevel level)) return;
+        // 不陪你了就起来（来了敌人时直接站起来）；来了敌人时手里要递的先放下
+        if (from == Kind.LOUNGE) c.life.rise(level, now, foe != null);
+        if ((from == Kind.GIFT || from == Kind.FETCH) && foe != null) c.life.dropHand(level);
     }
 
     /** 转过去正对着 {@code t} 的身子中间（放弹射物前：她的视线就是术式的方向）。 */
@@ -570,7 +607,7 @@ public final class KohakuMind extends CompanionMind {
     @Override
     protected void describeOwn(StringBuilder sb) {
         long now = c.level().getGameTime();
-        sb.append(" cast=").append(c.magic.describe(now)).append(" moves=").append(c.moves.describe(now)).append(String.format(" power=%.2f mana=%.0f/%.0f store=%.0f staff=%s",
+        sb.append(" cast=").append(c.magic.describe(now)).append(" moves=").append(c.moves.describe(now)).append(" life=").append(c.life.describe()).append(String.format(" power=%.2f mana=%.0f/%.0f store=%.0f staff=%s",
                 c.spellPower(), c.mana(), c.maxMana(), c.staff.store(), c.staff.held().getItem()));
     }
 }

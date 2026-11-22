@@ -55,6 +55,8 @@ public abstract class KohakuViews extends CompanionViews {
                     .forEach(Entity::discard);
             p.setData(Companions.KOHAKU_BOND, Companions.Bond.NONE);
             p.setData(Companions.KOHAKU_POUCH, new dev.logos.dimension.companion.CompanionPouch());
+            p.setData(Companions.KOHAKU_DAYS, dev.logos.dimension.companion.KohakuDays.NONE);
+            KohakuCompanion.luckyForTest(false);
             p.getCooldowns().removeCooldown(p.getCooldowns().getCooldownGroup(PawSovereignItem.blank()));
             p.getInventory().clearContent();
             p.removeAllEffects();
@@ -355,8 +357,9 @@ public abstract class KohakuViews extends CompanionViews {
                     .step("字出完", ctx -> CompanionTalkViews.talk().skip()).ticks(6)
                     .screenshot("kohaku_talk_open")
                     .step("聊天", ctx -> CompanionTalkViews.talk().choose("chat")).ticks(6)
-                    .check("她自己的话题", ctx -> CompanionTalkViews.talk().options().equals(List.of("chat.coin", "chat.food", "chat.alchemy", "chat.lazy",
-                            "chat.city", "chat.money", "chat.enforcers", "chat.past", "chat.seals", "chat.us", "chat.rest", "back")))
+                    .check("她自己的话题", ctx -> CompanionTalkViews.talk().options().equals(List.of("chat.coin", "chat.food", "chat.alchemy",
+                            "chat.critique", "chat.lazy", "chat.city", "chat.money", "chat.allowance", "chat.enforcers", "chat.past", "chat.seals", "chat.us",
+                            "chat.rest", "back")))
                     .step("炼金是什么样的？", ctx -> CompanionTalkViews.talk().choose("chat.alchemy"))
                     .waitUntil("她回话", ctx -> CompanionTalkViews.said("alchemy_1"))
                     .step("跳到最后", ctx -> CompanionTalkViews.talk().skip()).ticks(6)
