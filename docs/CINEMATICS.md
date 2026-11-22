@@ -8,7 +8,8 @@
 | 全屏后期 | [SCREEN_EFFECTS.md](SCREEN_EFFECTS.md) | 黑白闪（冲击帧）、电影蒙版、泛光 `GlowBloom`、后期里画的特效 `PostVfx` |
 | 区域画风 | [WORLD_STYLES.md](WORLD_STYLES.md) | 门后、群系里的世界换一种画风（黑白、童话、国画），走进去时球形切换 |
 | 处决特写 | [EXECUTION_SHOTS.md](EXECUTION_SHOTS.md) | 投技、处决的两秒特写：抛起、黑白、刀光、红色重击、拍下；可交互版本；飞身刺（两人的剪影，刺中后定格，定格时换场景） |
-| 各功能自己的通道 | [EXPLOSION_MAGIC.md](EXPLOSION_MAGIC.md)、[DAWNVOW_CHARGE.md](DAWNVOW_CHARGE.md)、[RAILGUN.md](RAILGUN.md)、[SHIRAUME_BOSS.md](SHIRAUME_BOSS.md)、[ORCHESTRA.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/ORCHESTRA.md) | 爆裂魔法、曦誓蓄力、超电磁炮、白梅战、乐团描边各有一个全屏通道 |
+| 各功能自己的通道 | [EXPLOSION_MAGIC.md](EXPLOSION_MAGIC.md)、[DAWNVOW_CHARGE.md](DAWNVOW_CHARGE.md)、[RAILGUN.md](RAILGUN.md)、[SHIRAUME_BOSS.md](SHIRAUME_BOSS.md)、[ORCHESTRA.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/ORCHESTRA.md)、[QUEEN_CORE_BATTLE.md](QUEEN_CORE_BATTLE.md) | 爆裂魔法、曦誓蓄力、超电磁炮、白梅战、乐团描边、树心净化各有一个全屏通道 |
+| 世界球体着色 | [QUEEN_CORE_BATTLE.md](QUEEN_CORE_BATTLE.md)「画面」 | 一次画多个世界坐标的球：染腐、净化、显露、搏动波；女王战和树心净化结局在用，别的功能也能交球 |
 
 ## 一、先选对工具
 
@@ -23,11 +24,14 @@
 | 某块区域的世界换画风 | 服务端 `StyleRealms.add(level, realm)` | 第二镜头、渲染到贴图再贴到门上 |
 | 投技、处决特写 | `ExecutionShots.play`；玩家逐刀点击的用 `InteractiveExecutions.start` | 自己拼运镜加闪 |
 | 黑白里刺中、定格的那一下换场景，再接彩色过场 | `ExecutionShot.thrust` 加出手的人：定格的那几刻贴存下的一帧、不读深度，在里面传送；彩色运镜一到黑白就结束 | 剪影还在读深度时传送（地形扫进盒子，远处的实体插值滑过方块） |
+| 角色说一句话（战斗里的提醒、喊话） | 服务端 `CompanionLines.speak(speaker, 名字键, 颜色, 台词键, 刻数, 参数…)`，画面下方带名字的字幕，过场里也看得见 | 动作栏、聊天栏、血条下面写状态 |
 | 让发光的特效泛光 | `GlowBloom` | 按亮度挑像素来泛光（会把天空、雪地一起糊掉） |
 | 画面被调暗、调色后仍然亮着的特效；雾和光影包外也要看得见 | `PostVfx.add` / `PostVfx.blend` | 在世界里画了再想办法提亮 |
 | 一种新的全屏效果 | 照第四节加一个通道 | 占原版 `GameRenderer.setPostEffect` 的槽 |
 
 原版只有一个后期槽：附身苦力怕的视角就在用它，参数也只在加载时读一次。这里所有效果都不碰它。
+
+腐化女王处决腐败之心的一刀是个例外，没走 `ExecutionShots`：目标是悬吊的方块模型，抛不起来、也没有跟着身体转的盒子。它由一次 `CameraShots.play`（遮幅、硬切进去）、一次 `ScreenEffects.flash` 和世界坐标里画的刀光与汁液（`CorruptionFx`）拼成，一刀只闪一次，见 [QUEEN_CORE_BATTLE.md](QUEEN_CORE_BATTLE.md)「净化与降下」。
 
 ## 二、共同的结构
 
@@ -49,8 +53,9 @@
 6. `PartOutline`：乐团选中声部的描边
 7. `ShiraumeScreen`：白梅战的色散和红光
 8. `WorldStyleRenderer`：区域画风
-9. `ExecutionRenderer`：处决特写，整个画面换成平涂的颜色；飞身刺定格时直接贴存下的那一帧
-10. `ScreenEffectRenderer`：黑白闪和电影蒙版，最后画
+9. `WorldTintScreen`：世界球体着色，一次最多 8 个球（女王战的净化圈、搏动波、腐败漫开，树心净化结局）；有球时才取 `PostVfx` 深度
+10. `ExecutionRenderer`：处决特写，整个画面换成平涂的颜色；飞身刺定格时直接贴存下的那一帧
+11. `ScreenEffectRenderer`：黑白闪和电影蒙版，最后画
 
 新通道按「要处理谁的结果」决定放哪：
 
@@ -147,6 +152,17 @@
 
 - 效果没开时，通道在复制任何东西之前就返回。
 - 量 GPU 耗时要在通道前后 `glFinish`；只看帧间隔，量到的是 CPU 提交时间。
+
+### 世界球体着色：交球就行
+
+想在世界里某个球形范围染一层颜色（染腐、净化圈、显露、一道波），不用新开通道：在 `WorldTintScreen.collect` 里交一个 `Sphere`（中心、半径、模式、强度、宽度）。模式：
+
+- `TAINT`：球内压暗、染成腐败的暗红，边缘带世界噪声。
+- `PURIFY`：球内略提亮偏暖绿，边缘一圈淡绿光。
+- `REVEAL`：球外染腐（到 `width` 为止）、球内保持原样，边缘一圈净化光（`rim` 是光的强度）。
+- `PULSE`：半径处一圈很淡的去饱和波，`width` 是波的厚度。
+
+一帧最多 8 个，按交的顺序画；交不上的丢掉。噪声都按世界坐标取（`EyeWrapped` 折返到 4096 以内），遵守「不要贴在屏幕上的纹理」。只读颜色和 `PostVfx` 的不透明深度，天空不染。要不要留深度由 `WorldTintScreen.wanted()` 在世界开始画之前决定，新加的来源也要在那里报一声。
 
 ## 四、加一个新的全屏通道
 

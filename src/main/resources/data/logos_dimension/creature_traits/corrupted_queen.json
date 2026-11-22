@@ -1,0 +1,18 @@
+{
+  "attributes": {
+    "logos:spell_resistance": 0.0,
+    "logos:fire_spell_resistance": 0.5,
+    "logos:arcane_spell_resistance": 0.5,
+    "logos:physical_spell_resistance": 0.85,
+    "logos:frost_spell_resistance": 0.85,
+    "logos:lightning_spell_resistance": 0.85,
+    "logos:life_spell_resistance": 0.0,
+    "logos:life_spell_vulnerability": 0.3
+  },
+  "damage": [
+    { "element": "arcane", "unless_type": "logos_dimension:foxfire", "multiply": 0.3 },
+    { "spell": false, "tag": "minecraft:is_fire", "multiply": 0.5 },
+    { "spell": false, "tag": "minecraft:witch_resistant_to", "unless_type": "logos_dimension:foxfire", "multiply": 0.15 }
+  ],
+  "blight_ward": { "radius": 64, "per_core": 0.03, "max": 0.6 }
+}

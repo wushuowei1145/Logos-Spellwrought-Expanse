@@ -1,0 +1,41 @@
+{
+  "start": "princess_idle",
+  "moves": {
+    "princess_idle": {
+      "clip": "idle",
+      "length": 4.8,
+      "playback": "loop"
+    },
+    "princess_leap": {
+      "clip": "fall",
+      "length": 0.5,
+      "playback": "loop"
+    },
+    "princess_land": {
+      "clip": "land",
+      "length": 1.5,
+      "next": "princess_channel"
+    },
+    "princess_channel": {
+      "clip": "channel",
+      "length": 2.4,
+      "playback": "loop"
+    },
+    "princess_pulse": {
+      "clip": "cast_thorns",
+      "length": 1.3,
+      "contact": [0.5],
+      "next": "princess_channel"
+    },
+    "princess_downed": {
+      "clip": "death",
+      "length": 30,
+      "next": "princess_downed"
+    },
+    "princess_rise": {
+      "clip": "rise",
+      "length": 1.2,
+      "next": "princess_channel"
+    }
+  }
+}
