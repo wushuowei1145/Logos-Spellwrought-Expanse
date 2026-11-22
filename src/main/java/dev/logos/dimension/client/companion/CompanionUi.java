@@ -127,22 +127,6 @@ public final class CompanionUi {
         discs(g, color, c);
     }
 
-    /** 三叶：三片圆叶绕着正中一点（精灵公主的纹，先用这个，以后随她的模型另画）。 */
-    public static void trefoil(GuiGraphicsExtractor g, float cx, float cy, float r, int color) {
-        float leaf = r * .42f, dist = r * .52f;
-        float[] c = new float[4 * 3];
-        for (int i = 0; i < 3; i++) {
-            double a = Math.toRadians(-90 + 120 * i);
-            c[i * 3] = cx + (float) Math.cos(a) * dist;
-            c[i * 3 + 1] = cy + (float) Math.sin(a) * dist;
-            c[i * 3 + 2] = leaf;
-        }
-        c[9] = cx;
-        c[10] = cy;
-        c[11] = r * .2f;
-        discs(g, color, c);
-    }
-
     /** 柔和的圆形光晕：一圈圈叠上去，越往里越亮。 */
     public static void glow(GuiGraphicsExtractor g, float cx, float cy, float r, int color, int steps) {
         for (int i = 0; i < steps; i++) disc(g, cx, cy, r * (1 - i / (float) steps), color);

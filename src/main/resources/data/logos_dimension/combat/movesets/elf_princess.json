@@ -3,29 +3,28 @@
   "moves": {
     "princess_idle": {
       "clip": "idle",
-      "length": 4,
+      "length": 4.8,
       "playback": "loop"
     },
     "princess_leap": {
-      "clip": "jump",
-      "length": 0.75,
+      "clip": "fall",
+      "length": 0.5,
       "playback": "loop"
     },
     "princess_land": {
-      "clip": "princess_land",
+      "clip": "land",
       "length": 1.5,
       "next": "princess_channel"
     },
     "princess_channel": {
-      "clip": "heal_ring",
-      "length": 1.3,
-      "playback": "loop",
-      "attack_speed_base": 1.6
+      "clip": "channel",
+      "length": 2.4,
+      "playback": "loop"
     },
     "princess_pulse": {
-      "clip": "heal_ring",
+      "clip": "cast_thorns",
       "length": 1.3,
-      "contact": [0.55],
+      "contact": [0.5],
       "next": "princess_channel"
     },
     "princess_downed": {
@@ -34,8 +33,8 @@
       "next": "princess_downed"
     },
     "princess_rise": {
-      "clip": "heal_touch",
-      "length": 0.8,
+      "clip": "rise",
+      "length": 1.2,
       "next": "princess_channel"
     }
   }

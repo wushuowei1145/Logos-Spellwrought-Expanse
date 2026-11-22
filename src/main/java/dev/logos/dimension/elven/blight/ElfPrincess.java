@@ -11,20 +11,18 @@ import dev.logos.dimension.companion.CompanionLines;
 import dev.logos.dimension.companion.CompanionSheet;
 import dev.logos.dimension.companion.CompanionTactic;
 import dev.logos.dimension.companion.CompanionTalk;
+import dev.logos.dimension.companion.ElfPrincessCompanion;
 import dev.logos.dimension.companion.TalkMenu;
 import dev.logos.dimension.corruption.CorruptionNetworks;
 import dev.logos.dimension.corruption.mob.CorruptionMobs;
 import dev.logos.dimension.item.NaturesForceItem;
 import dev.logos.dimension.npc.NpcAnimated;
 import dev.logos.dimension.npc.NpcAnimations;
-import dev.logos.dimension.npc.NpcParts;
-import dev.logos.dimension.npc.NpcPartsHolder;
 import dev.logos.lang.Element;
 import dev.logos.runtime.Vfx;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
@@ -67,25 +65,23 @@ import org.jspecify.annotations.Nullable;
  * （进度在女王身上，见 {@link HeartPurification}）。
  * <li>战斗外打不死她；战斗里玩家也伤不到她。生命掉光时倒地，不会死：有人在身边按住使用键 3 秒扶起，没人扶 20 秒后自己起来。
  * <li>战斗里的提示都由她说出来（{@link #say}，画面下方的字幕），不往屏幕上写状态。
- * <li>外观先用固定的一套森林精灵零件（模型以后另做）；动作走招式文件 {@code combat/movesets/elf_princess.json}。
+ * <li>就是同伴里那位精灵公主（{@link ElfPrincessCompanion}）：同一个模型、名字、字幕颜色和面板样式；落下、落地、引导、扶起是她模型里
+ * 为这一战加的动画，动作走招式文件 {@code combat/movesets/elf_princess.json}，表情按她在做什么换（{@link #npcMiscAnimation}）。
+ * <li>她在这里按剧本行动、不归谁所有，所以是自己的实体；对话菜单另用一个 ID（{@link #TALK}），同伴的菜单只能登记一份。
  * </ul>
- * 打赢后的同伴版是另一种实体（第 5 步）。
+ * 打赢后她跟你走、成为同伴是第 5 步。
  */
-public class ElfPrincess extends PathfinderMob implements NpcAnimated, NpcPartsHolder, MoveRunner.Actor, CompanionTalk.Talker {
-    public static final String TALK = "elf_princess";
+public class ElfPrincess extends PathfinderMob implements NpcAnimated, MoveRunner.Actor, CompanionTalk.Talker {
+    /** 这一战里的对话菜单（语言键 {@code talk.logos_dimension.elf_princess_blight.*}）；台词、字幕上的名字和颜色仍按同伴的她。 */
+    public static final String TALK = "elf_princess_blight";
+    private static final String ME = ElfPrincessCompanion.ID;
     private static final Identifier MOVESET = LogosDimension.id("elf_princess");
-    private static final Identifier ASSET = LogosDimension.id("forest_elf");
     public static final float MAX_HEALTH = 120;
     /** 扶起要按住的刻数、没人扶自己起来的刻数、防御脉冲的冷却。 */
     public static final int REVIVE_TICKS = 60, SELF_RISE_TICKS = 400, PULSE_COOLDOWN = 200;
     /** 从祭坛上方多高落下、落多少刻、落地后蹲着再站起来多少刻（落地动作 {@code princess_land}）。 */
     public static final double DROP_HEIGHT = 7;
     public static final int FALL_TICKS = 12, LAND_TICKS = 30, LEAP_TICKS = FALL_TICKS + LAND_TICKS;
-    /** 字幕里她名字的颜色（同对话界面的嫩绿）。 */
-    public static final int NAME_COLOR = 0xB8E6A0;
-    /** 公主暂用的森林精灵外观（模型做好后替换）。 */
-    private static final Map<String, String> LOOK = Map.of("hair", "hair_priestess_braids", "headwear", "headwear_twig_crown", "ears", "ear_long",
-            "eyes", "eyes_droopy", "mouth", "mouth_smile", "outfit", "outfit_floral_gown");
 
     /** 在门口等、先进大厅、在大厅入口等、跃上祭坛、在祭坛上净化、倒地、打完了。 */
     public enum Role { GATE, AHEAD, WAITING, LEAP, CHANNEL, DOWNED, AFTER }
@@ -235,9 +231,9 @@ public class ElfPrincess extends PathfinderMob implements NpcAnimated, NpcPartsH
         play("princess_leap");
     }
 
-    /** 她说一句（画面下方的字幕，48 格内的玩家看得到）：{@code line.logos_dimension.elf_princess.<id>}。 */
+    /** 她说一句（画面下方的字幕，48 格内的玩家看得到）：{@code line.logos_dimension.elf_princess.<id>}，名字和颜色同同伴的她。 */
     public void say(String id, Object... args) {
-        CompanionLines.speak(this, key("name"), NAME_COLOR, line(id), 80, args);
+        CompanionLines.speak(this, CompanionLines.name(ME), CompanionLines.STYLE_COLOR, line(id), 80, args);
     }
 
     /** 同上，但这一场里只说一次。返回这次说了没有。 */
@@ -249,10 +245,10 @@ public class ElfPrincess extends PathfinderMob implements NpcAnimated, NpcPartsH
 
     /** 同上，但 {@code gap} 刻内不重复。 */
     public boolean sayEvery(String id, int gap, Object... args) {
-        return CompanionLines.speakEvery(this, key("name"), NAME_COLOR, line(id), 80, gap, args);
+        return CompanionLines.speakEvery(this, CompanionLines.name(ME), CompanionLines.STYLE_COLOR, line(id), 80, gap, args);
     }
 
-    private static String line(String id) { return "line.logos_dimension." + TALK + "." + id; }
+    private static String line(String id) { return "line.logos_dimension." + ME + "." + id; }
 
     /** 战斗打完：收起光束，站在原地（结局的蹲看、对话在第 5 步）。 */
     public void finish(ServerLevel world) {
@@ -564,9 +560,20 @@ public class ElfPrincess extends PathfinderMob implements NpcAnimated, NpcPartsH
 
     // ---------------------------------------------------------------- 外观与动画
 
-    @Override public NpcParts.Race npcRace() { return NpcParts.FOREST_ELF; }
-    @Override public Map<String, String> npcAppearance() { return NpcParts.FOREST_ELF.sanitize(LOOK); }
-    @Override public Identifier npcAnimationAsset() { return ASSET; }
+    @Override public Identifier npcAnimationAsset() { return ElfPrincessCompanion.ASSET; }
+
+    /** 表情（她模型里的 face_*，走 misc，和身体的动作叠着播）：等着时安心，落下来和净化时下定决心，倒下时担心，打完了难过。 */
+    @Override public String npcMiscAnimation() {
+        return switch (role()) {
+            case GATE, AHEAD, WAITING -> "face_content";
+            case LEAP, CHANNEL -> "face_determined";
+            case DOWNED -> "face_worried";
+            case AFTER -> "face_sad";
+        };
+    }
+
+    /** 引导时两手朝前伸着（动画里是水平的），渲染器把视线的俯仰叠上去，掌心就对着腐败之心。 */
+    @Override public boolean npcAiming() { return channeling(); }
 
     @Override public @Nullable CombatMove npcCombatMove() {
         String current = entityData.get(MOVE);

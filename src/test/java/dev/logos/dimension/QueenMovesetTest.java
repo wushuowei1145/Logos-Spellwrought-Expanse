@@ -29,6 +29,21 @@ class QueenMovesetTest {
             assertEquals(move.length(), animation.get("animation_length").getAsDouble(), move.name());
         }
     }
+    /** 战斗里的公主用同伴精灵公主的模型：招式文件里的动画都在她的动画文件里，防御脉冲出手的那刻对得上荆棘的 root 标记。 */
+    @Test void princessMovesPlayHerOwnClips() throws IOException {
+        var clips = resource("/assets/logos_dimension/geckolib/animations/entity/elf_princess_companion.animation.json").getAsJsonObject("animations");
+        var set = Moveset.parse(resource("/data/logos_dimension/combat/movesets/elf_princess.json"));
+        for (var move : set.moves().values()) {
+            var animation = clips.getAsJsonObject(move.clip());
+            assertNotNull(animation, move.name() + " 的动画 " + move.clip() + " 不在她的动画文件里");
+            if (move.playback() == Moveset.Playback.LOOP) assertEquals(move.length(), animation.get("animation_length").getAsDouble(), move.name());
+            if (move.hasContact()) {
+                var markers = animation.getAsJsonObject("timeline").entrySet().stream().filter(e -> e.getValue().getAsString().equals("root"))
+                        .map(e -> Double.parseDouble(e.getKey())).sorted().toList();
+                assertEquals(move.contacts(), markers, move.name());
+            }
+        }
+    }
     @Test void runnerOwnsContactAndCompletion() throws IOException {
         var actor = new Actor(); var r = new MoveRunner(body(), actor, 0);
         r.force("queen_reap", 100);

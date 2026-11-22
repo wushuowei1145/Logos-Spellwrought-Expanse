@@ -36,8 +36,8 @@ public class QueenHeartRenderer implements BlockEntityRenderer<QueenHeart, Queen
         e.registerBlockEntityRenderer(ElvenBlight.NODE_ENTITY.get(), c -> new CorruptionCoreRenderer(c, LogosDimension.id("textures/entity/blight_node_palette.png")));
         e.registerEntityRenderer(ElvenBlight.QUEEN.get(), dev.logos.dimension.client.QueenRenderer::new);
         e.registerEntityRenderer(ElvenBlight.TETHER.get(), QueenTetherRenderer::new);
-        // 公主的模型以后另做；现在用森林精灵的渲染器和动画（外观由实体给的零件决定）。
-        e.registerEntityRenderer(ElvenBlight.PRINCESS.get(), ctx -> new dev.logos.dimension.client.NpcRenderer<>(ctx, "forest_elf"));
+        // 公主就是同伴里的那位：同一个模型和动画。
+        e.registerEntityRenderer(ElvenBlight.PRINCESS.get(), FightPrincessRenderer::new);
     }
     private static void meshes() {
         if (shell != null) return;
