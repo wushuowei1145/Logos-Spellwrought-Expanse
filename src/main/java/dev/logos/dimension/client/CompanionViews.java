@@ -7,6 +7,7 @@ import dev.logos.dimension.DimensionTravel;
 import dev.logos.dimension.cloudsea.CloudseaBlocks;
 import dev.logos.dimension.companion.Companions;
 import dev.logos.dimension.companion.Katashiro;
+import dev.logos.dimension.companion.KatashiroItem;
 import dev.logos.dimension.companion.OwnerWatch;
 import dev.logos.dimension.companion.ShiraumeCompanion;
 import dev.logos.dimension.foxfire.FoxfireFlame;
@@ -18,6 +19,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -33,7 +35,7 @@ import net.minecraft.world.phys.Vec3;
 /**
  * 实际客户端检查白梅同伴（docs/SHIRAUME_COMPANION.md 第 7 节）。白瓷台上，镜头就是玩家的视线：
  * <ul>
- * <li>{@code companion_summon}：召唤（弹出来、行礼），走远后她跑过来跟上；
+ * <li>{@code companion_summon}：没立契时用创造模式物品栏里的空白形代召唤（立契、写上名字、弹出来、行礼），走远后她跑过来跟上；
  * <li>{@code companion_fight}：两只尸壳冲着主人来，她放狐火弹；主人打强敌时她给主人的手缠上狐火；
  * <li>{@code companion_sleep}：主人睡下，她走到床边蜷起来睡；主人挂机时她挨着主人打盹；
  * <li>{@code companion_death}：受到致命一击，跪下、侧倒，消散前放下形代，形代被幽蓝狐火烧掉，魂火飞回主人身边。
@@ -141,9 +143,25 @@ public abstract class CompanionViews implements UIScenario {
             stage(s, GameType.CREATIVE, 40)
                     .server("站好", ctx -> aim(ctx.player(), EYE, LOOK)).ticks(10)
                     .step("对准", ctx -> aimClient(LOOK))
-                    .server("召唤", ctx -> {
-                        summonAt(ctx.player(), SPOT);
+                    // 创造模式物品栏里拿的是空白形代：还没立契时右键用它，就写上名字、立契，她第一次出来
+                    .server("没立契，右键用一张空白形代", ctx -> {
+                        ServerPlayer p = ctx.player();
+                        p.getInventory().clearContent();
+                        p.getCooldowns().removeCooldown(p.getCooldowns().getCooldownGroup(KatashiroItem.blank()));
+                        p.setItemInHand(InteractionHand.MAIN_HAND, KatashiroItem.blank());
+                        KatashiroItem.ITEM.get().use(p.level(), p, InteractionHand.MAIN_HAND);
+                        ShiraumeCompanion c = Companions.out(p);
+                        if (c != null) {
+                            // 挪到台子正中，面朝主人（主人在南边）
+                            c.snapTo(SPOT.x, SPOT.y, SPOT.z, 180, 0);
+                            c.setYHeadRot(180);
+                            c.setYBodyRot(180);
+                        }
                         summonedAt = ctx.server().overworld().getGameTime();
+                    })
+                    .checkServer("立了契，形代写上了主人的名字，她出来了", ctx -> {
+                        ServerPlayer p = ctx.player();
+                        return p.getData(Companions.BOND).pact() && KatashiroItem.boundTo(p.getMainHandItem(), p) && Companions.out(p) != null;
                     })
                     .waitUntil("她同步到客户端", ctx -> !clientCompanions().isEmpty())
                     .check("入场时播的是 summon", ctx -> "summon".equals(clientCompanions().get(0).npcMiscAnimation()))
