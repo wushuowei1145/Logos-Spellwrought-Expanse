@@ -79,6 +79,8 @@ public final class KohakuMind extends CompanionMind {
      * （比跟着站在你身边多一点，跟随正在做时还有 {@link #HYSTERESIS}）；附近有掉落要捡时先捡（{@link #LOUNGE_AFTER_LOOT}）。
      */
     static final double LOUNGE_RUG = .75, LOUNGE_NEAR = .5, LOUNGE_NAP = .55, LOUNGE_SIT = .45, LOUNGE_AFTER_LOOT = .3;
+    /** 夜里跟你睡、赖床（比通用的「主人睡了就休息」高）；你挂机时去床上打盹（比在你身边打盹高一点）。 */
+    static final double LOUNGE_NIGHT = 1.05, LOUNGE_BED = .6;
     /** 给你吃的、叼战利品（叼在嘴里时更急）。 */
     static final double GIFT_SCORE = .8, FETCH_SCORE = .5, FETCH_CARRY = .8;
     /** 测试用：哈过几次气、吓走过几次幻翼。 */
@@ -177,6 +179,8 @@ public final class KohakuMind extends CompanionMind {
         KohakuLife life = c.life;
         KohakuLife.Plan lounge = life.choose(level, p, w, now, s.calm(), s.order());
         double loungeScore = lounge == null ? 0 : switch (lounge.spot()) {
+            case NIGHT -> LOUNGE_NIGHT;
+            case BED -> LOUNGE_BED;
             case RUG -> LOUNGE_RUG;
             case UMBRELLA, SUN -> LOUNGE_NEAR;
             case BESIDE -> lounge.nap() ? LOUNGE_NAP : LOUNGE_SIT;

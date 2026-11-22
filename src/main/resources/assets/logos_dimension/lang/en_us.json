@@ -1853,5 +1853,10 @@
   "line.logos_dimension.kohaku.talk.allowance_given": "Pocket money? ...Mm, I'll take it. Don't expect a thank-you.",
   "line.logos_dimension.kohaku.talk.allowance_change": "A whole sovereign? Too much. ...Nineteen shillings back. I only want one.",
   "line.logos_dimension.kohaku.talk.allowance_today": "I've already had today's. Greedy employers aren't popular.",
-  "line.logos_dimension.kohaku.talk.allowance_none": "...You don't have a single cat coin on you. Pocket money needs money first."
+  "line.logos_dimension.kohaku.talk.allowance_none": "...You don't have a single cat coin on you. Pocket money needs money first.",
+  "effect.logos_dimension.kohaku_company": "Kohaku's Company",
+  "talk.logos_dimension.kohaku.skill.company.name": "Kohaku's Company",
+  "talk.logos_dimension.kohaku.skill.company.icon": "K",
+  "talk.logos_dimension.kohaku.skill.company.desc": "For %s minutes after waking up beside her: mana regeneration +%s%%, channelling %s%% faster. The deeper the bond, the faster it comes back.",
+  "line.logos_dimension.kohaku.morning_gift": "...Morning. This is for you. I just happened to have it."
 }
