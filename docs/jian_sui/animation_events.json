@@ -1,0 +1,65 @@
+{
+  "attack_1": {
+    "length": 1.5,
+    "timeline": {
+      "0.1": [
+        "input_open"
+      ],
+      "0.6667": [
+        "trail_start"
+      ],
+      "0.7667": [
+        "contact"
+      ],
+      "0.9": [
+        "trail_end"
+      ],
+      "1.0": [
+        "cancel"
+      ]
+    }
+  },
+  "attack_2": {
+    "length": 1.8,
+    "timeline": {
+      "0.1": [
+        "input_open"
+      ],
+      "0.6": [
+        "trail_start"
+      ],
+      "0.7": [
+        "contact"
+      ],
+      "0.9": [
+        "contact"
+      ],
+      "1.0333": [
+        "trail_end"
+      ],
+      "1.1333": [
+        "cancel"
+      ]
+    }
+  },
+  "attack_3": {
+    "length": 1.8,
+    "timeline": {
+      "0.1": [
+        "input_open"
+      ],
+      "0.6": [
+        "trail_start"
+      ],
+      "0.7": [
+        "contact"
+      ],
+      "0.8333": [
+        "trail_end"
+      ],
+      "0.9333": [
+        "cancel"
+      ]
+    }
+  }
+}
