@@ -107,13 +107,16 @@ for ti,t in enumerate([-.8,-.4,0,.4,.8]):
      else:
       # 原版平原之所以看起来平，是因为它们被分给了"侵蚀程度最高（地形最平）"的地方；
       # 这里照做：草原群系只占侵蚀 0.65 的格子，缓坡给牧草坡地，陡坡给旷野丘陵。
-      if ei==2:bid=['blue_bell_steps','silk_folds','rose_dunes'][(ti+wi)%3]
+      # 平坦内陆按温度连片分区，不再按山脊噪声轮换成碎条。
+      if ei==2:bid='blue_bell_steps' if ti<=1 else 'rose_dunes' if ti==4 else 'silk_folds'
       elif ei==1:bid='amber_whirls'
       else:bid='dawn_ribbons'
      if ci==2 and ei==2 and hi==4 and ti>1:bid='dream_basins'
      if ci==2 and ei==0 and wi==2:bid='echo_folds' if ti<2 else 'moon_folds'
      if ci==2 and ei==2 and wi in [0,4] and hi==3:bid='star_ribbons'
      climate.append(point('cloudsea_'+bid,t,h,c,e,w))
+# 温带、少雨内陆的平坦带合成连片长风平原，不再要求极端干燥的单个气候点。
+climate.append(point('cloudsea_silk_folds',[-.35,.55],[-.6,.2],[0,1.0],[.15,1.2],[-1.2,1.2]))
 climate.append(point('cloudsea_root_caves',[-1.2,1.2],[-1.2,1.2],[-1.2,1.2],[-1.2,1.2],[-1.2,1.2],[.35,1.5]))
 cloud={'type':'logos_dimension:cloudsea','generator':{'type':'minecraft:noise','settings':'logos_dimension:journey','biome_source':{'type':'minecraft:multi_noise','biomes':climate}}}
 write(D/'dimension/cloudsea.json',cloud)
@@ -209,7 +212,7 @@ for bid,(count,pairs) in FOREST_FLOORS.items():
 # 平原群系的地表组合：与林地分开维护，一个一个群系做，避免一次改完分不清哪个
 # 群系的地表出了问题。长风草原以"风里的长草"为主：长草压过其它，野花只作点缀。
 PLAINS_FLOORS={
- 'cloudsea_silk_folds':(420,[('minecraft:tall_grass',48),('minecraft:short_grass',12),('minecraft:short_grass',14),('logos_dimension:journey_meadow_grass_young',8),('minecraft:oxeye_daisy',7),('logos_dimension:journey_fireweed',6),('logos_dimension:journey_silver_anemone',5),('logos_dimension:journey_heather',4)]),
+ 'cloudsea_silk_folds':(800,[('minecraft:tall_grass',64),('minecraft:short_grass',16),('logos_dimension:journey_meadow_grass_young',4),('minecraft:oxeye_daisy',6),('logos_dimension:journey_fireweed',4),('logos_dimension:journey_silver_anemone',4),('logos_dimension:journey_heather',2)]),
  # 野花草甸：野花压过草；原矮草位置改用原版短草，保留原有权重。
  'cloudsea_rose_dunes':(460,[('logos_dimension:journey_bluebell',18),('logos_dimension:journey_silver_anemone',16),('minecraft:oxeye_daisy',14),('minecraft:short_grass',20),('logos_dimension:journey_fireweed',8),('logos_dimension:journey_stardew',6),('logos_dimension:journey_heather',6),('minecraft:short_grass',8)]),
  # 旷野丘陵：起伏草坡，草更短更碎，夹着砾石与卷叶蕨，野花很少。
@@ -413,3 +416,6 @@ runpy.run_path(str(ROOT/'tools/tall_trees.py'))
 
 runpy.run_path(str(ROOT/'tools/settlements.py'))
 runpy.run_path(str(ROOT/'tools/elven_forest.py'),run_name='__main__')
+
+# 最后应用连片长风平原的原版密度函数。
+runpy.run_path(str(ROOT/'tools/changfeng_plains.py'),run_name='__main__')
