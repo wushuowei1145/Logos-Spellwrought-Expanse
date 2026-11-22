@@ -60,7 +60,7 @@ class KohakuTest {
     @Test void everyClipTheGameUsesIsInTheModel() throws Exception {
         JsonObject anims = animations();
         List<String> used = new ArrayList<>(List.of("idle", "walk", "run", "sleep", "summon", "death", "eat", "refuse",
-                "hold_mainhand#logos_dimension:companion_staffs", "cast_staff", "cast_ward",
+                "hold_mainhand#logos_dimension:companion_staffs", "cast_staff", "cast_ward", "conjure_sweep", "blink_out", "blink_in",
                 "face_lazy", "face_bored", "face_focus", "face_smug", "face_content", "face_happy", "face_guard", "face_flustered",
                 "face_surprised", "face_sleepy", "face_sad", "face_curious", "act_cat_stretch", "act_sigh", "act_coin_flip", "act_formula",
                 "act_petted", "act_groom", "act_shake", "act_guard", "act_wave", "act_head_tilt", "pre_parallel0", "pre_parallel1", "pre_parallel2"));
@@ -79,6 +79,46 @@ class KohakuTest {
         assertEquals(KohakuCompanion.SUMMON_LAND, marker(summon, "land"));
         assertEquals(KohakuCompanion.DEATH_TICKS, ticks(anims.getAsJsonObject("death")));
         assertEquals(CompanionEntity.EAT_TICKS, ticks(anims.getAsJsonObject("eat")));
+        // 凝辉、猫步（第 7 版）
+        JsonObject sweep = anims.getAsJsonObject("conjure_sweep");
+        assertEquals(KohakuMoves.SWEEP_TICKS, ticks(sweep));
+        assertEquals(KohakuMoves.SWEEP_CONTACT, marker(sweep, "sweep"));
+        assertEquals(KohakuMoves.SHATTER_AT, marker(sweep, "shatter"));
+        assertEquals(KohakuMoves.HOP_AT, marker(sweep, "hop"));
+        assertEquals(KohakuMoves.VANISH_AT, marker(anims.getAsJsonObject("blink_out"), "vanish"));
+        assertEquals(KohakuMoves.LAND_TICKS, ticks(anims.getAsJsonObject("blink_in")));
+    }
+
+    /** 凝辉的招式文件：出手时刻和动作的 sweep 标记一致，伤害、张角同代码里的备用数。 */
+    @Test void conjureMovesetMatchesTheClip() throws Exception {
+        JsonObject move = read("/data/logos_dimension/combat/movesets/kohaku_companion.json").getAsJsonObject("moves").getAsJsonObject(KohakuMoves.SWEEP);
+        assertEquals(KohakuMoves.SWEEP_CONTACT, Math.round(move.get("contact").getAsDouble() * 20));
+        assertEquals(KohakuMoves.SWEEP_TICKS, Math.round(move.get("length").getAsDouble() * 20));
+        assertEquals(KohakuMoves.SWEEP_DAMAGE, move.get("damage").getAsDouble(), 1e-9);
+        // 招式文件要能照常解析（cone 最多 180°，这一斩的 220° 写在代码里）
+        assertNotNull(dev.logos.dimension.combat.Moveset.parse(read("/data/logos_dimension/combat/movesets/kohaku_companion.json")).move(KohakuMoves.SWEEP));
+    }
+
+    /** 凝辉的网格：切片合并以后一百来块（美术稿 210 块），贴图坐标都在贴图里，原点在剑柄上。 */
+    @Test void vesperglassMeshIsSlimAndInBounds() throws Exception {
+        JsonObject mesh = read("/assets/logos_dimension/combat/weapons/vesperglass_greatsword.json");
+        int w = mesh.getAsJsonArray("texture_size").get(0).getAsInt(), h = mesh.getAsJsonArray("texture_size").get(1).getAsInt();
+        var cubes = mesh.getAsJsonArray("cubes");
+        assertTrue(cubes.size() <= 120, "还有 " + cubes.size() + " 块");
+        double minY = 1e9, maxY = -1e9;
+        for (var e : cubes) {
+            JsonObject cube = e.getAsJsonObject();
+            minY = Math.min(minY, cube.getAsJsonArray("start").get(1).getAsDouble());
+            maxY = Math.max(maxY, cube.getAsJsonArray("end").get(1).getAsDouble());
+            for (var f : cube.getAsJsonObject("uv").entrySet()) {
+                var uv = f.getValue().getAsJsonArray();
+                for (int i = 0; i < 4; i++) {
+                    double v = uv.get(i).getAsDouble();
+                    assertTrue(v >= -1e-6 && v <= (i % 2 == 0 ? w : h) + 1e-6, cube.get("name").getAsString() + " " + f.getKey());
+                }
+            }
+        }
+        assertTrue(minY < 0 && maxY > 20, "原点在剑柄上，剑尖朝 +Y");
     }
 
     /**
@@ -152,14 +192,12 @@ class KohakuTest {
         }
     }
 
-    /** 八种意图里她自己会的（第九印的位移和猫步一起做）：每枚爪之契一页，第一到第八印都有。 */
+    /** 八种意图她都有自己的页（维护者定的）；本来就会的之外，第一到第九印每枚都有一页新的。 */
     @Test void herPagesCoverTheIntentsAndSeals() {
         java.util.Set<dev.logos.lang.Intent> intents = java.util.EnumSet.noneOf(dev.logos.lang.Intent.class);
         for (KohakuSpells s : KohakuSpells.ALL) intents.add(s.intent());
-        for (var i : dev.logos.lang.Intent.values()) {
-            if (i != dev.logos.lang.Intent.MOVE) assertTrue(intents.contains(i), "没有 " + i + " 的页");
-        }
-        for (int seal = 0; seal <= 8; seal++) {
+        for (var i : dev.logos.lang.Intent.values()) assertTrue(intents.contains(i), "没有 " + i + " 的页");
+        for (int seal = 0; seal <= 9; seal++) {
             int n = seal;
             assertTrue(KohakuSpells.ALL.stream().anyMatch(s -> s.seal() == n), "第 " + seal + " 枚没有新的页");
         }
@@ -192,8 +230,8 @@ class KohakuTest {
         TalkMenu.Option chat = TalkMenu.find(KohakuTalk.MENU, TalkMenu.CHAT);
         assertNotNull(chat);
         for (TalkMenu.Option o : chat.children()) if (o.id().startsWith("chat.")) keys.add(TALK + "option." + o.id());
-        for (String s : new String[]{"one_drop", "ward", "staff", "mana", "genius", "withdraw", "sealed", "cat_eye", "boiling_flask", "nap_ward",
-                "greenhouse", "quick_enchant", "time_amber", "misty_umbrella", "starbloom", "your_pages"}) {
+        for (String s : new String[]{"one_drop", "ward", "staff", "mana", "genius", "withdraw", "cat_eye", "boiling_flask", "nap_ward",
+                "greenhouse", "quick_enchant", "time_amber", "misty_umbrella", "starbloom", "your_pages", "conjure", "cat_step", "two_step"}) {
             for (String part : new String[]{"name", "icon", "desc"}) keys.add(TALK + "skill." + s + "." + part);
         }
         for (int n = 0; n < KohakuTalk.MEMORY_LINES.length; n++) {
@@ -206,7 +244,8 @@ class KohakuTest {
             keys.add(LINE + "talk.greet_" + s + "_1");
             keys.add(LINE + "talk.greet_" + s + "_2");
         }
-        for (String l : new String[]{"stay", "follow", "refuse", "full", "stuck", "hungry", "seal", "remake", "talk.bye", "talk.danger", "talk.rest"}) {
+        for (String l : new String[]{"stay", "follow", "refuse", "full", "stuck", "hungry", "seal", "remake", "two_step", "talk.bye", "talk.danger",
+                "talk.rest"}) {
             keys.add(LINE + l);
         }
         for (String l : new String[]{"greet_hurt", "greet_hungry", "greet_night", "food_1", "food_2", "food_hungry", "alchemy_1", "alchemy_2",

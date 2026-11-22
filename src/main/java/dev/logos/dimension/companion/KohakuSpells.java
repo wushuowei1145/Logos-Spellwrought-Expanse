@@ -52,9 +52,12 @@ record KohakuSpells(String id, int seal, Intent intent, int cooldown, Aim aim) {
     static final KohakuSpells TIME_AMBER = new KohakuSpells("time_amber", 6, Intent.CONTROL, 600, Aim.FOE);
     static final KohakuSpells MISTY_UMBRELLA = new KohakuSpells("misty_umbrella", 7, Intent.WARD, 500, Aim.ALLY);
     static final KohakuSpells STARBLOOM = new KohakuSpells("starbloom", 8, Intent.AREA, 800, Aim.CLUSTER);
-    /** 做好的几页，按契印排（第九印的两个人的猫步和猫步一起在第三步做）。 */
-    static final List<KohakuSpells> ALL = List.of(ONE_DROP, CAT_EYE, BOILING_FLASK, NAP_WARD, GREENHOUSE, QUICK_ENCHANT, TIME_AMBER, MISTY_UMBRELLA,
-            STARBLOOM);
+    /** 猫步（本来就会）、两个人的猫步（第九印）：落点交给 here，由 {@link KohakuMoves} 放（有自己的起跳、落地动作）。 */
+    static final KohakuSpells CAT_STEP = new KohakuSpells("cat_step", 0, Intent.MOVE, KohakuMoves.BLINK_COOLDOWN, Aim.CLUSTER);
+    static final KohakuSpells TWO_STEP = new KohakuSpells("two_step", 9, Intent.MOVE, 0, Aim.CLUSTER);
+    /** 她的页，按契印排。 */
+    static final List<KohakuSpells> ALL = List.of(ONE_DROP, CAT_STEP, CAT_EYE, BOILING_FLASK, NAP_WARD, GREENHOUSE, QUICK_ENCHANT, TIME_AMBER,
+            MISTY_UMBRELLA, STARBLOOM, TWO_STEP);
     /** 沸腾烧瓶飞多快（页上写的 :speed）、抛物线每刻往下拉多少（Logos 的 ARC），算仰角用。 */
     static final double FLASK_SPEED = 1, ARC_GRAVITY = .05;
 

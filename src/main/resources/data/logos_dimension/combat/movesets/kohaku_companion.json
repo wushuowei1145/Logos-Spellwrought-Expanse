@@ -1,0 +1,7 @@
+{
+  "_comment": "琥珀同伴的凝辉（docs/KOHAKU_COMPANION.md 第 6 节）：被贴脸时凝出魔力大剑「凝辉」横扫一圈。动作是模型第 7 版的 conjure_sweep（kohaku_companion/tools/clips7.py），时刻照它的标记：0.3 秒剑成形、0.6 秒出手（contact）、0.85 秒剑碎、1.0 秒往后跳。damage 是奥术伤害（再乘她的法强；手里是杖剑时代码再给 +30%）。前方张角 220° 超过招式文件允许的 180°（cone），和半径、击退一起写在 KohakuMoves。",
+  "start": "conjure_sweep",
+  "moves": {
+    "conjure_sweep": {"length": 1.6, "contact": 0.6, "next": "conjure_sweep", "damage": 6}
+  }
+}

@@ -63,6 +63,15 @@ public final class KohakuMind extends CompanionMind {
     static final double AREA_SAFE = 5;
     /** 没有敌人多久算一场打完（下一场再放开场的支援）。 */
     static final int CALM_RESET = 100;
+    /** 凝辉：敌人近到这里就斩（随机应变、优先近战、优先远程）；优先远程时只在猫步还没好时斩。 */
+    static final double SWEEP_AT = 3, SWEEP_AT_MELEE = 4.5, SWEEP_AT_RANGED = 2.5;
+    /** 猫步、两个人的猫步的分（比护膜高：被围了先脱身）。 */
+    static final double BLINK_SCORE = .99, CARRY_SCORE = .98;
+    /** 被包围：几格内有几个敌人；护膜碎了时近一点的两个也算。 */
+    static final double SURROUND = 4, SURROUND_CLOSE = 2.5;
+    /** 两个人的猫步：你血少于几成、身边几格内有两个以上敌人。 */
+    static final float CARRY_BELOW = .25f;
+    static final double CARRY_NEAR = 5;
     /** 测试用：哈过几次气、吓走过几次幻翼。 */
     static int hisses, phantomsScared;
 
@@ -71,8 +80,8 @@ public final class KohakuMind extends CompanionMind {
     /** 站在主人哪一侧（1 或 -1，进入战斗时按她当时在哪边定）。 */
     private int side = 1;
     private boolean sideChosen;
-    /** 这一场开场的支援放过了没有；最近一次有敌人是哪一刻。 */
-    private boolean opened;
+    /** 这一场开场的支援放过了没有；两个人的猫步用过了没有（一场一次）；最近一次有敌人是哪一刻。 */
+    private boolean opened, carried;
     private long lastFoe = -10_000;
     /** 打算放的那一个支援（或猫眼药剂）：她的页或你的页、给谁、落在哪。 */
     private record Plan(@Nullable KohakuSpells own, KohakuSpells.@Nullable Yours yours, LivingEntity target, Vec3 at, boolean opening) {}
@@ -86,13 +95,13 @@ public final class KohakuMind extends CompanionMind {
 
     @Override
     protected boolean engagedOwn(Kind k) {
-        return k == Kind.WARD || k == Kind.SUPPORT && foe != null;
+        return k == Kind.WARD || k == Kind.BLINK || k == Kind.CARRY || k == Kind.SUPPORT && foe != null;
     }
 
-    /** 撤退、法阵还在转开时什么都不做。 */
+    /** 撤退、法阵还在转开、正在凝辉横扫或猫步时什么都不做（动作自己走完）。 */
     @Override
     protected boolean busy(ServerLevel level, ServerPlayer p, long now) {
-        if (!c.withdrawing() && !c.inCircle()) return false;
+        if (!c.withdrawing() && !c.inCircle() && !c.moves.busy()) return false;
         c.getNavigation().stop();
         return true;
     }
@@ -100,7 +109,10 @@ public final class KohakuMind extends CompanionMind {
     @Override
     protected void beforeScore(ServerLevel level, ServerPlayer p, long now) {
         if (foe != null) lastFoe = now;
-        else if (now - lastFoe > CALM_RESET) opened = false;
+        else if (now - lastFoe > CALM_RESET) {
+            opened = false;
+            carried = false;
+        }
         scarePhantoms(level, p, now);
     }
 
@@ -140,6 +152,37 @@ public final class KohakuMind extends CompanionMind {
         }
         scores.put(Kind.SUPPORT, support);
         scores.put(Kind.UTILITY, utility);
+        // 猫步：被包围了先脱身；两个人的猫步：你快撑不住、身边又围着敌人
+        List<Mob> close = level.getEntitiesOfClass(Mob.class, c.getBoundingBox().inflate(SURROUND), e -> e.isAlive() && threatens(e)
+                && e.distanceTo(c) <= SURROUND);
+        long tight = close.stream().filter(e -> e.distanceTo(c) <= SURROUND_CLOSE).count();
+        boolean surrounded = close.size() >= 3 || tight >= 2 && !m.wardUp();
+        scores.put(Kind.BLINK, surrounded && c.moves.blinkReady(now) && c.available() >= KohakuMoves.BLINK_MANA ? BLINK_SCORE : 0);
+        boolean carry = !carried && KohakuSpells.TWO_STEP.unlocked(c.seals()) && p.getHealth() < p.getMaxHealth() * CARRY_BELOW
+                && p.distanceTo(c) < 16 && c.available() >= KohakuMoves.CARRY_MANA && !c.moves.busy()
+                && level.getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(CARRY_NEAR), e -> e.isAlive() && threatens(e)).size() >= 2;
+        scores.put(Kind.CARRY, carry ? CARRY_SCORE : 0);
+    }
+
+    /** 她当作威胁的：她能伤的、敌对生物或冲着她和主人来的。 */
+    private boolean threatens(Mob e) {
+        return c.canHarm(e) && (e instanceof Enemy || c.hostileTo(e));
+    }
+
+    /** 猫步：找落点（开阔、背离敌群、往主人那边偏、看得见主人），蹲身一跃闪过去。找不到就照常打。 */
+    private void blink(ServerLevel level, ServerPlayer p, long now) {
+        List<Mob> foes = level.getEntitiesOfClass(Mob.class, c.getBoundingBox().inflate(8), e -> e.isAlive() && threatens(e));
+        Vec3 to = KohakuMoves.openGround(level, c, p, foes);
+        if (to == null || !c.moves.startBlink(to, false, now)) {
+            if (foe != null) fight(level, foe, now, false);
+        }
+    }
+
+    /** 两个人的猫步：给主人找落点，拉着主人一起闪过去。一场一次。 */
+    private void carry(ServerLevel level, ServerPlayer p, long now) {
+        List<Mob> foes = level.getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(8), e -> e.isAlive() && threatens(e));
+        Vec3 to = KohakuMoves.openGround(level, p, p, foes);
+        if (to != null && c.moves.startBlink(to, true, now)) carried = true;
     }
 
     // ---------------------------------------------------------------- 支援
@@ -265,7 +308,7 @@ public final class KohakuMind extends CompanionMind {
 
     @Override
     protected boolean canTurnToTalk() {
-        return !c.magic.casting();
+        return !c.magic.casting() && !c.moves.busy();
     }
 
     // ---------------------------------------------------------------- 做
@@ -281,6 +324,8 @@ public final class KohakuMind extends CompanionMind {
             }
             case HISS -> hiss(level, now);
             case SUPPORT, UTILITY -> support(now);
+            case BLINK -> blink(level, p, now);
+            case CARRY -> carry(level, p, now);
             default -> idle(p, now, true);
         }
     }
@@ -342,6 +387,10 @@ public final class KohakuMind extends CompanionMind {
         double d = c.distanceTo(target);
         if (!hold) {
             double keep = tactic == CompanionTactic.RANGED ? KEEP_FAR : tactic == CompanionTactic.MELEE ? KEEP_NEAR : KEEP;
+            // 贴到跟前：凝出凝辉横扫一圈再往后跳（不参与攻击时不斩；优先远程时只在猫步还没好时斩）
+            double sweepAt = tactic == CompanionTactic.MELEE ? SWEEP_AT_MELEE : tactic == CompanionTactic.RANGED ? SWEEP_AT_RANGED : SWEEP_AT;
+            if (d < sweepAt && !holdsBack() && (tactic != CompanionTactic.RANGED || !c.moves.blinkReady(now)) && c.hasLineOfSight(target)
+                    && c.moves.startSweep(target, now)) return;
             // 被贴脸、或者冲着她来的近过「隔开」：先往外退；冲主人去的不退，站定了照打
             boolean atMe = target instanceof net.minecraft.world.entity.Mob mob && mob.getTarget() == c;
             if (d < CLOSE || atMe && d < keep - 1.5) {
@@ -457,6 +506,7 @@ public final class KohakuMind extends CompanionMind {
     /** 后撤（血少了，或不参与攻击时敌人近了）：退到主人身后；站好了、没在躲的话照常施法。 */
     @Override
     protected void retreat(ServerPlayer p, LivingEntity threat, long now) {
+        if (!holdsBack() && c.distanceTo(threat) < SWEEP_AT && c.moves.startSweep(threat, now)) return;
         if (c.magic.casting()) {
             c.getNavigation().stop();
             return;
@@ -520,7 +570,7 @@ public final class KohakuMind extends CompanionMind {
     @Override
     protected void describeOwn(StringBuilder sb) {
         long now = c.level().getGameTime();
-        sb.append(" cast=").append(c.magic.describe(now)).append(String.format(" power=%.2f mana=%.0f/%.0f store=%.0f staff=%s",
+        sb.append(" cast=").append(c.magic.describe(now)).append(" moves=").append(c.moves.describe(now)).append(String.format(" power=%.2f mana=%.0f/%.0f store=%.0f staff=%s",
                 c.spellPower(), c.mana(), c.maxMana(), c.staff.store(), c.staff.held().getItem()));
     }
 }

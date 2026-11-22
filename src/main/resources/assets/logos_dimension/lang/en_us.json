@@ -1822,5 +1822,15 @@
   "talk.logos_dimension.kohaku.skill.starbloom.desc": "Against a strong foe, or many at once, she draws a great circle beneath them; 1.5 s later a field of arcane starbloom opens: %s damage (radius %s). Cooldown %s s.",
   "talk.logos_dimension.kohaku.skill.your_pages.name": "Your Spells",
   "talk.logos_dimension.kohaku.skill.your_pages.icon": "Y",
-  "talk.logos_dimension.kohaku.skill.your_pages.desc": "Pages on the staff you put in her pouch are hers to use too, by her own spell power; for the same intent, yours come first. Usable now: %s (summoning, possession and the like she cannot use)."
+  "talk.logos_dimension.kohaku.skill.your_pages.desc": "Pages on the staff you put in her pouch are hers to use too, by her own spell power; for the same intent, yours come first. Usable now: %s (summoning, possession and the like she cannot use).",
+  "talk.logos_dimension.kohaku.skill.conjure.name": "Vesperglass",
+  "talk.logos_dimension.kohaku.skill.conjure.icon": "V",
+  "talk.logos_dimension.kohaku.skill.conjure.desc": "When a foe gets right up close, she condenses a greatsword of mana in her right hand and sweeps all round: %s arcane damage to the foes before her (radius %s), knocking them back; the sword shatters into light and she hops away. Cooldown %s s. With a blade staff from you in hand she cuts with that instead, cheaper and harder.",
+  "talk.logos_dimension.kohaku.skill.cat_step.name": "Cat Step",
+  "talk.logos_dimension.kohaku.skill.cat_step.icon": "C",
+  "talk.logos_dimension.kohaku.skill.cat_step.desc": "Surrounded, she crouches and springs away to open ground %s–%s blocks off, leaving glowing paw prints behind. Cooldown %s s.",
+  "talk.logos_dimension.kohaku.skill.two_step.name": "Cat Step for Two",
+  "talk.logos_dimension.kohaku.skill.two_step.icon": "T",
+  "talk.logos_dimension.kohaku.skill.two_step.desc": "When you drop below %s%% health with foes around you, she takes you along and springs to open ground together. Once per fight.",
+  "line.logos_dimension.kohaku.two_step": "Hold on to me. ...We're going."
 }

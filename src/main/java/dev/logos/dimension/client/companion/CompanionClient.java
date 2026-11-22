@@ -253,6 +253,9 @@ public final class CompanionClient {
         private static final DataTicket<Integer> CIRCLE_LENGTH = DataTicket.create("logos_dimension_kohaku_circle_length", Integer.class);
         private static final DataTicket<Boolean> WITHDRAW = DataTicket.create("logos_dimension_kohaku_withdraw", Boolean.class);
         private static final DataTicket<Float> CLOCK = DataTicket.create("logos_dimension_kohaku_clock", Float.class);
+        /** 凝辉的样子（{@link VesperglassOnBone#state}，-1 没有）、她的实体 ID（凝聚、消散的随机种子）。 */
+        private static final DataTicket<Float> SWORD = DataTicket.create("logos_dimension_kohaku_sword", Float.class);
+        private static final DataTicket<Integer> ID = DataTicket.create("logos_dimension_kohaku_id", Integer.class);
 
         @Override
         public boolean shouldRender(KohakuCompanion entity, Frustum frustum, double x, double y, double z) {
@@ -272,6 +275,22 @@ public final class CompanionClient {
             state.addGeckolibData(CIRCLE_LENGTH, animatable.circleLength());
             state.addGeckolibData(WITHDRAW, animatable.circleWithdraws());
             state.addGeckolibData(CLOCK, animatable.tickCount + partialTick);
+            float sword = -1;
+            var move = animatable.npcCombatMove();
+            if (move != null && "conjure_sweep".equals(move.animation()) && !KohakuCompanion.bladeStaff(animatable.getMainHandItem())) {
+                sword = VesperglassOnBone.state((animatable.level().getGameTime() - move.start() + partialTick) / 20f);
+            }
+            state.addGeckolibData(SWORD, sword);
+            state.addGeckolibData(ID, animatable.getId());
+        }
+
+        @Override
+        public void adjustRenderPose(RenderPassInfo<R> info) {
+            super.adjustRenderPose(info);
+            if (info.getOrDefaultGeckolibData(SWORD, -1f) < 0) return;
+            GeoBone hand = info.model().boneLookup().get().get("RightHand");
+            if (hand != null) info.addPerBoneRender(hand, (i, bone, out) -> VesperglassOnBone.submit(i.poseStack(), out, i.packedLight(),
+                    i.getOrDefaultGeckolibData(SWORD, -1f), "kohaku" + i.getOrDefaultGeckolibData(ID, 0)));
         }
 
         @Override

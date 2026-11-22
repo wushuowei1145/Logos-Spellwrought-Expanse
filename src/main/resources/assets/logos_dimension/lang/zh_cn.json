@@ -1822,5 +1822,15 @@
   "talk.logos_dimension.kohaku.skill.starbloom.desc": "对付强敌、或者一下子围上来很多时，在敌人脚下画一个大炼成阵，1.5 秒后开出一片奥术星辰花：伤害 %s（半径 %s）。冷却 %s 秒。",
   "talk.logos_dimension.kohaku.skill.your_pages.name": "你给的术式",
   "talk.logos_dimension.kohaku.skill.your_pages.icon": "页",
-  "talk.logos_dimension.kohaku.skill.your_pages.desc": "你放进包袱的那根杖上挂着的页，她也会用，按她自己的法强算；同一种意图先用你的。现在能用的有 %s 页（召唤、附身这类她用不了的不算）。"
+  "talk.logos_dimension.kohaku.skill.your_pages.desc": "你放进包袱的那根杖上挂着的页，她也会用，按她自己的法强算；同一种意图先用你的。现在能用的有 %s 页（召唤、附身这类她用不了的不算）。",
+  "talk.logos_dimension.kohaku.skill.conjure.name": "凝辉",
+  "talk.logos_dimension.kohaku.skill.conjure.icon": "辉",
+  "talk.logos_dimension.kohaku.skill.conjure.desc": "敌人贴到跟前时，右手凝出魔力大剑横扫一圈：前方的敌人受奥术伤害 %s（半径 %s）、被推开，剑碎成光，她往后一跳。冷却 %s 秒。手里是你给的杖剑时直接用它砍，更省也更痛。",
+  "talk.logos_dimension.kohaku.skill.cat_step.name": "猫步",
+  "talk.logos_dimension.kohaku.skill.cat_step.icon": "步",
+  "talk.logos_dimension.kohaku.skill.cat_step.desc": "被围住的时候蹲身一跃，闪到 %s–%s 格外开阔的地方，原地留下几个发光的猫爪印。冷却 %s 秒。",
+  "talk.logos_dimension.kohaku.skill.two_step.name": "两个人的猫步",
+  "talk.logos_dimension.kohaku.skill.two_step.icon": "携",
+  "talk.logos_dimension.kohaku.skill.two_step.desc": "你的血少于 %s%%、身边又围着敌人时，她拉着你一起闪到开阔的地方。一场战斗一次。",
+  "line.logos_dimension.kohaku.two_step": "抓紧我。……走了。"
 }
