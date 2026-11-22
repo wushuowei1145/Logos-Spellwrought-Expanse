@@ -79,6 +79,11 @@ public final class KohakuMind extends CompanionMind {
      * （比跟着站在你身边多一点，跟随正在做时还有 {@link #HYSTERESIS}）；附近有掉落要捡时先捡（{@link #LOUNGE_AFTER_LOOT}）。
      */
     static final double LOUNGE_RUG = .75, LOUNGE_NEAR = .5, LOUNGE_NAP = .55, LOUNGE_SIT = .45, LOUNGE_AFTER_LOOT = .3;
+    /**
+     * 夜里跟你睡、赖床（这时通用的「主人睡了就休息」记 0：不然哪一次打分她的这一晚没排上——附近一分钟内的掉落把分压下去、床边一时没地方——
+     * 就先进了休息，之后休息带着滞后 1.1 一直赢她的 1.05，整晚只是在你身边蜷着，没有赖床、「大」字、礼物）；你挂机时去床上打盹（比在你身边打盹高一点）。
+     */
+    static final double LOUNGE_NIGHT = 1.05, LOUNGE_BED = .6;
     /** 给你吃的、叼战利品（叼在嘴里时更急）。 */
     static final double GIFT_SCORE = .8, FETCH_SCORE = .5, FETCH_CARRY = .8;
     /** 测试用：哈过几次气、吓走过几次幻翼。 */
@@ -177,13 +182,17 @@ public final class KohakuMind extends CompanionMind {
         KohakuLife life = c.life;
         KohakuLife.Plan lounge = life.choose(level, p, w, now, s.calm(), s.order());
         double loungeScore = lounge == null ? 0 : switch (lounge.spot()) {
+            case NIGHT -> LOUNGE_NIGHT;
+            case BED -> LOUNGE_BED;
             case RUG -> LOUNGE_RUG;
             case UMBRELLA, SUN -> LOUNGE_NEAR;
             case BESIDE -> lounge.nap() ? LOUNGE_NAP : LOUNGE_SIT;
         };
-        // 还没坐下、附近有掉落：先捡完
-        if (!life.posed() && scores.getOrDefault(Kind.SCAVENGE, 0.0) > 0) loungeScore = Math.min(loungeScore, LOUNGE_AFTER_LOOT);
+        boolean night = lounge != null && lounge.spot() == KohakuLife.Spot.NIGHT;
+        // 还没坐下、附近有掉落：先捡完（你睡下了就不捡）
+        if (!night && !life.posed() && scores.getOrDefault(Kind.SCAVENGE, 0.0) > 0) loungeScore = Math.min(loungeScore, LOUNGE_AFTER_LOOT);
         scores.put(Kind.LOUNGE, loungeScore);
+        if (night) scores.put(Kind.REST, 0.0);
         scores.put(Kind.GIFT, s.calm() && life.giftPending() ? GIFT_SCORE : 0);
         scores.put(Kind.FETCH, s.calm() && life.fetching() ? life.inHand().isEmpty() ? FETCH_SCORE : FETCH_CARRY : 0);
     }

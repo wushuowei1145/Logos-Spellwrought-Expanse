@@ -45,8 +45,9 @@ final class KohakuLife {
     static final int STILL = 200;
     /** 坐在你身边：离你多远（你的侧边）；离要坐的地方多近就不寻路、直接走过去。 */
     static final double BESIDE = 1.25, FINAL_STRETCH = 2.5;
-    /** 姿势和过渡的长度（刻），与动画文件一致（单元测试对过）。 */
-    static final int SIT_DOWN = 16, STAND_UP = 12, LOAF_DOWN = 24, LOAF_UP = 16, UMBRELLA_OPEN = 10, UMBRELLA_CLOSE = 8;
+    /** 姿势和过渡的长度（刻），与动画文件一致（单元测试对过）；赖床（侧卧）那一段多长、第几刻撑起来。 */
+    static final int SIT_DOWN = 16, STAND_UP = 12, LOAF_DOWN = 24, LOAF_UP = 16, UMBRELLA_OPEN = 10, UMBRELLA_CLOSE = 8, CURL_DOWN = 18,
+            SIDE_UP = 18, BELLY_DOWN = 20, BELLY_UP = 20, SPRAWL_UP = 20, WAKE_LINGER = 80, WAKE_RISE = 48;
     /** 递东西：动画多长、第几刻交出去（{@code give} 标记）。 */
     static final int GIVE_TICKS = 32, GIVE_AT = 16;
     /** 给你吃的：每隔多久判一次、成功率（羁绊每段多几成）、给过以后多久不再给、一天最多几次、你饿到多少算饿。 */
@@ -71,14 +72,19 @@ final class KohakuLife {
     /** 测试用：塞过几次吃的、叼过几次战利品、认过几次地毯、在地毯上睡着加过几次羁绊、晒饱过几次。 */
     static int foodGifts, fetches, rugClaims, rugNaps, sunFulls;
 
-    /** 闲着陪你的去处。 */
-    enum Spot { BESIDE, RUG, SUN, UMBRELLA }
+    /** 闲着陪你的去处；夜里跟你睡（{@link KohakuSleep}）、你挂机时去床上打盹。 */
+    enum Spot { BESIDE, RUG, SUN, UMBRELLA, NIGHT, BED }
 
-    /** 整身姿势（坐、趴、撑伞），和它在 MOVE 上的动画名。 */
+    /**
+     * 整身姿势（坐、趴、撑伞、侧卧、露肚皮、「大」字），和它在 MOVE 上的动画名。侧卧没有循环的那一段：躺下以后整个人交给 misc 的 sleep。
+     * 「大」字没有躺下的那一段：她是睡着睡着变成这样的。
+     */
     enum Pose {
         NONE(null, null, 0, null, 0), SIT("sit_down", "sit_beside", SIT_DOWN, "stand_up", STAND_UP),
         LOAF("loaf_down", "sleep_loaf", LOAF_DOWN, "loaf_up", LOAF_UP),
-        UMBRELLA("umbrella_open", "umbrella", UMBRELLA_OPEN, "umbrella_close", UMBRELLA_CLOSE);
+        UMBRELLA("umbrella_open", "umbrella", UMBRELLA_OPEN, "umbrella_close", UMBRELLA_CLOSE),
+        CURL("curl_down", null, CURL_DOWN, "side_up", SIDE_UP), BELLY("belly_down", "sleep_belly", BELLY_DOWN, "belly_up", BELLY_UP),
+        SPRAWL(null, "sleep_sprawl", 0, "sprawl_up", SPRAWL_UP);
 
         final @Nullable String down, loop, up;
         final int downTicks, upTicks;
@@ -92,28 +98,41 @@ final class KohakuLife {
         }
     }
 
-    /** 这一回陪你：去哪、站在哪、朝哪，是不是打盹，是不是第一次认这块地毯。 */
-    record Plan(Spot spot, Vec3 at, @Nullable BlockPos rug, boolean nap, boolean claim) {
+    /**
+     * 这一回陪你：去哪、站在哪，是不是打盹，是不是第一次认这块地毯；睡觉时定好的睡姿（null 按去处来）、躺下以后朝哪（NaN 不管）。
+     */
+    record Plan(Spot spot, Vec3 at, @Nullable BlockPos rug, boolean nap, boolean claim, @Nullable Pose sleep, float yaw) {
+        Plan(Spot spot, Vec3 at, @Nullable BlockPos rug, boolean nap, boolean claim) {
+            this(spot, at, rug, nap, claim, null, Float.NaN);
+        }
+
         Pose pose() {
+            if (sleep != null) return sleep;
             return spot == Spot.UMBRELLA ? Pose.UMBRELLA : nap || spot == Spot.SUN ? Pose.LOAF : Pose.SIT;
         }
     }
 
     private final KohakuCompanion c;
+    final KohakuSleep sleep;
     private @Nullable Plan plan;
     private Pose pose = Pose.NONE;
+    /** 摆着的姿势是在哪摆的（打分时 {@link #plan} 会先清空，睡觉那边要看她是不是正睡在夜里那一处）。 */
+    private @Nullable Spot posedAt;
     private long settleAt, risenAt = -1, napSince = -1;
-    /** 起身播完要伸懒腰（猫饼起来）；正在起身（这一刻醒来不伸懒腰）。 */
+    /** 起身播完要伸懒腰（猫饼起来）；正在起身（这一刻醒来不伸懒腰）；伸完懒腰以后困多久（刻）。 */
     private boolean stretchAfter, rising;
+    private int sleepyAfter;
     private int sunTicks, approach;
     private boolean sunned;
     private long nextNote;
     /** 找地毯：上一次找的时刻和结果（隔一阵才找一次）。 */
     private long rugLooked = -10_000;
     private @Nullable BlockPos rugFound;
-    /** 给你吃的：下一次判的时刻、上一次给的时刻、判成了要给的那一份。 */
+    /** 给你吃的：下一次判的时刻、上一次给的时刻；要递给你的那一份（吃的、醒来的礼物）、递的时候说哪一句、是不是吃的。 */
     private long nextFoodRoll, lastFood = -100_000;
     private ItemStack pendingFood = ItemStack.EMPTY;
+    private String pendingLine = "give_food";
+    private boolean pendingIsFood = true;
     /** 猫的战利品：这一场从哪一刻打起、要去叼的那一样、叼在嘴里的。 */
     private long fightStart = -1;
     private @Nullable ItemEntity fetchTarget;
@@ -121,10 +140,12 @@ final class KohakuLife {
     /** 正在递：递的是什么、哪一刻开始、递完以后得意一下（战利品）。 */
     private ItemStack handing = ItemStack.EMPTY;
     private long handAt = -1;
-    private boolean handingLoot;
+    private boolean handingLoot, handingFood = true;
+    private String handingLine = "give_food";
 
     KohakuLife(KohakuCompanion c) {
         this.c = c;
+        this.sleep = new KohakuSleep(c, this);
     }
 
     // ---------------------------------------------------------------- 给心智用
@@ -143,14 +164,23 @@ final class KohakuLife {
         return pose;
     }
 
-    /** 坐着或趴着（长杖收起来；只播坐着也能播的小动作）。 */
+    /** 坐着或躺着（长杖收起来；只播坐着也能播的小动作）。 */
     boolean seated() {
-        return pose == Pose.SIT || pose == Pose.LOAF;
+        return pose == Pose.SIT || asleep();
     }
 
-    /** 趴着打盹（猫饼）。 */
+    /** 躺着睡（猫饼、侧卧、露肚皮、「大」字）：闭着眼，不看你。 */
     boolean napping() {
-        return pose == Pose.LOAF;
+        return asleep();
+    }
+
+    boolean asleep() {
+        return pose == Pose.LOAF || pose == Pose.CURL || pose == Pose.BELLY || pose == Pose.SPRAWL;
+    }
+
+    /** 摆着的姿势是在哪摆的（没摆为 null）。 */
+    @Nullable Spot posedAt() {
+        return pose == Pose.NONE ? null : posedAt;
     }
 
     @Nullable Plan plan() {
@@ -188,7 +218,13 @@ final class KohakuLife {
     /** 这一回陪你的打算；没有为 null（你在动、在打、在睡、她被叫留下……）。打分时每半秒算一次。 */
     @Nullable Plan choose(ServerLevel level, ServerPlayer p, OwnerWatch w, long now, boolean calm, @Nullable Vec3 order) {
         plan = null;
-        if (!calm || order != null || c.staying() || p.isSleeping() || c.eating() || !p.onGround() || w.still(now) < STILL) return null;
+        // 夜里跟你睡、你醒来以后赖床
+        Plan night = sleep.night(level, p, now, calm);
+        if (night != null || sleep.holds()) return plan = night;
+        if (!calm || order != null || c.staying() || p.isSleeping() || c.eating() || !p.onGround() || w.still(now) < STILL) {
+            sleep.bedNap(level, p, false);
+            return null;
+        }
         if (c.talking() && !posed()) return null;
         if (p.distanceTo(c) > 24) return null;
         boolean afk = w.still(now) >= OwnerWatch.AFK_TICKS;
@@ -203,6 +239,9 @@ final class KohakuLife {
             boolean claim = !rug.equals(claimedRug(level, p));
             return plan = new Plan(Spot.RUG, onRug(rug), rug, afk && !claim, claim);
         }
+        // 挂机了：有时去空床上打盹
+        Plan bed = sleep.bedNap(level, p, afk);
+        if (bed != null) return plan = bed;
         // 3. 晴天白天、晒得到太阳：猫饼
         if (!level.isRaining() && !level.isDarkOutside()) {
             Vec3 sun = sunSpot(level, p);
@@ -249,6 +288,7 @@ final class KohakuLife {
             c.setSprinting(false);
             c.setPos(c.position().lerp(at, .5));
             if (pl.spot() == Spot.UMBRELLA || pl.spot() == Spot.BESIDE) faceAlong(p);
+            if (!Float.isNaN(pl.yaw())) turn(pl.yaw());
             settle(level, p, want, now, pl);
             return;
         }
@@ -263,8 +303,10 @@ final class KohakuLife {
     /** 摆上姿势：先播坐下 / 趴下 / 撑伞，播完换成循环的那一段。认地毯就在这时候。 */
     private void settle(ServerLevel level, ServerPlayer p, Pose want, long now, Plan pl) {
         pose = want;
+        posedAt = pl.spot();
         settleAt = now + want.downTicks;
-        c.setMove(want.down + "|" + now + "|1|false");
+        c.setMove(want.down == null ? "" : want.down + "|" + now + "|1|false");
+        if (pl.spot() == Spot.BED) KohakuSleep.napped();
         if (want == Pose.UMBRELLA) {
             c.setUmbrella(wideUmbrella(p) ? 2 : 1);
             level.playSound(null, c.getX(), c.getY(), c.getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.NEUTRAL, .5f, 1.5f);
@@ -280,11 +322,13 @@ final class KohakuLife {
 
     /** 摆着姿势的每一刻：过渡播完换循环；打盹时算晒太阳、地毯上的羁绊；坐着时偶尔冒一个音符。 */
     private void tickPosed(ServerLevel level, ServerPlayer p, long now, Plan pl) {
-        if (now == settleAt || now > settleAt && !c.move().startsWith(pose.loop)) {
-            c.setMove(pose.loop + "|" + now + "|1|true");
-            if (pose == Pose.LOAF) {
-                c.mood.curl(true);
-                napSince = now;
+        // 躺下那一段播完：换成循环的那一段（侧卧没有，整个人交给 misc 的 sleep），闭上眼
+        boolean looped = pose.loop == null ? c.mood.curled() && c.move().isEmpty() : c.move().startsWith(pose.loop);
+        if (now == settleAt || now > settleAt && !looped) {
+            c.setMove(pose.loop == null ? "" : pose.loop + "|" + now + "|1|true");
+            if (asleep()) {
+                if (!c.mood.curled()) c.mood.curl(true);
+                if (napSince < 0) napSince = now;
             }
         }
         if (now < settleAt) return;
@@ -317,6 +361,11 @@ final class KohakuLife {
 
     /** 起身：{@code hurry}（来了敌人）时直接站起来，不然播起身那一段（猫饼起来以后伸个懒腰）。 */
     void rise(ServerLevel level, long now, boolean hurry) {
+        rise(level, now, hurry, false);
+    }
+
+    /** {@code wake}：早上赖完床起来（侧卧时播 {@code wake_linger}：动一动、翻个身再起来）。 */
+    void rise(ServerLevel level, long now, boolean hurry, boolean wake) {
         if (pose == Pose.NONE) {
             plan = null;
             return;
@@ -325,8 +374,10 @@ final class KohakuLife {
         pose = Pose.NONE;
         plan = null;
         napSince = -1;
-        stretchAfter = was == Pose.LOAF && !hurry;
-        boolean down = was.loop != null && c.move().startsWith(was.loop) || was.down != null && c.move().startsWith(was.down);
+        stretchAfter = was != Pose.SIT && was != Pose.UMBRELLA && !hurry;
+        // 侧卧时整个人在 misc 的 sleep 上（MOVE 是空的）；别的姿势看 MOVE 上是不是它
+        boolean down = was == Pose.CURL ? c.mood.curled() || c.move().startsWith("curl_down")
+                : was.loop != null && c.move().startsWith(was.loop) || was.down != null && c.move().startsWith(was.down);
         // 醒来的伸懒腰由这里管（猫饼要先起来；来了敌人就不伸了）
         rising = true;
         if (c.mood.curled()) c.mood.curl(false);
@@ -336,17 +387,25 @@ final class KohakuLife {
             risenAt = -1;
             return;
         }
-        c.setMove(was.up + "|" + now + "|1|false");
-        risenAt = now + was.upTicks;
+        boolean linger = wake && was == Pose.CURL;
+        c.setMove((linger ? "wake_linger" : was.up) + "|" + now + "|1|false");
+        risenAt = now + (linger ? WAKE_LINGER : was.upTicks);
     }
 
     /** 每刻（她自己的 tickActions 里）：起身播完收尾，递东西走到交出去那一刻。 */
     void tick(ServerLevel level, long now, @Nullable ServerPlayer p) {
+        if (p != null) sleep.tick(level, p, now);
         if (risenAt >= 0 && now >= risenAt) {
             risenAt = -1;
-            if (c.move().startsWith("stand_up") || c.move().startsWith("loaf_up") || c.move().startsWith("umbrella_close")) c.setMove("");
-            if (stretchAfter) c.mood.act("act_cat_stretch");
+            String m = c.move();
+            if (m.startsWith("stand_up") || m.startsWith("loaf_up") || m.startsWith("umbrella_close") || m.startsWith("side_up")
+                    || m.startsWith("belly_up") || m.startsWith("sprawl_up") || m.startsWith("wake_linger")) c.setMove("");
+            if (stretchAfter) {
+                c.mood.act("act_cat_stretch");
+                if (sleepyAfter > 0) ((KohakuMood) c.mood).sleepy(now + c.mood.length("act_cat_stretch") + sleepyAfter);
+            }
             stretchAfter = false;
+            sleepyAfter = 0;
         }
         if (handAt >= 0) tickHand(level, now, p);
         // 不撑了：收伞那一段播完，伞面才收掉
@@ -400,6 +459,50 @@ final class KohakuLife {
             }
         }
         return null;
+    }
+
+    /** 转向 {@code yaw}（躺下以后的朝向）。 */
+    private void turn(float yaw) {
+        c.setYRot(yaw);
+        c.yBodyRot = yaw;
+        c.yBodyRotO = yaw;
+        c.setYHeadRot(yaw);
+    }
+
+    /** 测试和睡觉用：站得住的位置（同 {@link #stand}）。 */
+    @Nullable Vec3 standAt(ServerLevel level, Vec3 at) {
+        return stand(level, at);
+    }
+
+    /** 睡着睡着换了姿势、挪了地方（「大」字）：不播过渡，直接换。 */
+    void switchPose(Plan to, long now) {
+        plan = to;
+        pose = to.pose();
+        posedAt = to.spot();
+        settleAt = now;
+        // 还在走过来、正在起身（天亮时直接睡在那里）：都不要了
+        risenAt = -1;
+        stretchAfter = false;
+        approach = 0;
+        c.getNavigation().stop();
+        c.setDeltaMovement(Vec3.ZERO);
+        c.setPos(to.at());
+        if (!Float.isNaN(to.yaw())) turn(to.yaw());
+        c.setMove(pose.loop == null ? "" : pose.loop + "|" + now + "|1|true");
+        if (!c.mood.curled()) c.mood.curl(true);
+    }
+
+    /** 赖完床起来：侧卧时动一动、翻个身再起来；之后伸懒腰，再困 {@code sleepy} 刻。 */
+    void wakeUp(ServerLevel level, long now, int sleepy) {
+        sleepyAfter = sleepy;
+        rise(level, now, false, true);
+    }
+
+    /** 要递给你一样东西（醒来的礼物）：她起来、伸完懒腰以后走过来递，说 {@code line}。 */
+    void offer(ItemStack stack, String line) {
+        pendingFood = stack;
+        pendingLine = line;
+        pendingIsFood = false;
     }
 
     /** 转过去和你朝同一边（坐在你身边一起看前面）。 */
@@ -503,22 +606,30 @@ final class KohakuLife {
         float chance = FOOD_CHANCE + FOOD_STAGE * CompanionBond.Stage.of(c.bond(p).affection()).ordinal();
         if (!lucky && c.getRandom().nextFloat() >= chance) return;
         pendingFood = food(foodIndex(c.getRandom().nextInt(100)));
+        pendingLine = "give_food";
+        pendingIsFood = true;
     }
 
-    /** 判成了、还没递出去。 */
+    /** 判成了、还没递出去（吃的、醒来的礼物）。 */
     boolean giftPending() {
         return !pendingFood.isEmpty() || handAt >= 0 && !handingLoot;
     }
 
-    /** 走到你跟前，递给你（{@code give}，第 0.8 秒交出去）。 */
+    /** 走到你跟前，递给你（{@code give}，第 0.8 秒交出去）。正在伸懒腰这些小动作时先等它播完。 */
     void gift(ServerPlayer p, long now) {
         if (handAt >= 0) {
             hold(p);
             return;
         }
         if (pendingFood.isEmpty()) return;
+        if (c.mood.acting()) {
+            c.getNavigation().stop();
+            return;
+        }
         if (approach(p, now)) return;
         handing = pendingFood;
+        handingLine = pendingLine;
+        handingFood = pendingIsFood;
         pendingFood = ItemStack.EMPTY;
         handingLoot = false;
         startHand(p, now);
@@ -639,11 +750,13 @@ final class KohakuLife {
                 fetches++;
             } else {
                 if (!p.getInventory().add(stack)) p.drop(stack, false);
-                long day = level.getOverworldClockTime() / 24000;
-                p.setData(Companions.KOHAKU_DAYS, days(p).withFood(day));
-                lastFood = now;
-                CompanionLines.say(c, p, "give_food", 60);
-                foodGifts++;
+                if (handingFood) {
+                    long day = level.getOverworldClockTime() / 24000;
+                    p.setData(Companions.KOHAKU_DAYS, days(p).withFood(day));
+                    lastFood = now;
+                    foodGifts++;
+                }
+                CompanionLines.say(c, p, handingLine, 60);
             }
             level.playSound(null, c.getX(), c.getY(), c.getZ(), SoundEvents.ITEM_PICKUP, SoundSource.NEUTRAL, .3f, 1.1f);
         }
@@ -656,14 +769,18 @@ final class KohakuLife {
         carrying = ItemStack.EMPTY;
         if (!handing.isEmpty()) {
             if (handingLoot) c.spawnAtLocation(level, handing);
-            else pendingFood = handing;
+            else {
+                pendingFood = handing;
+                pendingLine = handingLine;
+                pendingIsFood = handingFood;
+            }
         }
         handing = ItemStack.EMPTY;
         handAt = -1;
     }
 
     String describe() {
-        return "pose=" + pose.name().toLowerCase() + (plan == null ? "" : " spot=" + plan.spot().name().toLowerCase()
+        return "pose=" + pose.name().toLowerCase() + " " + sleep.describe() + (plan == null ? "" : " spot=" + plan.spot().name().toLowerCase()
                 + String.format(" at=(%.2f %.2f %.2f) me=(%.2f %.2f %.2f) nav=%s", plan.at().x, plan.at().y, plan.at().z, c.getX(), c.getY(), c.getZ(),
                 c.getNavigation().isDone() ? "done" : "going")) + " sun=" + sunTicks
                 + (sunned ? "(full)" : "") + (pendingFood.isEmpty() ? "" : " food=" + pendingFood.getItem()) + (fetching() ? " fetch" : "");

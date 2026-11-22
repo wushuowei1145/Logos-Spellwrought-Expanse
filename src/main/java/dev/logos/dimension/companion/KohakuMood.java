@@ -28,7 +28,7 @@ final class KohakuMood extends CompanionMood {
     /** 一阵没事干：主人不动多久（刻）她开始嫌麻烦。 */
     static final int BORED_AFTER = 600;
 
-    private long strongKillSeen, nextIdleAct, smugUntil = -10_000, surprisedUntil = -10_000, guardUntil = -10_000;
+    private long strongKillSeen, nextIdleAct, smugUntil = -10_000, surprisedUntil = -10_000, guardUntil = -10_000, sleepyUntil = -10_000;
     private int lookedAt;
     private boolean wet;
 
@@ -50,6 +50,11 @@ final class KohakuMood extends CompanionMood {
     /** 得意一阵（盖爪之契、主人打倒强敌）。 */
     void smug(long now) {
         smugUntil = now + 160;
+    }
+
+    /** 睡醒以后困一阵（到 {@code until} 那一刻）。 */
+    void sleepy(long until) {
+        sleepyUntil = until;
     }
 
     /** 护膜碎了：吓一跳。 */
@@ -125,6 +130,8 @@ final class KohakuMood extends CompanionMood {
         if ("act_guard".equals(playing())) return "face_guard";
         if (c.talking()) return now < talkFaceUntil && talkFace != null ? talkFace : "face_content";
         if (now < smugUntil) return "face_smug";
+        // 刚睡醒：困
+        if (now < sleepyUntil) return "face_sleepy";
         // 下雨天在露天：嫌弃（撑着伞也嫌弃）
         if (life().inRain()) return "face_rain";
         if (now < delightUntil) return "face_happy";

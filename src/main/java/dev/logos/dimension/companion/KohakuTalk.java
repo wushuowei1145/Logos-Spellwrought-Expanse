@@ -101,6 +101,8 @@ final class KohakuTalk {
                 new CompanionSheet.Skill("staff", CompanionSheet.PASSIVE, 0, true, List.of("#" + staff.getItem().getDescriptionId(),
                         num(c.staff.capacity()), c.staff.yours() ? "#talk.logos_dimension.kohaku.skill.staff.yours" : "#talk.logos_dimension.kohaku.skill.staff.own")),
                 new CompanionSheet.Skill("mana", CompanionSheet.PASSIVE, 0, true, List.of(num(c.maxMana()), num(c.regenPerSecond()))),
+                new CompanionSheet.Skill("company", CompanionSheet.PASSIVE, 0, true, List.of(num(KohakuCompany.TICKS / 1200f),
+                        num(KohakuCompany.regen(CompanionBond.Stage.of(bond.affection()).ordinal()) * 100), num(KohakuCompany.CHANNEL * 100))),
                 new CompanionSheet.Skill("genius", CompanionSheet.PASSIVE, 0, true, List.of(num(sp))),
                 new CompanionSheet.Skill("withdraw", CompanionSheet.PASSIVE, 0, true, List.of(num(KohakuCompanion.REST_TICKS / 1200f)))));
         CompanionBond.Stage st = CompanionBond.Stage.of(bond.affection());

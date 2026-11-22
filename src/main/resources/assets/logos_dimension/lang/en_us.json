@@ -1860,5 +1860,10 @@
   "entity.logos_dimension.jian_sui_fall_stage": "Falling Abyss",
   "commands.logos_dimension.jiansui.no_site": "Not inside a Taixuan sanctuary.",
   "entity.logos_dimension.jian_sui": "Jian Sui",
-  "entity.logos_dimension.jian_sui.bar": "Jian Sui"
+  "entity.logos_dimension.jian_sui.bar": "Jian Sui",
+  "effect.logos_dimension.kohaku_company": "Kohaku's Company",
+  "talk.logos_dimension.kohaku.skill.company.name": "Kohaku's Company",
+  "talk.logos_dimension.kohaku.skill.company.icon": "K",
+  "talk.logos_dimension.kohaku.skill.company.desc": "For %s minutes after waking up beside her: mana regeneration +%s%%, channelling %s%% faster. The deeper the bond, the faster it comes back.",
+  "line.logos_dimension.kohaku.morning_gift": "...Morning. This is for you. I just happened to have it."
 }
