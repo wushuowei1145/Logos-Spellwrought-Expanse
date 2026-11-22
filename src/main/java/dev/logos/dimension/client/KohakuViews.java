@@ -180,7 +180,7 @@ public abstract class KohakuViews extends CompanionViews {
         public void define(ScenarioBuilder s) {
             kohakuStage(s, GameType.SURVIVAL).runCommand("difficulty peaceful")
                     .server("召唤", ctx -> c = summonKohaku(ctx.player(), SPOT))
-                    .checkServer("一出来魔力就是满的", ctx -> c.mana() >= c.maxMana() - 1 && c.mana() > 400);
+                    .checkServer("一出来魔力就是满的（身上的加上已经往杖里充的）", ctx -> c.available() >= c.maxMana() - 1 && c.maxMana() > 400);
         }
     }
 

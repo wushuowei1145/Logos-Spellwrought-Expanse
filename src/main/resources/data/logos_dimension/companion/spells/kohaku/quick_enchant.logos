@@ -1,0 +1,7 @@
+; 附魔速成（第五枚爪之契）：给你手里的武器缠上奥术 30 秒，每打中一下附带奥术伤害。「我懒得打，你替我打。」
+; 用的是页里的 imbue，缠在 (master)（你）身上：挥中时触发的伤害是这一页的，按施法者（她）的法强和缠绕强度算，不按你的。注入 500。
+(spell :name "附魔速成" :mana 500 :trigger cast :intent empower
+  (imbue (master) :life 30
+    (on-hit
+      (if (is target (kind enemies))
+        (damage target 2 arcane)))))

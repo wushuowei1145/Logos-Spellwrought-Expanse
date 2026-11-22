@@ -1,0 +1,9 @@
+; 午睡结界（第三枚爪之契）：敌人扎堆的地方铺一个慵懒的结界 6 秒，里面的敌人缓慢 II、虚弱 I——「大家都慢一点嘛」。
+; 圈心是施放时交给她的 here（代码传敌群中心），先记下来。注入 600，炼金长杖（第 4 档，容量 800）放得满。
+(spell :name "午睡结界" :mana 600 :trigger cast :intent control
+  (let $c here
+    (field :at $c :radius 4 :life 6 :every 0.5
+      (on-tick
+        (each (enemies :at $c :radius 4)
+          (potion target slowness 1 2)
+          (potion target weakness 1 1))))))

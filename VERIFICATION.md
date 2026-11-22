@@ -1,5 +1,23 @@
 # 首版验证记录
 
+## 琥珀同伴（第二步：术式）
+
+2026-11-22：分支 `feat/kohaku-spells`，基于 main `8f3739ac`（#282 琥珀第一步、#283 精灵公主的缠绕）。Logos jar 同第一步（Logos main `5fdd33e` 现场编的）。
+设计见 [琥珀](docs/KOHAKU_COMPANION.md) 第 5、7 节和第 18 节的第二步。
+
+| 层级 | 结果 |
+|---|---|
+| 单元 | `KohakuTest` **12/12**（新加两个：八种意图里除了位移都有她的页、第一到第八印每枚都有新的页；你给的页里带附身之类的认得出、按意图和作用对象决定怎么放），同伴其余照旧全过；`LangCoverageTest` 2/2 |
+| 实际客户端 | `group:kohaku_companion` **11/11 场景**（第一步的 7 个照旧全过，新加 4 个）：八枚爪之契时三只僵尸扎堆冲主人来——开场随机放了一个支援（伞或附魔速成）、把强敌封进琥珀、画炼成阵·星辰花、三只都倒下、主人没挨她的打；四枚时主人四成血、身边没敌人，她有余力，在主人脚下铺温室的午后，主人的血回上来；包袱里一根回响长杖挂着你写的单体攻击和一页带附身的，她只认得前一页、打僵尸时先用你的；半夜在外面，她递给主人猫眼药剂、主人有了夜视 |
+| 人工看截图 | 开场的护盾、冻住的僵尸、星辰花的大法阵、回血圈、你写的火弹打中僵尸、猫眼药剂 |
+| 场景里踩到的 | 和平难度下主人自己回血，几秒就不算伤员了（照顾伤员的场景改成简单难度、饿着）；刚叫出来马上盖几枚爪之契，她身上的魔力还是按零枚的上限加满的（场景里先加满） |
+| 没做 | 没进游戏试玩；这几页用的是 Logos 按元素自带的特效（琥珀是冰蓝的冻结、星辰花是粉紫的奥术法阵、温室是绿色的生命领域），要不要叠一层琥珀色等维护者定；抛烧瓶、画大阵的专门动作还没做（现在用点杖、拄杖）；第九印和第三到第五步 |
+
+```text
+./gradlew test --tests 'dev.logos.dimension.companion.*' --tests 'dev.logos.dimension.LangCoverageTest' -PlogosJar=/absolute/path/logos.jar -PorchestraJar=/absolute/path/starbloom_orchestra-0.1.0.jar
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:kohaku_companion -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 琥珀同伴（第三位同伴，第一步：进游戏）
 
 2026-11-22：分支 `feat/kohaku-companion`，基于 main `3ce82584`（#279）。Logos jar 用 Logos main `5fdd33e`（#485：`Runes.safeSpot` 公开；含 #484 杖剑）现场编的，

@@ -230,6 +230,11 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
         return took;
     }
 
+    /** 她拿得出的魔力：身上的加上杖里存的（不打的时候她把身上的往杖里充，只留三成）。 */
+    public double available() {
+        return mana + staff.store();
+    }
+
     /** 花掉最多 {@code amount}；返回花了多少。 */
     double spendMana(double amount) {
         double took = Math.max(0, Math.min(amount, mana));
@@ -448,6 +453,27 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
 
     public static int casts() {
         return KohakuMagic.casts;
+    }
+
+    /** 测试用：她自己的那一页（{@code one_drop}、{@code starbloom}……）放过几次；你给的页放过几次。 */
+    public static int casts(String page) {
+        return KohakuMagic.CAST_COUNT.getOrDefault(page, 0);
+    }
+
+    public static int yoursCasts() {
+        return KohakuMagic.yoursCasts;
+    }
+
+    /** 测试用：魔力加满、杖里充满（大术式要两边加起来才放得出）。 */
+    public void topUp() {
+        refreshCap();
+        mana = maxMana;
+        staff.setStore(staff.capacity());
+    }
+
+    /** 测试用：你给的杖上她能放几页。 */
+    public int yourPageCount() {
+        return staff.yoursPages().size();
     }
 
     public static int phantomsScared() {
