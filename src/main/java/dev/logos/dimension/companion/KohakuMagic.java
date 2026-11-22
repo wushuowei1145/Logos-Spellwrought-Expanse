@@ -255,7 +255,8 @@ final class KohakuMagic {
         if (casting == Kind.WARD) {
             if (wardUp() || c.mana() < wardCost()) return;
             c.spendMana(wardCost());
-            Effects.shield(c, wardAmount());
+            // 晒饱了太阳：这一次厚一点（第 10 节第 4 条）
+            Effects.shield(c, wardAmount() + c.getMaxHealth() * c.life.takeSunBonus());
             wardWasUp = true;
             wards++;
             Vec3 at = c.position();

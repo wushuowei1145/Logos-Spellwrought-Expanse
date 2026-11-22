@@ -75,10 +75,13 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
     /** 她的炼成阵什么时候转开的（游戏刻，没有为 -1）、一共转多久：客户端照着画（{@code KohakuCircle}），不走 Logos 的领域特效（那是奥术的粉紫色）。 */
     private static final EntityDataAccessor<Long> CIRCLE_AT = SynchedEntityData.defineId(KohakuCompanion.class, EntityDataSerializers.LONG);
     private static final EntityDataAccessor<Integer> CIRCLE_LENGTH = SynchedEntityData.defineId(KohakuCompanion.class, EntityDataSerializers.INT);
+    /** 撑着伞没有：0 没有、1 她自己的、2 大的（把你也罩进去）。客户端照着在杖头上画伞面（{@code KohakuUmbrella}）。 */
+    private static final EntityDataAccessor<Integer> UMBRELLA = SynchedEntityData.defineId(KohakuCompanion.class, EntityDataSerializers.INT);
 
     final KohakuStaff staff = new KohakuStaff(this);
     final KohakuMagic magic = new KohakuMagic(this);
     final KohakuMoves moves = new KohakuMoves(this);
+    final KohakuLife life = new KohakuLife(this);
     private float spellPower = 1;
     private CompanionStats.Part power = new CompanionStats.Part(1, 0, 0);
     private double mana, maxMana = MANA;
@@ -94,6 +97,16 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
         super.defineSynchedData(builder);
         builder.define(CIRCLE_AT, -1L);
         builder.define(CIRCLE_LENGTH, 0);
+        builder.define(UMBRELLA, 0);
+    }
+
+    void setUmbrella(int size) {
+        if (entityData.get(UMBRELLA) != size) entityData.set(UMBRELLA, size);
+    }
+
+    /** 撑着伞没有：0 没有、1 她自己的、2 大的（把你也罩进去）。 */
+    public int umbrella() {
+        return entityData.get(UMBRELLA);
     }
 
     /** 地上转开她的炼成阵，转 {@code length} 刻。 */
@@ -257,6 +270,9 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
 
     @Override
     protected ItemStack restingMainHand() {
+        // 要递给你的吃的、叼来的战利品拿在右手里
+        ItemStack gift = life.inHand();
+        if (!gift.isEmpty()) return gift.copy();
         return staffStowed() ? ItemStack.EMPTY : staff.held().copy();
     }
 
@@ -268,6 +284,8 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
         // 凝辉：右手凝剑（手里是杖剑时直接用它砍，不收）；猫步：一跃一落，杖收着
         if (moves.busy()) return !(moves.sweeping() && staff.blade());
         if (magic.casting()) return false;
+        // 坐着、趴着：长杖收起来（撑伞时杖就是伞柄，不收）
+        if (life.seated()) return true;
         return withdrawing() || mood.playing() != null || mood.curled();
     }
 
@@ -277,7 +295,8 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
         ItemStack want = restingMainHand(), have = getMainHandItem();
         if (ItemStack.isSameItemSameComponents(want, have)) return;
         setItemSlot(EquipmentSlot.MAINHAND, want);
-        if (hiddenForSummon()) return;
+        // 拿出要递的东西、递出去：不闪光
+        if (hiddenForSummon() || !life.inHand().isEmpty() || !have.isEmpty() && !ItemStack.isSameItem(have, staff.held())) return;
         Vec3 hand = getEyePosition().add(Vec3.directionFromRotation(0, yBodyRot + 40).scale(.4)).add(0, -.5, 0);
         level.sendParticles(new DustParticleOptions(AMBER, .8f), hand.x, hand.y, hand.z, 8, .1, .3, .1, 0);
         level.sendParticles(ParticleTypes.END_ROD, hand.x, hand.y, hand.z, 2, .05, .2, .05, .01);
@@ -294,7 +313,7 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
 
     @Override
     protected boolean busyHands() {
-        return magic.casting() || moves.busy();
+        return magic.casting() || moves.busy() || !life.inHand().isEmpty();
     }
 
     /** 凝辉的战斗武器编号（客户端按它取网格画剑）。 */
@@ -363,6 +382,7 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
         mana = Math.min(maxMana, mana + regenPerSecond() / 20);
         magic.tick(level, now);
         moves.tick(level, now);
+        life.tick(level, now, p);
         tickStaffInHand(level);
     }
 
@@ -411,6 +431,8 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
         setHealth(1);
         magic.cancel();
         moves.cancel();
+        life.rise(level, withdrawAt, true);
+        life.dropHand(level);
         stopEating();
         setMove("");
         getNavigation().stop();
@@ -497,6 +519,61 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
         return KohakuMoves.carries;
     }
 
+    /** 测试用：塞给你吃的几次、叼来战利品几次、认过几次地毯、在地毯上睡着加过几次羁绊、晒饱过几次。 */
+    public static int foodGifts() {
+        return KohakuLife.foodGifts;
+    }
+
+    public static int fetches() {
+        return KohakuLife.fetches;
+    }
+
+    public static int rugClaims() {
+        return KohakuLife.rugClaims;
+    }
+
+    public static int rugNaps() {
+        return KohakuLife.rugNaps;
+    }
+
+    public static int sunFulls() {
+        return KohakuLife.sunFulls;
+    }
+
+    /** 测试用：给你吃的、叼战利品都必成（不看概率）。 */
+    public static void luckyForTest(boolean on) {
+        KohakuLife.lucky = on;
+    }
+
+    /** 测试用：此刻摆着什么姿势（none / sit / loaf / umbrella）、陪你去的是哪（beside / rug / sun / umbrella，没有为空）。 */
+    public String poseForTest() {
+        return life.pose().name().toLowerCase(java.util.Locale.ROOT);
+    }
+
+    public String spotForTest() {
+        var plan = life.plan();
+        return plan == null ? "" : plan.spot().name().toLowerCase(java.util.Locale.ROOT);
+    }
+
+    /** 测试用：晒饱了没有；直接晒到差 {@code left} 刻就饱。 */
+    public boolean sunnedForTest() {
+        return life.sunned();
+    }
+
+    public void sunAlmostForTest(int left) {
+        life.sunAlmost(left);
+    }
+
+    /** 测试用：把和主人的羁绊直接定到 {@code affection}。 */
+    public void affectionForTest(ServerPlayer p, float affection) {
+        setBond(p, bond(p).withAffection(affection));
+    }
+
+    /** 测试用：认下的地毯（没有为 null）。 */
+    public static net.minecraft.core.@Nullable BlockPos rugForTest(ServerPlayer p) {
+        return KohakuLife.days(p).rug().map(net.minecraft.core.GlobalPos::pos).orElse(null);
+    }
+
     /** 测试用：魔力加满、杖里充满（大术式要两边加起来才放得出）。 */
     public void topUp() {
         refreshCap();
@@ -536,6 +613,7 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
     protected void onDie() {
         magic.cancel();
         moves.cancel();
+        if (level() instanceof ServerLevel level) life.dropHand(level);
     }
 
     /** 整个人由 misc 动画摆（睡着、倒下）：客户端这时不叠加视线。 */
@@ -570,6 +648,10 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
     protected void onLeave() {
         magic.cancel();
         moves.cancel();
+        if (level() instanceof ServerLevel level) {
+            life.rise(level, level.getGameTime(), true);
+            life.dropHand(level);
+        }
     }
 
     @Override

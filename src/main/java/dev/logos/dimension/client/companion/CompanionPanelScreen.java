@@ -433,18 +433,52 @@ public final class CompanionPanelScreen extends Screen {
             g.text(font, fit(title, lw - 14), x + 11, ry + 1, open ? style.ink() : CompanionUi.alpha(style.dim(), .7f), false);
         }
         int dx = x + lw + 8, dy = top() + 16;
-        g.fill(dx - 5, dy - 2, dx - 4, cardB() - 16, CompanionUi.alpha(style.accent(), .14f));
+        // 琥珀的往事是她的炼金笔记（第 10 节第 8 条）：一张笔记纸，字是深色的墨水
+        boolean note = NOTEBOOK.contains(id());
+        int ink = CompanionUi.mix(style.ink(), style.dim(), .25f), head = style.accent(), dim = style.dim();
+        if (note) {
+            notePaper(g, dx - 4, dy - 6, r + 2, cardB() - 10, dy, memory);
+            dx += 14;
+            ink = NOTE_INK;
+            head = style.accentDeep();
+            dim = NOTE_DIM;
+        } else {
+            g.fill(dx - 5, dy - 2, dx - 4, cardB() - 16, CompanionUi.alpha(style.accent(), .14f));
+        }
         if (memory >= s.memories()) {
-            g.text(font, tr("locked_skill"), dx, dy, style.dim(), false);
-            wrapped(g, tr("memory_locked", memory), dx, dy + 14, r - dx, style.dim());
+            g.text(font, tr("locked_skill"), dx, dy, dim, false);
+            wrapped(g, tr("memory_locked", memory), dx, dy + 14, r - dx, dim);
             return;
         }
-        g.text(font, own("memory." + memory + ".title"), dx, dy, style.accent(), false);
+        g.text(font, own("memory." + memory + ".title"), dx, dy, head, false);
         int ty = dy + 14;
         for (int i = 1; I18n.exists("line.logos_dimension." + id() + ".talk.past_" + memory + "_" + i); i++) {
-            ty = wrapped(g, Component.translatable("line.logos_dimension." + id() + ".talk.past_" + memory + "_" + i), dx, ty, r - dx,
-                    CompanionUi.mix(style.ink(), style.dim(), .25f)) + 4;
+            ty = wrapped(g, Component.translatable("line.logos_dimension." + id() + ".talk.past_" + memory + "_" + i), dx, ty, r - dx, ink) + (note ? 0 : 4);
         }
+    }
+
+    /** 往事画成笔记纸的同伴（琥珀的炼金笔记）。 */
+    static final java.util.Set<String> NOTEBOOK = java.util.Set.of("kohaku");
+    /** 笔记纸：纸、阴影、横线、页边线、墨水、淡墨、页边的涂鸦。 */
+    static final int NOTE_PAPER = 0xFFF4EAD4, NOTE_SHADOW = 0x66000000, NOTE_RULE = 0x507FA2C4, NOTE_MARGIN = 0x90D07070, NOTE_INK = 0xFF4A3426,
+            NOTE_DIM = 0xFF9A8670, NOTE_DOODLE = 0x58B8732A;
+    /** 页边的公式涂鸦（每一页换着画）。 */
+    static final String[] NOTE_FORMULAS = {"Hg + S → ∴", "Δ = √(φ·τ)", "∞ ≈ 3 naps", "☉ + ☽ = ◎", "1 drop > 2 pages"};
+
+    /**
+     * 琥珀的笔记纸：奶油色的纸，淡蓝横线对着每一行字，左边一条红色页边线；页边画着猫爪，角上潦草写着一行公式（每一页不一样）。
+     * {@code lineTop} 是第一行字的顶（横线落在每行字的下面）。
+     */
+    private void notePaper(GuiGraphicsExtractor g, int x0, int y0, int x1, int y1, int lineTop, int page) {
+        g.fill(x0 + 3, y0 + 3, x1 + 3, y1 + 3, NOTE_SHADOW);
+        g.fill(x0, y0, x1, y1, NOTE_PAPER);
+        for (int y = lineTop + 23; y < y1 - 3; y += 10) g.fill(x0 + 3, y, x1 - 3, y + 1, NOTE_RULE);
+        g.fill(x0 + 13, y0, x0 + 14, y1, NOTE_MARGIN);
+        CompanionStyle.paw(g, x0 + 7, y1 - 12, 4, NOTE_DOODLE);
+        CompanionStyle.paw(g, x0 + 7, y1 - 26, 3, NOTE_DOODLE);
+        CompanionStyle.paw(g, x1 - 12, y0 + 11, 6, NOTE_DOODLE);
+        String formula = NOTE_FORMULAS[Math.floorMod(page, NOTE_FORMULAS.length)];
+        g.text(font, formula, x1 - 8 - font.width(formula), y1 - 30, NOTE_DOODLE, false);
     }
 
     // ---------------------------------------------------------------- 小工具

@@ -194,6 +194,9 @@ public final class Companions {
     public static final Supplier<AttachmentType<CompanionPouch>> PRINCESS_POUCH = pouch("elf_princess_pouch");
     public static final Supplier<AttachmentType<Bond>> KOHAKU_BOND = bond("kohaku_bond");
     public static final Supplier<AttachmentType<CompanionPouch>> KOHAKU_POUCH = pouch("kohaku_pouch");
+    /** 琥珀和你的日子：她的专属地毯、今天塞了几次吃的、哪天看过载页、收过零花钱（{@link KohakuDays}）。 */
+    public static final Supplier<AttachmentType<KohakuDays>> KOHAKU_DAYS = ATTACHMENTS.register("kohaku_days",
+            () -> AttachmentType.builder(() -> KohakuDays.NONE).serialize(KohakuDays.CODEC.fieldOf("days")).copyOnDeath().build());
 
     private static Supplier<AttachmentType<Bond>> bond(String id) {
         return ATTACHMENTS.register(id, () -> AttachmentType.builder(() -> Bond.NONE).serialize(Bond.CODEC.fieldOf("bond")).copyOnDeath().build());

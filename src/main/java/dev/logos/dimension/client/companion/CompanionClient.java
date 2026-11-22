@@ -256,6 +256,9 @@ public final class CompanionClient {
         /** 凝辉的样子（{@link VesperglassOnBone#state}，-1 没有）、她的实体 ID（凝聚、消散的随机种子）。 */
         private static final DataTicket<Float> SWORD = DataTicket.create("logos_dimension_kohaku_sword", Float.class);
         private static final DataTicket<Integer> ID = DataTicket.create("logos_dimension_kohaku_id", Integer.class);
+        /** 伞撑开了多少（{@link KohakuUmbrella#openness}，0 没有）、是不是大伞。 */
+        private static final DataTicket<Float> UMBRELLA = DataTicket.create("logos_dimension_kohaku_umbrella", Float.class);
+        private static final DataTicket<Boolean> UMBRELLA_WIDE = DataTicket.create("logos_dimension_kohaku_umbrella_wide", Boolean.class);
 
         @Override
         public boolean shouldRender(KohakuCompanion entity, Frustum frustum, double x, double y, double z) {
@@ -282,15 +285,28 @@ public final class CompanionClient {
             }
             state.addGeckolibData(SWORD, sword);
             state.addGeckolibData(ID, animatable.getId());
+            float umbrella = 0;
+            if (move != null && animatable.umbrella() > 0) {
+                umbrella = KohakuUmbrella.openness(move.animation(), (animatable.level().getGameTime() - move.start() + partialTick) / 20f);
+            }
+            state.addGeckolibData(UMBRELLA, umbrella);
+            state.addGeckolibData(UMBRELLA_WIDE, animatable.umbrella() == 2);
         }
 
         @Override
         public void adjustRenderPose(RenderPassInfo<R> info) {
             super.adjustRenderPose(info);
-            if (info.getOrDefaultGeckolibData(SWORD, -1f) < 0) return;
+            boolean sword = info.getOrDefaultGeckolibData(SWORD, -1f) >= 0, umbrella = info.getOrDefaultGeckolibData(UMBRELLA, 0f) > 0;
+            if (!sword && !umbrella) return;
             GeoBone hand = info.model().boneLookup().get().get("RightHand");
-            if (hand != null) info.addPerBoneRender(hand, (i, bone, out) -> VesperglassOnBone.submit(i.poseStack(), out, i.packedLight(),
+            if (hand == null) return;
+            if (sword) info.addPerBoneRender(hand, (i, bone, out) -> VesperglassOnBone.submit(i.poseStack(), out, i.packedLight(),
                     i.getOrDefaultGeckolibData(SWORD, -1f), "kohaku" + i.getOrDefaultGeckolibData(ID, 0)));
+            // 下雨天的伞面：画在杖头上（阴影那一遍不画）
+            if (umbrella) info.addPerBoneRender(hand, (i, bone, out) -> {
+                if (!dev.logos.dimension.client.dissolve.Dissolves.shadowPass()) KohakuUmbrella.submit(i.poseStack(), out,
+                        i.getOrDefaultGeckolibData(UMBRELLA, 0f), i.getOrDefaultGeckolibData(UMBRELLA_WIDE, false), i.getOrDefaultGeckolibData(CLOCK, 0f));
+            });
         }
 
         @Override
