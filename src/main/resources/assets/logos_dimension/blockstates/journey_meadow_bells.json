@@ -32,6 +32,38 @@
       {
         "model": "logos_dimension:block/wildflower/journey_meadow_bells_0_1",
         "y": 270
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_0_2",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_0_2",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_0_2",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_0_2",
+        "y": 270
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_0_3",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_0_3",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_0_3",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_0_3",
+        "y": 270
       }
     ],
     "season=1": [
@@ -65,6 +97,38 @@
       },
       {
         "model": "logos_dimension:block/wildflower/journey_meadow_bells_1_1",
+        "y": 270
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_1_2",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_1_2",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_1_2",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_1_2",
+        "y": 270
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_1_3",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_1_3",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_1_3",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_1_3",
         "y": 270
       }
     ],
@@ -100,6 +164,38 @@
       {
         "model": "logos_dimension:block/wildflower/journey_meadow_bells_2_1",
         "y": 270
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_2_2",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_2_2",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_2_2",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_2_2",
+        "y": 270
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_2_3",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_2_3",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_2_3",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_2_3",
+        "y": 270
       }
     ],
     "season=3": [
@@ -133,6 +229,38 @@
       },
       {
         "model": "logos_dimension:block/wildflower/journey_meadow_bells_3_1",
+        "y": 270
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_3_2",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_3_2",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_3_2",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_3_2",
+        "y": 270
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_3_3",
+        "y": 0
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_3_3",
+        "y": 90
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_3_3",
+        "y": 180
+      },
+      {
+        "model": "logos_dimension:block/wildflower/journey_meadow_bells_3_3",
         "y": 270
       }
     ]

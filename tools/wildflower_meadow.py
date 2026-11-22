@@ -29,35 +29,43 @@ def paint(name, season, head=False):
     leaf = ['#628844', '#527c3c', '#8a8951', '#899280'][season]
     vein = ['#94ae63', '#8fa65a', '#bbaf72', '#c2cabb'][season]
     stem = ['#506e36', '#49672f', '#806943', '#858875'][season]
-    petal = ('#f2efda' if name.endswith('daisies') else '#a3a9df') if season < 2 else '#ccb994'
-    shadow = '#c6c5ac' if name.endswith('daisies') else '#6b7caf'
+    white = name.endswith('daisies')
+    petal = ('#f4ebd8' if white else '#b2b3e1') if season < 2 else '#ccb994'
+    shadow = '#d7c8ad' if white else '#7a86b8'
     if head:
         if season < 3:
-            if name.endswith('daisies'):
-                for box in [(6,2,9,5),(6,10,9,13),(2,6,5,9),(10,6,13,9),(4,4,6,6),(9,4,11,6),(4,9,6,11),(9,9,11,11)]:
-                    q.rectangle(box, fill=petal)
-                q.rectangle((6,6,9,9), fill='#d6ae51' if season < 2 else '#a28a51')
+            if white:
+                # 宽瓣波斯菊：八片花瓣重叠成饱满花冠，花心只留小块暖金。
+                for box in [(5,0,10,7),(8,2,15,8),(9,6,15,12),(5,8,11,15),
+                            (1,8,7,15),(0,5,7,10),(0,1,7,7),(2,0,8,6)]:
+                    q.ellipse(box,fill=shadow)
+                    q.ellipse((box[0]+1,box[1],box[2],box[3]-1),fill=petal)
+                q.rectangle((6,6,9,9),fill='#d7b356' if season<2 else '#a28a51')
                 q.point((6,6),fill='#f5d974')
             else:
-                q.polygon([(7,2),(11,5),(13,9),(10,12),(5,13),(2,9),(4,4)],fill=shadow)
-                q.polygon([(7,3),(10,6),(12,9),(9,10),(5,12),(4,8),(5,5)],fill=petal)
-                q.rectangle((6,6,9,9),fill='#e5debe')
+                # 绣球由数朵小花形成整团花冠，避免一个大色块糊在茎上。
+                q.ellipse((1,1,14,14),fill=shadow)
+                for x,y in [(5,4),(10,4),(3,8),(8,8),(12,9),(6,12),(10,12)]:
+                    q.polygon([(x,y-2),(x+2,y-1),(x+2,y+1),(x,y+2),(x-2,y+1),(x-2,y-1)],fill=petal)
+                    q.point((x,y),fill='#e8e3ee')
         return im
-    q.line((8,15,8,3),fill=stem,width=1)
-    q.polygon([(8,14),(3,13),(1,9),(5,10),(8,12)],fill=leaf)
-    q.polygon([(8,12),(10,8),(14,6),(13,10),(10,13)],fill=leaf)
-    q.line((3,11,8,14),fill=vein,width=1)
-    q.line((9,12,12,8),fill=vein,width=1)
+    q.line((8,15,8,5),fill=stem,width=2)
+    for points in [[(8,15),(1,14),(0,9),(5,10),(8,13)],[(8,15),(10,10),(15,9),(14,14)],
+                   [(8,12),(2,10),(1,6),(6,8)],[(8,12),(10,7),(15,6),(13,11)]]:
+        q.polygon(points,fill=leaf)
+    q.line((2,11,8,15),fill=vein,width=1)
+    q.line((9,14,13,10),fill=vein,width=1)
     if season < 2:
-        if name.endswith('daisies'):
-            q.rectangle((6,1,9,5),fill=petal);q.rectangle((4,2,11,4),fill=petal)
-            q.rectangle((7,2,8,3),fill='#d7ad4a');q.point((7,2),fill='#f4d67d')
+        if white:
+            q.ellipse((1,1,14,8),fill=shadow)
+            for box in [(2,0,7,5),(6,0,11,5),(9,1,14,6),(8,4,13,8),(3,4,8,8),(1,2,6,6)]:
+                q.ellipse(box,fill=petal)
+            q.rectangle((6,3,9,5),fill='#d7ad4a');q.point((6,3),fill='#f4d67d')
         else:
-            q.line((8,3,11,2),fill=stem)
-            q.rectangle((7,2,11,5),fill=shadow);q.rectangle((8,2,10,4),fill=petal)
-            q.point((7,5),fill=petal);q.point((11,5),fill=petal)
-            q.line((8,7,4,6),fill=stem)
-            q.rectangle((2,6,6,9),fill=shadow);q.rectangle((3,6,5,8),fill=petal)
+            q.ellipse((1,0,14,9),fill=shadow)
+            for x,y in [(5,2),(10,2),(3,5),(8,5),(12,6),(6,8)]:
+                q.polygon([(x,y-1),(x+2,y),(x+1,y+2),(x-1,y+2),(x-2,y)],fill=petal)
+                q.point((x,y),fill='#e8e3ee')
     else:
         q.rectangle((7,2,9,4),fill='#9a8256' if season==2 else '#bec7b9')
         if season==3:q.line((2,9,5,10),fill='#e1e5d8')
@@ -72,11 +80,15 @@ def card(x,z,h,w,axis,texture='body'):
 
 def model(name,season,variant):
     elements=[]
-    positions=[(4,5,10,8),(11,11,13,9)] if variant==0 else [(5,11,12,9),(11,4,9,8)]
+    # 错开花冠位置和高度，避免高密度时所有花头都落在整齐的半格网点上。
+    positions=[[(4.5,4.5,8.5,11),(11.5,11.5,11,11)],
+               [(5.8,12,10,11),(10.3,3.5,8,10.5)],
+               [(3.3,7.7,9,10.5),(11,11.7,11.2,11)],
+               [(6.2,3.4,10.8,10.5),(12,12,7.8,11)]][variant]
     for x,z,h,w in positions:
         elements.extend([card(x,z,h,w,'z'),card(x,z,h,w,'x')])
         if season<2:
-            elements.append({'from':[x-2,h*.8,z-2],'to':[x+2,h*.8,z+2], 'shade':False,
+            elements.append({'from':[x-3.7,h*.77,z-3.7],'to':[x+3.7,h*.77,z+3.7], 'shade':False,
                              'faces':{f:{'texture':'#head','uv':[0,0,16,16]} for f in ['up','down']}})
     return {'parent':'minecraft:block/block','ambientocclusion':False,'render_type':'minecraft:cutout',
             'textures':{'body':f'logos_dimension:block/wildflower/{name}_{season}',
@@ -99,7 +111,7 @@ def main():
             paint(name,season).save(textures/f'{name}_{season}.png')
             paint(name,season,True).save(textures/f'{name}_{season}_head.png')
             variants[f'season={season}']=[]
-            for variant in range(2):
+            for variant in range(4):
                 model_id=f'block/wildflower/{name}_{season}_{variant}'
                 write(A/'models'/f'{model_id}.json',model(name,season,variant))
                 variants[f'season={season}'] += [{'model':'logos_dimension:'+model_id,'y':r} for r in [0,90,180,270]]
@@ -109,7 +121,7 @@ def main():
     ids=['logos_dimension:'+n for n in KINDS]
     for ns,kind,name in [('logos','block','fragile_plants'),('minecraft','block','small_flowers'),('minecraft','item','small_flowers'),('minecraft','block','replaceable_by_trees')]:
         tag(ns,kind,name,ids)
-    for language,labels in [('zh_cn',['原野雏菊花簇','原野铃花花簇']),('en_us',['Meadow Daisy Cluster','Meadow Bellflower Cluster'])]:
+    for language,labels in [('zh_cn',['奶油波斯菊花簇','蓝紫绣球花簇']),('en_us',['Cream Cosmos Cluster','Blue Hydrangea Cluster'])]:
         path=A/f'lang/{language}.json';obj=json.loads(path.read_text(encoding='utf-8'))
         for name,label in zip(KINDS,labels):
             for prefix in ['block','item']:obj[f'{prefix}.logos_dimension.{name}']=label
@@ -120,7 +132,7 @@ def main():
         'seed':602211,'noise':{'firstOctave':-2,'amplitudes':[1.0,.35]},'scale':.25,
         'states':[state(KINDS[0],0)]*3+[state(KINDS[1],0)]*2}}})
     placed=D/'worldgen/placed_feature/cloudsea_rose_dunes_floor.json'
-    template=json.loads(placed.read_text(encoding='utf-8'));template['placement'][0]['count']=360;write(placed,template)
+    template=json.loads(placed.read_text(encoding='utf-8'));template['placement'][0]['count']=600;write(placed,template)
     entries=[('minecraft:short_grass',None,58),('logos_dimension:journey_meadow_grass_young',None,24),
              ('logos_dimension:journey_stardew',None,6),('logos_dimension:journey_silver_anemone',0,8),('logos_dimension:journey_fireweed',0,4)]
     provider={'type':'minecraft:weighted_state_provider','entries':[]}
@@ -129,7 +141,7 @@ def main():
         if season is not None:value['Properties']={'season':str(season)}
         provider['entries'].append({'data':value,'weight':weight})
     write(D/'worldgen/configured_feature/wildflower_understory.json',{'type':'minecraft:simple_block','config':{'to_place':provider}})
-    under=copy.deepcopy(template);under['feature']='logos_dimension:wildflower_understory';under['placement'][0]['count']=220
+    under=copy.deepcopy(template);under['feature']='logos_dimension:wildflower_understory';under['placement'][0]['count']=180
     write(D/'worldgen/placed_feature/wildflower_understory.json',under)
     path=D/'worldgen/biome/cloudsea_rose_dunes.json';biome=json.loads(path.read_text(encoding='utf-8'))
     features=biome['features'][9]

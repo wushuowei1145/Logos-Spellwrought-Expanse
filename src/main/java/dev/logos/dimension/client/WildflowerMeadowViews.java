@@ -56,7 +56,7 @@ public abstract class WildflowerMeadowViews implements UIScenario {
                     }
                     System.out.println("WILDFLOWER_SAMPLE flowers="+flowers+" grass="+grass);
                 })
-                .checkServer("花簇覆盖多于草且留有空隙",ctx->flowers>grass&&flowers>300&&grass>50&&flowers+grass<1024)
+                .checkServer("密集花簇覆盖超过八成且留有空隙",ctx->flowers>grass&&flowers>=860&&grass>=10&&flowers+grass<1024)
                 .checkServer("花簇不能在石头上扎根",ctx->{
                     var level=ctx.player().level();var p=new BlockPos(22,Y+1,22);
                     level.setBlockAndUpdate(p.below(),Blocks.STONE.defaultBlockState());
