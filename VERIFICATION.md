@@ -1,5 +1,26 @@
 # 首版验证记录
 
+## 野花草甸：噪声花带与四季花簇
+
+2026-11-22：分支 `feat/wildflower-meadow`，基于 main `b270b089`（#286），与长风平原 PR #288 分开。Logos 使用 CI 固定提交 `5fdd33e` 构建的 0.7.2，星辰花乐团使用 `ca57e94` 构建的 0.1.0。说明见 [野花草甸](docs/WILDFLOWER_MEADOW.md)。
+
+| 层级 | 结果 |
+|---|---|
+| 构建与单元 | `test build` 通过，**386/386**。更新现有花甸数据检查：主花带为原版噪声提供器、白花与蓝花两类状态，先铺花后填草；保留其他平原的原版短草 ID 与原有草原气候分配检查 |
+| 原版生成 | 湿润平地补入连续气候主体，并同步世界测试预设。花带和草层仍为原版 SimpleBlock + PlacedFeature，不抬地、不削坡。生成脚本重复执行后 42 个相关模型、贴图、花带数据和气候文件内容不变 |
+| 实际客户端 | 普通渲染器、Iris + Sodium + Photon 1.3b 各 **2/2 场景、6/6 检查**：固定样地通过真实原版放置特征生成，1024 格中 **775 格新花簇、101 格草**；花多于草且留有空隙，花簇不能在石头上存活；另拍未改动地表的自然花甸，检查群系正确、仍为原版噪声生成器 |
+| 世界测试 | 已有 `plant_item_soil_support`、`plant_support_loss`、`plant_legacy_cleanup` **3/3**；新花簇加入原有季节植物列表，因此覆盖实际 BlockItem 种植、土壤被换成石头或挖去后的脱落、旧存档错误种植在随机刻下清理；各季节状态均保持土壤规则 |
+| 美术检查 | 新增 16 张贴图均为 **16×16**。两种花各有两种株型、四季模型、四向旋转；春夏每格 12 面，秋冬 8 面。人工查看自然景观、测试样地俯视与近景，花带有白蓝分区，侧面与花顶均可见；没有使用图像生成服务 |
+| 修正 | 最初自然定位失败，补入湿润平地连续气候范围；测试预设同步由现有一致性单测守住。平地样本最初给两层重复使用同一随机种子，导致草层总撞上已经种过花的位置，改为按特征分开的种子；生产环境本来就由原版按特征分配种子 |
+| 未验证 | 没有测 FPS、联机、其他光影包；秋冬外观没有逐季进游戏拍摄。未把旧区块的已有花草替换成新花簇，新增自然生成只在新区块生效 |
+
+```text
+python tools/wildflower_meadow.py
+./gradlew test build -PlogosJar=/absolute/path/logos.jar -PorchestraJar=/absolute/path/orchestra.jar
+./gradlew runGameTestServer -PlogosJar=... -PorchestraJar=... -PdimensionTests=logos_dimension:plant_*
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:wildflower_meadow -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 长风平原：移除风动草
 
 2026-11-23：分支 `fix/remove-grass-wind`，从 main `9ac1a6b7`。Logos 0.7.2（`5fdd33e`）、星辰花乐团 0.1.0，同友人帐。说明见 [长风平原](docs/CHANGFENG_PLAINS.md)。

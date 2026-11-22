@@ -1905,5 +1905,9 @@
   "gui.logos_dimension.companion_book.dismiss": "Send back",
   "gui.logos_dimension.companion_book.resting": "Resting · %ss",
   "gui.logos_dimension.companion_book.unknown": "???",
-  "gui.logos_dimension.companion_book.with_you": "With you"
+  "gui.logos_dimension.companion_book.with_you": "With you",
+  "block.logos_dimension.journey_meadow_daisies": "Meadow Daisy Cluster",
+  "item.logos_dimension.journey_meadow_daisies": "Meadow Daisy Cluster",
+  "block.logos_dimension.journey_meadow_bells": "Meadow Bellflower Cluster",
+  "item.logos_dimension.journey_meadow_bells": "Meadow Bellflower Cluster"
 }
