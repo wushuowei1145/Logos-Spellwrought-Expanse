@@ -1,0 +1,7 @@
+; 炼成阵·星辰花（第八枚爪之契）：在敌人脚下画一个大炼成阵（半径 5），1.5 秒后开出一片奥术星辰花，阵里的敌人都受奥术伤害。
+; 圈心是代码传的 here（敌群中心或强敌脚下）。只对强敌、或者一下子围上来三个以上时放。注入 2400，天穹长杖（容量 3200）放得满。
+(spell :name "炼成阵·星辰花" :mana 2400 :trigger cast :intent area
+  (let $c here
+    (field :at $c :radius 5 :life 1.5 :every 2
+      (on-expire
+        (damage-all (enemies :at $c :radius 5) 12 arcane)))))

@@ -9,6 +9,7 @@ import dev.logos.lang.Spell;
 import dev.logos.runtime.Casting;
 import dev.logos.runtime.Effects;
 import dev.logos.runtime.ManaWrap;
+import dev.logos.runtime.SpellModifiers;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -182,7 +183,7 @@ final class PrincessMagic {
                 shields++;
             }
             case BLESS -> {
-                ManaWrap.wrap(t, Element.LIFE, BLESS_DAMAGE * power, BLESS_SECONDS);
+                ManaWrap.wrap(t, Element.LIFE, blessAmount(power, SpellModifiers.of(t).damage(Element.LIFE)), BLESS_SECONDS);
                 Vec3 hand = t.getEyePosition().add(0, -.6, 0);
                 level.sendParticles(new DustParticleOptions(ElfPrincessCompanion.MINT, 1.3f), hand.x, hand.y, hand.z, 18, .25, .2, .25, 0);
                 level.sendParticles(ParticleTypes.HAPPY_VILLAGER, hand.x, hand.y, hand.z, 8, .3, .2, .3, 0);
@@ -202,6 +203,14 @@ final class PrincessMagic {
                 ready.put(Kind.SNARE, now + SNARE_COOLDOWN);
             }
         }
+    }
+
+    /**
+     * 缠到主人手上的量：每一下只按她的法强算（维护者定的）。Logos 的魔力缠绕挥中时会再乘挥武器的人（主人）的生命法强
+     * （{@code Effects.followUp}），所以这里先除掉主人此刻的那一份 {@code ownerLife}，挥中时乘回来正好是 {@code BLESS_DAMAGE × 她的法强}。
+     */
+    static double blessAmount(double power, double ownerLife) {
+        return BLESS_DAMAGE * power / Math.max(.01, ownerLife);
     }
 
     /**

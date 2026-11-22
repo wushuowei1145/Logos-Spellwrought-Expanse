@@ -61,7 +61,104 @@ public final class CompanionCommands {
                     return 1;
                 })))
                 .then(outfits())
-                .then(princess());
+                .then(princess())
+                .then(kohaku());
+    }
+
+    /**
+     * {@code kohaku ...}：琥珀（docs/KOHAKU_COMPANION.md）。
+     * <pre>
+     * /alchemy companion kohaku summon        召出她（顺带立契，给一枚压着你名字的爪印金镑）
+     * /alchemy companion kohaku dismiss       收回
+     * /alchemy companion kohaku info          她的数值、法术强度、魔力、长杖、心智
+     * /alchemy companion kohaku rest          清掉撤退后的休息时间
+     * /alchemy companion kohaku seal [枚数]   盖爪之契
+     * /alchemy companion kohaku satiety 值    设她的饱腹
+     * /alchemy companion kohaku mana 值       设她的魔力（试魔力少时的打法）
+     * /alchemy companion kohaku withdraw      让她撤退（试倒下、法阵卷走的样子）
+     * </pre>
+     */
+    private static LiteralArgumentBuilder<CommandSourceStack> kohaku() {
+        CompanionDef d = Companions.KOHAKU_DEF;
+        return Commands.literal("kohaku")
+                .then(Commands.literal("summon").executes(c -> {
+                    ServerPlayer p = c.getSource().getPlayerOrException();
+                    Companions.grantPact(p, d);
+                    if (!PawSovereignItem.carries(p)) {
+                        var coin = PawSovereignItem.bound(p);
+                        if (!p.getInventory().add(coin)) p.drop(coin, false);
+                    }
+                    Component failed = Companions.summon(p, d, null);
+                    if (failed != null) c.getSource().sendFailure(failed);
+                    return failed == null ? 1 : 0;
+                }))
+                .then(Commands.literal("dismiss").executes(c -> Companions.dismiss(c.getSource().getPlayerOrException(), d) ? 1 : 0))
+                .then(Commands.literal("rest").executes(c -> {
+                    ServerPlayer p = c.getSource().getPlayerOrException();
+                    Companions.wake(p, d);
+                    p.getCooldowns().removeCooldown(p.getCooldowns().getCooldownGroup(PawSovereignItem.blank()));
+                    c.getSource().sendSuccess(() -> Component.literal("琥珀不用再休息了"), false);
+                    return 1;
+                }))
+                .then(Commands.literal("seal").executes(c -> kohakuSeal(c.getSource(), 1))
+                        .then(Commands.argument("count", IntegerArgumentType.integer(1, 20)).executes(c ->
+                                kohakuSeal(c.getSource(), IntegerArgumentType.getInteger(c, "count")))))
+                .then(Commands.literal("satiety").then(Commands.argument("value", FloatArgumentType.floatArg(0, CompanionBond.SATIETY_MAX)).executes(c -> {
+                    Companions.setSatiety(c.getSource().getPlayerOrException(), d, FloatArgumentType.getFloat(c, "value"));
+                    return 1;
+                })))
+                .then(Commands.literal("mana").then(Commands.argument("value", FloatArgumentType.floatArg(0)).executes(c -> {
+                    KohakuCompanion e = Companions.kohaku(c.getSource().getPlayerOrException());
+                    if (e == null) {
+                        c.getSource().sendFailure(Component.literal("琥珀不在外面"));
+                        return 0;
+                    }
+                    e.setMana(FloatArgumentType.getFloat(c, "value"));
+                    e.staff.setStore(0);
+                    return 1;
+                })))
+                .then(Commands.literal("withdraw").executes(c -> {
+                    KohakuCompanion e = Companions.kohaku(c.getSource().getPlayerOrException());
+                    if (e == null || !(e.level() instanceof net.minecraft.server.level.ServerLevel level)) {
+                        c.getSource().sendFailure(Component.literal("琥珀不在外面"));
+                        return 0;
+                    }
+                    e.startWithdraw(level);
+                    return 1;
+                }))
+                .then(Commands.literal("info").executes(c -> kohakuInfo(c.getSource())));
+    }
+
+    private static int kohakuSeal(CommandSourceStack src, int count) throws CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        Companions.grantPact(p, Companions.KOHAKU_DEF);
+        int n = 0;
+        for (int i = 0; i < count; i++) n = Companions.addSeal(p, Companions.KOHAKU_DEF);
+        int seals = n;
+        src.sendSuccess(() -> Component.literal("爪之契 " + seals + " 枚"), false);
+        return 1;
+    }
+
+    private static int kohakuInfo(CommandSourceStack src) throws CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        CompanionDef d = Companions.KOHAKU_DEF;
+        var bond = Companions.bond(p, d);
+        int stage = CompanionBond.Stage.of(bond.affection()).ordinal();
+        CompanionStats.Part power = CompanionStats.power(d.growth(), KohakuCompanion.ownerPower(p), bond.seals(), stage);
+        CompanionStats.Part mana = KohakuCompanion.manaParts(KohakuCompanion.ownerMana(p), bond.seals(), stage);
+        src.sendSuccess(() -> Component.literal(String.format("立契 %s，爪之契 %d，继承 %.0f%%（生命 %.0f%%）；好感 %.1f（%s），饱腹 %.1f；你的奥术法强 ×%.2f；她的法强 ×%.2f（自己 %.2f 羁绊 %.2f 继承 %.2f）；魔力上限 %.0f（自己 %.0f 羁绊 %.0f 继承 %.0f，不算杖）；休息还剩 %d 秒",
+                bond.pact() ? "是" : "否", bond.seals(), d.growth().ratio(bond.seals()) * 100, d.growth().healthRatio(bond.seals()) * 100, bond.affection(),
+                CompanionBond.Stage.of(bond.affection()), bond.satiety(), KohakuCompanion.ownerPower(p), power.total(), power.own(), power.bond(),
+                power.inherited(), mana.total(), mana.own(), mana.bond(), mana.inherited(), (Companions.restLeft(p, d) + 19) / 20)), false);
+        KohakuCompanion c = Companions.kohaku(p);
+        if (c == null) {
+            src.sendSuccess(() -> Component.literal("她现在不在外面"), false);
+            return 1;
+        }
+        CompanionMind mind = c.mind();
+        src.sendSuccess(() -> Component.literal(String.format("生命 %.1f/%.1f 护盾 %.1f；魔力 %.0f/%.0f（每秒 %.1f）；表情 %s；心智：%s", c.getHealth(), c.getMaxHealth(),
+                c.getAbsorptionAmount(), c.mana(), c.maxMana(), c.regenPerSecond(), c.npcMiscAnimation(), mind == null ? "-" : mind.describe())), false);
+        return 1;
     }
 
     /**

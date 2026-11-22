@@ -31,14 +31,36 @@ public record CompanionDef(String id, Supplier<? extends EntityType<? extends Co
      * @param bondHealth     羁绊每升一段多的生命；{@code bondAttack}、{@code bondSpellPower} 同理
      * @param ratio          继承比例的起点，每枚契印加 {@code ratioStep}，最多 {@code maxRatio}
      * @param fullSeals      她自己的成长到第几枚契印为止
+     * @param healthRatio    生命单独的继承比例：起点、每枚契印加 {@code healthRatioStep}、最多 {@code maxHealthRatio}
+     * @param inheritsArmor  护甲、韧性和保护类魔咒继承不继承（琥珀不继承，一直是 0）
      */
     public record Growth(double health, double armor, double toughness, double attack, double spellPower,
                          double sealHealth, double sealArmor, double sealToughness, double sealSpellPower,
                          double bondHealth, double bondAttack, double bondSpellPower,
-                         double ratio, double ratioStep, double maxRatio, int fullSeals) {
+                         double ratio, double ratioStep, double maxRatio, int fullSeals,
+                         double healthRatio, double healthRatioStep, double maxHealthRatio, boolean inheritsArmor) {
+        /** 生命和别的数按同一个比例继承，护甲也继承（白梅、精灵公主）。 */
+        public Growth(double health, double armor, double toughness, double attack, double spellPower,
+                      double sealHealth, double sealArmor, double sealToughness, double sealSpellPower,
+                      double bondHealth, double bondAttack, double bondSpellPower,
+                      double ratio, double ratioStep, double maxRatio, int fullSeals) {
+            this(health, armor, toughness, attack, spellPower, sealHealth, sealArmor, sealToughness, sealSpellPower, bondHealth, bondAttack,
+                    bondSpellPower, ratio, ratioStep, maxRatio, fullSeals, ratio, ratioStep, maxRatio, true);
+        }
+
         /** 盖了 {@code seals} 枚契印时的继承比例。 */
         public double ratio(int seals) {
             return Math.min(maxRatio, ratio + ratioStep * Math.max(0, seals));
+        }
+
+        /** 盖了 {@code seals} 枚契印时生命的继承比例。 */
+        public double healthRatio(int seals) {
+            return Math.min(maxHealthRatio, healthRatio + healthRatioStep * Math.max(0, seals));
+        }
+
+        /** 护甲、韧性、保护类魔咒的继承比例（不继承时是 0）。 */
+        public double armorRatio(int seals) {
+            return inheritsArmor ? ratio(seals) : 0;
         }
 
         /** 契印算到第几枚为止（她自己的成长）。 */

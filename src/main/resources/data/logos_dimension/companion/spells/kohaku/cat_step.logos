@@ -1,0 +1,4 @@
+; 猫步（琥珀本来就会，docs/KOHAKU_COMPANION.md 第 7.4 节）：被包围时闪到开阔的地方。落点是代码算好交给她的 here
+; （8–14 格外、背离敌群往主人那边偏、站得住、附近敌人少、看得见主人）。注入 60。
+(spell :name "猫步" :mana 60 :trigger cast :intent move
+  (blink here))

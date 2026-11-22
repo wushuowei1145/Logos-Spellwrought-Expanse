@@ -10,6 +10,82 @@
 | 实际时间轴核对 | Blockbench 5.2.2 打开模型，贴图错误数 0；三组动作共 18 个时刻，每刻六块关键衣片，与预览矩阵最大顶点偏差 0.00002705 制作单位；几何和完整动画使用其原生编解码器导出 |
 | 资源审计 | `python tools/audit_jian_sui.py` 通过：资源格式、骨骼与通道引用、方块/面数、UV、透明度、关键帧时长、循环首尾及正式导出事件时间 |
 | 未验证 | 未接入实体注册、MoveRunner、武器挂接、伤害或自然生成；未执行 GeckoLib 解析烘焙、Minecraft/TLM 客户端、光影包或世界测试。本 PR 不是可召唤 Boss 的实现 |
+## 琥珀同伴（第四步：日常）
+
+2026-11-22：分支 `feat/kohaku-life`，接在第三步 `feat/kohaku-blink`（#285，还没合并）后面。Logos jar 同前几步（Logos main `5fdd33e` 现场编的）。
+设计见 [琥珀](docs/KOHAKU_COMPANION.md) 第 8、10 节，做了什么在第 10.1 节。模型第 8 版（`MinecraftLogosMod/kohaku_companion`，不在仓库里）加了 12 段日常动画。
+
+| 层级 | 结果 |
+|---|---|
+| 单元 | `KohakuTest` **18/18**（新加四个：坐、趴、撑伞的过渡长度和代码等的刻数一致、循环的那段真的循环，递东西在 give 标记交出去；给你吃的六样加起来一百、按概率落到对应那一样；一天的事一天算；帮你看载页的几种点评——纸撑不住、魔力放不起、注入不够花、条件写死走不到、注入太多、还行。另外改了两个：新动画都在模型里，新台词中英文都有），同伴其余 37 个照旧全过；`LangCoverageTest` 2/2 |
+| 实际客户端 | `group:kohaku_companion` **21/21 场景、46/46 检查**（前三步的 14 个照旧全过，新加 7 个）：顶棚底下你站着不动，她走到你身边鸭子坐、长杖收起来，摸头时还坐着，你一走她站起来又拄着杖；下雨露天嫌弃脸，你站着不动她撑伞，羁绊亲近时是大伞，伞面画出来了，雨停收伞；屋里一块地毯，她第一次坐上去认下它、坐在正中，挂机了在上面趴着打盹、加了羁绊，你一走先起身再伸懒腰；晴天在你旁边趴成猫饼，晒饱了，来了僵尸凝的那次护膜用掉晒饱的那一份；你饿着，她走过来右手拿着吃的递给你、背包里多一份、记下今天给过一次；打完一场，她把带名字的剑（不是腐肉）叼到你脚边、你捡到了；对话里「帮我看看这张」说注入不够花，「给你零花钱」收走一先令、同一天再给不收；对话的话题表多了这两项 |
+| 人工看截图 | 第三人称从背后和前面拍：鸭子坐、猫饼、地毯上打盹、递吃的（拿着炖菜、头别开）都对；伞面第一版浮在杖头上方半格（伞沿离握处 30 像素），她自己的伞改成落在杖头上（16），大伞要高过你的头留在 30、杖头到伞顶连一道淡光；面板「往事」是笔记纸，页角的公式第一版压着「Esc 返回」，挪上去了 |
+| 场景里踩到的 | 在你身边坐的分（0.34）比跟随正在做时（0.3 + 换行为的余量 0.1）低，她一直不坐（改成 0.45，附近有掉落时先捡）；寻路到那一格附近就算到，差 1.4 格停住、最后一段走不过去（最后 2.5 格改成直接走过去，走一阵还没到再挪）；找战利品原来以她为中心，她退开施法以后够不着掉落（改成以你为中心 12 格）；场景自己的：`Inventory.contains(ItemStack)` 连名字一起比，带名字的剑找不到；先令放进了快捷栏手上那一格，被下一步清掉 |
+| 没做 | 没进游戏试玩；醒来的礼物（零花钱让稀有那一档翻倍）是第五步；载页点评没有「伤害和魔力的比例」（Logos 静态算不出伤害）；多人、专用服务器 |
+
+```text
+./gradlew test --tests 'dev.logos.dimension.companion.*' --tests 'dev.logos.dimension.LangCoverageTest' -PlogosJar=/absolute/path/logos.jar -PorchestraJar=/absolute/path/starbloom_orchestra-0.1.0.jar
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:kohaku_companion -PldTestHeadless -PldTestWindow=1280x720
+```
+
+## 琥珀同伴（第三步：凝辉、猫步）
+
+2026-11-22：分支 `feat/kohaku-blink`，基于 main `fabe1c1a`（#284）。Logos jar 同前两步（Logos main `5fdd33e` 现场编的）。
+设计见 [琥珀](docs/KOHAKU_COMPANION.md) 第 6、7.4 节和第 18 节的第三步。模型第 7 版（`MinecraftLogosMod/kohaku_companion`，不在仓库里）加了
+`conjure_sweep`、`blink_out`、`blink_in`。
+
+| 层级 | 结果 |
+|---|---|
+| 单元 | `KohakuTest` **14/14**（新加两个：凝辉招式文件能照常解析、出手时刻和动作标记一致；凝辉网格合并以后 113 块、贴图坐标都在贴图里、原点在剑柄上。另外改了两个：八种意图现在都有她的页、第一到第九印每枚都有新的页；动作时刻加上凝辉和猫步的标记），同伴其余照旧全过；`LangCoverageTest` 2/2 |
+| 实际客户端 | `group:kohaku_companion` **14/14 场景、30/30 检查**（前两步的 11 个照旧全过，新加 3 个）：一只僵尸贴到她跟前——长杖收起、右手凝出凝辉、横扫打中它（受了奥术伤害）、推开，她往后跳开，又拄着长杖；三只僵尸把她围住——她蹲身一跃，落在 7 格以外、落点附近敌人不超过一个；九枚爪之契、主人两成血、身边两只僵尸——她拉着主人一起闪走，主人离开原地 6 格以上、她就在主人身边 |
+| 人工看截图 | 凝辉第一版画得只有她身高的三分之一（比例照美术稿 1:1），放大到 2.4 倍（同白梅的流火）以后长度和她身高差不多；凝聚、横扫、碎掉、往后跳；猫步的爪印、落地 |
+| 网格对比 | `tools/import_vesperglass.py --preview` 离线光栅化合并前后（`art/vesperglass/slim_compare.png`）：剑身、剑柄、萼托看不出差别；花瓣和露滴剑首第一次合得太狠（弧线变折线），收严容差以后和原来一样 |
+| 场景里踩到的 | 招式文件的 cone 最多 180°，凝辉的 220° 写进去整份解析失败（张角挪到代码里，单元测试加了解析）；叫出来时先按没拿杖的上限加满魔力，拿上杖以后差一截（改成先拿杖再加满）；被围猫步在整组里跑第一个时有一次没起跳，没找到原因，加了近一点的备选落点以后连跑三遍都过 |
+| 没做 | 没进游戏试玩；猫步用 Logos 的 `blink`，原地那团紫色的虚空闪光是 Logos 的样子，要全琥珀色得改成代码瞬移，等维护者定；多人、专用服务器；第四、五步 |
+
+```text
+./gradlew test --tests 'dev.logos.dimension.companion.*' --tests 'dev.logos.dimension.LangCoverageTest' -PlogosJar=/absolute/path/logos.jar -PorchestraJar=/absolute/path/starbloom_orchestra-0.1.0.jar
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:kohaku_companion -PldTestHeadless -PldTestWindow=1280x720
+uv run --with numpy --with pillow python tools/import_vesperglass.py --preview
+```
+
+## 琥珀同伴（第二步：术式）
+
+2026-11-22：分支 `feat/kohaku-spells`，基于 main `8f3739ac`（#282 琥珀第一步、#283 精灵公主的缠绕）。Logos jar 同第一步（Logos main `5fdd33e` 现场编的）。
+设计见 [琥珀](docs/KOHAKU_COMPANION.md) 第 5、7 节和第 18 节的第二步。
+
+| 层级 | 结果 |
+|---|---|
+| 单元 | `KohakuTest` **12/12**（新加两个：八种意图里除了位移都有她的页、第一到第八印每枚都有新的页；你给的页里带附身之类的认得出、按意图和作用对象决定怎么放），同伴其余照旧全过；`LangCoverageTest` 2/2 |
+| 实际客户端 | `group:kohaku_companion` **11/11 场景**（第一步的 7 个照旧全过，新加 4 个）：八枚爪之契时三只僵尸扎堆冲主人来——开场随机放了一个支援（伞或附魔速成）、把强敌封进琥珀、画炼成阵·星辰花、三只都倒下、主人没挨她的打；四枚时主人四成血、身边没敌人，她有余力，在主人脚下铺温室的午后，主人的血回上来；包袱里一根回响长杖挂着你写的单体攻击和一页带附身的，她只认得前一页、打僵尸时先用你的；半夜在外面，她递给主人猫眼药剂、主人有了夜视 |
+| 人工看截图 | 开场的护盾、冻住的僵尸、星辰花的大法阵、回血圈、你写的火弹打中僵尸、猫眼药剂 |
+| 场景里踩到的 | 和平难度下主人自己回血，几秒就不算伤员了（照顾伤员的场景改成简单难度、饿着）；刚叫出来马上盖几枚爪之契，她身上的魔力还是按零枚的上限加满的（场景里先加满） |
+| 没做 | 没进游戏试玩；这几页用的是 Logos 按元素自带的特效（琥珀是冰蓝的冻结、星辰花是粉紫的奥术法阵、温室是绿色的生命领域），要不要叠一层琥珀色等维护者定；抛烧瓶、画大阵的专门动作还没做（现在用点杖、拄杖）；第九印和第三到第五步 |
+
+```text
+./gradlew test --tests 'dev.logos.dimension.companion.*' --tests 'dev.logos.dimension.LangCoverageTest' -PlogosJar=/absolute/path/logos.jar -PorchestraJar=/absolute/path/starbloom_orchestra-0.1.0.jar
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:kohaku_companion -PldTestHeadless -PldTestWindow=1280x720
+```
+
+## 琥珀同伴（第三位同伴，第一步：进游戏）
+
+2026-11-22：分支 `feat/kohaku-companion`，基于 main `3ce82584`（#279）。Logos jar 用 Logos main `5fdd33e`（#485：`Runes.safeSpot` 公开；含 #484 杖剑）现场编的，
+星辰花乐团 `builds/starbloom-orchestra-split-2026-11-17/starbloom_orchestra-0.1.0.jar`。CI 的 `LOGOS_REF` 跟着改到 `5fdd33e`（原来的 `dc3d381` 没有杖剑，编不过）。
+设计见 [琥珀](docs/KOHAKU_COMPANION.md)，分五步做（第 18 节），这是第一步。模型是维护者的 `_5` 加三段动画的 `_6`（`MinecraftLogosMod/kohaku_companion`，不在仓库里）。
+
+| 层级 | 结果 |
+|---|---|
+| 单元 | 同伴 **46/46**（原有 36 + 新加 `KohakuTest` 10：游戏用到的动画都在模型里、施法 / 入场 / 倒下的时间点对得上标记、法强 / 生命 / 魔力 / 护膜的成长、护甲不继承而白梅照样继承、她自己的长杖随契印换、载页编得过且注入量不超过当时长杖的容量、语言键中英文都齐、三位同伴各有自己的契）；`LangCoverageTest` 2/2 |
+| 实际客户端（她） | `group:kohaku_companion` **7/7 场景、19/19 检查**：空白金镑立契，炼成阵转开、她蹦出来、入场时长杖收着、落地后拄着紫晶长杖，再用收回；两只戴帽子的僵尸冲主人来，她先拄杖凝护膜（一倍生命上限）、站到主人斜后方用一滴就够打倒它们，主人没挨她的打；不参与攻击时朝冲来的僵尸哈气（长杖收起、没施法），幻翼扑向主人时被她吓走；包袱里放回响魔杖她换上、拿走换回、盖三枚换成炼金长杖（魔力上限算上杖的）；致命一击不死，倒下、法阵转开、光柱把她卷走，歇五分钟、金镑转冷却；叫出来时魔力是满的；中文对话和面板（生命 28、法强 1.2、魔力一行、护甲 0、能力、往事） |
+| 实际客户端（回归） | 白梅 `companion_talk`、`companion_tactics`，精灵公主 `princess_talk`、`princess_heal`、`princess_withdraw`：**5/5 场景、28/28 检查**（面板的数值页改成按档案画、数值规则加了两个选项，所以跑这几个） |
+| 人工看截图 | 拄杖的角度（偏离竖直 8°，杖脚落在脚边）、点杖施法、护膜、换杖的光、哈气时收杖、炼成阵（第一版白天在浅色地面上冲成一片奶白，改成先用半透明深琥珀画纹样再叠光）、撤退的光柱（第一版太白、带着粉色花瓣，调暗、去掉花瓣）、面板三页 |
+| 没做 | 没进游戏试玩；法阵没在夜里、光影包下看过；多人、专用服务器；第二到第五步的东西（第一到第九印的术式、凝辉、猫步、日常、睡觉）；往事十段是草稿 |
+
+```text
+./gradlew test --tests 'dev.logos.dimension.companion.*' --tests 'dev.logos.dimension.LangCoverageTest' -PlogosJar=/absolute/path/logos.jar -PorchestraJar=/absolute/path/starbloom_orchestra-0.1.0.jar
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:kohaku_companion -PldTestHeadless -PldTestWindow=1280x720
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=companion_talk,companion_tactics,princess_talk,princess_heal,princess_withdraw -PldTestHeadless -PldTestWindow=1280x720
+```
 
 ## 精灵公主同伴（第二位同伴；同伴的公共部分抽出来）
 

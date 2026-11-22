@@ -90,6 +90,29 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 return c;
             }, 18, .75f, -8, .68f, 0));
 
+    /**
+     * 琥珀：温室午后的咖啡色到深棕，琥珀色当主色，金线，奶油色正文，被动能力用淡紫（星辰花）；纹是一只琥珀色的猫爪按在圆形炼成阵上。
+     * 面板里她拄着长杖，懒洋洋地看着你，身子往左侧一点。
+     */
+    public static final CompanionStyle KOHAKU = new CompanionStyle(0xFFE8A043, 0xFFB8732A, 0xFFE3C27A, 0xFFC9B6E8, 0xFFF6EEDD, 0xFFBFAE95,
+            0xFF2A1C14, 0xFF140D09, 0xB41E140E, CompanionStyle::paw,
+            new Showcase((level, sheet) -> {
+                var c = Companions.KOHAKU.get().create(level, EntitySpawnReason.LOAD);
+                if (c != null) c.showcase("face_lazy", sheet.seals());
+                return c;
+            }, 18, .75f, -8, .68f, 0));
+
+    /** 猫爪按在炼成阵上：一圈细环，环里一个大肉垫、四个小肉垫。 */
+    static void paw(GuiGraphicsExtractor g, float cx, float cy, float r, int color) {
+        CompanionUi.ring(g, cx, cy, r, Math.max(1, r * .1f), color);
+        CompanionUi.disc(g, cx, cy + r * .2f, Math.max(1, r * .3f), color);
+        float toe = Math.max(1, r * .14f);
+        CompanionUi.disc(g, cx - r * .42f, cy - r * .12f, toe, color);
+        CompanionUi.disc(g, cx - r * .16f, cy - r * .4f, toe, color);
+        CompanionUi.disc(g, cx + r * .16f, cy - r * .4f, toe, color);
+        CompanionUi.disc(g, cx + r * .42f, cy - r * .12f, toe, color);
+    }
+
     /** 世界树的叶纹：一圈细环，四片菱形的叶，正中一颗生命晶。 */
     static void worldTree(GuiGraphicsExtractor g, float cx, float cy, float r, int color) {
         CompanionUi.ring(g, cx, cy, r, Math.max(1, r * .12f), color);
@@ -105,5 +128,6 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
     static {
         register("shiraume", SHIRAUME);
         register("elf_princess", PRINCESS);
+        register("kohaku", KOHAKU);
     }
 }

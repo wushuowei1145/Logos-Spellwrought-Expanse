@@ -98,14 +98,14 @@ public final class CompanionStats {
 
     /** 按 {@code g} 这位同伴的数，盖了 {@code seals} 枚契印、羁绊在第 {@code stage} 段时的各项。 */
     public static Parts parts(CompanionDef.Growth g, Owner owner, int seals, int stage) {
-        double r = g.ratio(seals);
+        double r = g.ratio(seals), hr = g.healthRatio(seals), ar = g.armorRatio(seals);
         int n = g.grown(seals);
         int b = Math.max(0, stage);
         return new Parts(r,
-                new Part(g.health() + g.sealHealth() * n, g.bondHealth() * b, r * owner.health()),
+                new Part(g.health() + g.sealHealth() * n, g.bondHealth() * b, hr * owner.health()),
                 new Part(g.attack(), g.bondAttack() * b, r * owner.attack()),
-                new Part(g.armor() + g.sealArmor() * n, 0, r * owner.armor()),
-                new Part(g.toughness() + g.sealToughness() * n, 0, r * owner.toughness()));
+                new Part(g.armor() + g.sealArmor() * n, 0, ar * owner.armor()),
+                new Part(g.toughness() + g.sealToughness() * n, 0, ar * owner.toughness()));
     }
 
     /**
@@ -168,6 +168,11 @@ public final class CompanionStats {
             if (attr.isPresent()) power *= lasting(owner, attr.get(), temporary);
         }
         return power;
+    }
+
+    /** 主人不算药水、信标时这项属性的值（琥珀继承主人的魔力上限）。 */
+    public static double lasting(Player owner, Holder<Attribute> attribute) {
+        return lasting(owner, attribute, temporary(owner));
     }
 
     /** 状态效果给的修饰（继承时剔掉）。 */

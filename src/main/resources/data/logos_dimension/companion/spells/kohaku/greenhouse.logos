@@ -1,0 +1,9 @@
+; 温室的午后（第四枚爪之契）：你脚下铺一圈暖金色的光 8 秒，圈里不是敌人的每秒回血（按她的治疗强度乘）。
+; 圈心是代码传的 here（你或最需要的那位的脚下）。注入 700。
+(spell :name "温室的午后" :mana 700 :trigger cast :intent heal
+  (let $c here
+    (field :at $c :radius 4 :life 8 :every 1
+      (on-tick
+        (each (entities :at $c :radius 4 :filter (kind living))
+          (if (not (is target (kind enemies)))
+            (heal target 1.5)))))))

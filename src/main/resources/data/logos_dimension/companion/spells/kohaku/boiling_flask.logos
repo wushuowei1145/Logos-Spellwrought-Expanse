@@ -1,0 +1,15 @@
+; 沸腾烧瓶（第二枚爪之契）：抛出一个烧瓶（抛物线飞），砸到谁或落地就炸开，半径 3 内的敌人受奥术伤害；
+; 地上留一滩咕嘟冒泡的药液 3 秒，踩在里面的敌人缓慢。弹射物、领域不分敌我：伤害和缓慢都只给敌人（enemies 不含主人、主人的使魔和宠物）。
+; 代码按抛物线算好仰角再出手。「攻击玩家」开着时代码在 :trigger cast 后面加 :players true。注入 400（回响长杖的容量）。
+(spell :name "沸腾烧瓶" :mana 400 :trigger cast :intent area
+  (projectile :motion arc :speed 1 :size 0.3 :look &splash_potion :spin 2
+    (on-hit
+      (let $c here
+        (damage-all (enemies :at $c :radius 3) 5 arcane)
+        (field :at $c :radius 2.5 :life 3 :every 0.5
+          (on-tick (each (enemies :at $c :radius 2.5) (potion target slowness 1))))))
+    (on-impact
+      (let $c here
+        (damage-all (enemies :at $c :radius 3) 5 arcane)
+        (field :at $c :radius 2.5 :life 3 :every 0.5
+          (on-tick (each (enemies :at $c :radius 2.5) (potion target slowness 1))))))))

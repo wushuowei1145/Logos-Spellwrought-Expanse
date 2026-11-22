@@ -1,0 +1,7 @@
+; 缥缈之伞（第七枚爪之契）：撑开那把魔力伞，罩住那一位和身边 6 格内不是敌人的每一位：各一层护盾（按她的治疗强度乘）。
+; 伞心是代码传的 here（你或最需要的那位的脚下）。注入 900，天穹长杖（第 6 档，容量 3200）放得满。
+(spell :name "缥缈之伞" :mana 900 :trigger cast :intent ward
+  (let $c here
+    (each (entities :at $c :radius 6 :filter (kind living))
+      (if (not (is target (kind enemies)))
+        (shield target 6)))))

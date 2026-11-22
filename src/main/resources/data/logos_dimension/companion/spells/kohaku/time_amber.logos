@@ -1,0 +1,7 @@
+; 时间的琥珀（第六枚爪之契）：一发琥珀色的弹直直飞向强敌，打中就把它封进琥珀里 3 秒（冻结，几乎动不了），她名字的由来。
+; 只对强敌放（代码判断，她的视线对准它）；弹射物不分敌我，只封敌人。注入 900。
+(spell :name "时间的琥珀" :mana 900 :trigger cast :intent control
+  (projectile :speed 2 :size 0.35
+    (on-hit
+      (if (is target (kind enemies))
+        (do (freeze target 3) (glow target 3))))))

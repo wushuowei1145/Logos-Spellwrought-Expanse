@@ -72,6 +72,11 @@ public final class Companions {
             EntityType.Builder.of(ElfPrincessCompanion::new, MobCategory.MISC).sized(.6f, 1.35f).eyeHeight(1.02f).clientTrackingRange(10)
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("elf_princess_companion"))));
 
+    /** 琥珀：发顶约 1.24 格、耳尖约 1.4 格（2 倍制作，渲染缩放 0.5）；眼睛约 0.96 格。 */
+    public static final Supplier<EntityType<KohakuCompanion>> KOHAKU = TYPES.register("kohaku_companion", () ->
+            EntityType.Builder.of(KohakuCompanion::new, MobCategory.MISC).sized(.6f, 1.3f).eyeHeight(.96f).clientTrackingRange(10)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("kohaku_companion"))));
+
     /** 她倒下时留在原地、替她烧掉的形代。不存档。 */
     public static final Supplier<EntityType<Katashiro>> KATASHIRO = TYPES.register("shiraume_katashiro", () ->
             EntityType.Builder.<Katashiro>of(Katashiro::new, MobCategory.MISC).sized(.4f, .1f).clientTrackingRange(8).noSave()
@@ -187,6 +192,11 @@ public final class Companions {
     public static final Supplier<AttachmentType<CompanionPouch>> POUCH = pouch("shiraume_pouch");
     public static final Supplier<AttachmentType<Bond>> PRINCESS_BOND = bond("elf_princess_bond");
     public static final Supplier<AttachmentType<CompanionPouch>> PRINCESS_POUCH = pouch("elf_princess_pouch");
+    public static final Supplier<AttachmentType<Bond>> KOHAKU_BOND = bond("kohaku_bond");
+    public static final Supplier<AttachmentType<CompanionPouch>> KOHAKU_POUCH = pouch("kohaku_pouch");
+    /** 琥珀和你的日子：她的专属地毯、今天塞了几次吃的、哪天看过载页、收过零花钱（{@link KohakuDays}）。 */
+    public static final Supplier<AttachmentType<KohakuDays>> KOHAKU_DAYS = ATTACHMENTS.register("kohaku_days",
+            () -> AttachmentType.builder(() -> KohakuDays.NONE).serialize(KohakuDays.CODEC.fieldOf("days")).copyOnDeath().build());
 
     private static Supplier<AttachmentType<Bond>> bond(String id) {
         return ATTACHMENTS.register(id, () -> AttachmentType.builder(() -> Bond.NONE).serialize(Bond.CODEC.fieldOf("bond")).copyOnDeath().build());
@@ -201,7 +211,9 @@ public final class Companions {
     public static final CompanionDef PRINCESS_DEF = new CompanionDef(ElfPrincessCompanion.ID, ELF_PRINCESS, PRINCESS_BOND, PRINCESS_POUCH,
             ElfPrincessCompanion.GROWTH, ElfPrincessCompanion.REST_TICKS, ElfPrincessCompanion.MAX_SEALS);
     /** 全部同伴（登录、重生、换维度、下线时一位位看）。 */
-    public static final List<CompanionDef> ALL = List.of(SHIRAUME_DEF, PRINCESS_DEF);
+    public static final CompanionDef KOHAKU_DEF = new CompanionDef(KohakuCompanion.ID, KOHAKU, KOHAKU_BOND, KOHAKU_POUCH,
+            KohakuCompanion.GROWTH, KohakuCompanion.REST_TICKS, KohakuCompanion.MAX_SEALS);
+    public static final List<CompanionDef> ALL = List.of(SHIRAUME_DEF, PRINCESS_DEF, KOHAKU_DEF);
 
     /** 等到下一刻再叫出来的同伴（上线、重生、换维度之后）：「主人 UUID|同伴 ID」 → 还要等几刻。 */
     private static final Map<String, Integer> PENDING = new HashMap<>();
@@ -213,13 +225,16 @@ public final class Companions {
         ATTACHMENTS.register(bus);
         KatashiroItem.register(bus);
         BaggedWorldTreeItem.register(bus);
+        PawSovereignItem.register(bus);
         CompanionLines.register(bus);
         CompanionTalk.register(bus);
         ShiraumeTalk.init();
         PrincessTalk.init();
+        KohakuTalk.init();
         bus.addListener((EntityAttributeCreationEvent event) -> {
             event.put(SHIRAUME.get(), ShiraumeCompanion.createAttributes().build());
             event.put(ELF_PRINCESS.get(), ElfPrincessCompanion.createAttributes().build());
+            event.put(KOHAKU.get(), KohakuCompanion.createAttributes().build());
         });
         NeoForge.EVENT_BUS.addListener(Companions::onBreak);
         NeoForge.EVENT_BUS.addListener(Companions::onPlace);
@@ -236,6 +251,7 @@ public final class Companions {
                 for (CompanionDef d : ALL) comeBackLater(p, d, 40);
                 learn(p, false);
                 BaggedWorldTreeItem.refresh(p);
+                PawSovereignItem.refresh(p);
             }
         });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerRespawnEvent e) -> {
@@ -280,6 +296,11 @@ public final class Companions {
     /** 精灵公主此刻在外面的那一位。 */
     public static @Nullable ElfPrincessCompanion princess(ServerPlayer owner) {
         return (ElfPrincessCompanion) out(owner, PRINCESS_DEF);
+    }
+
+    /** 琥珀此刻在外面的那一位。 */
+    public static @Nullable KohakuCompanion kohaku(ServerPlayer owner) {
+        return (KohakuCompanion) out(owner, KOHAKU_DEF);
     }
 
     /** 还要休息多少刻（0 表示随时能叫）。 */
@@ -530,7 +551,7 @@ public final class Companions {
         if (!(e.getEntity() instanceof CompanionEntity c) || !(c.level() instanceof ServerLevel level) || e.getNewDamage() <= 0) return;
         ServerPlayer owner = c.ownerPlayer();
         if (owner == null) return;
-        float protection = CompanionStats.protection(level, owner, e.getSource(), c.def().growth().ratio(c.seals()));
+        float protection = CompanionStats.protection(level, owner, e.getSource(), c.def().growth().armorRatio(c.seals()));
         if (protection > 0) e.setNewDamage(net.minecraft.world.damagesource.CombatRules.getDamageAfterMagicAbsorb(e.getNewDamage(), protection));
     }
 
@@ -540,6 +561,12 @@ public final class Companions {
         if (dead instanceof ElfPrincessCompanion princess && princess.level() instanceof ServerLevel level) {
             e.setCanceled(true);
             princess.startWithdraw(level);
+            return;
+        }
+        // 琥珀也不会死：倒下以后法阵把她卷回爪印金镑里
+        if (dead instanceof KohakuCompanion kohaku && kohaku.level() instanceof ServerLevel level) {
+            e.setCanceled(true);
+            kohaku.startWithdraw(level);
             return;
         }
         if (dead instanceof ServerPlayer p) {

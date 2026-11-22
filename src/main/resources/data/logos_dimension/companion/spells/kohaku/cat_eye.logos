@@ -1,0 +1,7 @@
+; 猫眼药剂（第一枚爪之契，docs/KOHAKU_COMPANION.md 第 5.1 节）：洞里、夜里你周围暗的时候，她递给你一瓶：夜视两分钟，
+; 你身边 16 格内的敌人发光十秒（隔着墙也看得见）。(master) 是施法者的主人，就是你（施放启式的最外层没有 target）。
+; 注入 150，回响长杖（第 3 档，容量 400）放得满。
+(spell :name "猫眼药剂" :mana 150 :trigger cast :intent utility
+  (potion (master) night_vision 120)
+  (each (enemies :at (pos-of (master)) :radius 16)
+    (glow target 10)))
