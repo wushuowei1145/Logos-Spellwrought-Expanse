@@ -394,6 +394,7 @@ final class KohakuLife {
 
     /** 每刻（她自己的 tickActions 里）：起身播完收尾，递东西走到交出去那一刻。 */
     void tick(ServerLevel level, long now, @Nullable ServerPlayer p) {
+        if (p != null) sleep.tick(level, p, now);
         if (risenAt >= 0 && now >= risenAt) {
             risenAt = -1;
             String m = c.move();
@@ -479,6 +480,12 @@ final class KohakuLife {
         pose = to.pose();
         posedAt = to.spot();
         settleAt = now;
+        // 还在走过来、正在起身（天亮时直接睡在那里）：都不要了
+        risenAt = -1;
+        stretchAfter = false;
+        approach = 0;
+        c.getNavigation().stop();
+        c.setDeltaMovement(Vec3.ZERO);
         c.setPos(to.at());
         if (!Float.isNaN(to.yaw())) turn(to.yaw());
         c.setMove(pose.loop == null ? "" : pose.loop + "|" + now + "|1|true");

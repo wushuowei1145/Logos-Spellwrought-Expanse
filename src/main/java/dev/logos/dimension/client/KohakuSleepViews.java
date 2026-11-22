@@ -12,6 +12,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Blocks;
@@ -22,9 +25,10 @@ import net.minecraft.world.phys.Vec3;
  * 实际客户端检查琥珀睡觉（docs/KOHAKU_COMPANION.md 第 9 节，第五步），也在 {@code kohaku_companion} 一组。夜里你躺下，一晚过去
  * （{@code advance_time} 开着，一个人睡够 5 秒就跳到早上），醒来以后拍她赖床：
  * <ul>
- * <li>{@code kohaku_sleep}：贴着你的床边侧躺、脸朝着你；一整夜以后你有琥珀相伴，她赖一会床、翻个身起来、伸懒腰、困着走过来递礼物。</li>
+ * <li>{@code kohaku_sleep}：她在 11 格外、床边地上有一分钟内的掉落（同实际玩的时候）；你醒来时她已经隔着床、贴着床边侧躺，
+ *     脸朝着你，不在你起床站的那一格；一整夜以后你有琥珀相伴，她赖一会床、翻个身起来、伸懒腰、困着走过来递礼物。</li>
  * <li>{@code kohaku_sleep_spare}：旁边有一张空床，她占那张趴成猫饼；你半夜自己起来（没睡满一晚）：她照样赖床起来，没有琥珀相伴。</li>
- * <li>{@code kohaku_sleep_yours}：挤上你的床缩在床边；你醒来时她已经横着摊成「大」字。</li>
+ * <li>{@code kohaku_sleep_yours}：挤上你的床（她也在 11 格外）；你醒来时她已经横着摊成「大」字。</li>
  * <li>{@code kohaku_sleep_belly}：露肚皮睡在你床边。</li>
  * <li>{@code kohaku_sleep_shiraume}：白梅蜷在床边，她贴着白梅的背蜷着。</li>
  * <li>{@code kohaku_bed_nap}：白天你挂机，她去旁边的空床上打盹；你一动她就起来。</li>
@@ -33,8 +37,8 @@ import net.minecraft.world.phys.Vec3;
 public abstract class KohakuSleepViews extends KohakuLifeViews {
     /** 你的床：床脚、床头（朝南）；旁边那张空床。 */
     static final BlockPos FOOT = new BlockPos(0, FLOOR + 1, 2), HEAD = FOOT.south(), SPARE_FOOT = FOOT.east(2);
-    /** 站在床边。 */
-    static final Vec3 BEDSIDE = new Vec3(-1.5, FLOOR + 1, 2.5);
+    /** 站在床边；她离得远的时候在哪（11 格外，你躺下 5 秒天就亮了，她走不到）。 */
+    static final Vec3 BEDSIDE = new Vec3(-1.5, FLOOR + 1, 2.5), FAR = new Vec3(-10.5, FLOOR + 1, -6.5);
 
     static void bed(ServerLevel level, BlockPos foot) {
         var bed = Blocks.RED_BED.defaultBlockState().setValue(BedBlock.FACING, Direction.SOUTH);
@@ -68,31 +72,50 @@ public abstract class KohakuSleepViews extends KohakuLifeViews {
     @LDLRegisterClient(name = "kohaku_sleep", group = "kohaku_companion", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
     public static class Sleep extends KohakuSleepViews {
         private KohakuCompanion c;
+        private ItemEntity loot;
         private int nights, gifts;
 
         @Override
         public void define(ScenarioBuilder s) {
-            night(s).server("一张床，站在床边，召唤；这一晚侧卧、醒来一定给礼物", ctx -> {
+            night(s).server("一张床，站在床边，她在 11 格外；这一晚侧卧、醒来一定给礼物", ctx -> {
                         ServerLevel level = ctx.server().overworld();
                         ServerPlayer p = ctx.player();
                         bed(level, FOOT);
                         standAt(p, BEDSIDE);
-                        c = summonKohaku(p, BEDSIDE.add(-1, 0, -1));
+                        c = summonKohaku(p, FAR);
                         KohakuCompanion.sleepForTest("curl", "floor");
                         KohakuCompanion.luckyForTest(true);
                         nights = KohakuCompanion.fullNights();
                         gifts = KohakuCompanion.morningGifts();
                     })
                     .waitUntilServer("入场播完", ctx -> arrived(c))
+                    .server("她还在远处；你刚打完回来，床边地上还有掉落；你走到床边看着床", ctx -> {
+                        c.setPos(FAR);
+                        ServerLevel level = ctx.server().overworld();
+                        loot = new ItemEntity(level, BEDSIDE.x - 2, BEDSIDE.y + .2, BEDSIDE.z - 2, new ItemStack(Items.ROTTEN_FLESH, 3));
+                        level.addFreshEntity(loot);
+                        aim(ctx.player(), BEDSIDE.add(0, 1.62, 0), Vec3.atCenterOf(HEAD));
+                    })
                     .checkServer("主人躺下", ctx -> sleep(ctx.player()))
-                    .waitUntilServer("她贴着床边侧躺下来", ctx -> "curl".equals(c.poseForTest()) && "floor".equals(c.sleepWhereForTest()) && c.curled())
+                    .waitUntilServer("一夜过去，主人醒了", ctx -> !ctx.player().isSleeping())
+                    .server("掉落收掉（免得她醒来去捡）", ctx -> loot.discard())
+                    .checkServer("天亮了", ctx -> !ctx.server().overworld().isDarkOutside())
+                    .checkServer("她已经贴着床边侧躺着", ctx -> "curl".equals(c.poseForTest()) && "floor".equals(c.sleepWhereForTest()) && c.curled()
+                            && Math.abs(c.getX() - .5) < 1.6 && Math.abs(c.getZ() - 3) < 1.6)
+                    .checkServer("隔着床，不在你起床站的地方", ctx -> {
+                        ServerPlayer p = ctx.player();
+                        return (c.getX() - .5) * (p.getX() - .5) < 0 && Math.hypot(c.getX() - p.getX(), c.getZ() - p.getZ()) > 1.1;
+                    })
                     .checkServer("脸朝着床（你）", ctx -> {
                         Vec3 toBed = Vec3.atCenterOf(HEAD).subtract(c.position()).multiply(1, 0, 1).normalize();
                         return Vec3.directionFromRotation(0, c.yBodyRot).dot(toBed) > .5;
                     })
                     .checkServer("长杖收起来了", ctx -> c.getMainHandItem().isEmpty())
-                    .waitUntilServer("一夜过去，主人醒了", ctx -> !ctx.player().isSleeping())
-                    .checkServer("天亮了", ctx -> !ctx.server().overworld().isDarkOutside())
+                    .server("你起来站在原地，低头看她（原版起床时视线是平的，床边地上在画面下沿以下）", ctx -> {
+                        ServerPlayer p = ctx.player();
+                        aim(p, p.getEyePosition(), c.position().add(0, .3, 0));
+                    })
+                    .ticks(12).screenshot("kohaku_wake_view")
                     .server("站到能看见她的地方", ctx -> lookAt(ctx.player(), c, new Vec3(2.2, 1.9, -2.2)))
                     .checkServer("她还在赖床", ctx -> c.curled())
                     .ticks(8).screenshot("kohaku_sleep_linger")
@@ -156,19 +179,20 @@ public abstract class KohakuSleepViews extends KohakuLifeViews {
 
         @Override
         public void define(ScenarioBuilder s) {
-            night(s).server("一张床，站在床边，召唤；这一晚挤上你的床", ctx -> {
+            night(s).server("一张床，站在床边，她在 11 格外；这一晚挤上你的床", ctx -> {
                         ServerLevel level = ctx.server().overworld();
                         ServerPlayer p = ctx.player();
                         bed(level, FOOT);
                         standAt(p, BEDSIDE);
-                        c = summonKohaku(p, BEDSIDE.add(-1, 0, -1));
+                        c = summonKohaku(p, FAR);
                         KohakuCompanion.sleepForTest("curl", "yours");
                     })
                     .waitUntilServer("入场播完", ctx -> arrived(c))
+                    .server("她还在远处", ctx -> c.setPos(FAR))
                     .checkServer("主人躺下", ctx -> sleep(ctx.player()))
-                    .waitUntilServer("她缩在你的床边上", ctx -> "yours".equals(c.sleepWhereForTest()) && c.curled() && c.getY() > FLOOR + 1.4)
                     .waitUntilServer("一夜过去，主人醒了", ctx -> !ctx.player().isSleeping())
-                    .waitUntilServer("她横着摊成「大」字", ctx -> "sprawl".equals(c.poseForTest()) && "sleep_sprawl".equals(KohakuViews.move(c)))
+                    .checkServer("她已经横着摊成「大」字躺在你床上", ctx -> "sprawl".equals(c.poseForTest()) && "sleep_sprawl".equals(KohakuViews.move(c))
+                            && c.getY() > FLOOR + 1.4)
                     .server("站到能看见她的地方", ctx -> lookAt(ctx.player(), c, new Vec3(-2.4, 2.0, -1.6)))
                     .ticks(8).screenshot("kohaku_sleep_sprawl")
                     .waitUntilServer("赖够了起来", ctx -> "sprawl_up".equals(KohakuViews.move(c)))

@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -32,13 +33,17 @@ import org.jspecify.annotations.Nullable;
  *   <li>睡姿（一晚定一次）：经典侧卧（默认）；猫饼三成；羁绊到「信赖」或第五枚爪之契以后，露肚皮四成。</li>
  *   <li>赖床：你起来以后她再睡 3–6 秒，然后（侧卧时）动一动、翻个身，慢慢起来，伸个懒腰，之后一阵子是困的。
  *       挤上你床的那一晚，你醒来时她已经横着摊成「大」字（你被挤下了床），再多睡几秒。</li>
- *   <li>一起睡过一整夜（这一晚真的跳过去了、她睡够了）：你醒来就有「琥珀相伴」；七成（羁绊每段 +5%，最多九成）她起来以后递给你一样东西。</li>
+ *   <li>你躺下 5 秒夜晚就跳过去了，她多半还没走到、没躺好：这一晚过去了，你醒来时她已经睡在那一处（不让出来就没有赖床、一整夜）。
+ *       睡在地上时让开你起床要站的那一格，挑你起来那一侧的对面，你一起来隔着床就看见她。</li>
+ *   <li>一起睡过一整夜（这一晚真的跳过去了、她跟你睡了）：你醒来就有「琥珀相伴」；七成（羁绊每段 +5%，最多九成）她起来以后递给你一样东西。</li>
  *   <li>你挂机时：每次挂机判一次（三成），12 格内有空床就过去在床上打盹（多半是猫饼）。</li>
  * </ul>
  */
 final class KohakuSleep {
-    /** 她躺下以后睡了多久（刻）才算一起睡过（你躺下 5 秒就跳过夜晚，她走过来躺下要一会）；这一晚跳过去了：时钟比经过的刻数多走了这么多。 */
-    static final int SLEEP_TICKS = 20, NIGHT_SKIPPED = 1000;
+    /** 这一晚跳过去了：时钟比经过的刻数多走了这么多。 */
+    static final int NIGHT_SKIPPED = 1000;
+    /** 天亮时她离要睡的那一处多远以内，算是跟你睡了（走过去来不及躺下，醒来时她已经睡在那里）；睡在地上时离你起床站的地方至少多远。 */
+    static final double CATCH_UP = 32, CLEAR_OF_YOU = 1.1;
     /** 赖床多久（刻）；「大」字那一晚多睡一会。 */
     static final int LINGER_MIN = 60, LINGER_MAX = 120, SPRAWL_LINGER = 120;
     /** 醒来以后困多久（刻）。 */
@@ -73,9 +78,10 @@ final class KohakuSleep {
 
     private final KohakuCompanion c;
     private final KohakuLife life;
-    /** 这一晚：你睡着了没有、睡下那一刻的时钟和刻数、定好的睡姿、要不要挤上你的床、睡在哪、她什么时候睡着的。 */
-    private boolean ownerAsleep, yours;
-    private long clockAtBed, tickAtBed, asleepSince = -1;
+    /** 这一晚：你睡着了没有、睡下那一刻的时钟和刻数、你的床、定好的睡姿、要不要挤上你的床、睡在哪；上一次打分时是不是太平。 */
+    private boolean ownerAsleep, yours, calm = true;
+    private long clockAtBed, tickAtBed;
+    private @Nullable BlockPos bed;
     private @Nullable Pose nightPose;
     private @Nullable Where where;
     private @Nullable Plan night;
@@ -115,31 +121,33 @@ final class KohakuSleep {
      * 琥珀相伴、有概率递礼物。没睡在一起返回 null。
      */
     @Nullable Plan night(ServerLevel level, ServerPlayer p, long now, boolean calm) {
-        boolean sleeping = p.isSleeping();
-        if (sleeping && !ownerAsleep) startNight(level, p, now);
-        if (!sleeping && ownerAsleep) {
-            ownerAsleep = false;
-            wake(level, p, now);
-        }
+        this.calm = calm;
+        if (p.isSleeping() && !ownerAsleep) startNight(level, p, now);
+        tick(level, p, now);
         if (lingerUntil >= 0) {
             if (now < lingerUntil) return night;
             finishLinger(level, p, now);
             return null;
         }
         if (!ownerAsleep || !calm) return null;
-        if (asleep() && night != null) {
-            if (asleepSince < 0) asleepSince = now;
-            return night;
-        }
+        if (asleep() && night != null) return night;
         night = place(level, p);
         return night;
+    }
+
+    /** 每刻：你一起来就醒（不等下一次打分：天亮那一刻她就得已经睡在那里，不能让你看见她走着走着一下子躺下）。 */
+    void tick(ServerLevel level, ServerPlayer p, long now) {
+        if (ownerAsleep && !p.isSleeping()) {
+            ownerAsleep = false;
+            wake(level, p, now);
+        }
     }
 
     private void startNight(ServerLevel level, ServerPlayer p, long now) {
         ownerAsleep = true;
         clockAtBed = level.getOverworldClockTime();
         tickAtBed = now;
-        asleepSince = -1;
+        bed = p.getSleepingPos().orElse(null);
         fullNight = false;
         CompanionBond.Stage stage = CompanionBond.Stage.of(c.bond(p).affection());
         RandomSource r = c.getRandom();
@@ -184,23 +192,34 @@ final class KohakuSleep {
             if (at != null) return plan(at, Pose.CURL, s.yBodyRot);
         }
         where = Where.FLOOR;
-        // 贴着你的床边：床头、床脚两侧里离她近的、站得住的那一格，往床那边靠一点；脸朝着你
+        // 你起床时会站在哪（同原版的算法，按你躺下时朝哪边）
+        Vec3 up = BedBlock.findStandUpPosition(EntityType.PLAYER, level, bed, facing, p.getYRot()).orElse(null);
+        return floor(level, bed, facing, pose, up);
+    }
+
+    /**
+     * 贴着你的床边睡在地上，脸朝着床（你）；露肚皮头朝床头那边。先挑你起床那一侧的对面、床头那一格（你起来面朝床，隔着床就看见她），
+     * 再挑对面床脚、你这一侧床脚、你这一侧床头、床尾外面；往床那边靠一点；离你起床站的地方 {@code you} 太近的不要。
+     */
+    private @Nullable Plan floor(ServerLevel level, BlockPos bed, Direction facing, Pose pose, @Nullable Vec3 you) {
         BlockPos foot = bed.relative(facing.getOpposite());
-        Vec3 best = null;
-        Direction bestSide = null;
-        for (BlockPos part : new BlockPos[] {bed, foot}) {
-            for (Direction side : new Direction[] {facing.getClockWise(), facing.getCounterClockWise()}) {
-                Vec3 at = life.standAt(level, Vec3.atBottomCenterOf(part.relative(side)).subtract(new Vec3(side.getStepX(), 0, side.getStepZ()).scale(.2)));
-                if (at != null && (best == null || at.distanceToSqr(c.position()) < best.distanceToSqr(c.position()) - (part == bed ? 1 : 0))) {
-                    best = at;
-                    bestSide = side;
-                }
-            }
+        Direction right = facing.getClockWise();
+        Direction yourSide = right;
+        if (you != null) {
+            Vec3 d = you.subtract(bedCenter(bed, facing));
+            yourSide = d.x * right.getStepX() + d.z * right.getStepZ() >= 0 ? right : right.getOpposite();
         }
-        if (best == null) return null;
-        // 侧卧、猫饼：脸朝着床（你）；露肚皮：头朝床头那边
-        float yaw = pose == Pose.BELLY ? facing.getOpposite().toYRot() : bestSide.getOpposite().toYRot();
-        return plan(best, pose, yaw);
+        Direction far = yourSide.getOpposite(), back = facing.getOpposite();
+        BlockPos[] parts = {bed, foot, foot, bed, foot};
+        Direction[] sides = {far, far, yourSide, yourSide, back};
+        for (int i = 0; i < parts.length; i++) {
+            Direction side = sides[i];
+            Vec3 at = life.standAt(level, Vec3.atBottomCenterOf(parts[i].relative(side)).subtract(new Vec3(side.getStepX(), 0, side.getStepZ()).scale(.2)));
+            if (at == null || you != null && Math.hypot(at.x - you.x, at.z - you.z) < CLEAR_OF_YOU) continue;
+            float yaw = pose == Pose.BELLY && side != back ? back.toYRot() : side.getOpposite().toYRot();
+            return plan(at, pose, yaw);
+        }
+        return null;
     }
 
     private static Plan plan(Vec3 at, Pose pose, float yaw) {
@@ -241,17 +260,35 @@ final class KohakuSleep {
 
     // ---------------------------------------------------------------- 醒来
 
-    /** 你醒了：她睡着的话开始赖床（挤上你床的那一晚换成「大」字、多睡一会）；这一晚真的跳过去了、她睡够了就算一整夜。 */
+    /**
+     * 你醒了：她睡着的话开始赖床（挤上你床的那一晚换成「大」字、多睡一会）；这一晚真的跳过去了、她跟你睡了就算一整夜。
+     * 夜晚跳过去时她还在走过来、正要躺下（你躺下 5 秒就天亮了）：一晚过去，她早就睡在那一处了，直接摆上睡姿。
+     * 睡在地上、正好在你起床站的地方：挪开（你醒来那一刻，看不见）。
+     */
     private void wake(ServerLevel level, ServerPlayer p, long now) {
         boolean skipped = level.getOverworldClockTime() - clockAtBed - (now - tickAtBed) > NIGHT_SKIPPED;
-        fullNight = asleep() && asleepSince >= 0 && now - asleepSince >= SLEEP_TICKS && skipped;
+        boolean late = skipped && !asleep() && calm && night != null && c.position().distanceTo(night.at()) < CATCH_UP;
+        if (night != null && (late || asleep())) {
+            Plan to = night;
+            BlockPos b = bed;
+            if (where == Where.FLOOR && b != null && level.getBlockState(b).getBlock() instanceof BedBlock
+                    && Math.hypot(to.at().x - p.getX(), to.at().z - p.getZ()) < CLEAR_OF_YOU) {
+                Plan moved = floor(level, b, level.getBlockState(b).getValue(BedBlock.FACING), to.pose(), p.position());
+                if (moved != null) to = moved;
+            }
+            if (late || to != night) {
+                night = to;
+                life.switchPose(to, now);
+            }
+        }
+        fullNight = skipped && asleep();
         if (!asleep()) {
             night = null;
             return;
         }
         if (where == Where.YOURS) {
             // 你被挤下了床：她已经横着摊成「大」字，躺在床正中
-            BlockPos bed = p.getSleepingPos().orElse(null);
+            BlockPos bed = this.bed;
             Plan pl = night;
             if (pl != null) {
                 Vec3 at = pl.at();
