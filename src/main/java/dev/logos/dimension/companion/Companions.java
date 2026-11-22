@@ -226,6 +226,7 @@ public final class Companions {
         KatashiroItem.register(bus);
         BaggedWorldTreeItem.register(bus);
         PawSovereignItem.register(bus);
+        KohakuCompany.register(bus);
         CompanionLines.register(bus);
         CompanionTalk.register(bus);
         ShiraumeTalk.init();

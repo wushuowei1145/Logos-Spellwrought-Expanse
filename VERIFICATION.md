@@ -1,5 +1,23 @@
 # 首版验证记录
 
+## 琥珀同伴（第五步：睡觉）
+
+2026-11-22：分支 `feat/kohaku-sleep`，接在第四步 `feat/kohaku-life`（#286，还没合并）后面。Logos jar 同前几步（Logos main `5fdd33e` 现场编的）。
+设计见 [琥珀](docs/KOHAKU_COMPANION.md) 第 9 节，做了什么在第 9.6 节。模型第 9 版（`MinecraftLogosMod/kohaku_companion`，不在仓库里）加了 8 段睡觉的动画。
+
+| 层级 | 结果 |
+|---|---|
+| 单元 | `KohakuTest` **20/20**（新加两个：睡姿按羁绊和契印定——信赖或第五枚以后才有露肚皮、三成猫饼；醒来的礼物七成起最多九成、药水 45 猫币 30 稀有 25、收了零花钱稀有翻倍、稀有里几样加起来一百，琥珀相伴魔力回复 +50% 起每段 +10%。另外改了三个：姿势和过渡的长度（多了侧卧、露肚皮、「大」字，赖床那一段 4 秒、2.4 秒撑起来），新动画都在模型里，新的台词、效果名、面板一行中英文都有），同伴其余 37 个照旧全过；`LangCoverageTest` 2/2 |
+| 实际客户端 | `group:kohaku_companion` **27/27 场景、60/60 检查**（前四步的 21 个照旧全过，新加 6 个）：夜里你躺下，她贴着床边侧躺、脸朝着你、长杖收起来，一晚过去你醒来她还在赖床，然后动一动翻个身起来、伸懒腰，一起睡过一整夜、你有琥珀相伴，她走过来把礼物（这一回是一瓶药水）递到你手里，递完困着；旁边有空床她占那张趴成猫饼、躺在床上，你半夜自己起来她照样起来伸懒腰、没有琥珀相伴；挤上你的床缩在床边，你醒来时她横着摊成「大」字，赖够了起来伸懒腰；露肚皮睡在床边，醒来起身；白梅蜷在床边时她贴着白梅的背；白天你挂机，她去旁边的空床上趴着打盹，你一走她起来伸懒腰 |
+| 人工看截图 | 床边侧躺（被床挡着一半）、赖床起身、递礼物、露肚皮、贴着白梅、空床上的猫饼、你床上的「大」字、白天在床上打盹都对；第 9 版离线预览在 `kohaku_companion/preview/revision_9_cardigan_sleep.png`；琥珀相伴的图标是 18×18 的琥珀色猫爪印 |
+| 场景里踩到的 | 打分时陪你的打算先清空了，睡觉那边看「她是不是正睡在夜里那一处」时总是否，赖床、整夜、「大」字都没触发（改成另记她在哪摆的姿势）；要她睡满 5 秒才算一整夜，可你躺下 5 秒夜晚就跳过去了、她走过来躺下要一会，永远不够（改成 1 秒）；场景自己的：拍照时把你的脚放进了台子 2 厘米，镜头卡在里面、人掉到台子底下的地面；醒来的礼物递得比「困」早，等的顺序反了；这个版本的游戏规则叫 `advance_time`（原来的 `doDaylightCycle` 不认） |
+| 没做 | 没进游戏试玩；多人（几个人一起睡）、专用服务器；「大」字那一晚没有把你的起床位置换到床另一侧（原版本来就把你放在床边） |
+
+```text
+./gradlew test --tests 'dev.logos.dimension.companion.*' --tests 'dev.logos.dimension.LangCoverageTest' -PlogosJar=/absolute/path/logos.jar -PorchestraJar=/absolute/path/starbloom_orchestra-0.1.0.jar
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:kohaku_companion -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 琥珀同伴（第四步：日常）
 
 2026-11-22：分支 `feat/kohaku-life`，接在第三步 `feat/kohaku-blink`（#285，还没合并）后面。Logos jar 同前几步（Logos main `5fdd33e` 现场编的）。

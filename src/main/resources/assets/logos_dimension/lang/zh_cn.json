@@ -1853,5 +1853,10 @@
   "line.logos_dimension.kohaku.talk.allowance_given": "零花钱？……嗯，收下了。别指望我说谢谢。",
   "line.logos_dimension.kohaku.talk.allowance_change": "一枚金镑？太多了。……找你十九先令，我只要一先令。",
   "line.logos_dimension.kohaku.talk.allowance_today": "今天的已经收过了。贪心的雇主可不讨人喜欢。",
-  "line.logos_dimension.kohaku.talk.allowance_none": "……你身上一枚猫币都没有。零花钱要先有钱才能给哦。"
+  "line.logos_dimension.kohaku.talk.allowance_none": "……你身上一枚猫币都没有。零花钱要先有钱才能给哦。",
+  "effect.logos_dimension.kohaku_company": "琥珀相伴",
+  "talk.logos_dimension.kohaku.skill.company.name": "琥珀相伴",
+  "talk.logos_dimension.kohaku.skill.company.icon": "伴",
+  "talk.logos_dimension.kohaku.skill.company.desc": "和她一起睡醒以后的 %s 分钟里：魔力回复 +%s%%、汇集快 %s%%。羁绊越深，回得越快。",
+  "line.logos_dimension.kohaku.morning_gift": "……早。这个给你，顺手拿的。"
 }
