@@ -107,6 +107,17 @@ class PrincessTest {
         assertEquals(32 + 6, parts.health().total(), 1e-9, "她自己 32，继承主人 20 的三成");
     }
 
+    /**
+     * 生命缠绕只按她的法强：缠上去的量先除掉主人的生命法强，Logos 挥中时再乘回来（Effects.followUp 按挥武器的人算），
+     * 每一下正好是 2.5 × 她的法强，主人的法强是多少都一样。
+     */
+    @Test void lifeWrapGoesByHerPowerOnly() {
+        for (double owner : new double[]{1, 1.5, 2, 3.2}) {
+            double perHit = PrincessMagic.blessAmount(1.8, owner) * owner;
+            assertEquals(PrincessMagic.BLESS_DAMAGE * 1.8, perHit, 1e-9, "主人生命法强 " + owner);
+        }
+    }
+
     /** 台词、对话、面板用到的语言键，中英文都有。 */
     @Test void everyLineAndPanelKeyIsInBothLanguages() throws Exception {
         List<String> keys = new ArrayList<>(List.of("entity.logos_dimension.elf_princess_companion", "item.logos_dimension.bagged_world_tree",
