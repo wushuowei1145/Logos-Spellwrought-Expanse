@@ -5,6 +5,10 @@ import json
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / 'src/main/resources/data/logos_dimension/worldgen'
 NAMESPACE = 'logos_dimension:changfeng/'
+# 长风平原的温度区间，native_worldgen.py 的气候范围与下面的压平遮罩共用这一处。
+# 下界不能低于约 0.35：古榉林只长在网格温度 0 的湿润平地（湿度 -0.4、0；0.4 那一档归精灵森林），
+# 多噪声里区间内距离恒为 0，区间一旦盖到温度 0 附近就把整片古榉林吞掉（#288 用 -0.35 时古榉林为 0）。
+TEMPERATURE = (.35, .55)
 
 
 def write(path, value):
@@ -29,7 +33,20 @@ def mix(original, target, mask):
     return add(mul(original, add(1, mul(-1, mask))), mul(target, mask))
 
 
+def climate():
+    """在已提交的维度与测试预设里定点改长风平原的温度区间；整条 native_worldgen 管线重跑时同样取 TEMPERATURE。"""
+    for path in [DATA.parent / 'dimension/cloudsea.json', ROOT / 'gametest-packs/crucible/data/minecraft/worldgen/world_preset/flat.json']:
+        doc = json.loads(path.read_text(encoding='utf-8'))
+        generator = doc['generator'] if 'generator' in doc else doc['dimensions']['logos_dimension:cloudsea']['generator']
+        boxes = [e for e in generator['biome_source']['biomes']
+                 if e['biome'] == 'logos_dimension:cloudsea_silk_folds' and isinstance(e['parameters']['temperature'], list)]
+        assert len(boxes) == 1, (path, len(boxes))
+        boxes[0]['parameters']['temperature'] = list(TEMPERATURE)
+        write(path, doc)
+
+
 def main():
+    climate()
     path = DATA / 'noise_settings/journey.json'
     settings = json.loads(path.read_text(encoding='utf-8'))
     router = settings['noise_router']
@@ -46,7 +63,7 @@ def main():
         write(functions / 'original_surface.json', router['preliminary_surface_level'])
     mask = ramp('minecraft:overworld/erosion', [(-.05, 0), (.15, 1), (1.2, 1)])
     for coordinate, points in [
-        (router['temperature'], [(-.55, 0), (-.35, 1), (.55, 1), (.75, 0)]),
+        (router['temperature'], [(round(TEMPERATURE[0] - .2, 6), 0), (TEMPERATURE[0], 1), (TEMPERATURE[1], 1), (round(TEMPERATURE[1] + .2, 6), 0)]),
         (router['vegetation'], [(-1.2, 0), (-.95, 1), (.2, 1), (.4, 0)]),
         ('minecraft:overworld/continents', [(-.1, 0), (0, 1), (1.05, 1), (1.2, 0)]),
     ]:

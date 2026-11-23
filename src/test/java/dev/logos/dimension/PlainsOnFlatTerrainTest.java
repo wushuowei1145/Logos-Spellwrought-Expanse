@@ -90,6 +90,35 @@ class PlainsOnFlatTerrainTest {
         assertTrue(share>4.0&&share<12.0,"草原占比异常："+plain+"/"+total+" = "+share+"%");
     }
 
+    /**
+     * 多噪声里区间内的距离恒为 0，长风平原的连续区间会吞掉落在区间里或贴着区间边缘的单值气候点。
+     * 古榉林只有温度 0 那一行；#288 的区间从温度 -0.35 起，古榉林在整个世界里一格都不剩。
+     * 实测区间边离古榉林 0.2 时古榉林只剩原来的四分之一，0.35 时约六成，所以至少留 0.3。
+     */
+    @Test void longwindLeavesRoomForTheAncientBeech()throws Exception{
+        try(var input=getClass().getResourceAsStream("/data/logos_dimension/dimension/cloudsea.json")){
+            var entries=JsonParser.parseReader(new InputStreamReader(Objects.requireNonNull(input),StandardCharsets.UTF_8))
+                    .getAsJsonObject().getAsJsonObject("generator").getAsJsonObject("biome_source").getAsJsonArray("biomes");
+            JsonObject box=null;var beech=new ArrayList<JsonObject>();
+            for(var e:entries){
+                var entry=e.getAsJsonObject();String id=entry.get("biome").getAsString();var p=entry.getAsJsonObject("parameters");
+                if(id.equals("logos_dimension:cloudsea_silk_folds")&&p.get("temperature").isJsonArray())box=p;
+                if(id.equals("logos_dimension:cloudsea_ancient_beech"))beech.add(p);
+            }
+            assertNotNull(box,"缺少连片温带平原的气候范围");
+            assertFalse(beech.isEmpty(),"古榉林没有气候点");
+            for(var p:beech){
+                double squared=0;
+                for(String axis:new String[]{"temperature","humidity","continentalness","erosion","weirdness"}){
+                    double value=p.get(axis).getAsDouble();var range=box.getAsJsonArray(axis);
+                    double gap=Math.max(0,Math.max(range.get(0).getAsDouble()-value,value-range.get(1).getAsDouble()));
+                    squared+=gap*gap;
+                }
+                assertTrue(Math.sqrt(squared)>=.3,"长风平原的气候范围贴得离古榉林太近："+p);
+            }
+        }
+    }
+
     @Test void longwindHasAContinuousTemperateBandInsteadOfRidgeStripes()throws Exception{
         try(var input=getClass().getResourceAsStream("/data/logos_dimension/dimension/cloudsea.json")){
             var entries=JsonParser.parseReader(new InputStreamReader(Objects.requireNonNull(input),StandardCharsets.UTF_8))
