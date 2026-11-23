@@ -12,11 +12,23 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec3;
 
 /** 真实原版噪声生成的草原；不放置、替换或整平地表方块。 */
-@LDLRegisterClient(name="changfeng_natural",group="grass_wind",registry=UIScenario.REGISTRY,environment=RegistrationEnvironment.DEV_ONLY)
-public class GrassWindNaturalView implements UIScenario {
+@LDLRegisterClient(name="changfeng_natural",group="changfeng",registry=UIScenario.REGISTRY,environment=RegistrationEnvironment.DEV_ONLY)
+public class ChangfengNaturalView implements UIScenario {
     private BlockPos ground;
     private int heightSpan;
-    @Override public void configure(ScenarioOptions o) { o.tags("grass_wind","native_worldgen").defaultTimeoutMs(180000).scenarioTimeoutMs(300000); }
+    @Override public void configure(ScenarioOptions o) { o.tags("changfeng","native_worldgen").defaultTimeoutMs(180000).scenarioTimeoutMs(300000); }
+    /** 客户端 32×32 格内贴着地面、已换成宽叶草簇的草；双层草只数下半。 */
+    static int widened(BlockPos center){
+        var mc=Minecraft.getInstance();var level=mc.level;var models=mc.getModelManager().getBlockStateModelSet();
+        int count=0;
+        for(int x=-16;x<16;x++)for(int z=-16;z<16;z++){
+            int bx=center.getX()+x,bz=center.getZ()+z;
+            var p=new BlockPos(bx,level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING,bx,bz),bz);
+            var state=level.getBlockState(p);
+            if(models.get(state) instanceof ChangfengGrassModel model&&ChangfengGrassModel.appearance(level,p,state,model.original())!=model.original())count++;
+        }
+        return count;
+    }
     private static boolean core(net.minecraft.world.level.biome.Climate.Sampler sampler,int x,int z){
         var p=sampler.sample(x>>2,18,z>>2);
         double t=net.minecraft.world.level.biome.Climate.unquantizeCoord(p.temperature());
@@ -65,7 +77,7 @@ public class GrassWindNaturalView implements UIScenario {
             .checkServer("仍为原版噪声生成器",ctx->NativeWorlds.vanilla(ctx.player().level()))
             .checkServer("三十二格样地保持平坦",ctx->heightSpan<=6)
             .check("位于长风草原",ctx->Minecraft.getInstance().level.getBiome(ground.above()).is(LogosDimension.id(CloudseaBiome.SILK_FOLDS.id())))
-            .check("自然草地已进入风动缓存",ctx->WindGrass.lastQuads>0)
+            .check("自然草地换上宽叶草簇",ctx->widened(ground.above())>0)
             .screenshot("changfeng_natural")
             .step("俯瞰连片平原",ctx->Minecraft.getInstance().player.setXRot(27))
             .ticks(100).screenshot("changfeng_natural_overview")

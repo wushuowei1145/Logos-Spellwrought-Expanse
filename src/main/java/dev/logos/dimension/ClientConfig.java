@@ -16,13 +16,5 @@ public final class ClientConfig {
             .comment("How strongly whole-biome painting styles show, like the ink-wash look in Cloudveil Peaks. 0 turns them off.")
             .defineInRange("biomeStyle", 1.0, 0.0, 1.0);
 
-    public static final ModConfigSpec.BooleanValue GRASS_WIND = BUILDER
-            .comment("长风草原的草随风摇摆；关闭后恢复静态方块模型。")
-            .define("grassWind", true);
-
-    public static final ModConfigSpec.DoubleValue GRASS_WIND_AMOUNT = BUILDER
-            .comment("草浪强度；0 保持静止，1 使用自然风场。")
-            .defineInRange("grassWindAmount", 1.0, 0.0, 1.0);
-
     public static final ModConfigSpec SPEC = BUILDER.build();
 }
