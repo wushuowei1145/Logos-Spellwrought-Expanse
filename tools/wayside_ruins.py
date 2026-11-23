@@ -21,6 +21,9 @@ CATALOG=[
  ('ravine_thread','断崖星纱门',['halo_spires','echo_folds','moon_folds','cloudroot_shelves'],'minecraft:feather'),
  ('rain_memory','沉月镜庭',['glass_lagoons'],'minecraft:nautilus_shell'),
 ]
+# 较大的遗迹放第二只独立箱子，彼此不相邻，避免意外合并成大箱。
+SECOND_CACHES={'fern_scriptorium':(9,5,6),'root_cradle':(4,5,7),'wind_compass':(10,5,7),
+               'ravine_thread':(7,5,6),'rain_memory':(4,5,6)}
 
 def write(path,obj):
     path.parent.mkdir(parents=True,exist_ok=True)
@@ -72,7 +75,7 @@ def art():
     vine={'parent':'minecraft:block/block','ambientocclusion':False,'render_type':'minecraft:cutout',
           'textures':{'vine':'logos_dimension:block/wayside/bloom_vine','flower':'logos_dimension:block/wayside/wall_flower','particle':'logos_dimension:block/wayside/bloom_vine'},
           'elements':[{'from':[0,0,.12],'to':[16,16,.12],'shade':False,'faces':faces('vine')}]+
-          [{'from':[x-2.6,y-2.6,1.1],'to':[x+2.6,y+2.6,1.1],'shade':False,'faces':faces('flower')} for x,y in [(5,7),(11,12)]]}
+          [{'from':[x-4,y-4,1.1],'to':[x+4,y+4,1.1],'shade':False,'faces':faces('flower')} for x,y in [(4,6),(12,12)]]}
     write(A/'models/block/wayside/bloom_vine_side.json',vine)
     # 上附着沿用侧面模型旋转，四面仍由原版藤蔓属性决定，失去墙体会脱落。
     parts=[{'when':{face:'true'},'apply':{'model':'logos_dimension:block/wayside/bloom_vine_side',**({'x':270} if face=='up' else {'y':angle})}} for face,angle in [('north',0),('east',90),('south',180),('west',270),('up',0)]]
@@ -126,7 +129,9 @@ class Build:
         for dy in range(length):self.put(x,y-dy,z,st('iron_chain',axis='y',waterlogged=False))
         self.put(x,y-length,z,st(PREFIX+'wayside_jade_lamp'))
     def cache(self,x,y,z):
-        self.put(x,y,z,st('barrel',facing='up',open=False));self.entities[x,y,z]={'id':'minecraft:barrel','LootTable':PREFIX+'chests/wayside/'+self.kind}
+        if y==5 and (x,4,z) not in self.cells:self.floor(x,z)
+        self.put(x,y,z,st('chest',facing='south',type='single',waterlogged=self.kind=='rain_memory'))
+        self.entities[x,y,z]={'id':'minecraft:chest','LootTable':PREFIX+'chests/wayside/'+self.kind}
     def ring(self,cx,cz,r,y=4,breaks=()):
         for x in range(cx-r-1,cx+r+2):
             for z in range(cz-r-1,cz+r+2):
@@ -135,6 +140,7 @@ class Build:
                     if y==4:self.floor(x,z)
                     else:self.put(x,y,z,STONE)
     def finish(self):
+        if self.kind in SECOND_CACHES:self.cache(*SECOND_CACHES[self.kind])
         if self.variant:
             for _ in range(3):
                 x,z=self.rng.randrange(1,11),self.rng.randrange(1,11)
@@ -184,17 +190,19 @@ def build(kind,variant):
         log=st(PREFIX+'cloudsea_ancient_beech_log',axis='y')
         for x,z,side in [(3,5,1),(9,7,-1)]:
             b.floor(x,z)
-            for y in range(5,12):b.put(x+(y-5)//3*side,y,z,log)
+            for y in range(5,12):
+                xx=x+(y-5)//3*side;b.put(xx,y,z,log)
+                if y>5:b.put(x+(y-6)//3*side,y,z,log)
             for dx in range(-1,2):b.put(6+dx,11,z,log)
-        b.lamp(6,10,6,2);b.put(6,5,6,RUNE);b.cache(7,5,6)
+        b.put(6,11,6,log);b.lamp(6,10,6,2);b.floor(6,6);b.put(6,5,6,RUNE);b.cache(7,5,6)
         for x,z in [(3,4),(8,3),(9,8)]:b.vine(x,6,z+1,'north')
-        for x,z in [(4,4),(8,8),(5,9)]:b.put(x,5,z,st('moss_carpet'))
+        for x,z in [(4,4),(8,8),(5,9)]:b.floor(x,z);b.put(x,5,z,st('moss_carpet'))
     elif kind=='frost_resonator':
         b.ring(5,5,3,breaks=[(5,8)])
         for x,z,h in [(3,4,7),(7,4,9-v),(5,7,5+v)]:
             b.pillar(x,z,h);b.put(x,5+h,z,st('polished_deepslate'));b.put(x,6+h,z,st('lightning_rod',facing='up',powered=False,waterlogged=False))
         b.box((3,11,4),(7,11,4),STONE);b.lamp(5,10,4,2)
-        b.put(5,5,5,st('amethyst_cluster',facing='up',waterlogged=False));b.cache(6,5,6)
+        b.floor(5,5);b.put(5,5,5,st('amethyst_cluster',facing='up',waterlogged=False));b.cache(6,5,6)
         for x,z in [(2,5),(4,2),(8,6)]:b.floor(x,z,st('snow_block'));b.put(x,5,z,st('snow',layers=2))
     elif kind=='wind_compass':
         b.ring(7,7,5,breaks=[(11,10),(3,4)])
@@ -202,7 +210,7 @@ def build(kind,variant):
             for k in range(1,5):b.floor(7+dx*k,7+dz*k,RUNE if k==4 else STONE)
         b.pillar(7,7,2);b.put(7,7,7,st('weathered_copper'))
         for x,z,h in [(7,2,4),(12,7,2+v),(2,7,3),(7,12,1)]:b.pillar(x,z,h)
-        b.put(7,6,3,st(PREFIX+'wayside_jade_lamp'));b.cache(6,5,7)
+        b.put(7,5,3,MOSS);b.put(7,6,3,st(PREFIX+'wayside_jade_lamp'));b.cache(6,5,7)
         b.vine(8,6,2,'west');b.vine(2,6,8,'north')
     elif kind=='tide_lens':
         b.ring(6,6,4,breaks=[(6,10),(9,8)])
@@ -243,8 +251,13 @@ def loot(kind,theme):
     def item(name,weight,lo=1,hi=1):
         return {'type':'minecraft:item','name':name,'weight':weight,'functions':[{'function':'minecraft:set_count','count':{'type':'minecraft:uniform','min':lo,'max':hi}}]}
     write(D/f'loot_table/chests/wayside/{kind}.json',{'type':'minecraft:chest','pools':[
-        {'rolls':{'type':'minecraft:uniform','min':2,'max':4},'entries':[item('minecraft:paper',5,1,5),item('minecraft:book',2),item('logos_dimension:imperial_cent',5,2,12),item(theme,3,1,2)]},
-        {'rolls':1,'entries':[item('logos:mana_shard',1),{'type':'minecraft:empty','weight':4}]}]})
+        # 补给与钱币保底，地形物品和魔力材料另外抽取，避免只开出纸张。
+        {'rolls':{'type':'minecraft:uniform','min':2,'max':4},'entries':[
+            item('minecraft:bread',5,2,5),item('minecraft:baked_potato',5,3,7),item('minecraft:torch',6,4,10),
+            item('minecraft:arrow',3,4,10),item('minecraft:paper',3,2,6),item('minecraft:book',1,1,2)]},
+        {'rolls':1,'entries':[item('logos_dimension:imperial_cent',1,4,16)]},
+        {'rolls':{'type':'minecraft:uniform','min':1,'max':2},'entries':[item(theme,3,1,2),{'type':'minecraft:empty','weight':6}]},
+        {'rolls':1,'entries':[item('logos:mana_shard',3,1,2),item('minecraft:golden_apple',1),{'type':'minecraft:empty','weight':16}]}]})
 
 def generate():
     art();summary=[]

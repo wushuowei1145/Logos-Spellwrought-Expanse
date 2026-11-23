@@ -56,11 +56,13 @@ public final class WaysideGameTests {
                 var state=level.getBlockState(p);h.assertTrue(!state.is(Blocks.JIGSAW),"遗留拼图块："+kind+" "+p);
                 if(state.is(WaysideBlocks.BLOSSOM.get()))h.assertTrue(state.canSurvive(level,p),"花藤没有墙体："+kind+" "+p);
                 if(level.getBlockEntity(p) instanceof RandomizableContainerBlockEntity cache){
+                    h.assertTrue(state.is(Blocks.CHEST),"奖励容器应为箱子："+kind+" "+p);
+                    h.assertTrue(state.getMenuProvider(level,p)!=null,"奖励箱无法打开："+kind+" "+p);
                     boolean hasItem=false;for(int slot=0;slot<cache.getContainerSize();slot++)if(!cache.getItem(slot).isEmpty())hasItem=true;
                     h.assertTrue(hasItem,"遗迹战利品为空："+kind);caches++;
                 }
             }
-            h.assertTrue(caches==1,"每个模板应有一个藏匣："+kind+" "+caches);
+            h.assertTrue(caches>=1&&caches<=2,"每个模板应有一至两个奖励箱："+kind+" "+caches);
         }
         h.succeed();
     }
@@ -71,6 +73,9 @@ public final class WaysideGameTests {
             h.assertTrue(start.isValid(),"原版拼接无起点："+kind);
             var supports=start.getPieces().stream().filter(p->p instanceof PoolElementStructurePiece pool&&pool.getElement() instanceof FeaturePoolElement).map(p->(PoolElementStructurePiece)p).toList();
             h.assertTrue(!supports.isEmpty(),"未拼入原版石脚："+kind);
+            var root=(PoolElementStructurePiece)start.getPieces().getFirst();
+            int expected=root.getElement().getShuffledJigsawBlocks(level.getStructureManager(),root.getPosition(),root.getRotation(),RandomSource.create(7711)).size();
+            h.assertTrue(supports.size()==expected,"石脚端口漏接："+kind+" "+supports.size()+"/"+expected);
             // 人为挖空三格，证明补柱由特征真正执行，而非原来就有地面。
             for(var p:supports)for(int dy=0;dy<3;dy++)level.setBlock(p.getPosition().below(2+dy),Blocks.AIR.defaultBlockState(),Block.UPDATE_CLIENTS);
             SettlementGameTests.place(level,start);

@@ -29,9 +29,9 @@
         10,
         8
       ],
-      "blocks": 137,
-      "supports": 37,
-      "loot": 1
+      "blocks": 140,
+      "supports": 38,
+      "loot": 2
     },
     {
       "id": "fern_scriptorium_1",
@@ -40,9 +40,9 @@
         10,
         8
       ],
-      "blocks": 143,
-      "supports": 39,
-      "loot": 1
+      "blocks": 146,
+      "supports": 40,
+      "loot": 2
     },
     {
       "id": "root_cradle_0",
@@ -51,9 +51,9 @@
         12,
         10
       ],
-      "blocks": 92,
-      "supports": 23,
-      "loot": 1
+      "blocks": 110,
+      "supports": 29,
+      "loot": 2
     },
     {
       "id": "root_cradle_1",
@@ -62,9 +62,9 @@
         12,
         10
       ],
-      "blocks": 98,
-      "supports": 25,
-      "loot": 1
+      "blocks": 116,
+      "supports": 31,
+      "loot": 2
     },
     {
       "id": "frost_resonator_0",
@@ -73,8 +73,8 @@
         16,
         8
       ],
-      "blocks": 77,
-      "supports": 16,
+      "blocks": 81,
+      "supports": 18,
       "loot": 1
     },
     {
@@ -84,8 +84,8 @@
         15,
         9
       ],
-      "blocks": 86,
-      "supports": 19,
+      "blocks": 87,
+      "supports": 20,
       "loot": 1
     },
     {
@@ -97,7 +97,7 @@
       ],
       "blocks": 127,
       "supports": 41,
-      "loot": 1
+      "loot": 2
     },
     {
       "id": "wind_compass_1",
@@ -108,7 +108,7 @@
       ],
       "blocks": 134,
       "supports": 43,
-      "loot": 1
+      "loot": 2
     },
     {
       "id": "tide_lens_0",
@@ -117,8 +117,8 @@
         12,
         10
       ],
-      "blocks": 100,
-      "supports": 26,
+      "blocks": 102,
+      "supports": 27,
       "loot": 1
     },
     {
@@ -126,10 +126,10 @@
       "size": [
         11,
         12,
-        10
+        11
       ],
-      "blocks": 103,
-      "supports": 27,
+      "blocks": 108,
+      "supports": 29,
       "loot": 1
     },
     {
@@ -161,9 +161,9 @@
         14,
         8
       ],
-      "blocks": 70,
-      "supports": 9,
-      "loot": 1
+      "blocks": 75,
+      "supports": 11,
+      "loot": 2
     },
     {
       "id": "ravine_thread_1",
@@ -172,9 +172,9 @@
         14,
         9
       ],
-      "blocks": 79,
-      "supports": 12,
-      "loot": 1
+      "blocks": 84,
+      "supports": 14,
+      "loot": 2
     },
     {
       "id": "rain_memory_0",
@@ -185,7 +185,7 @@
       ],
       "blocks": 144,
       "supports": 46,
-      "loot": 1
+      "loot": 2
     },
     {
       "id": "rain_memory_1",
@@ -196,7 +196,7 @@
       ],
       "blocks": 147,
       "supports": 47,
-      "loot": 1
+      "loot": 2
     }
   ],
   "kinds": 9,
