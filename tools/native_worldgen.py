@@ -116,7 +116,8 @@ for ti,t in enumerate([-.8,-.4,0,.4,.8]):
      if ci==2 and ei==2 and wi in [0,4] and hi==3:bid='star_ribbons'
      climate.append(point('cloudsea_'+bid,t,h,c,e,w))
 # 温带、少雨内陆的平坦带合成连片长风平原，不再要求极端干燥的单个气候点。
-climate.append(point('cloudsea_silk_folds',[-.35,.55],[-.6,.2],[0,1.0],[.15,1.2],[-1.2,1.2]))
+# 温度只取暖温带一行（网格温度 0.4）；温和一行（0）的湿润平地留给古榉林，见 changfeng_plains.TEMPERATURE。
+climate.append(point('cloudsea_silk_folds',list(runpy.run_path(str(ROOT/'tools/changfeng_plains.py'))['TEMPERATURE']),[-.6,.2],[0,1.0],[.15,1.2],[-1.2,1.2]))
 climate.append(point('cloudsea_root_caves',[-1.2,1.2],[-1.2,1.2],[-1.2,1.2],[-1.2,1.2],[-1.2,1.2],[.35,1.5]))
 cloud={'type':'logos_dimension:cloudsea','generator':{'type':'minecraft:noise','settings':'logos_dimension:journey','biome_source':{'type':'minecraft:multi_noise','biomes':climate}}}
 write(D/'dimension/cloudsea.json',cloud)
