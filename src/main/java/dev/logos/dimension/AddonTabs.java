@@ -80,7 +80,7 @@ public final class AddonTabs {
                 "journey_river_reed", "journey_bluebell", "journey_foxglove", "journey_lupine", "journey_stardew",
                 // 四季植物
                 "journey_silver_anemone", "journey_moonbell", "journey_glowcap", "journey_heather",
-                "journey_amber_fern", "journey_winter_hellebore", "journey_fireweed",
+                "journey_amber_fern", "journey_winter_hellebore", "journey_fireweed", "journey_meadow_daisies", "journey_meadow_bells",
                 // 蘑菇：前三种能吃，后三种有毒
                 "journey_field_mushroom", "journey_chanterelle", "journey_bolete",
                 "journey_fly_agaric", "journey_death_cap", "journey_false_chanterelle",

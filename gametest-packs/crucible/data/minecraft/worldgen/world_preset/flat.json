@@ -18090,6 +18090,33 @@
                 ],
                 "offset": 0
               }
+            },
+            {
+              "biome": "logos_dimension:cloudsea_rose_dunes",
+              "parameters": {
+                "temperature": [
+                  -0.1,
+                  0.55
+                ],
+                "humidity": [
+                  0.28,
+                  0.8
+                ],
+                "continentalness": [
+                  0,
+                  1.0
+                ],
+                "erosion": [
+                  0.45,
+                  1.2
+                ],
+                "weirdness": [
+                  -1.2,
+                  1.2
+                ],
+                "depth": 0,
+                "offset": 0
+              }
             }
           ]
         }

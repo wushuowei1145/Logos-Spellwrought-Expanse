@@ -89,7 +89,7 @@ class PlainsFloorTest {
             "砾石不能压过草，否则不像丘陵而像碎石坡");
     }
 
-    /** 野花草甸：野花权重压过草，是六个平原里最"花"的一个。 */
+    /** 野花先按连续噪声铺花带，再用草与少量点缀填空。 */
     @Test void roseDunesIsAFlowerMeadow()throws Exception{
         var ground=vegetation("cloudsea_rose_dunes");
         assertTrue(ground.contains("logos_dimension:cloudsea_rose_dunes_floor"),
@@ -97,26 +97,24 @@ class PlainsFloorTest {
         assertFalse(ground.contains("logos_dimension:meadow_floor"),
             "野花草甸不应再引用共享草地表");
 
-        var w=weights("cloudsea_rose_dunes_floor");
-        int grass=w.getOrDefault("logos_dimension:journey_meadow_grass",0)
-                 +w.getOrDefault("minecraft:short_grass",0);
-        int flowers=0;
-        for(var e:w.entrySet())
-            if(e.getKey().startsWith("logos_dimension:journey_")&&
-               !e.getKey().contains("meadow_grass")) flowers+=e.getValue();
-        flowers+=w.getOrDefault("minecraft:oxeye_daisy",0);
-        assertTrue(flowers>grass,"野花权重应当压过草（花甸才像花甸）：花="+flowers+" 草="+grass);
-        assertTrue(w.getOrDefault("logos_dimension:journey_fireweed",0)>0,"缺少柳兰点缀");
+        assertTrue(ground.indexOf("logos_dimension:cloudsea_rose_dunes_floor") < ground.indexOf("logos_dimension:wildflower_understory"),"先铺花带，再填林下草");
+        var provider=data("worldgen/configured_feature/cloudsea_rose_dunes_floor").getAsJsonObject("config").getAsJsonObject("to_place");
+        assertEquals("minecraft:noise_provider",provider.get("type").getAsString());
+        var flowers=new HashSet<String>();
+        for(var state:provider.getAsJsonArray("states")) flowers.add(state.getAsJsonObject().get("Name").getAsString());
+        assertEquals(Set.of("logos_dimension:journey_meadow_daisies","logos_dimension:journey_meadow_bells"),flowers);
+        assertTrue(weights("wildflower_understory").getOrDefault("logos_dimension:journey_fireweed",0)>0,"缺少少量柳兰点缀");
     }
 
     /** 删除矮草后必须使用原版 ID，并保留合并后的短草总权重。 */
     @Test void plainsShortGrassUsesVanillaRegistryId()throws Exception{
-        for(var entry:Map.of(SILK,16,"cloudsea_dawn_ribbons",56,"cloudsea_rose_dunes",28).entrySet()){
+        for(var entry:Map.of(SILK,16,"cloudsea_dawn_ribbons",56).entrySet()){
             var w=weights(entry.getKey()+"_floor");
             assertEquals(entry.getValue(),w.get("minecraft:short_grass"),entry.getKey()+" 短草 ID 或总权重错误");
             assertFalse(w.containsKey("logos_dimension:short_grass"),"短草属于 minecraft 命名空间");
             assertFalse(w.containsKey("logos_dimension:journey_meadow_grass_short"),"不应再引用已删除的矮草");
         }
+        assertEquals(58,weights("wildflower_understory").get("minecraft:short_grass"));
     }
 
     @Test void otherPlainsStillUseTheSharedFloor()throws Exception{

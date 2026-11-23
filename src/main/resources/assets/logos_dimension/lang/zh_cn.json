@@ -1905,5 +1905,9 @@
   "gui.logos_dimension.companion_book.dismiss": "收回",
   "gui.logos_dimension.companion_book.resting": "歇着 · %s 秒",
   "gui.logos_dimension.companion_book.unknown": "？？？",
-  "gui.logos_dimension.companion_book.with_you": "在你身边"
+  "gui.logos_dimension.companion_book.with_you": "在你身边",
+  "block.logos_dimension.journey_meadow_daisies": "奶油波斯菊花簇",
+  "item.logos_dimension.journey_meadow_daisies": "奶油波斯菊花簇",
+  "block.logos_dimension.journey_meadow_bells": "蓝紫绣球花簇",
+  "item.logos_dimension.journey_meadow_bells": "蓝紫绣球花簇"
 }

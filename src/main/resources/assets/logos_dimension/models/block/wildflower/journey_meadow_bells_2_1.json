@@ -1,0 +1,144 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "body": "logos_dimension:block/wildflower/journey_meadow_bells_2",
+    "head": "logos_dimension:block/wildflower/journey_meadow_bells_2_head",
+    "particle": "logos_dimension:block/wildflower/journey_meadow_bells_2"
+  },
+  "elements": [
+    {
+      "from": [
+        0.2999999999999998,
+        0,
+        12
+      ],
+      "to": [
+        11.3,
+        10,
+        12
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5.8,
+        0,
+        6.5
+      ],
+      "to": [
+        5.8,
+        10,
+        17.5
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5.050000000000001,
+        0,
+        3.5
+      ],
+      "to": [
+        15.55,
+        8,
+        3.5
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        10.3,
+        0,
+        -1.75
+      ],
+      "to": [
+        10.3,
+        8,
+        8.75
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ]
+}

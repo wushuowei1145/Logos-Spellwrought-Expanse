@@ -1,0 +1,210 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "body": "logos_dimension:block/wildflower/journey_meadow_daisies_0",
+    "head": "logos_dimension:block/wildflower/journey_meadow_daisies_0_head",
+    "particle": "logos_dimension:block/wildflower/journey_meadow_daisies_0"
+  },
+  "elements": [
+    {
+      "from": [
+        -1.9500000000000002,
+        0,
+        7.7
+      ],
+      "to": [
+        8.55,
+        9,
+        7.7
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        3.3,
+        0,
+        2.45
+      ],
+      "to": [
+        3.3,
+        9,
+        12.95
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        -0.40000000000000036,
+        6.93,
+        4.0
+      ],
+      "to": [
+        7.0,
+        6.93,
+        11.4
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#head",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#head",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5.5,
+        0,
+        11.7
+      ],
+      "to": [
+        16.5,
+        11.2,
+        11.7
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        11,
+        0,
+        6.199999999999999
+      ],
+      "to": [
+        11,
+        11.2,
+        17.2
+      ],
+      "shade": false,
+      "faces": {
+        "east": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#body",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.3,
+        8.623999999999999,
+        7.999999999999999
+      ],
+      "to": [
+        14.7,
+        8.623999999999999,
+        15.399999999999999
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#head",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#head",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ]
+}

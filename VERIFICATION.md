@@ -1,5 +1,51 @@
 # 首版验证记录
 
+## 野花草甸：噪声花带与四季花簇
+
+分支 `feat/wildflower-meadow`（PR #289），说明见 [野花草甸](docs/WILDFLOWER_MEADOW.md)。下面从新到旧：维护者接手后的整合、第二版加密与换花、首版。
+
+### 接手后整合到 main（2026-11-23）
+
+先 rebase 到 main `11bc9374`（#295 移除风动草之后），再合入 main `61f9c5b4`（#296 古榉林）。冲突只在本文件和 `PlainsOnFlatTerrainTest`（两边都保留）；花甸段落放在顶部，顺带把放错位置的「腐化女王重做第 2 步」挪回第 1 步旁边。CI 里 `creative_tabs_cover_items` 发现两种新花不在任何创造物品栏，已加进「四季植物」一行。Logos 0.7.2（`5fdd33e`）、星辰花乐团 0.1.0。
+
+| 层级 | 结果 |
+|---|---|
+| 构建与单元 | `test build` 通过，**403/403**（含 #296 的古榉林间距检查） |
+| 世界测试 | 全部 **268/269**：`creative_tabs_cover_items`、`cloudsea_tree_blocks`、`grape_native_growth_sites`、`plant_*` 都通过；只有已知偶发的 `jian_sui_arena_flow` 失败（main 的 CI 上同样出现） |
+| 实际客户端 | `group:wildflower_meadow` **2/2 场景、6/6 检查**；固定样地 **932 格花簇、37 格草**，与第二版一致；看过样地截图 |
+| 尚未验证 | 本轮没有跑光影包；FPS、联机、秋冬实机外观仍未测 |
+
+更早的整合：11-22 在 main `14f68389`（#288、#280/#290、#291 之后）上 `test build` **401/401**；之后又强推到 `9ac1a6b7`，那一轮没有本地重跑。两个生成脚本重新运行后，共用气候表保留 main 全部气候点再加入花甸连续范围，语言表保留 main 全部键。
+
+### 第二版：加密与换花（2026-11-22）
+
+维护者要求更密集、可换花。第二版改为奶油波斯菊与蓝紫绣球，沿用两种原注册 ID；花冠从 4 单位加宽到 7.4 单位，叶丛加厚、株高压低，四种错开布局避免密集时排成整齐网点。花带放置次数 360→600，草层 220→180；新增贴图仍全部 16×16，春夏每格仍 12 面、秋冬 8 面。
+
+- 同一 32×32 固定样地的新花簇为 **932/1024=91.015625%**，草为 **37/1024**，仍保留空位。初版为 775 格花、101 格草。统计的是花簇占据的地表格数，不是画面像素覆盖率。
+- `test build` 全部 **386/386** 通过；最终错开株型在 Iris + Sodium + Photon 1.3b 下 **2/2 场景、6/6 检查**。保留自然生成与对照样地的同一镜头，人工查看宽花冠、蓝色团花、茎叶与疏密。
+- 16 张贴图逐张检查为 16×16，32 个方块模型逐个统计面数仍为 8 或 12。世界种植与土壤规则的类没有改动，3 项植物世界测试沿用下方首版结果，本次未重复跑；普通渲染器与秋冬实机外观未在这一版重拍，未测 FPS。
+
+### 首版（2026-11-22）
+
+基于 main `b270b089`（#286），与长风平原 PR #288 分开。Logos 使用 CI 固定提交 `5fdd33e` 构建的 0.7.2，星辰花乐团使用 `ca57e94` 构建的 0.1.0。
+
+| 层级 | 结果 |
+|---|---|
+| 构建与单元 | `test build` 通过，**386/386**。更新现有花甸数据检查：主花带为原版噪声提供器、白花与蓝花两类状态，先铺花后填草；保留其他平原的原版短草 ID 与原有草原气候分配检查 |
+| 原版生成 | 湿润平地补入连续气候主体，并同步世界测试预设。花带和草层仍为原版 SimpleBlock + PlacedFeature，不抬地、不削坡。生成脚本重复执行后 42 个相关模型、贴图、花带数据和气候文件内容不变 |
+| 实际客户端 | 普通渲染器、Iris + Sodium + Photon 1.3b 各 **2/2 场景、6/6 检查**：固定样地通过真实原版放置特征生成，1024 格中 **775 格新花簇、101 格草**；花多于草且留有空隙，花簇不能在石头上存活；另拍未改动地表的自然花甸，检查群系正确、仍为原版噪声生成器 |
+| 世界测试 | 已有 `plant_item_soil_support`、`plant_support_loss`、`plant_legacy_cleanup` **3/3**；新花簇加入原有季节植物列表，因此覆盖实际 BlockItem 种植、土壤被换成石头或挖去后的脱落、旧存档错误种植在随机刻下清理；各季节状态均保持土壤规则 |
+| 美术检查 | 新增 16 张贴图均为 **16×16**。两种花各有两种株型、四季模型、四向旋转；春夏每格 12 面，秋冬 8 面。人工查看自然景观、测试样地俯视与近景，花带有白蓝分区，侧面与花顶均可见；没有使用图像生成服务 |
+| 修正 | 最初自然定位失败，补入湿润平地连续气候范围；测试预设同步由现有一致性单测守住。平地样本最初给两层重复使用同一随机种子，导致草层总撞上已经种过花的位置，改为按特征分开的种子；生产环境本来就由原版按特征分配种子 |
+| 未验证 | 没有测 FPS、联机、其他光影包；秋冬外观没有逐季进游戏拍摄。未把旧区块的已有花草替换成新花簇，新增自然生成只在新区块生效 |
+
+```text
+python tools/wildflower_meadow.py
+./gradlew test build -PlogosJar=/absolute/path/logos.jar -PorchestraJar=/absolute/path/orchestra.jar
+./gradlew runGameTestServer -PlogosJar=... -PorchestraJar=... -PdimensionTests=logos_dimension:plant_*
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:wildflower_meadow -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 长风平原：把古榉林还回来
 
 2026-11-23：分支 `fix/ancient-beech-biome`，从 main `11bc9374`。Logos 0.7.2（`5fdd33e`）、星辰花乐团 0.1.0。#288 之后 main 上 `cloudsea_tree_blocks`（找不到古榉林内部）和 `grape_native_growth_sites`（找不到古榉林）一直失败。原因是长风草原新加的连续气候范围从温度 -0.35 起，盖住了古榉林唯一的温度 0 那一行（湿度 -0.4、0；0.4 那档归精灵森林）。温度下界改为 0.35，压平遮罩同步。说明见 [长风平原](docs/CHANGFENG_PLAINS.md)。
@@ -55,19 +101,6 @@
 ./gradlew test --tests 'dev.logos.dimension.companion.*' --tests 'dev.logos.dimension.LangCoverageTest' -PlogosJar=/absolute/path/logos.jar -PorchestraJar=/absolute/path/starbloom_orchestra-0.1.0.jar
 ./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:kohaku_companion -PldTestHeadless -PldTestWindow=1280x720
 ```
-
-## 腐化女王重做第 2 步：扩大树心战场
-
-2026-11-16：分支 `feat/corrupted-elven-intro`，Logos `dc3d381` / 0.7.0。腐化世界树加粗，大厅扩到直径约 48，加祭坛、三个出怪壁龛、环形高台、坡道和树根掩体；血管接头移到高台上方。见 [docs/BLIGHTED_ELVEN_FOREST.md](docs/BLIGHTED_ELVEN_FOREST.md)「树心战场」。
-
-| 层级 | 结果 |
-|---|---|
-| 生成 | `python tools/blighted_elven_forest.py`：348 份模板中 18 份改变，其余解码后逐格相同（压缩字节不同的已还原为原文件）；战场形状写入格数与算出的一致（缺部件会断言失败）；离线切片看过 y = 1、3、11、20 的平面和两条中轴剖面 |
-| 单元 | 全量 436 条、0 失败、1 跳过 |
-| 世界 | `elven_blight_*` 10/10 |
-| 实际客户端 | `elven_blight_queen`（新增两项检查：血管接头至少 12 个在高台上方够得着的高度；大厅半径 22 处仍是空的、西侧壁龛、祭坛与发光顶面、高台和拱门上方的断口、门口木阶）与 `elven_blight_cleanup` 2/2 场景、18/18 检查，原版渲染；看过从高台和从入口拍的两张全景 |
-| 未验证 | 实际生成的世界里，加粗的根部与陡坡地形的衔接（测试用平地）；光影包；多人 |
-
 
 ## 琥珀同伴（第五步补：实际玩时赖床、「大」字没触发；模型第 10 版）
 
@@ -297,6 +330,19 @@ uv run --with numpy --with pillow python tools/import_vesperglass.py --preview
 ./gradlew --offline runGameTestServer -PlogosJar=/absolute/path/logos-0.7.0.jar "-PdimensionTests=logos_dimension:foxfire_word_*"
 ./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.7.0.jar "-PldTest=group:shiraume_companion" -PldTestHeadless -PldTestWindow=1280x720
 ```
+
+## 腐化女王重做第 2 步：扩大树心战场
+
+2026-11-16：分支 `feat/corrupted-elven-intro`，Logos `dc3d381` / 0.7.0。腐化世界树加粗，大厅扩到直径约 48，加祭坛、三个出怪壁龛、环形高台、坡道和树根掩体；血管接头移到高台上方。见 [docs/BLIGHTED_ELVEN_FOREST.md](docs/BLIGHTED_ELVEN_FOREST.md)「树心战场」。
+
+| 层级 | 结果 |
+|---|---|
+| 生成 | `python tools/blighted_elven_forest.py`：348 份模板中 18 份改变，其余解码后逐格相同（压缩字节不同的已还原为原文件）；战场形状写入格数与算出的一致（缺部件会断言失败）；离线切片看过 y = 1、3、11、20 的平面和两条中轴剖面 |
+| 单元 | 全量 436 条、0 失败、1 跳过 |
+| 世界 | `elven_blight_*` 10/10 |
+| 实际客户端 | `elven_blight_queen`（新增两项检查：血管接头至少 12 个在高台上方够得着的高度；大厅半径 22 处仍是空的、西侧壁龛、祭坛与发光顶面、高台和拱门上方的断口、门口木阶）与 `elven_blight_cleanup` 2/2 场景、18/18 检查，原版渲染；看过从高台和从入口拍的两张全景 |
+| 未验证 | 实际生成的世界里，加粗的根部与陡坡地形的衔接（测试用平地）；光影包；多人 |
+
 
 ## 腐化女王重做第 1 步：改名与腐败森林的存储、放置开销
 

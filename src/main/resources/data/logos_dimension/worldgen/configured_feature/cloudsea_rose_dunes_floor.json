@@ -2,64 +2,46 @@
   "type": "minecraft:simple_block",
   "config": {
     "to_place": {
-      "type": "minecraft:weighted_state_provider",
-      "entries": [
+      "type": "minecraft:noise_provider",
+      "seed": 602211,
+      "noise": {
+        "firstOctave": -2,
+        "amplitudes": [
+          1.0,
+          0.35
+        ]
+      },
+      "scale": 0.25,
+      "states": [
         {
-          "data": {
-            "Name": "logos_dimension:journey_bluebell"
-          },
-          "weight": 18
+          "Name": "logos_dimension:journey_meadow_daisies",
+          "Properties": {
+            "season": "0"
+          }
         },
         {
-          "data": {
-            "Name": "logos_dimension:journey_silver_anemone",
-            "Properties": {
-              "season": "0"
-            }
-          },
-          "weight": 16
+          "Name": "logos_dimension:journey_meadow_daisies",
+          "Properties": {
+            "season": "0"
+          }
         },
         {
-          "data": {
-            "Name": "minecraft:oxeye_daisy"
-          },
-          "weight": 14
+          "Name": "logos_dimension:journey_meadow_daisies",
+          "Properties": {
+            "season": "0"
+          }
         },
         {
-          "data": {
-            "Name": "minecraft:short_grass"
-          },
-          "weight": 20
+          "Name": "logos_dimension:journey_meadow_bells",
+          "Properties": {
+            "season": "0"
+          }
         },
         {
-          "data": {
-            "Name": "logos_dimension:journey_fireweed",
-            "Properties": {
-              "season": "0"
-            }
-          },
-          "weight": 8
-        },
-        {
-          "data": {
-            "Name": "logos_dimension:journey_stardew"
-          },
-          "weight": 6
-        },
-        {
-          "data": {
-            "Name": "logos_dimension:journey_heather",
-            "Properties": {
-              "season": "0"
-            }
-          },
-          "weight": 6
-        },
-        {
-          "data": {
-            "Name": "minecraft:short_grass"
-          },
-          "weight": 8
+          "Name": "logos_dimension:journey_meadow_bells",
+          "Properties": {
+            "season": "0"
+          }
         }
       ]
     }

@@ -1,0 +1,46 @@
+{
+  "type": "minecraft:simple_block",
+  "config": {
+    "to_place": {
+      "type": "minecraft:weighted_state_provider",
+      "entries": [
+        {
+          "data": {
+            "Name": "minecraft:short_grass"
+          },
+          "weight": 58
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_meadow_grass_young"
+          },
+          "weight": 24
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_stardew"
+          },
+          "weight": 6
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_silver_anemone",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 8
+        },
+        {
+          "data": {
+            "Name": "logos_dimension:journey_fireweed",
+            "Properties": {
+              "season": "0"
+            }
+          },
+          "weight": 4
+        }
+      ]
+    }
+  }
+}
