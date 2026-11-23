@@ -1,0 +1,205 @@
+{
+  "templates": [
+    {
+      "id": "bloom_waystone_0",
+      "size": [
+        8,
+        13,
+        8
+      ],
+      "blocks": 90,
+      "supports": 17,
+      "loot": 1
+    },
+    {
+      "id": "bloom_waystone_1",
+      "size": [
+        10,
+        13,
+        11
+      ],
+      "blocks": 97,
+      "supports": 20,
+      "loot": 1
+    },
+    {
+      "id": "fern_scriptorium_0",
+      "size": [
+        11,
+        10,
+        8
+      ],
+      "blocks": 137,
+      "supports": 37,
+      "loot": 1
+    },
+    {
+      "id": "fern_scriptorium_1",
+      "size": [
+        11,
+        10,
+        8
+      ],
+      "blocks": 143,
+      "supports": 39,
+      "loot": 1
+    },
+    {
+      "id": "root_cradle_0",
+      "size": [
+        11,
+        12,
+        10
+      ],
+      "blocks": 92,
+      "supports": 23,
+      "loot": 1
+    },
+    {
+      "id": "root_cradle_1",
+      "size": [
+        11,
+        12,
+        10
+      ],
+      "blocks": 98,
+      "supports": 25,
+      "loot": 1
+    },
+    {
+      "id": "frost_resonator_0",
+      "size": [
+        9,
+        16,
+        8
+      ],
+      "blocks": 77,
+      "supports": 16,
+      "loot": 1
+    },
+    {
+      "id": "frost_resonator_1",
+      "size": [
+        10,
+        15,
+        9
+      ],
+      "blocks": 86,
+      "supports": 19,
+      "loot": 1
+    },
+    {
+      "id": "wind_compass_0",
+      "size": [
+        13,
+        9,
+        13
+      ],
+      "blocks": 127,
+      "supports": 41,
+      "loot": 1
+    },
+    {
+      "id": "wind_compass_1",
+      "size": [
+        13,
+        9,
+        13
+      ],
+      "blocks": 134,
+      "supports": 43,
+      "loot": 1
+    },
+    {
+      "id": "tide_lens_0",
+      "size": [
+        11,
+        12,
+        10
+      ],
+      "blocks": 100,
+      "supports": 26,
+      "loot": 1
+    },
+    {
+      "id": "tide_lens_1",
+      "size": [
+        11,
+        12,
+        10
+      ],
+      "blocks": 103,
+      "supports": 27,
+      "loot": 1
+    },
+    {
+      "id": "reed_siphon_0",
+      "size": [
+        9,
+        12,
+        7
+      ],
+      "blocks": 92,
+      "supports": 24,
+      "loot": 1
+    },
+    {
+      "id": "reed_siphon_1",
+      "size": [
+        11,
+        12,
+        9
+      ],
+      "blocks": 98,
+      "supports": 26,
+      "loot": 1
+    },
+    {
+      "id": "ravine_thread_0",
+      "size": [
+        10,
+        14,
+        8
+      ],
+      "blocks": 70,
+      "supports": 9,
+      "loot": 1
+    },
+    {
+      "id": "ravine_thread_1",
+      "size": [
+        11,
+        14,
+        9
+      ],
+      "blocks": 79,
+      "supports": 12,
+      "loot": 1
+    },
+    {
+      "id": "rain_memory_0",
+      "size": [
+        11,
+        10,
+        10
+      ],
+      "blocks": 144,
+      "supports": 46,
+      "loot": 1
+    },
+    {
+      "id": "rain_memory_1",
+      "size": [
+        11,
+        10,
+        10
+      ],
+      "blocks": 147,
+      "supports": 47,
+      "loot": 1
+    }
+  ],
+  "kinds": 9,
+  "variants": 2,
+  "note": "不含实体、复制土台或运行时建筑生成器。"
+}

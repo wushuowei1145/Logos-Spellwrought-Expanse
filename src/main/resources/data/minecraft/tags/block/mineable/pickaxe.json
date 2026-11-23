@@ -42,6 +42,10 @@
     "logos_dimension:taixuan_brass_ridge_slab",
     "logos_dimension:taixuan_brass_block",
     "logos_dimension:taixuan_dark_iron",
-    "logos_dimension:blight_node"
+    "logos_dimension:blight_node",
+    "logos_dimension:wayside_carved_stone",
+    "logos_dimension:wayside_moss_stone",
+    "logos_dimension:wayside_rune_tile",
+    "logos_dimension:wayside_jade_lamp"
   ]
 }

@@ -1,0 +1,111 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "vine": "logos_dimension:block/wayside/bloom_vine",
+    "flower": "logos_dimension:block/wayside/wall_flower",
+    "particle": "logos_dimension:block/wayside/bloom_vine"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0.12
+      ],
+      "to": [
+        16,
+        16,
+        0.12
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#vine",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#vine",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        2.4,
+        4.4,
+        1.1
+      ],
+      "to": [
+        7.6,
+        9.6,
+        1.1
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#flower",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#flower",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        8.4,
+        9.4,
+        1.1
+      ],
+      "to": [
+        13.6,
+        14.6,
+        1.1
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "texture": "#flower",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#flower",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ]
+}
