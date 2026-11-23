@@ -18010,7 +18010,7 @@
           "biome": "logos_dimension:cloudsea_silk_folds",
           "parameters": {
             "temperature": [
-              -0.35,
+              0.35,
               0.55
             ],
             "humidity": [

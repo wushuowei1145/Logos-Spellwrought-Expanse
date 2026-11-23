@@ -1,5 +1,18 @@
 # 首版验证记录
 
+## 长风平原：把古榉林还回来
+
+2026-11-23：分支 `fix/ancient-beech-biome`，从 main `11bc9374`。Logos 0.7.2（`5fdd33e`）、星辰花乐团 0.1.0。#288 之后 main 上 `cloudsea_tree_blocks`（找不到古榉林内部）和 `grape_native_growth_sites`（找不到古榉林）一直失败。原因是长风草原新加的连续气候范围从温度 -0.35 起，盖住了古榉林唯一的温度 0 那一行（湿度 -0.4、0；0.4 那档归精灵森林）。温度下界改为 0.35，压平遮罩同步。说明见 [长风平原](docs/CHANGFENG_PLAINS.md)。
+
+| 层级 | 结果 |
+|---|---|
+| 群系占比 | 临时 GameTest 在测试种子 ±12000 格内每 128 格取一点（35344 点，Y=96）：长风草原 51.83% → **15.93%**，古榉林 0 → **0.46%**（去掉连续范围时 0.74%）。蛋白石沙丘 12.20% → 28.21%、晴光林隙 0.09% → 5.64%、白樱 0.27% → 3.98%、精灵森林 0.57% → 1.49%，也是被原先的范围压掉的 |
+| 构建与单元 | `test build` 通过，**403/403**（加 `longwindLeavesRoomForTheAncientBeech`：区间离每个古榉林气候点至少 0.3） |
+| GameTest | 269 项中 265 项通过，`cloudsea_tree_blocks`、`grape_native_growth_sites` 通过。失败 4 项：`jian_sui_giant_parry`、`jian_sui_arena_flow`、`shiraume_beast_bite_parried`（已知偶发）和 `lingxiao_mana`；`lingxiao_mana` 单独重复 10 次在本分支失败 8 次、在未改动的 main 上失败 5 次，都是差一刻回复（9.45 / 10.55），与本次改动无关 |
+| 实际客户端 | `group:changfeng` **2/2 场景、6/6 检查**：`changfeng_natural` 仍在真实噪声里找到长风平原，32 格样地平坦、草是宽叶草簇；俯瞰截图是开阔平地 |
+| 生成脚本 | `tools/native_worldgen.py` 整条管线在 main 上已跑不起来（`journey_resources.py` 断言 33 个群系，云岫峰林之后是 34 个），所以由 `tools/changfeng_plains.py` 在已提交的维度和测试预设里定点改区间；它和 `native_worldgen.py` 共用 `TEMPERATURE` |
+| 尚未验证 | 没进游戏看古榉林和平原交界的地形过渡；只影响新区块 |
+
 ## 长风平原：移除风动草
 
 2026-11-23：分支 `fix/remove-grass-wind`，从 main `9ac1a6b7`。Logos 0.7.2（`5fdd33e`）、星辰花乐团 0.1.0，同友人帐。说明见 [长风平原](docs/CHANGFENG_PLAINS.md)。
