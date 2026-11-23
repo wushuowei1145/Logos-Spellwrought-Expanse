@@ -2,13 +2,22 @@
 
 ## 野花草甸：噪声花带与四季花簇
 
-### 与最新 main 整合
+分支 `feat/wildflower-meadow`（PR #289），说明见 [野花草甸](docs/WILDFLOWER_MEADOW.md)。下面从新到旧：维护者接手后的整合、第二版加密与换花、首版。
 
-强推期间 main 再次推进，第二轮已整合到 `9ac1a6b7`（包含 #292–#294）。新增的同伴语言键、植物标签和原有气候数据一并保留；下方 401 项单测与 4 场景、15 检查是在 `14f68389` 整合版本上通过的，最新一轮按维护者要求直接强推，后续由 GitHub CI 验证。
+### 接手后整合到 main（2026-11-23）
 
-2026-11-22：PR #289 已 rebase 到 main `14f68389`（包含长风平原 #288、剑祟 #280/#290 和琥珀日常 #291）。共用生成脚本依次保留长风平原和花甸处理；两份气候表保留 main 全部气候点，再加入花甸连续范围；语言表保留 main 的全部键。两个生成脚本重新运行后，共用气候与各自材质内容不变。整合后 `test build` **401/401** 通过。客户端组合回归另行启动，推送时不把未完成的运行计作通过；维护者要求直接强推，后续检查 GitHub CI。
+rebase 到 main `11bc9374`（#295 移除风动草之后）。只有本文件冲突，花甸段落放回顶部；顺带把放错位置的「腐化女王重做第 2 步」挪回第 1 步旁边。Logos 0.7.2（`5fdd33e`）、星辰花乐团 0.1.0。
 
-### 加密与换花
+| 层级 | 结果 |
+|---|---|
+| 构建与单元 | `test build` 通过，**402/402** |
+| 世界测试 | `plant_*` **3/3**（种植、失去土壤脱落、旧存档清理） |
+| 实际客户端 | `group:wildflower_meadow` **2/2 场景、6/6 检查**；固定样地 **932 格花簇、37 格草**，与第二版一致；看过样地截图 |
+| 尚未验证 | 本轮没有跑光影包；FPS、联机、秋冬实机外观仍未测 |
+
+更早的整合：11-22 在 main `14f68389`（#288、#280/#290、#291 之后）上 `test build` **401/401**；之后又强推到 `9ac1a6b7`，那一轮没有本地重跑。两个生成脚本重新运行后，共用气候表保留 main 全部气候点再加入花甸连续范围，语言表保留 main 全部键。
+
+### 第二版：加密与换花（2026-11-22）
 
 维护者要求更密集、可换花。第二版改为奶油波斯菊与蓝紫绣球，沿用两种原注册 ID；花冠从 4 单位加宽到 7.4 单位，叶丛加厚、株高压低，四种错开布局避免密集时排成整齐网点。花带放置次数 360→600，草层 220→180；新增贴图仍全部 16×16，春夏每格仍 12 面、秋冬 8 面。
 
@@ -16,9 +25,9 @@
 - `test build` 全部 **386/386** 通过；最终错开株型在 Iris + Sodium + Photon 1.3b 下 **2/2 场景、6/6 检查**。保留自然生成与对照样地的同一镜头，人工查看宽花冠、蓝色团花、茎叶与疏密。
 - 16 张贴图逐张检查为 16×16，32 个方块模型逐个统计面数仍为 8 或 12。世界种植与土壤规则的类没有改动，3 项植物世界测试沿用下方首版结果，本次未重复跑；普通渲染器与秋冬实机外观未在这一版重拍，未测 FPS。
 
-### 首版
+### 首版（2026-11-22）
 
-2026-11-22：分支 `feat/wildflower-meadow`，基于 main `b270b089`（#286），与长风平原 PR #288 分开。Logos 使用 CI 固定提交 `5fdd33e` 构建的 0.7.2，星辰花乐团使用 `ca57e94` 构建的 0.1.0。说明见 [野花草甸](docs/WILDFLOWER_MEADOW.md)。
+基于 main `b270b089`（#286），与长风平原 PR #288 分开。Logos 使用 CI 固定提交 `5fdd33e` 构建的 0.7.2，星辰花乐团使用 `ca57e94` 构建的 0.1.0。
 
 | 层级 | 结果 |
 |---|---|
@@ -79,19 +88,6 @@ python tools/wildflower_meadow.py
 ./gradlew test --tests 'dev.logos.dimension.companion.*' --tests 'dev.logos.dimension.LangCoverageTest' -PlogosJar=/absolute/path/logos.jar -PorchestraJar=/absolute/path/starbloom_orchestra-0.1.0.jar
 ./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:kohaku_companion -PldTestHeadless -PldTestWindow=1280x720
 ```
-
-## 腐化女王重做第 2 步：扩大树心战场
-
-2026-11-16：分支 `feat/corrupted-elven-intro`，Logos `dc3d381` / 0.7.0。腐化世界树加粗，大厅扩到直径约 48，加祭坛、三个出怪壁龛、环形高台、坡道和树根掩体；血管接头移到高台上方。见 [docs/BLIGHTED_ELVEN_FOREST.md](docs/BLIGHTED_ELVEN_FOREST.md)「树心战场」。
-
-| 层级 | 结果 |
-|---|---|
-| 生成 | `python tools/blighted_elven_forest.py`：348 份模板中 18 份改变，其余解码后逐格相同（压缩字节不同的已还原为原文件）；战场形状写入格数与算出的一致（缺部件会断言失败）；离线切片看过 y = 1、3、11、20 的平面和两条中轴剖面 |
-| 单元 | 全量 436 条、0 失败、1 跳过 |
-| 世界 | `elven_blight_*` 10/10 |
-| 实际客户端 | `elven_blight_queen`（新增两项检查：血管接头至少 12 个在高台上方够得着的高度；大厅半径 22 处仍是空的、西侧壁龛、祭坛与发光顶面、高台和拱门上方的断口、门口木阶）与 `elven_blight_cleanup` 2/2 场景、18/18 检查，原版渲染；看过从高台和从入口拍的两张全景 |
-| 未验证 | 实际生成的世界里，加粗的根部与陡坡地形的衔接（测试用平地）；光影包；多人 |
-
 
 ## 琥珀同伴（第五步补：实际玩时赖床、「大」字没触发；模型第 10 版）
 
@@ -321,6 +317,19 @@ uv run --with numpy --with pillow python tools/import_vesperglass.py --preview
 ./gradlew --offline runGameTestServer -PlogosJar=/absolute/path/logos-0.7.0.jar "-PdimensionTests=logos_dimension:foxfire_word_*"
 ./gradlew --offline runClient -PlogosJar=/absolute/path/logos-0.7.0.jar "-PldTest=group:shiraume_companion" -PldTestHeadless -PldTestWindow=1280x720
 ```
+
+## 腐化女王重做第 2 步：扩大树心战场
+
+2026-11-16：分支 `feat/corrupted-elven-intro`，Logos `dc3d381` / 0.7.0。腐化世界树加粗，大厅扩到直径约 48，加祭坛、三个出怪壁龛、环形高台、坡道和树根掩体；血管接头移到高台上方。见 [docs/BLIGHTED_ELVEN_FOREST.md](docs/BLIGHTED_ELVEN_FOREST.md)「树心战场」。
+
+| 层级 | 结果 |
+|---|---|
+| 生成 | `python tools/blighted_elven_forest.py`：348 份模板中 18 份改变，其余解码后逐格相同（压缩字节不同的已还原为原文件）；战场形状写入格数与算出的一致（缺部件会断言失败）；离线切片看过 y = 1、3、11、20 的平面和两条中轴剖面 |
+| 单元 | 全量 436 条、0 失败、1 跳过 |
+| 世界 | `elven_blight_*` 10/10 |
+| 实际客户端 | `elven_blight_queen`（新增两项检查：血管接头至少 12 个在高台上方够得着的高度；大厅半径 22 处仍是空的、西侧壁龛、祭坛与发光顶面、高台和拱门上方的断口、门口木阶）与 `elven_blight_cleanup` 2/2 场景、18/18 检查，原版渲染；看过从高台和从入口拍的两张全景 |
+| 未验证 | 实际生成的世界里，加粗的根部与陡坡地形的衔接（测试用平地）；光影包；多人 |
+
 
 ## 腐化女王重做第 1 步：改名与腐败森林的存储、放置开销
 
