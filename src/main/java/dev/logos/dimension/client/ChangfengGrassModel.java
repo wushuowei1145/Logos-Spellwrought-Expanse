@@ -1,6 +1,7 @@
 package dev.logos.dimension.client;
 
 import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.cloudsea.CloudseaBiome;
 import dev.logos.dimension.cloudsea.CloudseaBlocks;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
@@ -21,9 +22,12 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import java.util.List;
 
-/** 保留原模型和物品外观；只有已缓存的草丛改交风动管线，避免静态草重影。 */
+/**
+ * 长风草皮上的原版短草与高草换成宽叶草簇。仍画进区块网格，光影包的阴影、光照和它自带的草摆动照常生效；
+ * 物品、破坏粒子和别处的草保留原模型。
+ */
 @EventBusSubscriber(modid = LogosDimension.ID, value = Dist.CLIENT)
-public record GrassWindModel(BlockStateModel original) implements BlockStateModel {
+public record ChangfengGrassModel(BlockStateModel original) implements BlockStateModel {
     private record Form(int part, int variant, int rotation, StandaloneModelKey<BlockStateModel> key) {}
     private static final List<Form> FORMS = forms();
     private static volatile List<BlockStateModel> blades = List.of();
@@ -47,17 +51,17 @@ public record GrassWindModel(BlockStateModel original) implements BlockStateMode
     }
 
     @SubscribeEvent static void bake(ModelEvent.ModifyBakingResult event) {
-        WindGrass.modelsChanged();
         blades = FORMS.stream().map(form -> event.getBakingResult().standaloneModels().get(form.key())).toList();
         event.getBakingResult().blockStateModels().replaceAll((state, model) ->
-                grass(state) ? new GrassWindModel(model) : model);
+                grass(state) ? new ChangfengGrassModel(model) : model);
     }
 
-    /** 只换长风草皮上的草片；关闭风动后也保留新株型，双层共用根点随机数。 */
+    /** 双层草从共同根点检查长风草皮，也用根点的随机数选株型，上下两半对得上。可从区块编译线程调用。 */
     static BlockStateModel appearance(BlockAndTintGetter level, BlockPos pos, BlockState state, BlockStateModel original) {
-        if (blades.isEmpty() || !WindGrass.eligible(level, pos, state) || !(state.is(Blocks.TALL_GRASS) || state.is(Blocks.SHORT_GRASS))) return original;
+        if (blades.isEmpty() || !grass(state)) return original;
         int part = state.is(Blocks.SHORT_GRASS) ? 0 : state.getValue(DoublePlantBlock.HALF) == DoubleBlockHalf.LOWER ? 1 : 2;
         BlockPos root = part == 2 ? pos.below() : pos;
+        if (!level.getBlockState(root.below()).is(CloudseaBlocks.GROUND.get(CloudseaBiome.SILK_FOLDS).get())) return original;
         long seed = net.minecraft.util.Mth.getSeed(root.getX(), root.getY(), root.getZ());
         int choice = Math.floorMod(seed, 12);
         var model = blades.get(part * 12 + choice);
@@ -65,12 +69,11 @@ public record GrassWindModel(BlockStateModel original) implements BlockStateMode
     }
 
     static boolean grass(BlockState state) {
-        return state.is(Blocks.TALL_GRASS) || state.is(Blocks.SHORT_GRASS)
-                || state.is(CloudseaBlocks.MEADOW_GRASS.get()) || state.is(CloudseaBlocks.MEADOW_GRASS_YOUNG.get());
+        return state.is(Blocks.TALL_GRASS) || state.is(Blocks.SHORT_GRASS);
     }
 
     @Override public void collectParts(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, List<BlockStateModelPart> parts) {
-        if (!WindGrass.replace(level, pos, state)) appearance(level, pos, state, original).collectParts(level, pos, state, random, parts);
+        appearance(level, pos, state, original).collectParts(level, pos, state, random, parts);
     }
     @Override public void collectParts(RandomSource random, List<BlockStateModelPart> parts) { original.collectParts(random, parts); }
     @Override public Material.Baked particleMaterial() { return original.particleMaterial(); }
