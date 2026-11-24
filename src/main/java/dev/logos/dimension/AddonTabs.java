@@ -48,7 +48,9 @@ public final class AddonTabs {
             // 太玄：花窗、云纹砖雕、黄铜筒瓦、黄铜、玄铁
             "taixuan_lattice_window", "taixuan_carved_brick",
             "taixuan_brass_tiles", "taixuan_brass_tile_stairs", "taixuan_brass_ridge_slab", "taixuan_brass_block",
-            "taixuan_dark_iron"));
+            "taixuan_dark_iron",
+            // 野外遗迹的旧石与嵌纹
+            "wayside_carved_stone", "wayside_moss_stone", "wayside_rune_tile"));
 
     /** 装饰：家具、灯、布帘与绳结、石像，没有交互。 */
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> DECORATIONS = tab("decorations", BUILDING, "journey_stone_lantern", out -> ids(out,
@@ -63,7 +65,7 @@ public final class AddonTabs {
             // 石像、石龛、竹出水口、封印杭
             "journey_fox_statue", "journey_shrine_hokora", "journey_bamboo_spout", "journey_seal_stake",
             // 太玄深渊的雾
-            "taixuan_abyss_mist"));
+            "taixuan_abyss_mist", "wayside_jade_lamp"));
 
     /** 自然：远行大陆的地形石、各群系的地面、原木和树叶、花草蘑菇与水草。 */
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> NATURE = tab("nature", DECORATIONS, "cloudsea_white_cherry_leaf", out -> {
@@ -88,7 +90,7 @@ public final class AddonTabs {
                 "journey_berry_bramble", "journey_grapevine", "journey_grapes", "journey_grape_leaf",
                 // 地面落瓣与落叶、水草
                 "journey_white_petals", "journey_fallen_leaves",
-                "journey_seagrass", "journey_glow_seagrass", "journey_kelp");
+                "journey_seagrass", "journey_glow_seagrass", "journey_kelp", "wayside_bloom_vine");
     });
 
     /** 功能方块：右键或注魔会做事的方块。柜台也留在货币页，炼金釜也留在炼金釜页。 */

@@ -1,0 +1,26 @@
+{
+  "name": "logos_dimension:wayside/rain_memory",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "logos_dimension:wayside/rain_memory_0",
+        "processors": "logos_dimension:wayside_preserve",
+        "override_liquid_settings": "ignore_waterlogging",
+        "projection": "rigid"
+      }
+    },
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "logos_dimension:wayside/rain_memory_1",
+        "processors": "logos_dimension:wayside_preserve",
+        "override_liquid_settings": "ignore_waterlogging",
+        "projection": "rigid"
+      }
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "structures": [
+    {
+      "structure": "logos_dimension:wayside_bloom_waystone",
+      "weight": 1
+    },
+    {
+      "structure": "logos_dimension:wayside_fern_scriptorium",
+      "weight": 1
+    },
+    {
+      "structure": "logos_dimension:wayside_root_cradle",
+      "weight": 1
+    },
+    {
+      "structure": "logos_dimension:wayside_frost_resonator",
+      "weight": 1
+    },
+    {
+      "structure": "logos_dimension:wayside_wind_compass",
+      "weight": 1
+    },
+    {
+      "structure": "logos_dimension:wayside_tide_lens",
+      "weight": 1
+    },
+    {
+      "structure": "logos_dimension:wayside_reed_siphon",
+      "weight": 1
+    },
+    {
+      "structure": "logos_dimension:wayside_ravine_thread",
+      "weight": 1
+    },
+    {
+      "structure": "logos_dimension:wayside_rain_memory",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 26,
+    "separation": 14,
+    "salt": 79101324
+  }
+}

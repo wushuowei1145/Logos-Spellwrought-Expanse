@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "logos_dimension:cloudsea_frost_spires",
+    "logos_dimension:cloudsea_pale_spires",
+    "logos_dimension:cloudsea_aurora_dunes",
+    "logos_dimension:cloudsea_fir_heart",
+    "logos_dimension:cloudsea_lilac_steps"
+  ]
+}

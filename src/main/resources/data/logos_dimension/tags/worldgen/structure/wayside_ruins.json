@@ -1,0 +1,14 @@
+{
+  "replace": false,
+  "values": [
+    "logos_dimension:wayside_bloom_waystone",
+    "logos_dimension:wayside_fern_scriptorium",
+    "logos_dimension:wayside_root_cradle",
+    "logos_dimension:wayside_frost_resonator",
+    "logos_dimension:wayside_wind_compass",
+    "logos_dimension:wayside_tide_lens",
+    "logos_dimension:wayside_reed_siphon",
+    "logos_dimension:wayside_ravine_thread",
+    "logos_dimension:wayside_rain_memory"
+  ]
+}
