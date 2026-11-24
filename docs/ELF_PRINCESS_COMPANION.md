@@ -182,6 +182,7 @@ Logos 的法术（荆棘）和箭的生命伤害自己就乘它；治疗、护�
 | `cast_heal` / `cast_bless` / `cast_thorns` | combat | 治疗、缠绕、荆棘（直身跪下按地）；`heal` / `bless` / `root` 标记是出手的那一刻 |
 | `eat` / `refuse` | misc | 吃东西（同白梅的 2.4 秒、三口、1.75 秒咽下）、不吃 |
 | `withdraw` | misc | 撤退：跪下 → 荷花张开着长出来 → 合拢 → 沉进地里 |
+| `fall` / `land` / `channel` / `rise` | combat | 腐化女王之战里的她（模型第 6 版，`tools/clips.py` 的 `FIGHT`；[QUEEN_CORE_BATTLE.md](QUEEN_CORE_BATTLE.md)「公主」）：从祭坛上方落下、直身跪着落地再站起、两手朝前引导净化、被扶起。都不动脸 |
 
 入场的荷花苞是模型里的骨骼 `SummonBud`（平时缩到 0，渲染器只在 `summon`、`withdraw` 时画它）。
 

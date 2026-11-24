@@ -29,7 +29,7 @@ public final class ElvenBlightGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS = DeferredRegister.create(Registries.TEST_FUNCTION, LogosDimension.ID);
     private ElvenBlightGameTests() {}
     public static void register(IEventBus bus) {
-        var tests = Map.<String, Consumer<GameTestHelper>>of(
+        var tests = new LinkedHashMap<>(Map.<String, Consumer<GameTestHelper>>of(
                 "elven_blight_heart_once_and_saved", ElvenBlightGameTests::once,
                 "elven_blight_emergence_and_defeat", ElvenBlightGameTests::defeat,
                 "elven_blight_growth_uses_corruption", ElvenBlightGameTests::growth,
@@ -39,7 +39,13 @@ public final class ElvenBlightGameTests {
                 "elven_blight_natural_trigger", ElvenBlightGameTests::trigger,
                 "elven_blight_cleanup_is_local_and_restores", BlightReclamationTests::cleanup,
                 "elven_blight_reclamation_saved_and_rotated", BlightReclamationTests::saved,
-                "elven_blight_natural_nodes", BlightReclamationTests::natural);
+                "elven_blight_natural_nodes", BlightReclamationTests::natural));
+        tests.put("elven_blight_three_stage_battle", QueenBattleTests::battle);
+        tests.put("elven_blight_queen_purification", QueenBattleTests::restoration);
+        tests.put("elven_blight_queen_logos_spells", QueenBattleTests::spells);
+        tests.put("elven_blight_queen_battle_reset", QueenBattleTests::reset);
+        tests.put("elven_blight_princess_gate", QueenBattleTests::gate);
+        CorruptionDamageTests.register(tests);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent e) -> {
@@ -96,17 +102,26 @@ public final class ElvenBlightGameTests {
         h.assertTrue(ElvenForestGameTests.roots(tree) >= 1500, "腐败树根缺少接地子件");
         h.succeed();
     }
-    private record Fixture(QueenHeart heart, ServerPlayer player, BlockPos pos) {
+    record Fixture(QueenHeart heart, ServerPlayer player, BlockPos pos) {
         void close(GameTestHelper h) {
             var world = h.getLevel();
-            if (heart.queen() != null && world.getEntity(heart.queen()) != null) world.getEntity(heart.queen()).discard();
+            // 女王、公主、她们放出来的衍生物和血管接头都清掉，不留在复用的测试存档里。
+            if (heart.queen() != null && world.getEntity(heart.queen()) instanceof CorruptedElfQueen q) {
+                for (var id : q.waveMobs()) if (world.getEntity(id) != null) world.getEntity(id).discard();
+                for (var t : q.tethers(world)) t.discard();
+                q.discard();
+            }
+            if (heart.princessId() != null && world.getEntity(heart.princessId()) != null) world.getEntity(heart.princessId()).discard();
             world.getServer().getPlayerList().remove(player);
             for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++) world.setChunkForced((pos.getX() >> 4) + x, (pos.getZ() >> 4) + z, false);
         }
     }
-    private static Fixture fixture(GameTestHelper h) {
+    static Fixture fixture(GameTestHelper h) {
+        return fixture(h, BlockPos.ZERO);
+    }
+    static Fixture fixture(GameTestHelper h, BlockPos offset) {
         var world = h.getLevel();
-        BlockPos at = h.absolutePos(new BlockPos(8, 9, 8));
+        BlockPos at = h.absolutePos(new BlockPos(8, 9, 8)).offset(offset);
         for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++) world.setChunkForced((at.getX() >> 4) + x, (at.getZ() >> 4) + z, true);
         for (int x = -8; x <= 8; x++) for (int z = -8; z <= 8; z++) {
             world.setBlockAndUpdate(at.offset(x, -8, z), Blocks.STONE.defaultBlockState());
@@ -178,6 +193,9 @@ public final class ElvenBlightGameTests {
     }
     private static void melee(GameTestHelper h) {
         var f = fixture(h);
+        // 横扫一下 16（腐败伤害，困难 ×1.25）：给玩家足够的生命，结算两次也看得出来。
+        f.player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);
+        f.player.setHealth(100);
         var queen = Objects.requireNonNull(f.heart.awaken(f.player));
         h.assertTrue(dev.logos.dimension.corruption.CorruptionContact.immune(queen), "女王未加入腐败生物标签");
         final float[] before = {0};
@@ -191,23 +209,31 @@ public final class ElvenBlightGameTests {
             h.assertTrue(queen.tickCount >= QueenEntrances.TICKS + 75, "等待横扫完成");
             try {
                 float lost = before[0] - f.player.getHealth();
-                h.assertTrue(lost > 0 && lost <= 11, "近身横扫未命中或重复结算：" + lost);
+                h.assertTrue(lost > 0 && lost <= 16 * 1.25f + .01f, "近身横扫未命中或重复结算：" + lost);
                 h.succeed();
             } finally { f.close(h); }
         }));
     }
     private static void trigger(GameTestHelper h) {
-        var f = fixture(h);
+        // 远离别的测试：要强制加载门口那一片，结束时再放掉，不能碰到相邻测试的区块。
+        var f = fixture(h, new BlockPos(-100000, 200, -100000));
+        QueenBattleTests.pads(h.getLevel(), f.pos);
         f.player.setGameMode(GameType.CREATIVE);
         h.runAfterDelay(20, () -> {
             h.assertTrue(f.heart.queen() != null && h.getLevel().getEntity(f.heart.queen()) instanceof CorruptedElfQueen q && q.action().equals("queen_guard"), "女王应坐在核心下，创造模式不自动开战");
+            h.assertTrue(f.heart.princess(h.getLevel()) != null, "走近世界树时门口没有生成公主");
             f.player.setGameMode(GameType.SURVIVAL);
         });
         h.runAfterDelay(45, () -> {
+            // 公主还在门口：生存靠近也不开战。
+            h.assertTrue(h.getLevel().getEntity(f.heart.queen()) instanceof CorruptedElfQueen q && q.action().equals("queen_guard"), "公主没到场女王就起身了");
+            f.heart.princess(h.getLevel()).arrive(h.getLevel());
+        });
+        h.runAfterDelay(70, () -> {
             try {
-                h.assertTrue(f.heart.queen() != null && h.getLevel().getEntity(f.heart.queen()) instanceof CorruptedElfQueen q && !q.action().equals("queen_guard"), "生存靠近未唤醒守护者");
+                h.assertTrue(f.heart.queen() != null && h.getLevel().getEntity(f.heart.queen()) instanceof CorruptedElfQueen q && !q.action().equals("queen_guard"), "公主到场后生存靠近未唤醒守护者");
                 h.succeed();
-            } finally { f.close(h); }
+            } finally { f.close(h); QueenBattleTests.unpads(h.getLevel(), f.pos); }
         });
     }
 }

@@ -1,0 +1,4 @@
+; 腐化荆棘：朝女王锁定的方向升起三道荆棘，荆棘留在地上十秒。女王是腐败一方，她的生命伤害就是腐败伤害（docs/CORRUPTION.md），荆棘也画成腐败的紫红色。
+(spell :name "腐化荆棘" :mana 40 :trigger cast
+  (split 3
+    (vein :linger 10 (on-hit (damage target 10 life)))))
