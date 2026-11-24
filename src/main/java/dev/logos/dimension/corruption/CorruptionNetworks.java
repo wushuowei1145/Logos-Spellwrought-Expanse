@@ -162,6 +162,18 @@ public final class CorruptionNetworks extends SavedData {
         return networks.size();
     }
 
+    /** 水平 {@code radius} 格内还在的核心有几个（区域核心也算）。开销按核心总数算，调用方自己限频（女王每秒一次）。 */
+    public int coresWithin(BlockPos center, double radius) {
+        double r2 = radius * radius;
+        int n = 0;
+        for (LongIterator it = cores.keySet().iterator(); it.hasNext(); ) {
+            long key = it.nextLong();
+            double dx = BlockPos.getX(key) - center.getX(), dz = BlockPos.getZ(key) - center.getZ();
+            if (dx * dx + dz * dz <= r2) n++;
+        }
+        return n;
+    }
+
     /** {@code n} 现在有几个子核心（拆掉的不算）。 */
     public int satellites(Network n) {
         IntArrayList list = children().get(n.id);
@@ -298,6 +310,18 @@ public final class CorruptionNetworks extends SavedData {
             n.originals.remove(pos.asLong());
         }
         setDirty();
+    }
+
+    /** 批量净化绕过方块回调时，显式撤销这一格的归属；外圈未清理的原状态仍留在网络里。 */
+    public void purified(BlockPos pos) {
+        release(pos);
+        Network core = ofCore(pos);
+        if (core != null) {
+            core.passive = false;
+            core.spreader.cursors().clear();
+            core.reserve = 0;
+            setDirty();
+        }
     }
 
     /** 蔓延把 {@code original} 换成了 {@code pos} 上的污秽：记下来，核心没了以后变回去。不属于任何网络的位置不记。 */

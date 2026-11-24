@@ -1,0 +1,4 @@
+; 枯荣一线：有抬手前摇的直线生命术式，掩体能阻挡。
+(spell :name "枯荣一线" :mana 40 :players true
+  (ray :range 22
+    (on-hit (damage target 14 life))))
