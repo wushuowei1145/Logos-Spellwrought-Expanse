@@ -251,13 +251,14 @@ def loot(kind,theme):
     def item(name,weight,lo=1,hi=1):
         return {'type':'minecraft:item','name':name,'weight':weight,'functions':[{'function':'minecraft:set_count','count':{'type':'minecraft:uniform','min':lo,'max':hi}}]}
     write(D/f'loot_table/chests/wayside/{kind}.json',{'type':'minecraft:chest','pools':[
-        # 补给与钱币保底，地形物品和魔力材料另外抽取，避免只开出纸张。
+        # 补给保底，地形物品另外抽取，避免只开出纸张。
         {'rolls':{'type':'minecraft:uniform','min':2,'max':4},'entries':[
             item('minecraft:bread',5,2,5),item('minecraft:baked_potato',5,3,7),item('minecraft:torch',6,4,10),
             item('minecraft:arrow',3,4,10),item('minecraft:paper',3,2,6),item('minecraft:book',1,1,2)]},
-        {'rolls':1,'entries':[item('logos_dimension:imperial_cent',1,4,16)]},
         {'rolls':{'type':'minecraft:uniform','min':1,'max':2},'entries':[item(theme,3,1,2),{'type':'minecraft:empty','weight':6}]},
-        {'rolls':1,'entries':[item('logos:mana_shard',3,1,2),item('minecraft:golden_apple',1),{'type':'minecraft:empty','weight':16}]}]})
+        {'rolls':1,'entries':[item('minecraft:golden_apple',1),{'type':'minecraft:empty','weight':19}]},
+        # 钱币和 Logos 物品统一由手写的分级表给，见 docs/LOOT_TIERS.md。
+        {'rolls':1,'entries':[{'type':'minecraft:loot_table','value':PREFIX+'chests/tiers/common'}]}]})
 
 def generate():
     art();summary=[]

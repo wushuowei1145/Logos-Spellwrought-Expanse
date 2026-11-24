@@ -101,26 +101,6 @@
       ]
     },
     {
-      "rolls": 1,
-      "entries": [
-        {
-          "type": "minecraft:item",
-          "name": "logos_dimension:imperial_cent",
-          "weight": 1,
-          "functions": [
-            {
-              "function": "minecraft:set_count",
-              "count": {
-                "type": "minecraft:uniform",
-                "min": 4,
-                "max": 16
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
       "rolls": {
         "type": "minecraft:uniform",
         "min": 1,
@@ -153,21 +133,6 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "logos:mana_shard",
-          "weight": 3,
-          "functions": [
-            {
-              "function": "minecraft:set_count",
-              "count": {
-                "type": "minecraft:uniform",
-                "min": 1,
-                "max": 2
-              }
-            }
-          ]
-        },
-        {
-          "type": "minecraft:item",
           "name": "minecraft:golden_apple",
           "weight": 1,
           "functions": [
@@ -183,7 +148,16 @@
         },
         {
           "type": "minecraft:empty",
-          "weight": 16
+          "weight": 19
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:loot_table",
+          "value": "logos_dimension:chests/tiers/common"
         }
       ]
     }
