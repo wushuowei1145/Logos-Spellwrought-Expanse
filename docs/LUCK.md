@@ -1,6 +1,6 @@
 # 运势
 
-神社签箱抽到的「今日运势」。抽签流程已经完整，九种运现在都是**空壳**：能抽到、能看到图标、能在代码里读到等级，但还没有实际效果，由各玩法慢慢接上。设想见 [issue #163](https://github.com/wushuowei1145/Logos-Spellwrought-Expanse/issues/163)。
+神社签箱抽到的「今日运势」。抽签流程已经完整，各种运能抽到、能看到图标、能在代码里读到等级，实际效果由各玩法慢慢接上；现在接上的只有附属箱子的战利品（总签运、财运、法运，见 [LOOT_TIERS.md](LOOT_TIERS.md)），其余还是**空壳**。设想见 [issue #163](https://github.com/wushuowei1145/Logos-Spellwrought-Expanse/issues/163)。
 
 代码在 `dev.logos.dimension.luck`（`Luck`、`LuckKind`），抽签在 `cloudsea/Omikuji`，图标由 `tools/luck_icons.py` 生成。
 
@@ -13,13 +13,14 @@ int level = Luck.level(player, LuckKind.WEALTH); // 正吉负凶，0 表示今�
 - 只读 `Luck.level`，不要读药水效果：效果只是图标，会被牛奶和死亡清掉，要等下一秒才补回来；`level` 不受影响。
 - 只在服务端有值，记录不同步到客户端。
 - 接上之后把下表的「现状」改掉。
+- 战利品表里不用写 Java：用数值类型 `logos_dimension:luck`（`LuckValue`）按等级取值，见 [LOOT_TIERS.md](LOOT_TIERS.md)。
 
 | `LuckKind` | 效果名 | 签项 | 设想 | 现状 |
 | --- | --- | --- | --- | --- |
-| `WEALTH` | 财运 | 商卖 | 怪物掉钱增减（要先做怪物掉钱） | 空壳 |
+| `WEALTH` | 财运 | 商卖 | 怪物掉钱增减（要先做怪物掉钱） | 附属箱子的钱币增减，大利可能出金冠；怪物掉钱还没做 |
 | `MARKET` | 行情运 | 行情 | 传闻上提示可信度 | 空壳 |
 | `WAR` | 武运 | 胜负 | 附属武器暴击增减 | 空壳 |
-| `SPELL` | 法运 | 学问 | 施法耗魔、蓄力速度（要改 Logos 本体） | 空壳 |
+| `SPELL` | 法运 | 学问 | 施法耗魔、蓄力速度（要改 Logos 本体） | 附属箱子里 Logos 的东西（魔力碎片、符文书、古代药剂）增减；施法还没做 |
 | `HARVEST` | 丰收运 | 田亩 | 作物多收或少收 | 空壳 |
 | `ALCHEMY` | 炼金运 | 匠作 | 炼金多出或少出 | 空壳 |
 | `TRAVEL` | 旅运 | 行旅 | 远行大陆里的移动速度与饥饿 | 空壳 |
