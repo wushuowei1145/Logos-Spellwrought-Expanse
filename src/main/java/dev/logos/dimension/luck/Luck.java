@@ -76,6 +76,7 @@ public final class Luck {
     public static void register(IEventBus bus) {
         EFFECTS.register(bus);
         ATTACHMENTS.register(bus);
+        LuckValue.register(bus);
         NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post event) -> {
             if (event.getEntity() instanceof ServerPlayer player && player.tickCount % SYNC_TICKS == 0) sync(player);
         });

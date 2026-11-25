@@ -255,9 +255,10 @@ def loot(kind,theme):
         {'rolls':{'type':'minecraft:uniform','min':2,'max':4},'entries':[
             item('minecraft:bread',5,2,5),item('minecraft:baked_potato',5,3,7),item('minecraft:torch',6,4,10),
             item('minecraft:arrow',3,4,10),item('minecraft:paper',3,2,6),item('minecraft:book',1,1,2)]},
-        {'rolls':{'type':'minecraft:uniform','min':1,'max':2},'entries':[item(theme,3,1,2),{'type':'minecraft:empty','weight':6}]},
-        {'rolls':1,'entries':[item('minecraft:golden_apple',1),{'type':'minecraft:empty','weight':19}]},
-        # 钱币和 Logos 物品统一由手写的分级表给，见 docs/LOOT_TIERS.md。
+        # 原版幸运（总签运）用原版的 quality：空位随幸运变少、金苹果随幸运变多，霉运反过来。
+        {'rolls':{'type':'minecraft:uniform','min':1,'max':2},'entries':[item(theme,3,1,2),{'type':'minecraft:empty','weight':6,'quality':-1}]},
+        {'rolls':1,'entries':[{**item('minecraft:golden_apple',2),'quality':1},{'type':'minecraft:empty','weight':38}]},
+        # 钱币和 Logos 物品统一由手写的分级表给，按签运变，见 docs/LOOT_TIERS.md。
         {'rolls':1,'entries':[{'type':'minecraft:loot_table','value':PREFIX+'chests/tiers/common'}]}]})
 
 def generate():
