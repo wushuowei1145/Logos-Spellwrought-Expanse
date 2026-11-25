@@ -89,6 +89,17 @@ public final class LongswordCombat {
             DawnvowCharge.contact(player, runner.move().name());
             LongswordCombat.contact(player, this);
         }
+        @Override public void fire(MoveRunner runner) {
+            if (selected(player, this) && !PAUSED.contains(player.getUUID()) && stack.getItem() instanceof CombatWeapon.Holder holder)
+                holder.fire(player, runner.move(), runner.fireIndex());
+        }
+        @Override public void feed(MoveRunner runner) {
+            if (selected(player, this) && !PAUSED.contains(player.getUUID()) && stack.getItem() instanceof CombatWeapon.Holder holder)
+                holder.feed(player, runner.move());
+        }
+        @Override public boolean allows(String requirement) {
+            return stack.getItem() instanceof CombatWeapon.Holder holder && holder.allows(player, requirement);
+        }
         LongswordPayload payload(MoveRunner runner) {
             if (runner.cleared()) return LongswordPayload.clear(player.getUUID());
             var move = runner.move(); var set = runner.moveset();
@@ -156,6 +167,11 @@ public final class LongswordCombat {
         if (state != null && (!player.isUsingItem() || state.runner.move().accepts(Moveset.Input.ATTACK))
                 && (!(state.stack.getItem() instanceof CombatWeapon.Holder holder) || holder.allowsAttack(player, state.runner.move().name())))
             state.runner.input(Moveset.Input.ATTACK, player.level().getGameTime());
+    }
+    /** 换弹：交给招式文件的 {@code reload} 输入（铳，见 docs/FIREARMS.md）；接受时返回 true。 */
+    public static boolean reload(ServerPlayer player) {
+        var state = active(player);
+        return state != null && state.runner.input(Moveset.Input.RELOAD, player.level().getGameTime());
     }
     /** 松开左键：交给招式文件的 {@code attack_release}（流火平一文字の構え蓄够了就突进）。 */
     public static void attackRelease(ServerPlayer player) {

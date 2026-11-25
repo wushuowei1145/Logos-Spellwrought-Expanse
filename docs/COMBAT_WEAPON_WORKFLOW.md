@@ -12,6 +12,7 @@
 | 凌霄 | [LINGXIAO.md](LINGXIAO.md) | `import_lingxiao.py` | `lingxiao_moves.py` | `group:lingxiao` |
 | 惊鸿（剑阵） | [JINGHONG.md](JINGHONG.md) | `jinghong_sword.py`（网格、贴图都由脚本生成） | `jinghong_moves.py`（格挡、弹剑、掷剑；其余共用凌霄） | `group:jinghong` |
 | 神狐薙刀 | [NAGINATA.md](NAGINATA.md) | `import_naginata.py` | `naginata_moves.py` | `group:naginata` |
+| 铳斧 | [GUNAXE.md](GUNAXE.md)、[FIREARMS.md](FIREARMS.md) | `import_gunaxe.py`（维护者手改的 Blockbench 工程；初稿由 `gunaxe.py` 生成） | `gunaxe_moves.py`（第一人称按镜头逐帧写） | `group:gunaxe` |
 
 ## 1. 几条原则
 
