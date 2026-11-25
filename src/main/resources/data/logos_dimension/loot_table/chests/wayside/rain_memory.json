@@ -124,7 +124,8 @@
         },
         {
           "type": "minecraft:empty",
-          "weight": 6
+          "weight": 6,
+          "quality": -1
         }
       ]
     },
@@ -134,7 +135,7 @@
         {
           "type": "minecraft:item",
           "name": "minecraft:golden_apple",
-          "weight": 1,
+          "weight": 2,
           "functions": [
             {
               "function": "minecraft:set_count",
@@ -144,11 +145,12 @@
                 "max": 1
               }
             }
-          ]
+          ],
+          "quality": 1
         },
         {
           "type": "minecraft:empty",
-          "weight": 19
+          "weight": 38
         }
       ]
     },

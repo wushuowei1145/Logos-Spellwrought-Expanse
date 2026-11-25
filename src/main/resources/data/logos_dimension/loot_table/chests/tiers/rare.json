@@ -4,48 +4,86 @@
     {
       "rolls": 1,
       "entries": [
-        { "type": "minecraft:item", "name": "logos_dimension:imperial_silver",
-          "functions": [ { "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 1, "max": 3 } } ] }
+        {
+          "type": "minecraft:item",
+          "name": "logos_dimension:imperial_silver",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": {
+                  "type": "logos_dimension:luck",
+                  "kind": "wealth",
+                  "values": [1, 1, 1, 2, 2]
+                },
+                "max": {
+                  "type": "logos_dimension:luck",
+                  "kind": "wealth",
+                  "values": [2, 2, 3, 4, 6]
+                }
+              }
+            }
+          ]
+        }
       ]
     },
     {
       "rolls": 1,
-      "conditions": [ { "condition": "minecraft:random_chance", "chance": 0.4 } ],
+      "conditions": [
+        {
+          "condition": "minecraft:random_chance",
+          "chance": {
+            "type": "logos_dimension:luck",
+            "kind": "wealth",
+            "values": [0, 0, 0, 0.03, 0.1]
+          }
+        }
+      ],
       "entries": [
-        { "type": "minecraft:item", "name": "logos:mana_shard",
-          "functions": [ { "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 3, "max": 6 } } ] }
+        {
+          "type": "minecraft:item",
+          "name": "logos_dimension:imperial_crown"
+        }
       ]
     },
     {
       "rolls": 1,
-      "conditions": [ { "condition": "minecraft:random_chance", "chance": 0.5 } ],
+      "conditions": [
+        {
+          "condition": "minecraft:random_chance",
+          "chance": {
+            "type": "logos_dimension:luck",
+            "kind": "spell",
+            "values": [0.4, 0.7, 1, 1, 1]
+          }
+        }
+      ],
       "entries": [
-        { "type": "minecraft:item", "name": "logos:targeting_book", "weight": 29 },
-        { "type": "minecraft:item", "name": "logos:change_book", "weight": 52 },
-        { "type": "minecraft:item", "name": "logos:law_book", "weight": 10 },
-        { "type": "minecraft:item", "name": "logos:number_book", "weight": 23 },
-        { "type": "minecraft:item", "name": "logos:motion_book", "weight": 8 }
+        {
+          "type": "minecraft:loot_table",
+          "value": "logos_dimension:chests/tiers/logos/rare"
+        }
       ]
     },
     {
       "rolls": 1,
-      "conditions": [ { "condition": "minecraft:random_chance", "chance": 0.05 } ],
-      "entries": [ { "type": "minecraft:item", "name": "logos:principle_book" } ]
-    },
-    {
-      "rolls": 1,
-      "conditions": [ { "condition": "minecraft:random_chance", "chance": 0.25 } ],
-      "entries": [ { "type": "minecraft:item", "name": "logos:ancient_echo_mana_elixir" } ]
-    },
-    {
-      "rolls": 1,
-      "conditions": [ { "condition": "minecraft:random_chance", "chance": 0.12 } ],
-      "entries": [ { "type": "minecraft:item", "name": "logos:ancient_firmament_mana_elixir" } ]
-    },
-    {
-      "rolls": 1,
-      "conditions": [ { "condition": "minecraft:random_chance", "chance": 0.05 } ],
-      "entries": [ { "type": "minecraft:item", "name": "logos:ancient_sage_mana_elixir" } ]
+      "conditions": [
+        {
+          "condition": "minecraft:random_chance",
+          "chance": {
+            "type": "logos_dimension:luck",
+            "kind": "spell",
+            "values": [0, 0, 0, 0.5, 1]
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:loot_table",
+          "value": "logos_dimension:chests/tiers/logos/rare"
+        }
+      ]
     }
   ]
 }
