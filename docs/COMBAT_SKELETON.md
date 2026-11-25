@@ -134,11 +134,13 @@ CombatWeapon.register(6, "glaive", "glaive", GLAIVE_MOVESET).withCone(90);
 | `knockback` | 为 `false` 时这一招不击退（连刺不把目标推出枪尖）。不写为 `true`。 |
 | `full_strength` | 为 `true` 时每一下都按蓄满的攻击结算，不吃原版攻击冷却（连刺自己就是节奏）。不写为 `false`。 |
 | `effect` | 武器自己的附加效果名，由 `CombatEffects` 解释：`launch`（挑飞）、`flurry`（连刺：打浮空目标伤害翻倍、延长浮空）、`slam`（下砸：砸落浮空目标、结算摔落）、`parry`（弹刀：由 `block` 转入时这次格挡不耗耐久，近战的攻击方僵直）。不认识的名字没有效果。 |
+| `fire` | 铳扣扳机的时刻（动作时间，秒，单个数或严格递增的数组），同 `contact` 一样到点结算：膛里有子弹就打出一发，空膛只空响（[FIREARMS.md](FIREARMS.md)）。 |
+| `feed` | 铳换弹装到位的时刻（秒）：到点时退回没打完的、从背包装满（[FIREARMS.md](FIREARMS.md)）。 |
 | `on` | 转移列表，按顺序取第一条满足条件的。 |
 
 伤害仍走原版 `player.attack`：`damage` 与效果的倍数在 NeoForge 的 `LivingIncomingDamageEvent` 里只乘到这一招的目标上，击退在 `LivingKnockBackEvent` 里取消（浮空目标总是不击退）。
 
-转移字段：`input` 为 `attack`、`use_press`、`use_release`、`block`（原版格挡组件挡下一次攻击，由服务端在 `LivingShieldBlockEvent` 里给出）、`attack_release`（松开左键，客户端在左键抬起的那一刻发；流火格挡中按住左键蓄力、松开突进）；`to` 为目标招式或 `$clear`；`window` 为 `[起, 止]` 动作时间窗口（含端点，`止` 可省略表示到结束）；`queue` 为真时输入先记下（输入缓冲），到 `at`（取消点，动作时间）那一刻切换，没写 `at` 就等本招式播完；取消点已过才输入则立即切换；切换时刻不对齐游戏刻，连段节奏不漂移。`at` 不能早于本招式的 `contact`（多段命中看最后一段），否则缓冲的下一招会吞掉这一下命中；`combo` 为真时若连招记忆有效，改去记忆中那一段的 `combo_next`。
+转移字段：`input` 为 `attack`、`use_press`、`use_release`、`block`（原版格挡组件挡下一次攻击，由服务端在 `LivingShieldBlockEvent` 里给出）、`attack_release`（松开左键，客户端在左键抬起的那一刻发；流火格挡中按住左键蓄力、松开突进）、`reload`（铳的换弹：短按 R、在弹药轮盘里选了弹药、或打空最后一发后服务端自动给出）；`to` 为目标招式或 `$clear`；`require` 为这条转移的前提，由武器判断（铳：`loaded` 膛里有子弹、`empty` 空膛、`reloadable` 有弹药可装且没装满或要换种类），不满足时跳过这条看下一条，不认识的前提一律不满足；`window` 为 `[起, 止]` 动作时间窗口（含端点，`止` 可省略表示到结束）；`queue` 为真时输入先记下（输入缓冲），到 `at`（取消点，动作时间）那一刻切换，没写 `at` 就等本招式播完；取消点已过才输入则立即切换；切换时刻不对齐游戏刻，连段节奏不漂移。`at` 不能早于本招式的 `contact`、`fire`、`feed`（多段看最后一段），否则缓冲的下一招会吞掉这一下；`combo` 为真时若连招记忆有效，改去记忆中那一段的 `combo_next`。
 
 时间约定：招式里的时间都是**动作时间**，带 `attack_speed_base` 的招式按攻速缩放；`combo_memory` 与 `blend_in` 用游戏时间。没有缓冲输入时播完整段（包括收势）再进入 `next`。
 
@@ -162,6 +164,8 @@ CombatWeapon.register(6, "glaive", "glaive", GLAIVE_MOVESET).withCone(90);
 | `trail_start`、`trail_end` | 可选 | 刀光的开始与结束，一般包住 `contact` 前后挥得最快的一段。 | 刀光功能做好后使用 |
 | `tip_fx` | 可选 | 枪尖残影：刺到头的那一刻，客户端在枪尖放出一枚沿刺出方向冲出去的枪头光影（长枪连刺，[OATH_SPEAR.md](OATH_SPEAR.md) 第 4 节）。一般与 `contact` 同一时刻。 | 客户端直接读动作 |
 | `handoff` | 可选 | 武器离手交给别处画的时刻：凌霄起飞把剑抛到脚下，这一刻之后骨架里的剑缩成 0，由御剑载具自己画（剑尖顺着飞行方向，[LINGXIAO.md](LINGXIAO.md) 第 4 节）。客户端用 `LongswordClient.handedOff` 判断。 | 客户端直接读动作 |
+| `fire` | 铳开火的动作必需 | 扣扳机、火光喷出的那一帧（击锤落下）。 | `fire` |
+| `feed` | 铳换弹的动作必需 | 新转轮（弹匣）装到位的那一帧。 | `feed` |
 | `release`、`catch` | 可选 | 掷出武器、接回武器的时刻：惊鸿掷剑在 `release` 出手（与 `contact` 同一时刻，服务端在这一刻结算掷剑），剑飞回来在 `catch` 接住；两者之间骨架里的剑缩成 0，飞出去的剑由客户端在世界里画（[JINGHONG.md](JINGHONG.md) 第 4 节）。回手时刻由 `SwordFlight.THROW_HOME` 对上，单元测试检查。 | 客户端直接读动作 |
 
 规则：

@@ -5,11 +5,17 @@ package dev.logos.dimension.combat;
  * 服务端逐刻调用 {@link #tick}，收到输入时调用 {@link #input}；换招、接触与结束通过 {@link Actor} 回调。
  */
 public final class MoveRunner {
-    /** 使用招式的角色：提供攻速，接收换招与接触。 */
+    /** 使用招式的角色：提供攻速，接收换招与接触。铳另有扣扳机、装弹两个时刻和转移的前提（见 docs/FIREARMS.md）。 */
     public interface Actor {
         double attackSpeed();
         void moveStarted(MoveRunner runner);
         void contact(MoveRunner runner);
+        /** 招式的 {@code fire} 时刻：扣一次扳机（第几次见 {@link MoveRunner#fireIndex}）。 */
+        default void fire(MoveRunner runner) {}
+        /** 招式的 {@code feed} 时刻：换弹装到位。 */
+        default void feed(MoveRunner runner) {}
+        /** 转移的前提（{@code require}）是否满足；不认识的前提一律不满足。 */
+        default boolean allows(String requirement) { return false; }
     }
     /** 刻数比较的容差，避免 0.625×20 之类的小数误差错过边界。 */
     private static final double EPSILON = 1e-6;
@@ -17,8 +23,8 @@ public final class MoveRunner {
     private final Actor actor;
     private Moveset.Move move;
     private double start, rate = 1, offset;
-    private int hits;
-    private boolean cleared;
+    private int hits, shots;
+    private boolean cleared, fed;
     private Moveset.Transition queued;
     private String comboMove;
     private double comboTime;
@@ -36,6 +42,8 @@ public final class MoveRunner {
     public boolean cleared() { return cleared; }
     /** 正在结算的是本招式第几次接触（从 0 开始）；只在 {@link Actor#contact} 回调里有意义。 */
     public int contactIndex() { return hits - 1; }
+    /** 正在结算的是本招式第几次扣扳机（从 0 开始）；只在 {@link Actor#fire} 回调里有意义。 */
+    public int fireIndex() { return shots - 1; }
     public double age(double now) { return now - start; }
     /** 当前招式已经播放的动作时间（秒），不取模、不截断。 */
     private double elapsed(double now) { return Math.max(0, now - start) / 20 * rate; }
@@ -46,6 +54,7 @@ public final class MoveRunner {
         double t = elapsed(now);
         for (var transition : move.on()) {
             if (transition.input() != input || t + EPSILON < transition.from() || t - EPSILON > transition.until()) continue;
+            if (transition.require() != null && !actor.allows(transition.require())) continue;
             // 取消点已经过了就立即切换，否则先缓冲到取消点。
             if (!transition.queue() || now - start + EPSILON >= fireTicks(transition)) follow(transition, now);
             else queued = transition;
@@ -69,6 +78,17 @@ public final class MoveRunner {
             hits++;
             actor.contact(this);
             // 结算时可能已经换招（例如被打断），后面的接触不再属于这一招。
+            if (cleared || move != current) return;
+        }
+        // 铳：到点扣扳机、换弹装到位，和接触一样一刻里过了几次就结算几次。
+        while (shots < current.fires().size() && age + EPSILON >= current.fires().get(shots) * 20 / rate) {
+            shots++;
+            actor.fire(this);
+            if (cleared || move != current) return;
+        }
+        if (!fed && current.feeds() && age + EPSILON >= current.feed() * 20 / rate) {
+            fed = true;
+            actor.feed(this);
             if (cleared || move != current) return;
         }
         // 缓冲的输入在取消点那一刻接上，不等到下一刻，连段节奏不因刻边界漂移。
@@ -98,7 +118,7 @@ public final class MoveRunner {
     private void begin(Moveset.Move next, double time) {
         // 倒放招式从上一招式已播放的位置退回，例如蓄力未满时松手。
         double from = move == null ? 0 : move.seconds(time - start, rate, offset);
-        move = next; start = time; hits = 0; queued = null;
+        move = next; start = time; hits = 0; shots = 0; fed = false; queued = null;
         rate = next.scalesWithAttackSpeed() ? Math.clamp(actor.attackSpeed() / next.speedBase(), .2, 4) : 1;
         offset = next.playback() == Moveset.Playback.REVERSE ? from : 0;
         if (next.resetCombo()) comboMove = null;

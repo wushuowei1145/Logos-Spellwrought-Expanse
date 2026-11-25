@@ -51,6 +51,12 @@ public record CombatWeapon(int id, String mesh, String animations, Identifier mo
          * 惊鸿在这里让身后的剑反击。
          */
         default void blocked(net.minecraft.server.level.ServerPlayer player, net.minecraft.world.damagesource.DamageSource source, boolean parried) {}
+        /** 招式的 {@code fire} 时刻（铳扣扳机，见 docs/FIREARMS.md）。 */
+        default void fire(net.minecraft.server.level.ServerPlayer player, Moveset.Move move, int index) {}
+        /** 招式的 {@code feed} 时刻（铳换弹装到位）。 */
+        default void feed(net.minecraft.server.level.ServerPlayer player, Moveset.Move move) {}
+        /** 招式文件里转移的前提（{@code require}）对这名玩家是否满足；默认都不满足（这把武器的招式文件不该写前提）。 */
+        default boolean allows(net.minecraft.server.level.ServerPlayer player, String requirement) { return false; }
     }
 
     public static CombatWeapon register(int id, String mesh, String animations, Identifier moveset) {
