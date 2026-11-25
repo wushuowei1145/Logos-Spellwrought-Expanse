@@ -25,7 +25,11 @@ class WaysideDataTest {
             assertEquals("OCEAN_FLOOR_WG",structure.get("project_start_to_heightmap").getAsString());
             var pool=read("worldgen/template_pool/"+structure.get("start_pool").getAsString().split(":")[1]);
             assertEquals(2,pool.getAsJsonArray("elements").size());
-            for(var e:pool.getAsJsonArray("elements"))assertEquals("minecraft:single_pool_element",e.getAsJsonObject().getAsJsonObject("element").get("element_type").getAsString());
+            for(var e:pool.getAsJsonArray("elements")){
+                var element=e.getAsJsonObject().getAsJsonObject("element");
+                assertEquals("minecraft:single_pool_element",element.get("element_type").getAsString());
+                assertEquals("apply_waterlogging",element.get("override_liquid_settings").getAsString());
+            }
             var tag=read("tags/worldgen/biome/has_structure/"+name);
             for(var b:tag.getAsJsonArray("values"))assertTrue(b.getAsString().startsWith("logos_dimension:cloudsea_"));
         }

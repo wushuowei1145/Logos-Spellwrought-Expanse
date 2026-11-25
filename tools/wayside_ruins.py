@@ -99,10 +99,12 @@ def art():
     zh=['风蚀刻纹石','苔痕旧石','月纹嵌石','青玉遗灯','缠石星花藤'];en=['Weathered Carved Stone','Mossworn Stone','Moon Inlay Stone','Jade Relic Lamp','Stoneclinging Starbloom']
     for language,labels in [('zh_cn',zh),('en_us',en)]:
         path=A/f'lang/{language}.json';obj=json.loads(path.read_text(encoding='utf-8'))
+        before=dict(obj)
         for name,label in zip(['carved_stone','moss_stone','rune_tile','jade_lamp','bloom_vine'],labels):
             for prefix in ['block','item']:obj[f'{prefix}.logos_dimension.wayside_{name}']=label
         for name,label,_,_ in CATALOG:obj[f'structure.logos_dimension.wayside_{name}']=label if language=='zh_cn' else name.replace('_',' ').title()
-        write(path,obj)
+        # 本功能的译名没有变化时保留原文件，避免重排其他功能追加的语言文本。
+        if obj!=before:write(path,obj)
 
 class Build:
     def __init__(self,kind,variant):
@@ -271,7 +273,8 @@ def generate():
     for kind,title,biomes,theme in CATALOG:
         summary.extend(build(kind,v) for v in [0,1]);loot(kind,theme)
         pool=PREFIX+'wayside/'+kind
-        write(D/f'worldgen/template_pool/wayside/{kind}.json',{'name':pool,'fallback':'minecraft:empty','elements':[{'weight':1,'element':{'element_type':'minecraft:single_pool_element','location':PREFIX+f'wayside/{kind}_{v}','processors':PREFIX+'wayside_preserve','override_liquid_settings':'ignore_waterlogging','projection':'rigid'}} for v in [0,1]]})
+        # 让原版模板按现场水体决定含水状态，避免湖底灯挤掉水，也不在浅水上方凭空造水源。
+        write(D/f'worldgen/template_pool/wayside/{kind}.json',{'name':pool,'fallback':'minecraft:empty','elements':[{'weight':1,'element':{'element_type':'minecraft:single_pool_element','location':PREFIX+f'wayside/{kind}_{v}','processors':PREFIX+'wayside_preserve','override_liquid_settings':'apply_waterlogging','projection':'rigid'}} for v in [0,1]]})
         tagged('logos_dimension','worldgen/biome','has_structure/wayside_'+kind,[PREFIX+'cloudsea_'+b for b in biomes])
         write(D/f'worldgen/structure/wayside_{kind}.json',{'type':'minecraft:jigsaw','biomes':'#logos_dimension:has_structure/wayside_'+kind,
             'step':'surface_structures','spawn_overrides':{},'terrain_adaptation':'none','start_pool':pool,'size':1,

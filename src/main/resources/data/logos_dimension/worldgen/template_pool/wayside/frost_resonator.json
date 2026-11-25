@@ -8,7 +8,7 @@
         "element_type": "minecraft:single_pool_element",
         "location": "logos_dimension:wayside/frost_resonator_0",
         "processors": "logos_dimension:wayside_preserve",
-        "override_liquid_settings": "ignore_waterlogging",
+        "override_liquid_settings": "apply_waterlogging",
         "projection": "rigid"
       }
     },
@@ -18,7 +18,7 @@
         "element_type": "minecraft:single_pool_element",
         "location": "logos_dimension:wayside/frost_resonator_1",
         "processors": "logos_dimension:wayside_preserve",
-        "override_liquid_settings": "ignore_waterlogging",
+        "override_liquid_settings": "apply_waterlogging",
         "projection": "rigid"
       }
     }
