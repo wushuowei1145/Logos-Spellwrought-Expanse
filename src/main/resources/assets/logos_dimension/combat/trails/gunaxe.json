@@ -1,0 +1,15 @@
+{
+  "blade": {
+    "from": 10.6,
+    "to": 21.2,
+    "tip_x": -0.84
+  },
+  "style": "logos_dimension:physical",
+  "auto": false,
+  "clips": {
+    "attack_1": {"windows": [[0.17, 0.42]]},
+    "attack_2": {"windows": [[0.19, 0.4]]},
+    "attack_3": {"windows": [[0.19, 0.46]]},
+    "attack_4": {"windows": [[0.15, 0.3]]}
+  }
+}

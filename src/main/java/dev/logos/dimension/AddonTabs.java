@@ -111,7 +111,7 @@ public final class AddonTabs {
         Reifu.REIFU.values().forEach(r -> out.accept(r.blank().get()));
     });
 
-    /** 武器：剑、刀、长柄、弓、盾、法杖，同类挨在一起，同一把的几种配色挨在一起。 */
+    /** 武器：剑、刀、长柄、弓、盾、法杖、铳与弹药，同类挨在一起，同一把的几种配色挨在一起。 */
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> WEAPONS = tab("weapons", TOOLS, "dawnvow", out -> ids(out,
             // 剑
             "dawnvow", "blacksteel_longsword", "lingxiao_sword", "jinghong_sword",
@@ -125,7 +125,9 @@ public final class AddonTabs {
             // 盾
             "ancient_embrace",
             // 法杖
-            "explosion_staff"));
+            "explosion_staff",
+            // 铳与弹药
+            "gunaxe", "buckshot_shell"));
 
     /** 异世界货币：钱囊、兑换台、钱庄与四国钱币。 */
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> ECONOMY = tab("economy", WEAPONS, "fox_ichibu", Economy::creativeItems);

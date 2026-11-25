@@ -37,6 +37,9 @@ public final class LogosDimension {
         dev.logos.dimension.item.LongswordItem.init();
         dev.logos.dimension.item.LingxiaoSwordItem.init();
         dev.logos.dimension.item.JinghongSwordItem.init();
+        dev.logos.dimension.item.GunaxeItem.init();
+        dev.logos.dimension.firearm.BuckshotItem.init();
+        dev.logos.dimension.firearm.Firearms.register(bus);
         dev.logos.dimension.lingxiao.LingxiaoFlight.register(bus);
         dev.logos.dimension.longsword.ManaGuard.init();
         dev.logos.dimension.item.UchigatanaItem.init();

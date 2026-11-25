@@ -141,7 +141,8 @@ public final class LongswordClient {
                 pose = from.blend(pose, w * w * (3 - 2 * w));
             }
         }
-        return rig.sample(pose);
+        // 铳：转轮里打掉的子弹藏起来（docs/FIREARMS.md）
+        return dev.logos.dimension.client.firearm.FirearmClient.rounds(p, rig, rig.sample(pose), now);
     }
     private static CombatPose pose(LongswordRig rig, LongswordPayload p, double time) {
         double length = rig.length(p.clip());
@@ -235,6 +236,8 @@ public final class LongswordClient {
         dev.logos.dimension.client.jinghong.SwordArrayClient.gauge(rig, p, sample, pose, event.getSubmitNodeCollector(), true, now, shown);
         var tip = SwordCastClient.tip(mc.player.getMainHandItem());
         if (tip != null) SwordCastClient.reportFirstPerson(mc.player.getId(), pose.last().pose(), LongswordRig.onWeapon(sample, tip));
+        dev.logos.dimension.client.firearm.FirearmClient.reportFirstPerson(mc.player.getId(),
+                new org.joml.Matrix4f(entry).invert().mul(pose.last().pose()), rig, sample);
         if (shown) LongswordAuras.firstPerson(mc.player,sample,pose,event.getSubmitNodeCollector(),ryuka);
         DawnvowSummon.submit(p, now, sample, pose, event.getSubmitNodeCollector(), true);
         if (shown) DawnvowBlade.submit(DawnvowClient.blade(mc.player.getId(), event.getPartialTick()), sample, pose, event.getSubmitNodeCollector(), true,
@@ -271,6 +274,7 @@ public final class LongswordClient {
                 if (shown) RyukaClient.pinkFire(frame.effects);
             } else rig.submit(frame.sample, pose, collector, light, state.skin, !state.isInvisible, shown);
             dev.logos.dimension.client.YumiClient.reportArrow(state.id, pose.last().pose(), frame.sample);
+            dev.logos.dimension.client.firearm.FirearmClient.reportThirdPerson(state.id, pose.last().pose(), rig, frame.sample);
             if (shown && frame.glow > 0) rig.submitGlow(frame.sample, pose, collector, false, frame.glow, frame.glowColor);
             dev.logos.dimension.client.jinghong.SwordArrayClient.gauge(rig, frame.move, frame.sample, pose, collector, false, frame.time,
                     shown && !state.isInvisible);
