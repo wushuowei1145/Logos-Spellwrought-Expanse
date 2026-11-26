@@ -2069,5 +2069,8 @@
   "talk.logos_dimension.elf_princess_blight.bow": "Draw it fully before you loose. The arrows carry the power of life, and they reach from afar—when the heart comes down, one arrow is enough.",
   "talk.logos_dimension.elf_princess_blight.ready": "Right! I'll go ahead and wait at the hall entrance.",
   "talk.logos_dimension.elf_princess_blight.ready_inside": "I'm right here. We can start whenever you like.",
-  "talk.logos_dimension.elf_princess_blight.after": "...It's over. Thank you. Truly."
+  "talk.logos_dimension.elf_princess_blight.after": "...It's over. Thank you. Truly.",
+  "advancements.logos_dimension.crop_circle.title": "Crop Circles",
+  "advancements.logos_dimension.crop_circle.description": "As wind passes through wheat, even the unknown takes shape.",
+  "biome.logos_dimension.wheat_plains": "Wheat Plains"
 }

@@ -422,3 +422,4 @@ runpy.run_path(str(ROOT/'tools/blighted_elven_forest.py'),run_name='__main__')
 # 最后应用连片长风平原的原版密度函数。
 runpy.run_path(str(ROOT/'tools/changfeng_plains.py'),run_name='__main__')
 runpy.run_path(str(ROOT/'tools/wildflower_meadow.py'),run_name='__main__')
+runpy.run_path(str(ROOT/'tools/wheat_plains.py'),run_name='__main__')

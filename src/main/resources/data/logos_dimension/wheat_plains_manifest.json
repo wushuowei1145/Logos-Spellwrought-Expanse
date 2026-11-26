@@ -1,0 +1,24 @@
+{
+  "biome": "logos_dimension:wheat_plains",
+  "size": 128,
+  "logo_reference": "art/wheat_plains/team_logo.png",
+  "materials": [
+    {
+      "Name": "minecraft:mud"
+    },
+    {
+      "Name": "minecraft:dirt_path"
+    },
+    {
+      "Name": "minecraft:hay_block",
+      "Properties": {
+        "axis": "y"
+      }
+    }
+  ],
+  "pattern_blocks": 7895,
+  "full_wheat_attempts_per_chunk": 4096,
+  "placement": "rare_inland_temperate_plains",
+  "rarity_noise_threshold": 0.2,
+  "new_registered_items": 0
+}
