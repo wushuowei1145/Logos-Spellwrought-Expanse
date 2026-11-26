@@ -111,9 +111,10 @@ def fp1(blade, edge=None, hand=None, lhand=FP_LEFT_AWAY):
 
 # 第一人称待机：右手在画面右下角外，枪身从右下斜进画面，枪托落在镜头下面看不到（像 FPS 端枪）。
 FP_IDLE = fp1(hand=(7.0, -7.5, -8.5), blade=(-0.15, 0.12, -0.98), edge=(0.15, -0.99, 0.0))
-# 待机：单手提着，像提一柄长柄斧：右手在右胯前，枪口斜指前下方、刃朝下；左手空着垂在身侧。
-IDLE = dict(space='hips', grip=(0.46, -0.84, -0.14), blade=(0.10, -0.22, -0.97), edge=(0.05, -0.97, 0.22),
-            rpos=GRIPS[0], lmode='free', lhand=(-0.44, -0.86, 0.02), rmode='sword', up=(-2, -12, 0), fp=FP_IDLE)
+# 待机：单手提着，像提一柄长柄斧：身子站正，右手垂在身侧，枪顺着右腿斜指前下方、刃朝下；左手空着垂在身侧。
+# （原先手在胯前、枪端平、上身拧 12°，像西部片里端枪，维护者觉得太西部。）
+IDLE = dict(space='hips', grip=(0.42, -0.86, -0.08), blade=(0.06, -0.34, -0.94), edge=(0.02, -0.94, 0.34),
+            rpos=GRIPS[0], lmode='free', lhand=(-0.42, -0.86, 0.02), rmode='sword', up=(0, -3, 0), fp=FP_IDLE)
 # 举枪瞄准（第三人称）：枪托抵右肩，左手前移握在机匣前，身子侧过来。只有这时左手才上枪。
 AIM = dict(space='hips', grip=(0.31, 0.14, -0.66), blade=(0.0, 0.02, -1.0), edge=(0, -1, 0), rpos=GRIPS[0],
            lmode='two', lpos=3.4, rmode='sword', up=(-2, -36, 0), head=(6, 0, -8), blend=0.12)
@@ -143,7 +144,7 @@ def clips():
 
     out.append(dict(name='idle', length=2.4, loop='loop', keys=[
         k(0.0, IDLE),
-        k(1.2, IDLE, grip=(0.46, -0.82, -0.13), blade=(0.10, -0.19, -0.98), lhand=(-0.44, -0.84, 0.03), up=(-1, -11, 0),
+        k(1.2, IDLE, grip=(0.42, -0.85, -0.07), blade=(0.06, -0.32, -0.95), lhand=(-0.42, -0.84, 0.03), up=(1, -2, 0),
           fp=fp1(hand=(7.0, -7.3, -8.5), blade=(-0.15, 0.14, -0.98), edge=(0.15, -0.99, 0.0))),
         k(2.4, IDLE),
     ]))
@@ -263,8 +264,9 @@ def clips():
         k(0.50, shot_end),
         k(0.95, IDLE, **STANCE),
         gun(0.0, trigger=0.0, hammer=0.0, cyl_spin=0.0), gun(0.05, trigger=16.0), gun(0.06, hammer=28.0, ease='lin'),
-        gun(0.32, trigger=16.0, hammer=28.0, cyl_spin=0.0, ease='hold'),
-        gun(0.50, trigger=0.0, hammer=0.0, cyl_spin=60.0), gun(0.95, cyl_spin=60.0),
+        # 扳击锤、转一格放在扇击的输入窗口（0.07–0.36 秒）之后：接扇击时转轮总是还没转，由扇击第一下扇过去。
+        gun(0.38, trigger=16.0, hammer=28.0, cyl_spin=0.0, ease='hold'),
+        gun(0.56, trigger=0.0, hammer=0.0, cyl_spin=60.0), gun(0.95, cyl_spin=60.0),
     ]))
 
     # 空膛的第五下：刺到底扣扳机，只有“咔哒”一声；枪口失望地一沉，收回待机（之后自动换弹）。
@@ -276,9 +278,11 @@ def clips():
           fp=fp1(hand=(2.5, -4.0, -13.6), blade=(-0.08, 0.10, -0.99), edge=(0, -0.99, 0.10))),
         k(0.18, dry_dip, ease='hold'),
         k(0.55, IDLE, **STANCE),
-        gun(0.0, trigger=0.0, hammer=0.0), gun(0.05, trigger=16.0), gun(0.06, hammer=28.0, ease='lin'),
-        gun(0.30, trigger=16.0, hammer=28.0, ease='hold'), gun(0.45, trigger=0.0, hammer=0.0),
+        gun(0.0, trigger=0.0, hammer=0.0, cyl_spin=0.0), gun(0.05, trigger=16.0), gun(0.06, hammer=28.0, ease='lin'),
+        gun(0.30, trigger=16.0, hammer=28.0, cyl_spin=0.0, ease='hold'), gun(0.45, trigger=0.0, hammer=0.0, cyl_spin=60.0),
     ]))
+
+    out.append(fan_clip(thrust))
 
     # 举枪瞄准（按住右键）：左手上枪握住护木前端，枪托抵肩、贴腮，枪口随呼吸轻轻晃。
     out.append(dict(name='aim', length=2.0, loop='loop', fp_root=AIM_ROOT, keys=[
@@ -309,10 +313,10 @@ def clips():
         k(0.03, AIM, ease='hold', fp=AIM_FP),
         k(0.12, AIM, grip=(0.31, 0.12, -0.66), blade=(0.0, -0.01, -1.0), ease='hold', fp=dict(AIM_FP, kick=(-2, 0.0))),
         k(0.35, AIM, fp=AIM_FP),
-        gun(0.0, trigger=0.0, hammer=0.0, fp=dict(hammer=AIM_HAMMER)), gun(0.02, trigger=16.0),
+        gun(0.0, trigger=0.0, hammer=0.0, cyl_spin=0.0, fp=dict(hammer=AIM_HAMMER)), gun(0.02, trigger=16.0),
         gun(0.03, hammer=28.0, ease='lin', fp=dict(hammer=AIM_HAMMER)),
-        gun(0.18, trigger=16.0, hammer=28.0, ease='hold', fp=dict(hammer=AIM_HAMMER)),
-        gun(0.32, trigger=0.0, hammer=0.0, fp=dict(hammer=AIM_HAMMER)),
+        gun(0.18, trigger=16.0, hammer=28.0, cyl_spin=0.0, ease='hold', fp=dict(hammer=AIM_HAMMER)),
+        gun(0.32, trigger=0.0, hammer=0.0, cyl_spin=60.0, fp=dict(hammer=AIM_HAMMER)),
     ]))
 
     out.append(reload_clip())
@@ -342,6 +346,56 @@ EJECT = 1.21
 EJECT_V = np.array([0.0, 2.0, 15.0])        # 网格单位/秒
 EJECT_SPIN = np.array([-320.0, 140.0, 520.0])  # 度/秒
 GRAVITY = 220.0                              # 网格单位/秒²（约原版掉落物的重力）
+
+
+# 扇击：五次扣扳机的时刻（秒）。两枪之间 0.13 秒，左掌一下一下把击锤往后扇。
+FAN_FIRES = (0.18, 0.31, 0.44, 0.57, 0.70)
+FAN_LAST_COCK = 0.88                       # 最后一枪之后再扇一下，击锤扳回、转轮转到位，好接下一段动作
+# 左掌心在枪上的位置（网格单位，枪的上方为负 X、左面为负 Z）：抬在击锤前上方，扫过击锤压到后面。
+FAN_UP = (-4.4, 2.4, -0.6)
+FAN_DOWN = (-3.4, -0.6, -0.6)
+# 第一人称扇击：枪在画面右下、指向准星，转轮窗口朝镜头偏一点，看得见转轮一格格转、左掌扇击锤。
+FAN_WINDOW = (-0.35, 0.45, 0.82)
+
+
+def fanning(**kw):
+    """扇击的一帧：右手在胯前平端着枪，左手按网格坐标贴在枪上（lweapon）。"""
+    return dict(space='hips', rpos=GRIPS[0], lmode='weapon', **kw)
+
+
+def fan_clip(thrust):
+    """第五下开完枪趁后坐按右键：枪收到右胯前平端，扳机扣住不放，左掌一下下扇击锤，剩下的子弹一口气打光。
+    每一枪枪口往上一跳；打空了服务端自动换弹，招式文件里换弹的转移立即接上。"""
+    hold = fanning(grip=(0.26, -0.50, -0.50), blade=(0.0, 0.02, -1.0), edge=(0, -1, 0.02), lweapon=FAN_UP,
+                   up=(-8, -12, 0), chest=(-4, 0, 0), head=(-6, 0, 0), **WIDE, blend=0.1,
+                   fp=fpc(hand=(4.5, -6.5, -14.0), blade=(-0.16, 0.22, -0.96), window=FAN_WINDOW))
+    kick = dict(hold, grip=(0.27, -0.44, -0.46), blade=(0.0, 0.22, -0.97), edge=(0, -0.97, -0.22), up=(-4, -12, 0),
+                fp=fpc(hand=(4.6, -5.6, -13.4), blade=(-0.16, 0.42, -0.89), window=FAN_WINDOW))
+    end = swing(grip=(0.34, -0.40, -0.66), blade=(0.04, -0.12, -0.99), edge=(0, -0.99, 0.12),
+                lhand=(-0.48, -0.70, 0.15), up=(-6, -10, 0), lfoot=(-0.14, 0, -0.38, 12), rfoot=(0.22, 0, 0.40, -28), blend=0.12,
+                fp=fp1(hand=(4.5, -5.0, -11.0), blade=(-0.14, 0.15, -0.98), edge=(0.10, -0.99, 0.15)))
+    keys = [k(0.0, hold)]
+    for f in FAN_FIRES:
+        keys += [k(f, hold, ease='hold'), k(f + 0.03, kick, ease='lin'), k(f + 0.10, hold)]
+    keys += [k(0.95, end), k(1.25, IDLE, **STANCE)]
+    # 左掌：每一枪之前从前上方扫到击锤后面（扳到底），松开击锤落下就是一枪。
+    palm = [dict(t=0.0, lweapon=FAN_UP)]
+    for f in FAN_FIRES:
+        palm += [dict(t=f - 0.10, lweapon=FAN_UP), dict(t=f - 0.02, lweapon=FAN_DOWN)]
+    palm += [dict(t=FAN_LAST_COCK - 0.10, lweapon=FAN_UP), dict(t=FAN_LAST_COCK, lweapon=FAN_DOWN)]
+    # 击锤：第五下那一枪之后是落下的（28），每一枪之前扇回 0、到点落下；转轮每扇一下转 60°。
+    # 第五下那一枪之后转轮还没转（客户端已往回拨了一格），从 -60° 起：第一下扇击锤时转到 0。
+    gun_keys = [gun(0.0, trigger=16.0, hammer=28.0, cyl_spin=-60.0), gun(FAN_FIRES[0] - 0.10, cyl_spin=-60.0),
+                gun(FAN_FIRES[0] - 0.02, cyl_spin=0.0)]
+    cocks = list(FAN_FIRES[1:]) + [FAN_LAST_COCK + 0.02]
+    for i, f in enumerate(FAN_FIRES):
+        gun_keys += [gun(f - 0.09, hammer=28.0), gun(f - 0.02, hammer=0.0), gun(f, hammer=0.0, ease='hold'),
+                     gun(f + 0.01, hammer=28.0, ease='lin'),
+                     gun(f + 0.03, cyl_spin=60.0 * i, ease='hold'), gun(cocks[i] - 0.02, cyl_spin=60.0 * (i + 1))]
+    gun_keys += [gun(FAN_LAST_COCK - 0.09, hammer=28.0), gun(FAN_LAST_COCK, hammer=0.0),
+                 gun(FAN_LAST_COCK, trigger=16.0), gun(FAN_LAST_COCK + 0.1, trigger=0.0)]
+    return dict(name='fan', length=1.25, loop='once',
+                markers={'fire': list(FAN_FIRES), 'cancel': 0.95}, keys=keys + palm + gun_keys)
 
 
 def reload_clip():

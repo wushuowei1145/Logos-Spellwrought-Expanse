@@ -34,6 +34,13 @@ public final class GunaxeItem extends Item implements CombatWeapon.Holder, Firea
     public static final CombatWeapon WEAPON = CombatWeapon.register(50, "gunaxe", "gunaxe", LogosDimension.id("gunaxe")).withoutSheath();
     public static final DeferredItem<GunaxeItem> ITEM = DimensionBlocks.ITEMS.registerItem("gunaxe", GunaxeItem::new);
     public static final int CAPACITY = 6;
+    /** 开枪的威力倍数：举枪瞄准开枪比弹药本身略弱；连招第五下的那一枪在招式文件里再乘 2（shot_5 的 damage）。 */
+    public static final double SHOT = 0.85;
+    /**
+     * 扇击（招式 fan）：第五下开完枪趁后坐按右键，左掌连扇击锤把剩下的子弹打光。每一枪的威力在招式文件里（fan 的 damage 0.7，
+     * 比瞄准开枪还低），散布越扇越大：第 i 枪（从 0 数）是 {@code FAN_SPREAD + FAN_SPREAD_STEP * i} 倍，枪口一跳一跳地往上翻。
+     */
+    public static final double FAN_SPREAD = 1.3, FAN_SPREAD_STEP = 0.3;
     /** 近战：伤害 9（铁斧），攻速 1.0，长刃比剑多够 1 格。 */
     public static final double DAMAGE = 9, SPEED = 1.0, REACH = 1.0;
 
@@ -71,8 +78,11 @@ public final class GunaxeItem extends Item implements CombatWeapon.Holder, Firea
     @Override public int getUseDuration(ItemStack stack, LivingEntity user) { return 72000; }
     @Override public ItemUseAnimation getUseAnimation(ItemStack stack) { return ItemUseAnimation.NONE; }
 
+    @Override public double damage() { return SHOT; }
+
     @Override public void fire(ServerPlayer player, Moveset.Move move, int index) {
-        Firearms.fire(player, player.getMainHandItem(), move.name().startsWith("aim"));
+        double spread = move.name().equals("fan") ? FAN_SPREAD + FAN_SPREAD_STEP * index : 1;
+        Firearms.fire(player, player.getMainHandItem(), move.name().startsWith("aim"), move.damage(), spread);
     }
     @Override public void feed(ServerPlayer player, Moveset.Move move) { Firearms.feed(player, player.getMainHandItem()); }
     @Override public boolean allows(ServerPlayer player, String requirement) {

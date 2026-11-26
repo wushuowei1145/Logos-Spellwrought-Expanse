@@ -160,8 +160,10 @@ public final class Firearms {
     /**
      * 扣一次扳机（招式的 {@code fire} 时刻）：膛里有子弹就扣掉一发交给弹药打出去，返回 true；
      * 空膛只“咔哒”一声，返回 false。打空最后一发或空膛时自动换弹（玩家、背包里有弹药时）。
+     * {@code power} 是这一招的倍数（招式文件里的 {@code damage}），和铳的威力倍数相乘后交给弹药；
+     * {@code spread} 乘在铳的散布上（扇击越扇越散）。
      */
-    public static boolean fire(LivingEntity shooter, ItemStack gun, boolean aimed) {
+    public static boolean fire(LivingEntity shooter, ItemStack gun, boolean aimed, double power, double spread) {
         var firearm = firearm(gun);
         if (firearm == null || !(shooter.level() instanceof ServerLevel level)) return false;
         var load = load(gun);
@@ -173,7 +175,7 @@ public final class Firearms {
         var round = load.loaded();
         store(gun, load.withRounds(load.rounds() - 1));
         var shot = new Ammo.Shot(level, shooter, gun, round, shooter.getEyePosition(), shooter.getLookAngle(),
-                firearm.spread(aimed), firearm.damage(), aimed);
+                firearm.spread(aimed) * spread, firearm.damage() * power, aimed);
         var result = ammo.ammo().fire(shot);
         broadcast(shooter, new FirearmPayloads.Shot(shooter.getId(), BuiltInRegistries.ITEM.getKey(round.getItem()), shot.origin(), result.traces()));
         if (!(shooter instanceof Player p && p.hasInfiniteMaterials())) gun.hurtAndBreak(1, shooter, EquipmentSlot.MAINHAND);

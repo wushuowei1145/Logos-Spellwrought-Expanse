@@ -30,7 +30,7 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * 铳斧与霰弹（docs/GUNAXE.md、docs/FIREARMS.md）的实际操作：
- * 短按 R 换弹（装满六发、背包扣六发），举枪瞄准开枪（木桩掉血、少一发），四连击接第五下开枪，
+ * 短按 R 换弹（装满六发、背包扣六发），举枪瞄准开枪（木桩掉血、少一发），四连击接第五下开枪，第五下后坐里按右键扇击打光剩下的、立即换弹，
  * 背包没弹药时打空了只空响、不换弹，捡到弹药后空响自动换弹，长按 R 打开弹药轮盘。
  * 第一人称与侧面机位在换弹、瞄准、开枪的那一刻各截图；转轮窗口里看得到还剩几发。
  */
@@ -156,6 +156,20 @@ public class GunaxeView implements UIScenario {
         shot(s, "side", "shot_5", .1);
         shot(s, "side", "shot_5", .2);
         s.check("第五下开了一枪", ctx -> rounds(Minecraft.getInstance().player) == 4)
+                .waitUntil("回到待机", ctx -> phase("idle")).ticks(4);
+
+        // 再来一轮：第五下开完枪趁后坐按右键扇击，剩下的三发一口气打光，打空立即换弹。
+        s.step("按住左键", ctx -> attack(true))
+                .waitUntil("第五下", ctx -> phase("shot_5")).step("松开左键", ctx -> attack(false))
+                .settleMs(0).waitUntil("后坐里", ctx -> phase("shot_5") && seconds() >= .15)
+                .step("按右键", ctx -> aim(true))
+                .settleMs(0).waitUntil("扇击", ctx -> phase("fan"));
+        shot(s, "side", "fan", .2);
+        shot(s, "side", "fan", .34);
+        s.waitUntil("扇光了", ctx -> rounds(Minecraft.getInstance().player) == 0)
+                .waitUntil("打空立即换弹", ctx -> phase("reload"))
+                .step("松开右键", ctx -> aim(false))
+                .waitUntil("装到位", ctx -> rounds(Minecraft.getInstance().player) == 6)
                 .waitUntil("回到待机", ctx -> phase("idle")).ticks(4)
                 .step("回到玩家", ctx -> { var mc = Minecraft.getInstance(); mc.setCameraEntity(mc.player); mc.options.hideGui = false; })
                 .server("移除机位", ctx -> { var e = ctx.server().overworld().getEntity(camera); if (e != null) e.discard(); });
