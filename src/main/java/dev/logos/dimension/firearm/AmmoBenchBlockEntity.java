@@ -305,7 +305,8 @@ public class AmmoBenchBlockEntity extends ManaVesselBlockEntity {
         var input = new RoundModRecipe.Input(rounds, additive);
         var recipe = AmmoRecipeBook.mods(level).stream().filter(r -> r.matches(input, level)).findFirst().orElse(null);
         if (recipe == null) return Mod.no("unknown");
-        int count = Math.min(BATCH, rounds.getCount());
+        // 一份添加物改几发看配方：硫粉八发，TNT 四发，末影珍珠、药粉一发。
+        int count = Math.min(Math.min(BATCH, recipe.rounds()), rounds.getCount());
         ItemStack result = recipe.assemble(input).copyWithCount(count);
         if (!fits(modded, result)) return Mod.no("full");
         return new Mod(null, count, result, recipe);

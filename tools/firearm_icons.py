@@ -142,7 +142,8 @@ def blueprint():
 # ---------------------------------------------------------------- 外观（术式档位、改装）
 # 一发弹的外观组件 logos_dimension:round_finish（docs/FIREARMS.md 第 9、10 节）：物品模型按它换贴图。
 # 术式弹按档位换弹头（霰弹换封口和一道色环）：基础在金属上加金纹，晶辉紫水晶尖，回响幽匿纹，炼成死灰黑尖，
-# 白垩白尖，天穹蓝里透金，贤者红色晶尖。改装弹：燃烧黄尖、水银镜银尖、烟火弹多一层按烟火之星染色的星纹。
+# 白垩白尖，天穹蓝里透金，贤者红色晶尖。改装弹：燃烧黄尖、水银镜银尖、烟火弹多一层按烟火之星染色的星纹，
+# 荧光橙金带亮点（荧石），末影是一颗青绿的珠子（末影珍珠），震爆红尖一道白环（TNT），药水弹的弹头是单独一层、按药水染色（像药粉）。
 
 GOLD = ((255, 226, 120), (232, 186, 70), (160, 112, 30))
 SCULK = ((60, 140, 150), (22, 66, 78), (10, 32, 40))
@@ -153,6 +154,14 @@ SAGE = ((255, 132, 128), (200, 34, 48), (112, 12, 26))
 SULFUR = ((252, 240, 130), (226, 200, 56), (154, 124, 22))
 MERCURY = ((252, 253, 255), (198, 208, 222), (122, 132, 152))
 FIREWORK_TIP = ((96, 86, 98), (62, 54, 66), (36, 30, 40))
+GLOW = ((255, 240, 188), (246, 184, 70), (178, 108, 30))
+ENDER = ((140, 226, 200), (37, 132, 116), (11, 77, 66))
+TNT_RED = ((240, 96, 80), (196, 40, 32), (116, 18, 16))
+TNT_WHITE = ((252, 252, 250), (222, 220, 214), (168, 164, 156))
+# 药水弹：底下一层画成浅灰（没染上色时也像一发弹），上面一层灰度按药水颜色染（原版 minecraft:potion 染色）
+POTION_BASE = ((214, 214, 220), (172, 172, 182), (120, 120, 132))
+TINT_GRAY = ((255, 255, 255), (200, 200, 200), (136, 136, 136))
+SPECK_GLOW = (255, 255, 236)
 SPECK_SCULK, SPECK_GOLD = (90, 232, 226), (246, 206, 96)
 
 # 每种外观：弹头（霰弹的封口、色环）的颜色、是不是削尖的晶体、点缀、金纹
@@ -167,9 +176,13 @@ FINISHES = {
     'sulfur': dict(tip=SULFUR, crystal=False, speck=None, gold=False),
     'mercury': dict(tip=MERCURY, crystal=False, speck=None, gold=False),
     'firework': dict(tip=FIREWORK_TIP, crystal=False, speck=None, gold=False),
+    'glowing': dict(tip=GLOW, crystal=False, speck=SPECK_GLOW, gold=False),
+    'ender': dict(tip=ENDER, crystal=False, speck=None, gold=False, pearl=True),
+    'blast': dict(tip=TNT_RED, crystal=False, speck=None, gold=False, ring=TNT_WHITE),
+    'potion': dict(tip=POTION_BASE, crystal=False, speck=None, gold=False, tinted=True),
 }
 SPELLS = [f'spell_{i}' for i in range(1, 8)]
-MODS = ['sulfur', 'mercury', 'firework']
+MODS = ['sulfur', 'mercury', 'firework', 'glowing', 'ender', 'blast', 'potion']
 
 
 def draw_ts(paint):
@@ -215,8 +228,14 @@ def tip_paint(f, metal_tip, t0, pointed):
         u = (t - t0) / (1 - t0)
         if f['crystal'] or pointed:
             radius = 2.0 * (1 - u ** 1.4)
+        elif f.get('pearl'):
+            # 一颗珠子：细颈接一个圆球
+            ball = 2.1 * max(0., 1 - ((u - .56) / .44) ** 2) ** .5
+            radius = max(ball, 1.3 * (1 - u / .3)) if u < .3 else ball
         else:
             radius = 1.6 * max(0., 1 - u * u) ** .5
+        if f.get('ring') and abs(u - .36) < .1:
+            return f['ring'], radius
         if f['tip'] is None:
             # 基础档：金属本色，一道金环加几点金纹
             colour = GOLD if abs(u - .35) < .09 or (f['speck'] and speckled(x, y)) else metal_tip
@@ -275,7 +294,7 @@ def shell_finish(metal, finish):
                 colour = f['speck']
             return colour, 2.6
         if .62 < t < .7 and finish != 'spell_1':
-            return mark, 2.6
+            return f.get('ring') or mark, 2.6
         if f['gold'] and (abs(t - .45) < .03 or abs(t - .75) < .03):
             return GOLD, 2.6
         return hull, 2.6
@@ -291,6 +310,23 @@ def firework_mark(kind):
     for dx, dy in ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)):
         x, y = int(cx + dx), int(cy + dy)
         img[y, x] = (255, 255, 255, 255)
+    return Image.fromarray(img, 'RGBA')
+
+
+def potion_mark(kind):
+    """药水弹多出来的一层：霰弹的封口和色环、步枪弹的弹头，画成灰度，按药水颜色染色。"""
+    if kind == 'buckshot':
+        def paint(t, s, x, y):
+            return (TINT_GRAY, 2.6) if t > .9 or .62 < t < .7 else None
+    else:
+        tip = tip_paint(dict(FINISHES['potion'], tip=TINT_GRAY), TINT_GRAY, .58, False)
+
+        def paint(t, s, x, y):
+            return tip(t, s, x, y) if t >= .58 else None
+    img = np.array(draw_ts(paint))
+    # draw_ts 给有东西的地方描了一圈深色边，这一层只要灰度本身：边去掉（底下那层自己有边）
+    outline = (img[..., 0] == OUTLINE[0]) & (img[..., 1] == OUTLINE[1]) & (img[..., 2] == OUTLINE[2])
+    img[outline] = 0
     return Image.fromarray(img, 'RGBA')
 
 
@@ -314,12 +350,17 @@ def write_finishes(out_dir=None):
     marks = {'buckshot': firework_mark('buckshot'), 'rifle': firework_mark('rifle')}
     for kind, img in marks.items():
         img.save(ASSETS / f'textures/item/firework_mark_{kind}.png')
+    potion_marks = {'buckshot': potion_mark('buckshot'), 'rifle': potion_mark('rifle')}
+    for kind, img in potion_marks.items():
+        img.save(ASSETS / f'textures/item/potion_mark_{kind}.png')
     by_item = {}
     for name, (item, finish, img) in icons.items():
         img.save(ASSETS / f'textures/item/{name}.png')
         textures = {'layer0': f'logos_dimension:item/{name}'}
         if finish == 'firework':
             textures['layer1'] = f'logos_dimension:item/firework_mark_{"buckshot" if "buckshot" in item else "rifle"}'
+        if finish == 'potion':
+            textures['layer1'] = f'logos_dimension:item/potion_mark_{"buckshot" if "buckshot" in item else "rifle"}'
         write_json(ASSETS / f'models/item/{name}.json', {'parent': 'minecraft:item/generated', 'textures': textures})
         by_item.setdefault(item, []).append((finish, name))
     for item, cases in by_item.items():
@@ -327,13 +368,16 @@ def write_finishes(out_dir=None):
             m = {'type': 'minecraft:model', 'model': f'logos_dimension:item/{name}'}
             if finish == 'firework':
                 m['tints'] = [{'type': 'minecraft:constant', 'value': -1}, {'type': 'minecraft:firework', 'default': -7697782}]
+            if finish == 'potion':
+                # 和药粉一样的染色（默认色也一样）
+                m['tints'] = [{'type': 'minecraft:constant', 'value': -1}, {'type': 'minecraft:potion', 'default': -13083194}]
             return m
         write_json(ASSETS / f'items/{item}.json', {'model': {
             'type': 'minecraft:select', 'property': 'minecraft:component', 'component': 'logos_dimension:round_finish',
             'cases': [{'when': finish, 'model': model(name, finish)} for finish, name in cases],
             'fallback': {'type': 'minecraft:model', 'model': f'logos_dimension:item/{item}'}}})
     if out_dir:
-        # 预览：每行一种弹，从左到右是普通、七档术式、三种改装
+        # 预览：每行一种弹，从左到右是普通、七档术式、七种改装
         rows = ['copper_buckshot_shell', 'buckshot_shell', 'netherite_buckshot_shell', 'copper_rifle_round', 'iron_rifle_round',
                 'netherite_rifle_round', 'blank_round']
         cols = [None] + SPELLS + MODS
@@ -350,6 +394,11 @@ def write_finishes(out_dir=None):
                     mark[..., :3] = (mark[..., :3] * np.array([240, 90, 60]) / 255).astype(np.uint8)
                     tinted = Image.fromarray(mark, 'RGBA')
                     icon = Image.alpha_composite(icon, tinted)
+                if finish == 'potion':
+                    # 预览拿剧毒药水的颜色染
+                    mark = np.array(potion_marks['buckshot' if 'buckshot' in item else 'rifle'])
+                    mark[..., :3] = (mark[..., :3] * np.array([135, 163, 99]) / 255).astype(np.uint8)
+                    icon = Image.alpha_composite(icon, Image.fromarray(mark, 'RGBA'))
                 sheet.alpha_composite(icon, (2 + c * 18, 2 + r * 18))
         out_dir.mkdir(parents=True, exist_ok=True)
         sheet.resize((sheet.width * 6, sheet.height * 6), Image.NEAREST).save(out_dir / 'finishes_x6.png')

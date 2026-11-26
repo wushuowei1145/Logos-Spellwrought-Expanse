@@ -28,6 +28,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.alchemy.Potions;
+import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.network.Connection;
@@ -79,6 +82,11 @@ public final class FirearmGameTests {
         tests.put("incendiary_round_sets_fire", FirearmGameTests::incendiary);
         tests.put("mercury_round_banes_undead", FirearmGameTests::mercury);
         tests.put("firework_round_bursts_where_it_lands", FirearmGameTests::firework);
+        tests.put("ammo_bench_modifies_by_the_recipe_count", FirearmGameTests::modCounts);
+        tests.put("glowing_round_makes_targets_glow", FirearmGameTests::glowing);
+        tests.put("ender_round_teleports_the_shooter", FirearmGameTests::ender);
+        tests.put("blast_round_explodes_without_breaking_blocks", FirearmGameTests::blast);
+        tests.put("potion_round_gives_the_powder_effects", FirearmGameTests::potion);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -446,9 +454,103 @@ public final class FirearmGameTests {
         var rockets = h.getLevel().getEntitiesOfClass(FireworkRocketEntity.class, new AABB(o.offset(6, 1, 0)).inflate(2));
         h.assertTrue(!rockets.isEmpty(), "墙上的落点出现一枚烟火");
         p.discard();
+        // 靶道伸出了测试结构，落点那个区块不一定在跑实体（烟火就等着不炸）：强制加载它，等烟火炸开再放掉。
+        int cx = net.minecraft.core.SectionPos.blockToSectionCoord(o.getX() + 6), cz = net.minecraft.core.SectionPos.blockToSectionCoord(o.getZ());
+        h.getLevel().setChunkForced(cx, cz, true);
         h.succeedWhen(() -> {
             h.assertTrue(h.getLevel().getEntitiesOfClass(FireworkRocketEntity.class, new AABB(o.offset(6, 1, 0)).inflate(2)).isEmpty(), "烟火炸开了");
             h.assertTrue(golem.getHealth() < full, "旁边的木桩挨了烟火");
+            h.getLevel().setChunkForced(cx, cz, false);
         });
+    }
+
+    // ---------------------------------------------------------------- 荧光、末影、震爆、药水（docs/FIREARMS.md 第 10 节）
+
+    private static ItemStack powder(net.minecraft.core.Holder<net.minecraft.world.item.alchemy.Potion> potion) {
+        var stack = new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("logos:potion_powder")));
+        stack.set(DataComponents.POTION_CONTENTS, new PotionContents(potion));
+        return stack;
+    }
+
+    /** 一份添加物改几发看配方：末影珍珠、药粉一发，TNT 四发；没有药水的药粉改不了；药粉把药水带进弹里。 */
+    private static void modCounts(GameTestHelper h) {
+        var bench = bench(h);
+        bench.modding().set(AmmoBenchBlockEntity.MOD_ROUNDS, ItemResource.of(new ItemStack(RifleRoundItem.IRON.get())), 10);
+        bench.modding().set(AmmoBenchBlockEntity.ADDITIVE, ItemResource.of(new ItemStack(Items.ENDER_PEARL)), 2);
+        h.assertTrue(bench.modPlan().count() == 1, "一颗末影珍珠一发：" + bench.modPlan().count());
+        bench.modding().set(AmmoBenchBlockEntity.ADDITIVE, ItemResource.of(new ItemStack(Items.TNT)), 1);
+        h.assertTrue(bench.modPlan().count() == 4, "一块 TNT 四发：" + bench.modPlan().count());
+        bench.modding().set(AmmoBenchBlockEntity.ADDITIVE, ItemResource.of(new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("logos:potion_powder")))), 1);
+        h.assertTrue(bench.modPlan().result() == null, "没有药水的药粉改不了");
+        bench.modding().set(AmmoBenchBlockEntity.ADDITIVE, ItemResource.of(powder(Potions.SWIFTNESS)), 1);
+        h.assertTrue(bench.modPlan().count() == 1, "一份药粉一发：" + bench.modPlan().count());
+        h.succeedWhen(() -> {
+            var out = bench.modded().getResource(0).toStack(bench.modded().getAmountAsInt(0));
+            h.assertTrue(out.getCount() == 1 && RoundEffects.POTION.equals(out.get(Firearms.FINISH.get())), "一发药水弹：" + out);
+            var contents = out.get(DataComponents.POTION_CONTENTS);
+            h.assertTrue(contents != null && contents.is(Potions.SWIFTNESS), "带着迅捷药水：" + contents);
+            h.assertTrue(out.getHoverName().getContents() instanceof TranslatableContents t && t.getKey().equals("logos_dimension.round_name.potion"),
+                    "名字后面带药水名：" + out.getHoverName());
+            h.assertTrue(bench.modding().getAmountAsInt(AmmoBenchBlockEntity.MOD_ROUNDS) == 9, "只用掉一发弹");
+        });
+    }
+
+    /** 荧光弹打中的木桩发光。 */
+    private static void glowing(GameTestHelper h) {
+        var o = range(h, 8);
+        var golem = golem(h, o, 5);
+        var p = shooter(h, o, modded(RifleRoundItem.IRON.get(), RoundEffects.GLOWING));
+        Firearms.fire(p, p.getMainHandItem(), true, 1, 1);
+        h.assertTrue(golem.hasEffect(MobEffects.GLOWING), "发光了");
+        p.discard();
+        h.succeed();
+    }
+
+    /** 末影弹打在墙上：开枪的人传送到墙前，没卡在墙里，像末影珍珠那样掉 5 点血。 */
+    private static void ender(GameTestHelper h) {
+        var o = range(h, 8);
+        for (int y = 0; y <= 3; y++) for (int z = -2; z <= 2; z++) h.getLevel().setBlockAndUpdate(o.offset(6, y, z), Blocks.STONE.defaultBlockState());
+        var p = shooter(h, o, modded(RifleRoundItem.IRON.get(), RoundEffects.ENDER));
+        float full = p.getHealth();
+        Firearms.fire(p, p.getMainHandItem(), true, 1, 1);
+        h.assertTrue(p.getX() > o.getX() + 5 && p.getX() < o.getX() + 6, "传送到墙前：x = " + (p.getX() - o.getX()));
+        h.assertTrue(h.getLevel().noCollision(p, p.getBoundingBox()), "没卡在墙里");
+        h.assertTrue(Math.abs(full - p.getHealth() - RoundEffects.ENDER_DAMAGE) < .01, "掉 5 点血：" + (full - p.getHealth()));
+        p.discard();
+        h.succeed();
+    }
+
+    /** 震爆弹打在墙上：落点炸开，伤到旁边的木桩，墙还在。 */
+    private static void blast(GameTestHelper h) {
+        var o = range(h, 8);
+        for (int y = 0; y <= 3; y++) for (int z = -2; z <= 2; z++) h.getLevel().setBlockAndUpdate(o.offset(6, y, z), Blocks.STONE.defaultBlockState());
+        var golem = golem(h, o, 4);
+        golem.snapTo(o.getX() + 4.5, o.getY(), o.getZ() + 2.2, 90, 0);
+        float full = golem.getHealth();
+        var p = shooter(h, o, modded(RifleRoundItem.IRON.get(), RoundEffects.BLAST));
+        Firearms.fire(p, p.getMainHandItem(), true, 1, 1);
+        h.assertTrue(golem.getHealth() < full, "旁边的木桩挨了爆炸");
+        for (int y = 0; y <= 3; y++) h.assertTrue(h.getLevel().getBlockState(o.offset(6, y, 0)).is(Blocks.STONE), "墙没被炸坏");
+        p.discard();
+        h.succeed();
+    }
+
+    /** 药水弹：虚弱药粉做的弹让木桩虚弱；伤害药粉做的弹在子弹之外再掉瞬间伤害的血。 */
+    private static void potion(GameTestHelper h) {
+        var o = range(h, 8);
+        var golem = golem(h, o, 5);
+        var p = shooter(h, o, RoundEffects.modified(new ItemStack(RifleRoundItem.IRON.get()), powder(Potions.WEAKNESS), RoundEffects.POTION));
+        Firearms.fire(p, p.getMainHandItem(), true, 1, 1);
+        h.assertTrue(golem.hasEffect(MobEffects.WEAKNESS), "虚弱了");
+        p.discard();
+        golem.discard();
+        var second = golem(h, o, 5);
+        float full = second.getHealth();
+        var q = shooter(h, o, RoundEffects.modified(new ItemStack(RifleRoundItem.IRON.get()), powder(Potions.HARMING), RoundEffects.POTION));
+        Firearms.fire(q, q.getMainHandItem(), true, 1, 1);
+        float lost = full - second.getHealth();
+        h.assertTrue(lost > 12 * .85 + 5, "子弹之外还挨了瞬间伤害：" + lost);
+        q.discard();
+        h.succeed();
     }
 }

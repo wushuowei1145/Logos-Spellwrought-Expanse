@@ -82,10 +82,12 @@ public final class RifleRoundItem extends Item implements Ammo.Item {
                     : new Ammo.Trace(stop, Ammo.Trace.BLOCK, Block.getId(level.getBlockState(block.getBlockPos()))));
         }
         SpellRounds.strike(carried, level, dir, hits, block.getType() == HitResult.Type.MISS ? null : block, end);
-        // 烟火弹在落点炸开：打中的第一个生物，或者方块上，或者射程尽头。
-        RoundEffects.landed(shot.round(), level, shooter, !hits.isEmpty() ? hits.getFirst().at() : stop);
         level.playSound(null, shooter.getX(), shooter.getEyeY(), shooter.getZ(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, .4f, 1.95f);
         level.playSound(null, shooter.getX(), shooter.getEyeY(), shooter.getZ(), SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS, 1f, .9f);
+        // 落点：打中的第一个生物，或者方块上，或者射程尽头（烟火弹、震爆弹在那里炸开，末影弹落在生物或方块上才传送）。
+        // 枪声先响在开枪的地方，末影弹再把人传送走。
+        boolean impact = !hits.isEmpty() || block.getType() != HitResult.Type.MISS;
+        RoundEffects.landed(shot.round(), level, shooter, !hits.isEmpty() ? hits.getFirst().at() : stop, dir, impact);
         return new Ammo.ShotResult(List.copyOf(traces));
     }
 

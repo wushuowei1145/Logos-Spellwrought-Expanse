@@ -76,7 +76,7 @@ class SpellRoundTest {
     }
     @Test void everyRoundLooksDifferentForEachTierAndModification() throws Exception {
         var spells = List.of("spell_1", "spell_2", "spell_3", "spell_4", "spell_5", "spell_6", "spell_7");
-        var mods = List.of("sulfur", "mercury", "firework");
+        var mods = List.of("sulfur", "mercury", "firework", "glowing", "ender", "blast", "potion");
         for (var round : List.of("copper_buckshot_shell", "buckshot_shell", "netherite_buckshot_shell",
                 "copper_rifle_round", "iron_rifle_round", "netherite_rifle_round", "blank_round")) {
             var model = LongswordMotionTest.read("/assets/logos_dimension/items/" + round + ".json").getAsJsonObject("model");
@@ -99,13 +99,32 @@ class SpellRoundTest {
     }
 
     @Test void modifyingTakesOneAdditiveAndGivesTheBottleBack() throws Exception {
-        var additives = java.util.Map.of("sulfur", "logos:sulfur_powder", "mercury", "logos:mercury_bottle", "firework", "minecraft:firework_star");
+        // 改装 → 添加物、一份改几发（不写就是八发）
+        var additives = java.util.Map.of("sulfur", "logos:sulfur_powder", "mercury", "logos:mercury_bottle", "firework", "minecraft:firework_star",
+                "glowing", "minecraft:glowstone_dust", "ender", "minecraft:ender_pearl", "blast", "minecraft:tnt", "potion", "logos:potion_powder");
+        var rounds = java.util.Map.of("ender", 1, "blast", 4, "potion", 1);
         for (var e : additives.entrySet()) {
             var r = LongswordMotionTest.read("/data/logos_dimension/recipe/round_modifying/" + e.getKey() + ".json");
             assertEquals("logos_dimension:round_modifying", r.get("type").getAsString());
             assertEquals(e.getKey(), r.get("finish").getAsString());
             assertEquals(e.getValue(), r.get("additive").getAsString());
             assertEquals(e.getKey().equals("mercury"), r.has("remainder"), e.getKey());
+            assertEquals((int) rounds.getOrDefault(e.getKey(), 8), r.has("rounds") ? r.get("rounds").getAsInt() : 8, e.getKey());
+        }
+    }
+
+    @Test void potionRoundsAreTintedLikeThePowder() throws Exception {
+        for (var round : List.of("buckshot_shell", "iron_rifle_round")) {
+            var model = LongswordMotionTest.read("/assets/logos_dimension/items/" + round + ".json").getAsJsonObject("model");
+            com.google.gson.JsonObject potion = null;
+            for (var c : model.getAsJsonArray("cases")) {
+                if (c.getAsJsonObject().get("when").getAsString().equals("potion")) potion = c.getAsJsonObject().getAsJsonObject("model");
+            }
+            assertNotNull(potion, round);
+            var tints = potion.getAsJsonArray("tints");
+            assertEquals("minecraft:potion", tints.get(1).getAsJsonObject().get("type").getAsString(), round);
+            var textures = LongswordMotionTest.read("/assets/logos_dimension/models/item/" + round + "_potion.json").getAsJsonObject("textures");
+            assertTrue(textures.get("layer1").getAsString().startsWith("logos_dimension:item/potion_mark_"), round);
         }
     }
 }

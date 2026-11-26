@@ -1,0 +1,6 @@
+{
+  "type": "logos_dimension:round_modifying",
+  "additive": "minecraft:tnt",
+  "finish": "blast",
+  "rounds": 4
+}

@@ -26,8 +26,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.*;
@@ -42,14 +40,16 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 
 /**
- * 弹的外观和铸弹台三页（docs/FIREARMS.md 第 9–11 节）：背包里排开每种弹的每种外观（七档术式、三种改装），
+ * 弹的外观和铸弹台三页（docs/FIREARMS.md 第 9–11 节）：背包里排开每种弹的每种外观（七档术式、七种改装），
  * 铸弹台翻到铭刻页点一档配方看空格子里的虚影、翻到改装页，最后侧面看一发烟火弹打在墙上炸开。
  */
 @LDLRegisterClient(name="ammo_looks", group="ammo", registry=UIScenario.REGISTRY, environment=RegistrationEnvironment.DEV_ONLY)
 public class AmmoLooksView implements UIScenario {
     private static final BlockPos BENCH = new BlockPos(3, 100, 3);
-    private static final List<String> FINISHES = List.of("spell_1", "spell_2", "spell_3", "spell_4", "spell_5", "spell_6", "spell_7",
-            RoundEffects.SULFUR, RoundEffects.MERCURY, RoundEffects.FIREWORK);
+    private static final List<String> SPELLS = List.of("spell_1", "spell_2", "spell_3", "spell_4", "spell_5", "spell_6", "spell_7");
+    /** 药水弹按金属换一种药水，看得出按药水染色。 */
+    private static final List<net.minecraft.core.Holder<net.minecraft.world.item.alchemy.Potion>> POTIONS = List.of(
+            net.minecraft.world.item.alchemy.Potions.HEALING, net.minecraft.world.item.alchemy.Potions.SWIFTNESS, net.minecraft.world.item.alchemy.Potions.POISON);
     private boolean previousHideGui;
     private int camera = -1;
 
@@ -64,27 +64,38 @@ public class AmmoLooksView implements UIScenario {
     }
     private static AmmoBenchBlockEntity bench(ServerPlayer player) { return (AmmoBenchBlockEntity) player.level().getBlockEntity(BENCH); }
 
-    /** {@code item} 的这种外观：烟火弹配一颗红色的烟火之星，看得出染色。 */
-    private static ItemStack finished(Item item, String finish) {
+    /** {@code item} 的这种外观：烟火弹配一颗红色的烟火之星，药水弹配第 {@code row} 种药水，看得出染色。 */
+    private static ItemStack finished(Item item, String finish, int row) {
         var stack = new ItemStack(item, 8);
         stack.set(Firearms.FINISH.get(), finish);
         if (finish.equals(RoundEffects.FIREWORK)) stack.set(DataComponents.FIREWORK_EXPLOSION,
                 new FireworkExplosion(FireworkExplosion.Shape.LARGE_BALL, IntList.of(0xE04030), IntList.of(0xFFD040), true, false));
+        if (finish.equals(RoundEffects.POTION)) stack.set(DataComponents.POTION_CONTENTS,
+                new net.minecraft.world.item.alchemy.PotionContents(POTIONS.get(row % POTIONS.size())));
         return stack;
     }
 
-    /** 背包排一页：每行一种弹，从左到右七档术式和三种改装（一行九格，放不下的接到下一行）。 */
-    private static void lay(ServerPlayer p, List<Item> rounds) {
+    /** 背包排一页：每种弹从左到右排开 {@code finishes} 这几种外观（一行九格，放不下的接到下一行）；空弹头只有术式外观。 */
+    private static void lay(ServerPlayer p, List<Item> rounds, List<String> finishes) {
         var inv = p.getInventory();
         inv.clearContent();
         List<ItemStack> all = new ArrayList<>();
-        for (Item item : rounds) {
-            for (String finish : FINISHES) {
+        for (int row = 0; row < rounds.size(); row++) {
+            Item item = rounds.get(row);
+            for (String finish : finishes) {
                 if (item instanceof BlankRoundItem && !finish.startsWith("spell_")) continue;
-                all.add(finished(item, finish));
+                all.add(finished(item, finish, row));
             }
         }
         for (int i = 0; i < all.size() && i < 36; i++) inv.setItem(i < 27 ? i + 9 : i - 27, all.get(i));
+    }
+
+    private static List<Item> buckshot() {
+        return List.of(BuckshotItem.COPPER.get(), BuckshotItem.ITEM.get(), BuckshotItem.NETHERITE.get());
+    }
+
+    private static List<Item> rifle() {
+        return List.of(RifleRoundItem.COPPER.get(), RifleRoundItem.IRON.get(), RifleRoundItem.NETHERITE.get());
     }
 
     @Override public void configure(ScenarioOptions o) { o.tags("ammo", "firearms").defaultTimeoutMs(60000).scenarioTimeoutMs(240000); }
@@ -107,27 +118,39 @@ public class AmmoLooksView implements UIScenario {
                     for (int x = -8; x <= 8; x++) for (int y = 100; y < 104; y++) level.setBlockAndUpdate(new BlockPos(x, y, 12), Blocks.STONE.defaultBlockState());
                     level.setBlockAndUpdate(BENCH, AmmoBench.BENCH.get().defaultBlockState());
                     DimensionTravel.teleport(ctx.player(), level, new Vec3(.5, 100, .5), 0, 0);
-                    lay(ctx.player(), List.of(BuckshotItem.COPPER.get(), BuckshotItem.ITEM.get(), BuckshotItem.NETHERITE.get(), BlankRoundItem.ITEM.get()));
+                    var shells = new ArrayList<>(buckshot());
+                    shells.add(BlankRoundItem.ITEM.get());
+                    lay(ctx.player(), shells, SPELLS);
                 }).setGameMode(GameType.SURVIVAL).ticks(10)
-                // 背包两页（生存模式的背包，不是创造物品栏）：霰弹和空弹头，再是步枪弹。
+                // 背包四页（生存模式的背包，不是创造物品栏）：霰弹和空弹头的术式外观、步枪弹的术式外观，再是两种弹的改装外观。
                 .step("打开背包", ctx -> Minecraft.getInstance().setScreen(new InventoryScreen(Minecraft.getInstance().player)))
                 .ticks(6).screenshot("looks_buckshot")
                 .step("关掉背包", ctx -> Minecraft.getInstance().setScreen(null))
-                .server("换成步枪弹", ctx -> lay(ctx.player(), List.of(RifleRoundItem.COPPER.get(), RifleRoundItem.IRON.get(), RifleRoundItem.NETHERITE.get())))
+                .server("换成步枪弹", ctx -> lay(ctx.player(), rifle(), SPELLS))
                 .ticks(4)
                 .step("打开背包", ctx -> Minecraft.getInstance().setScreen(new InventoryScreen(Minecraft.getInstance().player)))
                 .ticks(6).screenshot("looks_rifle")
+                .step("关掉背包", ctx -> Minecraft.getInstance().setScreen(null))
+                .server("换成改装霰弹", ctx -> lay(ctx.player(), buckshot(), RoundEffects.MODS))
+                .ticks(4)
+                .step("打开背包", ctx -> Minecraft.getInstance().setScreen(new InventoryScreen(Minecraft.getInstance().player)))
+                .ticks(6).screenshot("looks_buckshot_mods")
+                .step("关掉背包", ctx -> Minecraft.getInstance().setScreen(null))
+                .server("换成改装步枪弹", ctx -> lay(ctx.player(), rifle(), RoundEffects.MODS))
+                .ticks(4)
+                .step("打开背包", ctx -> Minecraft.getInstance().setScreen(new InventoryScreen(Minecraft.getInstance().player)))
+                .ticks(6).screenshot("looks_rifle_mods")
                 .step("关掉背包", ctx -> Minecraft.getInstance().setScreen(null)).ticks(2);
 
-        // 铸弹台：铭刻页放了图纸和弹，点第三档（回响）的配方，催化、导体格里出现回响酊和活金锭的虚影；再翻到改装页。
+        // 铸弹台：铭刻页放了图纸和弹，点第三档（回响）的配方，催化、导体格里出现回响酊和活金锭的虚影；再翻到改装页（放着末影珍珠）。
         s.server("放图纸和弹、打开界面", ctx -> {
                     var bench = bench(ctx.player());
                     bench.etching().set(AmmoBenchBlockEntity.BLUEPRINT,
                             ItemResource.of(AmmoBlueprintItem.of(AmmoBlueprintItem.template(SpellRounds.RIFLE, "步枪弹术式"))), 1);
                     bench.etching().set(AmmoBenchBlockEntity.ROUNDS, ItemResource.of(new ItemStack(RifleRoundItem.IRON.get())), 16);
                     bench.modding().set(AmmoBenchBlockEntity.MOD_ROUNDS, ItemResource.of(new ItemStack(BuckshotItem.ITEM.get())), 16);
-                    bench.modding().set(AmmoBenchBlockEntity.ADDITIVE,
-                            ItemResource.of(new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("logos:sulfur_powder")))), 2);
+                    // 改装页放末影珍珠：一颗只改一发，配方册里末影那一行亮
+                    bench.modding().set(AmmoBenchBlockEntity.ADDITIVE, ItemResource.of(new ItemStack(net.minecraft.world.item.Items.ENDER_PEARL)), 2);
                     BlockUIMenuType.openUI(ctx.player(), BENCH);
                 }).waitUntil("界面打开", ctx -> Minecraft.getInstance().screen != null).ticks(20)
                 .click("#bench_book_press_1").ticks(3).screenshot("page_press")
@@ -140,7 +163,7 @@ public class AmmoLooksView implements UIScenario {
         s.server("装上烟火弹、机位", ctx -> {
                     var level = ctx.server().overworld();
                     var gun = new ItemStack(GunaxeItem.ITEM.get());
-                    var round = finished(RifleRoundItem.IRON.get(), RoundEffects.FIREWORK).copyWithCount(1);
+                    var round = finished(RifleRoundItem.IRON.get(), RoundEffects.FIREWORK, 0).copyWithCount(1);
                     gun.set(Firearms.LOAD.get(), new GunLoad(round.copy(), round.copy(), 6));
                     ctx.player().getInventory().clearContent();
                     ctx.player().getInventory().setItem(0, gun);

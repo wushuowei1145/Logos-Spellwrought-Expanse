@@ -102,11 +102,18 @@ public final class SpellRounds {
 
     // ---------------------------------------------------------------- 物品上的样子
 
-    /** 刻了术式或改装过的弹：名字前面带上档位或改装（晶辉术式、燃烧……），刻了术式的后面再带术式名，像写好的载页那样。 */
+    /**
+     * 刻了术式或改装过的弹：名字前面带上档位或改装（晶辉术式、燃烧……），刻了术式的后面再带术式名，像写好的载页那样；
+     * 药水弹后面带上药水名，像药粉那样：「药水铁步枪弹（迅捷药水）」。
+     */
     public static Component name(ItemStack stack, Component plain) {
         String finish = RoundEffects.finish(stack);
         Component named = finish == null ? plain
                 : Component.translatable("logos_dimension.round_name", Component.translatable("logos_dimension.round_finish." + finish), plain);
+        var potion = stack.get(net.minecraft.core.component.DataComponents.POTION_CONTENTS);
+        if (RoundEffects.POTION.equals(finish) && potion != null && (potion.potion().isPresent() || potion.customName().isPresent())) {
+            named = Component.translatable("logos_dimension.round_name.potion", named, potion.getName("item.minecraft.potion.effect."));
+        }
         var etched = stack.get(Firearms.ETCHED.get());
         Spell spell = etched == null ? null : Casting.compileOrNull(etched.source());
         return spell == null ? named : named.copy().append("《").append(spell.name()).append("》");

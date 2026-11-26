@@ -187,8 +187,10 @@ final class AmmoBenchUI {
         for (int i = 0; i < mods.size(); i++) {
             var r = mods.get(i);
             int index = i;
-            ItemStack add = first(r.additive());
-            rows.add(bookRow("bench_book_mod_" + i, List.of(add), RoundEffects.modified(sample, add, r.finish()),
+            // 药水弹拿一份真有药水的药粉来示范（配方只写了药粉这件物品）；成品写上一份添加物改几发。
+            var samples = RoundEffects.samples(r.additive(), r.finish());
+            ItemStack add = samples.isEmpty() ? ItemStack.EMPTY : samples.getFirst();
+            rows.add(bookRow("bench_book_mod_" + i, List.of(add), RoundEffects.modified(sample, add, r.finish()).copyWithCount(r.rounds()),
                     Component.translatable("logos_dimension.round_finish." + r.finish()),
                     () -> r.matches(new RoundModRecipe.Input(stack(bench.modding(), 0), stack(bench.modding(), 1)), level),
                     () -> picked[0] == index,
@@ -253,8 +255,8 @@ final class AmmoBenchUI {
         }));
         for (var stack : inputs) row.addChild(stack.isEmpty() ? text("—") : icon(stack));
         row.addChild(text("→"));
+        // 成品的数量画在图标角上（像格子里那样），整句「×8」在悬停的配方里。
         row.addChild(icon(output));
-        if (output.getCount() > 1) row.addChild(text("×" + output.getCount()));
         if (note != null) {
             var label = new Label();
             label.setText(note);

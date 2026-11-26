@@ -99,10 +99,12 @@ public final class BuckshotItem extends Item implements Ammo.Item {
         var end = shot.origin().add(look.scale(Buckshot.RANGE));
         var centre = level.clip(new ClipContext(shot.origin(), end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, shooter));
         SpellRounds.strike(carried, level, look, hits, centre.getType() == HitResult.Type.MISS ? null : centre, end);
-        RoundEffects.landed(shot.round(), level, shooter, !hits.isEmpty() ? hits.getFirst().at()
-                : centre.getType() == HitResult.Type.MISS ? end : centre.getLocation());
         level.playSound(null, shooter.getX(), shooter.getEyeY(), shooter.getZ(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, .55f, 1.75f);
         level.playSound(null, shooter.getX(), shooter.getEyeY(), shooter.getZ(), SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS, 1f, .6f);
+        // 枪声先响在开枪的地方，再算落点（末影弹会把人传送走）；落在生物或方块上才算真落定。
+        boolean impact = !hits.isEmpty() || centre.getType() != HitResult.Type.MISS;
+        RoundEffects.landed(shot.round(), level, shooter, !hits.isEmpty() ? hits.getFirst().at()
+                : centre.getType() == HitResult.Type.MISS ? end : centre.getLocation(), look, impact);
         return new Ammo.ShotResult(List.copyOf(traces));
     }
 
