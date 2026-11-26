@@ -1,0 +1,11 @@
+{
+  "type": "logos_dimension:ammo_pressing",
+  "casing": "minecraft:copper_ingot",
+  "powder": "minecraft:gunpowder",
+  "head": "minecraft:amethyst_shard",
+  "result": {
+    "id": "logos_dimension:blank_round",
+    "count": 8
+  },
+  "time": 40
+}

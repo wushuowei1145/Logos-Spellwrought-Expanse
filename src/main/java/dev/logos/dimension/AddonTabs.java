@@ -127,7 +127,9 @@ public final class AddonTabs {
             // 法杖
             "explosion_staff",
             // 铳与弹药
-            "gunaxe", "buckshot_shell"));
+            "gunaxe", "ammo_bench",
+            "copper_buckshot_shell", "buckshot_shell", "netherite_buckshot_shell",
+            "copper_rifle_round", "iron_rifle_round", "netherite_rifle_round", "blank_round"));
 
     /** 异世界货币：钱囊、兑换台、钱庄与四国钱币。 */
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> ECONOMY = tab("economy", WEAPONS, "fox_ichibu", Economy::creativeItems);

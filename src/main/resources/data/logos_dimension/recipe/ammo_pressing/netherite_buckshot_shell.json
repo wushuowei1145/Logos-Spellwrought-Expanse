@@ -1,0 +1,11 @@
+{
+  "type": "logos_dimension:ammo_pressing",
+  "casing": "minecraft:paper",
+  "powder": "minecraft:gunpowder",
+  "head": "minecraft:netherite_scrap",
+  "result": {
+    "id": "logos_dimension:netherite_buckshot_shell",
+    "count": 8
+  },
+  "time": 40
+}

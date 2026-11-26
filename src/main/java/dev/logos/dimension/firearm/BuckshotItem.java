@@ -25,18 +25,29 @@ import net.neoforged.neoforge.registries.DeferredItem;
 /**
  * 霰弹：一发八颗弹丸，散成一个锥形，近处威力大、远了衰减；锥形里的几个目标都会挨。
  * 同一个目标挨的几颗合成一次伤害（物理元素，Logos 的 {@code Effects.followUp}，不吃受击冷却），击退按挨了几颗算。
- * 数值在 {@link Buckshot}，试玩后再调（docs/FIREARMS.md 第 5 节）。
+ * 弹头金属（{@link RoundMetal}）只改伤害：铜、铁、下界合金三种。数值在 {@link Buckshot}，试玩后再调（docs/FIREARMS.md 第 5 节）。
  */
 public final class BuckshotItem extends Item implements Ammo.Item {
     // 数值和衰减在 Buckshot 里（不依赖注册表，单元测试直接测）。
-    public static final DeferredItem<BuckshotItem> ITEM = DimensionBlocks.ITEMS.registerItem("buckshot_shell", BuckshotItem::new);
-    private static final Ammo AMMO = BuckshotItem::fire;
+    /** 铁霰弹：最早的霰弹，沿用原来的编号 buckshot_shell，存档里的弹药不失效。 */
+    public static final DeferredItem<BuckshotItem> ITEM = DimensionBlocks.ITEMS.registerItem("buckshot_shell", p -> new BuckshotItem(p, RoundMetal.IRON));
+    public static final DeferredItem<BuckshotItem> COPPER = DimensionBlocks.ITEMS.registerItem("copper_buckshot_shell", p -> new BuckshotItem(p, RoundMetal.COPPER));
+    public static final DeferredItem<BuckshotItem> NETHERITE = DimensionBlocks.ITEMS.registerItem("netherite_buckshot_shell",
+            p -> new BuckshotItem(p.fireResistant(), RoundMetal.NETHERITE));
 
-    public BuckshotItem(Properties properties) { super(properties.stacksTo(64)); }
+    private final RoundMetal metal;
+    private final Ammo ammo;
+
+    public BuckshotItem(Properties properties, RoundMetal metal) {
+        super(properties.stacksTo(64));
+        this.metal = metal;
+        this.ammo = shot -> fire(shot, metal);
+    }
     public static void init() {}
-    @Override public Ammo ammo() { return AMMO; }
+    public RoundMetal metal() { return metal; }
+    @Override public Ammo ammo() { return ammo; }
 
-    private static Ammo.ShotResult fire(Ammo.Shot shot) {
+    private static Ammo.ShotResult fire(Ammo.Shot shot, RoundMetal metal) {
         var level = shot.level();
         var shooter = shot.shooter();
         var random = shooter.getRandom();
@@ -52,7 +63,7 @@ public final class BuckshotItem extends Item implements Ammo.Item {
             if (hit != null && hit.getEntity() instanceof LivingEntity living) {
                 double d = shot.origin().distanceTo(hit.getLocation());
                 var sum = struck.computeIfAbsent(living, k -> new double[2]);
-                sum[0] += Buckshot.PELLET_DAMAGE * Buckshot.falloff(d) * shot.damage();
+                sum[0] += Buckshot.PELLET_DAMAGE * metal.damage * Buckshot.falloff(d) * shot.damage();
                 sum[1]++;
                 traces.add(new Ammo.Trace(hit.getLocation(), Ammo.Trace.ENTITY, 0));
             } else if (block.getType() != HitResult.Type.MISS) {
@@ -71,7 +82,7 @@ public final class BuckshotItem extends Item implements Ammo.Item {
     }
 
     /** 打得到谁：活着、能被点中的生物，不打自己、不打自己的宠物、不打同乘的。 */
-    private static boolean target(LivingEntity shooter, Entity e) {
+    static boolean target(LivingEntity shooter, Entity e) {
         if (e == shooter || !e.isAlive() || e.isSpectator() || !e.isPickable() || e.isPassengerOfSameVehicle(shooter)) return false;
         return !(e instanceof TamableAnimal pet && pet.isOwnedBy(shooter));
     }
