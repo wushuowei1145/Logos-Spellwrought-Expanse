@@ -74,4 +74,38 @@ class SpellRoundTest {
         assertEquals(10, SpellRounds.capacity(SpellRounds.RIFLE, 10));
         assertEquals(20, SpellRounds.capacity(SpellRounds.BLANK, 10));
     }
+    @Test void everyRoundLooksDifferentForEachTierAndModification() throws Exception {
+        var spells = List.of("spell_1", "spell_2", "spell_3", "spell_4", "spell_5", "spell_6", "spell_7");
+        var mods = List.of("sulfur", "mercury", "firework");
+        for (var round : List.of("copper_buckshot_shell", "buckshot_shell", "netherite_buckshot_shell",
+                "copper_rifle_round", "iron_rifle_round", "netherite_rifle_round", "blank_round")) {
+            var model = LongswordMotionTest.read("/assets/logos_dimension/items/" + round + ".json").getAsJsonObject("model");
+            assertEquals("minecraft:select", model.get("type").getAsString(), round);
+            assertEquals("logos_dimension:round_finish", model.get("component").getAsString(), round);
+            List<String> cases = new java.util.ArrayList<>();
+            for (var c : model.getAsJsonArray("cases")) {
+                String when = c.getAsJsonObject().get("when").getAsString();
+                cases.add(when);
+                String path = c.getAsJsonObject().getAsJsonObject("model").get("model").getAsString().replace("logos_dimension:", "");
+                assertNotNull(SpellRoundTest.class.getResource("/assets/logos_dimension/models/" + path + ".json"), path);
+                assertNotNull(SpellRoundTest.class.getResource("/assets/logos_dimension/textures/" + path + ".png"), path);
+            }
+            var expected = new java.util.ArrayList<>(spells);
+            // 空弹头没有弹丸，不改装
+            if (!round.equals("blank_round")) expected.addAll(mods);
+            assertEquals(expected, cases, round);
+            assertEquals("logos_dimension:item/" + round, model.getAsJsonObject("fallback").get("model").getAsString());
+        }
+    }
+
+    @Test void modifyingTakesOneAdditiveAndGivesTheBottleBack() throws Exception {
+        var additives = java.util.Map.of("sulfur", "logos:sulfur_powder", "mercury", "logos:mercury_bottle", "firework", "minecraft:firework_star");
+        for (var e : additives.entrySet()) {
+            var r = LongswordMotionTest.read("/data/logos_dimension/recipe/round_modifying/" + e.getKey() + ".json");
+            assertEquals("logos_dimension:round_modifying", r.get("type").getAsString());
+            assertEquals(e.getKey(), r.get("finish").getAsString());
+            assertEquals(e.getValue(), r.get("additive").getAsString());
+            assertEquals(e.getKey().equals("mercury"), r.has("remainder"), e.getKey());
+        }
+    }
 }

@@ -8,6 +8,7 @@
 - 步枪弹：黄铜弹壳，肩部收窄，弹头是金属本色（铜、钢、下界合金）。
 - 空弹头：黄铜弹壳，弹头是一枚削尖的紫水晶。
 - 弹药图纸：一张蓝图纸，白线画一发弹，角上一枚金色术式印。
+- 刻了术式、改装过的弹各有一套贴图（下面「外观」一节），物品模型按组件 round_finish 选。
 """
 import json
 import sys
@@ -138,6 +139,222 @@ def blueprint():
     return Image.fromarray(img, 'RGBA')
 
 
+# ---------------------------------------------------------------- 外观（术式档位、改装）
+# 一发弹的外观组件 logos_dimension:round_finish（docs/FIREARMS.md 第 9、10 节）：物品模型按它换贴图。
+# 术式弹按档位换弹头（霰弹换封口和一道色环）：基础在金属上加金纹，晶辉紫水晶尖，回响幽匿纹，炼成死灰黑尖，
+# 白垩白尖，天穹蓝里透金，贤者红色晶尖。改装弹：燃烧黄尖、水银镜银尖、烟火弹多一层按烟火之星染色的星纹。
+
+GOLD = ((255, 226, 120), (232, 186, 70), (160, 112, 30))
+SCULK = ((60, 140, 150), (22, 66, 78), (10, 32, 40))
+CAPUT = ((86, 64, 62), (48, 34, 34), (24, 16, 16))
+CHALK = ((252, 250, 244), (226, 222, 210), (176, 170, 156))
+FIRMAMENT = ((126, 176, 246), (58, 104, 200), (28, 54, 126))
+SAGE = ((255, 132, 128), (200, 34, 48), (112, 12, 26))
+SULFUR = ((252, 240, 130), (226, 200, 56), (154, 124, 22))
+MERCURY = ((252, 253, 255), (198, 208, 222), (122, 132, 152))
+FIREWORK_TIP = ((96, 86, 98), (62, 54, 66), (36, 30, 40))
+SPECK_SCULK, SPECK_GOLD = (90, 232, 226), (246, 206, 96)
+
+# 每种外观：弹头（霰弹的封口、色环）的颜色、是不是削尖的晶体、点缀、金纹
+FINISHES = {
+    'spell_1': dict(tip=None, crystal=False, speck=SPECK_GOLD, gold=True),
+    'spell_2': dict(tip=AMETHYST, crystal=True, speck=None, gold=False),
+    'spell_3': dict(tip=SCULK, crystal=False, speck=SPECK_SCULK, gold=False),
+    'spell_4': dict(tip=CAPUT, crystal=False, speck=None, gold=False),
+    'spell_5': dict(tip=CHALK, crystal=False, speck=None, gold=False),
+    'spell_6': dict(tip=FIRMAMENT, crystal=False, speck=SPECK_GOLD, gold=False),
+    'spell_7': dict(tip=SAGE, crystal=True, speck=None, gold=False),
+    'sulfur': dict(tip=SULFUR, crystal=False, speck=None, gold=False),
+    'mercury': dict(tip=MERCURY, crystal=False, speck=None, gold=False),
+    'firework': dict(tip=FIREWORK_TIP, crystal=False, speck=None, gold=False),
+}
+SPELLS = [f'spell_{i}' for i in range(1, 8)]
+MODS = ['sulfur', 'mercury', 'firework']
+
+
+def draw_ts(paint):
+    """和 draw 一样沿对角线画回转体，但 paint(t, s, x, y) 能按横向位置和像素坐标上点缀；返回 None 表示这里没东西。"""
+    img = np.zeros((16, 16, 4), np.uint8)
+    axis = (B - A) / np.linalg.norm(B - A)
+    side = np.array([axis[1], -axis[0]])
+    length = np.linalg.norm(B - A)
+    for y in range(16):
+        for x in range(16):
+            p = np.array([x + .5, y + .5]) - A
+            t, s = p.dot(axis) / length, p.dot(side)
+            if not 0 <= t <= 1:
+                continue
+            got = paint(t, s, x, y)
+            if got is None:
+                continue
+            colours, radius = got
+            if abs(s) > radius:
+                continue
+            if isinstance(colours[0], int):
+                col = colours
+            else:
+                shade = 0 if s > radius * .45 else 1 if s > -radius * .25 else 2
+                col = colours[shade]
+            img[y, x] = (*col, 255)
+    solid = img[..., 3] > 0
+    edge = np.zeros_like(solid)
+    for dy, dx in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+        edge |= np.roll(np.roll(solid, dy, 0), dx, 1)
+    img[edge & ~solid] = (*OUTLINE, 255)
+    return Image.fromarray(img, 'RGBA')
+
+
+def speckled(x, y):
+    """固定的伪随机点缀：大约五分之一的像素。"""
+    return (x * 7 + y * 13) % 5 == 0
+
+
+def tip_paint(f, metal_tip, t0, pointed):
+    """弹头部分（t ≥ t0）：外观的颜色、晶体削尖、点缀；基础档保留金属本色加一道金纹。"""
+    def paint(t, s, x, y):
+        u = (t - t0) / (1 - t0)
+        if f['crystal'] or pointed:
+            radius = 2.0 * (1 - u ** 1.4)
+        else:
+            radius = 1.6 * max(0., 1 - u * u) ** .5
+        if f['tip'] is None:
+            # 基础档：金属本色，一道金环加几点金纹
+            colour = GOLD if abs(u - .35) < .09 or (f['speck'] and speckled(x, y)) else metal_tip
+        else:
+            colour = f['tip']
+            if f['speck'] and speckled(x, y) and abs(s) < radius - .4:
+                colour = f['speck']
+        return colour, radius
+    return paint
+
+
+def rifle_finish(metal_tip, finish):
+    f = FINISHES[finish]
+    tip = tip_paint(f, metal_tip, .55 if f['crystal'] else .58, False)
+
+    def paint(t, s, x, y):
+        if t < .06:
+            return BRASS[2], 2.2
+        if t < .52:
+            if f['gold'] and (abs(t - .2) < .025 or abs(t - .38) < .025):
+                return GOLD, 2.0
+            return BRASS, 2.0
+        if t < .58 and not f['crystal']:
+            return BRASS, 2.0 - (t - .52) / .06 * .4
+        return tip(t, s, x, y)
+    return draw_ts(paint)
+
+
+def blank_finish(finish):
+    f = FINISHES[finish]
+    tip = tip_paint(dict(f, tip=f['tip'] or AMETHYST), AMETHYST, .5, True)
+
+    def paint(t, s, x, y):
+        if t < .06:
+            return BRASS[2], 2.2
+        if t < .5:
+            if f['gold'] and (abs(t - .18) < .025 or abs(t - .36) < .025):
+                return GOLD, 2.0
+            return BRASS, 2.0
+        return tip(t, s, x, y)
+    return draw_ts(paint)
+
+
+def shell_finish(metal, finish):
+    """霰弹：纸壳不变，封口和一道色环换成外观的颜色；基础档在纸壳上加两道金纹。"""
+    f = FINISHES[finish]
+    hull, base = HULLS[metal], BASES[metal]
+    mark = f['tip'] or GOLD
+
+    def paint(t, s, x, y):
+        if t < .28:
+            return (base[2] if abs(t - .27) < .03 else base), 2.6
+        if t > .9:
+            colour = mark
+            if f['speck'] and speckled(x, y):
+                colour = f['speck']
+            return colour, 2.6
+        if .62 < t < .7 and finish != 'spell_1':
+            return mark, 2.6
+        if f['gold'] and (abs(t - .45) < .03 or abs(t - .75) < .03):
+            return GOLD, 2.6
+        return hull, 2.6
+    return draw_ts(paint)
+
+
+def firework_mark(kind):
+    """烟火弹多出来的一层：一颗白色的小星（按烟火之星的颜色染色），霰弹在纸壳中间，步枪弹在弹头上。"""
+    img = np.zeros((16, 16, 4), np.uint8)
+    axis = (B - A) / np.linalg.norm(B - A)
+    t = .62 if kind == 'buckshot' else .78
+    cx, cy = A + axis * np.linalg.norm(B - A) * t
+    for dx, dy in ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)):
+        x, y = int(cx + dx), int(cy + dy)
+        img[y, x] = (255, 255, 255, 255)
+    return Image.fromarray(img, 'RGBA')
+
+
+def finished_icons():
+    """每种弹在每种外观下的贴图：名字 → (贴图, 是否带烟火染色层)。"""
+    out = {}
+    tips = {'copper': COPPER, 'iron': STEEL, 'netherite': NETHERITE}
+    for metal in ('copper', 'iron', 'netherite'):
+        shell_id = 'buckshot_shell' if metal == 'iron' else f'{metal}_buckshot_shell'
+        rifle_id = f'{metal}_rifle_round'
+        for finish in SPELLS + MODS:
+            out[f'{shell_id}_{finish}'] = (shell_id, finish, shell_finish(metal, finish))
+            out[f'{rifle_id}_{finish}'] = (rifle_id, finish, rifle_finish(tips[metal], finish))
+    for finish in SPELLS:
+        out[f'blank_round_{finish}'] = ('blank_round', finish, blank_finish(finish))
+    return out
+
+
+def write_finishes(out_dir=None):
+    icons = finished_icons()
+    marks = {'buckshot': firework_mark('buckshot'), 'rifle': firework_mark('rifle')}
+    for kind, img in marks.items():
+        img.save(ASSETS / f'textures/item/firework_mark_{kind}.png')
+    by_item = {}
+    for name, (item, finish, img) in icons.items():
+        img.save(ASSETS / f'textures/item/{name}.png')
+        textures = {'layer0': f'logos_dimension:item/{name}'}
+        if finish == 'firework':
+            textures['layer1'] = f'logos_dimension:item/firework_mark_{"buckshot" if "buckshot" in item else "rifle"}'
+        write_json(ASSETS / f'models/item/{name}.json', {'parent': 'minecraft:item/generated', 'textures': textures})
+        by_item.setdefault(item, []).append((finish, name))
+    for item, cases in by_item.items():
+        def model(name, finish):
+            m = {'type': 'minecraft:model', 'model': f'logos_dimension:item/{name}'}
+            if finish == 'firework':
+                m['tints'] = [{'type': 'minecraft:constant', 'value': -1}, {'type': 'minecraft:firework', 'default': -7697782}]
+            return m
+        write_json(ASSETS / f'items/{item}.json', {'model': {
+            'type': 'minecraft:select', 'property': 'minecraft:component', 'component': 'logos_dimension:round_finish',
+            'cases': [{'when': finish, 'model': model(name, finish)} for finish, name in cases],
+            'fallback': {'type': 'minecraft:model', 'model': f'logos_dimension:item/{item}'}}})
+    if out_dir:
+        # 预览：每行一种弹，从左到右是普通、七档术式、三种改装
+        rows = ['copper_buckshot_shell', 'buckshot_shell', 'netherite_buckshot_shell', 'copper_rifle_round', 'iron_rifle_round',
+                'netherite_rifle_round', 'blank_round']
+        cols = [None] + SPELLS + MODS
+        sheet = Image.new('RGBA', (18 * len(cols) + 2, 18 * len(rows) + 2), (198, 198, 198, 255))
+        for r, item in enumerate(rows):
+            for c, finish in enumerate(cols):
+                path = ASSETS / f'textures/item/{item if finish is None else f"{item}_{finish}"}.png'
+                if not path.exists():
+                    continue
+                icon = Image.open(path).convert('RGBA')
+                if finish == 'firework':
+                    tinted = Image.new('RGBA', (16, 16), (0, 0, 0, 0))
+                    mark = np.array(marks['buckshot' if 'buckshot' in item else 'rifle'])
+                    mark[..., :3] = (mark[..., :3] * np.array([240, 90, 60]) / 255).astype(np.uint8)
+                    tinted = Image.fromarray(mark, 'RGBA')
+                    icon = Image.alpha_composite(icon, tinted)
+                sheet.alpha_composite(icon, (2 + c * 18, 2 + r * 18))
+        out_dir.mkdir(parents=True, exist_ok=True)
+        sheet.resize((sheet.width * 6, sheet.height * 6), Image.NEAREST).save(out_dir / 'finishes_x6.png')
+
+
 ICONS = {
     'copper_buckshot_shell': lambda: shell('copper'),
     'buckshot_shell': lambda: shell('iron'),
@@ -168,6 +385,7 @@ def main():
     if out:
         out.mkdir(parents=True, exist_ok=True)
         sheet.resize((sheet.width * 8, sheet.height * 8), Image.NEAREST).save(out / 'rounds_x8.png')
+    write_finishes(out)
     print('ok')
 
 

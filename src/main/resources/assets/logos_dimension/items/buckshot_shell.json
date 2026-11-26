@@ -1,6 +1,93 @@
 {
   "model": {
-    "type": "minecraft:model",
-    "model": "logos_dimension:item/buckshot_shell"
+    "type": "minecraft:select",
+    "property": "minecraft:component",
+    "component": "logos_dimension:round_finish",
+    "cases": [
+      {
+        "when": "spell_1",
+        "model": {
+          "type": "minecraft:model",
+          "model": "logos_dimension:item/buckshot_shell_spell_1"
+        }
+      },
+      {
+        "when": "spell_2",
+        "model": {
+          "type": "minecraft:model",
+          "model": "logos_dimension:item/buckshot_shell_spell_2"
+        }
+      },
+      {
+        "when": "spell_3",
+        "model": {
+          "type": "minecraft:model",
+          "model": "logos_dimension:item/buckshot_shell_spell_3"
+        }
+      },
+      {
+        "when": "spell_4",
+        "model": {
+          "type": "minecraft:model",
+          "model": "logos_dimension:item/buckshot_shell_spell_4"
+        }
+      },
+      {
+        "when": "spell_5",
+        "model": {
+          "type": "minecraft:model",
+          "model": "logos_dimension:item/buckshot_shell_spell_5"
+        }
+      },
+      {
+        "when": "spell_6",
+        "model": {
+          "type": "minecraft:model",
+          "model": "logos_dimension:item/buckshot_shell_spell_6"
+        }
+      },
+      {
+        "when": "spell_7",
+        "model": {
+          "type": "minecraft:model",
+          "model": "logos_dimension:item/buckshot_shell_spell_7"
+        }
+      },
+      {
+        "when": "sulfur",
+        "model": {
+          "type": "minecraft:model",
+          "model": "logos_dimension:item/buckshot_shell_sulfur"
+        }
+      },
+      {
+        "when": "mercury",
+        "model": {
+          "type": "minecraft:model",
+          "model": "logos_dimension:item/buckshot_shell_mercury"
+        }
+      },
+      {
+        "when": "firework",
+        "model": {
+          "type": "minecraft:model",
+          "model": "logos_dimension:item/buckshot_shell_firework",
+          "tints": [
+            {
+              "type": "minecraft:constant",
+              "value": -1
+            },
+            {
+              "type": "minecraft:firework",
+              "default": -7697782
+            }
+          ]
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "logos_dimension:item/buckshot_shell"
+    }
   }
 }

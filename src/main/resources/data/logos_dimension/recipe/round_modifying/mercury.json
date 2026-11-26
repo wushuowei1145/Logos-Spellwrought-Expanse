@@ -1,0 +1,8 @@
+{
+  "type": "logos_dimension:round_modifying",
+  "additive": "logos:mercury_bottle",
+  "finish": "mercury",
+  "remainder": {
+    "id": "minecraft:glass_bottle"
+  }
+}

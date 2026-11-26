@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "logos_dimension:item/buckshot_shell_firework",
+    "layer1": "logos_dimension:item/firework_mark_buckshot"
+  }
+}

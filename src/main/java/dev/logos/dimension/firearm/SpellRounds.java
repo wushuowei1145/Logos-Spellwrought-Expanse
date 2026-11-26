@@ -102,19 +102,26 @@ public final class SpellRounds {
 
     // ---------------------------------------------------------------- 物品上的样子
 
-    /** 刻了术式的弹：名字后面带上术式名，像写好的载页那样。 */
+    /** 刻了术式或改装过的弹：名字前面带上档位或改装（晶辉术式、燃烧……），刻了术式的后面再带术式名，像写好的载页那样。 */
     public static Component name(ItemStack stack, Component plain) {
+        String finish = RoundEffects.finish(stack);
+        Component named = finish == null ? plain
+                : Component.translatable("logos_dimension.round_name", Component.translatable("logos_dimension.round_finish." + finish), plain);
         var etched = stack.get(Firearms.ETCHED.get());
         Spell spell = etched == null ? null : Casting.compileOrNull(etched.source());
-        return spell == null ? plain : plain.copy().append("《").append(spell.name()).append("》");
+        return spell == null ? named : named.copy().append("《").append(spell.name()).append("》");
     }
 
-    /** 刻了术式的弹的说明：第几档、每发注入多少。 */
+    /** 刻了术式的弹写第几档、每发注入多少；改装弹写它的效果。 */
     public static void tooltip(ItemStack stack, Consumer<Component> builder) {
         var etched = stack.get(Firearms.ETCHED.get());
-        if (etched == null) return;
-        builder.accept(Component.translatable("tooltip.logos_dimension.etched_round", etched.tier(), (int) Math.round(etched.mana()))
-                .withStyle(ChatFormatting.LIGHT_PURPLE));
+        if (etched != null) {
+            builder.accept(Component.translatable("tooltip.logos_dimension.etched_round", etched.tier(), (int) Math.round(etched.mana()))
+                    .withStyle(ChatFormatting.LIGHT_PURPLE));
+            return;
+        }
+        String finish = RoundEffects.finish(stack);
+        if (finish != null) builder.accept(Component.translatable("tooltip.logos_dimension.round_finish." + finish).withStyle(ChatFormatting.GOLD));
     }
 
     public static boolean etched(ItemStack stack) {
