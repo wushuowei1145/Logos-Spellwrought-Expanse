@@ -6,11 +6,16 @@ import dev.logos.runtime.Effects;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.AABB;
@@ -41,6 +46,13 @@ public final class RifleRoundItem extends Item implements Ammo.Item {
     public RoundMetal metal() { return metal; }
     @Override public Ammo ammo() { return ammo; }
 
+    // 刻了术式的步枪弹（SpellRounds）：名字带术式名、说明写档位和注入、带附魔光泽。
+    @Override public Component getName(ItemStack stack) { return SpellRounds.name(stack, super.getName(stack)); }
+    @Override public boolean isFoil(ItemStack stack) { return SpellRounds.etched(stack) || super.isFoil(stack); }
+    @Override public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> builder, TooltipFlag flag) {
+        SpellRounds.tooltip(stack, builder);
+    }
+
     private static Ammo.ShotResult fire(Ammo.Shot shot, RoundMetal metal) {
         var level = shot.level();
         var shooter = shot.shooter();
@@ -50,6 +62,8 @@ public final class RifleRoundItem extends Item implements Ammo.Item {
         var block = level.clip(new ClipContext(from, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, shooter));
         var stop = block.getType() == HitResult.Type.MISS ? end : block.getLocation();
         List<Ammo.Trace> traces = new ArrayList<>();
+        var carried = SpellRounds.carry(shot, SpellRounds.RIFLE);
+        List<SpellRounds.Struck> hits = new ArrayList<>();
         int left = 1 + metal.pierce;
         for (var hit : struck(level, shooter, from, stop)) {
             if (left == 0) break;
@@ -58,12 +72,14 @@ public final class RifleRoundItem extends Item implements Ammo.Item {
             Effects.followUp(shooter, hit.entity(), damage, Element.PHYSICAL);
             hit.entity().knockback(Rifle.KNOCKBACK, -dir.x, -dir.z);
             traces.add(new Ammo.Trace(hit.at(), Ammo.Trace.ENTITY, 0));
+            hits.add(new SpellRounds.Struck(hit.entity(), hit.at()));
         }
         // 没被生物挡完：子弹接着飞到方块上，或者飞到射程尽头。
         if (left > 0) {
             traces.add(block.getType() == HitResult.Type.MISS ? new Ammo.Trace(end, Ammo.Trace.MISS, 0)
                     : new Ammo.Trace(stop, Ammo.Trace.BLOCK, Block.getId(level.getBlockState(block.getBlockPos()))));
         }
+        SpellRounds.strike(carried, level, dir, hits, block.getType() == HitResult.Type.MISS ? null : block, end);
         level.playSound(null, shooter.getX(), shooter.getEyeY(), shooter.getZ(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, .4f, 1.95f);
         level.playSound(null, shooter.getX(), shooter.getEyeY(), shooter.getZ(), SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS, 1f, .9f);
         return new Ammo.ShotResult(List.copyOf(traces));

@@ -7,6 +7,7 @@
 - 霰弹：纸壳、金属底火座、末端一圈封口。纸壳颜色分金属：铜绿壳铜底、铁红壳黄铜底、下界合金黑壳暗底。
 - 步枪弹：黄铜弹壳，肩部收窄，弹头是金属本色（铜、钢、下界合金）。
 - 空弹头：黄铜弹壳，弹头是一枚削尖的紫水晶。
+- 弹药图纸：一张蓝图纸，白线画一发弹，角上一枚金色术式印。
 """
 import json
 import sys
@@ -102,6 +103,41 @@ def blank():
     return draw(paint)
 
 
+def blueprint():
+    """弹药图纸：一张蓝图纸（深蓝底、浅蓝网格、右上角折起），纸上用白线画一发斜放的弹，边上一枚金色的术式印。"""
+    img = np.zeros((16, 16, 4), np.uint8)
+    paper, grid, edge, ink, fold = (52, 92, 156), (84, 126, 190), (24, 44, 86), (236, 242, 250), (150, 180, 224)
+    for y in range(1, 15):
+        for x in range(2, 14):
+            col = grid if (x - 2) % 3 == 0 or (y - 1) % 3 == 0 else paper
+            img[y, x] = (*col, 255)
+    # 右上角折起一个小三角
+    for y in range(1, 4):
+        for x in range(11, 14):
+            if x - 11 > y - 1:
+                img[y, x] = (0, 0, 0, 0)
+            elif x - 11 == y - 1:
+                img[y, x] = (*fold, 255)
+    # 白线画一发斜放的步枪弹的轮廓
+    for t in np.linspace(0, 1, 40):
+        cx, cy = 4.5 + 6 * t, 11.5 - 6 * t
+        for side in (-1.2, 1.2):
+            x, y = int(round(cx + side * .7)), int(round(cy + side * .7))
+            if 2 <= x < 14 and 1 <= y < 15:
+                img[y, x] = (*ink, 255)
+    img[11, 4] = img[12, 5] = (*ink, 255)
+    img[4, 11] = (*ink, 255)
+    # 左下角一枚金色术式印
+    for y, x in ((12, 11), (12, 12), (13, 11), (13, 12)):
+        img[y, x] = (232, 190, 90, 255)
+    solid = img[..., 3] > 0
+    border = np.zeros_like(solid)
+    for dy, dx in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+        border |= np.roll(np.roll(solid, dy, 0), dx, 1)
+    img[border & ~solid] = (*edge, 255)
+    return Image.fromarray(img, 'RGBA')
+
+
 ICONS = {
     'copper_buckshot_shell': lambda: shell('copper'),
     'buckshot_shell': lambda: shell('iron'),
@@ -110,6 +146,7 @@ ICONS = {
     'iron_rifle_round': lambda: rifle(TIPS['iron']),
     'netherite_rifle_round': lambda: rifle(TIPS['netherite']),
     'blank_round': blank,
+    'ammo_blueprint': blueprint,
 }
 
 

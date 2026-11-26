@@ -38,6 +38,11 @@ public final class AmmoBench {
             RECIPE_SERIALIZERS.register("ammo_pressing", () -> AmmoPressRecipe.SERIALIZER);
     public static final DeferredHolder<RecipeBookCategory, RecipeBookCategory> BOOK_CATEGORY =
             BOOK_CATEGORIES.register("ammo_pressing", RecipeBookCategory::new);
+    /** 蚀刻术式弹的档位（{@link RoundEtchRecipe}）。 */
+    public static final DeferredHolder<RecipeType<?>, RecipeType<RoundEtchRecipe>> ETCH_RECIPE =
+            RECIPE_TYPES.register("round_etching", RecipeType::simple);
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<RoundEtchRecipe>> ETCH_SERIALIZER =
+            RECIPE_SERIALIZERS.register("round_etching", () -> RoundEtchRecipe.SERIALIZER);
 
     static {
         DimensionBlocks.ITEMS.registerSimpleBlockItem("ammo_bench", BENCH);
@@ -48,7 +53,7 @@ public final class AmmoBench {
         RECIPE_TYPES.register(bus);
         RECIPE_SERIALIZERS.register(bus);
         BOOK_CATEGORIES.register(bus);
-        // 漏斗、管道：材料进三个输入格，弹药从出货格取。
+        // 漏斗、管道：材料进各自的格子，弹药从两个出货格取。
         bus.addListener((RegisterCapabilitiesEvent e) -> e.registerBlockEntity(Capabilities.Item.BLOCK, BENCH_ENTITY.get(),
                 (bench, side) -> bench.automation()));
     }

@@ -40,6 +40,9 @@ public final class Firearms {
     /** 铳的装弹状态（存档并同步：别人也看得见转轮里还剩几发）。 */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<GunLoad>> LOAD = COMPONENTS.registerComponentType(
             "gun_load", b -> b.persistent(GunLoad.CODEC).networkSynchronized(GunLoad.STREAM_CODEC));
+    /** 刻进一发弹药的术式（{@link EtchedSpell}，术式弹）：带着它的弹按组件区分，所以不同图纸刻的弹是不同的弹药。 */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<EtchedSpell>> ETCHED = COMPONENTS.registerComponentType(
+            "etched_spell", b -> b.persistent(EtchedSpell.CODEC).networkSynchronized(EtchedSpell.STREAM_CODEC));
 
     /** 转移的前提（招式文件的 {@code require}）：膛里有子弹、膛空了、可以换弹。 */
     public static final String LOADED = "loaded", EMPTY = "empty", RELOADABLE = "reloadable";

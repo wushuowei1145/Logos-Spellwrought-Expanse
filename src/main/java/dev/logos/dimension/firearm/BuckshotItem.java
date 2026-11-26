@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
@@ -15,6 +17,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.AABB;
@@ -47,11 +52,19 @@ public final class BuckshotItem extends Item implements Ammo.Item {
     public RoundMetal metal() { return metal; }
     @Override public Ammo ammo() { return ammo; }
 
+    // 刻了术式的霰弹（SpellRounds）：名字带术式名、说明写档位和注入、带附魔光泽。
+    @Override public Component getName(ItemStack stack) { return SpellRounds.name(stack, super.getName(stack)); }
+    @Override public boolean isFoil(ItemStack stack) { return SpellRounds.etched(stack) || super.isFoil(stack); }
+    @Override public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> builder, TooltipFlag flag) {
+        SpellRounds.tooltip(stack, builder);
+    }
+
     private static Ammo.ShotResult fire(Ammo.Shot shot, RoundMetal metal) {
         var level = shot.level();
         var shooter = shot.shooter();
         var random = shooter.getRandom();
         Map<LivingEntity, double[]> struck = new LinkedHashMap<>();
+        Map<LivingEntity, Vec3> firstHit = new LinkedHashMap<>();
         List<Ammo.Trace> traces = new ArrayList<>();
         for (int i = 0; i < Buckshot.PELLETS; i++) {
             var dir = cone(shot.direction(), Buckshot.SPREAD * shot.spread(), random);
@@ -65,16 +78,26 @@ public final class BuckshotItem extends Item implements Ammo.Item {
                 var sum = struck.computeIfAbsent(living, k -> new double[2]);
                 sum[0] += Buckshot.PELLET_DAMAGE * metal.damage * Buckshot.falloff(d) * shot.damage();
                 sum[1]++;
+                firstHit.putIfAbsent(living, hit.getLocation());
                 traces.add(new Ammo.Trace(hit.getLocation(), Ammo.Trace.ENTITY, 0));
             } else if (block.getType() != HitResult.Type.MISS) {
                 traces.add(new Ammo.Trace(stop, Ammo.Trace.BLOCK, Block.getId(level.getBlockState(block.getBlockPos()))));
             } else traces.add(new Ammo.Trace(end, Ammo.Trace.MISS, 0));
         }
         var look = shot.direction();
+        var carried = SpellRounds.carry(shot, SpellRounds.BUCKSHOT);
+        List<SpellRounds.Struck> hits = new ArrayList<>();
         for (var entry : struck.entrySet()) {
             var target = entry.getKey();
             Effects.followUp(shooter, target, entry.getValue()[0], Element.PHYSICAL);
             target.knockback(Math.min(1.2, .12 * entry.getValue()[1]), -look.x, -look.z);
+            hits.add(new SpellRounds.Struck(target, firstHit.get(target)));
+        }
+        // 刻着术式时：打中的生物各触发一次，一个都没打中就看正中那条弹道落在哪里。
+        if (carried != null) {
+            var end = shot.origin().add(look.scale(Buckshot.RANGE));
+            var centre = level.clip(new ClipContext(shot.origin(), end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, shooter));
+            SpellRounds.strike(carried, level, look, hits, centre.getType() == HitResult.Type.MISS ? null : centre, end);
         }
         level.playSound(null, shooter.getX(), shooter.getEyeY(), shooter.getZ(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, .55f, 1.75f);
         level.playSound(null, shooter.getX(), shooter.getEyeY(), shooter.getZ(), SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS, 1f, .6f);
