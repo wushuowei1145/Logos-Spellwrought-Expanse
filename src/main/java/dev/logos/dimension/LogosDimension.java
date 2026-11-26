@@ -39,6 +39,9 @@ public final class LogosDimension {
         dev.logos.dimension.item.JinghongSwordItem.init();
         dev.logos.dimension.item.GunaxeItem.init();
         dev.logos.dimension.firearm.BuckshotItem.init();
+        dev.logos.dimension.firearm.RifleRoundItem.init();
+        dev.logos.dimension.firearm.BlankRoundItem.init();
+        dev.logos.dimension.firearm.AmmoBench.register(bus);
         dev.logos.dimension.firearm.Firearms.register(bus);
         dev.logos.dimension.lingxiao.LingxiaoFlight.register(bus);
         dev.logos.dimension.longsword.ManaGuard.init();
@@ -125,6 +128,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.ForestElfGameTests.register(bus);
         dev.logos.dimension.gametest.EconomyGameTests.register(bus);
         dev.logos.dimension.gametest.RailgunGameTests.register(bus);
+        dev.logos.dimension.gametest.FirearmGameTests.register(bus);
         dev.logos.dimension.gametest.ExplosionGameTests.register(bus);
         dev.logos.dimension.gametest.ExplosionMaidGameTests.register(bus);
         dev.logos.dimension.gametest.GateGameTests.register(bus);

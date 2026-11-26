@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " P ",
+    "CSC"
+  ],
+  "key": {
+    "P": "minecraft:piston",
+    "C": "minecraft:copper_ingot",
+    "S": "minecraft:smithing_table"
+  },
+  "result": {
+    "id": "logos_dimension:ammo_bench",
+    "count": 1
+  }
+}

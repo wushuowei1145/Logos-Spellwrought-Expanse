@@ -1,0 +1,11 @@
+{
+  "type": "logos_dimension:ammo_pressing",
+  "casing": "minecraft:paper",
+  "powder": "minecraft:gunpowder",
+  "head": "minecraft:copper_ingot",
+  "result": {
+    "id": "logos_dimension:copper_buckshot_shell",
+    "count": 8
+  },
+  "time": 40
+}

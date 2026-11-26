@@ -1,0 +1,11 @@
+{
+  "type": "logos_dimension:ammo_pressing",
+  "casing": "minecraft:copper_ingot",
+  "powder": "minecraft:gunpowder",
+  "head": "minecraft:copper_ingot",
+  "result": {
+    "id": "logos_dimension:copper_rifle_round",
+    "count": 8
+  },
+  "time": 40
+}

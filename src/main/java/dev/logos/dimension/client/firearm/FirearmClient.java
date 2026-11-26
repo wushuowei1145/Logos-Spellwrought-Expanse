@@ -5,11 +5,14 @@ import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.client.longsword.LongswordClient;
 import dev.logos.dimension.client.longsword.LongswordRig;
 import dev.logos.dimension.combat.Moveset;
+import dev.logos.dimension.firearm.BlankRoundItem;
 import dev.logos.dimension.firearm.BuckshotItem;
 import dev.logos.dimension.firearm.FirearmPayloads;
 import dev.logos.dimension.firearm.Firearms;
+import dev.logos.dimension.firearm.RifleRoundItem;
 import dev.logos.dimension.longsword.LongswordPayload;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -70,7 +73,12 @@ public final class FirearmClient {
 
     @SubscribeEvent static void packets(RegisterClientPayloadHandlersEvent event) {
         event.register(FirearmPayloads.Shot.TYPE, (p, ctx) -> ctx.enqueueWork(() -> shot(p)));
-        AmmoVisuals.register(BuckshotItem.ITEM.getId(), BuckshotVisuals::draw);
+        for (var shell : List.of(BuckshotItem.COPPER, BuckshotItem.ITEM, BuckshotItem.NETHERITE))
+            AmmoVisuals.register(shell.getId(), BuckshotVisuals::draw);
+        for (var round : List.of(RifleRoundItem.COPPER, RifleRoundItem.IRON, RifleRoundItem.NETHERITE))
+            AmmoVisuals.register(round.getId(), RifleVisuals::draw);
+        // 空弹头只有铳口火光（铳统一画），没有弹道。
+        AmmoVisuals.register(BlankRoundItem.ITEM.getId(), (level, muzzle, traces) -> {});
     }
 
     @SubscribeEvent static void tick(ClientTickEvent.Post event) {
