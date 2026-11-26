@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "logos_dimension:item/netherite_buckshot_shell_potion",
+    "layer1": "logos_dimension:item/potion_mark_buckshot"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "logos_dimension:item/copper_rifle_round_potion",
+    "layer1": "logos_dimension:item/potion_mark_rifle"
+  }
+}

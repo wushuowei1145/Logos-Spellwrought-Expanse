@@ -112,11 +112,16 @@ ETCHING = [
 ]
 TIER_NAMES = ['basic', 'crystal', 'echo', 'transmuted', 'chalk', 'firmament', 'sage']
 
-# 改装弹（docs/FIREARMS.md 第 10 节）：一份添加物改一批（最多八发）有弹丸的普通弹；remainder 是添加物用完剩下的。
+# 改装弹（docs/FIREARMS.md 第 10 节）：一份添加物改 rounds 发有弹丸的普通弹（最多八发）；remainder 是添加物用完剩下的。
+# 末影珍珠、药粉本身就是一次传送、一瓶药水，一份只改一发。
 MODIFYING = [
-    ('sulfur', 'logos:sulfur_powder', None),
-    ('mercury', 'logos:mercury_bottle', 'minecraft:glass_bottle'),
-    ('firework', 'minecraft:firework_star', None),
+    ('sulfur', 'logos:sulfur_powder', None, 8),
+    ('mercury', 'logos:mercury_bottle', 'minecraft:glass_bottle', 8),
+    ('firework', 'minecraft:firework_star', None, 8),
+    ('glowing', 'minecraft:glowstone_dust', None, 8),
+    ('ender', 'minecraft:ender_pearl', None, 1),
+    ('blast', 'minecraft:tnt', None, 4),
+    ('potion', 'logos:potion_powder', None, 1),
 ]
 
 # 弹药图纸：纸、金粒加一发那种弹（弹种看这发弹），做出来就写好了「启式 → 这种弹」。
@@ -159,8 +164,10 @@ def main():
             recipe['catalyst'] = catalyst
         recipe['conductor'] = conductor
         write_json(DATA / f'recipe/round_etching/{TIER_NAMES[tier - 1]}.json', recipe)
-    for finish, additive, remainder in MODIFYING:
+    for finish, additive, remainder, rounds in MODIFYING:
         recipe = {'type': 'logos_dimension:round_modifying', 'additive': additive, 'finish': finish}
+        if rounds != 8:
+            recipe['rounds'] = rounds
         if remainder:
             recipe['remainder'] = {'id': remainder}
         write_json(DATA / f'recipe/round_modifying/{finish}.json', recipe)

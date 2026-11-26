@@ -83,6 +83,44 @@
             }
           ]
         }
+      },
+      {
+        "when": "glowing",
+        "model": {
+          "type": "minecraft:model",
+          "model": "logos_dimension:item/copper_buckshot_shell_glowing"
+        }
+      },
+      {
+        "when": "ender",
+        "model": {
+          "type": "minecraft:model",
+          "model": "logos_dimension:item/copper_buckshot_shell_ender"
+        }
+      },
+      {
+        "when": "blast",
+        "model": {
+          "type": "minecraft:model",
+          "model": "logos_dimension:item/copper_buckshot_shell_blast"
+        }
+      },
+      {
+        "when": "potion",
+        "model": {
+          "type": "minecraft:model",
+          "model": "logos_dimension:item/copper_buckshot_shell_potion",
+          "tints": [
+            {
+              "type": "minecraft:constant",
+              "value": -1
+            },
+            {
+              "type": "minecraft:potion",
+              "default": -13083194
+            }
+          ]
+        }
       }
     ],
     "fallback": {

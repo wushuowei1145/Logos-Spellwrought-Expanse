@@ -30,6 +30,7 @@ import net.minecraft.world.item.component.FireworkExplosion;
 /**
  * JEI 联动，只在装了 JEI 时加载（docs/FIREARMS.md 第 11 节）：铸弹台的压制、铭刻、改装各一个配方分类；
  * 每种弹按外观组件 {@code round_finish} 分成不同条目（像药水那样），所以「晶辉术式铁步枪弹」「燃烧铁霰弹」都能单独查到配方。
+ * 药水弹不再按药水分（每种弹一条「药水铁步枪弹」），它的改装配方里药粉和成品按每种药水一起轮换。
  */
 @JeiPlugin
 public final class AmmoJeiPlugin implements IModPlugin {
