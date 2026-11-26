@@ -43,6 +43,12 @@ public final class Firearms {
     /** 刻进一发弹药的术式（{@link EtchedSpell}，术式弹）：带着它的弹按组件区分，所以不同图纸刻的弹是不同的弹药。 */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<EtchedSpell>> ETCHED = COMPONENTS.registerComponentType(
             "etched_spell", b -> b.persistent(EtchedSpell.CODEC).networkSynchronized(EtchedSpell.STREAM_CODEC));
+    /**
+     * 一发弹的外观（docs/FIREARMS.md 第 9、10 节）：刻了第几档术式（{@code spell_1}–{@code spell_7}）或者改装成了什么
+     * （{@code sulfur}、{@code mercury}、{@code firework}）。物品模型按它换贴图，JEI 按它分条目；没有就是普通弹。
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> FINISH = COMPONENTS.registerComponentType(
+            "round_finish", b -> b.persistent(com.mojang.serialization.Codec.STRING).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8));
 
     /** 转移的前提（招式文件的 {@code require}）：膛里有子弹、膛空了、可以换弹。 */
     public static final String LOADED = "loaded", EMPTY = "empty", RELOADABLE = "reloadable";

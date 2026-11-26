@@ -23,6 +23,11 @@ repositories {
         forRepository { maven { url = 'https://api.modrinth.com/maven' } }
         filter { includeGroup 'maven.modrinth' }
     }
+    // JEI（可选的配方查看）：BlameJared 的 Maven，只在那里找 JEI 和它的配置库，和 Logos 一样。
+    exclusiveContent {
+        forRepository { maven { url = 'https://maven.blamejared.com' } }
+        filter { includeGroup 'mezz.jei'; includeGroup 'net.mezzdev.config' }
+    }
 }
 
 neoForge {
@@ -82,6 +87,10 @@ dependencies {
         compileOnly files(tlmJar)
         if (project.hasProperty('tlm')) runtimeOnly files(tlmJar)
     }
+    // JEI 可选：只对着它的接口编译，铸弹台的三种配方和每种弹的外观在装了 JEI 时显示（compat/jei）；-Pjei 把它放进开发运行
+    compileOnly "mezz.jei:jei-${jei_minecraft_version}-common-api:${jei_version}"
+    compileOnly "mezz.jei:jei-${jei_minecraft_version}-neoforge-api:${jei_version}"
+    if (project.hasProperty('jei')) runtimeOnly "mezz.jei:jei-${jei_minecraft_version}-neoforge:${jei_version}"
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

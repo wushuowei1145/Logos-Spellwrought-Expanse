@@ -12,6 +12,12 @@ import dev.logos.dimension.firearm.EtchedSpell;
 import dev.logos.dimension.firearm.Firearms;
 import dev.logos.dimension.firearm.GunLoad;
 import dev.logos.dimension.firearm.RifleRoundItem;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.entity.projectile.FireworkRocketEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.core.registries.BuiltInRegistries;
+import dev.logos.dimension.firearm.RoundEffects;
 import dev.logos.dimension.item.GunaxeItem;
 import dev.logos.lang.Status;
 import dev.logos.runtime.StatusData;
@@ -68,6 +74,11 @@ public final class FirearmGameTests {
         tests.put("etched_buckshot_casts_once_per_target", FirearmGameTests::etchedBuckshot);
         tests.put("etched_round_impact_and_expire", FirearmGameTests::impactAndExpire);
         tests.put("etched_blank_round_only_casts", FirearmGameTests::etchedBlank);
+        // 改装弹（docs/FIREARMS.md 第 10 节）
+        tests.put("ammo_bench_modifies_a_batch", FirearmGameTests::modBatch);
+        tests.put("incendiary_round_sets_fire", FirearmGameTests::incendiary);
+        tests.put("mercury_round_banes_undead", FirearmGameTests::mercury);
+        tests.put("firework_round_bursts_where_it_lands", FirearmGameTests::firework);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -271,6 +282,7 @@ public final class FirearmGameTests {
             var out = bench.etched().getResource(0).toStack(bench.etched().getAmountAsInt(0));
             h.assertTrue(out.getCount() == 8 && out.is(RifleRoundItem.IRON.get()), "刻出八发铁步枪弹");
             h.assertTrue(new EtchedSpell(src, 2, 20).equals(out.get(Firearms.ETCHED.get())), "刻着图纸原文、第二档、每发 20：" + out.get(Firearms.ETCHED.get()));
+            h.assertTrue(RoundEffects.spell(2).equals(out.get(Firearms.FINISH.get())), "外观是第二档（紫水晶尖）");
             h.assertTrue(Math.abs(bench.mana() - 140) < 1e-6, "扣了八发的注入，剩 " + bench.mana());
             h.assertTrue(bench.etching().getAmountAsInt(AmmoBenchBlockEntity.ROUNDS) == 2, "剩两发没刻");
             h.assertTrue(bench.etching().getAmountAsInt(AmmoBenchBlockEntity.BLUEPRINT) == 1, "图纸不消耗");
@@ -349,5 +361,94 @@ public final class FirearmGameTests {
         h.assertTrue(Math.abs(lost - 6) < .2, "只有术式的 6 点，实际 " + lost);
         p.discard();
         h.succeed();
+    }
+
+    // ---------------------------------------------------------------- 改装弹
+
+    private static ItemStack modded(Item round, String finish) {
+        var stack = new ItemStack(round);
+        stack.set(Firearms.FINISH.get(), finish);
+        return stack;
+    }
+
+    /** 十发铁步枪弹加一份硫粉改出八发燃烧弹，硫粉扣一份；水银瓶改完把空瓶留在台子上。 */
+    private static void modBatch(GameTestHelper h) {
+        var bench = bench(h);
+        bench.modding().set(AmmoBenchBlockEntity.MOD_ROUNDS, ItemResource.of(new ItemStack(RifleRoundItem.IRON.get())), 10);
+        bench.modding().set(AmmoBenchBlockEntity.ADDITIVE, ItemResource.of(new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("logos:sulfur_powder")))), 1);
+        h.assertTrue(bench.modPlan().count() == 8, "一批八发：" + bench.modPlan().problem());
+        h.runAfterDelay(50, () -> {
+            var out = bench.modded().getResource(0).toStack(bench.modded().getAmountAsInt(0));
+            h.assertTrue(out.getCount() == 8 && RoundEffects.SULFUR.equals(out.get(Firearms.FINISH.get())), "八发燃烧弹：" + out);
+            h.assertTrue(!out.has(Firearms.ETCHED.get()), "改装弹没有术式");
+            h.assertTrue(bench.modding().getAmountAsInt(AmmoBenchBlockEntity.ADDITIVE) == 0, "硫粉扣了一份");
+            h.assertTrue(!AmmoBenchBlockEntity.moddable(out), "改装过的不能再改");
+            // 换水银瓶改剩下的两发：空瓶留在台子上。
+            bench.modded().set(0, ItemResource.EMPTY, 0);
+            bench.modding().set(AmmoBenchBlockEntity.ADDITIVE, ItemResource.of(new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("logos:mercury_bottle")))), 1);
+        });
+        h.succeedWhen(() -> {
+            var out = bench.modded().getResource(0).toStack(bench.modded().getAmountAsInt(0));
+            h.assertTrue(out.getCount() == 2 && RoundEffects.MERCURY.equals(out.get(Firearms.FINISH.get())), "剩下两发改成水银弹：" + out);
+            var bottles = h.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(bench.getBlockPos()).inflate(3),
+                    e -> e.getItem().is(Items.GLASS_BOTTLE));
+            h.assertTrue(!bottles.isEmpty(), "空瓶留在台子上");
+        });
+    }
+
+    /** 燃烧弹打中的木桩着火。 */
+    private static void incendiary(GameTestHelper h) {
+        var o = range(h, 8);
+        var golem = golem(h, o, 5);
+        var p = shooter(h, o, modded(RifleRoundItem.IRON.get(), RoundEffects.SULFUR));
+        Firearms.fire(p, p.getMainHandItem(), true, 1, 1);
+        h.assertTrue(golem.isOnFire(), "着火了");
+        p.discard();
+        h.succeed();
+    }
+
+    /** 水银弹：打尸壳（亡灵）伤害 ×1.5 并上虚弱；打铁傀儡（不是亡灵）和普通弹一样。 */
+    private static void mercury(GameTestHelper h) {
+        var o = range(h, 8);
+        float[] lost = new float[2];
+        for (int i = 0; i < 2; i++) {
+            var husk = EntityType.HUSK.create(h.getLevel(), EntitySpawnReason.COMMAND);
+            husk.setNoAi(true);
+            husk.snapTo(o.getX() + 6.5, o.getY(), o.getZ() + .5, 90, 0);
+            h.getLevel().addFreshEntity(husk);
+            float full = husk.getHealth();
+            var p = shooter(h, o, i == 0 ? new ItemStack(RifleRoundItem.IRON.get()) : modded(RifleRoundItem.IRON.get(), RoundEffects.MERCURY));
+            Firearms.fire(p, p.getMainHandItem(), true, 1, 1);
+            lost[i] = full - husk.getHealth();
+            if (i == 1) h.assertTrue(husk.hasEffect(MobEffects.WEAKNESS), "尸壳挨了水银弹，虚弱");
+            p.discard();
+            husk.discard();
+        }
+        h.assertTrue(Math.abs(lost[1] / lost[0] - RoundEffects.MERCURY_BANE) < .05, "对亡灵 ×1.5：普通 " + lost[0] + "，水银 " + lost[1]);
+        var golem = golem(h, o, 6);
+        float full = golem.getHealth();
+        var p = shooter(h, o, modded(RifleRoundItem.IRON.get(), RoundEffects.MERCURY));
+        Firearms.fire(p, p.getMainHandItem(), true, 1, 1);
+        h.assertTrue(Math.abs(full - golem.getHealth() - 12 * .85) < .3 && !golem.hasEffect(MobEffects.WEAKNESS), "铁傀儡不是亡灵：照常伤害，没有虚弱");
+        p.discard();
+        h.succeed();
+    }
+
+    /** 烟火弹打在墙上：落点出现一枚烟火，下一刻炸开，伤到旁边的木桩。 */
+    private static void firework(GameTestHelper h) {
+        var o = range(h, 8);
+        for (int y = 0; y <= 3; y++) for (int z = -2; z <= 2; z++) h.getLevel().setBlockAndUpdate(o.offset(6, y, z), Blocks.STONE.defaultBlockState());
+        var golem = golem(h, o, 4);
+        golem.snapTo(o.getX() + 4.5, o.getY(), o.getZ() + 2.5, 90, 0);
+        float full = golem.getHealth();
+        var p = shooter(h, o, modded(RifleRoundItem.IRON.get(), RoundEffects.FIREWORK));
+        Firearms.fire(p, p.getMainHandItem(), true, 1, 1);
+        var rockets = h.getLevel().getEntitiesOfClass(FireworkRocketEntity.class, new AABB(o.offset(6, 1, 0)).inflate(2));
+        h.assertTrue(!rockets.isEmpty(), "墙上的落点出现一枚烟火");
+        p.discard();
+        h.succeedWhen(() -> {
+            h.assertTrue(h.getLevel().getEntitiesOfClass(FireworkRocketEntity.class, new AABB(o.offset(6, 1, 0)).inflate(2)).isEmpty(), "烟火炸开了");
+            h.assertTrue(golem.getHealth() < full, "旁边的木桩挨了烟火");
+        });
     }
 }

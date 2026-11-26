@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """铸弹台的方块模型、方块状态、掉落、合成配方，七条压制配方（docs/FIREARMS.md 第 6 节），
-以及术式弹的七档蚀刻配方、三种弹药图纸的配方和两个弹种标签（第 9 节）。
+以及术式弹的七档蚀刻配方、三种弹药图纸的配方和两个弹种标签（第 9 节），改装弹的配方（第 10 节）。
 
 用法：uv run --no-project python tools/ammo_bench.py
 
@@ -112,6 +112,13 @@ ETCHING = [
 ]
 TIER_NAMES = ['basic', 'crystal', 'echo', 'transmuted', 'chalk', 'firmament', 'sage']
 
+# 改装弹（docs/FIREARMS.md 第 10 节）：一份添加物改一批（最多八发）有弹丸的普通弹；remainder 是添加物用完剩下的。
+MODIFYING = [
+    ('sulfur', 'logos:sulfur_powder', None),
+    ('mercury', 'logos:mercury_bottle', 'minecraft:glass_bottle'),
+    ('firework', 'minecraft:firework_star', None),
+]
+
 # 弹药图纸：纸、金粒加一发那种弹（弹种看这发弹），做出来就写好了「启式 → 这种弹」。
 BLUEPRINTS = {
     'buckshot': ('#logos_dimension:buckshot_shells', 'buckshot-round', '霰弹术式'),
@@ -152,6 +159,11 @@ def main():
             recipe['catalyst'] = catalyst
         recipe['conductor'] = conductor
         write_json(DATA / f'recipe/round_etching/{TIER_NAMES[tier - 1]}.json', recipe)
+    for finish, additive, remainder in MODIFYING:
+        recipe = {'type': 'logos_dimension:round_modifying', 'additive': additive, 'finish': finish}
+        if remainder:
+            recipe['remainder'] = {'id': remainder}
+        write_json(DATA / f'recipe/round_modifying/{finish}.json', recipe)
     for shape, (round_, word, name) in BLUEPRINTS.items():
         write_json(DATA / f'recipe/ammo_blueprint_{shape}.json', {
             'type': 'minecraft:crafting_shapeless', 'category': 'misc',

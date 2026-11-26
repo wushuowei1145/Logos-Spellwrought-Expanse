@@ -69,8 +69,10 @@ public final class RifleRoundItem extends Item implements Ammo.Item {
             if (left == 0) break;
             left--;
             double damage = Rifle.DAMAGE * metal.damage * Rifle.falloff(Math.sqrt(hit.distance())) * shot.damage();
-            Effects.followUp(shooter, hit.entity(), damage, Element.PHYSICAL);
+            // 改装弹（RoundEffects）：水银弹打亡灵、腐败生物伤害加成，打中后燃烧弹点火、水银弹上虚弱。
+            Effects.followUp(shooter, hit.entity(), damage * RoundEffects.factor(shot.round(), hit.entity()), Element.PHYSICAL);
             hit.entity().knockback(Rifle.KNOCKBACK, -dir.x, -dir.z);
+            RoundEffects.hit(shot.round(), shooter, hit.entity());
             traces.add(new Ammo.Trace(hit.at(), Ammo.Trace.ENTITY, 0));
             hits.add(new SpellRounds.Struck(hit.entity(), hit.at()));
         }
@@ -80,6 +82,8 @@ public final class RifleRoundItem extends Item implements Ammo.Item {
                     : new Ammo.Trace(stop, Ammo.Trace.BLOCK, Block.getId(level.getBlockState(block.getBlockPos()))));
         }
         SpellRounds.strike(carried, level, dir, hits, block.getType() == HitResult.Type.MISS ? null : block, end);
+        // 烟火弹在落点炸开：打中的第一个生物，或者方块上，或者射程尽头。
+        RoundEffects.landed(shot.round(), level, shooter, !hits.isEmpty() ? hits.getFirst().at() : stop);
         level.playSound(null, shooter.getX(), shooter.getEyeY(), shooter.getZ(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, .4f, 1.95f);
         level.playSound(null, shooter.getX(), shooter.getEyeY(), shooter.getZ(), SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS, 1f, .9f);
         return new Ammo.ShotResult(List.copyOf(traces));

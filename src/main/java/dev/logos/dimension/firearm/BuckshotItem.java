@@ -89,16 +89,18 @@ public final class BuckshotItem extends Item implements Ammo.Item {
         List<SpellRounds.Struck> hits = new ArrayList<>();
         for (var entry : struck.entrySet()) {
             var target = entry.getKey();
-            Effects.followUp(shooter, target, entry.getValue()[0], Element.PHYSICAL);
+            // 改装弹（RoundEffects）：水银弹打亡灵、腐败生物伤害加成，打中后燃烧弹点火、水银弹上虚弱。
+            Effects.followUp(shooter, target, entry.getValue()[0] * RoundEffects.factor(shot.round(), target), Element.PHYSICAL);
             target.knockback(Math.min(1.2, .12 * entry.getValue()[1]), -look.x, -look.z);
+            RoundEffects.hit(shot.round(), shooter, target);
             hits.add(new SpellRounds.Struck(target, firstHit.get(target)));
         }
-        // 刻着术式时：打中的生物各触发一次，一个都没打中就看正中那条弹道落在哪里。
-        if (carried != null) {
-            var end = shot.origin().add(look.scale(Buckshot.RANGE));
-            var centre = level.clip(new ClipContext(shot.origin(), end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, shooter));
-            SpellRounds.strike(carried, level, look, hits, centre.getType() == HitResult.Type.MISS ? null : centre, end);
-        }
+        // 刻着术式时：打中的生物各触发一次，一个都没打中就看正中那条弹道落在哪里；烟火弹在落点炸开。
+        var end = shot.origin().add(look.scale(Buckshot.RANGE));
+        var centre = level.clip(new ClipContext(shot.origin(), end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, shooter));
+        SpellRounds.strike(carried, level, look, hits, centre.getType() == HitResult.Type.MISS ? null : centre, end);
+        RoundEffects.landed(shot.round(), level, shooter, !hits.isEmpty() ? hits.getFirst().at()
+                : centre.getType() == HitResult.Type.MISS ? end : centre.getLocation());
         level.playSound(null, shooter.getX(), shooter.getEyeY(), shooter.getZ(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, .55f, 1.75f);
         level.playSound(null, shooter.getX(), shooter.getEyeY(), shooter.getZ(), SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS, 1f, .6f);
         return new Ammo.ShotResult(List.copyOf(traces));

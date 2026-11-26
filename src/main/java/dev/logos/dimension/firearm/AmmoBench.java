@@ -43,6 +43,11 @@ public final class AmmoBench {
             RECIPE_TYPES.register("round_etching", RecipeType::simple);
     public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<RoundEtchRecipe>> ETCH_SERIALIZER =
             RECIPE_SERIALIZERS.register("round_etching", () -> RoundEtchRecipe.SERIALIZER);
+    /** 改装弹（{@link RoundModRecipe}）。 */
+    public static final DeferredHolder<RecipeType<?>, RecipeType<RoundModRecipe>> MOD_RECIPE =
+            RECIPE_TYPES.register("round_modifying", RecipeType::simple);
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<RoundModRecipe>> MOD_SERIALIZER =
+            RECIPE_SERIALIZERS.register("round_modifying", () -> RoundModRecipe.SERIALIZER);
 
     static {
         DimensionBlocks.ITEMS.registerSimpleBlockItem("ammo_bench", BENCH);
@@ -56,5 +61,8 @@ public final class AmmoBench {
         // 漏斗、管道：材料进各自的格子，弹药从两个出货格取。
         bus.addListener((RegisterCapabilitiesEvent e) -> e.registerBlockEntity(Capabilities.Item.BLOCK, BENCH_ENTITY.get(),
                 (bench, side) -> bench.automation()));
+        // 三种配方随数据包发给客户端：铸弹台的配方册和 JEI 都在客户端读它们。
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.OnDatapackSyncEvent e) ->
+                e.sendRecipes(PRESS_RECIPE.get(), ETCH_RECIPE.get(), MOD_RECIPE.get()));
     }
 }
