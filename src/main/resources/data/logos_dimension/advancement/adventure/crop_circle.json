@@ -1,0 +1,42 @@
+{
+  "parent": "minecraft:adventure/root",
+  "display": {
+    "icon": {
+      "id": "minecraft:wheat"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true,
+    "title": {
+      "translate": "advancements.logos_dimension.crop_circle.title"
+    },
+    "description": {
+      "translate": "advancements.logos_dimension.crop_circle.description"
+    }
+  },
+  "criteria": {
+    "first_encounter": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "location": {
+                "dimension": "logos_dimension:cloudsea",
+                "biomes": "logos_dimension:wheat_plains"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "first_encounter"
+    ]
+  ]
+}

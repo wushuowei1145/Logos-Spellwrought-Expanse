@@ -1,0 +1,15 @@
+{
+  "name": "logos_dimension:wheat/crop_circle",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "logos_dimension:wheat/team_crop_circle",
+        "processors": "logos_dimension:crop_circle_ground",
+        "projection": "rigid"
+      }
+    }
+  ]
+}

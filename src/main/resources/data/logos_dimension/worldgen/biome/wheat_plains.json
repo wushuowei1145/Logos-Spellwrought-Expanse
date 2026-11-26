@@ -1,0 +1,30 @@
+{
+  "has_precipitation": true,
+  "temperature": 0.75,
+  "downfall": 0.45,
+  "effects": {
+    "water_color": "#607d85",
+    "grass_color": "#b6ad68",
+    "foliage_color": "#a4a065"
+  },
+  "carvers": [
+    "minecraft:cave"
+  ],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "logos_dimension:wheat_plains_cover"
+    ],
+    []
+  ],
+  "spawners": {},
+  "spawn_costs": {}
+}

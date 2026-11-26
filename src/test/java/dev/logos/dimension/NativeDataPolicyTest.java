@@ -29,7 +29,8 @@ class NativeDataPolicyTest {
         var names=new java.util.HashSet<String>();
         for(var entry:entries)names.add(entry.getAsJsonObject().get("biome").getAsString().split(":")[1]);
         assertTrue(names.remove("cloudsea_root_caves"),"Native underground biome missing");
-        assertEquals(36,names.size());
+        assertEquals(37,names.size());
+        assertTrue(names.contains("wheat_plains"),"稀有麦田群系没有接入正式气候表");
         for(String name:names)for(var step:data("worldgen/biome/"+name).getAsJsonArray("features"))for(var feature:step.getAsJsonArray())
             assertFalse(feature.getAsString().contains("ore_"),feature.toString());
     }

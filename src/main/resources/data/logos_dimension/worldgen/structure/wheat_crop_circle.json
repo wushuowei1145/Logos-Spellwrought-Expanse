@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:jigsaw",
+  "biomes": [
+    "logos_dimension:wheat_plains"
+  ],
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none",
+  "start_pool": "logos_dimension:wheat/crop_circle",
+  "start_jigsaw_name": "logos_dimension:crop_circle_center",
+  "size": 1,
+  "start_height": {
+    "absolute": -1
+  },
+  "project_start_to_heightmap": "WORLD_SURFACE_WG",
+  "max_distance_from_center": 128,
+  "use_expansion_hack": false
+}

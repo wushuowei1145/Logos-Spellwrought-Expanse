@@ -1,0 +1,13 @@
+{
+  "processors": [
+    {
+      "processor_type": "minecraft:gravity",
+      "heightmap": "WORLD_SURFACE_WG",
+      "offset": -1
+    },
+    {
+      "processor_type": "minecraft:protected_blocks",
+      "value": "#logos_dimension:crop_circle_protected"
+    }
+  ]
+}

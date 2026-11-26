@@ -111,6 +111,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.TallTreeGameTests.register(bus);
         dev.logos.dimension.gametest.SettlementGameTests.register(bus);
         dev.logos.dimension.gametest.WaysideGameTests.register(bus);
+        dev.logos.dimension.gametest.WheatPlainsGameTests.register(bus);
         dev.logos.dimension.gametest.LootTierGameTests.register(bus);
         dev.logos.dimension.gametest.ElvenForestGameTests.register(bus);
         dev.logos.dimension.gametest.TaixuanGameTests.register(bus);

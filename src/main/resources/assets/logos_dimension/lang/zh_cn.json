@@ -2069,5 +2069,8 @@
   "talk.logos_dimension.elf_princess_blight.bow": "拉满弦再放，箭上带着生命之力。离得远也够得着——腐败之心降下来的时候，一箭就够了。",
   "talk.logos_dimension.elf_princess_blight.ready": "好！我先进去，在大厅入口等你。",
   "talk.logos_dimension.elf_princess_blight.ready_inside": "我就在这儿，随时可以开始。",
-  "talk.logos_dimension.elf_princess_blight.after": "……结束了。谢谢你，真的。"
+  "talk.logos_dimension.elf_princess_blight.after": "……结束了。谢谢你，真的。",
+  "advancements.logos_dimension.crop_circle.title": "麦田怪圈",
+  "advancements.logos_dimension.crop_circle.description": "风吹过麦穗，未解之事也有了形状。",
+  "biome.logos_dimension.wheat_plains": "麦田平原"
 }
