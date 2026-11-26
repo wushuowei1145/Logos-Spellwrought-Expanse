@@ -16,7 +16,7 @@ permissions:
 
 env:
   # 本 Mod 编译所依赖的 Logos 提交；需要更新的 Logos 代码时改这一行。
-  LOGOS_REF: 5fdd33e3c75565a2fca7c4bc7f81efbeafc2075a
+  LOGOS_REF: 4220e9b2f6b120bae327f6ca01648beff9406397
   # 乐器在星辰花乐团（starbloom_orchestra）里，附属编译、测试都要它的 jar；乐器那边的接口改了时改这一行。
   ORCHESTRA_REF: ca57e94bca1c5e428f7f285f819ce8c8742f0aaa
 

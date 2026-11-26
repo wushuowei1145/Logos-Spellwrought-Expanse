@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:paper",
+    "minecraft:gold_nugget",
+    "logos_dimension:blank_round"
+  ],
+  "result": {
+    "id": "logos_dimension:ammo_blueprint",
+    "count": 1,
+    "components": {
+      "logos:spell": "(spell :name \"空弹头术式\" :mana 10 (blank-round))"
+    }
+  }
+}

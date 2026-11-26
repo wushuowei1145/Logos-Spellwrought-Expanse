@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""铸弹台的方块模型、方块状态、掉落、合成配方，以及七条压制配方（docs/FIREARMS.md 第 6 节）。
+"""铸弹台的方块模型、方块状态、掉落、合成配方，七条压制配方（docs/FIREARMS.md 第 6 节），
+以及术式弹的七档蚀刻配方、三种弹药图纸的配方和两个弹种标签（第 9 节）。
 
 用法：uv run --no-project python tools/ammo_bench.py
 
@@ -98,6 +99,27 @@ RECIPES = {
 }
 
 
+# 术式弹的蚀刻（docs/FIREARMS.md 第 9 节）：照 Logos 载页的七档，催化是那一档载页的标志材料，导体是金锭（第三档起换活金锭）。
+# capacity 是每发普通弹能注入的魔力（约为同档载页的五分之一），空弹头加倍。
+ETCHING = [
+    (1, 10, None, 'minecraft:gold_ingot'),
+    (2, 30, 'minecraft:amethyst_shard', 'minecraft:gold_ingot'),
+    (3, 80, 'logos:echo_tincture', 'logos:living_gold_ingot'),
+    (4, 160, 'logos:raven_head', 'logos:living_gold_ingot'),
+    (5, 320, 'logos:chalk', 'logos:living_gold_ingot'),
+    (6, 640, 'logos:firmament_stone', 'logos:living_gold_ingot'),
+    (7, 1280, 'logos:philosophers_stone', 'logos:living_gold_ingot'),
+]
+TIER_NAMES = ['basic', 'crystal', 'echo', 'transmuted', 'chalk', 'firmament', 'sage']
+
+# 弹药图纸：纸、金粒加一发那种弹（弹种看这发弹），做出来就写好了「启式 → 这种弹」。
+BLUEPRINTS = {
+    'buckshot': ('#logos_dimension:buckshot_shells', 'buckshot-round', '霰弹术式'),
+    'rifle': ('#logos_dimension:rifle_rounds', 'rifle-round', '步枪弹术式'),
+    'blank': ('logos_dimension:blank_round', 'blank-round', '空弹头术式'),
+}
+
+
 def write_json(path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline='\n')
@@ -124,6 +146,22 @@ def main():
         write_json(DATA / f'recipe/ammo_pressing/{result}.json', {
             'type': 'logos_dimension:ammo_pressing', 'casing': casing, 'powder': 'minecraft:gunpowder', 'head': head,
             'result': {'id': f'logos_dimension:{result}', 'count': 8}, 'time': 40})
+    for tier, capacity, catalyst, conductor in ETCHING:
+        recipe = {'type': 'logos_dimension:round_etching', 'tier': tier, 'capacity': capacity}
+        if catalyst:
+            recipe['catalyst'] = catalyst
+        recipe['conductor'] = conductor
+        write_json(DATA / f'recipe/round_etching/{TIER_NAMES[tier - 1]}.json', recipe)
+    for shape, (round_, word, name) in BLUEPRINTS.items():
+        write_json(DATA / f'recipe/ammo_blueprint_{shape}.json', {
+            'type': 'minecraft:crafting_shapeless', 'category': 'misc',
+            'ingredients': ['minecraft:paper', 'minecraft:gold_nugget', round_],
+            'result': {'id': 'logos_dimension:ammo_blueprint', 'count': 1,
+                       'components': {'logos:spell': f'(spell :name "{name}" :mana 10 ({word}))'}}})
+    write_json(DATA / 'tags/item/buckshot_shells.json', {'values': [
+        'logos_dimension:copper_buckshot_shell', 'logos_dimension:buckshot_shell', 'logos_dimension:netherite_buckshot_shell']})
+    write_json(DATA / 'tags/item/rifle_rounds.json', {'values': [
+        'logos_dimension:copper_rifle_round', 'logos_dimension:iron_rifle_round', 'logos_dimension:netherite_rifle_round']})
     print('ok', len(elements()), 'elements')
 
 

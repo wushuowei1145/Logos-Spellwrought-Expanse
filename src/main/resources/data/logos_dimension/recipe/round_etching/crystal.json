@@ -1,0 +1,7 @@
+{
+  "type": "logos_dimension:round_etching",
+  "tier": 2,
+  "capacity": 30,
+  "catalyst": "minecraft:amethyst_shard",
+  "conductor": "minecraft:gold_ingot"
+}

@@ -3,15 +3,21 @@ package dev.logos.dimension.gametest;
 import com.mojang.authlib.GameProfile;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.firearm.AmmoBench;
+import dev.logos.dimension.firearm.AmmoBlueprintItem;
 import dev.logos.dimension.firearm.AmmoBenchBlockEntity;
 import dev.logos.dimension.firearm.AmmoPressRecipe;
 import dev.logos.dimension.firearm.BlankRoundItem;
 import dev.logos.dimension.firearm.BuckshotItem;
+import dev.logos.dimension.firearm.EtchedSpell;
 import dev.logos.dimension.firearm.Firearms;
 import dev.logos.dimension.firearm.GunLoad;
 import dev.logos.dimension.firearm.RifleRoundItem;
 import dev.logos.dimension.item.GunaxeItem;
+import dev.logos.lang.Status;
+import dev.logos.runtime.StatusData;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import io.netty.channel.embedded.EmbeddedChannel;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -48,12 +54,20 @@ public final class FirearmGameTests {
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS = DeferredRegister.create(Registries.TEST_FUNCTION, LogosDimension.ID);
 
     public static void register(IEventBus bus) {
-        var tests = Map.<String, Consumer<GameTestHelper>>of(
-                "ammo_bench_presses_batches", FirearmGameTests::press,
-                "ammo_bench_hoppers_feed_and_take", FirearmGameTests::automation,
-                "rifle_round_reaches_past_buckshot", FirearmGameTests::reach,
-                "netherite_rifle_round_pierces_one_more", FirearmGameTests::pierce,
-                "blank_round_does_no_harm", FirearmGameTests::blank);
+        Map<String, Consumer<GameTestHelper>> tests = new LinkedHashMap<>();
+        tests.put("ammo_bench_presses_batches", FirearmGameTests::press);
+        tests.put("ammo_bench_hoppers_feed_and_take", FirearmGameTests::automation);
+        tests.put("rifle_round_reaches_past_buckshot", FirearmGameTests::reach);
+        tests.put("netherite_rifle_round_pierces_one_more", FirearmGameTests::pierce);
+        tests.put("blank_round_does_no_harm", FirearmGameTests::blank);
+        // 术式弹（docs/FIREARMS.md 第 9 节）
+        tests.put("ammo_bench_burns_mana_fuel", FirearmGameTests::fuel);
+        tests.put("spell_rounds_etch_a_batch", FirearmGameTests::etchBatch);
+        tests.put("spell_rounds_refuse_what_the_tier_cannot_hold", FirearmGameTests::etchLimits);
+        tests.put("etched_rifle_round_casts_on_hit", FirearmGameTests::etchedRifle);
+        tests.put("etched_buckshot_casts_once_per_target", FirearmGameTests::etchedBuckshot);
+        tests.put("etched_round_impact_and_expire", FirearmGameTests::impactAndExpire);
+        tests.put("etched_blank_round_only_casts", FirearmGameTests::etchedBlank);
         tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
@@ -211,6 +225,128 @@ public final class FirearmGameTests {
         h.assertTrue(Firearms.fire(p, p.getMainHandItem(), true, 2, 1), "空弹头也能开枪");
         h.assertTrue(golem.getHealth() == full, "空弹头不伤人");
         h.assertTrue(Firearms.load(p.getMainHandItem()).rounds() == 5, "照样少一发");
+        p.discard();
+        h.succeed();
+    }
+
+    // ---------------------------------------------------------------- 术式弹
+
+    private static ItemStack etched(Item round, String source, int tier, double mana) {
+        var stack = new ItemStack(round);
+        stack.set(Firearms.ETCHED.get(), new EtchedSpell(source, tier, mana));
+        return stack;
+    }
+
+    private static void slot(AmmoBenchBlockEntity bench, int slot, ItemStack stack, int count) {
+        bench.etching().set(slot, ItemResource.of(stack), count);
+    }
+
+    /** 做不了时的原因（语言键的最后一段）。 */
+    private static String problem(AmmoBenchBlockEntity bench) {
+        var plan = bench.etchPlan();
+        if (plan.problem() == null) return "ok";
+        var key = ((TranslatableContents) plan.problem().getContents()).getKey();
+        return key.substring(key.lastIndexOf('.') + 1);
+    }
+
+    /** 两颗青金石放进补魔格：各 50 魔力，整个烧进台子。 */
+    private static void fuel(GameTestHelper h) {
+        var bench = bench(h);
+        bench.fuel().set(0, ItemResource.of(new ItemStack(Items.LAPIS_LAZULI)), 2);
+        h.assertTrue(bench.mana() == 0, "空台子");
+        h.succeedWhen(() -> h.assertTrue(bench.mana() == 100 && bench.fuel().getAmountAsInt(0) == 0, "烧进 100 魔力，现在 " + bench.mana()));
+    }
+
+    /** 第二档（紫水晶 + 金锭，每发最多 30）刻一批：十发铁步枪弹刻出八发，扣一份材料和八发的注入，剩两发等下一份材料。 */
+    private static void etchBatch(GameTestHelper h) {
+        var bench = bench(h);
+        String src = "(spell :name \"火弹\" :mana 20 (rifle-round (on-hit (damage target 5 fire))))";
+        bench.receiveMana(300);
+        slot(bench, AmmoBenchBlockEntity.BLUEPRINT, AmmoBlueprintItem.of(src), 1);
+        slot(bench, AmmoBenchBlockEntity.ROUNDS, new ItemStack(RifleRoundItem.IRON.get()), 10);
+        slot(bench, AmmoBenchBlockEntity.CATALYST, new ItemStack(Items.AMETHYST_SHARD), 1);
+        slot(bench, AmmoBenchBlockEntity.CONDUCTOR, new ItemStack(Items.GOLD_INGOT), 1);
+        h.assertTrue(problem(bench).equals("ok") && bench.etchPlan().count() == 8, "一批八发：" + problem(bench));
+        h.succeedWhen(() -> {
+            var out = bench.etched().getResource(0).toStack(bench.etched().getAmountAsInt(0));
+            h.assertTrue(out.getCount() == 8 && out.is(RifleRoundItem.IRON.get()), "刻出八发铁步枪弹");
+            h.assertTrue(new EtchedSpell(src, 2, 20).equals(out.get(Firearms.ETCHED.get())), "刻着图纸原文、第二档、每发 20：" + out.get(Firearms.ETCHED.get()));
+            h.assertTrue(Math.abs(bench.mana() - 140) < 1e-6, "扣了八发的注入，剩 " + bench.mana());
+            h.assertTrue(bench.etching().getAmountAsInt(AmmoBenchBlockEntity.ROUNDS) == 2, "剩两发没刻");
+            h.assertTrue(bench.etching().getAmountAsInt(AmmoBenchBlockEntity.BLUEPRINT) == 1, "图纸不消耗");
+            h.assertTrue(problem(bench).equals("no_materials"), "材料用完就停：" + problem(bench));
+        });
+    }
+
+    /** 第一档每发最多 10：图纸要 20 刻不了普通弹，空弹头加倍刚好装得下；图纸弹种不对、魔力不够也不刻。 */
+    private static void etchLimits(GameTestHelper h) {
+        var bench = bench(h);
+        String rifle = "(spell :mana 20 (rifle-round (on-hit (damage target 5))))";
+        bench.receiveMana(15);
+        slot(bench, AmmoBenchBlockEntity.BLUEPRINT, AmmoBlueprintItem.of(rifle), 1);
+        slot(bench, AmmoBenchBlockEntity.ROUNDS, new ItemStack(BuckshotItem.ITEM.get()), 4);
+        slot(bench, AmmoBenchBlockEntity.CONDUCTOR, new ItemStack(Items.GOLD_INGOT), 1);
+        h.assertTrue(problem(bench).equals("wrong_round"), "步枪弹图纸刻不了霰弹：" + problem(bench));
+        slot(bench, AmmoBenchBlockEntity.ROUNDS, new ItemStack(RifleRoundItem.IRON.get()), 4);
+        h.assertTrue(problem(bench).equals("over_capacity"), "第一档装不下 20：" + problem(bench));
+        String blank = "(spell :mana 20 (blank-round (on-hit (damage target 5))))";
+        slot(bench, AmmoBenchBlockEntity.BLUEPRINT, AmmoBlueprintItem.of(blank), 1);
+        slot(bench, AmmoBenchBlockEntity.ROUNDS, new ItemStack(BlankRoundItem.ITEM.get()), 4);
+        h.assertTrue(problem(bench).equals("no_mana"), "空弹头第一档装得下 20，但台子只有 15：" + problem(bench));
+        bench.receiveMana(30);
+        h.assertTrue(problem(bench).equals("ok") && bench.etchPlan().count() == 2, "45 魔力够刻两发：" + problem(bench));
+        h.succeed();
+    }
+
+    /** 刻了「命中时 5 点火焰」的铁步枪弹：十格外的木桩挨 12 × 0.85 的物理伤害，再挨 5 点火焰。 */
+    private static void etchedRifle(GameTestHelper h) {
+        var o = range(h, 14);
+        var golem = golem(h, o, 10);
+        float full = golem.getHealth();
+        var p = shooter(h, o, etched(RifleRoundItem.IRON.get(), "(spell :mana 20 (rifle-round (on-hit (damage target 5 fire))))", 2, 20));
+        h.assertTrue(Firearms.fire(p, p.getMainHandItem(), true, 1, 1), "开得了枪");
+        float lost = full - golem.getHealth();
+        h.assertTrue(Math.abs(lost - (12 * .85 + 5)) < .3, "物理 10.2 加术式 5，实际掉了 " + lost);
+        p.discard();
+        h.succeed();
+    }
+
+    /** 霰弹几颗打中同一个木桩：命中生物只触发一次。 */
+    private static void etchedBuckshot(GameTestHelper h) {
+        var o = range(h, 6);
+        var golem = golem(h, o, 2);
+        var p = shooter(h, o, etched(BuckshotItem.ITEM.get(), "(spell :mana 10 (buckshot-round (on-hit (mark target #shell))))", 1, 10));
+        Firearms.fire(p, p.getMainHandItem(), true, 1, 1);
+        double marks = StatusData.stacks(golem, new Status("#shell"));
+        h.assertTrue(marks == 1, "一个目标一次：" + marks);
+        p.discard();
+        h.succeed();
+    }
+
+    /** 什么都没打中：打在墙上触发命中方块，朝天飞到尽头触发消散。 */
+    private static void impactAndExpire(GameTestHelper h) {
+        var o = range(h, 8);
+        for (int y = 0; y <= 3; y++) for (int z = -1; z <= 1; z++) h.getLevel().setBlockAndUpdate(o.offset(5, y, z), Blocks.STONE.defaultBlockState());
+        var round = etched(RifleRoundItem.IRON.get(), "(spell :mana 10 (rifle-round (on-impact (mark caster #impact)) (on-expire (mark caster #expire))))", 1, 10);
+        var p = shooter(h, o, round);
+        Firearms.fire(p, p.getMainHandItem(), true, 1, 1);
+        h.assertTrue(StatusData.stacks(p, new Status("#impact")) == 1 && StatusData.stacks(p, new Status("#expire")) == 0, "打在墙上");
+        p.setXRot(-90);
+        Firearms.fire(p, p.getMainHandItem(), true, 1, 1);
+        h.assertTrue(StatusData.stacks(p, new Status("#expire")) == 1, "朝天飞到尽头");
+        p.discard();
+        h.succeed();
+    }
+
+    /** 刻了「命中时 6 点」的空弹头：没有弹丸的物理伤害，只有术式的 6 点，第五下的 ×2 也不乘术式。 */
+    private static void etchedBlank(GameTestHelper h) {
+        var o = range(h, 8);
+        var golem = golem(h, o, 5);
+        float full = golem.getHealth();
+        var p = shooter(h, o, etched(BlankRoundItem.ITEM.get(), "(spell :mana 20 (blank-round (on-hit (damage target 6))))", 1, 20));
+        Firearms.fire(p, p.getMainHandItem(), true, 2, 1);
+        float lost = full - golem.getHealth();
+        h.assertTrue(Math.abs(lost - 6) < .2, "只有术式的 6 点，实际 " + lost);
         p.discard();
         h.succeed();
     }

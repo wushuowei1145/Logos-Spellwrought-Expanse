@@ -41,6 +41,9 @@ public final class LogosDimension {
         dev.logos.dimension.firearm.BuckshotItem.init();
         dev.logos.dimension.firearm.RifleRoundItem.init();
         dev.logos.dimension.firearm.BlankRoundItem.init();
+        dev.logos.dimension.firearm.AmmoBlueprintItem.init();
+        // 三种弹在 Logos 里登记成寄托形体，要在任何术式编译之前。
+        dev.logos.dimension.firearm.SpellRounds.register();
         dev.logos.dimension.firearm.AmmoBench.register(bus);
         dev.logos.dimension.firearm.Firearms.register(bus);
         dev.logos.dimension.lingxiao.LingxiaoFlight.register(bus);

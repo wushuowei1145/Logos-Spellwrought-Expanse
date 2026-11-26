@@ -112,7 +112,7 @@ public final class AddonTabs {
     });
 
     /** 武器：剑、刀、长柄、弓、盾、法杖、铳与弹药，同类挨在一起，同一把的几种配色挨在一起。 */
-    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> WEAPONS = tab("weapons", TOOLS, "dawnvow", out -> ids(out,
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> WEAPONS = tab("weapons", TOOLS, "dawnvow", out -> { ids(out,
             // 剑
             "dawnvow", "blacksteel_longsword", "lingxiao_sword", "jinghong_sword",
             // 刀
@@ -129,7 +129,9 @@ public final class AddonTabs {
             // 铳与弹药
             "gunaxe", "ammo_bench",
             "copper_buckshot_shell", "buckshot_shell", "netherite_buckshot_shell",
-            "copper_rifle_round", "iron_rifle_round", "netherite_rifle_round", "blank_round"));
+            "copper_rifle_round", "iron_rifle_round", "netherite_rifle_round", "blank_round");
+            // 三种弹各一张新图纸（写好了「启式 → 这种弹」）
+            dev.logos.dimension.firearm.AmmoBlueprintItem.templates().forEach(out::accept); });
 
     /** 异世界货币：钱囊、兑换台、钱庄与四国钱币。 */
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> ECONOMY = tab("economy", WEAPONS, "fox_ichibu", Economy::creativeItems);

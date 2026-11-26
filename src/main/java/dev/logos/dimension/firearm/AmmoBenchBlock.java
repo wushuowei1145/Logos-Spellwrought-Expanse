@@ -6,7 +6,9 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -101,8 +103,19 @@ public class AmmoBenchBlock extends BaseEntityBlock implements BlockUIMenuType.B
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (player instanceof ServerPlayer sp) BlockUIMenuType.openUI(sp, pos);
+        if (player instanceof ServerPlayer sp) {
+            // 主人打开时记下他现在的稳定度（铭刻按它判断图纸上的术式复不复杂）。
+            if (level.getBlockEntity(pos) instanceof AmmoBenchBlockEntity bench) bench.noteUser(sp);
+            BlockUIMenuType.openUI(sp, pos);
+        }
         return InteractionResult.SUCCESS;
+    }
+
+    /** 摆放它的人成了主人。 */
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (placer instanceof ServerPlayer sp && level.getBlockEntity(pos) instanceof AmmoBenchBlockEntity bench) bench.noteUser(sp);
     }
 
     @Override
