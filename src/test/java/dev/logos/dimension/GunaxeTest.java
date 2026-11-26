@@ -3,6 +3,7 @@ package dev.logos.dimension;
 import com.google.gson.JsonParser;
 import dev.logos.dimension.combat.*;
 import dev.logos.dimension.firearm.Buckshot;
+import dev.logos.dimension.item.GunaxeItem;
 import java.util.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -67,6 +68,35 @@ class GunaxeTest {
         }
     }
 
+    /**
+     * #302：客户端过了 {@code fire} 就把转轮往回拨一格（FirearmClient.rounds），动作里扳击锤时再转回来。
+     * 所以每段动作开头、结尾，转轮转角减掉“已扣扳机次数 × 60°”都得是 0，前后两段动作才接得上、不会往回转一格；
+     * 只有扇击开头接的是第五下还没扳回的那一格（-60°）。
+     */
+    @Test void theCylinderEndsEveryClipWhereTheNextOneStarts() throws Exception {
+        var set = moveset();
+        for (var view : new String[]{"fp", "tp"}) {
+            var clips = CombatClip.parseFile(LongswordMotionTest.combat("animations/gunaxe_" + view + ".animation"), new ArrayList<>());
+            for (var move : set.moves().values()) {
+                var clip = clips.get(move.clip());
+                double start = cylinder(clip, 0), end = cylinder(clip, clip.length());
+                assertEquals(0, wrap(start - (move.name().equals("fan") ? -60 : 0)), 0.5, view + " " + move.name() + " 开头转轮 " + start);
+                assertEquals(0, wrap(end - 60.0 * move.fires().size()), 0.5, view + " " + move.name() + " 结尾转轮 " + end);
+            }
+        }
+    }
+
+    /** 转轮绕自身轴（网格 +Y）的转角（度）：从这一帧 Cylinder 的旋转矩阵取，不依赖欧拉角怎么分解。 */
+    private static double cylinder(CombatClip clip, float seconds) {
+        var joint = CombatPose.sample(clip, seconds).joint("Cylinder");
+        if (joint == null) return 0;
+        var r = joint.rotation();
+        var m = new org.joml.Matrix4f().rotateZ((float) Math.toRadians(r.z)).rotateY((float) Math.toRadians(r.y)).rotateX((float) Math.toRadians(r.x));
+        return Math.toDegrees(Math.atan2(m.m20(), m.m00()));
+    }
+
+    private static double wrap(double degrees) { return ((degrees % 360) + 540) % 360 - 180; }
+
     private static void assertMarkers(List<Double> expected, float[] actual, String what) {
         assertEquals(expected.size(), actual.length, what + " 个数");
         for (int i = 0; i < actual.length; i++) assertEquals(expected.get(i), actual[i], 1e-6, what + " 第 " + i + " 个");
@@ -84,6 +114,51 @@ class GunaxeTest {
         double at = s.actor.fires.getFirst() - start;
         assertTrue(at >= 1.2 - 1e-6 && at < 2.2, "扣扳机在 0.06 秒：" + at);
         assertEquals(4, s.actor.contacts.size());
+    }
+
+    @Test void theFifthHitShotHitsTwiceAsHardAsAnAimedShot() throws Exception {
+        var moves = moveset().moves();
+        assertEquals(2 * moves.get("aim_shot").damage(), moves.get("shot_5").damage(), 1e-9, "第五下那一枪是瞄准开枪的 2 倍");
+        assertTrue(GunaxeItem.SHOT < 1 && GunaxeItem.SHOT >= 0.8, "瞄准开枪比弹药本身略弱：" + GunaxeItem.SHOT);
+    }
+
+    @Test void rightClickInTheFifthHitRecoilFansTheRest() throws Exception {
+        var s = new Sim(moveset()).until(5);
+        assertTrue(s.input(Moveset.Input.ATTACK));
+        for (int i = 0; i < 4; i++) s.holdAttack();
+        assertEquals("shot_5", s.move());
+        double start = s.runner.start();
+        s.until(start + 4);
+        assertTrue(s.input(Moveset.Input.USE_PRESS), "第五下后坐里按右键");
+        assertEquals("fan", s.move());
+        double fan = s.runner.start();
+        s.until(fan + 30);
+        assertEquals(1 + 5, s.actor.fires.size(), "第五下一枪，扇击再扣五次");
+        for (int i = 1; i < s.actor.fires.size(); i++)
+            assertTrue(s.actor.fires.get(i) - s.actor.fires.get(i - 1) >= 2, "扇击两枪之间至少两刻");
+        var moves = moveset().moves();
+        assertTrue(moves.get("fan").damage() < moves.get("aim_shot").damage(), "扇击每一枪比瞄准开枪还弱");
+        assertTrue(GunaxeItem.FAN_SPREAD > 1 && GunaxeItem.FAN_SPREAD_STEP > 0, "扇击越扇越散");
+    }
+
+    @Test void fanNeedsAShellAndYieldsToReload() throws Exception {
+        var s = new Sim(moveset()).until(5);
+        assertTrue(s.input(Moveset.Input.ATTACK));
+        for (int i = 0; i < 4; i++) s.holdAttack();
+        s.until(s.runner.start() + 4);
+        s.actor.empty();
+        assertFalse(s.input(Moveset.Input.USE_PRESS), "第五下打空了，按右键不扇（后坐过了才是举枪）");
+        assertEquals("shot_5", s.move());
+        // 扇到打空：服务端给的换弹输入立即接上换弹。
+        var t = new Sim(moveset()).until(5);
+        t.input(Moveset.Input.ATTACK);
+        for (int i = 0; i < 4; i++) t.holdAttack();
+        t.until(t.runner.start() + 4);
+        t.input(Moveset.Input.USE_PRESS);
+        t.until(t.runner.start() + 7);
+        t.actor.allowed.add("reloadable");
+        assertTrue(t.input(Moveset.Input.RELOAD));
+        assertEquals("reload", t.move(), "扇到打空立即换弹");
     }
 
     @Test void theFifthHitOnlyClicksWhenEmpty() throws Exception {

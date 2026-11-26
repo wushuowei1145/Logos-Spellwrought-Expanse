@@ -113,9 +113,11 @@ public final class FirearmClient {
     // ---------------------------------------------------------------- 转轮里的子弹
 
     /**
-     * 把打掉的子弹藏起来（骨骼缩成 0）。转轮最上面一格对着枪膛，开一枪转 60°：平时还剩 n 发时 Round0..n-1 有弹；
-     * 开枪动作里过了 {@code fire} 那一刻，刚打出的 Round0 已经空了、还没转过去，所以藏 Round0 和 Round(n+1) 以后的。
-     * 换弹动作里，左手拿着的新转轮满弹，被顶出去的旧转轮（备用转轮）按换之前的发数。
+     * 转轮里的子弹（骨骼缩成 0 就是空膛）。转轮最上面一格对着枪膛，{@code Round0} 是下一发：还剩 n 发时 {@code Round0..n-1} 有弹。
+     * <p>开一枪转一格（{@code 360°/容量}）：动作里扳击锤时把转轮从 0 转到 60°。客户端过了 {@code fire} 那一刻就按开完这一枪的发数摆子弹，
+     * 同时把转轮往回拨一格（{@link #turn}），两者相抵和开枪前一模一样（刚打空的那格在最上面）；扳击锤时转回 0，
+     * 正好接上下一段动作的 0，不会再往回转一格（#302）。连开几枪（扇击）每过一个 {@code fire} 多拨一格。
+     * <p>换弹动作里，{@code feed} 之前左手拿着的新转轮满弹，被顶出去的旧转轮（备用转轮）按换之前的发数。
      */
     public static LongswordRig.Sample rounds(LongswordPayload p, LongswordRig rig, LongswordRig.Sample sample, double now) {
         var mc = Minecraft.getInstance();
@@ -124,24 +126,52 @@ public final class FirearmClient {
         if (player == null || !holding(player)) return sample;
         var gun = player.getMainHandItem();
         var firearm = Firearms.firearm(gun);
-        int rounds = Firearms.load(gun).rounds();
         double length = rig.length(p.clip());
         double t = length < 0 ? 0 : Moveset.playbackSeconds(p.playback(), length, now - p.started(), p.speed(), p.offset());
         float[] feed = rig.markers(p.clip(), "feed"), fire = rig.markers(p.clip(), "fire");
-        boolean[] live = new boolean[6], spare = new boolean[6];
-        if (feed.length > 0 && t < feed[0]) {
-            for (int k = 0; k < 6; k++) { live[k] = k < firearm.capacity(); spare[k] = k < rounds; }
-        } else if (fire.length > 0 && t >= fire[0]) {
-            for (int k = 1; k < 6; k++) live[k] = k <= rounds;
-        } else {
-            for (int k = 0; k < 6; k++) live[k] = k < rounds;
-        }
+        int passed = 0;
+        while (passed < fire.length && t + 1e-4 >= fire[passed]) passed++;
+        int rounds = predicted(p, Firearms.load(gun).rounds(), passed);
+        boolean reloading = feed.length > 0 && t < feed[0];
         Map<String, Matrix4f> bones = new HashMap<>(sample.bones());
+        if (passed > 0) turn(bones, rig, -360f / firearm.capacity() * passed);
         for (int k = 0; k < 6; k++) {
-            hide(bones, "Round" + k, !live[k]);
-            hide(bones, "SpareRound" + k, !spare[k]);
+            hide(bones, "Round" + k, !(reloading ? k < firearm.capacity() : k < rounds));
+            hide(bones, "SpareRound" + k, !(reloading && k < rounds));
         }
         return new LongswordRig.Sample(Map.copyOf(bones), sample.bodyRotation(), sample.weapon(), sample.turn(), sample.rightLeg(), sample.leftLeg());
+    }
+
+    /** 转轮（连同里面的子弹）绕自身轴转 {@code degrees}（同动作里的 cyl_spin，绕网格 +Y）。骨骼矩阵是静止姿势到这一帧的变换，右乘静止姿势里的转动。 */
+    private static void turn(Map<String, Matrix4f> bones, LongswordRig rig, float degrees) {
+        var cylinder = rig.ownBones().get("Cylinder");
+        if (cylinder == null) return;
+        var c = new Vector3f(cylinder.pivot()).mul(rig.weaponScale()).add(rig.weaponPivot());
+        var r = new Matrix4f().translation(c).rotateY((float) Math.toRadians(degrees)).translate(-c.x, -c.y, -c.z);
+        for (var entry : bones.entrySet())
+            if (entry.getKey().equals("Cylinder") || entry.getKey().startsWith("Round")) entry.setValue(new Matrix4f(entry.getValue()).mul(r));
+    }
+
+    /**
+     * 每个玩家：这段动作里过了几次扣扳机、服务端同步过来扣掉了几发。客户端过了 {@code fire} 时刻，服务端扣发数要晚一两刻才到；
+     * 这几刻里按“还欠着的”先少画一发，不然扇击时每一枪都会闪一下多出来的子弹。上一段动作欠着的（第五下那一枪还没同步就接了扇击）带进下一段，只带一次。
+     */
+    private static final class Count { double started = Double.NaN; int last, own, debt, got; }
+    private static final Map<java.util.UUID, Count> COUNTS = new HashMap<>();
+
+    private static int predicted(LongswordPayload p, int synced, int passed) {
+        var c = COUNTS.computeIfAbsent(p.player(), u -> new Count());
+        if (c.started != p.started()) {
+            c.debt = Double.isNaN(c.started) ? 0 : Math.max(0, c.own - Math.max(0, c.got - c.debt));
+            c.started = p.started();
+            c.own = 0; c.got = 0; c.last = synced;
+        }
+        if (synced < c.last) c.got += c.last - synced;
+        c.own = passed;
+        // 装填过（发数变多）或已经打空：之前的账都结清，空膛扣扳机不会欠下什么。
+        if (synced > c.last || synced == 0) { c.debt = 0; c.got = c.own; }
+        c.last = synced;
+        return Math.max(0, synced - Math.max(0, c.debt + c.own - c.got));
     }
 
     private static void hide(Map<String, Matrix4f> bones, String bone, boolean hidden) {
