@@ -37,6 +37,7 @@ public final class LogosDimension {
         dev.logos.dimension.item.LongswordItem.init();
         dev.logos.dimension.item.LingxiaoSwordItem.init();
         dev.logos.dimension.item.JinghongSwordItem.init();
+        dev.logos.dimension.item.CrimsonFlameLongswordItem.init();
         dev.logos.dimension.item.GunaxeItem.init();
         dev.logos.dimension.firearm.BuckshotItem.init();
         dev.logos.dimension.firearm.RifleRoundItem.init();
@@ -103,6 +104,7 @@ public final class LogosDimension {
         dev.logos.dimension.gametest.CreativeTabGameTests.register(bus);
         dev.logos.dimension.gametest.FoxfireGameTests.register(bus);
         dev.logos.dimension.gametest.DragonfireGameTests.register(bus);
+        dev.logos.dimension.gametest.CrimsonFlameGameTests.register(bus);
         dev.logos.dimension.gametest.ShiraumeGameTests.register(bus);
         dev.logos.dimension.gametest.ElvenBlightGameTests.register(bus);
         dev.logos.dimension.gametest.ReifuGameTests.register(bus);
