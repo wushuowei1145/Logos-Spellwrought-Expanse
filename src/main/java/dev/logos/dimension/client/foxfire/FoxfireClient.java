@@ -153,7 +153,7 @@ public final class FoxfireClient {
         for (Entity e : level.entitiesForRendering()) {
             if (e instanceof LivingEntity living && FoxfireRules.burning(living) != null) BURNING.add(living);
         }
-        // 缠身的火星：幽蓝用原版的灵魂火焰，白梅的淡粉用淡粉的尘和樱花瓣
+        // 缠身的火星：幽蓝用原版的灵魂火焰，白梅的淡粉用淡粉的尘和樱花瓣，龙炎用原版的火焰和熔金的火星
         RandomSource r = level.getRandom();
         for (LivingEntity e : BURNING) {
             // 第一人称时自己身上的火星会糊在镜头上：自己烧着由画面底边表示
@@ -162,7 +162,10 @@ public final class FoxfireClient {
             double a = r.nextDouble() * Math.PI * 2, rr = e.getBbWidth() * .55;
             double x = e.getX() + Math.cos(a) * rr, y = e.getY() + r.nextDouble() * e.getBbHeight() * .8, z = e.getZ() + Math.sin(a) * rr;
             if (flame == FoxfireFlame.KITSUNE) level.addParticle(net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME, x, y, z, 0, .03, 0);
-            else {
+            else if (flame == FoxfireFlame.DRAGON) {
+                level.addParticle(net.minecraft.core.particles.ParticleTypes.FLAME, x, y, z, 0, .03, 0);
+                if (r.nextInt(3) == 0) level.addParticle(new net.minecraft.core.particles.DustParticleOptions(flame.bright, .8f), x, y, z, 0, .06, 0);
+            } else {
                 level.addParticle(new net.minecraft.core.particles.DustParticleOptions(flame.core, 1.1f), x, y, z, 0, .04, 0);
                 if (r.nextInt(5) == 0) level.addParticle(net.minecraft.core.particles.ParticleTypes.CHERRY_LEAVES, x, y, z, 0, 0, 0);
             }

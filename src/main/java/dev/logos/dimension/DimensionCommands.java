@@ -85,6 +85,7 @@ public final class DimensionCommands {
         root.then(dev.logos.dimension.jiansui.JianSuiCommands.build());
         root.then(dev.logos.dimension.companion.CompanionCommands.build());
         root.then(dev.logos.dimension.foxfire.FoxfireCommands.build());
+        root.then(dev.logos.dimension.dragonfire.DragonfireCommands.build());
         // 试爆裂魔法：不吟唱，直接在准星指的地方放一次（半径和是否破坏地形照服务端配置）
         root.then(Commands.literal("explosion").executes(c -> {
             var player = c.getSource().getPlayerOrException();

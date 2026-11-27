@@ -95,12 +95,14 @@ public final class LogosDimension {
         dev.logos.dimension.jiansui.JianSuiEntities.register(bus);
         dev.logos.dimension.companion.Companions.register(bus);
         dev.logos.dimension.foxfire.Foxfire.register(bus);
+        dev.logos.dimension.dragonfire.Dragonfire.register(bus);
         dev.logos.dimension.reifu.Reifu.register(bus);
         GENERATORS.register(bus); BIOME_SOURCES.register(bus); AddonTabs.register(bus);
         DimensionGameTests.register(bus);
         dev.logos.dimension.gametest.CloudseaGameTests.register(bus);
         dev.logos.dimension.gametest.CreativeTabGameTests.register(bus);
         dev.logos.dimension.gametest.FoxfireGameTests.register(bus);
+        dev.logos.dimension.gametest.DragonfireGameTests.register(bus);
         dev.logos.dimension.gametest.ShiraumeGameTests.register(bus);
         dev.logos.dimension.gametest.ElvenBlightGameTests.register(bus);
         dev.logos.dimension.gametest.ReifuGameTests.register(bus);

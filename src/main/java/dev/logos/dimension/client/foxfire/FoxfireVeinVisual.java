@@ -14,7 +14,7 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * 狐火术式的游脉（{@code FoxfireVeinVisualsMixin} 换上）：和 Logos 各元素共用的游脉一样，沿着爬过的地面一路冒火、
- * 头上往上蹿、带起地面的碎屑，停在什么东西上时炸一下——只是冒的是狐火：幽蓝用原版的灵魂火焰，白梅的淡粉用淡粉的尘和樱花瓣。
+ * 头上往上蹿、带起地面的碎屑，停在什么东西上时炸一下——只是冒的是狐火：幽蓝用原版的灵魂火焰，白梅的淡粉用淡粉的尘和樱花瓣，龙炎用原版的火焰和熔金的火星。
  */
 final class FoxfireVeinVisual implements VeinVisual {
     /** 每爬这么远冒一点火。 */
@@ -56,6 +56,11 @@ final class FoxfireVeinVisual implements VeinVisual {
     /** 一点狐火，往上飘 {@code up}。 */
     private void flame(Level level, RandomSource r, Vec3 at, double spread, double up) {
         double x = at.x + (r.nextDouble() - .5) * 2 * spread, y = at.y + (r.nextDouble() - .5) * 2 * spread, z = at.z + (r.nextDouble() - .5) * 2 * spread;
+        if (flame == FoxfireFlame.DRAGON) {
+            level.addParticle(ParticleTypes.FLAME, x, y, z, 0, up, 0);
+            if (r.nextInt(3) == 0) level.addParticle(new DustParticleOptions(flame.bright, .9f), x, y, z, 0, up * 1.5, 0);
+            return;
+        }
         if (flame == FoxfireFlame.KITSUNE) {
             level.addParticle(ParticleTypes.SOUL_FIRE_FLAME, x, y, z, 0, up, 0);
             return;
