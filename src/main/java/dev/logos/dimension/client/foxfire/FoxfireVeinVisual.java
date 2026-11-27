@@ -14,7 +14,7 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * 狐火术式的游脉（{@code FoxfireVeinVisualsMixin} 换上）：和 Logos 各元素共用的游脉一样，沿着爬过的地面一路冒火、
- * 头上往上蹿、带起地面的碎屑，停在什么东西上时炸一下——只是冒的是狐火：幽蓝用原版的灵魂火焰，白梅的淡粉用淡粉的尘和樱花瓣，龙炎用原版的火焰和熔金的火星。
+ * 头上往上蹿、带起地面的碎屑，停在什么东西上时炸一下——只是冒的是狐火：幽蓝用原版的灵魂火焰，白梅的淡粉用淡粉的尘和樱花瓣，龙炎全是自己画的火舌和熔金火星（地面碎屑也换成迸出的火星，不用原版粒子）。
  */
 final class FoxfireVeinVisual implements VeinVisual {
     /** 每爬这么远冒一点火。 */
@@ -46,7 +46,10 @@ final class FoxfireVeinVisual implements VeinVisual {
         for (int k = 0; k < motes; k++) {
             Vec3 at = from.lerp(to, (k + r.nextDouble()) / motes).add(side.scale((r.nextDouble() - .5) * vein.width()));
             flame(level, r, at.add(n.scale(.08)), .03, .015);
-            if (k % 2 == 0) crumb(level, r, at, n);
+            if (k % 2 == 0) {
+                if (flame == FoxfireFlame.DRAGON) sparks(r, at, n);
+                else crumb(level, r, at, n);
+            }
         }
         Vec3 head = to.add(n.scale(vein.height() / 2));
         for (int i = 0; i < 2; i++) flame(level, r, head, Math.min(vein.width(), vein.height()) / 3, .03);
@@ -57,8 +60,10 @@ final class FoxfireVeinVisual implements VeinVisual {
     private void flame(Level level, RandomSource r, Vec3 at, double spread, double up) {
         double x = at.x + (r.nextDouble() - .5) * 2 * spread, y = at.y + (r.nextDouble() - .5) * 2 * spread, z = at.z + (r.nextDouble() - .5) * 2 * spread;
         if (flame == FoxfireFlame.DRAGON) {
-            level.addParticle(ParticleTypes.FLAME, x, y, z, 0, up, 0);
-            if (r.nextInt(3) == 0) level.addParticle(new DustParticleOptions(flame.bright, .9f), x, y, z, 0, up * 1.5, 0);
+            // 龙炎不用原版粒子：一小簇自己画的火舌，偶尔一点熔金火星
+            FoxfireClient.ember(flame, false, new Vec3(x, y, z), new Vec3(0, up + .015, 0), 9 + r.nextInt(7), .16f + r.nextFloat() * .1f);
+            if (r.nextInt(3) == 0) FoxfireClient.ember(flame, true, new Vec3(x, y, z),
+                    new Vec3((r.nextDouble() - .5) * .03, up * 2 + .03, (r.nextDouble() - .5) * .03), 12 + r.nextInt(10), .035f + r.nextFloat() * .02f);
             return;
         }
         if (flame == FoxfireFlame.KITSUNE) {
@@ -67,6 +72,15 @@ final class FoxfireVeinVisual implements VeinVisual {
         }
         level.addParticle(new DustParticleOptions(flame.core, 1.2f), x, y, z, 0, up, 0);
         if (r.nextInt(4) == 0) level.addParticle(ParticleTypes.CHERRY_LEAVES, x, y, z, 0, 0, 0);
+    }
+
+    /** 龙炎游脉换掉地面碎屑：从地里迸出几点火星，顺着面的法线往外溅。 */
+    private void sparks(RandomSource r, Vec3 at, Vec3 n) {
+        for (int i = 0; i < 2; i++) {
+            Vec3 jitter = new Vec3((r.nextDouble() - .5) * .12, (r.nextDouble() - .5) * .12, (r.nextDouble() - .5) * .12);
+            Vec3 v = n.scale(.07 + r.nextDouble() * .08).add(jitter.subtract(n.scale(jitter.dot(n))));
+            FoxfireClient.ember(flame, true, at.add(n.scale(.05)), v, 8 + r.nextInt(8), .03f + r.nextFloat() * .025f);
+        }
     }
 
     /** 带起一点地面的碎屑（同 Logos 共用的游脉）。 */

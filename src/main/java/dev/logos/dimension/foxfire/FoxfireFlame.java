@@ -16,8 +16,11 @@ public enum FoxfireFlame {
     KITSUNE(0x3FA8FF, 0xDDF2FF, .5f),
     /** 白梅：淡粉，同流火刀身上的狐火（{@code RyukaClient.PINK_HUE}）。 */
     SHIRAUME(0xF4A6CF, 0xFFF0F7, .85f),
-    /** 龙炎：绯红的外焰、熔金的焰心（拉塞塔的绯金龙炎）。物品表面火焰比原版的火偏红一点。 */
-    DRAGON(0xE8402A, 0xFFD36B, .97f);
+    /**
+     * 龙炎：深绯红的外焰、熔金的焰心（拉塞塔的绯金龙炎）。物品表面火焰的 {@code hue} 只是个记号：Logos 只会整体转色相，
+     * 转出来是淡粉，所以表面火焰的颜色由 {@code DragonfireSurfaceAuraMixin} 换成更深更红的（{@code FoxfireClient#dragonRed}）。
+     */
+    DRAGON(0xD42418, 0xFFA640, .9713f);
 
     /** 外焰的颜色（RGB）。 */
     public final int core;

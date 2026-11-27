@@ -11,7 +11,7 @@
   - **不带 `witch_resistant_to`**：女巫和神狐对魔法的减免都不算。
   - 护甲和保护类附魔都不减。抗性提升效果照常减。
   - 死亡消息是「X 被 Y 的龙炎焚尽了」。
-- **颜色**：绯红的外焰、熔金的焰心，取拉塞塔的绯金龙炎。
+- **颜色**：深绯红的外焰、熔金的焰心，取拉塞塔的绯金龙炎。
 - **命中**：不放 Logos 的奥秘命中特效，换成一团龙炎色的火，同狐火。
 
 ## 2. 谁放龙炎
@@ -64,16 +64,16 @@
 
 ## 5. 样子
 
-借用狐火的画法，只换颜色和粒子：
+借用狐火的画法，换成龙炎的颜色。全部是自己画的特效，不用原版粒子：
 
 | 地方 | 样子 |
 |---|---|
 | 命中、施放、符文自己放的一团 | 同狐火，龙炎色 |
-| 魔力缠绕 | 手里的东西燃着比原版火偏红的表面火焰 |
-| 游脉、缠身的火星 | 原版的火焰粒子，夹着熔金色的火星 |
+| 魔力缠绕 | 手里的东西燃着深绯红的表面火焰。Logos 的表面火焰只会整体转色相，橙色转出来是淡粉，所以由 `DragonfireSurfaceAuraMixin` 把每个颜色往红收、提饱和度 |
+| 游脉、缠身的火星 | 自己画的火舌（Logos 物品表面火焰的那张火焰动画，下面一层半透明焰体压住颜色，上面一层叠加的火）和熔金火星；游脉的地面碎屑换成从地里迸出的火星 |
 | 缠身 | 身上一圈龙炎色的火舌；烧着的是自己时，第一人称画面底边泛起龙炎色 |
 
-没有新加贴图。
+没有新加贴图，用的都是 Logos 现成的特效贴图。
 
 ## 6. 调试命令
 
@@ -103,7 +103,7 @@
 | 命令 | `dragonfire/DragonfireCommands.java` |
 | 藏词（狐火、龙炎共用） | `magic/HiddenWord.java`、`mixin/HiddenWord*Mixin.java` |
 | 借用的狐火部分 | `foxfire/FoxfireFlame.java`（颜色）、`FoxfireRules.java`（缠身每秒那一下）、`mixin/FoxfireEffectsMixin.java`（换来源、打中之后） |
-| 客户端 | `client/foxfire/FoxfireClient.java`、`FoxfireVeinVisual.java`（龙炎的粒子） |
+| 客户端 | `client/foxfire/FoxfireClient.java`（龙炎的火舌和火星 `ember`、表面火焰的换色 `dragonRed`）、`FoxfireVeinVisual.java`、`mixin/DragonfireSurfaceAuraMixin.java` |
 | 数据 | `damage_type/dragonfire.json`；原版和 `c` 的伤害标签；`tags/entity_type/dragonfire_kin.json`；死亡消息、卡片名 |
 
 注入都是 `require = 0`。Logos 改了被注入的方法时注入不上，龙炎退回普通的奥秘伤害，不会崩。

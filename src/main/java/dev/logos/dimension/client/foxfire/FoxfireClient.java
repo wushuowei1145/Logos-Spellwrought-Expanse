@@ -53,6 +53,9 @@ public final class FoxfireClient {
     private static final RenderType FLASH = VfxParts.add("fire_impact/flash");
     private static final RenderType GLOW = VfxParts.add("heal/glow");
     private static final RenderType TONGUE = VfxParts.add("fire_impact/glow");
+    private static final RenderType SPARK = VfxParts.add("fire_impact/ember");
+    /** 龙炎的火舌：Logos 物品表面火焰用的同一张火焰动画，一层叠加、一层半透明的焰体。 */
+    private static final RenderType FLAME = VfxParts.add("surface/fire_gray"), FLAME_BODY = VfxParts.blend("surface/fire_gray");
     private static final SoftGlow BLOOM = new SoftGlow();
     private static final Map<FoxfireFlame, SurfaceAura> FIRES = new EnumMap<>(FoxfireFlame.class);
 
@@ -60,6 +63,10 @@ public final class FoxfireClient {
     private record Cast(FoxfireFlame flame, Vec3 at, float start) {}
     private record Daze(FoxfireFlame flame, int entity, float start, float ticks) {}
     private record Mark(FoxfireFlame flame, long until) {}
+    /** 一点自己画的火（龙炎不用原版粒子）：火舌 {@code spark} 为假，火星为真。 */
+    private record Ember(FoxfireFlame flame, boolean spark, Vec3 at, Vec3 vel, float start, float life, float size, float roll) {}
+    private static final List<Ember> EMBERS = new ArrayList<>();
+    private static final int MAX_EMBERS = 768;
 
     private static final List<Hit> HITS = new ArrayList<>();
     private static final List<Cast> CASTS = new ArrayList<>();
@@ -81,6 +88,28 @@ public final class FoxfireClient {
     public static SurfaceAura fire(FoxfireFlame flame) {
         wrapFires++;
         return FIRES.computeIfAbsent(flame, f -> new SurfaceAura(SurfaceAura.Style.FIRE, f.hue));
+    }
+
+    /**
+     * 放一点龙炎（自己画，不用原版粒子）：{@code spark} 为假是一小簇往上窜的火舌，为真是一点熔金的火星。
+     * 沿 {@code vel}（格/刻）飘，越飘越往上，从焰心的颜色转成外焰的颜色再暗下去。
+     */
+    public static void ember(FoxfireFlame flame, boolean spark, Vec3 at, Vec3 vel, float life, float size) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return;
+        if (EMBERS.size() >= MAX_EMBERS) EMBERS.removeFirst();
+        EMBERS.add(new Ember(flame, spark, at, vel, level.getGameTime(), life, size, level.getRandom().nextFloat() * 6.28f));
+    }
+
+    /**
+     * 龙炎换给 Logos 物品表面火焰的颜色（{@code DragonfireSurfaceAuraMixin}）：Logos 的火是橙色系，只转色相会转成淡粉，
+     * 这里把色相往红收（金色的火星还偏一点金）、饱和度提起来、稍压暗，烧成深绯红。
+     */
+    public static int dragonRed(int rgb) {
+        float[] hsv = java.awt.Color.RGBtoHSB(rgb >> 16 & 255, rgb >> 8 & 255, rgb & 255, null);
+        float hue = hsv[0] > .5f ? 0 : hsv[0] * .3f;
+        float sat = Math.min(1, hsv[1] * 1.35f + .12f);
+        return java.awt.Color.HSBtoRGB(hue, sat, hsv[2] * .9f) & 0xFFFFFF;
     }
 
     /** 狐火术式的游脉换上的样子。 */
@@ -115,6 +144,7 @@ public final class FoxfireClient {
         DAZES.clear();
         VEINS.clear();
         BURNING.clear();
+        EMBERS.clear();
         bewitchFlame = null;
         java.util.Arrays.fill(RECEIVED, 0);
         wrapFires = veinLooks = 0;
@@ -153,18 +183,25 @@ public final class FoxfireClient {
         for (Entity e : level.entitiesForRendering()) {
             if (e instanceof LivingEntity living && FoxfireRules.burning(living) != null) BURNING.add(living);
         }
-        // 缠身的火星：幽蓝用原版的灵魂火焰，白梅的淡粉用淡粉的尘和樱花瓣，龙炎用原版的火焰和熔金的火星
+        // 缠身的火星：幽蓝用原版的灵魂火焰，白梅的淡粉用淡粉的尘和樱花瓣，龙炎全是自己画的火舌和熔金火星（每刻都冒）
         RandomSource r = level.getRandom();
         for (LivingEntity e : BURNING) {
             // 第一人称时自己身上的火星会糊在镜头上：自己烧着由画面底边表示
-            if (e.isInvisible() || (level.getGameTime() + e.getId()) % 2 != 0 || firstPersonSelf(e)) continue;
+            if (e.isInvisible() || firstPersonSelf(e)) continue;
             FoxfireFlame flame = FoxfireRules.burning(e);
+            if (flame != FoxfireFlame.DRAGON && (level.getGameTime() + e.getId()) % 2 != 0) continue;
             double a = r.nextDouble() * Math.PI * 2, rr = e.getBbWidth() * .55;
             double x = e.getX() + Math.cos(a) * rr, y = e.getY() + r.nextDouble() * e.getBbHeight() * .8, z = e.getZ() + Math.sin(a) * rr;
             if (flame == FoxfireFlame.KITSUNE) level.addParticle(net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME, x, y, z, 0, .03, 0);
             else if (flame == FoxfireFlame.DRAGON) {
-                level.addParticle(net.minecraft.core.particles.ParticleTypes.FLAME, x, y, z, 0, .03, 0);
-                if (r.nextInt(3) == 0) level.addParticle(new net.minecraft.core.particles.DustParticleOptions(flame.bright, .8f), x, y, z, 0, .06, 0);
+                float w = Math.max(.6f, e.getBbWidth());
+                ember(flame, false, new Vec3(x, y, z), new Vec3((r.nextDouble() - .5) * .01, .035 + r.nextDouble() * .02, (r.nextDouble() - .5) * .01),
+                        10 + r.nextInt(8), (.13f + r.nextFloat() * .08f) * w);
+                if (r.nextInt(3) == 0) {
+                    double b = r.nextDouble() * Math.PI * 2;
+                    ember(flame, true, new Vec3(x, y + .1, z), new Vec3(Math.cos(b) * .02, .06 + r.nextDouble() * .05, Math.sin(b) * .02),
+                            14 + r.nextInt(12), .035f + r.nextFloat() * .025f);
+                }
             } else {
                 level.addParticle(new net.minecraft.core.particles.DustParticleOptions(flame.core, 1.1f), x, y, z, 0, .04, 0);
                 if (r.nextInt(5) == 0) level.addParticle(net.minecraft.core.particles.ParticleTypes.CHERRY_LEAVES, x, y, z, 0, 0, 0);
@@ -172,6 +209,7 @@ public final class FoxfireClient {
         }
         long now = level.getGameTime();
         if (VEINS.size() > 64) VEINS.values().removeIf(m -> now > m.until);
+        EMBERS.removeIf(m -> now - m.start > m.life + 1);
     }
 
     // ---------------------------------------------------------------- 世界里
@@ -180,7 +218,7 @@ public final class FoxfireClient {
     static void submit(SubmitCustomGeometryEvent event) {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
-        if (level == null || HITS.isEmpty() && CASTS.isEmpty() && DAZES.isEmpty() && BURNING.isEmpty()) return;
+        if (level == null || HITS.isEmpty() && CASTS.isEmpty() && DAZES.isEmpty() && BURNING.isEmpty() && EMBERS.isEmpty()) return;
         float pt = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         float now = level.getGameTime() + pt;
         var camera = event.getLevelRenderState().cameraRenderState;
@@ -251,8 +289,50 @@ public final class FoxfireClient {
             float flicker = .75f + .25f * Mth.sin(now * .9f + id);
             glow.disc(base.add(0, height * .5, 0), Math.max(.5f, width) * 1.1f, VfxParts.argb(.35f * flicker, flame.core));
         }
+
+        EMBERS.removeIf(m -> now - m.start > m.life || now < m.start - 1);
+        if (!EMBERS.isEmpty()) {
+            // 火舌同 Logos 物品表面的火：底下一层半透明的焰体压住颜色（亮的地面上不会被叠成白），上面一层叠加的火焰动画
+            out.submitCustomGeometry(pose, FLAME_BODY, (p, buf) -> { for (Ember m : EMBERS) if (!m.spark) tongue(p, buf, view, m, now, true); });
+            out.submitCustomGeometry(pose, FLAME, (p, buf) -> { for (Ember m : EMBERS) if (!m.spark) tongue(p, buf, view, m, now, false); });
+            out.submitCustomGeometry(pose, SPARK, (p, buf) -> { for (Ember m : EMBERS) if (m.spark) spark(p, buf, view, m, now); });
+        }
         pose.popPose();
         if (!shadow) glow.flush();
+    }
+
+    /** 将熄的龙炎暗成的颜色；火焰动画一张图里几列、几帧（同 Logos 的 {@code surface/fire_gray}）。 */
+    private static final int EMBER_DARK = 0x4A0804, FLAME_COLS = 4, FLAME_FRAMES = 64;
+
+    /** 一点龙炎此刻的位置：沿速度飘、越飘越往上（火舌浮得快，火星有些拖慢）。 */
+    private static Vec3 emberAt(Ember m, float age, float k) {
+        float drift = m.spark ? age * (1 - .3f * k) : age;
+        return m.at.add(m.vel.scale(drift)).add(0, (m.spark ? .0005 : .0015) * age * age, 0);
+    }
+
+    /**
+     * 一簇龙炎火舌：火焰动画竖着拉成一条，先窜高再缩；{@code body} 为真画底下的焰体（深绯红、半透明），
+     * 为假画上面叠加的火（从熔金转成绯红）。
+     */
+    private static void tongue(PoseStack.Pose pose, VertexConsumer buf, VfxParts.View view, Ember m, float now, boolean body) {
+        float age = Math.max(0, now - m.start), k = age / m.life;
+        if (k >= 1) return;
+        Vec3 p = emberAt(m, age, k);
+        int f = ((int) (m.roll * 1000) + (int) (age * 3)) & (FLAME_FRAMES - 1);
+        float u0 = (f % FLAME_COLS) / (float) FLAME_COLS, v0 = (f / FLAME_COLS) / 16f;
+        float hgt = m.size * 3.2f * (.6f + .4f * Mth.sqrt(k));
+        float a = VfxParts.smooth(0, .15f, k) * (1 - VfxParts.smooth(.55f, 1, k)) * VfxParts.fade(view.cam(), p, .3, .9);
+        int rgb = body ? VfxParts.lerpColor(m.flame.core, EMBER_DARK, k) : VfxParts.lerpColor(m.flame.bright, m.flame.core, Math.min(1, k * 1.6f));
+        VfxParts.streak(pose, buf, view, p.subtract(0, hgt * .3, 0), p.add(0, hgt * .7, 0), hgt / 1.5f,
+                u0, v0, u0 + 1f / FLAME_COLS, v0 + 1 / 16f, VfxParts.argb(a * (body ? .9f : 1), rgb));
+    }
+
+    /** 一点熔金的火星：一直缩，从焰心的颜色转成外焰的颜色再暗下去。 */
+    private static void spark(PoseStack.Pose pose, VertexConsumer buf, VfxParts.View view, Ember m, float now) {
+        float age = Math.max(0, now - m.start), k = age / m.life;
+        if (k >= 1) return;
+        int rgb = k < .5f ? VfxParts.lerpColor(m.flame.bright, m.flame.core, k / .5f) : VfxParts.lerpColor(m.flame.core, EMBER_DARK, (k - .5f) / .5f);
+        VfxParts.sprite(pose, buf, view, emberAt(m, age, k), m.size * (1 - .45f * k), m.roll, VfxParts.argb(1 - k * k, rgb));
     }
 
     /** 一闪之后几缕火舌往上窜：从身上偏向来路的另一边冒出来，越往上越细、从焰心的白转成外焰的颜色。 */
