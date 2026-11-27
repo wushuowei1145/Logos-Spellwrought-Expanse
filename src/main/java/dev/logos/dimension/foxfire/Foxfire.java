@@ -1,15 +1,12 @@
 package dev.logos.dimension.foxfire;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
 import java.util.function.Supplier;
 
 import dev.logos.dimension.LogosDimension;
-import dev.logos.lang.Compiler;
+import dev.logos.dimension.dragonfire.Dragonfire;
+import dev.logos.dimension.dragonfire.DragonfireRules;
+import dev.logos.dimension.magic.HiddenWord;
 import dev.logos.lang.Element;
-import dev.logos.lang.LogosError;
 import dev.logos.lang.Spell;
 import dev.logos.runtime.Effects;
 import dev.logos.runtime.SpellInstance;
@@ -41,9 +38,13 @@ import org.jspecify.annotations.Nullable;
  * 和附属自己的生物（神狐的狐火缠绕）用得了。编辑器打开一张狐火术式页时它显示成奥秘，存回去就是普通的奥秘术式。
  *
  * <p>白梅的第三印教主人狐火之言（{@link #teach}）：学会的人自己写术式时 {@code foxfire} 和别的元素一样认得（编纂台、书与笔、
- * 发射器、书灵），编纂台的卡片库里也有它。狐火是奥秘的一支，开着符文解锁时还要学会奥秘才写得上。
+ * 发射器、书灵），编纂台的卡片库里也有它。狐火是奥秘的一支，开着符文解锁时还要学会奥秘才写得上。藏词的做法见 {@link HiddenWord}。
  *
- * <p>这些都靠注入 Logos（{@code mixin/Foxfire*Mixin}）。Logos 改了被注入的方法时注入不上，狐火退回普通的奥秘伤害，不会崩。
+ * <p>龙炎（docs/DRAGONFIRE.md）借用这一整套结算和画法：它是第三种颜色 {@link FoxfireFlame#DRAGON}，伤害类型、打中之后的事、
+ * 同族、藏着的词归 {@link Dragonfire}。这里凡是按颜色走的（{@link Context}、缠身、缠绕、游脉、命中），颜色是龙炎时就是龙炎。
+ *
+ * <p>这些都靠注入 Logos（{@code mixin/Foxfire*Mixin}、{@code HiddenWord*Mixin}）。Logos 改了被注入的方法时注入不上，
+ * 狐火退回普通的奥秘伤害，不会崩。
  */
 public final class Foxfire {
     public static final ResourceKey<DamageType> DAMAGE = ResourceKey.create(Registries.DAMAGE_TYPE, LogosDimension.id("foxfire"));
@@ -51,14 +52,14 @@ public final class Foxfire {
     public static final TagKey<EntityType<?>> KIN = TagKey.create(Registries.ENTITY_TYPE, LogosDimension.id("foxfire_kin"));
     /** 术式里狐火的词。 */
     public static final String WORD = "foxfire";
+    /** 狐火之言：藏着的词 {@code foxfire}。 */
+    public static final HiddenWord HIDDEN = HiddenWord.register(WORD, FoxfireAttachments.KNOWN);
     /** 书灵的「搭档学会了什么」里，狐火之言的键（同 Logos 的 {@code element:…}）。 */
-    public static final String UNLOCK = "element:" + WORD;
-    /** 客户端：本机的玩家学会了没有（客户端启动时指过去；服务端一直是假）。 */
-    public static java.util.function.BooleanSupplier viewerKnows = () -> false;
+    public static final String UNLOCK = HIDDEN.unlock;
 
     /**
-     * 正在结算的这一下是狐火：什么颜色，打中后要不要附带效果（缠身每秒烧的那一下不再附带）。
-     * {@code burn} 为假时附带效果里不点狐火缠身（流火平时的刀：缠身要靠狐火印攒满爆开，见 docs/RYUKA.md）。
+     * 正在结算的这一下是狐火（或龙炎）：什么颜色，打中后要不要附带效果（缠身每秒烧的那一下不再附带）。
+     * {@code burn} 为假时附带效果里不点缠身（流火平时的刀：缠身要靠狐火印攒满爆开，见 docs/RYUKA.md）。
      */
     public record Context(FoxfireFlame flame, boolean rules, boolean burn) {
         public Context(FoxfireFlame flame, boolean rules) {
@@ -67,19 +68,10 @@ public final class Foxfire {
     }
 
     private static final ThreadLocal<Context> CURRENT = new ThreadLocal<>();
-    /** Logos 正在执行的符文、正在触发的事件属于一条狐火术式时，它的颜色（换掉符文自己放的奥秘特效用）。 */
+    /** Logos 正在执行的符文、正在触发的事件属于一条狐火（龙炎）术式时，它的颜色（换掉符文自己放的奥秘特效用）。 */
     private static final ThreadLocal<FoxfireFlame> SPELL = new ThreadLocal<>();
     /** {@link #deal} 留给紧接着的 {@code Effects.damage(attacker, …)} 的狐火。 */
     private static final ThreadLocal<Context> NEXT = new ThreadLocal<>();
-    /** 大于 0 时正在编译玩家自己写的术式。 */
-    private static final ThreadLocal<int[]> AUTHORING = ThreadLocal.withInitial(() -> new int[1]);
-    /** 编译时把 foxfire 当元素用过的术式，按源码记（Logos 也按源码缓存编译结果）。 */
-    private static final Set<String> SOURCES = Collections.synchronizedSet(Collections.newSetFromMap(new LinkedHashMap<>(16, .75f, true) {
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<String, Boolean> eldest) {
-            return size() > 512;
-        }
-    }));
 
     private Foxfire() {}
 
@@ -90,7 +82,7 @@ public final class Foxfire {
 
     // ---------------------------------------------------------------- 结算
 
-    /** 正在结算的狐火，不是狐火时为 null。 */
+    /** 正在结算的狐火（或龙炎），都不是时为 null。 */
     public static @Nullable Context current() {
         return CURRENT.get();
     }
@@ -143,16 +135,22 @@ public final class Foxfire {
         return caster instanceof FoxfireBearer bearer ? bearer.foxfireFlame() : FoxfireFlame.KITSUNE;
     }
 
-    /** 这条术式是狐火术式时，它的狐火是什么颜色（看施法者）；不是时为 null。 */
+    /** 这条术式是狐火（龙炎）术式时，它的颜色；都不是时为 null。两个词都写了的按龙炎。 */
+    public static @Nullable FoxfireFlame flameOf(@Nullable Spell spell, @Nullable Entity caster) {
+        if (Dragonfire.is(spell)) return FoxfireFlame.DRAGON;
+        return is(spell) ? flameOf(caster) : null;
+    }
+
+    /** 同上，按正在跑的术式和它的施法者。 */
     public static @Nullable FoxfireFlame flameOf(SpellInstance inst) {
-        return is(inst.spell) ? flameOf(inst.caster) : null;
+        return flameOf(inst.spell, inst.caster);
     }
 
     public static boolean is(@Nullable Spell spell) {
-        return spell != null && SOURCES.contains(spell.source());
+        return HIDDEN.is(spell);
     }
 
-    /** Logos 正在执行的是一条狐火术式时，它的颜色；不是时为 null。 */
+    /** Logos 正在执行的是一条狐火（龙炎）术式时，它的颜色；不是时为 null。 */
     public static @Nullable FoxfireFlame spellFlame() {
         return SPELL.get();
     }
@@ -170,72 +168,38 @@ public final class Foxfire {
         }
     }
 
-    /** Logos 的这一下确实打进去了：附带狐火的效果（读当前的狐火）。 */
-    public static void landed(DamageSource source, LivingEntity target) {
+    /** Logos 的这一下确实打进去了（{@code amount} 点）：附带狐火或龙炎的效果（读当前的狐火）。 */
+    public static void landed(DamageSource source, LivingEntity target, float amount) {
         Context context = CURRENT.get();
-        if (context != null && context.rules()) FoxfireRules.landed(source.getEntity(), target, context.flame(), context.burn());
+        if (context == null || !context.rules()) return;
+        if (context.flame().dragon()) DragonfireRules.landed(source.getEntity(), target, amount, context.burn());
+        else FoxfireRules.landed(source.getEntity(), target, context.flame(), context.burn());
     }
 
-    // ---------------------------------------------------------------- 术式里藏着的词
-
-    /** 编译器碰到一个不认识的元素词时问：它能不能当狐火。 */
-    public static boolean word(String word) {
-        return WORD.equals(word) && AUTHORING.get()[0] == 0;
-    }
-
-    /** 编译完一条用过 foxfire 的术式。 */
-    public static void compiled(@Nullable Spell spell) {
-        if (spell != null) SOURCES.add(spell.source());
-    }
+    // ---------------------------------------------------------------- 狐火之言
 
     /** {@code p} 学会了狐火之言没有（白梅第三印）。 */
     public static boolean knows(@Nullable Entity p) {
-        return p instanceof net.minecraft.world.entity.player.Player player && player.getData(FoxfireAttachments.KNOWN);
+        return HIDDEN.knows(p);
     }
 
     /** 教 {@code p} 狐火之言；已经会了返回假。 */
     public static boolean teach(net.minecraft.server.level.ServerPlayer p) {
-        if (knows(p)) return false;
-        p.setData(FoxfireAttachments.KNOWN, true);
-        p.syncData(FoxfireAttachments.KNOWN);
-        return true;
+        return HIDDEN.teach(p);
     }
 
     /** 测试和命令用：忘掉狐火之言。 */
     public static void forget(net.minecraft.server.level.ServerPlayer p) {
-        p.setData(FoxfireAttachments.KNOWN, false);
-        p.syncData(FoxfireAttachments.KNOWN);
+        HIDDEN.forget(p);
     }
 
-    /** 编译玩家自己写的术式：学会了狐火之言（{@code knows}）的人照常认得 foxfire，没学会的同 {@link #authoring(Supplier)}。 */
-    public static <T> T authoring(boolean knows, Supplier<T> compile) {
-        return knows ? compile.get() : authoring(compile);
-    }
-
-    /** 同上，走编译缓存的地方（{@link #authoring(String, Supplier)}）。 */
-    public static Spell authoring(boolean knows, String src, Supplier<Spell> compile) {
-        return knows ? compile.get() : authoring(src, compile);
-    }
-
-    /** 编译玩家自己写的术式：这期间 foxfire 是不认识的词。 */
+    /** 测试用：编译玩家自己写的术式，没学会狐火之言（别的藏词照常认得）。 */
     public static <T> T authoring(Supplier<T> compile) {
-        int[] depth = AUTHORING.get();
-        depth[0]++;
-        try {
-            return compile.get();
-        } finally {
-            depth[0]--;
-        }
+        return HiddenWord.authoring(w -> w != HIDDEN, compile);
     }
 
-    /**
-     * 同上，用于走 Logos 编译缓存的地方：缓存按源码记，里面可能是调试时编过的狐火术式。
-     * 那就按玩家写的重编一次，报出和写错一个词一样的错。
-     */
+    /** 同上，走编译缓存的地方（见 {@link HiddenWord#authoring(java.util.function.Predicate, String, Supplier)}）。 */
     public static Spell authoring(String src, Supplier<Spell> compile) {
-        Spell spell = authoring(compile);
-        if (!is(spell)) return spell;
-        authoring(() -> Compiler.compile(src));
-        throw new LogosError("未知的词 " + WORD, 0, 0);
+        return HiddenWord.authoring(w -> w != HIDDEN, src, compile);
     }
 }

@@ -6,6 +6,7 @@ import java.util.WeakHashMap;
 
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.corruption.mob.CorruptionMobs;
+import dev.logos.dimension.dragonfire.DragonfireRules;
 import dev.logos.dimension.foxfire.FoxfireAttachments.Burn;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,7 +29,7 @@ import org.jspecify.annotations.Nullable;
  * 狐火打中之后的事（docs/FOXFIRE.md 第 3 节）：
  * <ul>
  *   <li><b>狐火缠身</b>：目标身上燃几秒狐火，每秒烧一点狐火伤害。它不是原版的火：水浇不灭，抗火挡不住，也不点燃方块。
- *       再被打中只续上时间，不叠层。</li>
+ *       再被打中只续上时间，不叠层。龙炎缠身也记在这里（颜色是 {@link FoxfireFlame#DRAGON}），规则见 {@link DragonfireRules}。</li>
  *   <li><b>同族</b>：神狐一族（实体标签 {@code logos_dimension:foxfire_kin}）受到的狐火只剩四分之一，不会缠身也不会被惑；
  *       被腐化的同族反而更怕，受到的多一半，缠身也烧得更久——狐火能净化它们。</li>
  *   <li><b>惑</b>：怪物被打中时有机会丢掉目标、原地打转一会儿（Boss 不会；同一只隔一阵才会再被惑）；
@@ -75,12 +76,30 @@ public final class FoxfireRules {
 
     /** 让 {@code target} 狐火缠身 {@code ticks} 刻：已经在烧就续上（取长的），不叠层。 */
     public static void burn(LivingEntity target, FoxfireFlame flame, @Nullable Entity burner, int ticks) {
+        if (flame.dragon()) {
+            DragonfireRules.burn(target, burner, ticks);
+            return;
+        }
         if (kin(target)) return;
-        long until = target.level().getGameTime() + ticks;
+        burnUntil(target, flame, burner, target.level().getGameTime() + ticks);
+    }
+
+    /**
+     * 让 {@code target} 缠身烧到 {@code until} 刻（已经烧得更久就不动），狐火、龙炎共用这一份（身上同时只燃一种）。
+     * 龙炎压过狐火：正燃着龙炎时点不上狐火。不查同族，调用的人自己查。
+     */
+    public static void burnUntil(LivingEntity target, FoxfireFlame flame, @Nullable Entity burner, long until) {
         Burn old = target.hasData(FoxfireAttachments.BURN) ? target.getData(FoxfireAttachments.BURN) : null;
-        if (old != null && old.until() > until) until = old.until();
+        boolean live = old != null && old.until() > target.level().getGameTime();
+        if (live && old.flame().dragon() && !flame.dragon()) return;
+        if (live && old.until() > until) until = old.until();
         UUID who = burner != null ? burner.getUUID() : old != null ? old.burner() : null;
         target.setData(FoxfireAttachments.BURN, new Burn(flame, until, who));
+    }
+
+    /** {@code e} 不怕这种火（不缠身）：狐火看神狐一族，龙炎看龙族。 */
+    public static boolean immune(LivingEntity e, FoxfireFlame flame) {
+        return flame.dragon() ? DragonfireRules.kin(e) : kin(e);
     }
 
     /** 正在狐火缠身的颜色，没在烧为 null。客户端也能用。 */
@@ -132,13 +151,15 @@ public final class FoxfireRules {
         if (!(event.getEntity() instanceof LivingEntity t) || !(t.level() instanceof ServerLevel level) || !t.hasData(FoxfireAttachments.BURN)) return;
         Burn burn = t.getData(FoxfireAttachments.BURN);
         long now = level.getGameTime();
-        if (now > burn.until() || !t.isAlive() || kin(t)) {
+        if (now > burn.until() || !t.isAlive() || immune(t, burn.flame())) {
             t.removeData(FoxfireAttachments.BURN);
             return;
         }
         if ((burn.until() - now) % 20 != 0) return;
         LivingEntity by = burn.burner() != null && level.getEntity(burn.burner()) instanceof LivingEntity l && l.isAlive() ? l : t.getLastHurtByMob();
-        if (by != null && by != t) Foxfire.deal(by, t, BURN_DAMAGE, new Foxfire.Context(burn.flame(), false));
+        boolean dragon = burn.flame().dragon();
+        if (by != null && by != t) Foxfire.deal(by, t, dragon ? DragonfireRules.BURN_DAMAGE : BURN_DAMAGE, new Foxfire.Context(burn.flame(), false));
+        if (dragon) DragonfireRules.scorched(t);
         if (now >= burn.until()) t.removeData(FoxfireAttachments.BURN);
     }
 }

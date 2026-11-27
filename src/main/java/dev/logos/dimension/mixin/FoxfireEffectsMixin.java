@@ -5,6 +5,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import dev.logos.dimension.corruption.Corruption;
 import dev.logos.dimension.corruption.CorruptionDamage;
+import dev.logos.dimension.dragonfire.Dragonfire;
 import dev.logos.dimension.foxfire.Foxfire;
 import dev.logos.dimension.foxfire.FoxfireFlame;
 import dev.logos.dimension.foxfire.FoxfireWraps;
@@ -26,6 +27,8 @@ import org.spongepowered.asm.mixin.injection.At;
  * （{@link CorruptionDamage#aligned}）打出的生命伤害换成腐败伤害来源。
  * 每个入口都重新定（不是就清掉），免得受伤时触发的别的伤害也被算进去。狐火的命中特效在 {@code RyukaBurstMixin} 里换，
  * 腐败的在 {@code CorruptionVfxMixin} 里换。
+ *
+ * <p>龙炎（docs/DRAGONFIRE.md）是狐火的第三种颜色 {@link FoxfireFlame#DRAGON}：同样的三个入口，伤害来源按颜色换成龙炎，打进去之后附带龙炎的效果。
  */
 @Mixin(value = Effects.class, remap = false)
 abstract class FoxfireEffectsMixin {
@@ -54,7 +57,7 @@ abstract class FoxfireEffectsMixin {
             target = "Lnet/minecraft/world/damagesource/DamageSources;indirectMagic(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/damagesource/DamageSource;"),
             require = 0)
     private static DamageSource logos_dimension$source(DamageSources sources, Entity direct, Entity causing, Operation<DamageSource> original) {
-        if (Foxfire.current() != null) return sources.source(Foxfire.DAMAGE, direct, causing);
+        if (Foxfire.current() instanceof Foxfire.Context fire) return sources.source(fire.flame().damage(), direct, causing);
         if (CorruptionDamage.current()) return sources.source(Corruption.DAMAGE, direct, causing);
         return original.call(sources, direct, causing);
     }
@@ -64,7 +67,7 @@ abstract class FoxfireEffectsMixin {
             require = 0)
     private static boolean logos_dimension$landed(LivingEntity t, ServerLevel level, DamageSource source, float amount, Operation<Boolean> original) {
         boolean hurt = original.call(t, level, source, amount);
-        if (hurt && source.is(Foxfire.DAMAGE)) Foxfire.landed(source, t);
+        if (hurt && (source.is(Foxfire.DAMAGE) || source.is(Dragonfire.DAMAGE))) Foxfire.landed(source, t, amount);
         return hurt;
     }
 }

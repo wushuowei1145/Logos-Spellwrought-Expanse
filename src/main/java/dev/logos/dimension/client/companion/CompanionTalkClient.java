@@ -23,9 +23,9 @@ public final class CompanionTalkClient {
     static void packets(RegisterClientPayloadHandlersEvent event) {
         event.register(CompanionTalk.Update.TYPE, (payload, context) -> context.enqueueWork(() -> receive(payload)));
         event.register(dev.logos.dimension.companion.CompanionGuard.Saved.TYPE, (payload, context) -> context.enqueueWork(CompanionTalkClient::saved));
-        // 狐火之言（白梅第三印）：编纂台在客户端编图、列卡片，问本机玩家学会了没有
-        dev.logos.dimension.foxfire.Foxfire.viewerKnows = () -> Minecraft.getInstance().player != null
-                && dev.logos.dimension.foxfire.Foxfire.knows(Minecraft.getInstance().player);
+        // 藏着的词（狐火之言、龙炎之言）：编纂台在客户端编图、列卡片，问本机玩家学会了没有
+        for (dev.logos.dimension.magic.HiddenWord w : dev.logos.dimension.magic.HiddenWord.all())
+            w.viewerKnows = () -> Minecraft.getInstance().player != null && w.knows(Minecraft.getInstance().player);
     }
 
     @SubscribeEvent

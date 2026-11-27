@@ -69,7 +69,7 @@ public abstract class CompanionSealViews extends CompanionViews {
                     .step("对准", ctx -> aimClient(LOOK))
                     .waitUntilServer("入场播完", ctx -> !"summon".equals(c.npcMiscAnimation()))
                     .checkServer("第三枚契印教会了主人狐火之言", ctx -> Foxfire.knows(ctx.player()))
-                    .waitUntil("客户端也知道学会了（编纂台的卡片库据此列出狐火）", ctx -> Foxfire.viewerKnows.getAsBoolean())
+                    .waitUntil("客户端也知道学会了（编纂台的卡片库据此列出狐火）", ctx -> Foxfire.HIDDEN.viewerKnows.getAsBoolean())
                     .checkServer("四枚契印：她自己的生命 60、护甲 8、韧性 2，继承六成二（主人 20 血 → +12.4）", ctx ->
                             Math.abs(c.getMaxHealth() - 72.4f) < .05 && Math.abs(c.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR) - 8) < .01
                                     && Math.abs(c.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR_TOUGHNESS) - 2) < .01)

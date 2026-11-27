@@ -101,13 +101,14 @@
 
 | 部分 | 文件 |
 |---|---|
-| 伤害、颜色、藏着的词 | `foxfire/Foxfire.java`、`FoxfireFlame.java`、`FoxfireBearer.java` |
+| 伤害、颜色 | `foxfire/Foxfire.java`、`FoxfireFlame.java`、`FoxfireBearer.java` |
+| 藏着的词（狐火、龙炎共用） | `magic/HiddenWord.java`、`mixin/HiddenWord*Mixin.java` |
 | 缠身、同族、惑 | `foxfire/FoxfireRules.java` |
 | 狐火缠绕 | `foxfire/FoxfireWraps.java`、`FoxfireAttachments.java` |
 | 给客户端的提示 | `foxfire/FoxfireCue.java` |
 | 客户端 | `client/foxfire/FoxfireClient.java` |
 | 命令 | `foxfire/FoxfireCommands.java` |
-| 注入 Logos | `mixin/Foxfire*Mixin.java`、`SpellObjectAccess`。命中特效在 `RyukaBurstMixin` 里换。 |
+| 注入 Logos | `mixin/Foxfire*Mixin.java`、`mixin/HiddenWord*Mixin.java`、`SpellObjectAccess`。命中特效在 `RyukaBurstMixin` 里换。 |
 | 数据 | `damage_type/foxfire.json`；原版和 `c` 的伤害标签；`tags/entity_type/foxfire_kin.json`；死亡消息 |
 
 注入 Logos 的地方：
@@ -121,6 +122,8 @@
 注入都是 `require = 0`。Logos 改了被注入的方法时注入不上，狐火退回普通的奥秘伤害，不会崩。
 
 腐败伤害（生命的子类型，见 [CORRUPTION.md](CORRUPTION.md)「腐败伤害」）共用 `FoxfireEffectsMixin` 的几个入口：每个入口同时定下这一下是不是狐火、是不是腐败，`hurt` 里先看狐火再看腐败。改这几个入口时两边一起测（`foxfire_*`、`elven_blight_corruption_heals_its_own`）。
+
+[龙炎](DRAGONFIRE.md) 借用这一整套：它是颜色表里的第三种 `FoxfireFlame.DRAGON`。凡是按颜色走的（结算、缠身、缠绕、游脉、命中、施法圈），颜色是龙炎时伤害类型就换成龙炎，打中之后的事归 `DragonfireRules`。藏着的词 `foxfire`、`dragonfire` 共用 `HiddenWord`，各自记谁学会了。改这些地方时把 `dragonfire_*` 一起测。
 
 ## 8. 测试
 

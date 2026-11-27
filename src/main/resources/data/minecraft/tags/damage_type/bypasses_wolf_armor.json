@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "logos_dimension:foxfire"
+    "logos_dimension:foxfire",
+    "logos_dimension:dragonfire"
   ]
 }
