@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 /**
  * 刀光样式表：{@code assets/<ns>/combat/trail_styles/<名字>.json}，用到时读、重载时清。
  * 每种伤害类型一种（{@code logos_dimension:physical}、{@code fire}、{@code frost}、{@code lightning}、{@code void}、
- * {@code arcane}、{@code life}，以及附属的 {@code foxfire}），武器也可以有自己的样式。缺失或写错时退回物理。
+ * {@code arcane}、{@code life}，以及附属的 {@code foxfire}、{@code dragonfire}），武器也可以有自己的样式。缺失或写错时退回物理。
  */
 public final class TrailStyles {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -40,14 +40,18 @@ public final class TrailStyles {
         return LogosDimension.id(element.name().toLowerCase(Locale.ROOT));
     }
 
-    /** 狐火的刀光：白梅的淡粉用共用的 {@code foxfire}，神狐一族的幽蓝用 {@code foxfire_kitsune}。 */
+    /** 狐火的刀光：白梅的淡粉用共用的 {@code foxfire}，神狐一族的幽蓝用 {@code foxfire_kitsune}；龙炎是另一种伤害，用 {@code dragonfire}。 */
     public static Identifier of(FoxfireFlame flame) {
-        return flame == FoxfireFlame.SHIRAUME ? LogosDimension.id("foxfire") : LogosDimension.id("foxfire_" + flame.name().toLowerCase(Locale.ROOT));
+        return switch (flame) {
+            case SHIRAUME -> LogosDimension.id("foxfire");
+            case DRAGON -> LogosDimension.id("dragonfire");
+            default -> LogosDimension.id("foxfire_" + flame.name().toLowerCase(Locale.ROOT));
+        };
     }
 
     /**
      * 实际要用的样式名：{@code fixed} 为假且持刀者缠着魔力时，换成那种元素的刀光（有这个样式文件的话），否则就是 {@code base}。
-     * 狐火缠绕在 Logos 看来是奥秘，但刀上烧的是狐火，所以先认狐火，按颜色换成对应的狐火刀光。
+     * 狐火、龙炎缠绕在 Logos 看来是奥秘，但刀上烧的是狐火（龙炎），所以先认它们，按颜色换成对应的刀光。
      */
     public static Identifier resolve(Identifier base, boolean fixed, @Nullable LivingEntity holder) {
         if (fixed || holder == null) return base;

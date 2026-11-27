@@ -1,0 +1,23 @@
+{
+  "blade": {
+    "from": 5.5,
+    "to": 29.3
+  },
+  "style": "logos_dimension:dragonfire",
+  "speed": 6.5,
+  "auto": false,
+  "clips": {
+    "draw": {"windows": [[0.24, 0.72]]},
+    "cleave_1": {"windows": [[0.15, 0.36]]},
+    "rend_2": {"windows": [[0.15, 0.37]]},
+    "ascend_3": {"windows": [[0.17, 0.42]]},
+    "cataclysm_4": {"windows": [[0.37, 0.57]]},
+    "parry": {"windows": [[0.01, 0.14]]},
+    "dragon_fang": {"windows": [[0.07, 0.22]]},
+    "crimson_thrust": {"windows": [[0.10, 0.26]]},
+    "vortex_rush": {"windows": [[0.11, 0.54]]},
+    "flame_sweep": {"windows": [[0.20, 0.45]]},
+    "skyfall_judgement": {"windows": [[0.34, 0.54]]},
+    "cross_rend": {"windows": [[0.10, 0.24], [0.30, 0.49]]}
+  }
+}

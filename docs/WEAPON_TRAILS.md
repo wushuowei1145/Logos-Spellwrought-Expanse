@@ -73,7 +73,7 @@
   - `"none"`：不出光。
   - 每一招都可以再用 `"style"` 覆盖样式。
 
-**样式按什么顺序选：** 招式指定 → `meshes` → 动作组默认；拿刀的手缠着魔力、且样式不 `fixed` 时，换成 `logos_dimension:<元素>`。狐火缠绕在 Logos 看来是奥秘，但刀上烧的是狐火，所以先认狐火：白梅的淡粉换成 `foxfire`，神狐一族的幽蓝换成 `foxfire_kitsune`（`TrailStyles.resolve`）。
+**样式按什么顺序选：** 招式指定 → `meshes` → 动作组默认；拿刀的手缠着魔力、且样式不 `fixed` 时，换成 `logos_dimension:<元素>`。狐火、龙炎缠绕在 Logos 看来是奥秘，但刀上烧的是狐火（龙炎），所以先认它们：白梅的淡粉换成 `foxfire`，神狐一族的幽蓝换成 `foxfire_kitsune`，龙炎换成 `dragonfire`（`TrailStyles.resolve`）。
 
 **挑招式：**
 - 攻击类招式都要有刀光：连招、重击、突刺、弹刀后的反击。
@@ -90,6 +90,7 @@
 | 凌霄 | `trails/lingxiao.json` | `lingxiao`；御剑飞行的尾迹 `lingxiao_flight` | 四式按时段，收剑的剑花也出光 | `weapon_trails_lingxiao` |
 | 流火（玩家与白梅） | `trails/ryuka.json`（`tip_x` 弯刀） | `ryuka`（`fixed`） | 五段连斩、弹刀、突刺按时段；白梅按 GeckoLib 动画名记时段 | `weapon_trails_ryuka` |
 | 神狐薙刀（12 把） | `trails/naginata.json`（`meshes` 分刃型、`tip_x` 弯刃） | `physical` | 四刀只亮砍下去那一段，按时段（举刀、收招也很快，按速度会多出一道） | `weapon_trails_naginata` |
+| 炽焰长剑 | `trails/crimson_flame_longsword.json` | `dragonfire`（龙炎的刀光） | 四式、龙牙、突刺、旋风、十文字、横扫、坠星和拔剑的剑花按时段 | `weapon_trails_crimson_flame` |
 | 神狐 NPC 的打刀 | 读玩家的 `trails/uchigatana.json` | `physical`，狐火缠绕时 `foxfire_kitsune` | 只在 `contact` 前后出光，够快就亮到这段结束 | `weapon_trails_fox` |
 
 和弓不出刀光。
@@ -115,7 +116,7 @@ BoneTrails.feed(key, holder, poseStack.last().pose(), base, tip,
 
 ## 样式
 
-样式文件是 `assets/<ns>/combat/trail_styles/<名字>.json`。每种伤害类型一种：`physical`、`fire`、`frost`、`lightning`、`void`、`arcane`、`life`，再加附属的 `foxfire`。武器可以有自己的样式，比如某把剑独有的光。
+样式文件是 `assets/<ns>/combat/trail_styles/<名字>.json`。每种伤害类型一种：`physical`、`fire`、`frost`、`lightning`、`void`、`arcane`、`life`，再加附属的 `foxfire`、`dragonfire`。武器可以有自己的样式，比如某把剑独有的光。
 
 一种样式一般三层，照 UE：**身子**（`slash_blob` 或 `slash_streak`，带颜色、盖住一些背景、尾部被条纹吃掉）、**高光**（`slash_streak` 或元素自己的形状：火舌 `slash_flame`、电弧 `slash_bolt`、冰晶 `slash_shards`、柔丝 `slash_wisp`，亮色、乘一张往尾部流的不透明噪声）、**刃线**（`slash_hook`，细而亮，带 `facing`）。
 

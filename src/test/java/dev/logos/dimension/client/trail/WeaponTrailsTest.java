@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dev.logos.dimension.foxfire.FoxfireFlame;
 import dev.logos.lang.Element;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -87,7 +88,11 @@ class WeaponTrailsTest {
             Path p = ASSETS.resolve("combat/trail_styles/" + e.name().toLowerCase(Locale.ROOT) + ".json");
             assertTrue(Files.isRegularFile(p), e + " 没有刀光样式");
         }
-        assertTrue(Files.isRegularFile(ASSETS.resolve("combat/trail_styles/foxfire.json")), "狐火没有刀光样式");
+        // 狐火的每种颜色和龙炎（缠绕时按颜色换刀光，TrailStyles.of(FoxfireFlame)）
+        for (FoxfireFlame flame : FoxfireFlame.values()) {
+            Path p = ASSETS.resolve("combat/trail_styles/" + TrailStyles.of(flame).getPath() + ".json");
+            assertTrue(Files.isRegularFile(p), flame + " 没有刀光样式：" + p.getFileName());
+        }
     }
 
     @Test void everyTrailSettingMatchesItsAnimations() throws IOException {

@@ -1,5 +1,18 @@
 # 首版验证记录
 
+## 炽焰长剑（2026-11-27）
+
+分支 `feat/crimson-flame-longsword`，基于 main `32b1a6c2`（#312 龙炎）。初稿（物品、招式、动作、导入和编排脚本、单元测试）原来基于 #303，没提交，这轮挪到最新 main 上接完，设计见 [炽焰长剑](docs/CRIMSON_FLAME_LONGSWORD.md)。Logos jar 用 `编译成品/20261126-2358-最新版/logos-0.7.2.jar`，乐团用同目录的 `starbloom_orchestra-0.1.0.jar`（单元测试时复制到纯英文路径）。
+
+- **伤害换成龙炎**：每一剑走 `strike` 打出同样点数的龙炎（不走原版近战），横扫的五道游脉、坠星的落点也是龙炎；初稿的 `Element.FIRE` 追伤、原版点火、原版火焰和岩浆粒子、`PillarBurst` 全部去掉，换成龙炎的一团（`FoxfireCue.burst`）、龙炎游脉和客户端自己画的冲刺火星（`CrimsonFlameClient`）。
+- **刀光**：初稿的 `crimson_flame` 样式改名为 `dragonfire`，作为龙炎这种伤害的刀光；`TrailStyles.of(FoxfireFlame.DRAGON)` 原来找 `foxfire_dragon`（不存在），龙炎缠绕退回奥秘刀光，现在换成 `dragonfire`。
+- **修了初稿的一处**：坠星原来带 `effect=slam`，落点刚挑飞的目标同一刻又被砸回地面，挑飞留不住；按设计去掉了 `slam`（单元测试改成断言不是 `slam`）。
+- 单元：`CrimsonFlameLongswordTest` 6/6、`WeaponTrailsTest` 7/7（`everyDamageTypeHasAStyle` 加了狐火每种颜色和龙炎；按原来的映射龙炎会找不到样式）、`MovesetTest`、`CombatWeaponTest`、`ItemModelDisplayTest`、`LangCoverageTest`、`QueenMovesetTest` 全过。没跑全量。
+- 世界 `crimson_flame_*` **3/3**：一式打穿满身钻石甲的尸壳正好 8 点龙炎、掉一点耐久、不缠身、不点原版火；格挡中左键的横扫，游脉打中 6 格外的尸壳 10 点龙炎并缠身；坠星落点 12 点龙炎、缠身、挑飞（第一次用尸壳被落点加接触那一剑打死，换成铁傀儡）。
+- 实际客户端：`crimson_flame_longsword` **1/1，13/13 检查**（真实按键打一式、格挡、横扫、潜行突刺、疾跑旋风、空中坠星；靶子挨的是龙炎、该缠身的缠身、游脉画成龙炎、冲刺冒火星、坠星不摔伤）；`weapon_trails_crimson_flame` **1/1，9/9 检查**（四式出光、默认龙炎刀光、缠冰霜换冰霜、缠龙炎仍是龙炎、待机散尽）。回归 `dragonfire_views` **1/1，8/8**、`weapon_trails_fox` **1/1，9/9**。截图在仓库外 `art/crimson_flame_longsword/ingame_v01`（刀光）、`ingame_v02`（技能，坠星改了起跳位置后重拍）。看过：刀光深红带金边、旋风一圈龙炎、横扫五道游脉、靶子身上龙炎火舌。
+- 截图里看到的：龙炎打中铁傀儡这种大个子时，命中的那团火按身形放到最大，白天背光时亮成一大团白（龙炎自带的命中特效，不是这轮改的）。
+- 没测：Iris/光影包、多人、拉塞塔（还没进游戏）、手感和数值（没人试玩）、全量单元和世界测试。
+
 ## 龙炎（2026-11-27）
 
 分支 `feat/dragonfire`，基于 main `4ecab15d`（#310）。新伤害类型 `logos_dimension:dragonfire`，奥秘的子类型，借用狐火的结算和画法（颜色 `FoxfireFlame.DRAGON`），设计见 [龙炎](docs/DRAGONFIRE.md)。狐火的藏词拆成共用的 `HiddenWord`，原来的 8 个 `Foxfire*Mixin`（编译、誊写、发射器、书与笔、术式图、书灵两处、卡片库）改名为 `HiddenWord*Mixin`，对 `foxfire`、`dragonfire` 一视同仁。Logos jar 用 `编译成品/20261126-2358-最新版/logos-0.7.2.jar`。

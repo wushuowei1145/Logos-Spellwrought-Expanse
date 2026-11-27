@@ -114,7 +114,7 @@ public final class AddonTabs {
     /** 武器：剑、刀、长柄、弓、盾、法杖、铳与弹药，同类挨在一起，同一把的几种配色挨在一起。 */
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> WEAPONS = tab("weapons", TOOLS, "dawnvow", out -> { ids(out,
             // 剑
-            "dawnvow", "blacksteel_longsword", "lingxiao_sword", "jinghong_sword",
+            "dawnvow", "blacksteel_longsword", "lingxiao_sword", "jinghong_sword", "crimson_flame_longsword",
             // 刀
             "fox_uchigatana_ink", "fox_uchigatana_vermilion", "fox_uchigatana_indigo", "fox_uchigatana_wood", "ryuka",
             // 长柄
