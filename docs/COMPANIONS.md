@@ -59,7 +59,7 @@
 | 21 | 生活 | 日常小事 | 独有 | 白梅：狐火灯（`CompanionLight`）、温泉、摘浆果、怕狗、装束（`CompanionOutfit`）；琥珀：四套衣服，对话里换、记在你身上（`KohakuOutfit`）；拉塞塔：四档守夜和坐下（`LacertaRest`）、收展翅（翅膀控制器排在 NPC 控制器之后） |
 | 22 | 命令 | `/alchemy companion …`：召唤、收回、看数、清休息、盖契印、设饱腹、换装 | 白梅的在最上一层，精灵公主的在 `princess` 下面，拉塞塔的在 `lacerta` 下面 | `CompanionCommands` |
 | 23 | 友人帐 | 按键（默认 K）翻开：所有同伴一人一页，立过契的画本人，没立契的是黑窗；在里面叫出来、收回（第 7 节） | **公共**（`Companions.ALL` 里的都在） | `CompanionBook`、`client/companion/CompanionBookClient`、`CompanionBookScreen` |
-| 24 | 奥义 | 按 V 令她放奥义（长按开号令轮盘），耗主人的魔力、各自冷却；在场的同伴在接力窗口里一个接一个都放过，就放连携切入，玩家再按 V 放最后一击（[ULTIMATES.md](ULTIMATES.md)） | 按键、轮盘、侧边小队、连携、冷却、耗魔、选目标、馈赠的接口**公共**；每位的演出、技能效果、馈赠**独有** | `ultimate/Ultimates`、`UltimateChain`；她的 `CompanionDef.ultimate`（服务端脚本）、`CompanionStyle.ultimate`（画面） |
+| 24 | 奥义 | 按 C 令她放奥义（长按开号令轮盘），耗主人的魔力、各自冷却；在场的同伴在接力窗口里一个接一个都放过，就放连携切入，玩家再按 C 放最后一击（[ULTIMATES.md](ULTIMATES.md)） | 按键、轮盘、侧边小队、连携、冷却、耗魔、选目标、馈赠的接口**公共**；每位的演出、技能效果、馈赠**独有** | `ultimate/Ultimates`、`UltimateChain`；她的 `CompanionDef.ultimate`（服务端脚本）、`CompanionStyle.ultimate`（画面） |
 
 ### 2.1 心智里的行为
 
