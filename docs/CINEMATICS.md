@@ -141,6 +141,8 @@
 ### 着色器
 
 - 不要用 GLSL 内置函数的名字给自己的函数命名：`noise1` 到 `noise4`、`texture*` 等。开发机的驱动会放过，严格的驱动（AMD、Intel）编译失败，NeoForge 预编译会连带整个着色器重载失败，玩家直接进不了游戏（`explosion.fsh` 的 `noise3` 就出过这事）。
+- 也不要拿 GLSL 的保留字和后续版本的关键字当名字：`active`、`filter`、`input`、`output`、`common`、`partition`、`sample`、`buffer`、`shared`、`resource` 等（`chain_cutin.fsh` 的 `float active` 让 A 卡进不了游戏）。内置函数名同样不要声明成自己的变量、参数（`distance`、`step`、`length`……）。
+- 单元测试 `ShaderNamesTest` 扫所有着色器查这两条；新加着色器跑一下它。
 - 管线在 `RegisterRenderPipelinesEvent` 里注册，启动时就编译，第一次用时不卡。
 - 着色器里写清每个参数的含义，和 Java 里的 `Std140Builder` 顺序一一对应；数组要对齐到 `vec4`。
 
