@@ -10,8 +10,8 @@ import java.util.function.Supplier;
  * @param finishers 每种武器大类的脚本，必须有 {@link FinisherTemplate#UNARMED}
  */
 public record HeroUltimate(Map<FinisherTemplate, Supplier<? extends UltimateScript>> finishers) {
-    /** 现在只有空手一类（万象共鸣·誓约星穹破）；先是占位的一击，正式的演出由玩家最后一击那一份做。 */
-    public static final HeroUltimate PLAYER = new HeroUltimate(Map.of(FinisherTemplate.UNARMED, StandInFinisher::new));
+    /** 现在只有空手一类：「星穹誓约 · 羁绊焚天炮」（{@link HeroFinisher}）。 */
+    public static final HeroUltimate PLAYER = new HeroUltimate(Map.of(FinisherTemplate.UNARMED, HeroFinisher::new));
 
     public HeroUltimate {
         if (!finishers.containsKey(FinisherTemplate.UNARMED)) throw new IllegalArgumentException("最后一击必须有空手那一类");
