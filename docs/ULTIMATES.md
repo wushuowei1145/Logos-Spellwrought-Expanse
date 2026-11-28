@@ -75,8 +75,8 @@ WINDOW ──在场的全放过了、都演完了──▶ CUTIN ──第 26 �
 | 最后一击的威力 | 两位同伴 1 倍，三位 1.6 倍（满格），四位 2 倍；不耗魔 | `UltimateChain.finisherPower` |
 | 白梅「狐嫁入 · 水镜形代断」 | 冷却 35 秒，基准耗魔 260；完整版 107 刻、第 78 刻出手，缩短版 44 刻、第 24 刻出手（[SHIRAUME_COMPANION.md](SHIRAUME_COMPANION.md) 第 11 节） | `ShiraumeCompanion.ULTIMATE` |
 | 精灵公主 | 40 秒，300 | `ElfPrincessCompanion.ULTIMATE` |
-| 琥珀 | 35 秒，280 | `KohakuCompanion.ULTIMATE` |
-| 拉塞塔 | 40 秒，320；完整版 107 刻（出手第 63 刻）、缩短版 44 刻（第 20 刻）；馈赠「龙炎碎甲」，见 [拉塞塔](LACERTA_COMPANION.md) 第 22 节 | `LacertaCompanion.ULTIMATE`、`LacertaUltimate` |
+| 琥珀 | 35 秒，280；完整版 106 刻（第 75 刻出手）、缩短版 42 刻（第 26 刻），馈赠「炼金回流」 | `KohakuCompanion.ULTIMATE`（`KohakuUltimate`，见 [KOHAKU_COMPANION.md](KOHAKU_COMPANION.md) 第 20 节） |
+| 拉塞塔 | 40 秒，320 | `LacertaCompanion.ULTIMATE` |
 
 - **冷却**：记在主人身上（附件 `ultimate_cooldowns`，存档、死亡不清），收回再叫不会刷掉。下令那一刻开始算。
 - **耗魔**：花的是主人的 Logos 魔力。实际花多少 = 基准 × 第几段的折扣 × 前面交过来的馈赠的折扣。创造模式不花。
