@@ -62,7 +62,123 @@ public final class CompanionCommands {
                 })))
                 .then(outfits())
                 .then(princess())
-                .then(kohaku());
+                .then(kohaku())
+                .then(lacerta());
+    }
+
+    /**
+     * {@code lacerta ...}：拉塞塔（docs/LACERTA_COMPANION.md）。
+     * <pre>
+     * /alchemy companion lacerta summon            召出她（顺带立契，给一片烙着你名字的誓约逆鳞）
+     * /alchemy companion lacerta dismiss           收回
+     * /alchemy companion lacerta info              她的数值、魔力、剑招、心智
+     * /alchemy companion lacerta rest              清掉龙眠的休息时间
+     * /alchemy companion lacerta seal [枚数]       盖鳞之契（不封顶）
+     * /alchemy companion lacerta satiety 值        设她的饱腹
+     * /alchemy companion lacerta affection 值      设好感（试四档睡姿、不演了：熟悉 40、亲近 150、信赖 400、羁绊 1000）
+     * /alchemy companion lacerta withdraw          让她坠入龙眠
+     * /alchemy companion lacerta sleep 档|auto     强行定睡姿：watch、doze、rest、together，auto 照羁绊
+     * /alchemy companion lacerta move 招|auto      下一招强行出这一招（cleave_1、flame_sweep、skyfall_judgement……）
+     * </pre>
+     */
+    private static LiteralArgumentBuilder<CommandSourceStack> lacerta() {
+        CompanionDef d = Companions.LACERTA_DEF;
+        LiteralArgumentBuilder<CommandSourceStack> sleep = Commands.literal("sleep").then(Commands.literal("auto").executes(c -> {
+            LacertaRest.forceTier = null;
+            return 1;
+        }));
+        for (LacertaRest.Tier t : LacertaRest.Tier.values()) {
+            sleep.then(Commands.literal(t.name().toLowerCase(java.util.Locale.ROOT)).executes(c -> {
+                LacertaRest.forceTier = t;
+                return 1;
+            }));
+        }
+        LiteralArgumentBuilder<CommandSourceStack> move = Commands.literal("move").then(Commands.literal("auto").executes(c -> {
+            LacertaMind.forceMove = null;
+            return 1;
+        }));
+        for (String m : new String[]{"cleave_1", "rend_2", "ascend_3", "cataclysm_4", "crimson_thrust", "vortex_rush", "flame_sweep", "skyfall_judgement",
+                "cross_rend", "dragon_fang"}) {
+            move.then(Commands.literal(m).executes(c -> {
+                LacertaMind.forceMove = m;
+                return 1;
+            }));
+        }
+        return Commands.literal("lacerta")
+                .then(Commands.literal("summon").executes(c -> {
+                    ServerPlayer p = c.getSource().getPlayerOrException();
+                    Companions.grantPact(p, d);
+                    if (!DragonScaleItem.carries(p)) {
+                        var scale = DragonScaleItem.bound(p);
+                        if (!p.getInventory().add(scale)) p.drop(scale, false);
+                    }
+                    Component failed = Companions.summon(p, d, null);
+                    if (failed != null) c.getSource().sendFailure(failed);
+                    return failed == null ? 1 : 0;
+                }))
+                .then(Commands.literal("dismiss").executes(c -> Companions.dismiss(c.getSource().getPlayerOrException(), d) ? 1 : 0))
+                .then(Commands.literal("rest").executes(c -> {
+                    ServerPlayer p = c.getSource().getPlayerOrException();
+                    Companions.wake(p, d);
+                    p.getCooldowns().removeCooldown(p.getCooldowns().getCooldownGroup(DragonScaleItem.blank()));
+                    c.getSource().sendSuccess(() -> Component.literal("拉塞塔醒了"), false);
+                    return 1;
+                }))
+                .then(Commands.literal("seal").executes(c -> lacertaSeal(c.getSource(), 1))
+                        .then(Commands.argument("count", IntegerArgumentType.integer(1, 30)).executes(c ->
+                                lacertaSeal(c.getSource(), IntegerArgumentType.getInteger(c, "count")))))
+                .then(Commands.literal("satiety").then(Commands.argument("value", FloatArgumentType.floatArg(0, CompanionBond.SATIETY_MAX)).executes(c -> {
+                    Companions.setSatiety(c.getSource().getPlayerOrException(), d, FloatArgumentType.getFloat(c, "value"));
+                    return 1;
+                })))
+                .then(Commands.literal("affection").then(Commands.argument("value", FloatArgumentType.floatArg(0)).executes(c -> {
+                    ServerPlayer p = c.getSource().getPlayerOrException();
+                    Companions.setBond(p, d, Companions.bond(p, d).withAffection(FloatArgumentType.getFloat(c, "value")));
+                    return 1;
+                })))
+                .then(Commands.literal("withdraw").executes(c -> {
+                    LacertaCompanion e = Companions.lacerta(c.getSource().getPlayerOrException());
+                    if (e == null || !(e.level() instanceof net.minecraft.server.level.ServerLevel level)) {
+                        c.getSource().sendFailure(Component.literal("拉塞塔不在外面"));
+                        return 0;
+                    }
+                    e.startWithdraw(level);
+                    return 1;
+                }))
+                .then(sleep)
+                .then(move)
+                .then(Commands.literal("info").executes(c -> lacertaInfo(c.getSource())));
+    }
+
+    private static int lacertaSeal(CommandSourceStack src, int count) throws CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        Companions.grantPact(p, Companions.LACERTA_DEF);
+        int n = 0;
+        for (int i = 0; i < count; i++) n = Companions.addSeal(p, Companions.LACERTA_DEF);
+        int seals = n;
+        src.sendSuccess(() -> Component.literal("鳞之契 " + seals + " 枚，防御向继承 " + Math.round(LacertaStats.tankRatio(seals) * 100) + "%"), false);
+        return 1;
+    }
+
+    private static int lacertaInfo(CommandSourceStack src) throws CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        CompanionDef d = Companions.LACERTA_DEF;
+        var bond = Companions.bond(p, d);
+        src.sendSuccess(() -> Component.literal(String.format("立契 %s，鳞之契 %d，防御向继承 %.0f%%、魔力法强继承 %.0f%%；好感 %.1f（%s），饱腹 %.1f；龙眠还剩 %d 秒",
+                bond.pact() ? "是" : "否", bond.seals(), LacertaStats.tankRatio(bond.seals()) * 100, LacertaStats.magicRatio(bond.seals()) * 100,
+                bond.affection(), CompanionBond.Stage.of(bond.affection()), bond.satiety(), (Companions.restLeft(p, d) + 19) / 20)), false);
+        LacertaCompanion c = Companions.lacerta(p);
+        if (c == null) {
+            src.sendSuccess(() -> Component.literal("她现在不在外面"), false);
+            return 1;
+        }
+        var parts = c.parts();
+        CompanionMind mind = c.mind();
+        src.sendSuccess(() -> Component.literal(String.format("生命 %.1f/%.1f；攻击 %.1f（+剑 %.0f）；护甲 %.1f（属性 %.1f）韧性 %.1f；超限减伤 %.0f%%；魔力 %.0f/%.0f；法强 ×%.2f；表情 %s；心智：%s",
+                c.getHealth(), c.getMaxHealth(), c.attack(), LacertaBlade.SWORD, parts.armor().total(), c.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR),
+                parts.toughness().total(), LacertaStats.overflow(parts.armor().total(), parts.toughness().total()) * 100, c.mana(), c.maxMana(), c.spellPower(),
+                c.npcMiscAnimation(), mind == null ? "-" : mind.describe())), false);
+        return 1;
     }
 
     /**

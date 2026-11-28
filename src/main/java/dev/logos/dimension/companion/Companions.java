@@ -77,6 +77,11 @@ public final class Companions {
             EntityType.Builder.of(KohakuCompanion::new, MobCategory.MISC).sized(.6f, 1.3f).eyeHeight(.96f).clientTrackingRange(10)
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("kohaku_companion"))));
 
+    /** 拉塞塔：发顶约 1.4 格、角尖约 1.5 格（2 倍制作，渲染缩放 0.5）；眼睛约 1.05 格。真龙不怕火和岩浆。 */
+    public static final Supplier<EntityType<LacertaCompanion>> LACERTA = TYPES.register("lacerta_companion", () ->
+            EntityType.Builder.of(LacertaCompanion::new, MobCategory.MISC).sized(.6f, 1.35f).eyeHeight(1.05f).fireImmune().clientTrackingRange(10)
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("lacerta_companion"))));
+
     /** 她倒下时留在原地、替她烧掉的形代。不存档。 */
     public static final Supplier<EntityType<Katashiro>> KATASHIRO = TYPES.register("shiraume_katashiro", () ->
             EntityType.Builder.<Katashiro>of(Katashiro::new, MobCategory.MISC).sized(.4f, .1f).clientTrackingRange(8).noSave()
@@ -198,6 +203,12 @@ public final class Companions {
     public static final Supplier<AttachmentType<KohakuDays>> KOHAKU_DAYS = ATTACHMENTS.register("kohaku_days",
             () -> AttachmentType.builder(() -> KohakuDays.NONE).serialize(KohakuDays.CODEC.fieldOf("days")).copyOnDeath().build());
 
+    public static final Supplier<AttachmentType<Bond>> LACERTA_BOND = bond("lacerta_bond");
+    public static final Supplier<AttachmentType<CompanionPouch>> LACERTA_POUCH = pouch("lacerta_pouch");
+    /** 拉塞塔和你的日子：哪天夸过她、哪天让她看过武器（{@link LacertaDays}）。 */
+    public static final Supplier<AttachmentType<LacertaDays>> LACERTA_DAYS = ATTACHMENTS.register("lacerta_days",
+            () -> AttachmentType.builder(() -> LacertaDays.NONE).serialize(LacertaDays.CODEC.fieldOf("days")).copyOnDeath().build());
+
     private static Supplier<AttachmentType<Bond>> bond(String id) {
         return ATTACHMENTS.register(id, () -> AttachmentType.builder(() -> Bond.NONE).serialize(Bond.CODEC.fieldOf("bond")).copyOnDeath().build());
     }
@@ -213,7 +224,9 @@ public final class Companions {
     /** 全部同伴（登录、重生、换维度、下线时一位位看）。 */
     public static final CompanionDef KOHAKU_DEF = new CompanionDef(KohakuCompanion.ID, KOHAKU, KOHAKU_BOND, KOHAKU_POUCH,
             KohakuCompanion.GROWTH, KohakuCompanion.REST_TICKS, KohakuCompanion.MAX_SEALS);
-    public static final List<CompanionDef> ALL = List.of(SHIRAUME_DEF, PRINCESS_DEF, KOHAKU_DEF);
+    public static final CompanionDef LACERTA_DEF = new CompanionDef(LacertaCompanion.ID, LACERTA, LACERTA_BOND, LACERTA_POUCH,
+            LacertaCompanion.GROWTH, LacertaCompanion.REST_TICKS, LacertaCompanion.MAX_SEALS);
+    public static final List<CompanionDef> ALL = List.of(SHIRAUME_DEF, PRINCESS_DEF, KOHAKU_DEF, LACERTA_DEF);
 
     /** 等到下一刻再叫出来的同伴（上线、重生、换维度之后）：「主人 UUID|同伴 ID」 → 还要等几刻。 */
     private static final Map<String, Integer> PENDING = new HashMap<>();
@@ -226,6 +239,7 @@ public final class Companions {
         KatashiroItem.register(bus);
         BaggedWorldTreeItem.register(bus);
         PawSovereignItem.register(bus);
+        DragonScaleItem.register(bus);
         KohakuCompany.register(bus);
         CompanionLines.register(bus);
         CompanionTalk.register(bus);
@@ -233,10 +247,12 @@ public final class Companions {
         ShiraumeTalk.init();
         PrincessTalk.init();
         KohakuTalk.init();
+        LacertaTalk.init();
         bus.addListener((EntityAttributeCreationEvent event) -> {
             event.put(SHIRAUME.get(), ShiraumeCompanion.createAttributes().build());
             event.put(ELF_PRINCESS.get(), ElfPrincessCompanion.createAttributes().build());
             event.put(KOHAKU.get(), KohakuCompanion.createAttributes().build());
+            event.put(LACERTA.get(), LacertaCompanion.createAttributes().build());
         });
         NeoForge.EVENT_BUS.addListener(Companions::onBreak);
         NeoForge.EVENT_BUS.addListener(Companions::onPlace);
@@ -254,6 +270,7 @@ public final class Companions {
                 learn(p, false);
                 BaggedWorldTreeItem.refresh(p);
                 PawSovereignItem.refresh(p);
+                DragonScaleItem.refresh(p);
             }
         });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerRespawnEvent e) -> {
@@ -303,6 +320,11 @@ public final class Companions {
     /** 琥珀此刻在外面的那一位。 */
     public static @Nullable KohakuCompanion kohaku(ServerPlayer owner) {
         return (KohakuCompanion) out(owner, KOHAKU_DEF);
+    }
+
+    /** 拉塞塔此刻在外面的那一位。 */
+    public static @Nullable LacertaCompanion lacerta(ServerPlayer owner) {
+        return (LacertaCompanion) out(owner, LACERTA_DEF);
     }
 
     /** 还要休息多少刻（0 表示随时能叫）。 */
@@ -552,9 +574,9 @@ public final class Companions {
     private static void onProtect(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Pre e) {
         if (!(e.getEntity() instanceof CompanionEntity c) || !(c.level() instanceof ServerLevel level) || e.getNewDamage() <= 0) return;
         ServerPlayer owner = c.ownerPlayer();
-        if (owner == null) return;
-        float protection = CompanionStats.protection(level, owner, e.getSource(), c.def().growth().armorRatio(c.seals()));
-        if (protection > 0) e.setNewDamage(net.minecraft.world.damagesource.CombatRules.getDamageAfterMagicAbsorb(e.getNewDamage(), protection));
+        float protection = owner == null ? 0 : CompanionStats.protection(level, owner, e.getSource(), c.protectionRatio());
+        float after = c.reduceDamage(e.getSource(), e.getNewDamage(), protection);
+        if (after != e.getNewDamage()) e.setNewDamage(after);
     }
 
     private static void onDeath(LivingDeathEvent e) {
@@ -569,6 +591,12 @@ public final class Companions {
         if (dead instanceof KohakuCompanion kohaku && kohaku.level() instanceof ServerLevel level) {
             e.setCanceled(true);
             kohaku.startWithdraw(level);
+            return;
+        }
+        // 拉塞塔也不会死：坠入龙眠，化作火星回到龙鳞里
+        if (dead instanceof LacertaCompanion lacerta && lacerta.level() instanceof ServerLevel level) {
+            e.setCanceled(true);
+            lacerta.startWithdraw(level);
             return;
         }
         if (dead instanceof ServerPlayer p) {

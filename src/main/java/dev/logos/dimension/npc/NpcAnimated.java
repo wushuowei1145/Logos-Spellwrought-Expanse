@@ -20,6 +20,14 @@ public interface NpcAnimated extends GeoEntity {
     }
 
     /**
+     * 主控制器（走、跑、待机……）换状态时过渡几刻。大多是 2 刻；待机和走路手的位置差得多的（拉塞塔待机叉腰、走路两手摆）给长一点，
+     * 免得一起步手就跳过去。实体造好以后不再变（控制器只在注册时读一次）。
+     */
+    default int npcMainTransition() {
+        return 2;
+    }
+
+    /**
      * 剧情动作（对应 TLM 的 misc 控制器，例如 {@code wave}、{@code talk}）；没有时返回 null。
      * 名字不在动画文件里时不播放。
      */

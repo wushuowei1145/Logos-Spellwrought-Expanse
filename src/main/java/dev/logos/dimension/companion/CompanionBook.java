@@ -111,11 +111,12 @@ public final class CompanionBook {
         return out;
     }
 
-    /** 画她时穿哪一套：琥珀的记在你身上（对话里换的）；白梅在外面就是她身上那一套，不然巫女服；精灵公主只有一套。 */
+    /** 画她时穿哪一套：琥珀的记在你身上（对话里换的）；白梅在外面就是她身上那一套，不然巫女服；精灵公主、拉塞塔只有一套。 */
     private static String outfit(ServerPlayer p, CompanionDef d, CompanionEntity c) {
         if (d == Companions.KOHAKU_DEF) return p.getData(Companions.KOHAKU_DAYS).outfit();
         if (c instanceof ShiraumeCompanion s) return s.outfit().id;
         if (d == Companions.SHIRAUME_DEF) return CompanionOutfit.MIKO.id;
+        if (d == Companions.LACERTA_DEF) return LacertaTalk.OUTFIT;
         return "";
     }
 }

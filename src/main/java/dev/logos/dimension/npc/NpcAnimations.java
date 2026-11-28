@@ -254,7 +254,7 @@ public final class NpcAnimations {
         for (int i = 0; i < PARALLEL_COUNT; i++) {
             controllers.add(parallel(npc, String.format("pre_parallel_%d_controller", i), "pre_parallel" + i));
         }
-        controllers.add(new AnimationController<T>("main", 2, test -> {
+        controllers.add(new AnimationController<T>("main", npc.npcMainTransition(), test -> {
             Set<String> names = available(npc.npcAnimationAsset());
             String name = mainState(Snapshot.of(npc, npc.isNpcSitting()), names::contains);
             if (name == null) return PlayState.STOP;

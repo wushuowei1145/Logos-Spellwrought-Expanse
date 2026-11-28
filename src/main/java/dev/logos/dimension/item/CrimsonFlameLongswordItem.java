@@ -35,7 +35,8 @@ import net.neoforged.neoforge.registries.DeferredItem;
  */
 public final class CrimsonFlameLongswordItem extends Item implements CombatWeapon.Holder {
     private static final Identifier MOVESET = LogosDimension.id("crimson_flame_longsword");
-    private static final int COMBAT_ID = 60;
+    /** 战斗武器编号（拉塞塔手里的那把也按它取网格画，client/companion/CrimsonOnBone）。 */
+    public static final int COMBAT_ID = 60;
     private static final double REACH = 0.5;
     private final CombatWeapon weapon;
 

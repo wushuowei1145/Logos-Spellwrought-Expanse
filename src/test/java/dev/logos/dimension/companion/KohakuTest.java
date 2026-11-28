@@ -423,13 +423,13 @@ class KohakuTest {
         assertTrue(back.opens() && !back.done());
     }
 
-    /** 三位同伴各有自己的契和包袱。 */
+    /** 四位同伴各有自己的契和包袱。 */
     @Test void eachCompanionHasHerOwnBond() {
         assertEquals("kohaku", Companions.KOHAKU_DEF.id());
         assertNotSame(Companions.KOHAKU_DEF.bond(), Companions.PRINCESS_DEF.bond());
         assertNotSame(Companions.KOHAKU_DEF.bond(), Companions.SHIRAUME_DEF.bond());
         assertNotSame(Companions.KOHAKU_DEF.pouch(), Companions.PRINCESS_DEF.pouch());
         assertEquals(Companions.KOHAKU_DEF, Companions.def("kohaku"));
-        assertEquals(3, Companions.ALL.size());
+        assertEquals(4, Companions.ALL.size());
     }
 }

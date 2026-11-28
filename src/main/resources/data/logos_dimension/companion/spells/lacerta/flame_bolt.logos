@@ -1,0 +1,9 @@
+; 掌心赤焰（拉塞塔本来就会，docs/LACERTA_COMPANION.md 第 6.3 节）：掌心一簇龙炎直线掷出去，专打近战够不着的——飞着的、站在高处的、隔着水的。
+; 伤害是龙炎（护甲、抗火挡不住），再乘她的法术强度（她身上的 logos:spell_power，刻意压得低：0.6 起，长得慢）。
+; 弹射物不分敌我：碰到的先看是不是敌人（主人、主人的使魔和宠物不算），只打敌人。「攻击玩家」开着时代码在 :trigger cast 后面加上 :players true。
+; 花她 30 点魔力（LacertaCompanion.FLAME_COST），3 秒一发。
+(spell :name "掌心赤焰" :mana 30 :trigger cast
+  (projectile :speed 2.0 :size 0.3
+    (on-hit
+      (if (is target (kind enemies))
+        (damage target 10 dragonfire)))))
