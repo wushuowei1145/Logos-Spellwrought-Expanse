@@ -124,6 +124,7 @@ public final class LacertaDragon {
     /** 变回人形（你让的、打完了、魔力不够、龙眠）：下次以人形登场。巨龙形态下收回、下线的不走这里（{@link LacertaCompanion#rememberForm}）。 */
     void revert(ServerLevel level, @Nullable ServerPlayer p) {
         if (!c.isDragonForm()) return;
+        c.rest.rise(level, true);
         stopBreath(level);
         clawAt = -1;
         c.setMove("");
@@ -213,6 +214,11 @@ public final class LacertaDragon {
     }
 
     // ---------------------------------------------------------------- 重爪裂击
+
+    /** 正在挥爪（{@code claw_attack} 播着）。 */
+    boolean clawing() {
+        return clawAt >= 0;
+    }
 
     boolean clawReady(long now) {
         return clawAt < 0 && breathAt < 0 && now >= nextClaw && appearAt < 0;

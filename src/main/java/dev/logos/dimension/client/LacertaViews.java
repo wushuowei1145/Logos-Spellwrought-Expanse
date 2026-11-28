@@ -79,6 +79,7 @@ public abstract class LacertaViews extends KohakuSleepViews {
             p.setData(Companions.LACERTA_POUCH, new CompanionPouch());
             p.setData(Companions.LACERTA_DAYS, LacertaDays.NONE);
             LacertaCompanion.sleepForTest(null);
+            LacertaCompanion.lifeForTest(null, false, false);
             LacertaCompanion.forceMoveForTest(null);
             p.getCooldowns().removeCooldown(p.getCooldowns().getCooldownGroup(DragonScaleItem.blank()));
             p.getInventory().clearContent();
@@ -636,7 +637,7 @@ public abstract class LacertaViews extends KohakuSleepViews {
                     .step("聊天", ctx -> CompanionTalkViews.talk().choose("chat")).ticks(6)
                     .check("她自己的话题", ctx -> CompanionTalkViews.talk().options().equals(List.of("chat.scale", "chat.food", "chat.slept",
                             "chat.pauldron", "chat.knight", "chat.cold", "chat.airships", "chat.praise", "chat.weapon", "chat.past", "chat.seals", "chat.us",
-                            "chat.form", "chat.rest", "back")))
+                            "chat.roast", "chat.form", "chat.rest", "back")))
                     .step("右肩甲的来历", ctx -> CompanionTalkViews.talk().choose("chat.pauldron"))
                     .waitUntil("她回话", ctx -> CompanionTalkViews.said("pauldron_1"))
                     .step("跳到最后", ctx -> CompanionTalkViews.talk().skip()).ticks(6)
@@ -968,7 +969,7 @@ public abstract class LacertaViews extends KohakuSleepViews {
                         standAt(p, new Vec3(-8.5, FLOOR + 1, -8.5));
                         fillMana(p, 5000);
                         Companions.grantPact(p, Companions.LACERTA_DEF);
-                        p.setData(Companions.LACERTA_DAYS, new dev.logos.dimension.companion.LacertaDays(-1, -1, true));
+                        p.setData(Companions.LACERTA_DAYS, dev.logos.dimension.companion.LacertaDays.NONE.withDragonForm(true));
                         ServerLevel level = ctx.server().overworld();
                         z1 = PrincessViews.helmeted(CompanionLifeViews.spawn(level, EntityType.ZOMBIE, new Vec3(10.5, FLOOR + 1, 12.5), 180));
                         z2 = PrincessViews.helmeted(CompanionLifeViews.spawn(level, EntityType.ZOMBIE, new Vec3(12.5, FLOOR + 1, 10.5), 180));
@@ -1010,11 +1011,13 @@ public abstract class LacertaViews extends KohakuSleepViews {
                     .waitUntilServer("入场播完", ctx -> arrived(c))
                     .server("变身", ctx -> c.transformForTest(ctx.player(), false))
                     .ticks(20)
-                    .server("空手右键她", ctx -> {
+                    .server("从她侧面空手右键（头前是摸头）", ctx -> {
                         ServerPlayer p = ctx.player();
                         p.removeAllEffects();
                         p.setHealth(p.getMaxHealth());
                         p.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                        c.setYRot(90);
+                        c.yBodyRot = 90;
                         c.interact(p, InteractionHand.MAIN_HAND, Vec3.ZERO);
                     })
                     .waitUntilServer("骑上去了", ctx -> ctx.player().getVehicle() == c)

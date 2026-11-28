@@ -2302,5 +2302,22 @@
   "line.logos_dimension.lacerta.talk.form_dragon": "好吧，就让你看看本龙真正的样子。……不准笑！",
   "line.logos_dimension.lacerta.talk.form_human": "变回来了。……刚才那副样子，你、你觉得怎么样？",
   "line.logos_dimension.lacerta.talk.form_room": "这里太挤了，展不开翅膀。去开阔的地方再说。",
-  "line.logos_dimension.lacerta.talk.form_mana": "你的魔力撑不住本龙的真身……别逞强。"
+  "line.logos_dimension.lacerta.talk.form_mana": "你的魔力撑不住本龙的真身……别逞强。",
+  "effect.logos_dimension.lacerta_warmth": "绯翼余温",
+  "talk.logos_dimension.lacerta.option.chat.roast": "帮我烤一下",
+  "talk.logos_dimension.lacerta.skill.hoard.name": "真龙宝藏窝",
+  "talk.logos_dimension.lacerta.skill.hoard.icon": "宝",
+  "talk.logos_dimension.lacerta.skill.hoard.desc": "你在家闲着时，她认下身边的一块钻石块、金块或下界合金块，坐上去守着：有一边旁边空着就坐在那条边上，四边都挨着方块就坐在顶上。巨龙形态盘成一圈把它圈在怀里。每天头一次守满一会儿 +%s 羁绊。",
+  "talk.logos_dimension.lacerta.skill.warmth.name": "绯翼余温",
+  "talk.logos_dimension.lacerta.skill.warmth.icon": "暖",
+  "talk.logos_dimension.lacerta.skill.warmth.desc": "她守着你睡过一整夜，醒来以后 5 分钟抗火、不怕冻，近战伤害多 %s%%、挨打少 %s%%（随羁绊涨）。可以和琥珀相伴一起有。",
+  "line.logos_dimension.lacerta.hoard_claim": "这堆亮晶晶归本龙帮你看着了。……哼，别想偷偷拿走！",
+  "line.logos_dimension.lacerta.cold_snuggle": "才、才不是本龙怕冷！是怕你这个脆弱的人类冻成冰棍……靠过来点，手伸出来暖着！",
+  "line.logos_dimension.lacerta.give_food": "……喏，给你。才不是特意留的，只是本龙吃不下了！",
+  "line.logos_dimension.lacerta.mine": "我的！",
+  "line.logos_dimension.lacerta.present": "这、这个最闪的……给你。本龙的宝藏，你帮我收着！",
+  "line.logos_dimension.lacerta.jealous": "……哼，既然你这么忙，那本龙就不打扰了！",
+  "line.logos_dimension.lacerta.talk.roast_none": "包袱里连块生肉都没有，你让本龙烤空气吗？",
+  "line.logos_dimension.lacerta.talk.roast_burnt": "……绝、绝对是这风向不对！火候是你的问题！",
+  "line.logos_dimension.lacerta.talk.roast_done": "火候刚好……嗯，咸淡也正好。这些热乎的，给你。"
 }

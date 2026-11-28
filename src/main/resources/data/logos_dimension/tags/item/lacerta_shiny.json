@@ -1,0 +1,19 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:gold_nugget",
+    "minecraft:gold_ingot",
+    "minecraft:raw_gold",
+    "minecraft:gold_block",
+    "minecraft:golden_apple",
+    "minecraft:enchanted_golden_apple",
+    "minecraft:emerald",
+    "minecraft:emerald_block",
+    "minecraft:diamond",
+    "minecraft:diamond_block",
+    "minecraft:amethyst_shard",
+    "minecraft:netherite_scrap",
+    "minecraft:netherite_ingot",
+    "minecraft:netherite_block"
+  ]
+}

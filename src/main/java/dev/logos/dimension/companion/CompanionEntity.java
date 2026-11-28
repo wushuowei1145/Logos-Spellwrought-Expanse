@@ -485,6 +485,7 @@ public abstract class CompanionEntity extends PathfinderMob implements NpcAnimat
             var b = bond(sp);
             long day = level().getOverworldClockTime() / 24000;
             setBond(sp, b.withAffection(b.affection() + CompanionBond.pat(b.patsOn(day))).withPats(day, b.patsOn(day) + 1));
+            Companions.favoured(sp, this);
             return InteractionResult.SUCCESS;
         }
         if (blankToken(held)) {
@@ -506,7 +507,10 @@ public abstract class CompanionEntity extends PathfinderMob implements NpcAnimat
                 CompanionLines.say(this, sp, "full", 40);
                 return InteractionResult.SUCCESS;
             }
-            if (startEating(held, true) && !sp.getAbilities().instabuild) held.shrink(1);
+            if (startEating(held, true)) {
+                if (!sp.getAbilities().instabuild) held.shrink(1);
+                Companions.favoured(sp, this);
+            }
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;
@@ -516,6 +520,12 @@ public abstract class CompanionEntity extends PathfinderMob implements NpcAnimat
     protected @Nullable InteractionResult interactSpecial(ServerPlayer sp) {
         return null;
     }
+
+    /** 主人当着她的面摸了、喂了另一位同伴 {@code other}（拉塞塔：偶尔吃醋）。 */
+    protected void ownerFavoured(ServerPlayer owner, CompanionEntity other) {}
+
+    /** 她捡起了地上的 {@code stack}（已放进包袱；拉塞塔：亮晶晶的喊「我的！」）。 */
+    protected void lootTaken(ServerPlayer owner, ItemStack stack) {}
 
     /** 这是她的空白信物（拿着右键她盖一枚契印）。 */
     protected abstract boolean blankToken(ItemStack held);

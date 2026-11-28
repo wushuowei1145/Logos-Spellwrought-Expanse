@@ -241,6 +241,7 @@ public final class Companions {
         PawSovereignItem.register(bus);
         DragonScaleItem.register(bus);
         KohakuCompany.register(bus);
+        LacertaWarmth.register(bus);
         CompanionLines.register(bus);
         CompanionTalk.register(bus);
         CompanionBook.register(bus);
@@ -388,6 +389,14 @@ public final class Companions {
     /** 让白梅回去：挥挥手，化作花瓣散去。 */
     public static boolean dismiss(ServerPlayer owner) {
         return dismiss(owner, SHIRAUME_DEF);
+    }
+
+    /** 主人摸了、喂了 {@code c}：告诉她身边（16 格内）主人的别的同伴（拉塞塔会吃醋）。 */
+    static void favoured(ServerPlayer owner, CompanionEntity c) {
+        for (CompanionDef d : ALL) {
+            CompanionEntity other = out(owner, d);
+            if (other != null && other != c && other.distanceTo(c) <= 16 && other.hasLineOfSight(c)) other.ownerFavoured(owner, c);
+        }
     }
 
     /** 让 {@code d} 回去：挥挥手，散去。 */
