@@ -85,6 +85,11 @@ public final class UltimateCast {
         return stage;
     }
 
+    /** 演缩短版（连携里第二位起）。 */
+    public boolean condensed() {
+        return UltimateDef.condensed(stage);
+    }
+
     public UltimateScript script() {
         return script;
     }

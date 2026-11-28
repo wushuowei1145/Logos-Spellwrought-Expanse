@@ -2,6 +2,8 @@ package dev.logos.dimension.client.companion;
 
 import dev.logos.dimension.client.cutin.CutinMotes;
 import dev.logos.dimension.client.cutin.CutinShot;
+import dev.logos.dimension.client.ultimate.StandInShow;
+import dev.logos.dimension.client.ultimate.UltimateFilm;
 import dev.logos.dimension.client.ultimate.UltimateShow;
 import dev.logos.dimension.companion.CompanionOutfit;
 import dev.logos.dimension.companion.CompanionSheet;
@@ -99,8 +101,8 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 if (c != null) c.showcase(CompanionOutfit.byId(sheet.outfit()), "face_kitsune", "cutin", true);
                 return c;
             }, 0, new CutinShot(46, .14f, 14, 9, -.05f), new CutinMotes(CutinMotes.Kind.FOXFIRE, 0xFFC2E0)),
-            // 奥义「绯梅落 · 九尾残月斩」的画面：专属演出做好以前没有客户端画面
-            UltimateShow.NONE);
+            // 奥义「绯梅落 · 九尾残月斩」的画面：专属过场做好以前先用占位的那一段
+            StandInShow.of(UltimateFilm.Wipe.PETAL, 0xFFC2E0, 0xF7B6D6));
 
     /**
      * 精灵公主：夜里的林子（深绿到墨绿），薄荷绿当主色，金线，被动能力用荷花粉；纹是世界树的叶（一圈细环、四片菱形的叶、正中一颗生命晶）。
@@ -123,8 +125,8 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 }
                 return c;
             }, 28, new CutinShot(38, .2f, 4, 5, 0), new CutinMotes(CutinMotes.Kind.LEAF, 0xA8F0C6)),
-            // 奥义「万分之一 · 世界树祈愿矢」的画面：专属演出做好以前没有客户端画面
-            UltimateShow.NONE);
+            // 奥义「万分之一 · 世界树祈愿矢」的画面：专属过场做好以前先用占位的那一段
+            StandInShow.of(UltimateFilm.Wipe.LEAF, 0xA8F0C6, 0xF2D58A));
 
     /**
      * 琥珀：温室午后的咖啡色到深棕，琥珀色当主色，金线，奶油色正文，被动能力用淡紫（星辰花）；纹是一只琥珀色的猫爪按在圆形炼成阵上。
@@ -147,8 +149,8 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 }
                 return c;
             }, 0, new CutinShot(42, .1f, -10, 7, .05f), new CutinMotes(CutinMotes.Kind.TALISMAN, 0xF2D06E)),
-            // 奥义「星辰花炼成 · 凝时琥珀」的画面：专属演出做好以前没有客户端画面
-            UltimateShow.NONE);
+            // 奥义「星辰花炼成 · 凝时琥珀」的画面：专属过场做好以前先用占位的那一段
+            StandInShow.of(UltimateFilm.Wipe.PAPER, 0xF2D06E, 0xF6EEDD));
 
     /**
      * 拉塞塔：熔岩夜里的酒红到深绯，珊瑚红当主色（翼骨与龙鳞），金线（角尖鎏金），被动能力用骑士甲的冷银，奶油色正文；
@@ -172,8 +174,8 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 }
                 return c;
             }, 0, new CutinShot(50, .08f, 8, 4, -.08f), new CutinMotes(CutinMotes.Kind.EMBER, 0xF6A04D)),
-            // 奥义「绯穹裁决 · 炽龙陨星破」的画面：专属演出做好以前没有客户端画面
-            UltimateShow.NONE);
+            // 奥义「绯穹裁决 · 炽龙陨星破」的画面：专属过场做好以前先用占位的那一段
+            StandInShow.of(UltimateFilm.Wipe.SMOKE, 0x2A2224, 0xF6A04D));
 
     /** 盾形的龙鳞，正中一簇龙炎：一圈细环，环里一枚大菱形（鳞），鳞的上半一枚小菱形、下面一点（火苗）。 */
     static void dragonScale(GuiGraphicsExtractor g, float cx, float cy, float r, int color) {

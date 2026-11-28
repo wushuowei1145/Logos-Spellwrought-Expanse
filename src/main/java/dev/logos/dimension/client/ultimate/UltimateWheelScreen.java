@@ -66,6 +66,7 @@ public final class UltimateWheelScreen extends Screen {
             st.crest().draw(g, x, y, r * .6f, cooling || m.released() ? CompanionUi.alpha(st.accent(), .4f) : st.accent());
             if (cooling && m.cooldown() > 0) UltimateHud.pie(g, x, y, r - 2, left / m.cooldown(), 0x99000000);
             if (m.released()) CompanionUi.diamond(g, Math.round(x + r * .62f), Math.round(y + r * .62f), 5, UltimateHud.GOLD);
+            if (m.queued()) CompanionUi.ring(g, x, y, r + 3, 1.5f, CompanionUi.alpha(UltimateHud.GOLD, .6f));
         }
         if (hovered >= 0) {
             UltimatePayloads.Member m = members.get(hovered);

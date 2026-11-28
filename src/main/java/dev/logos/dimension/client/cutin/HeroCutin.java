@@ -1,6 +1,8 @@
 package dev.logos.dimension.client.cutin;
 
 import dev.logos.dimension.LogosDimension;
+import dev.logos.dimension.client.ultimate.StandInShow;
+import dev.logos.dimension.client.ultimate.UltimateFilm;
 import dev.logos.dimension.client.ultimate.UltimateShow;
 import dev.logos.dimension.ultimate.FinisherTemplate;
 import java.util.Map;
@@ -33,7 +35,8 @@ public record HeroCutin(Pose pose, float turn, CutinShot shot, CutinMotes motes,
 
     /** 暖金的格子，金色星芒；镜头从右往左扫、慢慢升，略歪。 */
     public static final HeroCutin PLAYER = new HeroCutin(new Pose(-1.3f, .09f, .12f, -.55f, -.3f, -.18f, .12f, -.06f, -.35f, .3f), -18,
-            new CutinShot(42, .14f, -10, 4, .04f), new CutinMotes(CutinMotes.Kind.GLINT, 0xF2D58A), 0xF2D58A, 0x1C1A30, Map.of());
+            new CutinShot(42, .14f, -10, 4, .04f), new CutinMotes(CutinMotes.Kind.GLINT, 0xF2D58A), 0xF2D58A, 0x1C1A30,
+            Map.of(FinisherTemplate.UNARMED, StandInShow.of(UltimateFilm.Wipe.STAR, 0xF2D58A, 0xFFFFFF)));
 
     public HeroCutin {
         finishers = Map.copyOf(finishers);
