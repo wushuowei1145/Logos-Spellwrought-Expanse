@@ -14,6 +14,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.NeutralMob;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Enemy;
@@ -96,7 +98,14 @@ final class LacertaMind extends CompanionMind {
     protected void scoreOwn(ServerLevel level, ServerPlayer p, OwnerWatch w, long now, Situation s) {
         // 睡觉、陪你坐都走她自己的（LacertaRest），不用通用的休息；巨龙形态先不坐不睡
         scores.put(Kind.REST, 0.0);
-        scores.put(Kind.LOUNGE, l.isDragonForm() ? 0 : l.rest.score(p, s.doing(), s.calm()));
+        // 藏宝癖：地上有亮晶晶的，先去抢（压过跟着你）
+        ItemEntity loot = loot();
+        if (loot != null && LacertaLife.shiny(loot.getItem())) scores.put(Kind.SCAVENGE, SHINY_LOOT);
+        // 喷着龙炎、挥着爪时不陪坐
+        double lounge = l.dragon.breathing() || l.dragon.clawing() ? 0 : l.rest.score(level, p, s.doing(), s.calm(), now);
+        // 附近有掉落要捡时先捡，再去陪你坐（同琥珀）；你睡着时不管
+        if (!p.isSleeping() && lounge > 0 && scores.getOrDefault(Kind.SCAVENGE, 0.0) > 0) lounge = Math.min(lounge, LOUNGE_AFTER_LOOT);
+        scores.put(Kind.LOUNGE, lounge);
     }
 
     /** 通用的挑法之外，再往外找一圈：你周围 18 格（优先近战 24 格）里冲着你、她或别的同伴来的，和会主动伤人的敌对生物。 */
@@ -155,6 +164,12 @@ final class LacertaMind extends CompanionMind {
             calmSince = -1;
         }
         taunted.keySet().removeIf(m -> !m.isAlive() || now > taunted.get(m));
+        // 她自己喷着龙炎、目标没了（打倒了、跑了、被收走）：收住（只有打的时候才叫停，不收会一直喷）；骑着时由你松开右键收
+        if (breathUntil >= 0 && (foe == null || !l.dragon.breathing())) {
+            if (foe == null && l.dragon.breathing() && !l.isVehicle()) l.dragon.stopBreath(level);
+            breathUntil = -1;
+        }
+        l.life.think(level, p, now, foe == null);
     }
 
     @Override
@@ -182,7 +197,7 @@ final class LacertaMind extends CompanionMind {
         return l.flight.catching() || l.flight.reflex(level, p, dist);
     }
 
-    /** 你在飞就跟着飞，不然照地上的走。 */
+    /** 你在飞就跟着飞，不然照地上的走；冷了、馋了贴着你走。 */
     @Override
     protected void follow(ServerPlayer p, long now) {
         if (!c.staying() && l.flight.escort(p, now)) return;
@@ -190,8 +205,23 @@ final class LacertaMind extends CompanionMind {
             dragonFollow(p, now);
             return;
         }
+        if (snug(p, now)) return;
         super.follow(p, now);
     }
+
+    /** 冷了（裹着翅膀贴着你）、馋了（凑过来）：离你 {@link #SNUG_FAR} 格以外就走过来，走到 {@link #SNUG_NEAR} 格停。 */
+    private boolean snug(ServerPlayer p, long now) {
+        if (c.staying() || !l.life.cold() && !l.lacertaMood().craving()) return false;
+        if (dist > SNUG_FAR) {
+            if (now % THINK == 0 || c.getNavigation().isDone()) c.getNavigation().moveTo(p, 1);
+        } else if (dist < SNUG_NEAR) {
+            c.getNavigation().stop();
+            look(p, now);
+        }
+        return true;
+    }
+
+    static final double SNUG_NEAR = 1.4, SNUG_FAR = 2.2;
 
     /** 巨龙跟着走：离你 {@link #DRAGON_FAR} 格以外才走，走到 {@link #DRAGON_NEAR} 格停（她太大，别挤着你）。 */
     private void dragonFollow(ServerPlayer p, long now) {
@@ -205,10 +235,18 @@ final class LacertaMind extends CompanionMind {
     }
 
     static final double DRAGON_NEAR = 5, DRAGON_FAR = 8;
+    /** 附近有掉落要捡时，陪你坐 / 守宝藏的分压到多少（比捡东西低）；亮晶晶的掉落捡的分（比跟着你加上惯性高）。 */
+    static final double LOUNGE_AFTER_LOOT = .3, SHINY_LOOT = .5;
+
+    @Override
+    protected int lootRank(ItemStack s) {
+        return LacertaLife.shiny(s) ? 1 : 0;
+    }
 
     @Override
     protected void idle(ServerPlayer p, long now, boolean follow) {
         if (follow && !c.staying() && l.flight.escort(p, now)) return;
+        if (follow && !l.isDragonForm() && snug(p, now)) return;
         super.idle(p, now, follow);
     }
 

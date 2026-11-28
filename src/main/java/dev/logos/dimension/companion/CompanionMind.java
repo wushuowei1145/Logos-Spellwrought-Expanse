@@ -558,9 +558,20 @@ public abstract class CompanionMind extends Goal {
         for (ItemEntity e : level.getEntitiesOfClass(ItemEntity.class, c.getBoundingBox().inflate(LOOT_RADIUS),
                 e -> e.isAlive() && e.getOwner() == null && e.getAge() < 1200 && e.distanceTo(p) > 1.5 && e.distanceTo(p) < LOOT_RADIUS + 2
                         && !e.getItem().isEmpty())) {
-            if (best == null || c.distanceToSqr(e) < c.distanceToSqr(best)) best = e;
+            if (best == null || lootRank(e.getItem()) > lootRank(best.getItem())
+                    || lootRank(e.getItem()) == lootRank(best.getItem()) && c.distanceToSqr(e) < c.distanceToSqr(best)) best = e;
         }
         return best;
+    }
+
+    /** 地上几样掉落里先捡哪样：大的先捡，一样大捡近的（默认都一样；拉塞塔先抢亮晶晶的）。 */
+    protected int lootRank(ItemStack s) {
+        return 0;
+    }
+
+    /** 这一次想好要去捡的掉落（没有为 null）。 */
+    protected @Nullable ItemEntity loot() {
+        return loot;
     }
 
     private void scavenge(ServerLevel level, ServerPlayer p, long now) {
@@ -574,6 +585,7 @@ public abstract class CompanionMind extends Goal {
         ItemStack left = c.pouch(p).put(e.getItem().copy());
         int took = e.getItem().getCount() - left.getCount();
         if (took <= 0) return;
+        c.lootTaken(p, e.getItem().copyWithCount(took));
         c.take(e, took);
         if (left.isEmpty()) e.discard();
         else e.setItem(left);

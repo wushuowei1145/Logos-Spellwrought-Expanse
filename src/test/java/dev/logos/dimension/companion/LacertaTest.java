@@ -72,7 +72,7 @@ class LacertaTest {
             assertTrue(anims.has(e.getKey()), "模型里没有 " + e.getKey());
             assertEquals((long) e.getValue(), ticks(anims.getAsJsonObject(e.getKey())), e.getKey());
         }
-        for (String a : LacertaMood.INTERACT) assertTrue(LacertaMood.LENGTH.containsKey(a), a + " 没有长度");
+        for (String a : LacertaMood.INTERACT) assertTrue(LacertaMood.LENGTH.containsKey(a) || LacertaMood.DRAGON_LENGTH.containsKey(a), a + " 没有长度");
         for (String a : LacertaMood.WING_ACTS) assertTrue(LacertaMood.LENGTH.containsKey(a), a + " 没有长度");
     }
 
@@ -256,6 +256,43 @@ class LacertaTest {
         assertEquals("hold_on_last_frame", anims.getAsJsonObject("breath_start").get("loop").getAsString(), "蓄压停在最后一帧");
     }
 
+    /** 巨龙形态的小动作、被摸、坐趴睡（阶段 D）：都在巨龙模型里，长度和模型一致；坐、趴、盘睡循环。 */
+    @Test void dragonDailyClipsMatchTheModel() throws Exception {
+        JsonObject anims = dragonAnimations();
+        for (var e : LacertaMood.DRAGON_LENGTH.entrySet()) {
+            assertTrue(anims.has(e.getKey()), "巨龙模型里没有 " + e.getKey());
+            assertEquals((long) e.getValue(), ticks(anims.getAsJsonObject(e.getKey())), e.getKey());
+        }
+        for (String n : new String[]{"sit", "lie_flat", "sleep", "petted"}) {
+            assertTrue(anims.getAsJsonObject(n).get("loop").getAsBoolean(), n + " 要循环");
+        }
+        assertTrue(LacertaMood.INTERACT.contains("petted") && LacertaMood.INTERACT.contains("act_sniff_nudge"), "挨打时掐掉");
+    }
+
+    /** 巨龙盘睡：她站的位置让怀里的空位（她的左边 0.78、身后 0.39）正好落在要圈住的地方，四个朝向都对。 */
+    @Test void dragonCurlsAroundThePocket() {
+        Vec3 pocket = new Vec3(10.5, 64, -3.5);
+        for (float yaw : new float[]{0, 90, 180, -90, 37}) {
+            Vec3 at = LacertaRest.curlAt(pocket, yaw);
+            double r = Math.toRadians(yaw);
+            Vec3 forward = new Vec3(-Math.sin(r), 0, Math.cos(r)), left = new Vec3(Math.cos(r), 0, Math.sin(r));
+            Vec3 back = at.add(left.scale(LacertaRest.POCKET_LEFT)).subtract(forward.scale(LacertaRest.POCKET_BACK));
+            assertEquals(0, back.distanceTo(pocket), 1e-9, "朝 " + yaw);
+            assertEquals(Math.hypot(LacertaRest.POCKET_LEFT, LacertaRest.POCKET_BACK), at.distanceTo(pocket), 1e-9);
+        }
+        // 模型 sleep_pocket 的中心 (-50, 0, 25) 单位，2 倍模型 32 单位一格、缩 0.5
+        assertEquals(50 / 32.0 * .5, LacertaRest.POCKET_LEFT, .01);
+        assertEquals(25 / 32.0 * .5, LacertaRest.POCKET_BACK, .01);
+    }
+
+    /** 绯翼余温：近战伤害、减伤基础各 5%，羁绊每段 +2.5%；5 分钟。 */
+    @Test void warmthGrowsWithTheBond() {
+        assertEquals(.05, LacertaWarmth.bonus(0), 1e-9);
+        assertEquals(.15, LacertaWarmth.bonus(CompanionBond.Stage.BONDED.ordinal()), 1e-9);
+        assertEquals(.05, LacertaWarmth.bonus(-1), 1e-9);
+        assertEquals(6000, LacertaWarmth.TICKS);
+    }
+
     /** 巨龙的碰撞箱 3.2×2.4、眼高 1.85；挨打只受四分之一；嘴在身前、离地，喷得比龙爪远。 */
     @Test void dragonBodyFollowsThePlan() {
         assertEquals(3.2f, LacertaDragon.SIZE.width(), 1e-6);
@@ -400,6 +437,15 @@ class LacertaTest {
         assertEquals(12, dragon.critiqueDay());
         var savedDragon = LacertaDays.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, dragon).getOrThrow();
         assertEquals(dragon, LacertaDays.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, savedDragon).getOrThrow());
+        // 认下的宝藏、哪天守过：存了读回来不变，别的记录不动
+        var hoard = net.minecraft.core.GlobalPos.of(net.minecraft.world.level.Level.OVERWORLD, new net.minecraft.core.BlockPos(3, 70, -8));
+        LacertaDays guarded = dragon.withHoard(java.util.Optional.of(hoard)).withHoardDay(5);
+        assertEquals(hoard, guarded.hoard().orElseThrow());
+        assertEquals(5, guarded.hoardDay());
+        assertTrue(guarded.dragonForm());
+        assertTrue(LacertaDays.NONE.hoard().isEmpty());
+        var savedHoard = LacertaDays.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, guarded).getOrThrow();
+        assertEquals(guarded, LacertaDays.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, savedHoard).getOrThrow());
         var empty = new JsonObject();
         assertEquals(LacertaDays.NONE, LacertaDays.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, empty).getOrThrow());
         var saved = LacertaDays.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, d).getOrThrow();
@@ -448,6 +494,7 @@ class LacertaTest {
     /** 台词、对话、面板用到的语言键，中英文都有。 */
     @Test void everyLineAndPanelKeyIsInBothLanguages() throws Exception {
         List<String> keys = new ArrayList<>(List.of("entity.logos_dimension.lacerta_companion", "item.logos_dimension.dragon_scale",
+                "effect.logos_dimension.lacerta_warmth",
                 "container.logos_dimension.lacerta_pouch", TALK + "name", TALK + "kana", TALK + "epithet", TALK + "seal_name", TALK + "inherit",
                 TALK + "inherit_hint", TALK + "option.outfit." + LacertaTalk.OUTFIT));
         for (String t : new String[]{"blank", "blank_use", "owner", "use"}) keys.add("tooltip.logos_dimension.dragon_scale." + t);
@@ -455,7 +502,7 @@ class LacertaTest {
         assertNotNull(chat);
         for (TalkMenu.Option o : chat.children()) if (o.id().startsWith("chat.")) keys.add(TALK + "option." + o.id());
         for (String s : new String[]{"blade", "thrust", "vortex", "sweep", "skyfall", "parry", "taunt", "flame", "scale", "glide", "tank", "mana",
-                "vigil", "withdraw", "flight", "catch", "dragon", "claw", "breath", "ride"}) {
+                "vigil", "withdraw", "flight", "catch", "dragon", "claw", "breath", "ride", "hoard", "warmth"}) {
             for (String part : new String[]{"name", "icon", "desc"}) keys.add(TALK + "skill." + s + "." + part);
         }
         for (LacertaRest.Tier t : LacertaRest.Tier.values()) keys.add(TALK + "skill.vigil." + t.name().toLowerCase(Locale.ROOT));
@@ -471,6 +518,7 @@ class LacertaTest {
         }
         for (String l : new String[]{"stay", "follow", "refuse", "full", "stuck", "hungry", "seal", "remake", "withdraw", "taunt", "catch_hand", "catch_embrace",
                 "catch_after_hand", "catch_after_embrace", "talk.bye", "dragon_mana_out", "dragon_auto", "dragon_revert", "appear_room", "appear_mana",
+                "hoard_claim", "cold_snuggle", "give_food", "mine", "present", "jealous",
                 "talk.danger", "talk.rest"}) {
             keys.add(LINE + l);
         }
@@ -478,7 +526,7 @@ class LacertaTest {
                 "pauldron_3", "knight_early_1", "knight_early_2", "knight_close_1", "knight_close_2", "cold_1", "cold_2", "airships_1", "airships_2",
                 "praise_early_1", "praise_early_2", "praise_close_1", "praise_close_2", "past_more", "seals_none_1", "seals_none_2", "seals_1",
                 "seals_2", "seals_full", "follow", "stay", "pvp_on", "pvp_off", "pvp_off_server", "pouch_back", "scale_have", "scale_given",
-                "form_dragon", "form_human", "form_room", "form_mana"}) {
+                "form_dragon", "form_human", "form_room", "form_mana", "roast_none", "roast_burnt", "roast_done"}) {
             keys.add(LINE + "talk." + l);
         }
         for (String v : new String[]{"none", "crimson", "rival", "joke", "broken", "ranged", "enchanted", "melee"}) keys.add(LINE + "talk.weapon_" + v);

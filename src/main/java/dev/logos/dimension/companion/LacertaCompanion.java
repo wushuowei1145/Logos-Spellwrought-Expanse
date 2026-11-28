@@ -111,6 +111,9 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     final LacertaFlight flight = new LacertaFlight(this);
     final LacertaDragon dragon = new LacertaDragon(this);
     final LacertaRide ride = new LacertaRide(this);
+    final LacertaLife life = new LacertaLife(this);
+    /** 巨龙形态时空手右键她的头前（你站在她胸口前面这么多格以外）是摸头，不然是骑上去。 */
+    static final double PET_FRONT = 2.2;
     /** 想以巨龙登场却变不了（太挤、魔力不够）：入场后嘀咕一句。 */
     private @Nullable String appearComplaint;
     /** 客户端：巨龙离地多少刻了（飞的动画要离地几刻才换，台阶不算）；飞的动画换到哪一段、哪一刻换的。 */
@@ -482,13 +485,38 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
         ride.dismounted(passenger);
     }
 
-    /** 巨龙形态时空手右键：骑上去（潜行右键照样说话）。 */
+    /** 巨龙形态时空手右键：站在她头前是摸头（照常走摸头那一套），从侧面、背后是骑上去（潜行右键照样说话）。 */
     @Override
     protected net.minecraft.world.@Nullable InteractionResult interactSpecial(ServerPlayer sp) {
         if (!isDragonForm() || sp.isShiftKeyDown() || !sp.getMainHandItem().isEmpty() || isVehicle() || dragon.appearing()) return null;
+        if (inFrontOfHead(sp.position())) return null;
         sp.startRiding(this);
         rides++;
         return net.minecraft.world.InteractionResult.SUCCESS;
+    }
+
+    /** {@code at} 在她头前（巨龙：胸口往前 {@link #PET_FRONT} 格以外）。 */
+    boolean inFrontOfHead(Vec3 at) {
+        Vec3 to = at.subtract(position());
+        return to.dot(Vec3.directionFromRotation(0, yBodyRot)) > PET_FRONT;
+    }
+
+    /** 真龙的体温：不会冻。 */
+    @Override
+    public boolean canFreeze() {
+        return false;
+    }
+
+    /** 你当着她的面摸了、喂了别的同伴。 */
+    @Override
+    protected void ownerFavoured(ServerPlayer owner, CompanionEntity other) {
+        lacertaMood().jealous(owner, level().getGameTime());
+    }
+
+    /** 她捡起了 {@code stack}（藏宝癖）。 */
+    @Override
+    protected void lootTaken(ServerPlayer owner, ItemStack stack) {
+        life.picked(owner, stack, level().getGameTime());
     }
 
     @Override
@@ -541,7 +569,10 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
         mana = Math.min(maxMana, mana + regen / 20);
         blade.tick(level);
         tickFlame(level, now);
-        if (p != null) rest.tick(level, p, now);
+        if (p != null) {
+            rest.tick(level, p, now);
+            life.tick(p, now);
+        }
         flight.tick(level, p, now);
         dragon.tick(level, p, now);
         glide();
@@ -582,7 +613,8 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
             setWingsFolded(false);
             return;
         }
-        boolean fold = !blade.drawn() && !isFlying() && (isPassenger() || isInWater() || cramped());
+        // 冷的时候也收起来（裹住自己）
+        boolean fold = !blade.drawn() && !isFlying() && (isPassenger() || isInWater() || cramped() || life.cold());
         setWingsFolded(fold);
     }
 
@@ -707,9 +739,10 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
         return withdrawing();
     }
 
+    /** 龙眠时推不动；摆好姿势陪着你时（坐、睡、守宝藏、盘着）也不被挤开、不挤床上的你。 */
     @Override
     public boolean isPushable() {
-        return !withdrawing() && super.isPushable();
+        return !withdrawing() && !rest.anchored() && super.isPushable();
     }
 
     @Override
@@ -746,6 +779,7 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     @Override
     protected void swallowed(ServerLevel level) {
         level.playSound(null, getX(), getY(), getZ(), SoundEvents.FIRE_EXTINGUISH, SoundSource.NEUTRAL, .12f, 1.9f);
+        lacertaMood().fed(level.getGameTime());
     }
 
     @Override
@@ -1036,5 +1070,33 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     /** 测试用：剑是不是拔着（不看客户端的凝聚、消散）。 */
     public boolean swordDrawnForTest() {
         return blade.drawn();
+    }
+
+    // ---------------------------------------------------------------- 测试用：日常（阶段 D）
+
+    /**
+     * 测试用：认下宝藏宣告过几次、守着宝藏加过几次羁绊；递过几次吃的；烤过几次、烤糊几次；献过几次宝、喊过几次「我的」；
+     * 你在细雪里少冻了几刻；吃过几次醋；给过几次绯翼余温。
+     */
+    public static int[] lifeCountsForTest() {
+        return new int[]{LacertaRest.hoardClaims, LacertaRest.hoardBonds, LacertaLife.gifts, LacertaLife.roasts, LacertaLife.burnt,
+                LacertaLife.presents, LacertaLife.mines, LacertaLife.warmed, LacertaMood.jealousies, LacertaWarmth.given()};
+    }
+
+    /** 测试用：烤肉强行烤糊 / 不糊（null 照几率）、打完必定献宝、必定吃醋。 */
+    public static void lifeForTest(@Nullable Boolean burn, boolean present, boolean jealous) {
+        LacertaLife.forceBurn = burn;
+        LacertaLife.alwaysPresent = present;
+        LacertaMood.alwaysJealous = jealous;
+    }
+
+    /** 测试用：她觉得冷。 */
+    public boolean coldForTest() {
+        return life.cold();
+    }
+
+    /** 测试用：{@code at} 在她头前（巨龙：右键是摸头）。 */
+    public boolean inFrontOfHeadForTest(Vec3 at) {
+        return inFrontOfHead(at);
     }
 }

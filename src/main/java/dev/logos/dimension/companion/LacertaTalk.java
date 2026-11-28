@@ -38,7 +38,7 @@ final class LacertaTalk {
             Option.server("chat.scale"), Option.server("chat.food"), Option.server("chat.slept"), Option.server("chat.pauldron"),
             Option.server("chat.knight"), Option.server("chat.cold"), Option.server("chat.airships"), Option.server("chat.praise"),
             Option.server("chat.weapon"), Option.server("chat.past"), Option.server("chat.seals"), Option.server("chat.us"),
-            Option.server("chat.form"), Option.server("chat.rest")), true);
+            Option.server("chat.roast"), Option.server("chat.form"), Option.server("chat.rest")), true);
     /** 测试用：让她看过几次武器、最近一次说的是哪一种；夸过她几次。 */
     static int critiques, praises;
     static String lastVerdict = "";
@@ -75,6 +75,8 @@ final class LacertaTalk {
         CompanionStats.Part atk = parts.attack();
         // 巨龙形态护甲、韧性翻倍（属性里是乘上去的，档案照实显示）
         double form = c.isDragonForm() ? 2 : 1;
+        // 绯翼余温按此刻的羁绊段
+        double warmth = LacertaWarmth.bonus(CompanionBond.Stage.of(bond.affection()).ordinal());
         List<CompanionSheet.Stat> stats = List.of(
                 stat("health", c.getMaxHealth(), parts.health(), c.getHealth()),
                 new CompanionSheet.Stat("attack", (float) (atk.total() + LacertaBlade.SWORD), (float) (atk.own() + LacertaBlade.SWORD), (float) atk.bond(), -1),
@@ -109,7 +111,9 @@ final class LacertaTalk {
                         num(LacertaDragon.CLAW_REACH))),
                 new CompanionSheet.Skill("breath", CompanionSheet.SPECIAL, 0, true, List.of(num(c.attack() * LacertaDragon.BREATH_MULT * 20 / LacertaDragon.BREATH_PULSE),
                         num(LacertaDragon.BREATH_RANGE))),
-                new CompanionSheet.Skill("ride", CompanionSheet.PASSIVE, 0, true, List.of())));
+                new CompanionSheet.Skill("ride", CompanionSheet.PASSIVE, 0, true, List.of()),
+                new CompanionSheet.Skill("hoard", CompanionSheet.PASSIVE, 0, true, List.of(num(LacertaHoard.BOND))),
+                new CompanionSheet.Skill("warmth", CompanionSheet.PASSIVE, 0, true, List.of(num(warmth * 100), num(warmth * 100)))));
         CompanionBond.Stage st = CompanionBond.Stage.of(bond.affection());
         CompanionBond.Stage[] all = CompanionBond.Stage.values();
         float progress = st.ordinal() + 1 >= all.length ? 1 : (bond.affection() - st.from) / (all[st.ordinal() + 1].from - st.from);
@@ -199,6 +203,9 @@ final class LacertaTalk {
                 if (n < MEMORY_LINES.length - 1) out.add(line("past_more"));
                 return Reply.say(out);
             }
+            case "chat.roast" -> {
+                return roast(c, p, now);
+            }
             case "chat.form" -> {
                 return form(c, p, now);
             }
@@ -257,6 +264,28 @@ final class LacertaTalk {
             return Reply.say(line("tactic_" + t.id));
         }
         return Reply.NONE;
+    }
+
+    /**
+     * 帮我烤一下（第 8.3 节）：对着包袱里的一组生肉吹一口龙炎，烤好的给你。「熟悉」以前两成烤糊（木炭），脸红甩锅；之后火候正好，她先尝一口。
+     * 包袱里没有生肉就说没有。
+     */
+    private static Reply roast(LacertaCompanion c, ServerPlayer p, long now) {
+        if (!(c.level() instanceof ServerLevel level)) return Reply.NONE;
+        return switch (c.life.roast(level, p, now)) {
+            case NOTHING -> {
+                c.mood.talk("face_curious", now, 60);
+                yield Reply.say(line("roast_none"));
+            }
+            case BURNT -> {
+                c.mood.talk("face_flustered", now, 100);
+                yield Reply.say(line("roast_burnt"));
+            }
+            case DONE -> {
+                c.mood.talk("face_foodie", now, 80);
+                yield Reply.say(line("roast_done"));
+            }
+        };
     }
 
     /** 化身巨龙 / 变回人形（你让她变的，收回再叫出来还是巨龙）；地方太挤、你的魔力不够时不变。 */

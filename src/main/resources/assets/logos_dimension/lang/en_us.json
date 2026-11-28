@@ -2302,5 +2302,22 @@
   "line.logos_dimension.lacerta.talk.form_dragon": "Fine, I'll show you what this dragon really looks like. ...No laughing!",
   "line.logos_dimension.lacerta.talk.form_human": "Back to normal. ...So, wh-what did you think of that form?",
   "line.logos_dimension.lacerta.talk.form_room": "Too cramped here, I can't spread my wings. Somewhere open.",
-  "line.logos_dimension.lacerta.talk.form_mana": "Your mana can't sustain my true form... don't push it."
+  "line.logos_dimension.lacerta.talk.form_mana": "Your mana can't sustain my true form... don't push it.",
+  "effect.logos_dimension.lacerta_warmth": "Crimson Wing's Warmth",
+  "talk.logos_dimension.lacerta.option.chat.roast": "Roast this for me",
+  "talk.logos_dimension.lacerta.skill.hoard.name": "Dragon's Hoard",
+  "talk.logos_dimension.lacerta.skill.hoard.icon": "H",
+  "talk.logos_dimension.lacerta.skill.hoard.desc": "When you idle at home she claims a nearby diamond, gold or netherite block and sits on it to guard it: on the edge if one side is open, on top if all four sides are blocked. As a dragon she curls around it. Guarding it a while for the first time each day gives +%s bond.",
+  "talk.logos_dimension.lacerta.skill.warmth.name": "Crimson Wing's Warmth",
+  "talk.logos_dimension.lacerta.skill.warmth.icon": "W",
+  "talk.logos_dimension.lacerta.skill.warmth.desc": "After she watches over you for a whole night, for 5 minutes you resist fire and cold, deal %s%% more melee damage and take %s%% less (more with bond). Stacks with Kohaku's Company.",
+  "line.logos_dimension.lacerta.hoard_claim": "This pile of shinies is under this dragon's watch now. ...Hmph, don't even think about sneaking any away!",
+  "line.logos_dimension.lacerta.cold_snuggle": "I-I'm not cold! I just don't want a fragile human like you freezing solid... Come closer. Hands out, I'll warm them!",
+  "line.logos_dimension.lacerta.give_food": "...Here. I didn't save it for you on purpose—I'm just full!",
+  "line.logos_dimension.lacerta.mine": "Mine!",
+  "line.logos_dimension.lacerta.present": "Th-this one's the shiniest... take it. Keep my treasure safe for me!",
+  "line.logos_dimension.lacerta.jealous": "...Hmph. Since you're so busy, this dragon won't bother you!",
+  "line.logos_dimension.lacerta.talk.roast_none": "There's not even a scrap of raw meat in the pouch. You want me to roast air?",
+  "line.logos_dimension.lacerta.talk.roast_burnt": "...Th-the wind was blowing the wrong way! The heat was your fault!",
+  "line.logos_dimension.lacerta.talk.roast_done": "Done just right... mm, the seasoning's good too. Here, still hot."
 }
