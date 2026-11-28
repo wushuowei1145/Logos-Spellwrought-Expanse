@@ -4,7 +4,6 @@ import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.dissolve.DissolveShape;
 import dev.logos.dimension.dissolve.Dissolving;
 import dev.logos.dimension.item.WorldtreeBowItem;
-import dev.logos.dimension.ultimate.StandInUltimate;
 import dev.logos.dimension.ultimate.UltimateDef;
 import java.util.List;
 import java.util.Optional;
@@ -51,8 +50,11 @@ public class ElfPrincessCompanion extends CompanionEntity {
     public static final CompanionDef.Growth GROWTH = new CompanionDef.Growth(32, 2, 0, 4, .7, 4, .5, .25, .05, 4, .5, .05, .3, .08, 1, 9);
     /** 撤退以后在世界树里歇多久（5 分钟，同白梅）；契印一共几枚（叶之契）。 */
     public static final int REST_TICKS = 6000, MAX_SEALS = 9;
-    /** 奥义（docs/ULTIMATES.md）：万分之一 · 世界树祈愿矢。冷却 40 秒、基准耗魔 300；专属演出做好以前先用占位的那一段。 */
-    public static final UltimateDef ULTIMATE = new UltimateDef(800, 300, StandInUltimate::new);
+    /**
+     * 奥义「万分之一 · 世界树祈愿矢」（docs/ELF_PRINCESS_COMPANION.md 第 11 节）：冷却 40 秒、基准耗魔 300。
+     * 单人和连携第一位演完整版（104 刻），连携里第二位起演缩短版（44 刻）；馈赠是森之加护。
+     */
+    public static final UltimateDef ULTIMATE = new UltimateDef(800, 300, PrincessUltimate::full, PrincessUltimate::condensed);
     /** 入场动画多长、撤退动画多长（刻），与模型一致。 */
     static final int SUMMON_TICKS = 84, WITHDRAW_TICKS = 72;
     /** 入场动画的时间标记（刻）：开花、花瓣飞散。 */
@@ -145,10 +147,15 @@ public class ElfPrincessCompanion extends CompanionEntity {
 
     /** 拿出弓（一小阵叶子）或收起来。正在吃东西、撤退时不换手。 */
     void arm(boolean on) {
+        arm(on, false);
+    }
+
+    /** 同上；{@code quiet} 时不冒叶子（奥义开场镜头贴着地面拍新苗，飘过的叶子会糊满画面）。 */
+    void arm(boolean on, boolean quiet) {
         if (armed == on || eating() || withdrawing()) return;
         armed = on;
         setItemSlot(EquipmentSlot.MAINHAND, restingMainHand());
-        if (on && level() instanceof ServerLevel level) {
+        if (on && !quiet && level() instanceof ServerLevel level) {
             Vec3 hand = getEyePosition().add(Vec3.directionFromRotation(0, yBodyRot - 40).scale(.35)).add(0, -.35, 0);
             level.sendParticles(ParticleTypes.CHERRY_LEAVES, hand.x, hand.y, hand.z, 6, .15, .2, .15, .02);
             level.sendParticles(new DustParticleOptions(MINT, .9f), hand.x, hand.y, hand.z, 8, .15, .25, .15, 0);

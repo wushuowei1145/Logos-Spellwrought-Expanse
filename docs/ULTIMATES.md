@@ -74,7 +74,7 @@ WINDOW ──在场的全放过了、都演完了──▶ CUTIN ──第 26 �
 | 第 1 / 2 / 3 / 4 段的耗魔 | 基准的 100% / 85% / 70% / 55% | `UltimateChain.manaFactor` |
 | 最后一击的威力 | 两位同伴 1 倍，三位 1.6 倍（满格），四位 2 倍；不耗魔 | `UltimateChain.finisherPower` |
 | 白梅 | 冷却 35 秒，基准耗魔 260 | `ShiraumeCompanion.ULTIMATE` |
-| 精灵公主 | 40 秒，300 | `ElfPrincessCompanion.ULTIMATE` |
+| 精灵公主 | 40 秒，300；完整版 104 刻（第 79 刻出手）、缩短版 44 刻（第 30 刻）；馈赠森之加护（[ELF_PRINCESS_COMPANION.md](ELF_PRINCESS_COMPANION.md) 第 11 节） | `ElfPrincessCompanion.ULTIMATE` |
 | 琥珀 | 35 秒，280 | `KohakuCompanion.ULTIMATE` |
 | 拉塞塔 | 40 秒，320 | `LacertaCompanion.ULTIMATE` |
 
