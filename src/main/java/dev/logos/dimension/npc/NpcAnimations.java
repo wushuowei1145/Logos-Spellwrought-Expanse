@@ -256,6 +256,8 @@ public final class NpcAnimations {
         }
         controllers.add(new AnimationController<T>("main", npc.npcMainTransition(), test -> {
             Set<String> names = available(npc.npcAnimationAsset());
+            String own = npc.npcMainOverride();
+            if (own != null && names.contains(own) && !npc.isDeadOrDying()) return test.setAndContinue(raw(own));
             String name = mainState(Snapshot.of(npc, npc.isNpcSitting()), names::contains);
             if (name == null) return PlayState.STOP;
             // 最后一击：先把受击动画播完，再接死亡动画

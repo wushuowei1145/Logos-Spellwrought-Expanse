@@ -2270,5 +2270,15 @@
   "line.logos_dimension.lacerta.talk.tactic_passive": "Hold back? ...Fine, I'll just guard you. Anyone who touches you is another story.",
   "line.logos_dimension.lacerta.talk.pouch_back": "Done looking? It's all packed away... Stop rummaging through this dragon's pouch.",
   "line.logos_dimension.lacerta.talk.scale_have": "Isn't the scale right on you? ...Idiot, check your pockets.",
-  "line.logos_dimension.lacerta.talk.scale_given": "...Here. Keep it close this time. Don't lose it again."
+  "line.logos_dimension.lacerta.talk.scale_given": "...Here. Keep it close this time. Don't lose it again.",
+  "talk.logos_dimension.lacerta.skill.flight.name": "Wingborne Escort",
+  "talk.logos_dimension.lacerta.skill.flight.icon": "A",
+  "talk.logos_dimension.lacerta.skill.flight.desc": "When you take to the air (creative flight, elytra, hovering), she spreads her wings and flies behind you to your upper left. Foes she can't reach (in the air, up high) within %s blocks get a Skyfall Judgement from above once it's ready. Even in flight she never passes through walls.",
+  "talk.logos_dimension.lacerta.skill.catch.name": "Starvault Embrace",
+  "talk.logos_dimension.lacerta.skill.catch.icon": "C",
+  "talk.logos_dimension.lacerta.skill.catch.desc": "If you fall far enough to lose 30% of your health (or die), she flies in and catches you: before you are Trusted she grabs your hand, after that she holds you in her arms, and carries you slowly down. The fall before she catches you is cut by %s%% (%s%% when she holds you), and you always land with at least half a heart.",
+  "line.logos_dimension.lacerta.catch_hand": "G-got you! Don't squirm!",
+  "line.logos_dimension.lacerta.catch_embrace": "Idiot! Couldn't you call my name before you jumped?!",
+  "line.logos_dimension.lacerta.catch_after_hand": "...Falling from that high, are you trying to scare this dragon to death?! Do it again and you owe me a month of dinners!",
+  "line.logos_dimension.lacerta.catch_after_embrace": "...My heart's racing? Shut up, that's just the wind up there! ...You're not hurt, are you?"
 }

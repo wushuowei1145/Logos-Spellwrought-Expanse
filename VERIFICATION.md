@@ -1,5 +1,28 @@
 # 首版验证记录
 
+## 拉塞塔同伴（阶段 B：飞行、伴飞与护落，2026-11-28）
+
+分支 `feat/lacerta-flight`，基于 main `c0bb9725`（#314 阶段 A）。做了什么、和设计稿不同的地方见 [拉塞塔](docs/LACERTA_COMPANION.md) 第 18 节。模型仍是第 22 版。jar 同阶段 A（`builds/lacerta-jars/`）。
+
+| 项 | 结果 |
+|---|---|
+| 构建 | `compileJava` 通过 |
+| 单元 | `LacertaTest` **17/17**（新加三个：悬停、飞行移动循环，拉住手、抱住的 catch 标记和整身动画；原版摔伤算法、会摔死或掉三成才接、抓住以前那一段减 75% / 80%；伴飞点在你身后、左边、上方）；同伴其余、`LangCoverageTest`、`NpcAnimationsTest`、`MovesetTest`、`CrimsonFlameLongswordTest`、`CombatWeaponTest` 一起 105 个全过 |
+| 实际客户端 | `group:lacerta_companion` **15/15**（新加四个）：`lacerta_escort` 你飞起来她跟到左后上方、你飞过一堵 9 格高的墙她翻过去且全程没卡进方块、你落地她也落地；`lacerta_pursuit` 柱顶够不着的僵尸，她飞上去接坠星且那一剑真的砍中；`lacerta_catch_hand` / `lacerta_catch_embrace` 从 25 格高处掉下，她飞来拉住手（信赖起抱住）、带你降落、你几乎没掉血、落地后数落一句。阶段 A 的 11 个照旧全过（`lacerta_flame` 改成优先远程策略，不然她会先飞上去砸）。回归 `group:companion_book` **1/1** |
+| 人工看截图 | 仓库外 `MinecraftLogosMod/lacerta_dragon_model/ingame/phase_b_v01`。伴飞悬停、拔剑飞上去、抱住时贴在你胸前双翼前合、拉住手时在你头顶上方都看过 |
+
+做的过程中修过的：
+
+- **空中坠星砍不中**：坠星照玩家从地上跳起来砸，砍中那一刻已往前冲约 5 格、比出手时低约 2.3 格；一开始在目标头顶后方 1.2 格出手，冲过了头，目标落在身后的扇形外。改成在后方 4.8 格、高 2.6 格出手（场景里加了「剑的命中数增加」这一条才查出来，之前的伤害是后来补的龙炎弹）。
+- **翻墙卡在墙头**：挡着往上抬、一过墙头又往目标降，来回顶在墙沿上。改成撞到以后十来刻里只抬不降，斜着往下飞的路上有东西也先不降。
+- **护落时你降得比设定快一倍多**：服务端的玩家这一刻还会再叠一次重力才把速度发给客户端，设速度时先抵掉它。
+- **抱住时画面上她总在你上方**：她的位置同步、插值比你自己的画面慢几刻。把「正抱着谁、在哪一侧」同步给客户端，客户端照你在画面上的位置画她；她的位置同步也从三刻一次改成每刻一次。
+- 没测：多人（别的玩家看你被抱着）、Iris/光影包、真的鞘翅高速飞行（场景是创造飞行加传送）、手感和数值。
+
+```bash
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:lacerta_companion -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 拉塞塔同伴（阶段 A：人形核心，2026-11-28）
 
 分支 `feat/lacerta-companion`，基于 main `f2433471`（#313 炽焰长剑）。按接入方案阶段 A 做，进度和与设计稿不同的地方见 [拉塞塔](docs/LACERTA_COMPANION.md) 第 17 节。模型第 22 版（82 段动画）。Logos jar 用 `编译成品/20261126-2358-最新版/logos-0.7.2.jar`，乐团用同目录的 `starbloom_orchestra-0.1.0.jar`，都复制到纯英文路径 `builds/lacerta-jars/` 再传。

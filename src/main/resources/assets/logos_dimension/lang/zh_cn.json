@@ -2270,5 +2270,15 @@
   "line.logos_dimension.lacerta.talk.tactic_passive": "不出手？……好，我只守着你。谁敢碰你，那就另当别论了。",
   "line.logos_dimension.lacerta.talk.pouch_back": "看完了？东西都给你收好了……别乱翻本龙的包袱。",
   "line.logos_dimension.lacerta.talk.scale_have": "鳞不就在你身上吗？……笨蛋，自己摸摸口袋。",
-  "line.logos_dimension.lacerta.talk.scale_given": "……拿着。这回贴身放好，别再弄丢了。"
+  "line.logos_dimension.lacerta.talk.scale_given": "……拿着。这回贴身放好，别再弄丢了。",
+  "talk.logos_dimension.lacerta.skill.flight.name": "振翼伴飞",
+  "talk.logos_dimension.lacerta.skill.flight.icon": "飞",
+  "talk.logos_dimension.lacerta.skill.flight.desc": "你飞起来（创造飞行、鞘翅、浮在半空）时，她展开翅膀跟在你左后上方。够不着的敌人（天上的、高台上的），%s 格以内、炽翼坠星破好了时她飞到它头顶砸下去。飞着也不穿墙。",
+  "talk.logos_dimension.lacerta.skill.catch.name": "星穹怀抱",
+  "talk.logos_dimension.lacerta.skill.catch.icon": "抱",
+  "talk.logos_dimension.lacerta.skill.catch.desc": "你从高处掉下来、要摔掉三成以上的生命（或者会摔死）时，她飞过来接住你：信赖以前拉住你的手，信赖起抱住你，带着你慢慢降下去。抓住以前那一段掉落减掉 %s%%（抱住时 %s%%），落地至少留半颗心。",
+  "line.logos_dimension.lacerta.catch_hand": "抓、抓住了！别乱动！",
+  "line.logos_dimension.lacerta.catch_embrace": "笨蛋！跳之前不会叫我的名字吗？！",
+  "line.logos_dimension.lacerta.catch_after_hand": "……从那么高的地方掉下来，你是想吓死本龙吗！下次再这样，罚你一个月的晚饭！",
+  "line.logos_dimension.lacerta.catch_after_embrace": "……心跳太快？吵死了，那是高空的风声！……没受伤吧？"
 }

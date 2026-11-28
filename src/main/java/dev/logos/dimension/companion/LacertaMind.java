@@ -154,6 +154,33 @@ final class LacertaMind extends CompanionMind {
         else idle(p, now, true);
     }
 
+    // ---------------------------------------------------------------- 飞（LacertaFlight）
+
+    /** 接住你的那几秒里什么都不做。 */
+    @Override
+    protected boolean busy(ServerLevel level, ServerPlayer p, long now) {
+        return l.flight.catching();
+    }
+
+    /** 正在接你：别的反射都不做（掉队闪回会把她闪回地上）。跟着你飞时离得太远：闪到伴飞点。 */
+    @Override
+    protected boolean reflexOwn(ServerLevel level, ServerPlayer p, long now) {
+        return l.flight.catching() || l.flight.reflex(level, p, dist);
+    }
+
+    /** 你在飞就跟着飞，不然照地上的走。 */
+    @Override
+    protected void follow(ServerPlayer p, long now) {
+        if (!c.staying() && l.flight.escort(p, now)) return;
+        super.follow(p, now);
+    }
+
+    @Override
+    protected void idle(ServerPlayer p, long now, boolean follow) {
+        if (follow && !c.staying() && l.flight.escort(p, now)) return;
+        super.idle(p, now, follow);
+    }
+
     @Override
     protected boolean canMoveToCover() {
         return l.blade.ready() || !l.blade.drawn();
@@ -174,9 +201,12 @@ final class LacertaMind extends CompanionMind {
         opening = false;
         double d = l.distanceTo(target);
         boolean low = l.getHealth() < l.getMaxHealth() * TAUNT_HEALTH;
-        // 够不着（飞着、站在高处、隔着水）：掌心赤焰；地上远处的接着用剑的游脉
-        if (!melee(target)) {
-            ranged(level, target, now, d, hold);
+        // 坠星砸下去的那几刻让它砸完
+        var move = l.blade.move();
+        if (move != null && "skyfall_judgement".equals(move.name()) && !l.blade.canFollowUp()) return;
+        // 够不着（飞着、站在高处、隔着水）：坠星好了就飞上去砸，不然掌心赤焰；地上远处的接着用剑的游脉
+        if (l.flight.mode() == LacertaFlight.Mode.PURSUE || !melee(target)) {
+            if (!pursue(target, now, hold, low)) ranged(level, target, now, d, hold);
             return;
         }
         if (tactic == CompanionTactic.RANGED && d > 6 && (l.flameReady(now) || !l.blade.drawn())) {
@@ -193,6 +223,28 @@ final class LacertaMind extends CompanionMind {
             return;
         }
         strike(level, target, now, d, hold);
+    }
+
+    /**
+     * 空中追击（接入方案 6.1）：够不着的敌人，炽翼坠星破好了、她起得来、不是优先远程时飞到它头顶，拔着剑飞到够近接一记坠星
+     * （收了重力，坠星自己往上蹿、往下砸）。追不了返回假。
+     */
+    private boolean pursue(LivingEntity target, long now, boolean hold, boolean low) {
+        boolean ready = now >= this.ready.getOrDefault("skyfall_judgement", 0L);
+        if (hold || low || tactic == CompanionTactic.RANGED || !ready || !l.flight.canPursue(target)) {
+            if (l.flight.mode() == LacertaFlight.Mode.PURSUE) l.flight.land();
+            return false;
+        }
+        l.flight.pursue(target, now);
+        if (!l.blade.drawn()) {
+            if (!l.throwing()) l.blade.draw();
+            return true;
+        }
+        if (l.flight.inStrikeRange(target) && l.blade.canFollowUp()) {
+            l.flight.land();
+            attack("skyfall_judgement", target, now);
+        }
+        return true;
     }
 
     /** 近战够得着：在地上（或者不高），寻路过得去。 */
@@ -463,7 +515,7 @@ final class LacertaMind extends CompanionMind {
 
     @Override
     protected void describeOwn(StringBuilder sb) {
-        sb.append(" move=").append(l.moveForTest()).append(" recent=").append(recent).append(" mana=").append(String.format("%.0f/%.0f", l.mana(), l.maxMana()))
+        sb.append(" flight=").append(l.flight.describe()).append(" move=").append(l.moveForTest()).append(" recent=").append(recent).append(" mana=").append(String.format("%.0f/%.0f", l.mana(), l.maxMana()))
                 .append(" pose=").append(l.rest.describePose());
     }
 }
