@@ -10,7 +10,6 @@ import dev.logos.dimension.dissolve.DissolveShape;
 import dev.logos.dimension.dissolve.Dissolving;
 import dev.logos.dimension.foxfire.FoxfireCue;
 import dev.logos.dimension.foxfire.FoxfireFlame;
-import dev.logos.dimension.ultimate.StandInUltimate;
 import dev.logos.dimension.ultimate.UltimateDef;
 import dev.logos.lang.Spell;
 import dev.logos.runtime.Casting;
@@ -71,8 +70,8 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
             LacertaStats.SEAL_POWER, LacertaStats.BOND_HEALTH, LacertaStats.BOND_ATTACK, LacertaStats.BOND_POWER, .5, .125, 2, 9);
     /** 龙眠多久（5 分钟）；契印（鳞之契）面板上画几枚（盖得再多也照样长，见 {@link LacertaStats}）。 */
     public static final int REST_TICKS = 6000, MAX_SEALS = 9;
-    /** 奥义（docs/ULTIMATES.md）：绯穹裁决 · 炽龙陨星破。冷却 40 秒、基准耗魔 320；专属演出做好以前先用占位的那一段。 */
-    public static final UltimateDef ULTIMATE = new UltimateDef(800, 320, StandInUltimate::new);
+    /** 奥义（docs/ULTIMATES.md，docs/LACERTA_COMPANION.md 第 22 节）：绯穹裁决 · 炽龙裂地破。冷却 40 秒、基准耗魔 320；完整版 107 刻、缩短版 44 刻。 */
+    public static final UltimateDef ULTIMATE = new UltimateDef(800, 320, LacertaUltimate::full, LacertaUltimate::condensed);
     /** 入场（模型 summon，3.7 秒）多长、落地在第几刻（land 标记 0.9 秒）。 */
     static final int SUMMON_TICKS = 74, SUMMON_LAND = 18;
     /** 龙眠：挨了致命一下以后停多久（受击）、「最后的骑士」多长（模型 death 5.8 秒）、化作火星散去多久。 */

@@ -174,8 +174,8 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 }
                 return c;
             }, 0, new CutinShot(50, .08f, 8, 4, -.08f), new CutinMotes(CutinMotes.Kind.EMBER, 0xF6A04D)),
-            // 奥义「绯穹裁决 · 炽龙陨星破」的画面：专属过场做好以前先用占位的那一段
-            StandInShow.of(UltimateFilm.Wipe.SMOKE, 0x2A2224, 0xF6A04D));
+            // 奥义「绯穹裁决 · 炽龙裂地破」的画面：八镜过场和世界里的碎岩、光柱、地裂（docs/LACERTA_COMPANION.md 第 22 节）
+            LacertaUltimateShow::begin);
 
     /** 盾形的龙鳞，正中一簇龙炎：一圈细环，环里一枚大菱形（鳞），鳞的上半一枚小菱形、下面一点（火苗）。 */
     static void dragonScale(GuiGraphicsExtractor g, float cx, float cy, float r, int color) {
