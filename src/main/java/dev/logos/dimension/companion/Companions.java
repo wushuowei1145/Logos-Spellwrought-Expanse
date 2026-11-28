@@ -79,7 +79,7 @@ public final class Companions {
 
     /** 拉塞塔：发顶约 1.4 格、角尖约 1.5 格（2 倍制作，渲染缩放 0.5）；眼睛约 1.05 格。真龙不怕火和岩浆。 */
     public static final Supplier<EntityType<LacertaCompanion>> LACERTA = TYPES.register("lacerta_companion", () ->
-            EntityType.Builder.of(LacertaCompanion::new, MobCategory.MISC).sized(.6f, 1.35f).eyeHeight(1.05f).fireImmune().clientTrackingRange(10)
+            EntityType.Builder.of(LacertaCompanion::new, MobCategory.MISC).sized(.6f, 1.35f).eyeHeight(1.05f).fireImmune().clientTrackingRange(10).updateInterval(1)
                     .build(ResourceKey.create(Registries.ENTITY_TYPE, LogosDimension.id("lacerta_companion"))));
 
     /** 她倒下时留在原地、替她烧掉的形代。不存档。 */
@@ -258,6 +258,7 @@ public final class Companions {
         NeoForge.EVENT_BUS.addListener(Companions::onPlace);
         NeoForge.EVENT_BUS.addListener(Companions::onDamaged);
         NeoForge.EVENT_BUS.addListener(Companions::onProtect);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LacertaFlight::onOwnerHurt);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, Companions::onDeath);
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) stowAll(p, true);

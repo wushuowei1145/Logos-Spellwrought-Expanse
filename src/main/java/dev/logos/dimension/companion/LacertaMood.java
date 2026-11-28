@@ -152,7 +152,8 @@ final class LacertaMood extends CompanionMood {
             return;
         }
         wet = wetNow;
-        if (engaged || l.rest.seated()) return;
+        // 飞着时不插日常的小动作
+        if (engaged || l.rest.seated() || l.isFlying()) return;
         var bond = c.bond(owner);
         if (bond.satiety() < CompanionBond.HUNGRY && now >= nextHungry && dist < 10) {
             nextHungry = now + 3600;

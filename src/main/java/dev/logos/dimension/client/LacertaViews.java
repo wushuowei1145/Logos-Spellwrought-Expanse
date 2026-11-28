@@ -45,6 +45,10 @@ import net.minecraft.world.phys.Vec3;
  * <li>{@code lacerta_wings}：头顶压着顶棚时收起翅膀，拆掉顶棚又展开。</li>
  * <li>{@code lacerta_sleep_watch} / {@code _doze} / {@code _rest} / {@code _together}：你睡下，她按这一档在床边摆好（位置、朝向、动画）；你醒来她起身。</li>
  * <li>{@code lacerta_talk}：潜行右键说话（中文拍）；她自己的话题、右肩甲、看四样东西的点评；详细数据三页。</li>
+ * <li>{@code lacerta_escort}（阶段 B）：你飞起来，她展翅跟到你左后上方；你飞过一堵墙，她从墙上翻过去，一直没卡进方块；你落地她也落地。</li>
+ * <li>{@code lacerta_pursuit}：站在高柱上够不着的僵尸，她飞到它头顶接一记炽翼坠星破，砸完落地。</li>
+ * <li>{@code lacerta_catch_hand} / {@code lacerta_catch_embrace}：你从二十几格高处掉下去，她飞过来拉住你的手（信赖起抱住你），带你慢慢降落；
+ *     你活着落地、几乎没掉血，她数落你一句。</li>
  * </ul>
  */
 public abstract class LacertaViews extends KohakuSleepViews {
@@ -124,11 +128,17 @@ public abstract class LacertaViews extends KohakuSleepViews {
     /** 对着她拍：她身前偏 {@code side} 度、{@code dist} 格远、高 {@code height} 格，看着她胸口。 */
     static ScenarioBuilder shootHer(ScenarioBuilder s, String name, java.util.function.Supplier<LacertaCompanion> who, double side, double dist,
                                     double height) {
+        return shootHer(s, name, who, side, dist, height, 0);
+    }
+
+    /** 同上，机位和看的地方都往下挪 {@code lead} 格（她正往下降，机位同步过来那几刻她已经下去了）。 */
+    static ScenarioBuilder shootHer(ScenarioBuilder s, String name, java.util.function.Supplier<LacertaCompanion> who, double side, double dist,
+                                    double height, double lead) {
         return shoot(s, name, () -> {
             LacertaCompanion c = who.get();
             double yaw = Math.toRadians(c.yBodyRot + side);
-            Vec3 at = c.position().add(-Math.sin(yaw) * dist, height, Math.cos(yaw) * dist);
-            return new Vec3[]{at, c.position().add(0, .9, 0)};
+            Vec3 at = c.position().add(-Math.sin(yaw) * dist, height - lead, Math.cos(yaw) * dist);
+            return new Vec3[]{at, c.position().add(0, .9 - lead, 0)};
         });
     }
 
@@ -333,6 +343,9 @@ public abstract class LacertaViews extends KohakuSleepViews {
                         ServerLevel level = ctx.server().overworld();
                         for (int y = 0; y < 4; y++) level.setBlockAndUpdate(PILLAR.above(y), Blocks.STONE_BRICKS.defaultBlockState());
                         z = dummy(level, Vec3.atBottomCenterOf(PILLAR.above(4)), 180, 200);
+                        // 优先远程：够不着的用掌心赤焰（随机应变时坠星好了会先飞上去砸，见 lacerta_pursuit）
+                        ServerPlayer p = ctx.player();
+                        p.setData(Companions.LACERTA_BOND, Companions.bond(p, Companions.LACERTA_DEF).withTactic(dev.logos.dimension.companion.CompanionTactic.RANGED));
                         flames = LacertaCompanion.flames();
                     })
                     .waitUntilServer("她抬起左手抛出龙炎弹", ctx -> "flame_throw".equals(misc(c)))
@@ -627,5 +640,171 @@ public abstract class LacertaViews extends KohakuSleepViews {
                     .step("关掉", ctx -> Minecraft.getInstance().setScreen(null)).ticks(4)
                     .step("切回英文", ctx -> language("en_us")).waitUntil("资源重载完", ctx -> reload.isDone());
         }
+    }
+
+    // ---------------------------------------------------------------- 阶段 B：伴飞
+
+    @LDLRegisterClient(name = "lacerta_escort", group = "lacerta_companion", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class Escort extends LacertaViews {
+        /** 一堵墙：x -6..6、z 7、从地面到 FLOOR + 9。 */
+        private static final int WALL_Z = 7, WALL_TOP = FLOOR + 9;
+        private LacertaCompanion c;
+        private ServerPlayer owner;
+        private boolean clipped;
+        private int watched;
+
+        private static void wall(ServerLevel level, boolean on) {
+            for (int x = -6; x <= 6; x++)
+                for (int y = FLOOR + 1; y <= WALL_TOP; y++) {
+                    BlockPos at = new BlockPos(x, y, WALL_Z);
+                    if (on) level.setBlockAndUpdate(at, Blocks.STONE_BRICKS.defaultBlockState());
+                    else level.removeBlock(at, false);
+                }
+        }
+
+        /** 她在你身后（你朝向的反面）、比你的脚高、离你 1.5–5 格。 */
+        private boolean behindAbove() {
+            Vec3 to = c.position().subtract(owner.position());
+            Vec3 forward = Vec3.directionFromRotation(0, owner.getYRot());
+            double d = to.length();
+            return d > 1.5 && d < 5 && to.y > .5 && to.multiply(1, 0, 1).dot(forward) < 0;
+        }
+
+        /** 这一刻她卡没卡进方块（记下来）；看够 {@code polls} 次返回真。 */
+        private boolean watch(ServerLevel level, int polls) {
+            if (!level.noCollision(c, c.getBoundingBox().deflate(.05))) clipped = true;
+            return ++watched >= polls;
+        }
+
+        @Override
+        public void define(ScenarioBuilder s) {
+            lacertaStage(s, GameType.CREATIVE).runCommand("difficulty peaceful")
+                    .server("站在地上、召唤", ctx -> {
+                        owner = ctx.player();
+                        standAt(owner, new Vec3(.5, FLOOR + 1, -2.5));
+                        c = summonLacerta(owner, SPOT);
+                    })
+                    .waitUntilServer("入场播完", ctx -> arrived(c))
+                    .checkServer("你在地上时她不飞", ctx -> !c.isFlying())
+                    .server("你飞起来，停在半空", ctx -> aim(owner, new Vec3(.5, FLOOR + 7.6, -2.5), new Vec3(.5, FLOOR + 6, 6)))
+                    .waitUntilServer("她展翅飞起来跟着", ctx -> c.isFlying() && "escort".equals(c.flightForTest()))
+                    .waitUntilServer("到你左后上方", ctx -> behindAbove())
+                    .ticks(20)
+                    .checkServer("停在那里（还在你身后上方）", ctx -> behindAbove());
+            shootHer(s, "lacerta_escort_hover", () -> c, 60, 4, .6);
+            back(s).server("前面竖一堵墙，你飞到墙那边", ctx -> {
+                        ServerLevel level = ctx.server().overworld();
+                        wall(level, true);
+                        clipped = false;
+                        watched = 0;
+                        aim(owner, new Vec3(.5, FLOOR + 7.6, 12.5), new Vec3(.5, FLOOR + 6, 20));
+                    })
+                    .waitUntilServer("她飞过去的这几秒里一直没卡进方块", ctx -> watch(ctx.server().overworld(), 100))
+                    .checkServer("没穿墙", ctx -> !clipped)
+                    .waitUntilServer("翻过墙，又跟到你身后上方", ctx -> {
+                        watch(ctx.server().overworld(), 0);
+                        return c.getZ() > WALL_Z + 1 && behindAbove();
+                    });
+            shootHer(s, "lacerta_escort_over_wall", () -> c, 60, 4.5, 1);
+            back(s).server("你落地", ctx -> standAt(owner, new Vec3(.5, FLOOR + 1, 12.5)))
+                    .waitUntilServer("她也收翅落地", ctx -> !c.isFlying() && c.onGround())
+                    .checkServer("一直没穿墙", ctx -> !clipped)
+                    .teardown("拆墙", ctx -> wall(ctx.server().overworld(), false));
+        }
+    }
+
+    // ---------------------------------------------------------------- 阶段 B：空中追击
+
+    @LDLRegisterClient(name = "lacerta_pursuit", group = "lacerta_companion", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class Pursuit extends LacertaViews {
+        private static final BlockPos PILLAR = new BlockPos(0, FLOOR + 1, 9);
+        private static final Vec3 SIDE_EYE = new Vec3(-8.5, FLOOR + 2.62, 3.5), SIDE_LOOK = new Vec3(.5, FLOOR + 4, 7.5);
+        private LacertaCompanion c;
+        private Mob z;
+        private int skyfalls, landed;
+
+        @Override
+        public void define(ScenarioBuilder s) {
+            lacertaStage(s, GameType.SURVIVAL).runCommand("difficulty normal")
+                    .server("站好、召唤", ctx -> {
+                        ServerPlayer p = ctx.player();
+                        aim(p, SIDE_EYE, SIDE_LOOK);
+                        c = summonLacerta(p, SPOT);
+                    })
+                    .step("对准", ctx -> aimClient(SIDE_LOOK))
+                    .waitUntilServer("入场播完", ctx -> arrived(c))
+                    .server("九格外一根五格高的石柱，柱顶站着一只僵尸", ctx -> {
+                        ServerLevel level = ctx.server().overworld();
+                        for (int y = 0; y < 5; y++) level.setBlockAndUpdate(PILLAR.above(y), Blocks.STONE_BRICKS.defaultBlockState());
+                        z = dummy(level, Vec3.atBottomCenterOf(PILLAR.above(5)), 180, 300);
+                        skyfalls = LacertaCompanion.started("skyfall_judgement");
+                        landed = LacertaCompanion.landed();
+                    })
+                    .waitUntilServer("她拔剑飞上去", ctx -> c.isFlying() && "pursue".equals(c.flightForTest()))
+                    .ticks(12);
+            shootHer(s, "lacerta_pursuit_climb", () -> c, 80, 4, .4);
+            back(s).waitUntilServer("飞到它头顶，接一记炽翼坠星破", ctx -> LacertaCompanion.started("skyfall_judgement") > skyfalls);
+            // 侧面看柱顶：机位同步过来那几刻正好是往下砸
+            back(shoot(s, "lacerta_pursuit_dive", new Vec3(8.5, FLOOR + 7, 5.5), Vec3.atBottomCenterOf(PILLAR.above(5)).add(0, 1, 0)))
+                    .waitUntilServer("坠星那一剑砍中柱顶的僵尸", ctx -> LacertaCompanion.landed() > landed && z.getHealth() < z.getMaxHealth())
+                    .waitUntilServer("砸完不飞了", ctx -> !c.isFlying())
+                    .teardown("拆掉石柱", ctx -> {
+                        for (int y = 0; y < 7; y++) ctx.server().overworld().removeBlock(PILLAR.above(y), false);
+                    });
+        }
+    }
+
+    // ---------------------------------------------------------------- 阶段 B：护落
+
+    /** 你从高处掉下去，她飞过来接住你（{@code embrace}：信赖起抱住，不然拉住手），带你慢慢降落。 */
+    abstract static class Catch extends LacertaViews {
+        private static final Vec3 DROP = new Vec3(3.5, FLOOR + 26, .5);
+        private LacertaCompanion c;
+        private int catches;
+
+        abstract boolean embrace();
+
+        @Override
+        public void define(ScenarioBuilder s) {
+            String clip = embrace() ? "catch_embrace" : "catch_hand";
+            lacertaStage(s, GameType.SURVIVAL).runCommand("difficulty peaceful")
+                    .server("召唤；不带抗性（摔伤照算）", ctx -> {
+                        ServerPlayer p = ctx.player();
+                        standAt(p, new Vec3(.5, FLOOR + 1, -3.5));
+                        c = summonLacerta(p, SPOT);
+                        if (embrace()) c.affectionForTest(p, 450);
+                    })
+                    .waitUntilServer("入场播完", ctx -> arrived(c))
+                    .server("你出现在二十五格高处，掉下去", ctx -> {
+                        ServerPlayer p = ctx.player();
+                        p.removeAllEffects();
+                        p.setHealth(p.getMaxHealth());
+                        catches = LacertaCompanion.catches();
+                        dev.logos.dimension.DimensionTravel.teleport(p, p.level(), DROP, 90, 30);
+                        p.resetFallDistance();
+                    })
+                    .waitUntilServer("她飞过来", ctx -> LacertaCompanion.catches() > catches && clip.equals(misc(c)))
+                    .waitUntilServer("抓住了", ctx -> "carry".equals(c.flightForTest()));
+            shootHer(s, "lacerta_" + clip, () -> c, 70, 4.5, .2, embrace() ? 1.2 : 1.8);
+            back(s).ticks(10)
+                    .checkServer("带着你慢慢往下降", ctx -> "carry".equals(c.flightForTest()) && !ctx.player().onGround());
+            // 稳住以后再拍一张（刚抓住那一刻前面那段下坠刚被减速，画面上她落后得最多）
+            back(shootHer(s.ticks(10), "lacerta_" + clip + "_hold", () -> c, 70, 4.5, .2, embrace() ? .8 : 1.4))
+                    .waitUntilServer("你落地", ctx -> ctx.player().onGround())
+                    .checkServer("活着落地，几乎没掉血", ctx -> ctx.player().isAlive() && ctx.player().getHealth() >= ctx.player().getMaxHealth() - 6)
+                    .waitUntilServer("她红着脸数落你一句",
+                            ctx -> dev.logos.dimension.companion.CompanionLines.last().endsWith("catch_after_" + (embrace() ? "embrace" : "hand")))
+                    .waitUntilServer("她也落地", ctx -> !c.isFlying() && c.onGround());
+        }
+    }
+
+    @LDLRegisterClient(name = "lacerta_catch_hand", group = "lacerta_companion", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class CatchHand extends Catch {
+        @Override boolean embrace() { return false; }
+    }
+
+    @LDLRegisterClient(name = "lacerta_catch_embrace", group = "lacerta_companion", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class CatchEmbrace extends Catch {
+        @Override boolean embrace() { return true; }
     }
 }

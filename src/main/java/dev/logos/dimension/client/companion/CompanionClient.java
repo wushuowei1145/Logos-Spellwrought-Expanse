@@ -380,6 +380,16 @@ public final class CompanionClient {
                 state.xRot = 0;
                 state.yRot = 0;
             }
+            // 护落抱着你时：照你在画面上的位置画她（她自己的位置同步慢几刻，往下降时会落在你上方）
+            int carry = animatable.carryingId();
+            if (carry >= 0 && animatable.level().getEntity(carry) instanceof net.minecraft.world.entity.player.Player held) {
+                var at = held.getPosition(partialTick).add(LacertaCompanion.carryOffset(animatable.carryHug(), animatable.carrySide()));
+                state.x = at.x;
+                state.y = at.y;
+                state.z = at.z;
+                state.bodyRot = animatable.carrySide() + 180;
+                state.yRot = 0;
+            }
             float[] sword = CrimsonOnBone.state(animatable, partialTick);
             state.addGeckolibData(SWORD, sword == null ? -2f : sword[0]);
             state.addGeckolibData(APPEAR, sword != null && sword[1] > 0);

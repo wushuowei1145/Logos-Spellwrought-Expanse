@@ -28,6 +28,14 @@ public interface NpcAnimated extends GeoEntity {
     }
 
     /**
+     * 主控制器这一刻该播哪一段，压过走、跑、待机这些通用状态（拉塞塔飞着时的 {@code fly_hover} / {@code fly_move}）；
+     * 返回 null 照通用的状态机。名字不在动画文件里时也照通用的。
+     */
+    default String npcMainOverride() {
+        return null;
+    }
+
+    /**
      * 剧情动作（对应 TLM 的 misc 控制器，例如 {@code wave}、{@code talk}）；没有时返回 null。
      * 名字不在动画文件里时不播放。
      */

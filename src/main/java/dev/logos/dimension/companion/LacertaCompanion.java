@@ -84,16 +84,22 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     static final int WINGS_FOLD = 24, WINGS_UNFOLD = 20;
     /** 整个人由 misc 动画摆的（入场、睡、倒下）：这时客户端不叠视线，翅膀控制器不管。 */
     static final Set<String> WHOLE_BODY = Set.of("summon", "death", "sleep_watch", "sleep", "sleep_rest", "sleep_together_down", "sleep_together",
-            "sleep_together_up");
+            "sleep_together_up", "catch_hand", "catch_embrace");
 
     private static final EntityDataAccessor<Boolean> SWORD = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Long> SWORD_AT = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.LONG);
     private static final EntityDataAccessor<Boolean> WINGS_FOLDED = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Long> WINGS_AT = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.LONG);
     private static final EntityDataAccessor<Boolean> SITTING = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> FLYING = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.BOOLEAN);
+    /** 护落时抱着谁（实体 ID，-1 没有）、抱住还是拉住手、她在你哪一侧（yaw）：客户端照你在画面上的位置画她（{@link #carryOffset}）。 */
+    private static final EntityDataAccessor<Integer> CARRY = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> CARRY_HUG = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> CARRY_SIDE = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.FLOAT);
 
     final LacertaBlade blade = new LacertaBlade(this);
     final LacertaRest rest = new LacertaRest(this);
+    final LacertaFlight flight = new LacertaFlight(this);
     private CompanionStats.Parts parts = LacertaStats.parts(new CompanionStats.Owner(0, 0, 0, 0, 1), 0, 0);
     private CompanionStats.Part power = new CompanionStats.Part(LacertaStats.POWER, 0, 0), manaParts = new CompanionStats.Part(LacertaStats.MANA, 0, 0);
     private float spellPower = (float) LacertaStats.POWER;
@@ -113,6 +119,10 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
         builder.define(WINGS_FOLDED, false);
         builder.define(WINGS_AT, -1000L);
         builder.define(SITTING, false);
+        builder.define(FLYING, false);
+        builder.define(CARRY, -1);
+        builder.define(CARRY_HUG, false);
+        builder.define(CARRY_SIDE, 0f);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -274,6 +284,50 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
         return entityData.get(SITTING);
     }
 
+    /** 在飞（{@link LacertaFlight}；关了重力，客户端主状态播飞的动画）。 */
+    public boolean isFlying() {
+        return entityData.get(FLYING);
+    }
+
+    void setFlying(boolean on) {
+        if (entityData.get(FLYING) != on) entityData.set(FLYING, on);
+    }
+
+    /** 护落时抱着 {@code id}（-1 放开）：{@code hug} 抱住，不然拉住手；她在你 {@code sideYaw} 那一侧。 */
+    void setCarry(int id, boolean hug, float sideYaw) {
+        entityData.set(CARRY, id);
+        entityData.set(CARRY_HUG, hug);
+        entityData.set(CARRY_SIDE, sideYaw);
+    }
+
+    public int carryingId() {
+        return entityData.get(CARRY);
+    }
+
+    public boolean carryHug() {
+        return entityData.get(CARRY_HUG);
+    }
+
+    public float carrySide() {
+        return entityData.get(CARRY_SIDE);
+    }
+
+    /**
+     * 护落时她相对你的位置（她在你 {@code sideYaw} 那一侧、面朝你）：抱住在你身前，胸口对着胸口；拉住手在你身前偏上，握着你举起的手。
+     * 服务端按它挪她，客户端按你在画面上的位置画她（不然她的位置同步、插值比你的画面慢几刻，往下降时总在你上方）。
+     */
+    public static Vec3 carryOffset(boolean hug, float sideYaw) {
+        Vec3 side = Vec3.directionFromRotation(0, sideYaw);
+        return hug ? side.scale(.45).add(0, .3, 0) : side.scale(.4).add(0, 1.25, 0);
+    }
+
+    /** 飞着时主状态：水平快过 {@link LacertaFlight#FLY_MOVE_SPEED} 格/秒播 {@code fly_move}，不然 {@code fly_hover}。 */
+    @Override
+    public String npcMainOverride() {
+        if (!isFlying()) return null;
+        return Math.hypot(getX() - xo, getZ() - zo) * 20 > LacertaFlight.FLY_MOVE_SPEED ? "fly_move" : "fly_hover";
+    }
+
     @Override
     public boolean curled() {
         return WHOLE_BODY.contains(misc()) && !"summon".equals(misc());
@@ -311,6 +365,7 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
         blade.tick(level);
         tickFlame(level, now);
         if (p != null) rest.tick(level, p, now);
+        flight.tick(level, p, now);
         glide();
         if (tickCount % 10 == 0) tickWings();
     }
@@ -330,7 +385,7 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
 
     /** 展翼滑翔：掉了 {@link #GLIDE_AFTER} 格以上（不在水里、没在坠星）就张开翅膀慢慢往下飘。 */
     private void glide() {
-        if (onGround() || isInWater() || isPassenger() || fallDistance < GLIDE_AFTER) return;
+        if (isFlying() || onGround() || isInWater() || isPassenger() || fallDistance < GLIDE_AFTER) return;
         var m = blade.move();
         if (m != null && "skyfall_judgement".equals(m.name())) return;
         Vec3 v = getDeltaMovement();
@@ -345,7 +400,7 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
      * 拿着剑在打的时候、出来到开阔的地方展开。
      */
     private void tickWings() {
-        boolean fold = !blade.drawn() && (isPassenger() || isInWater() || cramped());
+        boolean fold = !blade.drawn() && !isFlying() && (isPassenger() || isInWater() || cramped());
         setWingsFolded(fold);
     }
 
@@ -418,6 +473,8 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
         if (withdrawing()) return;
         withdrawAt = level.getGameTime();
         setHealth(1);
+        if (flight.catching()) flight.release(level, ownerPlayer(), withdrawAt, false);
+        flight.land();
         blade.drop();
         rest.rise(level, true);
         stopEating();
@@ -629,6 +686,8 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     protected void readAdditionalSaveData(ValueInput input) {
         super.readAdditionalSaveData(input);
         mana = input.getDoubleOr("Mana", LacertaStats.MANA);
+        // 飞着时存的档会带着「无重力」：读回来照常落地
+        setNoGravity(false);
     }
 
     // ---------------------------------------------------------------- 测试用
@@ -676,6 +735,20 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     /** 测试用：此刻的睡姿 / 坐姿（none / sit / watch / doze / rest / together）。 */
     public String poseForTest() {
         return rest.describePose();
+    }
+
+    /** 测试用：接住过你几次、落地保底挡下过几次。 */
+    public static int catches() {
+        return LacertaFlight.catches;
+    }
+
+    public static int saves() {
+        return LacertaFlight.saves;
+    }
+
+    /** 测试用：飞行在做什么（none / escort / pursue / catch / carry）。 */
+    public String flightForTest() {
+        return flight.mode().name().toLowerCase(java.util.Locale.ROOT);
     }
 
     public String moveForTest() {

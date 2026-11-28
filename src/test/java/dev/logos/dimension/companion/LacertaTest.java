@@ -78,7 +78,8 @@ class LacertaTest {
         List<String> used = new ArrayList<>(List.of("idle", "walk", "run", "jump", "sit", "swim_stand", "attacked", "summon", "death", "eat",
                 "refuse", "pick", "wings_fold", "wings_folded", "wings_unfold", "pre_parallel0", "pre_parallel1", "pre_parallel2",
                 "face_poise", "face_aloof", "face_smug", "face_happy", "face_sweet", "face_pout", "face_flustered", "face_foodie", "face_curious",
-                "face_surprised", "face_angry", "face_sad", "face_sleepy", "face_battle", "sleep_together_down", "sleep_together_up"));
+                "face_surprised", "face_angry", "face_sad", "face_sleepy", "face_battle", "sleep_together_down", "sleep_together_up",
+                "fly_hover", "fly_move", "catch_hand", "catch_embrace"));
         for (LacertaRest.Tier t : LacertaRest.Tier.values()) used.add(t.clip);
         used.addAll(LacertaCompanion.WHOLE_BODY);
         for (String m : moves("lacerta_companion").keySet()) used.add(LacertaBlade.PREFIX + m);
@@ -208,6 +209,52 @@ class LacertaTest {
         assertTrue(LacertaStats.afterProtection(10, 10_000) >= 1 - 1e-4, "总共不超过九成");
     }
 
+    /**
+     * 飞（阶段 B，模型第 22 版）：悬停、飞行移动是循环的主状态；拉住手、抱住是整身的，抓住的那一刻和模型的 catch 标记一致，
+     * 播的时候翅膀控制器不管。
+     */
+    @Test void flightClipsMatchTheModel() throws Exception {
+        JsonObject anims = animations();
+        for (String n : new String[]{"fly_hover", "fly_move"}) assertTrue(anims.getAsJsonObject(n).get("loop").getAsBoolean(), n + " 要循环");
+        assertEquals(LacertaFlight.CATCH_HAND_AT, marker(anims.getAsJsonObject("catch_hand"), "catch"));
+        assertEquals(LacertaFlight.CATCH_EMBRACE_AT, marker(anims.getAsJsonObject("catch_embrace"), "catch"));
+        assertTrue(LacertaCompanion.WHOLE_BODY.contains("catch_hand") && LacertaCompanion.WHOLE_BODY.contains("catch_embrace"));
+        assertEquals(LacertaFlight.clipFor(CompanionBond.Stage.CLOSE), "catch_hand");
+        assertEquals(LacertaFlight.clipFor(CompanionBond.Stage.TRUSTED), "catch_embrace");
+        assertEquals(LacertaFlight.clipFor(CompanionBond.Stage.BONDED), "catch_embrace");
+    }
+
+    /**
+     * 护落：原版的摔伤算法；会摔死（剩不到 1 点）或者摔掉三成生命上限才接；抓住以前那一段掉落拉住手减 75%、抱住减 80%。
+     */
+    @Test void catchesHeavyFalls() {
+        assertEquals(20, LacertaFlight.fallDamage(23, 3, 1), 1e-9);
+        assertEquals(0, LacertaFlight.fallDamage(2, 3, 1), 1e-9);
+        assertEquals(11, LacertaFlight.fallDamage(13.5, 3, 1), 1e-9, "向上取整");
+        assertTrue(LacertaFlight.worthCatching(20, 20, 20), "会摔死");
+        assertTrue(LacertaFlight.worthCatching(3, 3.5, 20), "血少时一点也会摔死");
+        assertTrue(LacertaFlight.worthCatching(6, 20, 20), "三成生命上限");
+        assertFalse(LacertaFlight.worthCatching(5, 20, 20));
+        assertFalse(LacertaFlight.worthCatching(0, 1, 20), "不掉血的不接");
+        assertEquals(5, LacertaFlight.reducedFall(20, false), 1e-9);
+        assertEquals(4, LacertaFlight.reducedFall(20, true), 1e-9);
+    }
+
+    /** 伴飞点在你身后、左边、比你的脚高：面朝南（yaw 0）时在北边、东边（你的左手）。 */
+    @Test void escortFliesBehindToTheLeft() {
+        Vec3 at = new Vec3(10, 64, 10);
+        for (float yaw : new float[]{0, 90, -135, 180}) {
+            Vec3 p = LacertaFlight.escortPoint(at, yaw).subtract(at);
+            double r = Math.toRadians(yaw);
+            Vec3 forward = new Vec3(-Math.sin(r), 0, Math.cos(r)), left = new Vec3(Math.cos(r), 0, Math.sin(r));
+            assertEquals(-LacertaFlight.ESCORT_BACK, p.dot(forward), 1e-6, "身后 " + yaw);
+            assertEquals(LacertaFlight.ESCORT_SIDE, p.dot(left), 1e-6, "左边 " + yaw);
+            assertEquals(LacertaFlight.ESCORT_UP, p.y, 1e-6);
+        }
+        Vec3 south = LacertaFlight.escortPoint(Vec3.ZERO, 0);
+        assertTrue(south.z < 0 && south.x > 0, south.toString());
+    }
+
     /** 防复读：刚放过的那一招罚 0.45，往前每一招减半，放过几次就叠几次；顺手的后继加分。 */
     @Test void repeatsArePenalised() {
         assertEquals(.45, LacertaMind.repeat(List.of("flame_sweep", "cleave_1"), "flame_sweep"), 1e-9);
@@ -299,7 +346,7 @@ class LacertaTest {
         assertNotNull(chat);
         for (TalkMenu.Option o : chat.children()) if (o.id().startsWith("chat.")) keys.add(TALK + "option." + o.id());
         for (String s : new String[]{"blade", "thrust", "vortex", "sweep", "skyfall", "parry", "taunt", "flame", "scale", "glide", "tank", "mana",
-                "vigil", "withdraw"}) {
+                "vigil", "withdraw", "flight", "catch"}) {
             for (String part : new String[]{"name", "icon", "desc"}) keys.add(TALK + "skill." + s + "." + part);
         }
         for (LacertaRest.Tier t : LacertaRest.Tier.values()) keys.add(TALK + "skill.vigil." + t.name().toLowerCase(Locale.ROOT));
@@ -313,7 +360,8 @@ class LacertaTest {
             keys.add(LINE + "talk.greet_" + s + "_1");
             keys.add(LINE + "talk.greet_" + s + "_2");
         }
-        for (String l : new String[]{"stay", "follow", "refuse", "full", "stuck", "hungry", "seal", "remake", "withdraw", "taunt", "talk.bye",
+        for (String l : new String[]{"stay", "follow", "refuse", "full", "stuck", "hungry", "seal", "remake", "withdraw", "taunt", "catch_hand", "catch_embrace",
+                "catch_after_hand", "catch_after_embrace", "talk.bye",
                 "talk.danger", "talk.rest"}) {
             keys.add(LINE + l);
         }
