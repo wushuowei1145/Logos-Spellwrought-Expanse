@@ -7,6 +7,7 @@
 | 运镜 | [CAMERA_SHOTS.md](CAMERA_SHOTS.md) | 镜头暂时离开玩家，看完平滑回来，可带遮幅和电影蒙版 |
 | 全屏后期 | [SCREEN_EFFECTS.md](SCREEN_EFFECTS.md) | 黑白闪（冲击帧）、电影蒙版、泛光 `GlowBloom`、后期里画的特效 `PostVfx` |
 | 区域画风 | [WORLD_STYLES.md](WORLD_STYLES.md) | 门后、群系里的世界换一种画风（黑白、童话、国画），走进去时球形切换 |
+| 连携切入 | [CHAIN_CUTIN.md](CHAIN_CUTIN.md) | 小队合力一击的切入：斜切分格里玩家（正中）和在场的同伴，落位爆闪、闪白甩出；角色单独画进贴图再合成 |
 | 处决特写 | [EXECUTION_SHOTS.md](EXECUTION_SHOTS.md) | 投技、处决的两秒特写：抛起、黑白、刀光、红色重击、拍下；可交互版本；飞身刺（两人的剪影，刺中后定格，定格时换场景） |
 | 各功能自己的通道 | [EXPLOSION_MAGIC.md](EXPLOSION_MAGIC.md)、[DAWNVOW_CHARGE.md](DAWNVOW_CHARGE.md)、[RAILGUN.md](RAILGUN.md)、[SHIRAUME_BOSS.md](SHIRAUME_BOSS.md)、[ORCHESTRA.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/ORCHESTRA.md)、[QUEEN_CORE_BATTLE.md](QUEEN_CORE_BATTLE.md) | 爆裂魔法、曦誓蓄力、超电磁炮、白梅战、乐团描边、树心净化各有一个全屏通道 |
 | 世界球体着色 | [QUEEN_CORE_BATTLE.md](QUEEN_CORE_BATTLE.md)「画面」 | 一次画多个世界坐标的球：染腐、净化、显露、搏动波；女王战和树心净化结局在用，别的功能也能交球 |
@@ -22,6 +23,7 @@
 | 全屏白、全屏黑盖住传送、换场景 | 服务端 `ScreenEffects.cover(player, ScreenCover.white(in, hold, out))`，按刻计时，盖满的那几刻里换 | 用黑白闪遮（最多 8 帧，开了「隐藏闪电的闪烁」会跳过） |
 | 镜头一直很轻地平移颤动（下坠） | 客户端每刻 `CameraJitter.want(强度)` | 改镜头角度的抖动冒充平移 |
 | 某块区域的世界换画风 | 服务端 `StyleRealms.add(level, realm)` | 第二镜头、渲染到贴图再贴到门上 |
+| 小队连携、合体技的切入演出 | 服务端 `ChainCutins.play(player)`，自动点名在场的同伴 | 截图贴到屏幕上、渲染第二个世界 |
 | 投技、处决特写 | `ExecutionShots.play`；玩家逐刀点击的用 `InteractiveExecutions.start` | 自己拼运镜加闪 |
 | 黑白里刺中、定格的那一下换场景，再接彩色过场 | `ExecutionShot.thrust` 加出手的人：定格的那几刻贴存下的一帧、不读深度，在里面传送；彩色运镜一到黑白就结束 | 剪影还在读深度时传送（地形扫进盒子，远处的实体插值滑过方块） |
 | 角色说一句话（战斗里的提醒、喊话） | 服务端 `CompanionLines.speak(speaker, 名字键, 颜色, 台词键, 刻数, 参数…)`，画面下方带名字的字幕，过场里也看得见 | 动作栏、聊天栏、血条下面写状态 |
@@ -55,7 +57,8 @@
 8. `WorldStyleRenderer`：区域画风
 9. `WorldTintScreen`：世界球体着色，一次最多 8 个球（女王战的净化圈、搏动波、腐败漫开，树心净化结局）；有球时才取 `PostVfx` 深度
 10. `ExecutionRenderer`：处决特写，整个画面换成平涂的颜色；飞身刺定格时直接贴存下的那一帧
-11. `ScreenEffectRenderer`：黑白闪和电影蒙版，最后画
+11. `ScreenEffectRenderer`：黑白闪和电影蒙版
+12. `ChainCutinRenderer`：连携切入，最后画。它是盖在整个画面上的 2D 层；画之前先把每一格的角色单独画进自己的贴图（和原版物品栏小人同一种做法）
 
 新通道按「要处理谁的结果」决定放哪：
 
@@ -190,7 +193,7 @@
   - 框架会替换 `Util` 的时钟，时间差可能是负数，要容忍。
   - 量真实时长用 `System.nanoTime()`。
   - F2 截图拍得到这些效果，因为直接抓主画面。
-- **只跑相关的组**，不要跑整个 `group:logos`：`group:camera_shot`、`group:screen_fx`、`group:world_style`、`group:execution_shot`，以及你那个功能自己的组。
+- **只跑相关的组**，不要跑整个 `group:logos`：`group:camera_shot`、`group:screen_fx`、`group:world_style`、`group:execution_shot`、`group:chain_cutin`，以及你那个功能自己的组。
 
 ```text
 ./gradlew runClient -PldTest=group:screen_fx -PldTestHeadless -PldTestWindow=1280x720 -PlogosJar=/absolute/path/logos.jar -PldTestSeedDir=/path/to/seed

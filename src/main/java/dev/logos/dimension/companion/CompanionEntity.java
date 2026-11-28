@@ -93,6 +93,11 @@ public abstract class CompanionEntity extends PathfinderMob implements NpcAnimat
     /** 她是哪一位。 */
     public abstract CompanionDef def();
 
+    /** 她现在穿的那一套的 ID（客户端也读得到）；没有装束可换的同伴是空字符串。连携切入照这个画她。 */
+    public String outfitId() {
+        return "";
+    }
+
     protected abstract CompanionMood createMood();
 
     protected abstract CompanionMind createMind();
@@ -619,6 +624,15 @@ public abstract class CompanionEntity extends PathfinderMob implements NpcAnimat
 
     String move() {
         return entityData.get(MOVE);
+    }
+
+    /**
+     * 展示用（客户端临时造的、不放进世界的那一位，见连携切入）：表情播 {@code face}（{@code face_*}），身体一直播 {@code pose}（循环）。
+     * 两段都在她的动画文件里；名字不在时那一层不播。
+     */
+    public void stage(String face, String pose) {
+        setMisc(face);
+        setMove(pose + "|0|1|true");
     }
 
     @Override

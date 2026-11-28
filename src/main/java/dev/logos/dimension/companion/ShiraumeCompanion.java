@@ -460,6 +460,11 @@ public class ShiraumeCompanion extends CompanionEntity implements FoxfireBearer,
         return CompanionOutfit.byId(entityData.get(OUTFIT));
     }
 
+    @Override
+    public String outfitId() {
+        return outfit().id;
+    }
+
     /** 换上 {@code o}（已经穿着就只记下时间）：身边一阵花瓣和淡粉狐火，像变身一样换好。 */
     void dress(CompanionOutfit o, long now) {
         dressedAt = now;

@@ -28,9 +28,10 @@ import org.jspecify.annotations.Nullable;
  * @param card       卡片底
  * @param crest      她的纹：名字旁一个小的，面板里身后一个大的
  * @param showcase   面板里展示的她
+ * @param cutin      连携切入里的她
  */
 public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int ink, int dim, int night0, int night1, int card, Crest crest,
-                             Showcase showcase) {
+                             Showcase showcase, Cutin cutin) {
     /** 画纹：圆心、半径（像素）、颜色。 */
     public interface Crest {
         void draw(GuiGraphicsExtractor g, float cx, float cy, float r, int color);
@@ -57,6 +58,19 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
         }
     }
 
+    /**
+     * 连携切入里的她（docs/CHAIN_CUTIN.md「角色的姿势」）：{@code make} 造一个不放进世界的实体，摆成她在切入里的样子。
+     * 身体播她动画文件里的 {@code cutin}（tools/chain_cutin_poses.py 从她自己的出招、施法里取的那一刻，合她的人设），
+     * 表情是她自己的一段 {@code face_*}；穿哪一套照档案（{@link CompanionSheet#outfit()}）。{@code turn} 是身子在朝着画面中间之外再侧多少度
+     * （正数往她自己的左边转），头照样回过来看着镜头。
+     */
+    public record Cutin(BiFunction<Level, CompanionSheet, @Nullable LivingEntity> make, float turn) {
+        /** 身子不额外侧。 */
+        public Cutin(BiFunction<Level, CompanionSheet, @Nullable LivingEntity> make) {
+            this(make, 0);
+        }
+    }
+
     private static final Map<String, CompanionStyle> STYLES = new ConcurrentHashMap<>();
 
     public static void register(String companion, CompanionStyle style) {
@@ -77,7 +91,13 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 var c = Companions.SHIRAUME.get().create(level, EntitySpawnReason.LOAD);
                 if (c != null) c.showcase(CompanionOutfit.byId(sheet.outfit()), "face_kitsune", "ryuka_idle", true);
                 return c;
-            }, 18, .75f, -8, .68f, 0));
+            }, 18, .75f, -8, .68f, 0),
+            // 切入：流火斜着划过身前，左手压在胸前凝着狐火，眯着眼笑——赢的人的式神，也还是那只骄傲的九尾
+            new Cutin((level, sheet) -> {
+                var c = Companions.SHIRAUME.get().create(level, EntitySpawnReason.LOAD);
+                if (c != null) c.showcase(CompanionOutfit.byId(sheet.outfit()), "face_kitsune", "cutin", true);
+                return c;
+            }));
 
     /**
      * 精灵公主：夜里的林子（深绿到墨绿），薄荷绿当主色，金线，被动能力用荷花粉；纹是世界树的叶（一圈细环、四片菱形的叶、正中一颗生命晶）。
@@ -89,7 +109,16 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 var c = Companions.ELF_PRINCESS.get().create(level, EntitySpawnReason.LOAD);
                 if (c != null) c.showcase("face_content");
                 return c;
-            }, 18, .75f, -8, .68f, 0));
+            }, 18, .75f, -8, .68f, 0),
+            // 切入：把世界树之弓拉满，难得一脸认真——哪怕只有万分之一的机会
+            new Cutin((level, sheet) -> {
+                var c = Companions.ELF_PRINCESS.get().create(level, EntitySpawnReason.LOAD);
+                if (c != null) {
+                    c.showcase("face_determined");
+                    c.stage("face_determined", "cutin");
+                }
+                return c;
+            }, 28));
 
     /**
      * 琥珀：温室午后的咖啡色到深棕，琥珀色当主色，金线，奶油色正文，被动能力用淡紫（星辰花）；纹是一只琥珀色的猫爪按在圆形炼成阵上。
@@ -101,7 +130,16 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 var c = Companions.KOHAKU.get().create(level, EntitySpawnReason.LOAD);
                 if (c != null) c.showcase("face_lazy", sheet.seals(), KohakuOutfit.byId(sheet.outfit()));
                 return c;
-            }, 18, .75f, -8, .68f, 0));
+            }, 18, .75f, -8, .68f, 0),
+            // 切入：长杖拄在身侧，左手抬到下巴前竖起一指，竖瞳一闪——想到解法了，这一下交给她
+            new Cutin((level, sheet) -> {
+                var c = Companions.KOHAKU.get().create(level, EntitySpawnReason.LOAD);
+                if (c != null) {
+                    c.showcase("face_focus", sheet.seals(), KohakuOutfit.byId(sheet.outfit()));
+                    c.stage("face_focus", "cutin");
+                }
+                return c;
+            }));
 
     /**
      * 拉塞塔：熔岩夜里的酒红到深绯，珊瑚红当主色（翼骨与龙鳞），金线（角尖鎏金），被动能力用骑士甲的冷银，奶油色正文；
@@ -113,7 +151,17 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 var c = Companions.LACERTA.get().create(level, EntitySpawnReason.LOAD);
                 if (c != null) c.showcase("face_poise");
                 return c;
-            }, 20, .75f, -8, .68f, 0));
+            }, 20, .75f, -8, .68f, 0),
+            // 切入：炽焰长剑剑尖朝下拄在身前，双翼全展，龙瞳一竖——寸步不退的绯翼前排
+            new Cutin((level, sheet) -> {
+                var c = Companions.LACERTA.get().create(level, EntitySpawnReason.LOAD);
+                if (c != null) {
+                    c.showcase("face_battle");
+                    c.showcaseSword();
+                    c.stage("face_battle", "cutin");
+                }
+                return c;
+            }));
 
     /** 盾形的龙鳞，正中一簇龙炎：一圈细环，环里一枚大菱形（鳞），鳞的上半一枚小菱形、下面一点（火苗）。 */
     static void dragonScale(GuiGraphicsExtractor g, float cx, float cy, float r, int color) {

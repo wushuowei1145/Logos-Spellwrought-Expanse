@@ -101589,6 +101589,26 @@
      }
     }
    }
+  },
+  "cutin": {
+   "loop": true,
+   "animation_length": 1.0,
+   "bones": {
+    "LeftArm": {
+     "rotation": [
+      -37.8661,
+      -11.6937,
+      -96.2539
+     ]
+    },
+    "LeftForeArm": {
+     "rotation": [
+      -77.4195,
+      -0.0,
+      -0.0
+     ]
+    }
+   }
   }
  }
 }
