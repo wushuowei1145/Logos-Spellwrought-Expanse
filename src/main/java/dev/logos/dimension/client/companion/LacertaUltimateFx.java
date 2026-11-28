@@ -55,7 +55,7 @@ import org.jspecify.annotations.Nullable;
 @EventBusSubscriber(modid = LogosDimension.ID, value = Dist.CLIENT)
 public final class LacertaUltimateFx {
     static final int CORAL = 0xE0566B, GOLD = 0xFF9B3D, AMBER = 0xF2B544, WHITE = 0xFFF8EE, PALE = 0xFFE7C0, EMBER_RED = 0x8A1A10,
-            CHAR = 0x3B302D, HOT = 0xFF8A50, SMOKE = 0x2A2224;
+            CHAR = 0x3B302D, HOT = 0xFF8A50, SMOKE = 0x2A2224, FLAME = 0xEE7A30;
     /** 放完以后再留几刻淡掉（碎岩缩没、裂缝凉透）。 */
     static final int FADE = 12;
     /** 光柱亮几刻：完整版到第 7 镜结束，缩短版到擦镜。 */
@@ -389,12 +389,20 @@ public final class LacertaUltimateFx {
                      float core) {
         if (alpha <= .01f) return;
         int n = 18;
+        // 赤金的边是半透明的底（亮天上也是赤金），白芯和一层薄金是加法
+        body(pose, out, "heal/glow", (p, buf) -> {
+            for (int i = 0; i < n; i++) {
+                float s0 = i / (float) n, s1 = (i + 1) / (float) n;
+                float w = Mth.lerp(s1, .3f, 1);
+                VfxParts.streak(p, buf, view, at.apply(s0), at.apply(s1), wide * w, VfxParts.argb(alpha * w * .7f, VfxParts.lerpColor(CORAL, FLAME, s1)));
+            }
+        });
         glow(pose, out, "heal/glow", (p, buf) -> {
             for (int i = 0; i < n; i++) {
                 float s0 = i / (float) n, s1 = (i + 1) / (float) n;
                 float w = Mth.lerp(s1, .3f, 1);
-                VfxParts.streak(p, buf, view, at.apply(s0), at.apply(s1), wide * w, VfxParts.argb(alpha * w * .8f, VfxParts.lerpColor(CORAL, GOLD, s1)));
-                VfxParts.streak(p, buf, view, at.apply(s0), at.apply(s1), core * w, VfxParts.argb(alpha * w, WHITE));
+                VfxParts.streak(p, buf, view, at.apply(s0), at.apply(s1), wide * w * .55f, VfxParts.argb(alpha * w * .3f, GOLD));
+                VfxParts.streak(p, buf, view, at.apply(s0), at.apply(s1), core * w * .7f, VfxParts.argb(alpha * w * .8f, WHITE));
             }
         });
         Vec3 tip = at.apply(1f);
@@ -416,10 +424,13 @@ public final class LacertaUltimateFx {
         float length = Mth.lerp(grow, 1.8f, BLADE);
         Vec3 tip = hands.add(point.scale(length));
         float flicker = .85f + .15f * Mth.sin(a * 2.7f);
+        body(pose, out, "heal/glow", (p, buf) -> {
+            VfxParts.streak(p, buf, view, hands, tip, .85f * flicker, VfxParts.argb(alpha * .5f, CORAL));
+            VfxParts.streak(p, buf, view, hands, tip, .5f, VfxParts.argb(alpha * .7f, FLAME));
+        });
         glow(pose, out, "heal/glow", (p, buf) -> {
-            VfxParts.streak(p, buf, view, hands, tip, .8f * flicker, VfxParts.argb(alpha * .55f, CORAL));
-            VfxParts.streak(p, buf, view, hands, tip, .42f, VfxParts.argb(alpha * .85f, GOLD));
-            VfxParts.streak(p, buf, view, hands, tip, .17f, VfxParts.argb(alpha, WHITE));
+            VfxParts.streak(p, buf, view, hands, tip, .32f, VfxParts.argb(alpha * .35f, GOLD));
+            VfxParts.streak(p, buf, view, hands, tip, .12f, VfxParts.argb(alpha * .85f, WHITE));
         });
         for (int i = 1; i <= 3; i++) bloom(view, hands.add(point.scale(length * i / 3.0)), 1.3f, VfxParts.argb(alpha * .6f, GOLD));
     }
@@ -431,10 +442,8 @@ public final class LacertaUltimateFx {
         float k = VfxParts.smooth(b.dive(), b.impact(), a);
         float alpha = VfxParts.smooth(b.dive(), b.dive() + 2, a);
         Vec3 top = at.add(0, .3, 0), bottom = at.add(0, -1.5 - 1.8 * k, 0);
-        glow(pose, out, "heal/glow", (p, buf) -> {
-            VfxParts.streak(p, buf, view, top, bottom, 1.5f, VfxParts.argb(alpha * .45f, CORAL));
-            VfxParts.streak(p, buf, view, top, bottom, .65f, VfxParts.argb(alpha * .8f, PALE));
-        });
+        body(pose, out, "heal/glow", (p, buf) -> VfxParts.streak(p, buf, view, top, bottom, 1.5f, VfxParts.argb(alpha * .45f, CORAL)));
+        glow(pose, out, "heal/glow", (p, buf) -> VfxParts.streak(p, buf, view, top, bottom, .5f, VfxParts.argb(alpha * .5f, PALE)));
         bloom(view, bottom, 1.8f, VfxParts.argb(alpha * .7f, PALE));
     }
 
@@ -446,8 +455,10 @@ public final class LacertaUltimateFx {
         int color = VfxParts.argb((1 - t) * .9f, PALE);
         Vec3 c = center.add(0, .12, 0);
         glow(pose, out, "heal/ring", (p, buf) -> VfxParts.flat(p, buf, c, new Vec3(1, 0, 0), new Vec3(0, 0, 1), r, 0, color));
-        int glow = VfxParts.argb((1 - t) * .3f, GOLD);
-        glow(pose, out, "heal/glow", (p, buf) -> VfxParts.flat(p, buf, c.add(0, .05, 0), new Vec3(1, 0, 0), new Vec3(0, 0, 1), 4 + 2 * t, 0, glow));
+        // 地上那一团光：底下垫半透明的暖色，加法的只留薄薄一层（亮地面上加法只会叠成白的）
+        int under = VfxParts.argb((1 - t) * .45f, FLAME), glow = VfxParts.argb((1 - t) * .1f, GOLD);
+        body(pose, out, "heal/glow", (p, buf) -> VfxParts.flat(p, buf, c.add(0, .04, 0), new Vec3(1, 0, 0), new Vec3(0, 0, 1), 4 + 2 * t, 0, under));
+        glow(pose, out, "heal/glow", (p, buf) -> VfxParts.flat(p, buf, c.add(0, .05, 0), new Vec3(1, 0, 0), new Vec3(0, 0, 1), 3 + 2 * t, 0, glow));
     }
 
     /** 地缝：几刻里从落点往外裂开，先是炽白，转金，再慢慢冷成暗红。 */
@@ -456,27 +467,18 @@ public final class LacertaUltimateFx {
         float open = Math.min(1, k / 3);
         int color = k < 4 ? WHITE : k < 20 ? VfxParts.lerpColor(WHITE, AMBER, (k - 4) / 16) : VfxParts.lerpColor(AMBER, EMBER_RED, Math.min(1, (k - 20) / 24));
         float alpha = fade * (k < 20 ? 1 : Mth.lerp(Math.min(1, (k - 20) / 24), 1, .6f));
-        glow(pose, out, "heal/glow", (p, buf) -> {
-            for (Crack c : cracks) {
-                int segs = c.points.size() - 1;
-                float shown = open * segs;
-                for (int i = 0; i < segs && i < shown; i++) {
-                    Vec3 a0 = c.points.get(i), a1 = c.points.get(i + 1);
-                    float part = Math.min(1, shown - i);
-                    a1 = a0.lerp(a1, part);
-                    float w = c.width * (1 - .55f * i / segs);
-                    flatSegment(p, buf, a0, a1, w * 2.6f, VfxParts.argb(alpha * .3f, color));
-                    flatSegment(p, buf, a0, a1, w, VfxParts.argb(alpha, VfxParts.lerpColor(color, WHITE, k < 20 ? .5f : .15f)));
-                }
-            }
-        });
+        // 光缝：底下一条半透明的暖色（亮地面上也看得出是火），上面一条细细的加法亮芯
+        int under = VfxParts.lerpColor(FLAME, EMBER_RED, Math.min(1, k / 40));
+        body(pose, out, "heal/glow", (p, buf) -> eachSegment(open, (a0, a1, w) -> flatSegment(p, buf, a0, a1, w * 2.6f, VfxParts.argb(alpha * .6f, under))));
+        int core = VfxParts.lerpColor(color, WHITE, k < 20 ? .35f : .1f);
+        glow(pose, out, "heal/glow", (p, buf) -> eachSegment(open, (a0, a1, w) -> flatSegment(p, buf, a0, a1, w * .8f, VfxParts.argb(alpha * .75f, core))));
         // 裂缝里喷出的一道道细光
         if (k < 20) {
             float shaft = (1 - k / 20) * VfxParts.smooth(0, 2, k);
             glow(pose, out, "heal/glow", (p, buf) -> {
                 for (Crack c : cracks) {
                     Vec3 base = c.points.get(Math.min(c.points.size() - 1, 2));
-                    VfxParts.streak(p, buf, view, base, base.add(0, 2.5 + 2 * c.width * 10, 0), .45f, VfxParts.argb(shaft * .6f, PALE));
+                    VfxParts.streak(p, buf, view, base, base.add(0, 2.5 + 2 * c.width * 10, 0), .4f, VfxParts.argb(shaft * .3f, GOLD));
                 }
             });
         }
@@ -495,17 +497,24 @@ public final class LacertaUltimateFx {
         float rp = Mth.lerp(VfxParts.smooth(0, 8, k), .5f, PILLAR_RADIUS);
         float t = k;
         Vec3 base = center.add(0, -.2, 0), top = center.add(0, h, 0);
+        // 底下垫一层半透明的暖金、一圈珊瑚红的边：亮天上加法只会越叠越白，光柱的颜色要靠它们。
+        // 上面的加法层薄、偏金，炽白只留正中一条细芯（PostVfx 先画半透明的、再画加法的，世界里那条路也是这样叠）
+        body(pose, out, "heal/glow", (p, buf) -> {
+            VfxParts.streak(p, buf, view, base, top, rp * 2.6f, VfxParts.argb(show * .45f, CORAL));
+            VfxParts.streak(p, buf, view, base, top, rp * 1.7f, VfxParts.argb(show * .7f, FLAME));
+        });
         glow(pose, out, "charge/pillar", (p, buf) -> {
-            VfxParts.cylinder(p, buf, base, rp * 2f, h, 40, t * .01f, 3, -t * .05f, 2, VfxParts.argb(show * .16f, PALE), VfxParts.argb(0, WHITE));
-            VfxParts.cylinder(p, buf, base, rp * .55f, h, 32, -t * .012f, 3, -t * .2f, 2, VfxParts.argb(show, WHITE), VfxParts.argb(show * .5f, PALE));
+            VfxParts.cylinder(p, buf, base, rp * 2f, h, 40, t * .01f, 3, -t * .05f, 2, VfxParts.argb(show * .08f, GOLD), VfxParts.argb(0, GOLD));
+            // 圆柱前后两面都叠上去，白芯要更细更淡
+            VfxParts.cylinder(p, buf, base, rp * .38f, h, 32, -t * .012f, 3, -t * .2f, 2, VfxParts.argb(show * .35f, WHITE), VfxParts.argb(show * .2f, PALE));
         });
         glow(pose, out, "pillar_burst/flame", (p, buf) ->
-                VfxParts.cylinder(p, buf, base, rp, h, 40, t * .02f, 3, -t * .14f, 3, VfxParts.argb(show * .8f, GOLD), VfxParts.argb(show * .3f, CORAL)));
+                VfxParts.cylinder(p, buf, base, rp, h, 40, t * .02f, 3, -t * .14f, 3, VfxParts.argb(show * .45f, GOLD), VfxParts.argb(show * .2f, CORAL)));
         glow(pose, out, "heal/glow", (p, buf) -> {
-            VfxParts.streak(p, buf, view, base, top, rp * 1.5f, VfxParts.argb(show * .35f, GOLD));
-            VfxParts.streak(p, buf, view, base, top, rp * .6f, VfxParts.argb(show * .8f, WHITE));
+            VfxParts.streak(p, buf, view, base, top, rp * 1.3f, VfxParts.argb(show * .2f, GOLD));
+            VfxParts.streak(p, buf, view, base, top, rp * .35f, VfxParts.argb(show * .5f, WHITE));
         });
-        for (int i = 0; i < 5; i++) bloom(view, base.add(0, h * i / 4.0, 0), rp * 1.6f, VfxParts.argb(show * .6f, PALE));
+        for (int i = 0; i < 5; i++) bloom(view, base.add(0, h * i / 4.0, 0), rp * 1.6f, VfxParts.argb(show * .5f, GOLD));
     }
 
     /** 焦黑碎岩：刚崩飞时红热，转眼烧成焦黑，悬在半空，最后缩没。 */
@@ -539,11 +548,12 @@ public final class LacertaUltimateFx {
                 if (k < 0 || k > 1) continue;
                 Vec3 at = p.from.add(p.vel.scale(age));
                 float size = p.size * (1 + .9f * k);
-                float alpha = .55f * fade * VfxParts.smooth(0, .15f, k) * (1 - VfxParts.smooth(.5f, 1, k)) * VfxParts.fade(view.cam(), at, size * .5, size * 1.5);
+                float alpha = .4f * fade * VfxParts.smooth(0, .15f, k) * (1 - VfxParts.smooth(.5f, 1, k)) * VfxParts.fade(view.cam(), at, size * .5, size * 1.5);
                 if (alpha <= .003f) continue;
-                float u0 = (p.frame % 2) * .5f, v0 = (p.frame / 2) * .5f;
+                // 2×2 的烟图：每一格往里收一点取，免得采到隔壁那一格、烟团带出方方的边
+                float u0 = (p.frame % 2) * .5f + .03f, v0 = (p.frame / 2) * .5f + .03f;
                 int color = VfxParts.lerpColor(0xB0503A, SMOKE, VfxParts.smooth(0, .3f, k));
-                VfxParts.sprite(pose, buf, view, at, size, size, p.roll + age * .01f, u0, v0, u0 + .5f, v0 + .5f, VfxParts.argb(alpha, color));
+                VfxParts.sprite(pose, buf, view, at, size, size, p.roll + age * .01f, u0, v0, u0 + .44f, v0 + .44f, VfxParts.argb(alpha, color));
             }
         });
     }
@@ -554,6 +564,30 @@ public final class LacertaUltimateFx {
     private static void glow(PoseStack pose, SubmitNodeCollector out, String texture, SubmitNodeCollector.CustomGeometryRenderer draw) {
         if (PostVfx.collecting()) draw.render(pose.last(), PostVfx.add(PostVfx.logos(texture), false));
         else out.submitCustomGeometry(pose, VfxParts.add(texture), draw);
+    }
+
+    /** 一层半透明（暖色的底）：同 {@link #glow}，收的时候交 {@link PostVfx}，不收时在世界里画。 */
+    private static void body(PoseStack pose, SubmitNodeCollector out, String texture, SubmitNodeCollector.CustomGeometryRenderer draw) {
+        if (PostVfx.collecting()) draw.render(pose.last(), PostVfx.blend(PostVfx.logos(texture), false));
+        else out.submitCustomGeometry(pose, VfxParts.blend(texture), draw);
+    }
+
+    @FunctionalInterface
+    private interface Segment {
+        void draw(Vec3 a, Vec3 b, float width);
+    }
+
+    /** 每道裂缝已经裂开（{@code open} 成）的每一段：从落点往外，越往外越细。 */
+    private void eachSegment(float open, Segment segment) {
+        for (Crack c : cracks) {
+            int segs = c.points.size() - 1;
+            float shown = open * segs;
+            for (int i = 0; i < segs && i < shown; i++) {
+                Vec3 a0 = c.points.get(i), a1 = c.points.get(i + 1);
+                a1 = a0.lerp(a1, Math.min(1, shown - i));
+                segment.draw(a0, a1, c.width * (1 - .55f * i / segs));
+            }
+        }
     }
 
     /** 再交一份给泛光（坐标相对镜头）。 */
