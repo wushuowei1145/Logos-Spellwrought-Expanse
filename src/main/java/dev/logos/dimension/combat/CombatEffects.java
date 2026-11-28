@@ -5,7 +5,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
@@ -13,8 +12,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 招式文件里 {@code effect} 字段的附加效果（docs/COMBAT_SKELETON.md 第 5 节）。伤害本身仍走原版 {@code player.attack}，
- * 这里只在命中前后加上武器自己的规则：
+ * 招式文件里 {@code effect} 字段的附加效果（docs/COMBAT_SKELETON.md 第 5 节），玩家和同伴一样（{@link Wielder}）。伤害本身照常结算
+ * （玩家原版 {@code player.attack}，同伴 {@link NpcWeapon}），这里只在命中前后加上武器自己的规则：
  * <ul>
  *   <li>{@code launch}：长枪上挑，命中的目标进入 {@link Airborne 击飞}。</li>
  *   <li>{@code flurry}：长枪连刺，打浮空的目标伤害翻倍、每下延长一点浮空。</li>
@@ -31,15 +30,13 @@ public final class CombatEffects {
     private CombatEffects() {}
 
     /** 结算命中之前：下砸把自己挑起的浮空目标补进目标列表，并在枪尖落地处砸出尘土。 */
-    public static void contact(ServerPlayer player, Moveset.Move move, List<Entity> targets) {
+    public static void contact(Wielder w, Moveset.Move move, List<Entity> targets) {
         if (!SLAM.equals(move.effect())) return;
-        for (var e : Airborne.launchedBy(player, player.entityInteractionRange() + SLAM_EXTRA_RANGE))
-            if (!targets.contains(e) && player.hasLineOfSight(e)) targets.add(e);
-        if (player.level() instanceof ServerLevel level) {
-            var look = player.getLookAngle();
-            var flat = new Vec3(look.x, 0, look.z);
-            flat = flat.lengthSqr() < 1e-6 ? Vec3.directionFromRotation(0, player.getYRot()) : flat.normalize();
-            var at = player.position().add(flat.scale(2.2));
+        LivingEntity self = w.entity();
+        for (var e : Airborne.launchedBy(self, w.reach() + SLAM_EXTRA_RANGE))
+            if (!targets.contains(e) && self.hasLineOfSight(e) && w.mayHit(e)) targets.add(e);
+        if (self.level() instanceof ServerLevel level) {
+            var at = self.position().add(w.flatAim().scale(2.2));
             var ground = BlockPos.containing(at.x, at.y - 0.2, at.z);
             var state = level.getBlockState(ground);
             if (!state.isAir()) level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, state), at.x, ground.getY() + 1.05, at.z,
@@ -58,12 +55,12 @@ public final class CombatEffects {
     }
 
     /** 命中之后的效果。 */
-    public static void hit(ServerPlayer player, Entity target, Moveset.Move move) {
+    public static void hit(Wielder w, Entity target, Moveset.Move move) {
         if (move.effect() == null || !(target instanceof LivingEntity living) || !living.isAlive()) return;
         switch (move.effect()) {
             case LAUNCH -> {
-                if (Airborne.launch(living, player))
-                    player.level().playSound(null, living.getX(), living.getY(), living.getZ(), SoundEvents.PLAYER_ATTACK_KNOCKBACK,
+                if (Airborne.launch(living, w.entity()))
+                    living.level().playSound(null, living.getX(), living.getY(), living.getZ(), SoundEvents.PLAYER_ATTACK_KNOCKBACK,
                             SoundSource.PLAYERS, 1, 0.8f);
             }
             case FLURRY -> Airborne.extend(living);

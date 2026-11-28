@@ -3,6 +3,7 @@ package dev.logos.dimension.item;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.combat.Airborne;
 import dev.logos.dimension.combat.Moveset;
+import dev.logos.dimension.combat.Wielder;
 import dev.logos.dimension.dragonfire.Dragonfire;
 import dev.logos.dimension.foxfire.FoxfireCue;
 import dev.logos.dimension.foxfire.FoxfireFlame;
@@ -24,8 +25,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
@@ -49,6 +48,7 @@ import org.jspecify.annotations.Nullable;
  *       空降 {@code skyfall_judgement} 在落点炸开一圈龙炎并挑飞。</li>
  * </ul>
  * 龙炎不用原版粒子，也不点原版的火：画面全走龙炎自己的提示（{@link FoxfireCue}，颜色 {@link FoxfireFlame#DRAGON}）。
+ * 玩家和拉塞塔一样（{@link Wielder}，docs/WEAPON_AI.md）：她跑的就是玩家这份招式文件。
  */
 @EventBusSubscriber(modid = LogosDimension.ID)
 public final class CrimsonFlameSkills {
@@ -56,8 +56,6 @@ public final class CrimsonFlameSkills {
     static final double WAVE_RANGE = 11.0, WAVE_SPEED = 1.15, WAVE_WIDTH = 1.9, WAVE_HEIGHT = 1.8, WAVE_DAMAGE = 10.0;
     private static final double STEP = 1.0, DROP = 4.0, LIFT = 0.05, SKIN = 0.05, STRIDE = 0.5;
     static final double SKYFALL_RADIUS = 3.8, SKYFALL_DAMAGE = 12.0;
-    /** 不是玩家放的坠星：落点把敌人往上挑多快（格/刻）。 */
-    static final double LAUNCH_NPC = 0.62;
     private static final double[] FAN_ANGLES_DEG = {-36.0, -18.0, 0.0, 18.0, 36.0};
     /** 带火的招式：打中点龙炎缠身。连招前三式只打龙炎、不缠身，免得每一剑都把缠身叠满。 */
     private static final Set<String> BURNING = Set.of("cataclysm_4", "dragon_fang", "crimson_thrust", "vortex_rush",
@@ -73,85 +71,86 @@ public final class CrimsonFlameSkills {
     private CrimsonFlameSkills() {}
 
     /** 身法派生条件判断，供招式文件中的 {@code require} 字段调用。 */
-    public static boolean allows(ServerPlayer player, String requirement) {
+    public static boolean allows(Wielder w, String requirement) {
         return switch (requirement) {
-            case "airborne" -> !player.onGround() && !player.isInWater() && !player.onClimbable();
-            case "sprint" -> player.isSprinting();
-            case "sneak" -> player.isShiftKeyDown() && player.onGround();
+            case "airborne" -> w.airborne();
+            case "sprint" -> w.intends("sprint");
+            case "sneak" -> w.intends("sneak") && w.entity().onGround();
             default -> false;
         };
     }
 
     /**
-     * 这一剑对 {@code target} 打出的龙炎：点数同原版近战（攻击力乘攻击蓄力），招式的伤害倍数由
-     * {@code LongswordCombat} 在受伤事件里照常乘上。剑照原版每打中一下掉一点耐久。返回是否打进去了。
+     * 这一剑对 {@code target} 打出的龙炎：点数同近战（{@link Wielder#attackDamage}：玩家是攻击力乘攻击蓄力），招式的伤害倍数在
+     * 受伤事件里照常乘上（{@code combat/CombatHits}）。带火的招式缠身，逆鳞的拉塞塔每一剑都缠身。玩家的剑照原版每打中一下掉一点耐久。
+     * 返回是否打进去了。
      */
-    public static boolean strike(ServerPlayer player, LivingEntity target, Moveset.Move move) {
-        double amount = player.getAttributeValue(Attributes.ATTACK_DAMAGE) * player.getAttackStrengthScale(0.5f);
+    public static boolean strike(Wielder w, LivingEntity target, Moveset.Move move) {
+        LivingEntity user = w.entity();
         float before = target.getHealth() + target.getAbsorptionAmount();
-        boolean died = Dragonfire.deal(player, target, amount, BURNING.contains(move.name()));
+        boolean died = Dragonfire.deal(user, target, w.attackDamage(), BURNING.contains(move.name()) || w.ignites());
         // Logos 的 Effects.damage 只在打死时返回真，打没打进去看血量（含伤害吸收）有没有掉
         boolean hurt = died || target.getHealth() + target.getAbsorptionAmount() < before;
-        if (hurt && !player.hasInfiniteMaterials()) player.getMainHandItem().hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
+        if (hurt && w.player() instanceof ServerPlayer player && !player.hasInfiniteMaterials())
+            player.getMainHandItem().hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
         return hurt;
     }
 
-    /** 招式每刻位移推进。 */
-    public static void combatTick(ServerPlayer player, String move) {
-        UUID id = player.getUUID();
+    /** 招式每刻位移推进；返回这一刻是不是在这几招的冲刺、起落里（拉塞塔这时不另往目标带步）。 */
+    public static boolean combatTick(Wielder w, String move) {
+        LivingEntity user = w.entity();
+        UUID id = user.getUUID();
         boolean propelled = "crimson_thrust".equals(move) || "vortex_rush".equals(move)
                 || "flame_sweep".equals(move) || "skyfall_judgement".equals(move);
         if (!propelled) {
             DASHES.remove(id);
-            return;
+            return false;
         }
-        if ("flame_sweep".equals(move) && player.isUsingItem()) {
-            player.stopUsingItem();
+        if ("flame_sweep".equals(move) && user.isUsingItem()) {
+            user.stopUsingItem();
         }
         if ("skyfall_judgement".equals(move)) {
-            player.fallDistance = 0;
+            user.resetFallDistance();
         }
 
-        long now = player.level().getGameTime();
+        long now = user.level().getGameTime();
         DashState state = DASHES.get(id);
         if (state == null || !state.move.equals(move)) {
-            state = new DashState(move, flatLook(player), now);
+            state = new DashState(move, w.flatAim(), now);
             DASHES.put(id, state);
         }
         long t = now - state.start;
 
         if ("crimson_thrust".equals(move)) {
-            if (t >= 2 && t <= 5 && !player.horizontalCollision && !hasEnemyAhead(player, state.dir, 1.7)) {
-                pushHorizontal(player, state.dir, 1.15);
-            }
+            if (t < 2 || t > 5) return false;
+            if (!user.horizontalCollision && !hasEnemyAhead(w, state.dir, 1.7)) pushHorizontal(user, state.dir, 1.15);
         } else if ("vortex_rush".equals(move)) {
-            if (t >= 2 && t <= 10 && !player.horizontalCollision && !hasEnemyAhead(player, state.dir, 1.6)) {
-                pushHorizontal(player, state.dir, 0.78);
-            }
+            if (t < 2 || t > 10) return false;
+            if (!user.horizontalCollision && !hasEnemyAhead(w, state.dir, 1.6)) pushHorizontal(user, state.dir, 0.78);
         } else if ("flame_sweep".equals(move)) {
-            if (t >= 4 && t <= 7 && !player.horizontalCollision && !hasEnemyAhead(player, state.dir, 1.8)) {
-                pushHorizontal(player, state.dir, 0.55);
-            }
-        } else if ("skyfall_judgement".equals(move)) {
-            Vec3 vel = player.getDeltaMovement();
+            if (t < 4 || t > 7) return false;
+            if (!user.horizontalCollision && !hasEnemyAhead(w, state.dir, 1.8)) pushHorizontal(user, state.dir, 0.55);
+        } else {
+            Vec3 vel = user.getDeltaMovement();
             if (t >= 1 && t <= 4) {
-                player.setDeltaMovement(vel.x * 0.8 + state.dir.x * 0.24, Math.max(vel.y, 0.42), vel.z * 0.8 + state.dir.z * 0.24);
-                player.hurtMarked = true;
+                user.setDeltaMovement(vel.x * 0.8 + state.dir.x * 0.24, Math.max(vel.y, 0.42), vel.z * 0.8 + state.dir.z * 0.24);
+                user.hurtMarked = true;
             } else if (t >= 7 && t <= 10) {
-                player.setDeltaMovement(vel.x * 0.4 + state.dir.x * 0.45, -1.15, vel.z * 0.4 + state.dir.z * 0.45);
-                player.hurtMarked = true;
-            }
+                user.setDeltaMovement(vel.x * 0.4 + state.dir.x * 0.45, -1.15, vel.z * 0.4 + state.dir.z * 0.45);
+                user.hurtMarked = true;
+            } else return false;
         }
+        return true;
     }
 
     /** 招式接触帧：战技音效、龙炎游脉与落点的龙炎。 */
-    public static void onSwing(ServerPlayer player, Moveset.Move move) {
-        skill(player.level(), player, flatLook(player), move.name(), e -> mayHit(player, e));
+    public static void onSwing(Wielder w, Moveset.Move move) {
+        if (w.entity().level() instanceof ServerLevel level) skill(level, w.entity(), w.flatAim(), move.name(), w::mayHit);
     }
 
     /**
-     * 这一招接触时的战技（玩家和拉塞塔共用）：横扫扫出五道龙炎游脉，坠星在落点炸开一圈龙炎并挑飞，突刺、旋风、十文字放一团龙炎。
-     * {@code forward} 是水平的朝向；{@code hits} 挑打得到的（玩家：不打自己的宠物；同伴：只打她当作敌人的）。
+     * 这一招接触时的战技：横扫扫出五道龙炎游脉，坠星在落点炸开一圈龙炎并挑飞，突刺、旋风、十文字放一团龙炎。
+     * {@code forward} 是水平的朝向；{@code hits} 挑打得到的（{@link Wielder#mayHit}：玩家不打自己的宠物，同伴只打她当作敌人的）。
      */
     public static void skill(ServerLevel level, LivingEntity user, Vec3 forward, String move, Predicate<LivingEntity> hits) {
         switch (move) {
@@ -185,13 +184,7 @@ public final class CrimsonFlameSkills {
                 for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, area, hits::test)) {
                     if (e.getBoundingBox().getCenter().distanceToSqr(impact) > SKYFALL_RADIUS * SKYFALL_RADIUS) continue;
                     Dragonfire.deal(user, e, SKYFALL_DAMAGE);
-                    if (user instanceof ServerPlayer p) Airborne.launch(e, p);
-                    else if (!e.is(Airborne.IMMUNE)) {
-                        // 不是玩家打的：没有空中连段的那一套，只往上挑一下
-                        Vec3 v = e.getDeltaMovement();
-                        e.setDeltaMovement(v.x, Math.max(v.y, LAUNCH_NPC), v.z);
-                        e.hurtMarked = true;
-                    }
+                    Airborne.launch(e, user);
                 }
             }
             case "crimson_thrust" -> {
@@ -230,26 +223,20 @@ public final class CrimsonFlameSkills {
     /** 供自动化测试检查当前活跃的龙炎游脉数量。 */
     public static int liveWaves() { return WAVES.size(); }
 
-    private static Vec3 flatLook(ServerPlayer player) {
-        Vec3 look = player.getLookAngle();
-        Vec3 flat = new Vec3(look.x, 0, look.z);
-        return flat.lengthSqr() < 1e-6 ? Vec3.directionFromRotation(0, player.getYRot()).normalize() : flat.normalize();
-    }
-
     private static Vec3 rotateHorizontal(Vec3 dir, double radians) {
         double c = Math.cos(radians), s = Math.sin(radians);
         return new Vec3(dir.x * c - dir.z * s, 0, dir.x * s + dir.z * c).normalize();
     }
 
-    private static void pushHorizontal(ServerPlayer player, Vec3 dir, double speed) {
-        Vec3 cur = player.getDeltaMovement();
-        player.setDeltaMovement(dir.x * speed, Math.min(cur.y, 0.08), dir.z * speed);
-        player.hurtMarked = true;
+    private static void pushHorizontal(LivingEntity user, Vec3 dir, double speed) {
+        Vec3 cur = user.getDeltaMovement();
+        user.setDeltaMovement(dir.x * speed, Math.min(cur.y, 0.08), dir.z * speed);
+        user.hurtMarked = true;
     }
 
-    private static boolean hasEnemyAhead(ServerPlayer player, Vec3 dir, double dist) {
-        AABB box = player.getBoundingBox().expandTowards(dir.scale(dist)).inflate(0.5);
-        return !player.level().getEntitiesOfClass(LivingEntity.class, box, e -> mayHit(player, e)).isEmpty();
+    private static boolean hasEnemyAhead(Wielder w, Vec3 dir, double dist) {
+        AABB box = w.entity().getBoundingBox().expandTowards(dir.scale(dist)).inflate(0.5);
+        return !w.entity().level().getEntitiesOfClass(LivingEntity.class, box, w::mayHit).isEmpty();
     }
 
     /** 横扫出手时身前的一道龙炎弧：沿 90° 的弧放五小团。 */
@@ -258,11 +245,6 @@ public final class CrimsonFlameSkills {
             Vec3 ray = rotateHorizontal(forward, Math.toRadians(i * 22.5));
             FoxfireCue.burst(level, user.position().add(ray.scale(2.4)).add(0, 0.8, 0), FoxfireFlame.DRAGON, 0.8f);
         }
-    }
-
-    static boolean mayHit(ServerPlayer p, LivingEntity e) {
-        if (e == p || !e.isAlive() || e.isSpectator() || e.isPassengerOfSameVehicle(p)) return false;
-        return !(e instanceof TamableAnimal pet && pet.isOwnedBy(p));
     }
 
     static @Nullable Vec3 groundBelow(ServerLevel level, Entity p, Vec3 at) {

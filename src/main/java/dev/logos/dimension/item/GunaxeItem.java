@@ -4,6 +4,7 @@ import dev.logos.dimension.DimensionBlocks;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.combat.CombatWeapon;
 import dev.logos.dimension.combat.Moveset;
+import dev.logos.dimension.combat.Wielder;
 import dev.logos.dimension.firearm.Firearm;
 import dev.logos.dimension.firearm.Firearms;
 import dev.logos.dimension.longsword.LongswordCombat;
@@ -80,12 +81,16 @@ public final class GunaxeItem extends Item implements CombatWeapon.Holder, Firea
 
     @Override public double damage() { return SHOT; }
 
-    @Override public void fire(ServerPlayer player, Moveset.Move move, int index) {
+    // 子弹从玩家背包里拿；同伴还不会用（docs/WEAPON_AI.md 第 7 节）
+    @Override public void fire(Wielder w, Moveset.Move move, int index) {
+        if (!(w.player() instanceof ServerPlayer player)) return;
         double spread = move.name().equals("fan") ? FAN_SPREAD + FAN_SPREAD_STEP * index : 1;
         Firearms.fire(player, player.getMainHandItem(), move.name().startsWith("aim"), move.damage(), spread);
     }
-    @Override public void feed(ServerPlayer player, Moveset.Move move) { Firearms.feed(player, player.getMainHandItem()); }
-    @Override public boolean allows(ServerPlayer player, String requirement) {
-        return Firearms.allows(player, player.getMainHandItem(), requirement);
+    @Override public void feed(Wielder w, Moveset.Move move) {
+        if (w.player() instanceof ServerPlayer player) Firearms.feed(player, player.getMainHandItem());
+    }
+    @Override public boolean allows(Wielder w, String requirement) {
+        return w.player() instanceof ServerPlayer player && Firearms.allows(player, player.getMainHandItem(), requirement);
     }
 }

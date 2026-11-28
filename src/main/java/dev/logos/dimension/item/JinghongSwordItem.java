@@ -4,6 +4,7 @@ import dev.logos.dimension.DimensionBlocks;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.combat.CombatWeapon;
 import dev.logos.dimension.combat.Moveset;
+import dev.logos.dimension.combat.Wielder;
 import dev.logos.dimension.jinghong.SwordArray;
 import dev.logos.dimension.lingxiao.FlightRules;
 import dev.logos.dimension.longsword.LongswordCombat;
@@ -65,14 +66,17 @@ public final class JinghongSwordItem extends Item implements CombatWeapon.Holder
         return true;
     }
     /** 掷剑出手：不走近战判定，交给剑阵。 */
-    @Override public boolean swing(ServerPlayer player, Moveset.Move move) {
+    // 剑阵跟着玩家；同伴还不会用（docs/WEAPON_AI.md 第 7 节）
+    @Override public boolean swing(Wielder w, Moveset.Move move) {
         if (!THROW.equals(move.name())) return true;
-        SwordArray.throwSword(player);
+        if (w.player() instanceof ServerPlayer player) SwordArray.throwSword(player);
         return false;
     }
     /** 连招砍中：身后的剑追击这一刀的第一个目标。 */
-    @Override public void hit(ServerPlayer player, Entity target, Moveset.Move move, boolean first) {
-        if (first && move.name().startsWith("attack_")) SwordArray.followUp(player, target);
+    @Override public void hit(Wielder w, Entity target, Moveset.Move move, boolean first) {
+        if (first && move.name().startsWith("attack_") && w.player() instanceof ServerPlayer player) SwordArray.followUp(player, target);
     }
-    @Override public void blocked(ServerPlayer player, DamageSource source, boolean parried) { SwordArray.blocked(player, source, parried); }
+    @Override public void blocked(Wielder w, DamageSource source, boolean parried) {
+        if (w.player() instanceof ServerPlayer player) SwordArray.blocked(player, source, parried);
+    }
 }

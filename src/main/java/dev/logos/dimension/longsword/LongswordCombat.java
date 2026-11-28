@@ -3,11 +3,13 @@ package dev.logos.dimension.longsword;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.combat.Airborne;
 import dev.logos.dimension.combat.CombatEffects;
+import dev.logos.dimension.combat.CombatHits;
 import dev.logos.dimension.combat.CombatWeapon;
 import dev.logos.dimension.combat.MoveRunner;
 import dev.logos.dimension.combat.Moveset;
 import dev.logos.dimension.combat.Movesets;
 import dev.logos.dimension.combat.Parry;
+import dev.logos.dimension.combat.Wielder;
 import dev.logos.dimension.dawnvow.DawnvowCharge;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,8 +30,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
-import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
 import net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.entity.player.CriticalHitEvent;
@@ -59,27 +59,20 @@ public final class LongswordCombat {
     private static final ThreadLocal<Boolean> CONTACT = ThreadLocal.withInitial(() -> false);
     /** 这一刀要暴击的目标（准星正对着的），由暴击事件读。 */
     private static final ThreadLocal<Entity> CRIT = new ThreadLocal<>();
-    /** 正在结算的招式与目标：招式的 damage、knockback 与附加效果的伤害倍数由伤害、击退事件读。 */
-    private static final ThreadLocal<Moveset.Move> MOVE = new ThreadLocal<>();
-    private static final ThreadLocal<Entity> TARGET = new ThreadLocal<>();
     /** 招式要求按蓄满的攻击结算时写进攻击蓄力计时的值（远大于任何攻击间隔）。 */
     private static final int FULL_STRENGTH_TICKS = 1000;
-    /** 一刀最多打几个目标。 */
-    private static final int MAX_TARGETS = 8;
     private static final class State implements MoveRunner.Actor {
         final ServerPlayer player;
+        final Wielder wielder;
         final ItemStack stack;
         final int slot;
         final CombatWeapon weapon;
         final Object level;
         MoveRunner runner;
-        /**
-         * 这套连招最近打中各目标的记录：目标自己记下的“最后被生物打中”的时刻（它的 tickCount）与当时的游戏刻。
-         * 下一刀前目标的最后一下若仍是这一刀留下的，受击冷却就是连招自己造成的。
-         */
-        final Map<UUID, long[]> lastHits = new HashMap<>();
+        /** 这套连招自己留下的受击冷却（{@link CombatHits.Combo}）。 */
+        final CombatHits.Combo combo = new CombatHits.Combo();
         State(ServerPlayer player, CombatWeapon weapon) {
-            this.player = player; this.stack = player.getMainHandItem(); this.weapon = weapon;
+            this.player = player; this.wielder = Wielder.of(player); this.stack = player.getMainHandItem(); this.weapon = weapon;
             this.slot = player.getInventory().getSelectedSlot(); this.level = player.level();
         }
         @Override public double attackSpeed() { return player.getAttributeValue(Attributes.ATTACK_SPEED); }
@@ -91,14 +84,14 @@ public final class LongswordCombat {
         }
         @Override public void fire(MoveRunner runner) {
             if (selected(player, this) && !PAUSED.contains(player.getUUID()) && stack.getItem() instanceof CombatWeapon.Holder holder)
-                holder.fire(player, runner.move(), runner.fireIndex());
+                holder.fire(wielder, runner.move(), runner.fireIndex());
         }
         @Override public void feed(MoveRunner runner) {
             if (selected(player, this) && !PAUSED.contains(player.getUUID()) && stack.getItem() instanceof CombatWeapon.Holder holder)
-                holder.feed(player, runner.move());
+                holder.feed(wielder, runner.move());
         }
         @Override public boolean allows(String requirement) {
-            return stack.getItem() instanceof CombatWeapon.Holder holder && holder.allows(player, requirement);
+            return stack.getItem() instanceof CombatWeapon.Holder holder && holder.allows(wielder, requirement);
         }
         LongswordPayload payload(MoveRunner runner) {
             if (runner.cleared()) return LongswordPayload.clear(player.getUUID());
@@ -165,7 +158,7 @@ public final class LongswordCombat {
         var state = active(player);
         // 按住右键时只有接受左键的招式（例如弹刀后接突刺）才收左键，长剑蓄力中仍不出招。
         if (state != null && (!player.isUsingItem() || state.runner.move().accepts(Moveset.Input.ATTACK))
-                && (!(state.stack.getItem() instanceof CombatWeapon.Holder holder) || holder.allowsAttack(player, state.runner.move().name())))
+                && (!(state.stack.getItem() instanceof CombatWeapon.Holder holder) || holder.allowsAttack(state.wielder, state.runner.move().name())))
             state.runner.input(Moveset.Input.ATTACK, player.level().getGameTime());
     }
     /** 换弹：交给招式文件的 {@code reload} 输入（铳，见 docs/FIREARMS.md）；接受时返回 true。 */
@@ -206,7 +199,7 @@ public final class LongswordCombat {
             Parry.stagger(event.getDamageSource(), player);
             parried = true;
         }
-        if (state != null && state.stack.getItem() instanceof CombatWeapon.Holder holder) holder.blocked(player, event.getDamageSource(), parried);
+        if (state != null && state.stack.getItem() instanceof CombatWeapon.Holder holder) holder.blocked(state.wielder, event.getDamageSource(), parried);
     }
     /**
      * 这名玩家的攻击被弹开：切到招式文件的 {@link Moveset#PARRIED}，这一下后面的目标不再结算，这段时间不能出招、不能格挡。
@@ -265,7 +258,7 @@ public final class LongswordCombat {
         // 一直按着右键时，招式结束回到可格挡的状态（例如突刺收势）就重新进入格挡。
         else if (player.isUsingItem() && selected(player, state)) state.runner.input(Moveset.Input.USE_PRESS, now);
         if (DawnvowCharge.dawnvow(state.stack)) DawnvowCharge.tick(player, state.stack, state.runner.move().name());
-        if (selected(player, state) && state.stack.getItem() instanceof CombatWeapon.Holder holder) holder.combatTick(player, state.runner.move().name());
+        if (selected(player, state) && state.stack.getItem() instanceof CombatWeapon.Holder holder) holder.combatTick(state.wielder, state.runner.move().name());
     }
     /** 这一刀命中锥形的张角（度）：手上武器的 {@link CombatWeapon#cone}；曦誓剑身金光在时更宽。 */
     public static double cone(ServerPlayer player) {
@@ -290,40 +283,16 @@ public final class LongswordCombat {
         var end = block.getLocation();
         var hit = ProjectileUtil.getEntityHitResult(level, player, from, end,
                 player.getBoundingBox().expandTowards(end.subtract(from)).inflate(1), e -> !e.isSpectator() && e.isPickable(), 0);
-        List<Entity> out = new ArrayList<>();
         Entity aimed = hit != null && player.hasLineOfSight(hit.getEntity()) ? hit.getEntity() : null;
-        if (aimed != null) out.add(aimed);
-        double cos = Math.cos(Math.toRadians(degrees / 2));
-        List<Entity> cone = level.getEntities(player, player.getBoundingBox().inflate(reach + 1), e -> {
-            if (e == aimed || !(e instanceof LivingEntity living) || !living.isAlive() || e.isSpectator() || !e.isPickable()) return false;
-            if (e.isPassengerOfSameVehicle(player) || e instanceof net.minecraft.world.entity.TamableAnimal pet && pet.isOwnedBy(player)) return false;
-            var near = nearest(e.getBoundingBox(), from, look, reach);
-            var d = near.subtract(from);
-            double dist = d.length();
-            if (dist > reach) return false;
-            if (dist > 1e-4 && d.dot(look) / dist < cos) return false;
-            return player.hasLineOfSight(e) || level.clip(new ClipContext(from, near, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player))
-                    .getType() == net.minecraft.world.phys.HitResult.Type.MISS;
-        });
-        cone.sort(java.util.Comparator.comparingDouble(e -> e.getBoundingBox().distanceToSqr(from)));
-        for (var e : cone) if (out.size() < MAX_TARGETS) out.add(e);
-        return out;
-    }
-
-    /** 盒子里离视线最近的一点：先取视线上离盒心最近的点（不超过攻击距离），再夹进盒子。 */
-    private static net.minecraft.world.phys.Vec3 nearest(net.minecraft.world.phys.AABB box, net.minecraft.world.phys.Vec3 from,
-                                                        net.minecraft.world.phys.Vec3 look, double reach) {
-        double t = Math.clamp(box.getCenter().subtract(from).dot(look), 0, reach);
-        var p = from.add(look.scale(t));
-        return new net.minecraft.world.phys.Vec3(Math.clamp(p.x, box.minX, box.maxX), Math.clamp(p.y, box.minY, box.maxY), Math.clamp(p.z, box.minZ, box.maxZ));
+        return CombatHits.cone(level, player, from, look, reach, degrees, aimed, Wielder.of(player)::mayHit);
     }
 
     private static void contact(ServerPlayer player, State state) {
         var move = state.runner.move();
         var holder = state.stack.getItem() instanceof CombatWeapon.Holder h ? h : null;
-        if (holder != null && !holder.swing(player, move)) { player.resetAttackStrengthTicker(); return; }
+        if (holder != null && !holder.swing(state.wielder, move)) { player.resetAttackStrengthTicker(); return; }
         var targets = state.weapon.diamondHitbox() ? dev.logos.dimension.combat.DiamondHitbox.targets(player) : targets(player, cone(player, move));
-        CombatEffects.contact(player, move, targets);
+        CombatEffects.contact(state.wielder, move, targets);
         if (targets.isEmpty()) {
             player.resetAttackStrengthTicker();
             if (!CombatEffects.quietWhiff(move))
@@ -331,7 +300,7 @@ public final class LongswordCombat {
             return;
         }
         long now = player.level().getGameTime();
-        state.lastHits.values().removeIf(hit -> now - hit[1] > 20);
+        state.combo.forget(now);
         // 原版打完一下就把攻击蓄力清零；每个目标都按出刀时的蓄力算，最后一下之后照常清零
         var strength = (dev.logos.dimension.mixin.AttackStrengthAccess) player;
         int ticker = move.fullStrength() ? FULL_STRENGTH_TICKS : strength.logos_dimension$attackStrengthTicker();
@@ -341,40 +310,22 @@ public final class LongswordCombat {
             if (!selected(player, state) || !player.isAlive()) break;
             strength.logos_dimension$setAttackStrengthTicker(ticker);
             strength.logos_dimension$setItemSwapTicker(swap);
-            // 取消点让连段间隔短于原版 10 刻受击冷却；只放过这套连招上一下自己造成的冷却：
-            // 目标最后一次被生物打中仍是这一刀留下的（同一个人、同一时刻）。之后若被别人打过就照原版规则处理。
-            // 不按游戏刻推算剩余冷却：目标所在区块没在 tick 时冷却不会递减，推算会误判成被别人刷新过。
-            long[] last = state.lastHits.get(target.getUUID());
-            if (last != null && target instanceof LivingEntity living && living.invulnerableTime > 0
-                    && living.getLastHurtByMob() == player && living.getLastHurtByMobTimestamp() == last[0]) living.invulnerableTime = 0;
+            // 只放过这套连招上一下自己造成的受击冷却（CombatHits.Combo）
+            state.combo.clearOwn(target, player);
             CONTACT.set(true);
-            MOVE.set(move); TARGET.set(target);
+            CombatHits.begin(move, target);
             // 凌霄沿用原版铁剑暴击条件，不额外强制暴击。
             if (first && !state.weapon.diamondHitbox()) CRIT.set(target);
-            try { if (holder == null || !holder.strike(player, target, move)) player.attack(target); }
-            finally { CONTACT.remove(); CRIT.remove(); MOVE.remove(); TARGET.remove(); }
-            if (target instanceof LivingEntity living && living.invulnerableTime >= 20 && living.getLastHurtByMob() == player)
-                state.lastHits.put(target.getUUID(), new long[]{living.getLastHurtByMobTimestamp(), now});
+            try { if (holder == null || !holder.strike(state.wielder, target, move)) player.attack(target); }
+            finally { CONTACT.remove(); CRIT.remove(); CombatHits.end(); }
+            state.combo.record(target, player, now);
             // 这一下被弹开（招式已经换成被弹反）：没有砍中，不触发挑飞之类的效果，后面的目标也不再结算。
             if (state.runner.move() != move) break;
             DawnvowCharge.hit(player, target);
-            CombatEffects.hit(player, target, move);
-            if (holder != null) holder.hit(player, target, move, first);
+            CombatEffects.hit(state.wielder, target, move);
+            if (holder != null) holder.hit(state.wielder, target, move, first);
             first = false;
         }
-    }
-
-    /** 招式的伤害倍数（damage）与附加效果的倍数（例如连刺打浮空目标翻倍），只作用于这一刀的目标。 */
-    @SubscribeEvent static void damage(LivingIncomingDamageEvent event) {
-        var move = MOVE.get();
-        if (move == null || event.getEntity() != TARGET.get()) return;
-        float scale = (float) move.damage() * CombatEffects.multiplier(move, event.getEntity());
-        if (scale != 1) event.setAmount(event.getAmount() * scale);
-    }
-    /** 招式不击退（knockback 为假）或目标浮空时，这一刀的击退取消：连刺不把目标推出枪尖，浮空目标停在原处。 */
-    @SubscribeEvent static void knockback(LivingKnockBackEvent event) {
-        var move = MOVE.get();
-        if (move != null && event.getEntity() == TARGET.get() && (!move.knockback() || Airborne.is(event.getEntity()))) event.setCanceled(true);
     }
 
     /** 准星正对着的目标暴击：原版暴击的 1.5 倍、粒子与音效。 */
@@ -398,5 +349,5 @@ public final class LongswordCombat {
         STATES.remove(event.getEntity().getUUID());
         PAUSED.remove(event.getEntity().getUUID());
     }
-    @SubscribeEvent static void stopped(ServerStoppedEvent event) { STATES.clear(); PAUSED.clear(); CONTACT.remove(); MOVE.remove(); TARGET.remove(); }
+    @SubscribeEvent static void stopped(ServerStoppedEvent event) { STATES.clear(); PAUSED.clear(); CONTACT.remove(); CombatHits.end(); }
 }

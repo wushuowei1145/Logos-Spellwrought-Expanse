@@ -1,9 +1,8 @@
 package dev.logos.dimension.companion;
 
+import dev.logos.dimension.combat.WeaponPilot;
 import dev.logos.dimension.foxfire.FoxfireCue;
 import dev.logos.dimension.foxfire.FoxfireFlame;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -26,8 +25,9 @@ import org.jspecify.annotations.Nullable;
 /**
  * 拉塞塔的心智（docs/LACERTA_COMPANION.md 第 6 节，接入方案第三、四节）：寸步不退的绯翼前排。通用的行为在 {@link CompanionMind}；这里是她自己的：
  * <ul>
- *   <li><b>炽焰长剑全招式</b>：每到能接下一招时，把这一刻合法的招式都打一遍分——处境（多远、几个、强不强、够不够得着）+ 顺手的后继
- *       （一式接二式、旋风接十文字、弹反接龙牙……）− 刚放过的（近四招，越近罚得越重）+ 一点抖动——挑最高的。战技有短的软冷却，
+ *   <li><b>炽焰长剑全招式</b>：每到能接下一招时交给驾驶员（{@link WeaponPilot}，docs/WEAPON_AI.md）照招式文件里每一招的 {@code ai} 打分——
+ *       处境（多远、几个、强不强、够不够得着）+ 顺手的后继（一式接二式、旋风接十文字、弹反接龙牙……）− 刚放过的（近四招，越近罚得越重）
+ *       + 一点抖动——挑最高的，再像玩家一样按出来（突刺要潜行、旋风要疾跑、坠星要先跳起来、横扫要先横防）。战技有短的软冷却，
  *       不会复读一招。贴身四连、中近距突刺瞬贴、中距旋风追击、前方成群或被风筝时红莲横扫扫出游脉、强敌或高低差时坠星砸脸。</li>
  *   <li><b>赤龙威压</b>（{@link #taunt}）：在打、自己血量过三成时，开打那一下、以后每 8 秒一次，把 12 格内的敌对生物都拉到自己身上 6 秒
  *       （这 6 秒里它们转回去打你也会被拉回来）；Boss 不强拉。</li>
@@ -39,29 +39,10 @@ import org.jspecify.annotations.Nullable;
  * </ul>
  */
 final class LacertaMind extends CompanionMind {
-    /** 招式的距离（格，到目标脚下的水平距离之外再看目标半宽）。 */
-    static final double THRUST_MIN = 3.2, THRUST_MAX = 6.0, VORTEX_MIN = 5.0, VORTEX_MAX = 9.0, SWEEP_MIN = 5.0, SWEEP_MAX = 11.0,
-            SKYFALL_MIN = 4.0, SKYFALL_MAX = 9.0;
+    /** 够不着时拿剑的游脉扫地上远处的：距离（格，她脚下到目标脚下）。 */
+    static final double SWEEP_MIN = 5.0, SWEEP_MAX = 11.0;
     /** 主动找敌人的半径（你周围）：平时、优先近战。 */
     static final double HUNT = 18, HUNT_MELEE = 24;
-    /** 战技的软冷却（刻）。 */
-    static final Map<String, Integer> COOLDOWN = Map.of("flame_sweep", 70, "skyfall_judgement", 80, "crimson_thrust", 50, "vortex_rush", 50,
-            "cross_rend", 30, "dragon_fang", 20);
-    /** 顺手的后继：上一招 → 这一招加多少分。 */
-    static final Map<String, Map<String, Double>> FLOW = Map.of(
-            "cleave_1", Map.of("rend_2", .5),
-            "rend_2", Map.of("ascend_3", .5),
-            "ascend_3", Map.of("cataclysm_4", .6),
-            "cataclysm_4", Map.of("cleave_1", .2),
-            "crimson_thrust", Map.of("vortex_rush", .4, "cleave_1", .3),
-            "vortex_rush", Map.of("cross_rend", .5),
-            "flame_sweep", Map.of("cross_rend", .5),
-            "cross_rend", Map.of("ascend_3", .5),
-            "skyfall_judgement", Map.of("cleave_1", .4),
-            "dragon_fang", Map.of("rend_2", .5));
-    /** 刚放过的那一招罚多少（往前每一招减半）；记几招。 */
-    static final double REPEAT = .45;
-    static final int RECENT = 4;
     /** 一串砍完回到架势里停多久（刻，挡得住）：攻击欲望强，停得短。 */
     static final int STRING_REST = 5;
     /** 赤龙威压：半径、拉住多久、冷却（刻），血量要在几成以上。 */
@@ -74,8 +55,6 @@ final class LacertaMind extends CompanionMind {
     static final int SHEATHE_AFTER = 40;
 
     private final LacertaCompanion l;
-    private final Deque<String> recent = new ArrayDeque<>();
-    private final Map<String, Long> ready = new HashMap<>();
     private final Map<Mob, Long> taunted = new HashMap<>();
     private long nextTaunt, restUntil = -1, calmSince = -1, guardSince = -1, countered;
     private int combo;
@@ -161,7 +140,6 @@ final class LacertaMind extends CompanionMind {
             if (now - calmSince >= SHEATHE_AFTER && l.blade.canFollowUp()) {
                 l.blade.sheathe();
                 calmSince = -1;
-                recent.clear();
             }
         } else {
             calmSince = -1;
@@ -340,7 +318,7 @@ final class LacertaMind extends CompanionMind {
      */
     private boolean pursue(LivingEntity target, long now, boolean hold, boolean low) {
         // 炽翼坠星破是第四印
-        boolean ready = l.seal.has(LacertaSeals.SKYFALL) && now >= this.ready.getOrDefault("skyfall_judgement", 0L);
+        boolean ready = l.seal.has(LacertaSeals.SKYFALL) && !l.blade.pilot.cooling("skyfall_judgement");
         if (hold || low || tactic == CompanionTactic.RANGED || !ready || !l.flight.canPursue(target)) {
             if (l.flight.mode() == LacertaFlight.Mode.PURSUE) l.flight.land();
             return false;
@@ -478,97 +456,51 @@ final class LacertaMind extends CompanionMind {
         if (now % 5 == 0 || c.getNavigation().isDone()) c.getNavigation().moveTo(target, run ? 1.5 : 1.25);
     }
 
+    /** 去放这一招：驾驶员照招式文件的转移图按过去（软冷却、刚放过哪几招也记在驾驶员那里）。 */
     private boolean attack(String move, LivingEntity target, long now) {
-        if (!l.blade.attack(move, target, true)) return false;
+        if (!l.blade.attack(move, target)) return false;
         face(target);
         c.getNavigation().stop();
         c.setSprinting(false);
-        recent.addFirst(move);
-        while (recent.size() > RECENT) recent.removeLast();
-        Integer cd = COOLDOWN.get(move);
-        if (cd != null) ready.put(move, now + cd);
         return true;
     }
 
     /**
-     * 挑下一招：这一刻合法的每一招打分 = 处境 + 顺手的后继 − 刚放过的 + 一点抖动，取最高的（低于 0.2 就不打，走过去）。
+     * 挑下一招：交给驾驶员（{@link WeaponPilot#pick}），照炽焰长剑招式文件里每一招的 {@code ai} 打分（docs/WEAPON_AI.md 第 2.3 节）。
+     * 她自己的条件：炽翼坠星破要第四印。低于 0.2 就不打（走过去）。
      */
     @Nullable String pick(LivingEntity target, long now, double d) {
-        double reach = LacertaBlade.REACH + target.getBbWidth() * .5;
-        int around = crowd(c.position(), 3.5);
-        int ahead = crowdAhead(SWEEP_MAX);
-        boolean strong = target.getMaxHealth() >= CompanionEntity.STRONG;
-        double rise = target.getY() - c.getY();
-        boolean away = target.getDeltaMovement().horizontalDistanceSqr() > .004
-                && target.getDeltaMovement().dot(target.position().subtract(c.position())) > 0;
-        String prev = recent.peekFirst();
-        boolean melee = tactic == CompanionTactic.MELEE, rangedTactic = tactic == CompanionTactic.RANGED;
-        Map<String, Double> util = new HashMap<>();
-        if (d <= reach) {
-            String next = prev == null ? "cleave_1" : switch (prev) {
-                case "cleave_1" -> "rend_2";
-                case "rend_2" -> "ascend_3";
-                case "ascend_3" -> "cataclysm_4";
-                default -> "cleave_1";
-            };
-            for (String m : new String[]{"cleave_1", "rend_2", "ascend_3", "cataclysm_4"}) util.put(m, m.equals(next) ? .65 : .3);
-            if (strong) util.merge("cataclysm_4", .15, Double::sum);
-            util.put("cross_rend", "vortex_rush".equals(prev) || "flame_sweep".equals(prev) ? .7 : .35);
-            if (around >= 3) util.put("vortex_rush", .7);
-        }
-        if (d > THRUST_MIN && d <= THRUST_MAX) util.put("crimson_thrust", .8 + (away ? .2 : 0) + (melee ? .15 : 0));
-        if (d >= VORTEX_MIN && d <= VORTEX_MAX) util.put("vortex_rush", Math.max(util.getOrDefault("vortex_rush", 0.0), .75 + (melee ? .15 : 0)));
-        boolean ground = target.onGround() && Math.abs(rise) < 2;
-        if (ahead >= 2 && d <= SWEEP_MAX) util.put("flame_sweep", .85 + (rangedTactic ? .2 : 0));
-        else if (ground && d >= SWEEP_MIN && d <= SWEEP_MAX && c.hasLineOfSight(target)) util.put("flame_sweep", .7 + (rangedTactic ? .2 : 0) + (away ? .1 : 0));
-        // 炽翼坠星破是第四印
-        boolean skyfall = l.seal.has(LacertaSeals.SKYFALL);
-        if (skyfall && strong && d >= SKYFALL_MIN && d <= SKYFALL_MAX) util.put("skyfall_judgement", .8 + (melee ? .15 : 0));
-        else if (skyfall && rise >= 2 && rise <= 5 && d <= 8) util.put("skyfall_judgement", .6 + (melee ? .15 : 0));
-        String best = null;
-        double top = .2;
-        for (var e : util.entrySet()) {
-            String m = e.getKey();
-            if (now < ready.getOrDefault(m, 0L)) continue;
-            double s = e.getValue() + flow(prev, m) - repeat(recent, m) + (c.getRandom().nextDouble() - .5) * .1;
-            if (s > top) {
-                top = s;
-                best = m;
-            }
-        }
-        return best;
+        double lean = tactic == CompanionTactic.MELEE ? 1 : tactic == CompanionTactic.RANGED ? -1 : 0;
+        return l.blade.pilot.pick(target, d, situation, c.getRandom(), lean);
     }
 
-    static double flow(@Nullable String prev, String move) {
-        if (prev == null) return 0;
-        Map<String, Double> next = FLOW.get(prev);
-        return next == null ? 0 : next.getOrDefault(move, 0.0);
-    }
-
-    /** 刚放过的罚分：{@code recent} 从最近一招往前，最近一招 {@link #REPEAT}，往前每一招减半。 */
-    static double repeat(Iterable<String> recent, String move) {
-        double p = 0, k = REPEAT;
-        for (String m : recent) {
-            if (m.equals(move)) p += k;
-            k /= 2;
+    /** 驾驶员看的处境：她身边、前方的敌人；坠星要第四印。 */
+    private final WeaponPilot.Situation situation = new WeaponPilot.Situation() {
+        @Override
+        public int crowd(double radius, double arc) {
+            return arc >= 360 ? LacertaMind.this.crowd(c.position(), radius) : crowdAhead(radius, arc);
         }
-        return p;
-    }
+
+        @Override
+        public boolean allows(String move) {
+            return !"skyfall_judgement".equals(move) || l.seal.has(LacertaSeals.SKYFALL);
+        }
+    };
 
     /** 她身边 {@code r} 格里冲着她或你来的敌人有几个。 */
     private int crowd(Vec3 at, double r) {
         return c.level().getEntitiesOfClass(Mob.class, c.getBoundingBox().inflate(r), m -> m.isAlive() && c.canHarm(m) && c.hostileTo(m)).size();
     }
 
-    /** 她前方 72° 扇区、{@code r} 格里的敌人有几个（红莲横扫的游脉扫得到的）。 */
-    private int crowdAhead(double r) {
+    /** 她前方 {@code arc} 度扇区、{@code r} 格里的敌人有几个（红莲横扫的游脉扫得到 72° 的）。 */
+    private int crowdAhead(double r, double arc) {
         Vec3 f = Vec3.directionFromRotation(0, c.getYRot());
         int n = 0;
         for (Mob m : c.level().getEntitiesOfClass(Mob.class, c.getBoundingBox().inflate(r), m -> m.isAlive() && c.canHarm(m) && c.hostileTo(m))) {
             Vec3 to = m.position().subtract(c.position()).multiply(1, 0, 1);
             double len = to.length();
             if (len < 1e-3 || len > r) continue;
-            if (to.dot(f) / len >= Math.cos(Math.toRadians(36))) n++;
+            if (to.dot(f) / len >= Math.cos(Math.toRadians(arc / 2))) n++;
         }
         return n;
     }
@@ -581,7 +513,7 @@ final class LacertaMind extends CompanionMind {
             return;
         }
         if (l.blade.drawn() && l.blade.canFollowUp() && target.onGround() && d >= SWEEP_MIN && d <= SWEEP_MAX
-                && now >= ready.getOrDefault("flame_sweep", 0L) && attack("flame_sweep", target, now)) {
+                && !l.blade.pilot.cooling("flame_sweep") && attack("flame_sweep", target, now)) {
             return;
         }
         if (hold || owner == null) return;
@@ -709,7 +641,7 @@ final class LacertaMind extends CompanionMind {
 
     @Override
     protected void describeOwn(StringBuilder sb) {
-        sb.append(" flight=").append(l.flight.describe()).append(" move=").append(l.moveForTest()).append(" recent=").append(recent).append(" mana=").append(String.format("%.0f/%.0f", l.mana(), l.maxMana()))
+        sb.append(" flight=").append(l.flight.describe()).append(" move=").append(l.moveForTest()).append(" recent=").append(l.blade.pilot.recent()).append(" mana=").append(String.format("%.0f/%.0f", l.mana(), l.maxMana()))
                 .append(" pose=").append(l.rest.describePose());
     }
 }

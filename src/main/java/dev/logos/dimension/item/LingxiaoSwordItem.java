@@ -3,6 +3,7 @@ package dev.logos.dimension.item;
 import dev.logos.dimension.DimensionBlocks;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.combat.CombatWeapon;
+import dev.logos.dimension.combat.Wielder;
 import dev.logos.dimension.lingxiao.FlightRules;
 import dev.logos.dimension.lingxiao.FlyingSword;
 import dev.logos.dimension.lingxiao.LingxiaoFlight;
@@ -29,7 +30,7 @@ public final class LingxiaoSwordItem extends Item implements CombatWeapon.Holder
     }
     public static void init() {}
     @Override public CombatWeapon combatWeapon() { return WEAPON; }
-    @Override public boolean allowsAttack(ServerPlayer player, String move) { return !(player.getVehicle() instanceof FlyingSword); }
+    @Override public boolean allowsAttack(Wielder w, String move) { return !(w.entity().getVehicle() instanceof FlyingSword); }
     @Override public InteractionResult use(Level level, Player player, InteractionHand hand) {
         if (hand != InteractionHand.MAIN_HAND) return InteractionResult.FAIL;
         if (player instanceof ServerPlayer server && !LingxiaoFlight.start(server)) return InteractionResult.FAIL;

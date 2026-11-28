@@ -17,7 +17,7 @@
   生命单独的继承比例和不继承护甲（`CompanionDef.Growth` 的 `healthRatio`、`inheritsArmor`）、琥珀护膜、她自己施放的载页（`KohakuSpells`）、哈气和幻翼；
   之后是按意图挑页（含你给她的页）、凝辉、猫步、凑过来坐下、雨伞、睡姿和醒来的礼物、琥珀相伴。
 - **拉塞塔独有**（[拉塞塔](LACERTA_COMPANION.md) 第 17–21 节，接入方案分五个阶段都已进游戏，诸武精通拆出去另做）：誓约逆鳞（`DragonScaleItem`）、
-  不封顶的分段继承和超出原版上限的护甲、魔咒折成的减伤（`LacertaStats`）、炽焰长剑（`LacertaBlade`）和按处境挑招、防复读（`LacertaMind`）、
+  不封顶的分段继承和超出原版上限的护甲、魔咒折成的减伤（`LacertaStats`）、炽焰长剑（`LacertaBlade`，跑玩家那份招式文件、照招式文件里的 `ai` 挑招按键，[武器的 AI 用法](WEAPON_AI.md)）和按处境挑招（`LacertaMind`）、
   赤龙威压（嘲讽）、掌心赤焰（龙炎弹）、龙眠、收展翅、展翼滑翔、四档守夜（`LacertaRest`）；阶段 B 加了飞行（`LacertaFlight`：伴飞、
   空中追击接坠星、高空护落）；阶段 C 加了巨龙化身（`LacertaDragon`：同一个实体两种形态、重爪、龙炎吐息、你出魔力维持、记着下次以巨龙登场）
   和骑龙（`LacertaRide`）；阶段 D 加了日常（`LacertaHoard` 宝藏窝、`LacertaLife` 递吃的 / 龙息烤肉 / 龙温 / 藏宝癖、
