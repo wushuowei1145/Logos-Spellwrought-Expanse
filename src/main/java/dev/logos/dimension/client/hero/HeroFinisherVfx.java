@@ -277,29 +277,30 @@ public final class HeroFinisherVfx {
         float big = smooth(.3f, 1.2f, r);
         int mix = HeroFinisherTimeline.mix(show.accents, age * .02f);
         float halo = r < .4f ? r * 5 : r * 1.9f;
-        // 底下垫一层半透明的暖金：白天的亮天上加法的光会被冲淡，垫了才看得出是一团金色的火
-        if (big > 0) GLOW_BODY.submit(stack, out, (p, buf) -> VfxParts.sprite(p, buf, view, c, r * 1.35f, 0, VfxParts.argb(.55f * big, EMBER)));
+        // 底下垫一层半透明的暖金：亮天上加法的光只会越叠越白，金色要靠它。PostVfx 先画半透明的、再画加法的，
+        // 所以上面的加法层都要薄、偏金，白只留中间一小团，两条路（PostVfx、世界里）画出来才都是「炽白芯、暖金的火」
+        if (big > 0) GLOW_BODY.submit(stack, out, (p, buf) -> VfxParts.sprite(p, buf, view, c, r * 1.4f, 0, VfxParts.argb(.8f * big, EMBER)));
         GLOW.submit(stack, out, (p, buf) -> {
-            VfxParts.sprite(p, buf, view, c, halo, 0, VfxParts.argb(.3f * flicker, HeroFinisherTimeline.lerpColor(GOLD, mix, .35f * big)));
+            VfxParts.sprite(p, buf, view, c, halo, 0, VfxParts.argb((big > 0 ? .12f : .3f) * flicker, HeroFinisherTimeline.lerpColor(GOLD, mix, .35f * big)));
             // 白芯：用边缘透明的柔光（fire_beam/dot 的边缘是黑色不透明的，在世界里画会被雾染成一块方的）
-            VfxParts.sprite(p, buf, view, c, r * .75f, 0, VfxParts.argb(.95f, WHITE));
-            VfxParts.sprite(p, buf, view, c, r * .45f, 0, VfxParts.argb(1, WHITE));
+            VfxParts.sprite(p, buf, view, c, r * (big > 0 ? .5f : .75f), 0, VfxParts.argb(big > 0 ? .7f : .85f, WHITE));
+            VfxParts.sprite(p, buf, view, c, r * (big > 0 ? .28f : .45f), 0, VfxParts.argb(1, WHITE));
         });
-        RAYS.submit(stack, out, (p, buf) -> VfxParts.sprite(p, buf, view, c, r * (r < .4f ? 6 : 3f), age * .02f, VfxParts.argb(.3f * flicker, GOLD)));
+        RAYS.submit(stack, out, (p, buf) -> VfxParts.sprite(p, buf, view, c, r * (r < .4f ? 6 : 3f), age * .02f, VfxParts.argb((big > 0 ? .12f : .2f) * flicker, GOLD)));
         STAR.submit(stack, out, (p, buf) -> {
             float tw = .8f + .2f * Mth.sin(age * .9f);
-            VfxParts.sprite(p, buf, view, c, r * (r < .4f ? 4.5f : 3.6f) * tw, 0, VfxParts.argb(.55f, WARM));
+            VfxParts.sprite(p, buf, view, c, r * (r < .4f ? 4.5f : 3.6f) * tw, 0, r < .4f ? VfxParts.argb(.55f, WARM) : VfxParts.argb(.18f, GOLD));
             // 几何星芒阵：六颗星绕着魔弹转（成型以后）
             if (big > 0) for (int i = 0; i < 6; i++) {
                 double th = age * .05 + i * Math.PI / 3;
                 Vec3 at = c.add(show.right.scale(Math.cos(th) * r * 1.9)).add(0, Math.sin(th) * r * 1.9, 0).add(show.fwd.scale(Math.sin(th * 2) * r * .4));
-                VfxParts.sprite(p, buf, view, at, r * .45f * tw, 0, VfxParts.argb(.8f * big, HeroFinisherTimeline.mix(show.accents, i / 6f)));
+                VfxParts.sprite(p, buf, view, at, r * .45f * tw, 0, VfxParts.argb(.6f * big, HeroFinisherTimeline.mix(show.accents, i / 6f)));
             }
         });
-        FLASH.submit(stack, out, (p, buf) -> VfxParts.sprite(p, buf, view, c, r * 1.25f, 0, VfxParts.argb(.6f, HOT)));
+        FLASH.submit(stack, out, (p, buf) -> VfxParts.sprite(p, buf, view, c, r * 1.25f, 0, big > 0 ? VfxParts.argb(.25f, GOLD) : VfxParts.argb(.35f, HOT)));
         PLASMA.submit(stack, out, (p, buf) -> {
-            VfxParts.sprite(p, buf, view, c, r * 1.05f, age * .05f, VfxParts.argb(.7f, GOLD));
-            VfxParts.sprite(p, buf, view, c, r * .98f, -age * .07f + 1, VfxParts.argb(.55f * big, mix));
+            VfxParts.sprite(p, buf, view, c, r * 1.05f, age * .05f, VfxParts.argb(big > 0 ? .35f : .5f, GOLD));
+            VfxParts.sprite(p, buf, view, c, r * .98f, -age * .07f + 1, VfxParts.argb(.4f * big, mix));
         });
         if (big > 0) {
             int n = Math.max(1, show.accents.length);
@@ -374,7 +375,7 @@ public final class HeroFinisherVfx {
         Vec3 x = new Vec3(1, 0, 0), z = new Vec3(0, 0, 1), ground = p0.add(0, .25, 0);
         float k = t / 9;
         if (k < 1) BURST.submit(stack, out, (p, buf) -> VfxParts.sprite(p, buf, view, p0.add(0, 2, 0), (4 + 16 * (1 - (1 - k) * (1 - k))) * scale, t * .05f,
-                VfxParts.argb(.8f * (1 - k) * (1 - k * .5f), HOT)));
+                VfxParts.argb(.65f * (1 - k) * (1 - k * .5f), HOT)));
         float glow = (1 - smooth(14, 36, t));
         GLOW.submit(stack, out, (p, buf) -> {
             VfxParts.flat(p, buf, ground, x, z, (14 + 8 * smooth(0, 10, t)) * scale, 0, VfxParts.argb(.45f * glow, EMBER));
@@ -407,16 +408,19 @@ public final class HeroFinisherVfx {
         Vec3 base = p0.add(0, -2, 0), top = p0.add(0, h, 0);
         float v = -age * .09f;
         int outer = HeroFinisherTimeline.blend(show.accents);
+        // 底下垫一层半透明的暖金：白天的亮天上一叠加法就成了白的，垫了才是「炽白芯、暖金的火」
+        BODY.submit(stack, out, (p, buf) -> VfxParts.streak(p, buf, view, base, top, rp * 2.6f, VfxParts.argb(vis * .85f, EMBER)));
         COLUMN.submit(stack, out, (p, buf) -> VfxParts.cylinder(p, buf, base, rp * 1.35f, h + 2, 40, age * .004f, 4, v * .6f, 3,
-                VfxParts.argb(vis * .55f, outer), VfxParts.argb(vis * .25f, GOLD)));
+                VfxParts.argb(vis * .25f, outer), VfxParts.argb(vis * .12f, GOLD)));
         FLAME.submit(stack, out, (p, buf) -> VfxParts.cylinder(p, buf, base, rp, h + 2, 40, age * .01f, 3, v * 1.6f, 4,
-                VfxParts.argb(vis * .9f, EMBER), VfxParts.argb(vis * .6f, GOLD)));
-        COLUMN.submit(stack, out, (p, buf) -> VfxParts.cylinder(p, buf, base, rp * .55f, h + 2, 32, -age * .006f, 3, v * 2.2f, 3,
-                VfxParts.argb(vis, WHITE), VfxParts.argb(vis * .85f, WARM)));
+                VfxParts.argb(vis * .5f, EMBER), VfxParts.argb(vis * .3f, GOLD)));
+        // 圆柱的前后两面都会叠上去，白芯要更细更淡
+        COLUMN.submit(stack, out, (p, buf) -> VfxParts.cylinder(p, buf, base, rp * .38f, h + 2, 32, -age * .006f, 3, v * 2.2f, 3,
+                VfxParts.argb(vis * .3f, WHITE), VfxParts.argb(vis * .25f, WARM)));
         GLOW.submit(stack, out, (p, buf) -> {
-            VfxParts.streak(p, buf, view, base, top, rp * 2.9f, VfxParts.argb(vis * .5f, EMBER));
-            VfxParts.streak(p, buf, view, base, top, rp * 1.5f, VfxParts.argb(vis * .8f, GOLD));
-            VfxParts.streak(p, buf, view, base, top, rp * .7f, VfxParts.argb(vis * .9f, WHITE));
+            VfxParts.streak(p, buf, view, base, top, rp * 2.9f, VfxParts.argb(vis * .12f, EMBER));
+            VfxParts.streak(p, buf, view, base, top, rp * 1.5f, VfxParts.argb(vis * .25f, GOLD));
+            VfxParts.streak(p, buf, view, base, top, rp * .35f, VfxParts.argb(vis * .45f, WHITE));
         });
         // 往上冲的头
         if (rise < 1) BURST.submit(stack, out, (p, buf) -> VfxParts.sprite(p, buf, view, top, rp * 2.6f, age * .1f, VfxParts.argb(vis * .85f, HOT)));
