@@ -239,7 +239,7 @@ public abstract class LacertaUltimateViews extends UltimateViews {
                     .waitUntilServer("白梅接上并打中：吃到碎甲（穿甲、再缠一层龙炎）", ctx -> LacertaUltimate.Sunder.pierced() > pierced0)
                     .server("记下", ctx -> pierced1 = LacertaUltimate.Sunder.pierced())
                     .waitUntilServer("凑齐，进汇流", ctx -> Ultimates.phase(ctx.player()) == UltimateChain.Phase.CONVERGED)
-                    // 按 V 放最后一击由 ultimate_chain 测；这里只看碎甲管不管得到最后一击，直接在服务端下令
+                    // 按奥义键放最后一击由 ultimate_chain 测；这里只看碎甲管不管得到最后一击，直接在服务端下令
                     .server("放最后一击", ctx -> Ultimates.order(ctx.player(), ""))
                     .waitUntilServer("最后一击也吃到碎甲", ctx -> LacertaUltimate.Sunder.pierced() > pierced1)
                     .waitUntilServer("回到常态", ctx -> Ultimates.phase(ctx.player()) == UltimateChain.Phase.IDLE);

@@ -34,10 +34,10 @@ import org.jspecify.annotations.Nullable;
 /**
  * 实际客户端检查奥义（docs/ULTIMATES.md），一组 {@code ultimate}。白瓷台上同伴站成一排，台子后面一只不动的尸壳当靶子，玩家对准它：
  * <ul>
- * <li>{@code ultimate_chain}：两位同伴，下令一位、短按 V 接第二位，凑齐放连携切入，换场进汇流，按 V 放最后一击，回到常态；</li>
+ * <li>{@code ultimate_chain}：两位同伴，下令一位、短按 C 接第二位，凑齐放连携切入，换场进汇流，按 V 放最后一击，回到常态；</li>
  * <li>{@code ultimate_single}：只有一位同伴，放完不开窗口、不放切入；</li>
  * <li>{@code ultimate_denied}：魔力不够（她说一句、那一格闪红、不扣冷却）；都在冷却（整列抖一下）；</li>
- * <li>{@code ultimate_wheel}：三位同伴，按住 V 打开号令轮盘，甩到第二位松手就是她。</li>
+ * <li>{@code ultimate_wheel}：三位同伴，按住 C 打开号令轮盘，甩到第二位松手就是她。</li>
  * <li>{@code ultimate_queue}：过场放着时再下令就排队，放完接上（第二位演缩短版）；过场期间主人不受伤、靶子被定住，汇流时都放开；</li>
  * <li>{@code ultimate_film}：放一段占位的过场，游戏放慢到每秒 5 刻，每刻截一张（{@code ultimate_film_frame_NNN}），
  *     拿 tools/frames_to_gif.py 拼成动图看运镜、压暗、速度线、擦镜。做每位的过场时照这个截她的。</li>
@@ -108,9 +108,20 @@ public abstract class UltimateViews extends ChainCutinViews {
         return c != null && Ultimates.performing(c);
     }
 
+    /** {@link #press} 按下之前客户端认出过几下。 */
+    private static int pressedBefore;
+
     static ScenarioBuilder press(ScenarioBuilder s, String what) {
-        return s.step(what + "：按下 V", ctx -> UltimateClient.KEY.setDown(true))
-                .waitUntil(what + "：客户端看到按下了", ctx -> UltimateClient.held() >= 1)
+        // 按着不放，直到客户端认出这一下：这一下可能立刻放出过场，过场一开始镜头就把按键清掉，看「按住了几刻」会等不到
+        return s.step(what + "：按下奥义键", ctx -> {
+                    pressedBefore = UltimateClient.presses();
+                    UltimateClient.KEY.setDown(true);
+                })
+                .waitUntil(what + "：客户端认出这一下", ctx -> {
+                    if (UltimateClient.presses() > pressedBefore) return true;
+                    UltimateClient.KEY.setDown(true);
+                    return false;
+                })
                 .step(what + "：松开（短按）", ctx -> UltimateClient.KEY.setDown(false)).ticks(2);
     }
 
@@ -318,7 +329,7 @@ public abstract class UltimateViews extends ChainCutinViews {
                     })
                     .waitUntilServer("都站好了", ctx -> arrived(ctx.player(), 3)).ticks(10)
                     .waitUntil("客户端拿到三位的状态", ctx -> UltimateClient.status().members().size() == 3)
-                    .step("显示界面，按住 V", ctx -> {
+                    .step("显示界面，按住奥义键", ctx -> {
                         Minecraft.getInstance().options.hideGui = false;
                         UltimateClient.KEY.setDown(true);
                     })

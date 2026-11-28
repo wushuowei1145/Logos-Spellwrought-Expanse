@@ -25,7 +25,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * 实际客户端检查玩家空手的最后一击「星穹誓约 · 羁绊焚天炮」（docs/ULTIMATES.md 第六节），一组 {@code hero_finisher}。
- * 白瓷台上两位同伴放完连携、切入换场进汇流以后按 V：
+ * 白瓷台上两位同伴放完连携、切入换场进汇流以后按奥义键（默认 C）：
  * <ul>
  * <li>{@code hero_finisher_film}：靶子头顶有誓约锁定的星芒；最后一击打中锁住的靶子，游戏放慢到每秒 2 刻（截一张图要一百多毫秒，慢一点才每刻都截得到），从下令起每刻截一张
  *     （{@code hero_finisher_frame_NNN}），拿 tools/frames_to_gif.py 拼成动图看节奏和运镜；全黑起手画了；镜头一直没塞进方块；放完回到玩家视角；</li>
@@ -62,14 +62,14 @@ public abstract class HeroFinisherViews extends UltimateViews {
                 .waitUntil("客户端在汇流", ctx -> UltimateClient.status().chainPhase() == UltimateChain.Phase.CONVERGED);
     }
 
-    /** 按 V 放最后一击，等本机的过场开始。 */
+    /** 按奥义键放最后一击，等本机的过场开始。 */
     static ScenarioBuilder finisher(ScenarioBuilder s) {
         s.step("清零镜头的记录", ctx -> {
             buried = 0;
             farFrom = null;
         });
         // 按下去一直按着，直到过场开始：按下的那一刻客户端就把令发出去了，过场一开始镜头会把按键放掉，等不到「看到按下了」
-        return s.step("放最后一击：按下 V", ctx -> UltimateClient.KEY.setDown(true))
+        return s.step("放最后一击：按下奥义键", ctx -> UltimateClient.KEY.setDown(true))
                 .waitUntil("最后一击的过场开始", ctx -> {
                     if (show() == null) UltimateClient.KEY.setDown(true);
                     return show() != null && UltimateFilm.playing() != null;

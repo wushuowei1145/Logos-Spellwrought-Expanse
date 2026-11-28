@@ -13,7 +13,7 @@ public final class UltimatePayloads {
     private UltimatePayloads() {}
 
     /**
-     * 玩家下令（V 键、号令轮盘、直接热键）：{@code companion} 是指名的同伴，空串时由服务端挑（准星对着的、按队伍顺序的下一位）。
+     * 玩家下令（奥义键、号令轮盘、直接热键）：{@code companion} 是指名的同伴，空串时由服务端挑（准星对着的、按队伍顺序的下一位）。
      * 汇流里收到时放玩家自己的最后一击。
      */
     public record Order(String companion) implements CustomPacketPayload {

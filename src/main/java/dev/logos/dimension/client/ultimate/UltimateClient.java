@@ -41,7 +41,7 @@ import org.slf4j.Logger;
 /**
  * 客户端这边的奥义（docs/ULTIMATES.md「按键」「画面」）：
  * <ul>
- *   <li>V（「同伴」一栏里可以改）：短按下令（准星对着的那一位，否则按队伍顺序的下一位）；按住超过 {@link ClientConfig#ULTIMATE_HOLD}
+ *   <li>C（「同伴」一栏里可以改）：短按下令（准星对着的那一位，否则按队伍顺序的下一位）；按住超过 {@link ClientConfig#ULTIMATE_HOLD}
  *       打开号令轮盘（{@link UltimateWheelScreen}），甩到谁、松开就是谁；汇流里一按下就放玩家自己的最后一击。</li>
  *   <li>「同伴 1–4 的奥义」四个热键默认不绑，按在场的队伍顺序直接点名。</li>
  *   <li>服务端发来的状态喂给侧边小队（{@link UltimateHud}）和轮盘；开演时按演的人在她的档案里找画面（{@link UltimateShow}）。</li>
@@ -51,18 +51,19 @@ import org.slf4j.Logger;
 public final class UltimateClient {
     private static final Logger LOGGER = LogUtils.getLogger();
     /**
-     * V 在 Logos 里还是化身时的「变回」、附身时的「本能」、骑巨像时的「切换驾驶」：那几种场合让给它们，平时才是奥义。
-     * Logos 那两个键各有自己的场合（在场合里时它们是活的），巨像的那个不分场合，所以骑着巨像时这里自己让开。
+     * 奥义键默认是 C。改绑到和别的键同一个键时，别人有自己的场合并且这时是活的（Logos 化身时的「变回」、附身时的「本能」，默认都是 V），
+     * 就让给它们；Logos 骑巨像时的「切换驾驶」不分场合，骑着巨像、两个键又是同一个时也让开。
      */
     static final IKeyConflictContext COMMANDING = new IKeyConflictContext() {
         @Override
         public boolean isActive() {
             var mc = Minecraft.getInstance();
-            if (mc.screen != null || mc.player == null || ridingColossus(mc.player)) return false;
+            if (mc.screen != null || mc.player == null) return false;
             for (KeyMapping other : mc.options.keyMappings) {
                 if (other == KEY || !other.getKey().equals(KEY.getKey())) continue;
                 IKeyConflictContext context = other.getKeyConflictContext();
                 if (context != KeyConflictContext.UNIVERSAL && context != this && context.isActive()) return false;
+                if (COLOSSUS_MODE.equals(other.getName()) && ridingColossus(mc.player)) return false;
             }
             return true;
         }
@@ -72,7 +73,9 @@ public final class UltimateClient {
             return this == other;
         }
     };
-    public static final KeyMapping KEY = new KeyMapping("key.logos_dimension.ultimate", COMMANDING, InputConstants.Type.KEYSYM, InputConstants.KEY_V,
+    /** Logos 骑巨像时切换驾驶的那个键。 */
+    private static final String COLOSSUS_MODE = "key.logos.colossus_mode";
+    public static final KeyMapping KEY = new KeyMapping("key.logos_dimension.ultimate", COMMANDING, InputConstants.Type.KEYSYM, InputConstants.KEY_C,
             CompanionBookClient.CATEGORY);
     public static final List<KeyMapping> DIRECT = List.of(direct(1), direct(2), direct(3), direct(4));
 
@@ -80,6 +83,8 @@ public final class UltimateClient {
     /** 收到状态时的客户端时刻（侧边小队按它往前推冷却、窗口）。 */
     private static long statusAt;
     private static int held;
+    /** 奥义键一共被认出按下过几次（测试用）。 */
+    private static int presses;
     private static boolean wheel, finisherSent;
     /** 缺魔时她那一格闪红：同伴 ID → 还剩几刻。 */
     private static final Map<String, Integer> FLASH = new HashMap<>();
@@ -92,7 +97,7 @@ public final class UltimateClient {
 
     private UltimateClient() {}
 
-    /** 骑着 Logos 的巨像（V 这时是切换驾驶）。 */
+    /** 骑着 Logos 的巨像（这时它那个键是切换驾驶）。 */
     static boolean ridingColossus(Player player) {
         Entity vehicle = player.getVehicle();
         if (vehicle == null) return false;
@@ -205,7 +210,7 @@ public final class UltimateClient {
         UltimateChain.Phase phase = status.chainPhase();
         boolean down = mc.screen == null && KEY.isDown();
         if (down) {
-            held++;
+            if (++held == 1) presses++;
             if (held == 1 && phase == UltimateChain.Phase.CONVERGED) {
                 // 汇流里一按下就放，不等松手
                 order("");
@@ -263,7 +268,12 @@ public final class UltimateClient {
         }
     }
 
-    /** V 已经按住了几刻（测试用：按下去、客户端看到了再松开，就是一次短按）。 */
+    /** 奥义键一共被认出按下过几次（测试用：一按下就可能放出过场、把按键清掉，看这个数比看按住了几刻稳）。 */
+    public static int presses() {
+        return presses;
+    }
+
+    /** 奥义键已经按住了几刻（测试用：按下去、客户端看到了再松开，就是一次短按）。 */
     public static int held() {
         return held;
     }
