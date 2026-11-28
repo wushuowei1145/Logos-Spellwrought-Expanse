@@ -20,6 +20,9 @@ import java.util.function.IntSupplier;
 import java.util.function.LongSupplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.gametest.framework.GameTestInfo;
+import net.minecraft.gametest.framework.GameTestListener;
+import net.minecraft.gametest.framework.GameTestRunner;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.server.level.ServerLevel;
@@ -28,6 +31,7 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -48,6 +52,33 @@ import net.neoforged.neoforge.event.level.BlockEvent;
  */
 final class JianSuiArenaGameTests {
     private JianSuiArenaGameTests() {}
+
+    /** 地标在另一个维度，测试框架不会替它保持实体刻；整场战斗都要保住场地，而不是只在放模板时加载。 */
+    private static TaixuanGameTests.Site study(GameTestHelper h, ServerLevel level) {
+        var study = TaixuanGameTests.placeStudy(level);
+        var site = TaixuanSite.of(study.start());
+        h.assertTrue(site != null, "测试场地缺少太玄灵境起点");
+        var center = site.axis(0);
+        var owned = new ArrayList<ChunkPos>();
+        h.testInfo.addListener(new GameTestListener() {
+            private boolean released;
+            private void release() {
+                if (released) return;
+                released = true;
+                for (var chunk : owned) level.setChunkForced(chunk.x(), chunk.z(), false);
+            }
+            @Override public void testStructureLoaded(GameTestInfo info) {}
+            @Override public void testPassed(GameTestInfo info, GameTestRunner runner) { release(); }
+            @Override public void testFailed(GameTestInfo info, GameTestRunner runner) { release(); }
+            @Override public void testAddedForRerun(GameTestInfo original, GameTestInfo copy, GameTestRunner runner) { release(); }
+        });
+        var low = BlockPos.containing(center.add(-64, 0, -64));
+        var high = BlockPos.containing(center.add(64, 0, 64));
+        for (int x = low.getX() >> 4; x <= high.getX() >> 4; x++)
+            for (int z = low.getZ() >> 4; z <= high.getZ() >> 4; z++)
+                if (level.setChunkForced(x, z, true)) owned.add(new ChunkPos(x, z));
+        return study;
+    }
 
     /** 按顺序等条件、做动作；每一步等太久就失败。 */
     private static final class Script {
@@ -177,7 +208,7 @@ final class JianSuiArenaGameTests {
      */
     static void giantParry(GameTestHelper h) {
         ServerLevel level = TaixuanGameTests.level(h);
-        TaixuanSite site = TaixuanSite.of(TaixuanGameTests.placeStudy(level).start());
+        TaixuanSite site = TaixuanSite.of(study(h, level).start());
         h.assertTrue(site != null, "找不到太玄灵境的地标");
         Vec3 plunge = JianSuiFight.plunge(site);
         Vec3 out = plunge.subtract(site.axis(plunge.y)).multiply(1, 0, 1).normalize();
@@ -259,7 +290,7 @@ final class JianSuiArenaGameTests {
      */
     static void finisherPry(GameTestHelper h) {
         ServerLevel level = TaixuanGameTests.level(h);
-        TaixuanSite site = TaixuanSite.of(TaixuanGameTests.placeStudy(level).start());
+        TaixuanSite site = TaixuanSite.of(study(h, level).start());
         h.assertTrue(site != null, "找不到太玄灵境的地标");
         Vec3 plunge = JianSuiFight.plunge(site);
         Vec3 out = plunge.subtract(site.axis(plunge.y)).multiply(1, 0, 1).normalize();
@@ -333,7 +364,7 @@ final class JianSuiArenaGameTests {
 
     static void flow(GameTestHelper h) {
         ServerLevel level = TaixuanGameTests.level(h);
-        var study = TaixuanGameTests.placeStudy(level);
+        var study = study(h, level);
         TaixuanSite site = TaixuanSite.of(study.start());
         h.assertTrue(site != null, "找不到太玄灵境的地标");
         Vec3 plunge = JianSuiFight.plunge(site);

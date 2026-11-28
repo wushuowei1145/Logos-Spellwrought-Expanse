@@ -54,7 +54,16 @@ public final class JianSuiGameTests {
         tests.put("jian_sui_arena_flow", JianSuiArenaGameTests::flow);
         tests.put("jian_sui_giant_parry", JianSuiArenaGameTests::giantParry);
         tests.put("jian_sui_finisher_pry", JianSuiArenaGameTests::finisherPry);
-        tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
+        tests.forEach((name, test) -> FUNCTIONS.register(name, () -> switch (name) {
+            case "jian_sui_arena_flow", "jian_sui_giant_parry", "jian_sui_finisher_pry" -> test;
+            default -> h -> {
+                var chunks = ground(h);
+                // 测试结构只保证自身区块就绪；剑祟和玩家所在的外围地面也必须先进入实体刻。
+                h.startSequence().thenWaitUntil(RealTimeWait.paced(() -> {
+                    for (var c : chunks) h.assertTrue(h.getLevel().areEntitiesActuallyLoadedAndTicking(c), "等待剑祟测试场地的实体刻：" + c);
+                })).thenExecute(() -> test.accept(h));
+            };
+        }));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
             for (var name : tests.keySet()) {
@@ -202,7 +211,9 @@ public final class JianSuiGameTests {
             boss.play("feiyan");
         });
         f.at(60, () -> {
-            h.assertTrue(f.p.getCooldowns().isOnCooldown(f.p.getMainHandItem()), "飞燕挡下来没有破盾");
+            h.assertTrue(f.p.getCooldowns().isOnCooldown(f.p.getMainHandItem()), "飞燕挡下来没有破盾；剑祟=" + boss.position()
+                    + "，玩家=" + f.p.position() + "，招式=" + boss.move() + "，方向=" + boss.getYRot()
+                    + "，举盾=" + f.p.isBlocking() + "，血量=" + f.p.getHealth());
             h.assertTrue(f.p.getHealth() == f.p.getMaxHealth(), "飞燕挡下了还掉了血：" + f.p.getHealth());
             boss.discard();
             f.succeed();

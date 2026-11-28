@@ -80,7 +80,12 @@ public final class LingxiaoGameTests {
             var e=EntityType.IRON_GOLEM.create(h.getLevel(),EntitySpawnReason.COMMAND);
             e.setNoAi(true);e.setNoGravity(true);e.setPos(position);h.getLevel().addFreshEntity(e);return e;
         }
-        void at(int tick,Runnable action){h.runAfterDelay(tick,()->{try{action.run();}catch(RuntimeException|Error e){close();throw e;}});}
+        void at(int tick,Runnable action){
+            // 原版逐刻回调和定时回调共用无序表；改用序列，让读数固定发生在假玩家回魔之后。
+            h.startSequence().thenWaitUntil(RealTimeWait.paced(()->{
+                for(long key:chunks)h.assertTrue(h.getLevel().areEntitiesActuallyLoadedAndTicking(net.minecraft.world.level.ChunkPos.unpack(key)),"等待御剑测试场地的实体刻");
+            })).thenExecuteAfter(tick,()->{try{action.run();}catch(RuntimeException|Error e){close();throw e;}});
+        }
         void use(){p.getMainHandItem().use(h.getLevel(),p,InteractionHand.MAIN_HAND);}
         void idle(){h.assertTrue("idle".equals(LongswordCombat.move(p)),"尚未完成拔剑");}
         void close(){if(closed)return;closed=true;if(p.getVehicle() instanceof FlyingSword s)s.stop();target.discard();h.getLevel().getServer().getPlayerList().remove(p);

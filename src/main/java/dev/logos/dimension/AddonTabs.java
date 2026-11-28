@@ -101,7 +101,7 @@ public final class AddonTabs {
             "journey_ema_rack", "journey_omikuji_box", "journey_omikuji_rack", "journey_offering_box",
             "journey_suzu_rope", "journey_stone_basin", "journey_hot_spring_stone",
             // 兑换台、钱庄、炼金釜
-            "exchange_counter", "bank_counter", "alchemical_cauldron",
+            "exchange_counter", "bank_counter", "alchemical_cauldron", "ammo_bench",
             // 运镜的测试方块
             "camera_test_block"));
 
@@ -127,7 +127,7 @@ public final class AddonTabs {
             // 法杖
             "explosion_staff",
             // 铳与弹药
-            "gunaxe", "ammo_bench",
+            "gunaxe",
             "copper_buckshot_shell", "buckshot_shell", "netherite_buckshot_shell",
             "copper_rifle_round", "iron_rifle_round", "netherite_rifle_round", "blank_round");
             // 三种弹各一张新图纸（写好了「启式 → 这种弹」）
