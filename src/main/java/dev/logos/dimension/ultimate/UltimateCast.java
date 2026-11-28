@@ -39,11 +39,12 @@ public final class UltimateCast {
     private final UltimateScript script;
     private final long seed;
     private final Vec3 aim;
+    private final boolean filmed;
     private @Nullable LivingEntity target;
     int age;
 
     UltimateCast(ServerPlayer owner, LivingEntity performer, @Nullable CompanionDef def, String key, UltimateChain chain, UltimateChain.Stage stage,
-                 UltimateScript script, long seed, @Nullable LivingEntity target, Vec3 aim) {
+                 UltimateScript script, long seed, @Nullable LivingEntity target, Vec3 aim, boolean filmed) {
         this.owner = owner;
         this.performer = performer;
         this.def = def;
@@ -54,6 +55,7 @@ public final class UltimateCast {
         this.seed = seed;
         this.target = target;
         this.aim = aim;
+        this.filmed = filmed;
     }
 
     /** 为谁演（下令的玩家）。 */
@@ -88,6 +90,14 @@ public final class UltimateCast {
     /** 演缩短版（连携里第二位起）。 */
     public boolean condensed() {
         return UltimateDef.condensed(stage);
+    }
+
+    /**
+     * 这一段有过场：玩家的最后一击总是有，同伴的看 {@link Ultimates#COMPANION_FILMS}。没有时下令的玩家的镜头不被接管，
+     * 脚本也别给他闪冲击帧（{@code ScreenEffects.flash}），主人和同伴不无敌、敌人不定住。
+     */
+    public boolean filmed() {
+        return filmed;
     }
 
     public UltimateScript script() {

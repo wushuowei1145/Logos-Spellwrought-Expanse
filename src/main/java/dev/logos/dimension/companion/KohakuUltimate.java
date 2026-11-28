@@ -262,7 +262,7 @@ public final class KohakuUltimate implements UltimateScript {
             }
         }
         // 冲击帧：一次，短的两拍（满规格的四拍留给玩家的最后一击）
-        ScreenEffects.flash(cast.owner(), ScreenFlash.at(CameraPoint.world(center.add(0, 1.2, 0)))
+        if (cast.filmed()) ScreenEffects.flash(cast.owner(), ScreenFlash.at(CameraPoint.world(center.add(0, 1.2, 0)))
                 .frames(ScreenFlash.Frame.GLOW, ScreenFlash.Frame.SILHOUETTE));
         sound(level, center, SoundEvents.GENERIC_EXPLODE.value(), 1.2f, .55f);
         sound(level, center, SoundEvents.AMETHYST_CLUSTER_BREAK, 1.4f, .5f);

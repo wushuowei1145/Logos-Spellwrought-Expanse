@@ -96,7 +96,7 @@ public abstract class ShiraumeUltimateViews extends UltimateViews {
 
         @Override
         public void define(ScenarioBuilder s) {
-            ultimateStage(s).server("白梅一位、三只靶子", ctx -> {
+            filmStage(s).server("白梅一位、三只靶子", ctx -> {
                         call(ctx.player(), 1);
                         spawnFoe(ctx.player());
                         spawnSides(ctx.player());
@@ -133,7 +133,7 @@ public abstract class ShiraumeUltimateViews extends UltimateViews {
 
         @Override
         public void define(ScenarioBuilder s) {
-            ultimateStage(s).server("白梅和精灵公主、三只靶子", ctx -> {
+            filmStage(s).server("白梅和精灵公主、三只靶子", ctx -> {
                         call(ctx.player(), 2);
                         spawnFoe(ctx.player());
                         spawnSides(ctx.player());
@@ -164,7 +164,7 @@ public abstract class ShiraumeUltimateViews extends UltimateViews {
 
         @Override
         public void define(ScenarioBuilder s) {
-            ultimateStage(s).server("白梅和精灵公主、一个靶子", ctx -> {
+            filmStage(s).server("白梅和精灵公主、一个靶子", ctx -> {
                         call(ctx.player(), 2);
                         spawnFoe(ctx.player());
                     })

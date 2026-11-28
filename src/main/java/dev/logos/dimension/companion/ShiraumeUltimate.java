@@ -311,7 +311,7 @@ public final class ShiraumeUltimate implements UltimateScript {
     /** 因果斩：五段居合、强行叠满五枚狐火印当场引爆、樱花溅射，一次黑白冲击帧。 */
     private static void impact(UltimateCast cast, ShiraumeCompanion c, ServerLevel level, @Nullable LivingEntity target) {
         Vec3 at = target != null ? target.getBoundingBox().getCenter() : cast.aim().add(0, 1, 0);
-        ScreenEffects.flash(cast.owner(), ScreenFlash.at(CameraPoint.world(at))
+        if (cast.filmed()) ScreenEffects.flash(cast.owner(), ScreenFlash.at(CameraPoint.world(at))
                 .frames(ScreenFlash.Frame.GLOW, ScreenFlash.Frame.SILHOUETTE, ScreenFlash.Frame.ENGULF));
         sound(level, at, SoundEvents.GENERIC_EXPLODE.value(), 1.2f, .7f);
         sound(level, at, SoundEvents.PLAYER_ATTACK_SWEEP, 1.4f, .6f);

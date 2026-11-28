@@ -223,7 +223,7 @@ class UltimateTest {
         assertFalse(member.ready(), "放过了");
         assertFalse(new UltimatePayloads.Member("shiraume", 44, 700, 0, false, false, true, 260, true).ready(), "排着队的不能再点");
 
-        var cast = new UltimatePayloads.Cast(9, 3, "hero/unarmed", -1, new Vec3(1.5, 64, -2.25), 2, true, false, 2, 1234567890123L, 156, 99);
+        var cast = new UltimatePayloads.Cast(9, 3, "hero/unarmed", -1, new Vec3(1.5, 64, -2.25), 2, true, false, true, 2, 1234567890123L, 156, 99);
         buf = Unpooled.buffer();
         UltimatePayloads.Cast.CODEC.encode(buf, cast);
         assertEquals(cast, UltimatePayloads.Cast.CODEC.decode(buf));

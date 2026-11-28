@@ -382,7 +382,7 @@ public final class PrincessUltimate implements UltimateScript {
     private void strike(UltimateCast cast, ElfPrincessCompanion c, ServerLevel level) {
         ServerPlayer owner = cast.owner();
         // 每段过场只闪这一次（出手那一拍）
-        ScreenEffects.flash(owner, ScreenFlash.at(CameraPoint.world(center.add(0, 1, 0))));
+        if (cast.filmed()) ScreenEffects.flash(owner, ScreenFlash.at(CameraPoint.world(center.add(0, 1, 0))));
         PillarBurst.play(level, center, .9f);
         Vfx.burst(level, center.add(0, .5, 0), Element.LIFE, 60);
         level.playSound(null, center.x, center.y, center.z, SoundEvents.GENERIC_EXPLODE, SoundSource.NEUTRAL, 2.2f, .6f);

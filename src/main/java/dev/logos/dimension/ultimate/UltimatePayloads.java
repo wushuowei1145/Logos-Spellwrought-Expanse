@@ -99,13 +99,14 @@ public final class UltimatePayloads {
      * @param stage     连携里第几段
      * @param finisher  是不是玩家的最后一击
      * @param condensed 演缩短版（连携里第二位起，{@link UltimateDef#condensed}）
+     * @param filmed    这一段有过场（{@link UltimateCast#filmed}）：没有时谁的镜头都不接管，下令的玩家也只看世界里的那一半
      * @param members   这一轮在场几位同伴
      * @param seed      随机种子（和服务端脚本同一个）
      * @param length    一共几刻
      * @param impact    第几刻出手
      */
-    public record Cast(int performer, int owner, String key, int target, Vec3 aim, int stage, boolean finisher, boolean condensed, int members, long seed,
-                       int length, int impact) implements CustomPacketPayload {
+    public record Cast(int performer, int owner, String key, int target, Vec3 aim, int stage, boolean finisher, boolean condensed, boolean filmed,
+                       int members, long seed, int length, int impact) implements CustomPacketPayload {
         public static final Type<Cast> TYPE = new Type<>(LogosDimension.id("ultimate_cast"));
         public static final StreamCodec<ByteBuf, Cast> CODEC = StreamCodec.of((buf, c) -> {
             ByteBufCodecs.VAR_INT.encode(buf, c.performer);
@@ -118,13 +119,15 @@ public final class UltimatePayloads {
             ByteBufCodecs.VAR_INT.encode(buf, c.stage);
             ByteBufCodecs.BOOL.encode(buf, c.finisher);
             ByteBufCodecs.BOOL.encode(buf, c.condensed);
+            ByteBufCodecs.BOOL.encode(buf, c.filmed);
             ByteBufCodecs.VAR_INT.encode(buf, c.members);
             ByteBufCodecs.VAR_LONG.encode(buf, c.seed);
             ByteBufCodecs.VAR_INT.encode(buf, c.length);
             ByteBufCodecs.VAR_INT.encode(buf, c.impact);
         }, buf -> new Cast(ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
                 new Vec3(ByteBufCodecs.DOUBLE.decode(buf), ByteBufCodecs.DOUBLE.decode(buf), ByteBufCodecs.DOUBLE.decode(buf)),
-                ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
+                ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.BOOL.decode(buf),
+                ByteBufCodecs.VAR_INT.decode(buf),
                 ByteBufCodecs.VAR_LONG.decode(buf),
                 ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf)));
 

@@ -118,7 +118,7 @@ public abstract class KohakuUltimateViews extends UltimateViews {
 
         @Override
         public void define(ScenarioBuilder s) {
-            ultimateStage(s).server("琥珀一位、三只尸壳", ctx -> {
+            filmStage(s).server("琥珀一位、三只尸壳", ctx -> {
                         callParty(ctx.player(), Companions.KOHAKU_DEF);
                         spawnCrowd(ctx.player());
                     })
@@ -161,7 +161,7 @@ public abstract class KohakuUltimateViews extends UltimateViews {
 
         @Override
         public void define(ScenarioBuilder s) {
-            ultimateStage(s).server("白梅和琥珀、三只尸壳", ctx -> {
+            filmStage(s).server("白梅和琥珀、三只尸壳", ctx -> {
                         callParty(ctx.player(), Companions.SHIRAUME_DEF, Companions.KOHAKU_DEF);
                         spawnCrowd(ctx.player());
                     })
@@ -200,7 +200,7 @@ public abstract class KohakuUltimateViews extends UltimateViews {
 
         @Override
         public void define(ScenarioBuilder s) {
-            ultimateStage(s).server("琥珀和白梅、三只尸壳", ctx -> {
+            filmStage(s).server("琥珀和白梅、三只尸壳", ctx -> {
                         callParty(ctx.player(), Companions.SHIRAUME_DEF, Companions.KOHAKU_DEF);
                         spawnCrowd(ctx.player());
                     })
