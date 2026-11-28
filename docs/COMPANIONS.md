@@ -57,6 +57,7 @@
 | 21 | 生活 | 日常小事 | 独有 | 白梅：狐火灯（`CompanionLight`）、温泉、摘浆果、怕狗、装束（`CompanionOutfit`）；琥珀：四套衣服，对话里换、记在你身上（`KohakuOutfit`）；拉塞塔：四档守夜和坐下（`LacertaRest`）、收展翅（翅膀控制器排在 NPC 控制器之后） |
 | 22 | 命令 | `/alchemy companion …`：召唤、收回、看数、清休息、盖契印、设饱腹、换装 | 白梅的在最上一层，精灵公主的在 `princess` 下面，拉塞塔的在 `lacerta` 下面 | `CompanionCommands` |
 | 23 | 友人帐 | 按键（默认 K）翻开：所有同伴一人一页，立过契的画本人，没立契的是黑窗；在里面叫出来、收回（第 7 节） | **公共**（`Companions.ALL` 里的都在） | `CompanionBook`、`client/companion/CompanionBookClient`、`CompanionBookScreen` |
+| 24 | 奥义 | 按 V 令她放奥义（长按开号令轮盘），耗主人的魔力、各自冷却；在场的同伴在接力窗口里一个接一个都放过，就放连携切入，玩家再按 V 放最后一击（[ULTIMATES.md](ULTIMATES.md)） | 按键、轮盘、侧边小队、连携、冷却、耗魔、选目标、馈赠的接口**公共**；每位的演出、技能效果、馈赠**独有** | `ultimate/Ultimates`、`UltimateChain`；她的 `CompanionDef.ultimate`（服务端脚本）、`CompanionStyle.ultimate`（画面） |
 
 ### 2.1 心智里的行为
 
@@ -106,6 +107,7 @@
 - 九个颜色：主色、深主色、金线、冷色、正文、次要文字、面板底色上下、卡片底。
 - 纹（`Crest`）：名字旁一个小的、面板里身后一个大的。白梅是梅鉢，用 `CompanionUi` 的圆一格一格填出来，不用贴图。
 - 展示（`Showcase`）：造一个不放进世界的她、摆好姿势（每次打开面板造一次），身子侧几度、头转回来几成、镜头俯仰、占展示框几成高、往上挪多少。
+- 奥义的画面（`ultimate`）：她放奥义时客户端才做得了的那部分（后期、贴在世界里的特效），一个 `UltimateShow.Factory`；服务端那一半（动作、伤害、运镜、馈赠）在她的 `CompanionDef.ultimate`（[ULTIMATES.md](ULTIMATES.md)「给一位同伴做她的奥义」）。还没做的是 `UltimateShow.NONE`。
 - 连携切入（`Cutin`）：切入那一格里的她——造一个不放进世界的她，`stage(表情, "cutin")` 播她动画文件里的 `cutin` 姿势（`tools/chain_cutin_poses.py` 从她自己的动作里取样生成，拿刀的也可以按刀的编排解出来），要拿武器的照她的展示方法打开；再给身子额外侧几度、拍她的镜头怎么动（`CutinShot`）、身前飘什么光屑（`CutinMotes`），格子的底色和光用她的 `night0`、`accent`。格子窄，姿势要竖着（[CHAIN_CUTIN.md](CHAIN_CUTIN.md)「角色的姿势」「每个人的镜头和光屑」）。
 
 `CompanionUi` 有通用的画法：圆、圆环、椭圆、光晕、菱形、渐隐的线、进度条、能力图标，还有中日文逐字断行（标点不落到行首）。
@@ -154,8 +156,9 @@
 3. **实体**：接第 4 节的基类；给定义（数值、成长）；实现 `Talker`；心智里加她自己的战斗和生活行为；四种行动策略各是什么意思。
 4. **文字**：台词 `line.logos_dimension.<id>.*`，对话和面板 `talk.logos_dimension.<id>.*`（`name`、`epithet`、`kana`、`seal_name`、`option.*`、`skill.<能力>.name/.icon/.desc`、`memory.*`），中英文都要有。
 5. **样式**：`CompanionStyle` 的颜色、纹、展示姿势、连携切入的姿势（在 `tools/chain_cutin_poses.py` 里加她的取样）、镜头和光屑。
-6. **测试**：单元测试查语言文件齐全、档案在网络上来回不走样；客户端场景至少有召唤、对话、面板、一种策略、她的独有能力；同一组 tag。
-7. **文档**：她自己一份（结构照 `SHIRAUME_COMPANION.md`），这份文档第 2 节加一行她独有的东西。
+6. **奥义**：她的 `ULTIMATE`（冷却、基准耗魔、服务端脚本、接力馈赠）、`CompanionStyle.ultimate`（画面）、奥义名和发动 / 接力 / 缺魔三句台词；先用占位的 `StandInUltimate` 也走得通（[ULTIMATES.md](ULTIMATES.md) 第四节）。
+7. **测试**：单元测试查语言文件齐全、档案在网络上来回不走样；客户端场景至少有召唤、对话、面板、一种策略、她的独有能力；同一组 tag。
+8. **文档**：她自己一份（结构照 `SHIRAUME_COMPANION.md`），这份文档第 2 节加一行她独有的东西。
 
 ## 6. 做同伴时要守的规矩
 

@@ -1,5 +1,6 @@
 package dev.logos.dimension.companion;
 
+import dev.logos.dimension.ultimate.UltimateDef;
 import java.util.function.Supplier;
 import net.minecraft.world.entity.EntityType;
 import net.neoforged.neoforge.attachment.AttachmentType;
@@ -18,9 +19,11 @@ import net.neoforged.neoforge.attachment.AttachmentType;
  * @param growth     数值：她自己的、契印成长、羁绊加成、继承比例
  * @param restTicks  倒下（或撤退）以后要歇多少刻才能再叫
  * @param maxSeals   契印一共几枚
+ * @param ultimate   她的奥义（docs/ULTIMATES.md）：冷却、耗魔、演出脚本
  */
 public record CompanionDef(String id, Supplier<? extends EntityType<? extends CompanionEntity>> type, Supplier<AttachmentType<Companions.Bond>> bond,
-                           Supplier<AttachmentType<CompanionPouch>> pouch, Growth growth, int restTicks, int maxSeals) {
+                           Supplier<AttachmentType<CompanionPouch>> pouch, Growth growth, int restTicks, int maxSeals,
+                           UltimateDef ultimate) {
     /**
      * 数值的规矩（docs/COMPANIONS.md 第 3.5 节），每位同伴自己定数。
      *

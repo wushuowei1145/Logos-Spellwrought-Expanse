@@ -4,6 +4,8 @@ import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.dissolve.DissolveShape;
 import dev.logos.dimension.dissolve.Dissolving;
 import dev.logos.dimension.item.WorldtreeBowItem;
+import dev.logos.dimension.ultimate.StandInUltimate;
+import dev.logos.dimension.ultimate.UltimateDef;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.Holder;
@@ -49,6 +51,8 @@ public class ElfPrincessCompanion extends CompanionEntity {
     public static final CompanionDef.Growth GROWTH = new CompanionDef.Growth(32, 2, 0, 4, .7, 4, .5, .25, .05, 4, .5, .05, .3, .08, 1, 9);
     /** 撤退以后在世界树里歇多久（5 分钟，同白梅）；契印一共几枚（叶之契）。 */
     public static final int REST_TICKS = 6000, MAX_SEALS = 9;
+    /** 奥义（docs/ULTIMATES.md）：万分之一 · 世界树祈愿矢。冷却 40 秒、基准耗魔 300；专属演出做好以前先用占位的那一段。 */
+    public static final UltimateDef ULTIMATE = new UltimateDef(800, 300, StandInUltimate::new);
     /** 入场动画多长、撤退动画多长（刻），与模型一致。 */
     static final int SUMMON_TICKS = 84, WITHDRAW_TICKS = 72;
     /** 入场动画的时间标记（刻）：开花、花瓣飞散。 */
