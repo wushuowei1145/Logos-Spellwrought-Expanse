@@ -209,7 +209,7 @@ public final class CompanionStats {
         CompanionDef d = c.def();
         CompanionDef.Growth g = d.growth();
         int stage = stage(owner, d);
-        Parts parts = parts(g, read(owner), seals, stage);
+        Parts parts = c.statParts(read(owner), seals, stage);
         Stats s = parts.stats();
         float before = c.getMaxHealth(), fraction = before > 0 ? c.getHealth() / before : 1;
         set(c, Attributes.MAX_HEALTH, s.health() - g.health());

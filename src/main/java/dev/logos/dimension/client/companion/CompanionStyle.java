@@ -103,6 +103,28 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 return c;
             }, 18, .75f, -8, .68f, 0));
 
+    /**
+     * 拉塞塔：熔岩夜里的酒红到深绯，珊瑚红当主色（翼骨与龙鳞），金线（角尖鎏金），被动能力用骑士甲的冷银，奶油色正文；
+     * 纹是一枚盾形的龙鳞，正中一簇跃动的龙炎（既是真龙之鳞，也是护主之盾）。面板里她叉腰站着、自信地浅笑，身子侧 20°。
+     */
+    public static final CompanionStyle LACERTA = new CompanionStyle(0xFFE0566B, 0xFF8E2A3C, 0xFFE3C27A, 0xFFC9D3E0, 0xFFF6EEDD, 0xFFC0A7A5,
+            0xFF2A1218, 0xFF14080B, 0xB4200C12, CompanionStyle::dragonScale,
+            new Showcase((level, sheet) -> {
+                var c = Companions.LACERTA.get().create(level, EntitySpawnReason.LOAD);
+                if (c != null) c.showcase("face_poise");
+                return c;
+            }, 20, .75f, -8, .68f, 0));
+
+    /** 盾形的龙鳞，正中一簇龙炎：一圈细环，环里一枚大菱形（鳞），鳞的上半一枚小菱形、下面一点（火苗）。 */
+    static void dragonScale(GuiGraphicsExtractor g, float cx, float cy, float r, int color) {
+        CompanionUi.ring(g, cx, cy, r, Math.max(1, r * .1f), color);
+        int scale = Math.max(2, Math.round(r * .55f));
+        CompanionUi.diamond(g, Math.round(cx), Math.round(cy + r * .06f), scale, color);
+        int flame = Math.max(1, Math.round(r * .18f));
+        CompanionUi.diamond(g, Math.round(cx), Math.round(cy - r * .52f), flame, color);
+        CompanionUi.disc(g, cx, cy - r * .3f, Math.max(1, r * .08f), color);
+    }
+
     /** 猫爪按在炼成阵上：一圈细环，环里一个大肉垫、四个小肉垫。 */
     static void paw(GuiGraphicsExtractor g, float cx, float cy, float r, int color) {
         CompanionUi.ring(g, cx, cy, r, Math.max(1, r * .1f), color);
@@ -132,5 +154,6 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
         // 腐化女王之战里的她（对话菜单另一个 ID，样子还是她）
         register(dev.logos.dimension.elven.blight.ElfPrincess.TALK, PRINCESS);
         register("kohaku", KOHAKU);
+        register("lacerta", LACERTA);
     }
 }

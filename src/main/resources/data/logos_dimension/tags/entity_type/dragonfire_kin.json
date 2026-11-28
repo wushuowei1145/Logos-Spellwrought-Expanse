@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "minecraft:ender_dragon"
+    "minecraft:ender_dragon",
+    "logos_dimension:lacerta_companion"
   ]
 }

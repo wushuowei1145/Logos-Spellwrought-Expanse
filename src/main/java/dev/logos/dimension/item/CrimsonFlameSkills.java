@@ -15,11 +15,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
@@ -54,6 +56,8 @@ public final class CrimsonFlameSkills {
     static final double WAVE_RANGE = 11.0, WAVE_SPEED = 1.15, WAVE_WIDTH = 1.9, WAVE_HEIGHT = 1.8, WAVE_DAMAGE = 10.0;
     private static final double STEP = 1.0, DROP = 4.0, LIFT = 0.05, SKIN = 0.05, STRIDE = 0.5;
     static final double SKYFALL_RADIUS = 3.8, SKYFALL_DAMAGE = 12.0;
+    /** 不是玩家放的坠星：落点把敌人往上挑多快（格/刻）。 */
+    static final double LAUNCH_NPC = 0.62;
     private static final double[] FAN_ANGLES_DEG = {-36.0, -18.0, 0.0, 18.0, 36.0};
     /** 带火的招式：打中点龙炎缠身。连招前三式只打龙炎、不缠身，免得每一剑都把缠身叠满。 */
     private static final Set<String> BURNING = Set.of("cataclysm_4", "dragon_fang", "crimson_thrust", "vortex_rush",
@@ -142,27 +146,33 @@ public final class CrimsonFlameSkills {
 
     /** 招式接触帧：战技音效、龙炎游脉与落点的龙炎。 */
     public static void onSwing(ServerPlayer player, Moveset.Move move) {
-        ServerLevel level = player.level();
-        Vec3 forward = flatLook(player);
-        switch (move.name()) {
+        skill(player.level(), player, flatLook(player), move.name(), e -> mayHit(player, e));
+    }
+
+    /**
+     * 这一招接触时的战技（玩家和拉塞塔共用）：横扫扫出五道龙炎游脉，坠星在落点炸开一圈龙炎并挑飞，突刺、旋风、十文字放一团龙炎。
+     * {@code forward} 是水平的朝向；{@code hits} 挑打得到的（玩家：不打自己的宠物；同伴：只打她当作敌人的）。
+     */
+    public static void skill(ServerLevel level, LivingEntity user, Vec3 forward, String move, Predicate<LivingEntity> hits) {
+        switch (move) {
             case "flame_sweep" -> {
-                level.playSound(null, player.getX(), player.getY() + 1, player.getZ(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.1f, 0.85f);
-                level.playSound(null, player.getX(), player.getY() + 1, player.getZ(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1.0f, 0.9f);
-                flameArc(level, player, forward);
+                level.playSound(null, user.getX(), user.getY() + 1, user.getZ(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.1f, 0.85f);
+                level.playSound(null, user.getX(), user.getY() + 1, user.getZ(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1.0f, 0.9f);
+                flameArc(level, user, forward);
                 // 同一记横扫的五道游脉共享已命中集合，防止贴脸敌人单帧吃满五次。
                 Set<UUID> sharedStruck = new HashSet<>();
-                Vec3 originProbe = player.position().add(forward.scale(1.1)).add(0, STEP + LIFT, 0);
-                Vec3 startGround = groundBelow(level, player, originProbe);
-                Vec3 origin = startGround != null ? startGround : player.position();
+                Vec3 originProbe = user.position().add(forward.scale(1.1)).add(0, STEP + LIFT, 0);
+                Vec3 startGround = groundBelow(level, user, originProbe);
+                Vec3 origin = startGround != null ? startGround : user.position();
                 for (double deg : FAN_ANGLES_DEG) {
                     Vec3 rayDir = rotateHorizontal(forward, Math.toRadians(deg));
-                    WAVES.add(new FlameWave(level, player, origin, rayDir, sharedStruck));
+                    WAVES.add(new FlameWave(level, user, origin, rayDir, sharedStruck, hits));
                 }
             }
             case "skyfall_judgement" -> {
-                Vec3 ahead = player.position().add(forward.scale(2.0)).add(0, STEP + LIFT, 0);
-                Vec3 ground = groundBelow(level, player, ahead);
-                Vec3 impact = ground != null ? ground : player.position().add(forward.scale(1.6));
+                Vec3 ahead = user.position().add(forward.scale(2.0)).add(0, STEP + LIFT, 0);
+                Vec3 ground = groundBelow(level, user, ahead);
+                Vec3 impact = ground != null ? ground : user.position().add(forward.scale(1.6));
                 // 落点炸开一大团龙炎，外面一圈六小团
                 FoxfireCue.burst(level, impact.add(0, 0.6, 0), FoxfireFlame.DRAGON, 2.5f);
                 for (int i = 0; i < 6; i++) {
@@ -172,25 +182,38 @@ public final class CrimsonFlameSkills {
                 level.playSound(null, impact.x, impact.y, impact.z, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.4f, 0.85f);
                 level.playSound(null, impact.x, impact.y, impact.z, SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.1f, 0.75f);
                 AABB area = new AABB(impact, impact).inflate(SKYFALL_RADIUS);
-                for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, area, e -> mayHit(player, e))) {
+                for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, area, hits::test)) {
                     if (e.getBoundingBox().getCenter().distanceToSqr(impact) > SKYFALL_RADIUS * SKYFALL_RADIUS) continue;
-                    Dragonfire.deal(player, e, SKYFALL_DAMAGE);
-                    Airborne.launch(e, player);
+                    Dragonfire.deal(user, e, SKYFALL_DAMAGE);
+                    if (user instanceof ServerPlayer p) Airborne.launch(e, p);
+                    else if (!e.is(Airborne.IMMUNE)) {
+                        // 不是玩家打的：没有空中连段的那一套，只往上挑一下
+                        Vec3 v = e.getDeltaMovement();
+                        e.setDeltaMovement(v.x, Math.max(v.y, LAUNCH_NPC), v.z);
+                        e.hurtMarked = true;
+                    }
                 }
             }
             case "crimson_thrust" -> {
-                Vec3 tip = player.getEyePosition().add(player.getLookAngle().scale(2.4));
+                // 玩家照原样顺着视线；同伴按水平朝向，剑尖在眼睛下面一点
+                Vec3 tip = user instanceof ServerPlayer ? user.getEyePosition().add(user.getLookAngle().scale(2.4))
+                        : user.getEyePosition().add(forward.scale(2.4)).add(0, -0.2, 0);
                 FoxfireCue.burst(level, tip, FoxfireFlame.DRAGON, 1.0f);
                 level.playSound(null, tip.x, tip.y, tip.z, SoundEvents.TRIDENT_THROW.value(), SoundSource.PLAYERS, 0.9f, 1.25f);
                 level.playSound(null, tip.x, tip.y, tip.z, SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 0.7f, 1.3f);
             }
             case "vortex_rush", "cross_rend" -> {
-                Vec3 center = player.position().add(forward.scale(1.4)).add(0, 1.0, 0);
+                Vec3 center = user.position().add(forward.scale(1.4)).add(0, 1.0, 0);
                 FoxfireCue.burst(level, center, FoxfireFlame.DRAGON, 0.9f);
                 level.playSound(null, center.x, center.y, center.z, SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 0.8f, 1.05f);
             }
             default -> {}
         }
+    }
+
+    /** 带火的招式（打中点龙炎缠身）：四式、龙牙、突刺、旋风、十文字、横扫、坠星。 */
+    public static boolean burning(String move) {
+        return BURNING.contains(move);
     }
 
     @SubscribeEvent
@@ -230,10 +253,10 @@ public final class CrimsonFlameSkills {
     }
 
     /** 横扫出手时身前的一道龙炎弧：沿 90° 的弧放五小团。 */
-    private static void flameArc(ServerLevel level, ServerPlayer player, Vec3 forward) {
+    private static void flameArc(ServerLevel level, LivingEntity user, Vec3 forward) {
         for (int i = -2; i <= 2; i++) {
             Vec3 ray = rotateHorizontal(forward, Math.toRadians(i * 22.5));
-            FoxfireCue.burst(level, player.position().add(ray.scale(2.4)).add(0, 0.8, 0), FoxfireFlame.DRAGON, 0.8f);
+            FoxfireCue.burst(level, user.position().add(ray.scale(2.4)).add(0, 0.8, 0), FoxfireFlame.DRAGON, 0.8f);
         }
     }
 
@@ -242,7 +265,7 @@ public final class CrimsonFlameSkills {
         return !(e instanceof TamableAnimal pet && pet.isOwnedBy(p));
     }
 
-    static @Nullable Vec3 groundBelow(ServerLevel level, ServerPlayer p, Vec3 at) {
+    static @Nullable Vec3 groundBelow(ServerLevel level, Entity p, Vec3 at) {
         BlockHitResult hit = level.clip(new ClipContext(at, at.add(0, -(STEP + DROP + 1), 0),
                 ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY, p));
         return hit.getType() == HitResult.Type.MISS || hit.isInside() ? null : hit.getLocation();
@@ -254,16 +277,18 @@ public final class CrimsonFlameSkills {
      */
     private static final class FlameWave {
         final ServerLevel level;
-        final ServerPlayer owner;
+        final LivingEntity owner;
+        final Predicate<LivingEntity> hits;
         final int id = nextVeinId--;
         final Vec3 dir;
         final Set<UUID> struck;
         Vec3 pos;
         double travelled;
 
-        FlameWave(ServerLevel level, ServerPlayer owner, Vec3 start, Vec3 dir, Set<UUID> struck) {
+        FlameWave(ServerLevel level, LivingEntity owner, Vec3 start, Vec3 dir, Set<UUID> struck, Predicate<LivingEntity> hits) {
             this.level = level;
             this.owner = owner;
+            this.hits = hits;
             this.pos = start;
             this.dir = dir;
             this.struck = struck;
@@ -309,7 +334,7 @@ public final class CrimsonFlameSkills {
 
         private void strike(Vec3 a, Vec3 b) {
             AABB box = new AABB(a, b).inflate(WAVE_WIDTH / 2, 0, WAVE_WIDTH / 2).expandTowards(0, WAVE_HEIGHT, 0);
-            for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, box, e -> mayHit(owner, e) && !struck.contains(e.getUUID()))) {
+            for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, box, e -> e != owner && e.isAlive() && hits.test(e) && !struck.contains(e.getUUID()))) {
                 struck.add(e.getUUID());
                 Dragonfire.deal(owner, e, WAVE_DAMAGE);
             }

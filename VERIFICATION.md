@@ -1,5 +1,28 @@
 # 首版验证记录
 
+## 拉塞塔同伴（阶段 A：人形核心，2026-11-28）
+
+分支 `feat/lacerta-companion`，基于 main `f2433471`（#313 炽焰长剑）。按接入方案阶段 A 做，进度和与设计稿不同的地方见 [拉塞塔](docs/LACERTA_COMPANION.md) 第 17 节。模型第 22 版（82 段动画）。Logos jar 用 `编译成品/20261126-2358-最新版/logos-0.7.2.jar`，乐团用同目录的 `starbloom_orchestra-0.1.0.jar`，都复制到纯英文路径 `builds/lacerta-jars/` 再传。
+
+| 项 | 结果 |
+|---|---|
+| 构建 | `compileJava` 通过（只有原来就有的过时 API 警告） |
+| 单元 | `LacertaTest` **14/14**（动画长度和标记、招式文件和模型的 `crimson_*` 及玩家那份一致、`tankRatio` / `magicRatio` 分段、数值成长、超限护甲和魔咒的减伤有上限且一直涨、防复读罚分、床边朝向、一天的事一天算、掌心赤焰编得过、面板网络来回、语言键中英文都有且参数个数一样）；`KohakuTest` 的同伴总数 3 → 4；同伴其余、`LangCoverageTest`、`MovesetTest`、`CrimsonFlameLongswordTest`、`NpcAnimationsTest`、`CombatWeaponTest` 全过（这一批 103 个） |
+| 实际客户端 | `group:lacerta_companion` **11/11**：召唤（空白鳞立契、入场、太平不拔剑、收回不用歇）、打斗（拔剑、龙吟把僵尸引到她身上、砍中、至少两种招、没伤主人、打完收剑）、五个战技逐一出招拍特效、掌心赤焰打中柱顶够不着的僵尸且不点方块、龙眠（打不到、最后的骑士、火星回鳞、鳞上冷却、叫不出来）、顶棚下收翅拆掉展开、四档守夜（位置、朝向、动画、醒来起身）、对话（中文：话题、右肩甲、看五样东西的点评、面板三页） |
+| 人工看截图 | 截图在仓库外 `MinecraftLogosMod/lacerta_dragon_model/ingame/phase_a_v01`。入场落地、收翅成披风、龙眠化作樱粉赤金火星、横扫的龙炎游脉、坠星腾空、面板和往事都对。场景写法上修过三处：收翅要等心智换成留在原地再摆位置；守夜醒来她只停一刻就去你身边坐下，检查改成「不再是这一档的睡姿」；床上的聊天框关了会让主人起床，截图时只清聊天记录 |
+
+看到但这一轮没改的：
+
+- **剑的大小**：剑在她手里约 1.1 格，不是设计稿第 5.1 节说的 2.13 格、比她还高。当初烘焙动作时（`tools/crimson_flame_longsword_moves.py`）给她 2 倍骨架的 `weapon_scale` 是 0.85，模型显示时缩一半；渲染和烘焙一致。要改大得重新烘焙 `crimson_*`。
+- **龙炎弹的颜色**：弹体和命中的光是奥秘的粉紫色。龙炎术式本来就是「外观推断同奥秘」，只有施法圈、游脉、命中的火换成龙炎（玩家写的龙炎术式也一样）。
+- 嘲讽、抛火时她头顶附近有几点粉色 / 白色光点，是粒子，不是模型。
+- 回归 `group:companion_book` **1/1**：友人帐多了第四页，没和她立契时是黑窗；和她立契以后那一页长什么样没拍。
+- 没测：Iris/光影包、多人、手感和数值（没人试玩；基础一剑约 18 点龙炎，偏强）、全量单元和世界测试。
+
+```bash
+./gradlew runClient -PlogosJar=... -PorchestraJar=... -PldTest=group:lacerta_companion -PldTestHeadless -PldTestWindow=1280x720
+```
+
 ## 炽焰长剑（2026-11-27）
 
 分支 `feat/crimson-flame-longsword`，基于 main `32b1a6c2`（#312 龙炎）。初稿（物品、招式、动作、导入和编排脚本、单元测试）原来基于 #303，没提交，这轮挪到最新 main 上接完，设计见 [炽焰长剑](docs/CRIMSON_FLAME_LONGSWORD.md)。Logos jar 用 `编译成品/20261126-2358-最新版/logos-0.7.2.jar`，乐团用同目录的 `starbloom_orchestra-0.1.0.jar`（单元测试时复制到纯英文路径）。

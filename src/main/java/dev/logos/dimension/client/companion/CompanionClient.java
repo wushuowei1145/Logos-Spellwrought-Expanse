@@ -25,6 +25,7 @@ import dev.logos.dimension.companion.ElfPrincessCompanion;
 import dev.logos.dimension.companion.Katashiro;
 import dev.logos.dimension.companion.KohakuCompanion;
 import dev.logos.dimension.companion.KohakuOutfit;
+import dev.logos.dimension.companion.LacertaCompanion;
 import dev.logos.dimension.companion.ShiraumeCompanion;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -54,6 +55,7 @@ public final class CompanionClient {
         event.registerEntityRenderer(Companions.SHIRAUME.get(), CompanionRenderer::new);
         event.registerEntityRenderer(Companions.ELF_PRINCESS.get(), PrincessRenderer::new);
         event.registerEntityRenderer(Companions.KOHAKU.get(), KohakuRenderer::new);
+        event.registerEntityRenderer(Companions.LACERTA.get(), LacertaRenderer::new);
         event.registerEntityRenderer(Companions.KATASHIRO.get(), KatashiroRenderer::new);
     }
 
@@ -349,6 +351,48 @@ public final class CompanionClient {
                     s.skipChildrenRender(true);
                 });
             }
+        }
+    }
+
+    /**
+     * 拉塞塔（docs/LACERTA_COMPANION.md）：NPC 的通用渲染。入场最初几刻不画；睡着、倒下时不叠加视线。
+     * 炽焰长剑画在 {@code Weapon} 骨骼上（{@link CrimsonOnBone}）：拔剑时凝出来，收剑后散掉。
+     */
+    public static class LacertaRenderer<R extends LivingEntityRenderState & GeoRenderState> extends NpcRenderer<LacertaCompanion, R> {
+        /** 剑：进度（-1 完整、0–1 凝聚或消散、-2 不画）、是不是在凝；她的实体 ID（凝聚、消散的随机种子）。 */
+        private static final DataTicket<Float> SWORD = DataTicket.create("logos_dimension_lacerta_sword", Float.class);
+        private static final DataTicket<Boolean> APPEAR = DataTicket.create("logos_dimension_lacerta_sword_appear", Boolean.class);
+        private static final DataTicket<Integer> ID = DataTicket.create("logos_dimension_lacerta_id", Integer.class);
+
+        public LacertaRenderer(EntityRendererProvider.Context context) {
+            super(context, "lacerta_companion");
+        }
+
+        @Override
+        public boolean shouldRender(LacertaCompanion entity, Frustum frustum, double x, double y, double z) {
+            return !entity.hiddenForSummon() && super.shouldRender(entity, frustum, x, y, z);
+        }
+
+        @Override
+        public void addRenderData(LacertaCompanion animatable, Void relatedObject, R state, float partialTick) {
+            super.addRenderData(animatable, relatedObject, state, partialTick);
+            if (animatable.curled()) {
+                state.xRot = 0;
+                state.yRot = 0;
+            }
+            float[] sword = CrimsonOnBone.state(animatable, partialTick);
+            state.addGeckolibData(SWORD, sword == null ? -2f : sword[0]);
+            state.addGeckolibData(APPEAR, sword != null && sword[1] > 0);
+            state.addGeckolibData(ID, animatable.getId());
+        }
+
+        @Override
+        public void adjustRenderPose(RenderPassInfo<R> info) {
+            super.adjustRenderPose(info);
+            if (info.getOrDefaultGeckolibData(SWORD, -2f) <= -2) return;
+            GeoBone weapon = info.model().boneLookup().get().get("Weapon");
+            if (weapon != null) info.addPerBoneRender(weapon, (i, bone, out) -> CrimsonOnBone.submit(i.poseStack(), out, i.packedLight(),
+                    i.getOrDefaultGeckolibData(SWORD, -1f), i.getOrDefaultGeckolibData(APPEAR, true), "lacerta" + i.getOrDefaultGeckolibData(ID, 0)));
         }
     }
 

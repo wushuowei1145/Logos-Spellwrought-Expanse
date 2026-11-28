@@ -1,7 +1,7 @@
 # 同伴：有哪些系统，做下一位照着做
 
 白梅是第一位同伴，精灵公主是第二位。这份文档把同伴的系统一项项列出来，并说明每项现在是不是公共的，下一位同伴照着做。
-白梅自己的设定、数值和每印的机制见 [白梅同伴](SHIRAUME_COMPANION.md)，精灵公主的见 [精灵公主](ELF_PRINCESS_COMPANION.md)，琥珀的见 [琥珀](KOHAKU_COMPANION.md)；方向见 [二游式角色](SHIRAUME_COMPANION.md#1-核心做角色不做定制)：性格鲜明、羁绊随时间长、有自己的本事，不做女仆式的定制。
+白梅自己的设定、数值和每印的机制见 [白梅同伴](SHIRAUME_COMPANION.md)，精灵公主的见 [精灵公主](ELF_PRINCESS_COMPANION.md)，琥珀的见 [琥珀](KOHAKU_COMPANION.md)，拉塞塔的见 [拉塞塔](LACERTA_COMPANION.md)；方向见 [二游式角色](SHIRAUME_COMPANION.md#1-核心做角色不做定制)：性格鲜明、羁绊随时间长、有自己的本事，不做女仆式的定制。
 
 ## 1. 现状（2026-11-18，精灵公主加入时）
 
@@ -16,7 +16,11 @@
 - **琥珀独有**（[琥珀](KOHAKU_COMPANION.md)，分五步做，第一步已进游戏）：长杖和换杖（`KohakuStaff`）、魔力（她是 Logos 的 `ManaVessel`，回复由附属结算）、
   生命单独的继承比例和不继承护甲（`CompanionDef.Growth` 的 `healthRatio`、`inheritsArmor`）、琥珀护膜、她自己施放的载页（`KohakuSpells`）、哈气和幻翼；
   之后是按意图挑页（含你给她的页）、凝辉、猫步、凑过来坐下、雨伞、睡姿和醒来的礼物、琥珀相伴。
-- 角色面板的数值页按档案给的顺序画（`CompanionSheet.stats`）：白梅生命、攻击、护甲、韧性；精灵公主把攻击换成法术强度；琥珀生命、法术强度、魔力、护甲。
+- **拉塞塔独有**（[拉塞塔](LACERTA_COMPANION.md) 第 17 节，接入方案分五个阶段，阶段 A 人形核心已进游戏）：誓约逆鳞（`DragonScaleItem`）、
+  不封顶的分段继承和超出原版上限的护甲、魔咒折成的减伤（`LacertaStats`）、炽焰长剑（`LacertaBlade`）和按处境挑招、防复读（`LacertaMind`）、
+  赤龙威压（嘲讽）、掌心赤焰（龙炎弹）、龙眠、收展翅、展翼滑翔、四档守夜（`LacertaRest`）。
+- 角色面板的数值页按档案给的顺序画（`CompanionSheet.stats`）：白梅生命、攻击、护甲、韧性；精灵公主把攻击换成法术强度；琥珀生命、法术强度、魔力、护甲；
+  拉塞塔同白梅（攻击含剑的 8 点）。
 
 还没做的：命令只有白梅那一组是老写法（精灵公主的在 `princess` 下面）。
 
@@ -27,27 +31,27 @@
 | # | 系统 | 做什么 | 状态 | 代码 |
 |---|---|---|---|---|
 | 1 | 召唤、收回、休息 | 用信物召唤、收回；倒下后歇一段时间才能再叫；主人下线、死亡、换维度时悄悄收起，回来后自动叫回 | **公共** | `Companions`（`summon`、`dismiss`、`stow`、`fell`，都按 `CompanionDef`）；歇多久在定义里 |
-| 2 | 信物 | 写着主人名字的（绑定）召唤用；空白的右键她盖一枚契印，还没立契时右键用它就写上名字、立契、叫她出来；丢了找她补 | 独有（每位一种，用法照这个） | 白梅 `KatashiroItem`（丢了拿纸）；精灵公主 `BaggedWorldTreeItem`（丢了拿树苗） |
+| 2 | 信物 | 写着主人名字的（绑定）召唤用；空白的右键她盖一枚契印，还没立契时右键用它就写上名字、立契、叫她出来；丢了找她补 | 独有（每位一种，用法照这个） | 白梅 `KatashiroItem`（丢了拿纸）；精灵公主 `BaggedWorldTreeItem`（丢了拿树苗）；拉塞塔 `DragonScaleItem`（丢了在对话里说，或拿她最爱吃的给她） |
 | 3 | 加入方式 | 怎么成为同伴 | 独有 | 白梅：打倒狐形白梅后在封印之间立契，`ShiraumePact` |
 | 4 | 契 | 存在主人身上：立契没有、在外面的是谁、休息到哪、要不要自动叫回、契印、好感、饱腹、每天的次数、行动策略、攻击玩家 | **公共**（每位一份附件 `<同伴>_bond`，白梅的还是 `shiraume_bond`） | `Companions.Bond`、`CompanionDef.bond` |
 | 5 | 羁绊 | 五段：生疏 → 熟悉 → 亲近 → 信赖 → 羁绊。一起吃饭、摸头、泡温泉、挡死都加好感，同一件事一天里头几次加得多、之后很少，不能刷 | 规矩公共（纯函数），数是白梅的 | `CompanionBond` |
 | 6 | 契印 | 重复获得：每多一枚，继承多一点、她自己长一点，第 n 枚解锁第 n 个机制。每位同伴给它起名字（白梅叫「尾之契」） | 计数和公式公共，机制独有 | `CompanionBond.unlocked`、`CompanionStats.ratio` |
-| 7 | 数值 | 本身（基础 + 契印成长）+ 羁绊 + 继承。只继承长期属性（装备、基础属性、盔甲上的保护类魔咒，不算药水）；攻击取近战和法强折算后高的那个；用法术打的同伴另有法术强度；在场时 5 秒刷新一次，面板开着时每秒刷新 | **公共**（数在每位的 `CompanionDef.Growth`） | `CompanionStats`；保护魔咒在 `Companions.onProtect` |
+| 7 | 数值 | 本身（基础 + 契印成长）+ 羁绊 + 继承。只继承长期属性（装备、基础属性、盔甲上的保护类魔咒，不算药水）；攻击取近战和法强折算后高的那个；用法术打的同伴另有法术强度；在场时 5 秒刷新一次，面板开着时每秒刷新 | **公共**（数在每位的 `CompanionDef.Growth`；要另算的同伴覆盖 `CompanionEntity.statParts`、`protectionRatio`、`reduceDamage`，拉塞塔就是这样） | `CompanionStats`；保护魔咒在 `Companions.onProtect` |
 | 8 | 饱腹、吃东西 | 饱腹随时间降，饿了先吃包袱里的；喂她吃的效果同玩家吃，回的血 = 饱食度 + 饱和度；有喜欢的、不吃的 | **公共**（口味标签 `<同伴>_favorite_food` / `_refused_food`） | `CompanionFood`；吃的动作在 `CompanionEntity` |
 | 9 | 包袱 | 她替你背一个小箱子，饿了从里面拿吃的，捡的东西也放进去；从对话里打开 | **公共**（每位一份附件 `<同伴>_pouch`） | `CompanionPouch`、`CompanionDef.pouch` |
 | 10 | 心智 | 效用 AI：每刻先过反射层（掉队闪回、掉岩浆、防困，加她自己的），每 10 刻给各种行为打分，挑最高的做（第 2.1 节） | **公共**框架和通用行为；她自己的在子类 | `CompanionMind`（`ShiraumeMind`、`PrincessMind`）、`OwnerWatch` |
 | 11 | 行动策略、攻击玩家 | 随机应变、优先远程、优先近战、不参与攻击；攻击玩家开关（第 3.4 节） | 菜单和存储公共，「怎么打」每位自己写 | `CompanionTactic`；`Bond.tactic`、`Bond.pvp`；`CompanionMind` |
 | 12 | 护主 | 截下射向主人的弹射物，再去收拾射手；第一印替主人挡死（眼前转出信物，同不死图腾） | 弹道判断公共，挡死用的是形代 | `CompanionGuard` |
 | 13 | 防困 | 连着五次闪不回主人身边（矿车、船、座位）就回信物里 | **公共** | `CompanionMind.stuckInSeat` |
-| 14 | 表情、小动作 | 每半秒按处境挑一种表情（`face_*`），遇事插一个小动作（`act_*`） | 播放公共，挑哪一个每位自己写 | `CompanionMood`（`ShiraumeMood`、`PrincessMood`） |
+| 14 | 表情、小动作 | 每半秒按处境挑一种表情（`face_*`），遇事插一个小动作（`act_*`） | 播放公共，挑哪一个每位自己写；主控制器换状态的过渡刻数每位可以自己定（`NpcAnimated.npcMainTransition`，默认 2，拉塞塔 5） | `CompanionMood`（`ShiraumeMood`、`PrincessMood`） |
 | 15 | 台词字幕 | 她说话：名字 + 一句，屏幕下方字幕（名字取 `talk.logos_dimension.<同伴>.name`，颜色取她的主色） | **公共** | `CompanionLines.say(她, 主人, 键)`、`client/companion/CompanionLinesHud` |
 | 16 | 对话 | 潜行右键打开；一人同时只和一位说话；走开八格、来了敌人就断；看包袱时先放下，关上回来 | **公共** | `CompanionTalk`（`Talker`）、`TalkMenu`；白梅的在 `ShiraumeTalk` |
 | 17 | 角色档案 | 对话和面板显示的一切：数值、能力、契印、羁绊、饱腹、策略、往事 | **公共** | `CompanionSheet` |
 | 18 | 对话界面、角色面板 | 打字机文字、右边一列选项；面板三页（属性、契印 · 能力、往事），左边她本人可拖动转身 | **公共**（每位注册一份样式） | `client/companion/CompanionTalkScreen`、`CompanionPanelScreen`、`CompanionUi`、`CompanionStyle` |
 | 19 | 接 Logos | 她是 Logos 的长期同伴：主人用 `sic` 点名、`goto` 派差事、`dismiss` 收回 | **公共** | `LogosCompanionBridge` |
-| 20 | 战斗 | 怎么打 | 独有 | 白梅：狐火弹（`shiraume/FoxfireBolt`）、流火（`CompanionBlade`，招式文件 `shiraume_companion`）、缠火、处决；精灵公主：世界树之弓（`PrincessBow`）、生命涌动（`PrincessMagic`） |
-| 21 | 生活 | 日常小事 | 独有 | 白梅：狐火灯（`CompanionLight`）、温泉、摘浆果、怕狗、装束（`CompanionOutfit`）；琥珀：四套衣服，对话里换、记在你身上（`KohakuOutfit`） |
-| 22 | 命令 | `/alchemy companion …`：召唤、收回、看数、清休息、盖契印、设饱腹、换装 | 白梅的在最上一层，精灵公主的在 `princess` 下面 | `CompanionCommands` |
+| 20 | 战斗 | 怎么打 | 独有 | 白梅：狐火弹（`shiraume/FoxfireBolt`）、流火（`CompanionBlade`，招式文件 `shiraume_companion`）、缠火、处决；精灵公主：世界树之弓（`PrincessBow`）、生命涌动（`PrincessMagic`）；拉塞塔：炽焰长剑（`LacertaBlade`，招式文件 `lacerta_companion`，由 `LacertaMind` 挑招）、赤龙威压、掌心赤焰（`LacertaFlame`） |
+| 21 | 生活 | 日常小事 | 独有 | 白梅：狐火灯（`CompanionLight`）、温泉、摘浆果、怕狗、装束（`CompanionOutfit`）；琥珀：四套衣服，对话里换、记在你身上（`KohakuOutfit`）；拉塞塔：四档守夜和坐下（`LacertaRest`）、收展翅（翅膀控制器排在 NPC 控制器之后） |
+| 22 | 命令 | `/alchemy companion …`：召唤、收回、看数、清休息、盖契印、设饱腹、换装 | 白梅的在最上一层，精灵公主的在 `princess` 下面，拉塞塔的在 `lacerta` 下面 | `CompanionCommands` |
 | 23 | 友人帐 | 按键（默认 K）翻开：所有同伴一人一页，立过契的画本人，没立契的是黑窗；在里面叫出来、收回（第 7 节） | **公共**（`Companions.ALL` 里的都在） | `CompanionBook`、`client/companion/CompanionBookClient`、`CompanionBookScreen` |
 
 ### 2.1 心智里的行为

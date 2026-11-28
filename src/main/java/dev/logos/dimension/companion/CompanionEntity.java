@@ -242,6 +242,27 @@ public abstract class CompanionEntity extends PathfinderMob implements NpcAnimat
         seals = n;
     }
 
+    /**
+     * 她这一刻的生命、攻击、护甲、韧性（她自己的、羁绊给的、继承的）。默认按定义里的成长（{@link CompanionDef.Growth}）算；
+     * 拉塞塔的继承比例是分段、不封顶的（{@link LacertaStats}），自己算。
+     */
+    protected CompanionStats.Parts statParts(CompanionStats.Owner owner, int seals, int stage) {
+        return CompanionStats.parts(def().growth(), owner, seals, stage);
+    }
+
+    /** 继承主人保护类魔咒的比例（默认同护甲的继承比例）。 */
+    protected double protectionRatio() {
+        return def().growth().armorRatio(seals);
+    }
+
+    /**
+     * 护甲和魔咒都算过以后，这一下还剩多少：{@code protection} 是继承来的魔咒保护（已乘比例）。默认照原版封顶 20 点（减八成）；
+     * 拉塞塔超出原版上限的护甲、韧性、魔咒保护在这里再减一点（{@link LacertaStats#overflow}）。
+     */
+    protected float reduceDamage(net.minecraft.world.damagesource.DamageSource source, float damage, float protection) {
+        return protection > 0 ? net.minecraft.world.damagesource.CombatRules.getDamageAfterMagicAbsorb(damage, protection) : damage;
+    }
+
     /** {@link CompanionStats#apply} 算完生命、护甲、攻击以后：她自己的数（精灵公主：法术强度）。 */
     protected void statsApplied(Player owner, int seals, int stage) {}
 
@@ -400,7 +421,7 @@ public abstract class CompanionEntity extends PathfinderMob implements NpcAnimat
             b = b.withSatiety(CompanionBond.fed(b.satiety(), CompanionFood.nutrition(eating))).withAffection(b.affection() + gain);
             if (eatShared) b = b.withMeal(day, b.mealsOn(day) + 1);
             setBond(p, b);
-            level.playSound(null, getX(), getY(), getZ(), SoundEvents.PLAYER_BURP, SoundSource.NEUTRAL, .35f, 1.6f);
+            swallowed(level);
             if (taste == CompanionFood.Taste.FAVORITE) {
                 level.sendParticles(ParticleTypes.HEART, getX(), getY() + 1.35, getZ(), 2, .2, .1, .2, 0);
                 mood.delighted(now);
@@ -408,6 +429,11 @@ public abstract class CompanionEntity extends PathfinderMob implements NpcAnimat
             meals++;
         }
         if (t >= EAT_TICKS) stopEating();
+    }
+
+    /** 咽下去的那一下（第 {@link #EAT_SWALLOW} 刻）：默认一声小嗝；拉塞塔是鼻尖一小团满足的暖烟（她不打嗝）。 */
+    protected void swallowed(ServerLevel level) {
+        level.playSound(null, getX(), getY(), getZ(), SoundEvents.PLAYER_BURP, SoundSource.NEUTRAL, .35f, 1.6f);
     }
 
     void stopEating() {
