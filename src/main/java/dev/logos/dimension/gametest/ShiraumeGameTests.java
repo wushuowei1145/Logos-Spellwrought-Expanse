@@ -71,7 +71,13 @@ public final class ShiraumeGameTests {
         tests.put("shiraume_rage_ring_jumpable", ShiraumeGameTests::rageRingJumpable);
         tests.put("shiraume_ichimonji_wave", ShiraumeGameTests::ichimonjiWave);
         tests.put("shiraume_ichimonji_turns_when_behind", ShiraumeGameTests::ichimonjiTurnsWhenBehind);
-        tests.forEach((name, test) -> FUNCTIONS.register(name, () -> test));
+        tests.forEach((name, test) -> FUNCTIONS.register(name, () -> h -> {
+            var chunks = ground(h);
+            // 强制加载是异步的；场地还没进入实体刻时，不生成 Boss，也不开始计算攻击时间。
+            h.startSequence().thenWaitUntil(RealTimeWait.paced(() -> {
+                for (var c : chunks) h.assertTrue(h.getLevel().areEntitiesActuallyLoadedAndTicking(c), "等待白梅测试场地的实体刻：" + c);
+            })).thenExecute(() -> test.accept(h));
+        }));
         FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event) -> {
             // 每个测试单独一批：她会冲、会跳，同一批里会打到隔壁
@@ -418,7 +424,8 @@ public final class ShiraumeGameTests {
             beast.play("pounce_crouch");
         });
         grounded.at(120, () -> {
-            h.assertTrue(seen[0] > 0, "狂暴的大跳落地没有放出狐火冲击");
+            h.assertTrue(seen[0] > 0, "狂暴的大跳落地没有放出狐火冲击；位置=" + beast.position()
+                    + "，招式=" + beast.move() + "，实体刻=" + beast.tickCount + "，目标=" + beast.getTarget());
             h.assertTrue(grounded.p.getHealth() < grounded.p.getMaxHealth() && grounded.p.getLastDamageSource() != null
                     && grounded.p.getLastDamageSource().is(dev.logos.dimension.foxfire.Foxfire.DAMAGE), "贴地的人没挨狐火冲击：" + grounded.p.getLastDamageSource());
             h.assertTrue(jumping.p.getHealth() == jumping.p.getMaxHealth(), "跳在半空的人也挨了狐火冲击");
@@ -458,7 +465,9 @@ public final class ShiraumeGameTests {
             boss.play("ichimonji_raise");
         });
         f.at(8, () -> {
-            h.assertTrue(boss.move().equals("turn_sweep"), "举刀时玩家在背后没有转身横扫：她在 " + boss.move());
+            h.assertTrue(boss.move().equals("turn_sweep"), "举刀时玩家在背后没有转身横扫：她在 " + boss.move()
+                    + "，实体刻=" + boss.tickCount + "，位置=" + boss.position() + "，玩家=" + f.p.position()
+                    + "，方向=" + boss.getYRot() + "，目标=" + boss.getTarget());
             boss.discard();
             f.succeed();
         });

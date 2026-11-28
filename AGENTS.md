@@ -34,6 +34,8 @@
 - 附属结构的奖励箱要出 Logos 或附属的物品（钱币、魔力碎片、符文书、古代药剂等）时，在结构自己的表里引用 `logos_dimension:chests/tiers/{common,uncommon,rare}`，不要逐个结构写这些物品；以后加东西改分级表。见 [docs/LOOT_TIERS.md](docs/LOOT_TIERS.md)。
 - 不使用原版新版本硫磺方块，不添加原版主世界矿物生成。
 - 两个维度使用原版数据包生成，不恢复 Java 地形/种树/建筑填块生成器。咒械原为每釜独立的 20,000×20,000 格 UUID 世界，原版大群系替代同心环，以太占多数。挖掘保留绑定，实体损毁才销毁对应实例。
+- 群系与结构按 [生成分区与间距](docs/NATIVE_WORLDGEN.md#群系分区与结构间距) 布局：同一地表层的群系主体应连续成片、分区清晰；边界允许少量自然交融，不得大面积交错或侵入彼此腹地。独立结构按完整占地及景观范围保留与体量相称的间隔，同类与不同类都不得扎堆、贴邻或互相穿插。每片独立连片的麦田平原最多自然生成一处队徽怪圈，不能用单纯调大随机间距冒充唯一性保证。
+- 麦田怪圈的限定例外（维护者于 2026-11-26 明确同意）：`dev.logos.dimension.wheat.WheatCirclePlacement` 只用 Java 检查群系连通片、选出唯一原版候选点，并确认完整怪圈及边界余量都在同片麦田内；地形、模板与方块放置仍由原版数据包生成。不得把此例外扩大成 Java 地形或建筑填块器。
 - 例外是神狐聚落（`dev.logos.dimension.fox`，维护者于 2026-11-02 同意）：原版拼接无法按坡度铺山路、Beardifier 只能削不能填，所以由 Java 结构选址、整形山体、铺山路与溪流；建筑仍是代码生成的 NBT 模板。见 [docs/FOX_SANCTUARY.md](docs/FOX_SANCTUARY.md)。曦誓之洞（`dev.logos.dimension.dawnvow`，维护者于 2026-11-03 同意）同样由 Java 选址与开凿山洞，见 [docs/DAWNVOW_STONE.md](docs/DAWNVOW_STONE.md)。太玄灵境（`dev.logos.dimension.taixuan.TaixuanStructure`，维护者于 2026-11-11 同意）只用 Java 做选址检查（另外，剑祟战斗开始时按模板重放场地下面的空洞，维护者于 2026-11-22 同意，照 Crater 直接写区块数据，见 [docs/JIAN_SUI_BOSS.md](docs/JIAN_SUI_BOSS.md)）：整座地标都要落在云岫峰林里、深渊口一圈的地面不能低于石壁顶；浮岛、深渊、镇渊柱和殿阁仍是原版拼接的 NBT 模板，见 [docs/TAIXUAN.md](docs/TAIXUAN.md)。其他结构不得照此扩展，需要时先问。
 - 中心空岛顶面保持留空，禁止自动刷怪。Boss 和宫殿只在明确要求后制作。
 - 岛下影雾由服务端 Boss 完成状态控制；每个炼金釜的独立世界分别记录。

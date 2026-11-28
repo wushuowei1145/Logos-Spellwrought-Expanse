@@ -2,6 +2,7 @@ package dev.logos.dimension.gametest;
 
 import com.mojang.authlib.GameProfile;
 import dev.logos.dimension.*;
+import dev.logos.dimension.wheat.*;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.util.*;
 import java.util.function.Consumer;
@@ -21,20 +22,22 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.levelgen.*;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
+import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.pools.*;
 import net.minecraft.world.level.levelgen.structure.templatesystem.*;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-/** 只在测试世界取样和搭台；正式生成全部由原版数据包完成。 */
+/** 只在测试世界取样和搭台；正式放置走原版，选址使用维护者授权的唯一性检查。 */
 public final class WheatPlainsGameTests {
     public static final ResourceKey<Biome> BIOME=ResourceKey.create(Registries.BIOME,LogosDimension.id("wheat_plains"));
     private static final DeferredRegister<Consumer<GameTestHelper>> FUNCTIONS=DeferredRegister.create(Registries.TEST_FUNCTION,LogosDimension.ID);
     public static void register(IEventBus bus){
         var tests=Map.<String,Consumer<GameTestHelper>>of("wheat_distribution",WheatPlainsGameTests::distribution,
                 "wheat_natural_cover",WheatPlainsGameTests::natural,"wheat_circle_terrain",WheatPlainsGameTests::circle,
-                "wheat_first_encounter",WheatPlainsGameTests::encounter,"wheat_native_assembly",WheatPlainsGameTests::assembly);
+                "wheat_first_encounter",WheatPlainsGameTests::encounter,"wheat_native_assembly",WheatPlainsGameTests::assembly,
+                "wheat_unique_per_patch",WheatPlainsGameTests::unique);
         tests.forEach((name,test)->FUNCTIONS.register(name,()->test));FUNCTIONS.register(bus);
         bus.addListener((RegisterGameTestsEvent event)->{
             var env=event.registerEnvironment(LogosDimension.id("wheat_plains"),new TestEnvironmentDefinition.AllOf());
@@ -108,11 +111,42 @@ public final class WheatPlainsGameTests {
         var level=world(h);var at=findInterior(level);var source=level.getChunkSource();var generator=source.getGenerator();
         var holder=level.registryAccess().lookupOrThrow(Registries.STRUCTURE).getOrThrow(ResourceKey.create(Registries.STRUCTURE,LogosDimension.id("wheat_crop_circle")));
         for(long seed=0;seed<4;seed++){
-            StructureStart start=holder.value().generate(holder,level.dimension(),level.registryAccess(),generator,generator.getBiomeSource(),source.randomState(),level.getStructureManager(),seed,new ChunkPos(at.getX()>>4,at.getZ()>>4),0,level,b->b.is(BIOME));
+            var selected=WheatCirclePlacement.patch(context(level,new ChunkPos(at.getX()>>4,at.getZ()>>4),seed)).winner().orElseThrow();
+            var chunk=new ChunkPos(selected.blockX()>>4,selected.blockZ()>>4);
+            StructureStart start=holder.value().generate(holder,level.dimension(),level.registryAccess(),generator,generator.getBiomeSource(),source.randomState(),level.getStructureManager(),seed,chunk,0,level,b->b.is(BIOME));
             h.assertTrue(start.isValid()&&start.getPieces().size()==1,"原版拼接没有输出怪圈部件");
             var box=start.getBoundingBox();
             h.assertTrue(box.getXSpan()==128&&box.getZSpan()==128,"旋转后的怪圈尺寸错误");
+            // 检查整个模板而不是只有图案中的非空像素，避免邻近群系留下缺口。
+            for(int x=box.minX()-8;x<=box.maxX()+8;x+=4)for(int z=box.minZ()-8;z<=box.maxZ()+8;z+=4)
+                h.assertTrue(((MultiNoiseBiomeSource)generator.getBiomeSource()).getNoiseBiome(surface(source.randomState().sampler().sample(x>>2,18,z>>2))).is(BIOME),"怪圈或边界余量跨出了麦田群系");
         }
+        h.succeed();
+    }
+    private static Structure.GenerationContext context(ServerLevel level,ChunkPos chunk,long seed){
+        var source=level.getChunkSource();var generator=source.getGenerator();
+        return new Structure.GenerationContext(level.registryAccess(),generator,generator.getBiomeSource(),source.randomState(),level.getStructureManager(),seed,chunk,level,b->b.is(BIOME));
+    }
+    private static void unique(GameTestHelper h){
+        var level=world(h);var at=findInterior(level);long seed=level.getSeed();
+        var patch=WheatCirclePlacement.patch(context(level,new ChunkPos(at.getX()>>4,at.getZ()>>4),seed));
+        h.assertTrue(patch.winner().isPresent(),"完整麦田没有唯一候选点");
+        var placement=(net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement)level.registryAccess().lookupOrThrow(Registries.STRUCTURE_SET).getOrThrow(ResourceKey.create(Registries.STRUCTURE_SET,LogosDimension.id("wheat_crop_circles"))).value().placement();
+        var candidates=new ArrayList<ChunkPos>();
+        for(int x=Math.floorDiv(patch.minX(),4);x<=Math.floorDiv(patch.maxX(),4);x++)for(int z=Math.floorDiv(patch.minZ(),4);z<=Math.floorDiv(patch.maxZ(),4);z++){
+            var potential=placement.getPotentialStructureChunk(seed,x,z);
+            if(potential.x()!=x||potential.z()!=z)continue;
+            var chunk=new ChunkPos(x,z);
+            if(WheatCirclePlacement.patch(context(level,chunk,seed)).winner().equals(patch.winner()))candidates.add(chunk);
+        }
+        h.assertTrue(candidates.size()>1,"样地没有多个旧版随机起点，无法验证去重");
+        for(boolean reverse:new boolean[]{false,true}){
+            if(reverse)Collections.reverse(candidates);
+            int accepted=0;
+            for(var chunk:candidates)if(WheatCirclePlacement.allows(context(level,chunk,seed)))accepted++;
+            h.assertTrue(accepted==1,"同片麦田生成了多个怪圈，或选择受探索顺序影响");
+        }
+        System.out.println("WHEAT_UNIQUE cells="+patch.cells()+" old_candidates="+candidates.size()+" winner="+patch.winner().orElseThrow());
         h.succeed();
     }
     private static void circle(GameTestHelper h){

@@ -31,7 +31,7 @@ public final class WheatPlainsViews implements UIScenario {
                 level.clockManager().setTotalTicks(level.registryAccess().lookupOrThrow(Registries.WORLD_CLOCK).getOrThrow(JourneySeasons.CLOCK),6000);
                 level.getWeatherData().setRaining(false);level.getWeatherData().setThundering(false);
                 var at=WheatPlainsGameTests.findInterior(level);
-                // 群系边缘允许自然裁掉图案；预览在多个真实起点中选一个完整的，不修改地表。
+                // 正式选址必须容纳整个模板；自然生成的画面也严格检查全部图案。
                 boolean complete=false;
                 for(int attempt=0;attempt<8&&!complete;attempt++){
                   var found=level.findNearestMapStructure(TagKey.create(Registries.STRUCTURE,LogosDimension.id("wheat_crop_circles")),at,32,true);
@@ -41,7 +41,7 @@ public final class WheatPlainsViews implements UIScenario {
                     if(!LogosDimension.id("wheat_crop_circle").equals(level.registryAccess().lookupOrThrow(Registries.STRUCTURE).getKey(entry.getKey()))||!entry.getValue().isValid())continue;
                     var start=entry.getValue();center=start.getBoundingBox().getCenter();pieces=start.getPieces().size();
                     // 测试器不会自动补齐远处地面；预载整个取景范围，避免未收到区块的蓝底看起来像海岛。
-                    var box=start.getBoundingBox();for(int x=(box.minX()>>4)-6;x<=(box.maxX()>>4)+6;x++)for(int z=(box.minZ()>>4)-6;z<=(box.maxZ()>>4)+6;z++)level.getChunk(x,z);
+                    var box=start.getBoundingBox();for(int x=(box.minX()>>4)-2;x<=(box.maxX()>>4)+2;x++)for(int z=(box.minZ()>>4)-2;z<=(box.maxZ()>>4)+2;z++)level.getChunk(x,z);
                     var piece=(net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece)start.getPieces().getFirst();
                     overheadYaw=switch(piece.getRotation()){
                         case NONE -> 180;case CLOCKWISE_90 -> 270;case CLOCKWISE_180 -> 0;case COUNTERCLOCKWISE_90 -> 90;
@@ -52,7 +52,7 @@ public final class WheatPlainsViews implements UIScenario {
                         if(state.is(net.minecraft.world.level.block.Blocks.HAY_BLOCK)||state.is(net.minecraft.world.level.block.Blocks.DIRT_PATH)||state.is(net.minecraft.world.level.block.Blocks.MUD))marked++;
                     }
                     System.out.println("WHEAT_CLIENT_CANDIDATE "+center+" marked="+marked);
-                    complete=marked>=7800;
+                    complete=marked==7895;
                     break;
                   }
                 }
