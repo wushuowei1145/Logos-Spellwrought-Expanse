@@ -73,7 +73,7 @@ WINDOW ──在场的全放过了、都演完了──▶ CUTIN ──第 26 �
 | 第 1 / 2 / 3 / 4 段的威力 | 1 / 1.25 / 1.55 / 1.9 | `UltimateChain.power` |
 | 第 1 / 2 / 3 / 4 段的耗魔 | 基准的 100% / 85% / 70% / 55% | `UltimateChain.manaFactor` |
 | 最后一击的威力 | 两位同伴 1 倍，三位 1.6 倍（满格），四位 2 倍；不耗魔 | `UltimateChain.finisherPower` |
-| 白梅 | 冷却 35 秒，基准耗魔 260 | `ShiraumeCompanion.ULTIMATE` |
+| 白梅「狐嫁入 · 水镜形代断」 | 冷却 35 秒，基准耗魔 260；完整版 107 刻、第 78 刻出手，缩短版 44 刻、第 24 刻出手（[SHIRAUME_COMPANION.md](SHIRAUME_COMPANION.md) 第 11 节） | `ShiraumeCompanion.ULTIMATE` |
 | 精灵公主 | 40 秒，300 | `ElfPrincessCompanion.ULTIMATE` |
 | 琥珀 | 35 秒，280；完整版 106 刻（第 75 刻出手）、缩短版 42 刻（第 26 刻），馈赠「炼金回流」 | `KohakuCompanion.ULTIMATE`（`KohakuUltimate`，见 [KOHAKU_COMPANION.md](KOHAKU_COMPANION.md) 第 20 节） |
 | 拉塞塔 | 40 秒，320 | `LacertaCompanion.ULTIMATE` |
@@ -142,7 +142,7 @@ UltimateFilm.of(cast)
   - `wipe`：擦镜，花瓣、叶子、纸片、碎晶、烟、火星、星芒从左往右扫过，正中盖满的那几刻镜头回到玩家视角（`returning` 改回来用几刻，默认 6）。
   - 同一种层同一刻只有一层起作用（后加的）。
 - **她自己的全屏后期**：浮世绘、画面凝进琥珀、碎镜这类，写在她的 `UltimateShow#screen` 里（每帧在过场叠层之前调），自己注册管线、画全屏三角形，照 `UltimateFilmRenderer` 的写法，不用改 `ScreenEffectMixin`。只在 `film.mine()` 时画。
-- **世界里的特效**：粒子、Logos 的 `Vfx`、`PostVfx`、`GlowBloom` 照常用，从服务端发的所有人都看得见。
+- **世界里的特效**：粒子、Logos 的 `Vfx`、`PostVfx`、`GlowBloom` 照常用，从服务端发的所有人都看得见。有奥义的画面在放时 `PostVfx` 自动收几何（`UltimateClient.postVfx`），交上去的发光特效（穿雾、在后期调暗之后仍亮）不会被丢掉。
 - **最小的用法**：`StandInShow`（占位过场）。
 
 ### 截帧看动态

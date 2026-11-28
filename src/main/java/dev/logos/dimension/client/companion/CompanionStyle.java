@@ -101,8 +101,8 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 if (c != null) c.showcase(CompanionOutfit.byId(sheet.outfit()), "face_kitsune", "cutin", true);
                 return c;
             }, 0, new CutinShot(46, .14f, 14, 9, -.05f), new CutinMotes(CutinMotes.Kind.FOXFIRE, 0xFFC2E0)),
-            // 奥义「绯梅落 · 九尾残月斩」的画面：专属过场做好以前先用占位的那一段
-            StandInShow.of(UltimateFilm.Wipe.PETAL, 0xFFC2E0, 0xF7B6D6));
+            // 奥义「狐嫁入 · 水镜形代断」的画面：水镜、浮世绘、斩纸、破镜、因果斩，梅瓣擦镜
+            ShiraumeUltimateShow.FACTORY);
 
     /**
      * 精灵公主：夜里的林子（深绿到墨绿），薄荷绿当主色，金线，被动能力用荷花粉；纹是世界树的叶（一圈细环、四片菱形的叶、正中一颗生命晶）。
@@ -174,8 +174,8 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 }
                 return c;
             }, 0, new CutinShot(50, .08f, 8, 4, -.08f), new CutinMotes(CutinMotes.Kind.EMBER, 0xF6A04D)),
-            // 奥义「绯穹裁决 · 炽龙陨星破」的画面：专属过场做好以前先用占位的那一段
-            StandInShow.of(UltimateFilm.Wipe.SMOKE, 0x2A2224, 0xF6A04D));
+            // 奥义「绯穹裁决 · 炽龙裂地破」的画面：八镜过场和世界里的碎岩、光柱、地裂（docs/LACERTA_COMPANION.md 第 22 节）
+            LacertaUltimateShow::begin);
 
     /** 盾形的龙鳞，正中一簇龙炎：一圈细环，环里一枚大菱形（鳞），鳞的上半一枚小菱形、下面一点（火苗）。 */
     static void dragonScale(GuiGraphicsExtractor g, float cx, float cy, float r, int color) {

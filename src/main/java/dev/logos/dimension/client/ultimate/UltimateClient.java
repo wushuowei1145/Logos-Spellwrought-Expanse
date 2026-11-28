@@ -268,6 +268,14 @@ public final class UltimateClient {
         return held;
     }
 
+    /**
+     * 有奥义的画面正在放（本机看得到的任何一段）：这一帧 {@code PostVfx} 收几何，画面里交上去的发光特效（魔弹、光柱、法阵）
+     * 才画得出来。没在放时不开，PostVfx 不跑。
+     */
+    public static boolean postVfx() {
+        return !SHOWS.isEmpty();
+    }
+
     /** 正在放的画面有几段（测试用）。 */
     public static int showing() {
         return SHOWS.size();
