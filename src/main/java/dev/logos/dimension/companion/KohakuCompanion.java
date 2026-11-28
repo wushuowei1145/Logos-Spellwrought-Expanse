@@ -3,7 +3,6 @@ package dev.logos.dimension.companion;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.dissolve.DissolveShape;
 import dev.logos.dimension.dissolve.Dissolving;
-import dev.logos.dimension.ultimate.StandInUltimate;
 import dev.logos.dimension.ultimate.UltimateDef;
 import dev.logos.runtime.ManaVessel;
 import dev.logos.runtime.SpellModifiers;
@@ -62,8 +61,8 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
     public static final double MANA = 400, SEAL_MANA = 100, BOND_MANA = 50, REGEN = 4, SEAL_REGEN = .75, BOND_REGEN = .25;
     /** 撤退以后在金镑里歇多久（5 分钟）；契印一共几枚（爪之契）。 */
     public static final int REST_TICKS = 6000, MAX_SEALS = 9;
-    /** 奥义（docs/ULTIMATES.md）：星辰花炼成 · 凝时琥珀。冷却 35 秒、基准耗魔 280；专属演出做好以前先用占位的那一段。 */
-    public static final UltimateDef ULTIMATE = new UltimateDef(700, 280, StandInUltimate::new);
+    /** 奥义「星辰花炼成 · 凝时琥珀」（docs/ULTIMATES.md、docs/KOHAKU_COMPANION.md 第 20 节，{@link KohakuUltimate}）：冷却 35 秒、基准耗魔 280；完整版 106 刻，缩短版 42 刻。 */
+    public static final UltimateDef ULTIMATE = new UltimateDef(700, 280, KohakuUltimate::full, KohakuUltimate::condensed);
     /** 被摸头以后多少刻内回魔快一倍。 */
     static final int PETTED_REGEN = 600;
     /** 登场：法阵先转开多少刻她才蹦出来；入场动画多长、落地在第几刻（与模型的 summon 一致）。 */

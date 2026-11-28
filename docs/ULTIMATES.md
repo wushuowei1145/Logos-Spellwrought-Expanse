@@ -75,7 +75,7 @@ WINDOW ──在场的全放过了、都演完了──▶ CUTIN ──第 26 �
 | 最后一击的威力 | 两位同伴 1 倍，三位 1.6 倍（满格），四位 2 倍；不耗魔 | `UltimateChain.finisherPower` |
 | 白梅 | 冷却 35 秒，基准耗魔 260 | `ShiraumeCompanion.ULTIMATE` |
 | 精灵公主 | 40 秒，300 | `ElfPrincessCompanion.ULTIMATE` |
-| 琥珀 | 35 秒，280 | `KohakuCompanion.ULTIMATE` |
+| 琥珀 | 35 秒，280；完整版 106 刻（第 75 刻出手）、缩短版 42 刻（第 26 刻），馈赠「炼金回流」 | `KohakuCompanion.ULTIMATE`（`KohakuUltimate`，见 [KOHAKU_COMPANION.md](KOHAKU_COMPANION.md) 第 20 节） |
 | 拉塞塔 | 40 秒，320 | `LacertaCompanion.ULTIMATE` |
 
 - **冷却**：记在主人身上（附件 `ultimate_cooldowns`，存档、死亡不清），收回再叫不会刷掉。下令那一刻开始算。

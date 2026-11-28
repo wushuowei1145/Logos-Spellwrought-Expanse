@@ -149,8 +149,8 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 }
                 return c;
             }, 0, new CutinShot(42, .1f, -10, 7, .05f), new CutinMotes(CutinMotes.Kind.TALISMAN, 0xF2D06E)),
-            // 奥义「星辰花炼成 · 凝时琥珀」的画面：专属过场做好以前先用占位的那一段
-            StandInShow.of(UltimateFilm.Wipe.PAPER, 0xF2D06E, 0xF6EEDD));
+            // 奥义「星辰花炼成 · 凝时琥珀」的画面：敌群凝时、画面凝进琥珀、指尖轻弹碎镜、星辰花爆破、碎晶擦镜（docs/KOHAKU_COMPANION.md 第 20 节）
+            KohakuUltimateShow.FACTORY);
 
     /**
      * 拉塞塔：熔岩夜里的酒红到深绯，珊瑚红当主色（翼骨与龙鳞），金线（角尖鎏金），被动能力用骑士甲的冷银，奶油色正文；
