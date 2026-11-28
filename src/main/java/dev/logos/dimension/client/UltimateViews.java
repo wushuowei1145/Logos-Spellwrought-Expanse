@@ -38,10 +38,12 @@ import org.jspecify.annotations.Nullable;
  * <li>{@code ultimate_single}：只有一位同伴，放完不开窗口、不放切入；</li>
  * <li>{@code ultimate_denied}：魔力不够（她说一句、那一格闪红、不扣冷却）；都在冷却（整列抖一下）；</li>
  * <li>{@code ultimate_wheel}：三位同伴，按住 C 打开号令轮盘，甩到第二位松手就是她。</li>
- * <li>{@code ultimate_queue}：过场放着时再下令就排队，放完接上（第二位演缩短版）；过场期间主人不受伤、靶子被定住，汇流时都放开；</li>
- * <li>{@code ultimate_film}：放一段占位的过场，游戏放慢到每秒 5 刻，每刻截一张（{@code ultimate_film_frame_NNN}），
- *     拿 tools/frames_to_gif.py 拼成动图看运镜、压暗、速度线、擦镜。做每位的过场时照这个截她的。</li>
+ * <li>{@code ultimate_queue}：同伴的过场关着（{@link Ultimates#COMPANION_FILMS}）：她还在演时再下令就排队，放完接上（第二位演缩短版）；
+ *     她演的时候镜头不被接管、主人照常受伤、靶子不定住；连携切入照样放、切入时主人不受伤，汇流时都放开；</li>
+ * <li>{@code ultimate_film}：同伴的过场打开，放一段白梅的过场：过场期间主人不受伤、靶子被定住；游戏放慢到每秒 5 刻，每刻截一张
+ *     （{@code ultimate_film_frame_NNN}），拿 tools/frames_to_gif.py 拼成动图看运镜、压暗、速度线、擦镜。做每位的过场时照这个截她的。</li>
  * </ul>
+ * 每个场景开头把同伴的过场放回默认（{@link #ultimateStage}），要看她的过场的场景用 {@link #filmStage}；收尾也放回默认。
  */
 public abstract class UltimateViews extends ChainCutinViews {
     /** 靶子站在台子后面，准星正好穿过两位同伴中间对着它。 */
@@ -55,15 +57,21 @@ public abstract class UltimateViews extends ChainCutinViews {
         o.tags("ultimate").defaultTimeoutMs(60_000).scenarioTimeoutMs(240_000);
     }
 
-    /** 生存模式（要扣魔力），魔力上限加到够放几次，清掉冷却。 */
+    /** 生存模式（要扣魔力），魔力上限加到够放几次，清掉冷却；同伴的过场照默认（{@link Ultimates#COMPANION_FILMS}）。 */
     static ScenarioBuilder ultimateStage(ScenarioBuilder s) {
         return stage(s, GameType.SURVIVAL, 70).runCommand("difficulty easy")
-                .server("对准台子后面，魔力上限加满，清掉冷却", ctx -> {
+                .server("对准台子后面，魔力上限加满，清掉冷却，同伴的过场照默认", ctx -> {
+                    Ultimates.companionFilms = Ultimates.COMPANION_FILMS;
                     aim(ctx.player(), EYE, FOE.add(0, 1, 0));
                     boostMana(ctx.player());
                     Ultimates.reset(ctx.player());
                 })
                 .step("客户端也对准", ctx -> aimClient(FOE.add(0, 1, 0)));
+    }
+
+    /** 同 {@link #ultimateStage}，再打开同伴的过场（看她的过场、截帧的场景用；默认关着时过场的代码照样测得到）。 */
+    static ScenarioBuilder filmStage(ScenarioBuilder s) {
+        return ultimateStage(s).server("打开同伴的过场", ctx -> Ultimates.companionFilms = true);
     }
 
     static void boostMana(ServerPlayer p) {
@@ -146,6 +154,7 @@ public abstract class UltimateViews extends ChainCutinViews {
             ChainCutinRenderer.hold(-1);
             ctx.server().execute(() -> {
                 ctx.server().tickRateManager().setTickRate(20);
+                Ultimates.companionFilms = Ultimates.COMPANION_FILMS;
                 removeFoe();
                 for (ServerPlayer p : ctx.server().getPlayerList().getPlayers()) {
                     dismissAll(p);
@@ -264,14 +273,17 @@ public abstract class UltimateViews extends ChainCutinViews {
     @LDLRegisterClient(name = "ultimate_queue", group = "ultimate", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
     public static class Queue extends UltimateViews {
         private Ultimates.Outcome outcome;
+        private long passes;
 
         @Override
         public void define(ScenarioBuilder s) {
-            ultimateStage(s).server("两位同伴、一个靶子", ctx -> {
+            ultimateStage(s).server("两位同伴、一个靶子，同伴的过场关着", ctx -> {
+                        Ultimates.companionFilms = false;
                         call(ctx.player(), 2);
                         spawnFoe(ctx.player());
                     })
                     .waitUntilServer("都站好了", ctx -> arrived(ctx.player(), 2)).ticks(10)
+                    .step("记下叠层画了几次", ctx -> passes = UltimateFilmRenderer.passes())
                     .server("下令第一位，她还在演又下令", ctx -> {
                         Ultimates.order(ctx.player(), "");
                         outcome = Ultimates.order(ctx.player(), "");
@@ -279,18 +291,27 @@ public abstract class UltimateViews extends ChainCutinViews {
                     .checkServer("精灵公主排上了，还没扣冷却", ctx -> outcome == Ultimates.Outcome.QUEUED
                             && Ultimates.queued(ctx.player()).equals(List.of("elf_princess"))
                             && Ultimates.cooldown(ctx.player(), Companions.PRINCESS_DEF) == 0)
-                    .checkServer("过场期间主人不受伤，靶子被定住", ctx -> {
+                    .ticks(3)
+                    .checkServer("没有过场：主人照常受伤，靶子没被定住", ctx -> {
                         float health = ctx.player().getHealth();
                         ctx.player().hurtServer(ctx.player().level(), ctx.player().damageSources().generic(), 4);
-                        return ctx.player().getHealth() == health && Ultimates.cinematic(ctx.player()) && foe != null && Ultimates.frozen(foe);
+                        return ctx.player().getHealth() < health && !Ultimates.cinematic(ctx.player()) && foe != null && !Ultimates.frozen(foe);
                     })
-                    .waitUntil("本机在放过场", ctx -> UltimateFilm.playing() != null && CameraDirector.active())
+                    .waitUntil("本机收到了她这一段", ctx -> UltimateClient.showing() > 0).ticks(5)
+                    .check("镜头没被接管，也没盖叠层", ctx -> UltimateFilm.playing() == null && !CameraDirector.active()
+                            && UltimateFilmRenderer.passes() == passes)
                     .waitUntilServer("白梅放完，精灵公主接上，演缩短版", ctx -> {
                         CompanionEntity princess = out(ctx.player(), 1);
                         var cast = princess == null ? null : Ultimates.cast(princess);
                         return cast != null && cast.condensed() && Ultimates.queued(ctx.player()).isEmpty();
                     })
-                    .waitUntil("两位都放完，放连携切入", ctx -> ChainCutinRenderer.active())
+                    .waitUntilServer("两位都放完，到了切入", ctx -> Ultimates.phase(ctx.player()) == UltimateChain.Phase.CUTIN)
+                    .checkServer("切入照样算过场：主人不受伤", ctx -> {
+                        float health = ctx.player().getHealth();
+                        ctx.player().hurtServer(ctx.player().level(), ctx.player().damageSources().generic(), 4);
+                        return ctx.player().getHealth() == health && Ultimates.cinematic(ctx.player());
+                    })
+                    .waitUntil("本机放连携切入", ctx -> ChainCutinRenderer.active())
                     .waitUntilServer("进汇流", ctx -> Ultimates.phase(ctx.player()) == UltimateChain.Phase.CONVERGED)
                     .checkServer("汇流时玩家能动：不再无敌，靶子也放开了（只剩锁定的迟缓）", ctx -> !Ultimates.cinematic(ctx.player())
                             && foe != null && !Ultimates.frozen(foe) && !foe.getAttribute(Attributes.MOVEMENT_SPEED).hasModifier(LogosDimension.id("ultimate_frozen")));
@@ -304,13 +325,19 @@ public abstract class UltimateViews extends ChainCutinViews {
 
         @Override
         public void define(ScenarioBuilder s) {
-            ultimateStage(s).server("一位同伴、一个靶子", ctx -> {
+            filmStage(s).server("一位同伴、一个靶子", ctx -> {
                         call(ctx.player(), 1);
                         spawnFoe(ctx.player());
                     })
                     .waitUntilServer("站好了", ctx -> arrived(ctx.player(), 1)).ticks(10)
                     .step("记下叠层画了几次", ctx -> passes = UltimateFilmRenderer.passes())
                     .server("下令", ctx -> Ultimates.order(ctx.player(), ""))
+                    .waitUntilServer("过场期间靶子被定住", ctx -> foe != null && Ultimates.frozen(foe))
+                    .checkServer("主人不受伤", ctx -> {
+                        float health = ctx.player().getHealth();
+                        ctx.player().hurtServer(ctx.player().level(), ctx.player().damageSources().generic(), 4);
+                        return ctx.player().getHealth() == health && Ultimates.cinematic(ctx.player());
+                    })
                     .waitUntil("过场开始", ctx -> UltimateFilm.playing() != null);
             film(s, "ultimate_film_frame", 32, 5)
                     .check("叠层画了", ctx -> UltimateFilmRenderer.passes() > passes)

@@ -386,7 +386,7 @@ public final class LacertaUltimate implements UltimateScript {
             FoxfireCue.hit(level, e, center, FoxfireFlame.DRAGON);
         }
         c.fought(level.getGameTime());
-        ScreenEffects.flash(cast.owner(), ScreenFlash.at(CameraPoint.world(center.add(0, 1, 0)))
+        if (cast.filmed()) ScreenEffects.flash(cast.owner(), ScreenFlash.at(CameraPoint.world(center.add(0, 1, 0)))
                 .frames(ScreenFlash.Frame.SILHOUETTE, ScreenFlash.Frame.ENGULF));
         FoxfireCue.burst(level, center.add(0, .3, 0), FoxfireFlame.DRAGON, 3);
         level.sendParticles(ParticleTypes.EXPLOSION, center.x, center.y + .5, center.z, 3, 1.2, .2, 1.2, 0);

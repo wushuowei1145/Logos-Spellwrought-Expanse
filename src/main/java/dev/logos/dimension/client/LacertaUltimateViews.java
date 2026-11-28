@@ -119,7 +119,7 @@ public abstract class LacertaUltimateViews extends UltimateViews {
 
         @Override
         public void define(ScenarioBuilder s) {
-            ultimateStage(s).server("拉塞塔一个人、一个靶子", ctx -> {
+            filmStage(s).server("拉塞塔一个人、一个靶子", ctx -> {
                         callOnly(ctx.player(), Companions.LACERTA_DEF);
                         spawnFoe(ctx.player());
                     })
@@ -157,7 +157,7 @@ public abstract class LacertaUltimateViews extends UltimateViews {
 
         @Override
         public void define(ScenarioBuilder s) {
-            ultimateStage(s).server("头顶 4 格就是天花板；拉塞塔一个人、一个靶子", ctx -> {
+            filmStage(s).server("头顶 4 格就是天花板；拉塞塔一个人、一个靶子", ctx -> {
                         roof(ctx.server().overworld(), true);
                         callOnly(ctx.player(), Companions.LACERTA_DEF);
                         spawnFoe(ctx.player());
@@ -192,7 +192,7 @@ public abstract class LacertaUltimateViews extends UltimateViews {
 
         @Override
         public void define(ScenarioBuilder s) {
-            ultimateStage(s).server("白梅和拉塞塔、一个靶子", ctx -> {
+            filmStage(s).server("白梅和拉塞塔、一个靶子", ctx -> {
                         callOnly(ctx.player(), Companions.SHIRAUME_DEF, Companions.LACERTA_DEF);
                         spawnFoe(ctx.player());
                     })
@@ -225,7 +225,7 @@ public abstract class LacertaUltimateViews extends UltimateViews {
 
         @Override
         public void define(ScenarioBuilder s) {
-            ultimateStage(s).server("拉塞塔和白梅、一个靶子", ctx -> {
+            filmStage(s).server("拉塞塔和白梅、一个靶子", ctx -> {
                         callOnly(ctx.player(), Companions.LACERTA_DEF, Companions.SHIRAUME_DEF);
                         spawnFoe(ctx.player());
                     })

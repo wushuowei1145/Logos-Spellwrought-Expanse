@@ -101,7 +101,7 @@ public abstract class PrincessUltimateViews extends UltimateViews {
     }
 
     static ScenarioBuilder princessStage(ScenarioBuilder s) {
-        return ultimateStage(s).server("对准中间那只尸壳", ctx -> aim(ctx.player(), EYE, CENTER.add(0, 1, 0)))
+        return filmStage(s).server("对准中间那只尸壳", ctx -> aim(ctx.player(), EYE, CENTER.add(0, 1, 0)))
                 .step("客户端也对准", ctx -> aimClient(CENTER.add(0, 1, 0)));
     }
 

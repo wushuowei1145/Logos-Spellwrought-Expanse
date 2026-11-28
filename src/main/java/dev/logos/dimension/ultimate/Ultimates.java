@@ -61,6 +61,16 @@ public final class Ultimates {
     public static final Supplier<AttachmentType<UltimateCooldowns>> COOLDOWNS = ATTACHMENTS.register("ultimate_cooldowns",
             () -> AttachmentType.builder(() -> UltimateCooldowns.NONE).serialize(UltimateCooldowns.CODEC.fieldOf("ready_at")).copyOnDeath().build());
 
+    /**
+     * 同伴的奥义演不演过场（docs/ULTIMATES.md 第三节「同伴的过场先关着」）。现在关着，过场的代码都留着，改成 true 就回来。
+     * 关着时她照样演完她那一段：动作、世界里的特效、伤害、馈赠、接力、排队都不变，下令的玩家和别人一样只看世界里的那一半，
+     * 镜头不被接管，不盖叠层和她自己的全屏后期，不闪冲击帧；主人和同伴照常受伤，敌人不定住，别的同伴照常打。
+     * 连携切入和玩家的最后一击不看这个开关，总是有过场。
+     */
+    public static final boolean COMPANION_FILMS = false;
+    /** 此刻用的值：平时就是 {@link #COMPANION_FILMS}，测试里各位角色的过场场景临时打开。每一段开演时定下，演到一半改不影响它。 */
+    public static volatile boolean companionFilms = COMPANION_FILMS;
+
     /** 过场期间主人身边、目标身边多远以内的敌人定住（格）。 */
     static final double FREEZE_RADIUS = 24;
     private static final Identifier FROZEN = LogosDimension.id("ultimate_frozen");
@@ -73,7 +83,7 @@ public final class Ultimates {
     public enum Outcome {
         /** 一位同伴开演了。 */
         STARTED,
-        /** 正在放过场：记下了，这一段放完就轮到她。 */
+        /** 前一段还在演：记下了，这一段放完就轮到她。 */
         QUEUED,
         /** 汇流里：放了玩家的最后一击。 */
         FINISHER,
@@ -94,7 +104,7 @@ public final class Ultimates {
         boolean dirty = true;
         /** 上一次发给他的状态里有没有同伴（没有了要再发一次空的，侧边小队才收起来）。 */
         boolean shown;
-        /** 过场放着的时候点的同伴（按的顺序），这一段放完一个个接上。 */
+        /** 前一段还在演的时候点的同伴（按的顺序），这一段放完一个个接上。 */
         final ArrayDeque<String> queue = new ArrayDeque<>();
         /** 过场期间定住的敌人。 */
         final Map<UUID, Mob> frozen = new HashMap<>();
@@ -158,7 +168,8 @@ public final class Ultimates {
     }
 
     private static boolean cinematic(Party party) {
-        return !party.casts.isEmpty() || party.chain.phase() == UltimateChain.Phase.CUTIN;
+        for (UltimateCast cast : party.casts) if (cast.filmed()) return true;
+        return party.chain.phase() == UltimateChain.Phase.CUTIN;
     }
 
     /** 过场期间不受伤的：看过场的主人和他的同伴。 */
@@ -238,7 +249,7 @@ public final class Ultimates {
         CompanionDef d = pick.def();
         UltimateDef ultimate = d.ultimate();
         if (!party.casts.isEmpty()) {
-            // 正在放过场：先看够不够，够就记下，这一段放完再开（扣魔、冷却到那时才算）
+            // 前一段还在演（有没有过场都一样）：先看够不够，够就记下，这一段放完再开（扣魔、冷却到那时才算）
             UltimateChain.Stage next = party.chain.next(present.size());
             int cost = cost(party, ultimate, new UltimateChain.Stage(next.index() + party.queue.size(), false, present.size()));
             if (!affordable(owner, cost)) return noMana(owner, pick);
@@ -304,7 +315,7 @@ public final class Ultimates {
     private static void start(ServerPlayer owner, Party party, LivingEntity performer, @Nullable CompanionDef def, String key, UltimateChain.Stage stage,
                               UltimateScript script, @Nullable LivingEntity target) {
         UltimateCast cast = new UltimateCast(owner, performer, def, key, party.chain, stage, script, owner.getRandom().nextLong(), target,
-                UltimateTargets.aim(owner));
+                UltimateTargets.aim(owner), stage.finisher() || companionFilms);
         party.casts.add(cast);
         PERFORMING.put(performer.getUUID(), cast);
         if (target != null) party.lead = target.getUUID();
@@ -312,7 +323,7 @@ public final class Ultimates {
         script.start(cast);
         if (!stage.finisher()) cast.say("ultimate_cast", LINE_TICKS);
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(performer, new UltimatePayloads.Cast(performer.getId(), owner.getId(), key,
-                target == null ? -1 : target.getId(), cast.aim(), stage.index(), stage.finisher(), UltimateDef.condensed(stage), stage.members(),
+                target == null ? -1 : target.getId(), cast.aim(), stage.index(), stage.finisher(), UltimateDef.condensed(stage), cast.filmed(), stage.members(),
                 cast.seed(), script.length(), script.impact()));
     }
 
@@ -350,7 +361,7 @@ public final class Ultimates {
             cast.age++;
             if (cast.age >= cast.script().length()) end(owner, party, cast, false);
         }
-        // 前一段放完了：接上过场期间点的下一位
+        // 前一段放完了：接上它演着的时候点的下一位
         while (party.casts.isEmpty() && !party.queue.isEmpty()) order(owner, party.queue.poll());
         List<String> present = new ArrayList<>();
         for (CompanionEntity c : present(owner)) present.add(c.def().id());

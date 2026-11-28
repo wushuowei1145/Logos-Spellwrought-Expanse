@@ -174,10 +174,13 @@ public final class UltimateFilm implements CameraDirector.Rig {
         return player != null && player.getId() == cast.owner();
     }
 
-    /** 放出来：本机玩家下的令才接管镜头、加叠层，别人什么都不做。返回放没放。 */
+    /**
+     * 放出来：这一段有过场（{@link UltimatePayloads.Cast#filmed}）、又是本机玩家下的令，才接管镜头、加叠层，别的时候什么都不做。返回放没放。
+     * 没放时 {@link #playing()} 不是它，她的全屏后期也就不画。
+     */
     public boolean play() {
         Minecraft mc = Minecraft.getInstance();
-        if (!mine() || mc.player == null) return false;
+        if (!cast.filmed() || !mine() || mc.player == null) return false;
         int length = Math.max(1, cast.length());
         int back = Math.min(returnTicks, length);
         Vec3 eye = mc.player.getEyePosition();
