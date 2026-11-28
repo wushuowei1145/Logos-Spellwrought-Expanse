@@ -60,6 +60,10 @@ public final class UltimateHud {
         boolean cooling = left > 0;
         boolean ready = !cooling && !m.released() && !m.performing();
         CompanionUi.disc(g, x, y, R, CompanionUi.alpha(st.night0(), .82f));
+        if (m.queued()) {
+            // 排着队：下一个就是她，外圈一闪一闪地等
+            CompanionUi.ring(g, x, y, R + 2.5f, 1.2f, CompanionUi.alpha(GOLD, .35f + .35f * (float) Math.sin(time * .5)));
+        }
         if (m.performing()) {
             float pulse = (time % 12) / 12;
             CompanionUi.ring(g, x, y, R + 2 + pulse * 6, 1.2f, CompanionUi.alpha(st.accent(), .7f * (1 - pulse)));

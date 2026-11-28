@@ -6,6 +6,7 @@ import dev.logos.dimension.companion.CompanionEntity;
 import dev.logos.dimension.companion.CompanionLines;
 import dev.logos.dimension.cutin.ChainCutins;
 import dev.logos.dimension.item.LogosNatureBridge;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -13,16 +14,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -46,6 +61,9 @@ public final class Ultimates {
     public static final Supplier<AttachmentType<UltimateCooldowns>> COOLDOWNS = ATTACHMENTS.register("ultimate_cooldowns",
             () -> AttachmentType.builder(() -> UltimateCooldowns.NONE).serialize(UltimateCooldowns.CODEC.fieldOf("ready_at")).copyOnDeath().build());
 
+    /** 过场期间主人身边、目标身边多远以内的敌人定住（格）。 */
+    static final double FREEZE_RADIUS = 24;
+    private static final Identifier FROZEN = LogosDimension.id("ultimate_frozen");
     /** 平时多少刻给主人发一次状态（变了的时候立刻发）。 */
     static final int STATUS_EVERY = 10;
     /** 缺魔时她那句话显示多久。 */
@@ -55,6 +73,8 @@ public final class Ultimates {
     public enum Outcome {
         /** 一位同伴开演了。 */
         STARTED,
+        /** 正在放过场：记下了，这一段放完就轮到她。 */
+        QUEUED,
         /** 汇流里：放了玩家的最后一击。 */
         FINISHER,
         /** 没人能放，或者魔力不够（已经告诉玩家了）。 */
@@ -74,6 +94,10 @@ public final class Ultimates {
         boolean dirty = true;
         /** 上一次发给他的状态里有没有同伴（没有了要再发一次空的，侧边小队才收起来）。 */
         boolean shown;
+        /** 过场放着的时候点的同伴（按的顺序），这一段放完一个个接上。 */
+        final ArrayDeque<String> queue = new ArrayDeque<>();
+        /** 过场期间定住的敌人。 */
+        final Map<UUID, Mob> frozen = new HashMap<>();
     }
 
     private static final Map<UUID, Party> PARTIES = new HashMap<>();
@@ -104,6 +128,9 @@ public final class Ultimates {
         NeoForge.EVENT_BUS.addListener((LivingDeathEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) drop(p);
         });
+        NeoForge.EVENT_BUS.addListener((LivingIncomingDamageEvent e) -> {
+            if (!e.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY) && (shielded(e.getEntity()) || frozen(e.getSource()))) e.setCanceled(true);
+        });
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> {
             PARTIES.clear();
             PERFORMING.clear();
@@ -115,6 +142,50 @@ public final class Ultimates {
     /** {@code e} 正在演奥义（同伴的心智这时停着）。 */
     public static boolean performing(Entity e) {
         return PERFORMING.containsKey(e.getUUID());
+    }
+
+    /** 她的心智这一刻停着：她在演奥义，或者主人正在看过场（过场期间整个小队都停下来）。 */
+    public static boolean paused(CompanionEntity c) {
+        if (performing(c)) return true;
+        Party party = c.ownerId() == null ? null : PARTIES.get(c.ownerId());
+        return party != null && cinematic(party);
+    }
+
+    /** {@code owner} 正在看奥义的过场（同伴的、切入、最后一击）：这时他和他的同伴不受伤，附近的敌人定住。 */
+    public static boolean cinematic(ServerPlayer owner) {
+        Party party = PARTIES.get(owner.getUUID());
+        return party != null && cinematic(party);
+    }
+
+    private static boolean cinematic(Party party) {
+        return !party.casts.isEmpty() || party.chain.phase() == UltimateChain.Phase.CUTIN;
+    }
+
+    /** 过场期间不受伤的：看过场的主人和他的同伴。 */
+    private static boolean shielded(LivingEntity e) {
+        UUID owner = e instanceof ServerPlayer p ? p.getUUID() : e instanceof CompanionEntity c ? c.ownerId() : null;
+        Party party = owner == null ? null : PARTIES.get(owner);
+        return party != null && cinematic(party);
+    }
+
+    /** 打出这一下的是被定住的敌人（直接打的，或者它射出来的）。 */
+    private static boolean frozen(DamageSource source) {
+        for (Entity e : new Entity[]{source.getEntity(), source.getDirectEntity()}) {
+            if (e != null && frozen(e)) return true;
+        }
+        return false;
+    }
+
+    /** {@code e} 被过场定住了。 */
+    public static boolean frozen(Entity e) {
+        for (Party party : PARTIES.values()) if (party.frozen.containsKey(e.getUUID())) return true;
+        return false;
+    }
+
+    /** 已经点了、等着轮到的同伴（测试用）。 */
+    public static List<String> queued(ServerPlayer owner) {
+        Party party = PARTIES.get(owner.getUUID());
+        return party == null ? List.of() : List.copyOf(party.queue);
     }
 
     /** {@code e} 正在演的那一段；没在演是 null。 */
@@ -166,16 +237,27 @@ public final class Ultimates {
         }
         CompanionDef d = pick.def();
         UltimateDef ultimate = d.ultimate();
-        int cost = cost(party, ultimate, party.chain.next(present.size()));
-        if (!pay(owner, cost)) {
-            CompanionLines.say(pick, owner, "ultimate_no_mana", LINE_TICKS);
-            deny(owner, d.id(), UltimatePayloads.Denied.NO_MANA);
-            return Outcome.DENIED;
+        if (!party.casts.isEmpty()) {
+            // 正在放过场：先看够不够，够就记下，这一段放完再开（扣魔、冷却到那时才算）
+            UltimateChain.Stage next = party.chain.next(present.size());
+            int cost = cost(party, ultimate, new UltimateChain.Stage(next.index() + party.queue.size(), false, present.size()));
+            if (!affordable(owner, cost)) return noMana(owner, pick);
+            party.queue.add(d.id());
+            party.dirty = true;
+            return Outcome.QUEUED;
         }
+        int cost = cost(party, ultimate, party.chain.next(present.size()));
+        if (!pay(owner, cost)) return noMana(owner, pick);
         UltimateChain.Stage stage = party.chain.order(d.id(), present.size(), now);
         owner.setData(COOLDOWNS, owner.getData(COOLDOWNS).with(d.id(), now + ultimate.cooldown()));
-        start(owner, party, pick, d, d.id(), stage, ultimate.script().get(), UltimateTargets.pick(owner, pick));
+        start(owner, party, pick, d, d.id(), stage, ultimate.script(stage), UltimateTargets.pick(owner, pick));
         return Outcome.STARTED;
+    }
+
+    private static Outcome noMana(ServerPlayer owner, CompanionEntity pick) {
+        CompanionLines.say(pick, owner, "ultimate_no_mana", LINE_TICKS);
+        deny(owner, pick.def().id(), UltimatePayloads.Denied.NO_MANA);
+        return Outcome.DENIED;
     }
 
     private static @Nullable CompanionEntity choose(ServerPlayer owner, Party party, List<CompanionEntity> present, String requested, long now) {
@@ -192,7 +274,7 @@ public final class Ultimates {
 
     private static boolean ready(ServerPlayer owner, Party party, CompanionEntity c, long now) {
         String id = c.def().id();
-        return party.chain.open(id) && owner.getData(COOLDOWNS).left(id, now) == 0 && !performing(c);
+        return party.chain.open(id) && owner.getData(COOLDOWNS).left(id, now) == 0 && !performing(c) && !party.queue.contains(id);
     }
 
     /** 此刻给她下令要花多少魔力：基准 × 第几段的折扣 × 前面交过来的馈赠。 */
@@ -204,11 +286,14 @@ public final class Ultimates {
 
     /** 扣主人的魔力；不够时什么都不扣（不写字，缺魔由她说一句、画面上闪一下）。创造模式不花。 */
     private static boolean pay(ServerPlayer owner, int cost) {
+        if (!affordable(owner, cost)) return false;
         if (owner.hasInfiniteMaterials() || cost <= 0) return true;
-        double mana = LogosNatureBridge.mana(owner);
-        if (mana < cost) return false;
-        LogosNatureBridge.mana(owner, mana - cost);
+        LogosNatureBridge.mana(owner, LogosNatureBridge.mana(owner) - cost);
         return true;
+    }
+
+    private static boolean affordable(ServerPlayer owner, int cost) {
+        return owner.hasInfiniteMaterials() || cost <= 0 || LogosNatureBridge.mana(owner) >= cost;
     }
 
     private static void deny(ServerPlayer owner, String companion, int reason) {
@@ -226,9 +311,9 @@ public final class Ultimates {
         party.dirty = true;
         script.start(cast);
         if (!stage.finisher()) cast.say("ultimate_cast", LINE_TICKS);
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(performer, new UltimatePayloads.Cast(performer.getId(), key,
-                target == null ? -1 : target.getId(), cast.aim(), stage.index(), stage.finisher(), stage.members(), cast.seed(), script.length(),
-                script.impact()));
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(performer, new UltimatePayloads.Cast(performer.getId(), owner.getId(), key,
+                target == null ? -1 : target.getId(), cast.aim(), stage.index(), stage.finisher(), UltimateDef.condensed(stage), stage.members(),
+                cast.seed(), script.length(), script.impact()));
     }
 
     // ---------------------------------------------------------------- 每刻
@@ -265,6 +350,8 @@ public final class Ultimates {
             cast.age++;
             if (cast.age >= cast.script().length()) end(owner, party, cast, false);
         }
+        // 前一段放完了：接上过场期间点的下一位
+        while (party.casts.isEmpty() && !party.queue.isEmpty()) order(owner, party.queue.poll());
         List<String> present = new ArrayList<>();
         for (CompanionEntity c : present(owner)) present.add(c.def().id());
         switch (party.chain.tick(present, now)) {
@@ -277,6 +364,56 @@ public final class Ultimates {
             case AUTO_FINISH -> finish(owner, party);
             case NONE -> {}
         }
+        if (cinematic(party)) freeze(owner, party);
+        else if (!party.frozen.isEmpty()) unfreeze(party);
+    }
+
+    /**
+     * 过场期间定住主人身边、各段目标身边的敌人（敌对生物、冲着主人或同伴来的；Boss 不定，反正打不到人）：
+     * 不走、不追、不打，被奥义打飞照样会飞。只用临时的属性修饰，存档时不会留下来。
+     */
+    private static void freeze(ServerPlayer owner, Party party) {
+        List<Vec3> around = new ArrayList<>();
+        around.add(owner.position());
+        for (UltimateCast cast : party.casts) around.add(cast.aim());
+        for (Vec3 at : around) {
+            for (Mob m : owner.level().getEntitiesOfClass(Mob.class, new AABB(at, at).inflate(FREEZE_RADIUS), m -> freezable(owner, m)))
+                party.frozen.putIfAbsent(m.getUUID(), m);
+        }
+        for (Iterator<Mob> it = party.frozen.values().iterator(); it.hasNext(); ) {
+            Mob m = it.next();
+            if (!m.isAlive() || m.isRemoved()) {
+                it.remove();
+                continue;
+            }
+            m.getNavigation().stop();
+            m.setTarget(null);
+            m.setAggressive(false);
+            hold(m, Attributes.MOVEMENT_SPEED);
+            hold(m, Attributes.FLYING_SPEED);
+        }
+    }
+
+    private static boolean freezable(ServerPlayer owner, Mob m) {
+        if (!m.isAlive() || m instanceof CompanionEntity || m.is(Tags.EntityTypes.BOSSES)) return false;
+        LivingEntity t = m.getTarget();
+        return m instanceof Enemy || t == owner || t instanceof CompanionEntity c && owner.getUUID().equals(c.ownerId());
+    }
+
+    private static void hold(Mob m, Holder<Attribute> attribute) {
+        AttributeInstance inst = m.getAttribute(attribute);
+        if (inst != null && !inst.hasModifier(FROZEN))
+            inst.addTransientModifier(new AttributeModifier(FROZEN, -1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+    }
+
+    private static void unfreeze(Party party) {
+        for (Mob m : party.frozen.values()) {
+            for (Holder<Attribute> attribute : List.of(Attributes.MOVEMENT_SPEED, Attributes.FLYING_SPEED)) {
+                AttributeInstance inst = m.getAttribute(attribute);
+                if (inst != null) inst.removeModifier(FROZEN);
+            }
+        }
+        party.frozen.clear();
     }
 
     /** 出手：窗口从这一刻算，交出馈赠，后面还有人要接时她喊一声。 */
@@ -333,6 +470,7 @@ public final class Ultimates {
     /** 这一轮结束：清掉馈赠、放过的名单、锁定。 */
     private static void clear(ServerPlayer owner, Party party) {
         for (RelayGift g : party.chain.reset()) g.cleared(owner.level());
+        party.queue.clear();
         party.lock = -1;
         party.lead = null;
         party.dirty = true;
@@ -349,6 +487,8 @@ public final class Ultimates {
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(cast.performer(), new UltimatePayloads.End(cast.performer().getId(), true));
         }
         for (RelayGift g : party.chain.reset()) g.cleared(owner.level());
+        party.queue.clear();
+        unfreeze(party);
         if (owner.connection.hasChannel(UltimatePayloads.Status.TYPE)) PacketDistributor.sendToPlayer(owner, UltimatePayloads.Status.EMPTY);
     }
 
@@ -358,6 +498,8 @@ public final class Ultimates {
             cast.script().end(cast, true);
         }
         party.casts.clear();
+        party.queue.clear();
+        unfreeze(party);
     }
 
     private static Party party(ServerPlayer owner) {
@@ -383,7 +525,7 @@ public final class Ultimates {
             CompanionDef d = c.def();
             int cost = cost(party, d.ultimate(), next);
             members.add(new UltimatePayloads.Member(d.id(), c.getId(), d.ultimate().cooldown(), (int) cooldowns.left(d.id(), now),
-                    released.contains(d.id()), performing(c), cost, mana >= cost));
+                    released.contains(d.id()), performing(c), party.queue.contains(d.id()), cost, mana >= cost));
         }
         party.shown = !members.isEmpty();
         if (!owner.connection.hasChannel(UltimatePayloads.Status.TYPE)) return;

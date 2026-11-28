@@ -279,6 +279,17 @@ public final class UltimateClient {
         return r == null ? null : r.show;
     }
 
+    /** 正在放的每一段的全屏后期（{@link UltimateShow#screen}），由 {@link UltimateFilmRenderer} 在过场叠层之前调。 */
+    static void screens(float partial) {
+        for (Running r : new ArrayList<>(SHOWS.values())) {
+            try {
+                r.show.screen(r.cast, r.age[0] + partial);
+            } catch (RuntimeException error) {
+                LOGGER.error("奥义画面 {} 的后期出错", r.cast.key(), error);
+            }
+        }
+    }
+
     @SubscribeEvent
     static void frame(RenderFrameEvent.Pre event) {
         if (SHOWS.isEmpty()) return;

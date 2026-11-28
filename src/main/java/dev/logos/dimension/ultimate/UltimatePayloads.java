@@ -32,10 +32,12 @@ public final class UltimatePayloads {
      * @param left       冷却还剩多少刻
      * @param released   这一轮连携里放过了
      * @param performing 正在演
+     * @param queued     已经点了她，等正在放的那段过场放完就轮到她
      * @param cost       此刻下令要花多少魔力（算过连携折扣和馈赠）
      * @param affordable 主人的魔力够不够
      */
-    public record Member(String id, int entity, int cooldown, int left, boolean released, boolean performing, int cost, boolean affordable) {
+    public record Member(String id, int entity, int cooldown, int left, boolean released, boolean performing, boolean queued, int cost,
+                         boolean affordable) {
         static final StreamCodec<ByteBuf, Member> CODEC = StreamCodec.of((buf, m) -> {
             ByteBufCodecs.STRING_UTF8.encode(buf, m.id);
             ByteBufCodecs.VAR_INT.encode(buf, m.entity);
@@ -43,14 +45,15 @@ public final class UltimatePayloads {
             ByteBufCodecs.VAR_INT.encode(buf, m.left);
             ByteBufCodecs.BOOL.encode(buf, m.released);
             ByteBufCodecs.BOOL.encode(buf, m.performing);
+            ByteBufCodecs.BOOL.encode(buf, m.queued);
             ByteBufCodecs.VAR_INT.encode(buf, m.cost);
             ByteBufCodecs.BOOL.encode(buf, m.affordable);
         }, buf -> new Member(ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
-                ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
-                ByteBufCodecs.BOOL.decode(buf)));
+                ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.BOOL.decode(buf),
+                ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.BOOL.decode(buf)));
 
         public boolean ready() {
-            return left == 0 && !released && !performing;
+            return left == 0 && !released && !performing && !queued;
         }
     }
 
@@ -89,21 +92,24 @@ public final class UltimatePayloads {
      * 开演：发给看得见演的人的玩家，客户端按 {@code key} 找画面（同伴的 {@code CompanionStyle#ultimate}，玩家的 {@code HeroCutin#finishers}）。
      *
      * @param performer 谁在演（实体 ID）
+     * @param owner     为谁演（下令的玩家的实体 ID）：只有他的镜头被过场接管，别人只看世界里的那一半
      * @param key       同伴 ID，或者 {@code hero/<武器大类>}
      * @param target    打谁（实体 ID，-1 是没有）
      * @param aim       没有目标时往哪放
      * @param stage     连携里第几段
      * @param finisher  是不是玩家的最后一击
+     * @param condensed 演缩短版（连携里第二位起，{@link UltimateDef#condensed}）
      * @param members   这一轮在场几位同伴
      * @param seed      随机种子（和服务端脚本同一个）
      * @param length    一共几刻
      * @param impact    第几刻出手
      */
-    public record Cast(int performer, String key, int target, Vec3 aim, int stage, boolean finisher, int members, long seed, int length, int impact)
-            implements CustomPacketPayload {
+    public record Cast(int performer, int owner, String key, int target, Vec3 aim, int stage, boolean finisher, boolean condensed, int members, long seed,
+                       int length, int impact) implements CustomPacketPayload {
         public static final Type<Cast> TYPE = new Type<>(LogosDimension.id("ultimate_cast"));
         public static final StreamCodec<ByteBuf, Cast> CODEC = StreamCodec.of((buf, c) -> {
             ByteBufCodecs.VAR_INT.encode(buf, c.performer);
+            ByteBufCodecs.VAR_INT.encode(buf, c.owner);
             ByteBufCodecs.STRING_UTF8.encode(buf, c.key);
             ByteBufCodecs.VAR_INT.encode(buf, c.target);
             ByteBufCodecs.DOUBLE.encode(buf, c.aim.x);
@@ -111,13 +117,15 @@ public final class UltimatePayloads {
             ByteBufCodecs.DOUBLE.encode(buf, c.aim.z);
             ByteBufCodecs.VAR_INT.encode(buf, c.stage);
             ByteBufCodecs.BOOL.encode(buf, c.finisher);
+            ByteBufCodecs.BOOL.encode(buf, c.condensed);
             ByteBufCodecs.VAR_INT.encode(buf, c.members);
             ByteBufCodecs.VAR_LONG.encode(buf, c.seed);
             ByteBufCodecs.VAR_INT.encode(buf, c.length);
             ByteBufCodecs.VAR_INT.encode(buf, c.impact);
-        }, buf -> new Cast(ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
+        }, buf -> new Cast(ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
                 new Vec3(ByteBufCodecs.DOUBLE.decode(buf), ByteBufCodecs.DOUBLE.decode(buf), ByteBufCodecs.DOUBLE.decode(buf)),
-                ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_LONG.decode(buf),
+                ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
+                ByteBufCodecs.VAR_LONG.decode(buf),
                 ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf)));
 
         @Override public Type<Cast> type() { return TYPE; }

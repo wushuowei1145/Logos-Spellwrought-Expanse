@@ -10,6 +10,7 @@ import dev.logos.dimension.ultimate.UltimateChain.Event;
 import dev.logos.dimension.ultimate.UltimateChain.Phase;
 import dev.logos.dimension.ultimate.UltimateChain.Stage;
 import dev.logos.dimension.ultimate.UltimateCooldowns;
+import dev.logos.dimension.ultimate.UltimateDef;
 import dev.logos.dimension.ultimate.UltimatePayloads;
 import dev.logos.dimension.ultimate.UltimateScript;
 import io.netty.buffer.Unpooled;
@@ -175,6 +176,22 @@ class UltimateTest {
         assertEquals(1, c.reset().size(), "清掉时把还留着的都交回去");
     }
 
+    /** 单人和连携第一位演完整版，第二位起演缩短版，玩家的最后一击总是完整的。 */
+    @Test void laterStagesPlayTheShortCut() {
+        assertFalse(UltimateDef.condensed(new Stage(0, false, 1)), "单人");
+        assertFalse(UltimateDef.condensed(new Stage(0, false, 3)), "连携第一位");
+        assertTrue(UltimateDef.condensed(new Stage(1, false, 3)), "连携第二位");
+        assertTrue(UltimateDef.condensed(new Stage(2, false, 3)), "连携第三位");
+        assertFalse(UltimateDef.condensed(new Stage(3, true, 3)), "最后一击");
+        UltimateScript full = script(100, 80), shortCut = script(40, 30);
+        var def = new UltimateDef(700, 260, () -> full, () -> shortCut);
+        assertSame(full, def.script(new Stage(0, false, 2)));
+        assertSame(shortCut, def.script(new Stage(1, false, 2)));
+        var same = new UltimateDef(700, 260, () -> full);
+        assertSame(full, same.script(new Stage(1, false, 2)), "只给一段时两版是同一段");
+        assertTrue(UltimateDef.MAX_FULL <= 110 && UltimateDef.MAX_CONDENSED < UltimateDef.MAX_FULL, "完整版不超过 5.5 秒");
+    }
+
     @Test void heroFinisherFallsBackToBareHands() {
         HeroUltimate hero = HeroUltimate.PLAYER;
         for (FinisherTemplate t : FinisherTemplate.values()) {
@@ -196,16 +213,17 @@ class UltimateTest {
     }
 
     @Test void payloadsRoundTrip() {
-        var member = new UltimatePayloads.Member("kohaku", 42, 700, 120, true, false, 238, true);
+        var member = new UltimatePayloads.Member("kohaku", 42, 700, 120, true, false, false, 238, true);
         var status = new UltimatePayloads.Status(Phase.WINDOW.ordinal(), 90, 0, 17, List.of(member,
-                new UltimatePayloads.Member("lacerta", 43, 800, 0, false, true, 272, false)));
+                new UltimatePayloads.Member("lacerta", 43, 800, 0, false, true, false, 272, false)));
         var buf = Unpooled.buffer();
         UltimatePayloads.Status.CODEC.encode(buf, status);
         assertEquals(status, UltimatePayloads.Status.CODEC.decode(buf));
         assertEquals(Phase.WINDOW, status.chainPhase());
         assertFalse(member.ready(), "放过了");
+        assertFalse(new UltimatePayloads.Member("shiraume", 44, 700, 0, false, false, true, 260, true).ready(), "排着队的不能再点");
 
-        var cast = new UltimatePayloads.Cast(9, "hero/unarmed", -1, new Vec3(1.5, 64, -2.25), 2, true, 2, 1234567890123L, 30, 10);
+        var cast = new UltimatePayloads.Cast(9, 3, "hero/unarmed", -1, new Vec3(1.5, 64, -2.25), 2, true, false, 2, 1234567890123L, 156, 99);
         buf = Unpooled.buffer();
         UltimatePayloads.Cast.CODEC.encode(buf, cast);
         assertEquals(cast, UltimatePayloads.Cast.CODEC.decode(buf));

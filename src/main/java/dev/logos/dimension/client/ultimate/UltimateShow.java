@@ -28,6 +28,12 @@ public interface UltimateShow {
     /** 每帧（{@code age} 带着帧内插值）：要按帧画的东西在这里交给各自的渲染器。 */
     default void frame(UltimatePayloads.Cast cast, float age) {}
 
+    /**
+     * 她自己的全屏后期（浮世绘、画面凝进琥珀、碎镜……）在这里画：每帧在所有后期之后、过场叠层（{@link UltimateFilm}）之前调，
+     * 不用去改公共的渲染顺序。只有这一段是本机玩家下的令时才该画（{@code UltimateFilm#mine}）。
+     */
+    default void screen(UltimatePayloads.Cast cast, float age) {}
+
     /** 收起：演完、被打断、离开世界。 */
     default void end(UltimatePayloads.Cast cast, boolean interrupted) {}
 }

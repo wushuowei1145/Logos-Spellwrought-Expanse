@@ -157,8 +157,11 @@ public abstract class CompanionMind extends Goal {
         ServerPlayer p = c.ownerPlayer();
         if (p == null || !(c.level() instanceof ServerLevel level)) return;
         owner = p;
-        // 放奥义的这几秒由奥义脚本管她（docs/ULTIMATES.md）：不打分、不走、不出别的招
-        if (Ultimates.performing(c)) return;
+        // 放奥义的这几秒由奥义脚本管她；主人看过场时整个小队都停下来（docs/ULTIMATES.md）：不打分、不走、不出别的招
+        if (Ultimates.paused(c)) {
+            if (!Ultimates.performing(c)) c.getNavigation().stop();
+            return;
+        }
         long now = level.getGameTime();
         dist = c.distanceTo(p);
         if (now % THINK == 0) think(level, p, now);

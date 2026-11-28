@@ -53,6 +53,8 @@ public abstract class ScreenEffectMixin {
         // 处决特写把整个画面换成平涂的颜色，黑白闪和蒙版还能叠在它上面
         dev.logos.dimension.client.execution.ExecutionRenderer.draw();
         ScreenEffectRenderer.draw();
+        // 奥义过场盖在画面上的那一层（压暗调色、动态模糊、速度线、擦镜）：在所有后期之后，连携切入之前
+        dev.logos.dimension.client.ultimate.UltimateFilmRenderer.draw();
         // 连携切入是盖在整个画面上的 2D 层（黑底、分格、角色、闪白），排在所有通道之后
         dev.logos.dimension.client.cutin.ChainCutinRenderer.draw();
     }

@@ -20,6 +20,7 @@ import net.neoforged.neoforge.client.event.CalculatePlayerTurnEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
@@ -70,6 +71,8 @@ public final class CameraDirector {
     private static @Nullable Rig rig;
     /** 客户端场景用：停在这一刻上截图，null 时照常走。 */
     private static @Nullable Float heldAge;
+    /** 机位这一帧要的视角（度），NaN 是不改。 */
+    private static float fov = Float.NaN;
 
     private CameraDirector() {}
 
@@ -81,7 +84,15 @@ public final class CameraDirector {
         @Nullable Aim aim(float age, float partialTick);
     }
 
-    public record Aim(Vec3 from, Vec3 look, float roll) {}
+    /**
+     * 一帧的机位：站在哪、看哪、画面歪多少度；{@code fov} 是这一帧的视角（度），{@link Float#NaN} 时照玩家自己的视角。
+     * 视角和机位按同一个比例混进玩家的画面，进出照样平滑。
+     */
+    public record Aim(Vec3 from, Vec3 look, float roll, float fov) {
+        public Aim(Vec3 from, Vec3 look, float roll) {
+            this(from, look, roll, Float.NaN);
+        }
+    }
 
     /** 镜头的位置和朝向。朝向的含义同 {@link Camera#setRotation}。 */
     public record Pose(Vec3 pos, float yaw, float pitch, float roll) {
@@ -207,6 +218,7 @@ public final class CameraDirector {
         if (carry != null && age >= shot.blendIn()) carry = null;
         Aim rigged = rig == null ? null : rig.aim(age, partialTick);
         float roll = 0;
+        fov = rigged == null ? Float.NaN : rigged.fov();
         if (rigged != null) {
             lastFrom = rigged.from();
             lastLook = rigged.look();
@@ -274,6 +286,7 @@ public final class CameraDirector {
         away = returned = false;
         strength = 1;
         weight = 0;
+        fov = Float.NaN;
         bars = barsFrom = barsPeak = 0;
         grade = gradeFrom = gradePeak = 0;
     }
@@ -305,6 +318,12 @@ public final class CameraDirector {
         var hands = Minecraft.getInstance().gameRenderer.itemInHandRenderer;
         hands.itemUsed(InteractionHand.MAIN_HAND);
         hands.itemUsed(InteractionHand.OFF_HAND);
+    }
+
+    /** 机位给了视角时，按镜头离开玩家视角的比例换过去（只改世界的视角，不改手的）。 */
+    @SubscribeEvent static void fov(ViewportEvent.ComputeFov event) {
+        if (shot == null || Float.isNaN(fov) || !event.usedConfiguredFov()) return;
+        event.setFOV(Mth.lerp(weight, event.getFOV(), fov));
     }
 
     @SubscribeEvent static void mouse(CalculatePlayerTurnEvent event) {

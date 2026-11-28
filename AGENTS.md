@@ -18,7 +18,7 @@
 - 复用现有 Logos 材料注册 ID，不复制注册污染碎片。
 - 特效按 [docs/VFX.md](docs/VFX.md) 做：复用 Logos 的法术特效时在服务端调用 `dev.logos.runtime.Vfx`；附属自己的特效直接用 Photon 写，已有贴图用 `logos:` 路径引用。构建需要 `-PlogosJar`。
 - 做运镜、全屏后期、画风、处决特写或新的全屏通道之前，先读总览 [docs/CINEMATICS.md](docs/CINEMATICS.md)：选哪个系统、通道的顺序、深度在哪一步取、兼容和光敏的规矩（全屏明暗交替每秒不超过 3 次，遵从「隐藏闪电的闪烁」）、不要贴在屏幕上的纹理、着色器不要用 GLSL 内置名、怎么测。
-- 奥义（同伴终结技、接力连携、玩家的最后一击）按 [docs/ULTIMATES.md](docs/ULTIMATES.md)：公共的按键、号令轮盘、侧边小队、连携状态机、冷却和耗魔都在 `ultimate/`；每位角色的演出、技能效果、接力馈赠写在她自己的档案里（服务端 `CompanionDef.ultimate`，画面 `CompanionStyle.ultimate`；玩家的是 `HeroUltimate` 和 `HeroCutin.finishers`），不往公共代码里写「如果是她就……」。
+- 奥义（同伴终结技、接力连携、玩家的最后一击）按 [docs/ULTIMATES.md](docs/ULTIMATES.md)：公共的按键、号令轮盘、侧边小队、连携状态机、冷却和耗魔都在 `ultimate/`；每位角色的演出、技能效果、接力馈赠写在她自己的档案里（服务端 `CompanionDef.ultimate`，画面 `CompanionStyle.ultimate`；玩家的是 `HeroUltimate` 和 `HeroCutin.finishers`），不往公共代码里写「如果是她就……」。每段奥义是一段过场：分镜运镜和盖在画面上的一层用 `UltimateFilm`，她自己的全屏后期写在 `UltimateShow#screen`；同伴完整版不超过 5.5 秒、连携里第二位起演约 2 秒的缩短版，不写字（拟声字也不写）。
 - 连携切入（小队合力一击的斜切分格演出）按 [docs/CHAIN_CUTIN.md](docs/CHAIN_CUTIN.md)：服务端调 `ChainCutins.play`，玩家永远在正中间，同伴按在场人数自动排；分格改 `ChainLayout`，时刻看 `ChainTimeline`；每个人的姿势、镜头、光屑写在各自的档案里（同伴 `CompanionStyle.Cutin`，玩家 `HeroCutin`），不写进渲染器。
 - 处决特写（投技、处决的两秒特写）按 [docs/EXECUTION_SHOTS.md](docs/EXECUTION_SHOTS.md)：服务端调 `ExecutionShots.play`，玩家逐刀点击的用 `InteractiveExecutions.start`；伤害由调用方按 `ExecutionTimeline` 的时刻自己做。
 - 运镜（镜头暂时离开玩家再回来，方块、Boss 等共用）按 [docs/CAMERA_SHOTS.md](docs/CAMERA_SHOTS.md)：服务端调 `CameraShots.play`，不要用 `setCameraEntity` 做这件事。

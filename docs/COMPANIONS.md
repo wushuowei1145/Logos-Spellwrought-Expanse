@@ -156,7 +156,7 @@
 3. **实体**：接第 4 节的基类；给定义（数值、成长）；实现 `Talker`；心智里加她自己的战斗和生活行为；四种行动策略各是什么意思。
 4. **文字**：台词 `line.logos_dimension.<id>.*`，对话和面板 `talk.logos_dimension.<id>.*`（`name`、`epithet`、`kana`、`seal_name`、`option.*`、`skill.<能力>.name/.icon/.desc`、`memory.*`），中英文都要有。
 5. **样式**：`CompanionStyle` 的颜色、纹、展示姿势、连携切入的姿势（在 `tools/chain_cutin_poses.py` 里加她的取样）、镜头和光屑。
-6. **奥义**：她的 `ULTIMATE`（冷却、基准耗魔、服务端脚本、接力馈赠）、`CompanionStyle.ultimate`（画面）、奥义名和发动 / 接力 / 缺魔三句台词；先用占位的 `StandInUltimate` 也走得通（[ULTIMATES.md](ULTIMATES.md) 第四节）。
+6. **奥义**：她的 `ULTIMATE`（冷却、基准耗魔、完整版和缩短版的服务端脚本、接力馈赠）、`CompanionStyle.ultimate`（过场：`UltimateFilm` 分镜运镜和她自己的后期）、奥义名和发动 / 接力 / 缺魔三句台词；先用占位的 `StandInUltimate`、`StandInShow` 也走得通（[ULTIMATES.md](ULTIMATES.md) 第五节）。
 7. **测试**：单元测试查语言文件齐全、档案在网络上来回不走样；客户端场景至少有召唤、对话、面板、一种策略、她的独有能力；同一组 tag。
 8. **文档**：她自己一份（结构照 `SHIRAUME_COMPANION.md`），这份文档第 2 节加一行她独有的东西。
 
