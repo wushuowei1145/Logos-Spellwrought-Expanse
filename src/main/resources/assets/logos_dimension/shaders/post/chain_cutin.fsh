@@ -151,9 +151,10 @@ vec3 energy(vec2 q, int i, float aspect) {
     float along = fract((q.y * (0.8 + h2) - slide * 1.4 - dir * t * (0.02 + 0.02 * h)) * 1.3 + h * 7.0);
     float len = 0.25 + 0.45 * h2 + 0.3 * rush;
     float dash = smoothstep(0.0, 0.05, along) * smoothstep(len, len - 0.15, along);
-    float active = step(0.62 - rush * 0.25, h);
+    // 这一条亮不亮（变量名别用 active：那是 GLSL 的保留字，A 卡的驱动编译不过）
+    float lit = step(0.62 - rush * 0.25, h);
     float side = 0.4 + 0.6 * smoothstep(0.03, 0.17, abs(p.x));
-    col += mix(tint, vec3(1.0), 0.3) * across * dash * active * side * (0.2 + 0.8 * rush);
+    col += mix(tint, vec3(1.0), 0.3) * across * dash * lit * side * (0.2 + 0.8 * rush);
 
     // 远处的小光点
     vec2 g = (p - vec2(0.0, slide * 0.6 + dir * t * 0.003)) / 0.06;
