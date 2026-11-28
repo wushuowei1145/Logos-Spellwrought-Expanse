@@ -98,16 +98,16 @@ public final class LacertaUltimateShow implements UltimateShow {
         });
         f.blur(0, b.dash(), 2, UltimateFilm.Blur.RADIAL, .75f, 0, .5f, .5f);
         f.lines(0, b.dash(), 2, UltimateFilm.Lines.RADIAL, .75f, 0, INK);
-        // Cut 2 撞阵横扫：绕着她甩一整圈（离远一点、抬高一点，越过被拉过来的敌群看她），砍中那一下定格两刻
+        // Cut 2 撞阵横扫：从高处陡陡地往下看、绕着她甩一整圈（被拉过来的敌群围着她，刀光的圆环看得全），砍中那一下定格两刻
         f.cut(b.dash(), b.ascend(), s -> {
             float yaw = s.lerp(-150, 210);
             Vec3 chest = s.chest();
-            Vec3 from = safe(chest, ring(chest, d, r, yaw, 5.2).add(0, 1.6, 0));
-            return s.look(from, chest.add(0, -.2, 0), s.lerp(6, -6), 84);
+            Vec3 from = safe(chest, ring(chest, d, r, yaw, 3.4).add(0, 4, 0));
+            return s.look(from, chest.add(0, -.3, 0), s.lerp(6, -6), 80);
         });
         f.freeze(b.sweepHit(), b.sweepHit() + 2);
         f.shake(b.sweepHit(), b.sweepHit() + 3, 1, .08f);
-        f.blur(b.dash(), b.ascend(), 2, UltimateFilm.Blur.DIRECTIONAL, .85f, 0, .5f, .5f);
+        f.blur(b.dash(), b.ascend(), 2, UltimateFilm.Blur.DIRECTIONAL, .7f, 0, .5f, .5f);
         f.lines(b.dash(), b.ascend(), 2, UltimateFilm.Lines.DIRECTIONAL, .5f, 0, INK);
         // Cut 3 逆焰升龙挑空：在她身侧贴地仰摇（敌群在她前面，不挡镜头），跟着上撩的剑往天上看
         f.cut(b.ascend(), b.rise(), s -> {
@@ -139,11 +139,11 @@ public final class LacertaUltimateShow implements UltimateShow {
         f.shake(b.impact() + 11, b.stand() + 1, 3, .1f);
         f.blur(b.impact() + 11, b.stand() + 1, 3, UltimateFilm.Blur.DIRECTIONAL, .65f, 90, .5f, .5f);
         f.lines(b.impact() + 11, b.stand() + 1, 3, UltimateFilm.Lines.RADIAL, .6f, 0, INK, .5f, .6f);
-        // Cut 8 焦烟火星擦镜：她拄剑立定，烟和火星从左往右扫过去
+        // Cut 8 焦烟火星擦镜：凑近她拄剑立定的样子，烟和火星从左往右扫过去
         f.cut(b.stand() + 1, b.length(), s -> {
             Vec3 chest = s.chest();
-            Vec3 from = safe(chest, s.feet().add(d.scale(3)).add(r.scale(1.4)).add(0, 1.3, 0));
-            return s.look(from, chest.add(0, .1, 0), 0, 68);
+            Vec3 from = safe(chest, s.feet().add(d.scale(1.9)).add(r.scale(1.3)).add(0, 1.2, 0));
+            return s.look(from, chest.add(0, .1, 0), 0, 60);
         });
         f.wipe(b.wipe(), b.length(), UltimateFilm.Wipe.SMOKE, SMOKE, EMBER);
         return f;

@@ -64,6 +64,8 @@ public final class LacertaUltimateFx {
     static final float PILLAR_HEIGHT = 18, PILLAR_RADIUS = 1.1f;
     /** 碎岩多少块（规范 40–60）：{@link #ROCKS_MIN} 起，按种子再多几块。 */
     static final int ROCKS_MIN = 44, ROCKS_SPREAD = 13;
+    /** 碎岩不往这一边崩（左右各多少度）：裂地和拉远的镜头在她身后偏右（{@link #lane}），碎岩扑到镜头上会糊满一屏。 */
+    static final float LANE = 40;
     /** 剑和龙炎巨刃：举过头顶时手在多高；巨刃最长多长。 */
     static final float HANDS = 1.75f, BLADE = 5.2f;
 
@@ -137,6 +139,11 @@ public final class LacertaUltimateFx {
 
     static void remove(LacertaUltimateFx fx) {
         ACTIVE.remove(fx);
+    }
+
+    /** 从落点看，裂地和拉远的镜头在哪一边（她身后偏右，同 {@code LacertaUltimateShow} 的机位）。 */
+    Vec3 lane() {
+        return dir.scale(-.86).add(right.scale(.5)).normalize();
     }
 
     /** 演完了：再留 {@link #FADE} 刻淡掉。 */
@@ -245,8 +252,11 @@ public final class LacertaUltimateFx {
     /** 裂地那一下：碎岩崩飞、地面裂开、火星炸开。 */
     private void burst(ClientLevel level) {
         int count = ROCKS_MIN + random.nextInt(ROCKS_SPREAD);
+        Vec3 lane = lane();
+        float laneAt = (float) Mth.atan2(lane.z, lane.x), half = LANE * Mth.DEG_TO_RAD;
         for (int i = 0; i < count; i++) {
-            float a = random.nextFloat() * Mth.TWO_PI;
+            // 绕开镜头那一边：从那一道缺口的边上起，在剩下的一圈里随便挑
+            float a = laneAt + half + random.nextFloat() * (Mth.TWO_PI - 2 * half);
             float d = .8f + 4.2f * (float) Math.sqrt(random.nextFloat());
             double x = center.x + Mth.cos(a) * d, z = center.z + Mth.sin(a) * d;
             Vec3 foot = ground(level, new Vec3(x, center.y, z), 4);
@@ -436,7 +446,7 @@ public final class LacertaUltimateFx {
         int color = VfxParts.argb((1 - t) * .9f, PALE);
         Vec3 c = center.add(0, .12, 0);
         glow(pose, out, "heal/ring", (p, buf) -> VfxParts.flat(p, buf, c, new Vec3(1, 0, 0), new Vec3(0, 0, 1), r, 0, color));
-        int glow = VfxParts.argb((1 - t) * .45f, GOLD);
+        int glow = VfxParts.argb((1 - t) * .3f, GOLD);
         glow(pose, out, "heal/glow", (p, buf) -> VfxParts.flat(p, buf, c.add(0, .05, 0), new Vec3(1, 0, 0), new Vec3(0, 0, 1), 4 + 2 * t, 0, glow));
     }
 
@@ -455,7 +465,7 @@ public final class LacertaUltimateFx {
                     float part = Math.min(1, shown - i);
                     a1 = a0.lerp(a1, part);
                     float w = c.width * (1 - .55f * i / segs);
-                    flatSegment(p, buf, a0, a1, w * 2.6f, VfxParts.argb(alpha * .45f, color));
+                    flatSegment(p, buf, a0, a1, w * 2.6f, VfxParts.argb(alpha * .3f, color));
                     flatSegment(p, buf, a0, a1, w, VfxParts.argb(alpha, VfxParts.lerpColor(color, WHITE, k < 20 ? .5f : .15f)));
                 }
             }

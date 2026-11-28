@@ -6,7 +6,6 @@ import com.lowdragmc.lowdraglib2.uitest.*;
 import dev.logos.dimension.client.camera.CameraDirector;
 import dev.logos.dimension.client.companion.LacertaUltimateFx;
 import dev.logos.dimension.client.companion.LacertaUltimateShow;
-import dev.logos.dimension.client.ultimate.UltimateClient;
 import dev.logos.dimension.client.ultimate.UltimateFilm;
 import dev.logos.dimension.client.ultimate.UltimateFilmRenderer;
 import dev.logos.dimension.companion.CompanionDef;
@@ -240,8 +239,8 @@ public abstract class LacertaUltimateViews extends UltimateViews {
                     .waitUntilServer("白梅接上并打中：吃到碎甲（穿甲、再缠一层龙炎）", ctx -> LacertaUltimate.Sunder.pierced() > pierced0)
                     .server("记下", ctx -> pierced1 = LacertaUltimate.Sunder.pierced())
                     .waitUntilServer("凑齐，进汇流", ctx -> Ultimates.phase(ctx.player()) == UltimateChain.Phase.CONVERGED)
-                    .waitUntil("客户端在汇流", ctx -> UltimateClient.status().chainPhase() == UltimateChain.Phase.CONVERGED);
-            press(s, "放最后一击")
+                    // 按 V 放最后一击由 ultimate_chain 测；这里只看碎甲管不管得到最后一击，直接在服务端下令
+                    .server("放最后一击", ctx -> Ultimates.order(ctx.player(), ""))
                     .waitUntilServer("最后一击也吃到碎甲", ctx -> LacertaUltimate.Sunder.pierced() > pierced1)
                     .waitUntilServer("回到常态", ctx -> Ultimates.phase(ctx.player()) == UltimateChain.Phase.IDLE);
             lacertaTeardown(s, false);
