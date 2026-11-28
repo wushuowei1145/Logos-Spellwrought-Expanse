@@ -103,6 +103,16 @@ public abstract class LacertaViews extends KohakuSleepViews {
         return c;
     }
 
+    /**
+     * 立契、盖 {@code seals} 枚鳞之契，再在 {@code at} 叫她出来：要用锁在契印后面的本事时（第二印弹反、第四印坠星、第五印接住你、
+     * 第九印巨龙……，{@code LacertaSeals}）。
+     */
+    static LacertaCompanion summonLacerta(ServerPlayer p, Vec3 at, int seals) {
+        Companions.grantPact(p, Companions.LACERTA_DEF);
+        while (Companions.bond(p, Companions.LACERTA_DEF).seals() < seals) Companions.addSeal(p, Companions.LACERTA_DEF);
+        return summonLacerta(p, at);
+    }
+
     /** 入场动画播完。 */
     static boolean arrived(LacertaCompanion c) {
         return c.tickCount > 80 && !"summon".equals(misc(c));
@@ -764,7 +774,7 @@ public abstract class LacertaViews extends KohakuSleepViews {
                     .server("站好、召唤", ctx -> {
                         ServerPlayer p = ctx.player();
                         aim(p, SIDE_EYE, SIDE_LOOK);
-                        c = summonLacerta(p, SPOT);
+                        c = summonLacerta(p, SPOT, 4);
                     })
                     .step("对准", ctx -> aimClient(SIDE_LOOK))
                     .waitUntilServer("入场播完", ctx -> arrived(c))
@@ -806,7 +816,7 @@ public abstract class LacertaViews extends KohakuSleepViews {
                     .server("召唤；不带抗性（摔伤照算）", ctx -> {
                         ServerPlayer p = ctx.player();
                         standAt(p, new Vec3(.5, FLOOR + 1, -3.5));
-                        c = summonLacerta(p, SPOT);
+                        c = summonLacerta(p, SPOT, 5);
                         if (embrace()) c.affectionForTest(p, 450);
                     })
                     .waitUntilServer("入场播完", ctx -> arrived(c))
@@ -866,8 +876,9 @@ public abstract class LacertaViews extends KohakuSleepViews {
                     .server("站好、召唤；魔力补满", ctx -> {
                         ServerPlayer p = ctx.player();
                         standAt(p, new Vec3(-8.5, FLOOR + 1, -8.5));
-                        c = summonLacerta(p, SPOT);
-                        fillMana(p, 5000);
+                        c = summonLacerta(p, SPOT, 9);
+                        // 第九印每秒只扣 32：魔力上限别太高（自然回魔跟着上限涨），不然看不出在扣
+                        fillMana(p, 1000);
                     })
                     .waitUntilServer("入场播完", ctx -> arrived(c))
                     .server("让她化身巨龙（你在对话里让她变的）", ctx -> {
@@ -931,7 +942,7 @@ public abstract class LacertaViews extends KohakuSleepViews {
                     .server("站好、召唤；魔力补满", ctx -> {
                         ServerPlayer p = ctx.player();
                         standAt(p, new Vec3(-8.5, FLOOR + 1, -8.5));
-                        c = summonLacerta(p, SPOT);
+                        c = summonLacerta(p, SPOT, 9);
                         fillMana(p, 5000);
                     })
                     .waitUntilServer("入场播完", ctx -> arrived(c))
@@ -975,7 +986,7 @@ public abstract class LacertaViews extends KohakuSleepViews {
                         z2 = PrincessViews.helmeted(CompanionLifeViews.spawn(level, EntityType.ZOMBIE, new Vec3(12.5, FLOOR + 1, 10.5), 180));
                         z1.setTarget(p);
                         z2.setTarget(p);
-                        c = summonLacerta(p, SPOT);
+                        c = summonLacerta(p, SPOT, 9);
                     })
                     .checkServer("以巨龙登场", ctx -> c.isDragonForm() && "appear".equals(misc(c)))
                     .ticks(12);
@@ -1005,7 +1016,7 @@ public abstract class LacertaViews extends KohakuSleepViews {
                     .server("站好、召唤、化身巨龙", ctx -> {
                         ServerPlayer p = ctx.player();
                         standAt(p, new Vec3(.5, FLOOR + 1, -4.5));
-                        c = summonLacerta(p, new Vec3(.5, FLOOR + 1, -9.5));
+                        c = summonLacerta(p, new Vec3(.5, FLOOR + 1, -9.5), 9);
                         fillMana(p, 20000);
                     })
                     .waitUntilServer("入场播完", ctx -> arrived(c))

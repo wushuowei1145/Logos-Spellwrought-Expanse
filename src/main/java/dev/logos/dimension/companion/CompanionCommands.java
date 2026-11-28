@@ -117,6 +117,7 @@ public final class CompanionCommands {
                     return failed == null ? 1 : 0;
                 }))
                 .then(Commands.literal("dismiss").executes(c -> Companions.dismiss(c.getSource().getPlayerOrException(), d) ? 1 : 0))
+                .then(Commands.literal("meet").executes(c -> lacertaMeet(c.getSource())))
                 .then(Commands.literal("rest").executes(c -> {
                     ServerPlayer p = c.getSource().getPlayerOrException();
                     Companions.wake(p, d);
@@ -148,6 +149,19 @@ public final class CompanionCommands {
                 .then(sleep)
                 .then(move)
                 .then(Commands.literal("info").executes(c -> lacertaInfo(c.getSource())));
+    }
+
+    /** 试初遇：身边有烤着东西的营火就落在营火另一边，没有就落在你面前三格（已经立契的不行）。 */
+    private static int lacertaMeet(CommandSourceStack src) throws CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        if (Companions.bond(p, Companions.LACERTA_DEF).pact()) {
+            src.sendFailure(Component.literal("已经和拉塞塔立契了"));
+            return 0;
+        }
+        var level = p.level();
+        var fire = LacertaMeet.cooking(level, p.blockPosition());
+        if (fire == null) fire = net.minecraft.core.BlockPos.containing(p.position().add(p.getLookAngle().multiply(1, 0, 1).normalize().scale(3)));
+        return LacertaMeet.spawn(level, p, fire) != null ? 1 : 0;
     }
 
     private static int lacertaSeal(CommandSourceStack src, int count) throws CommandSyntaxException {

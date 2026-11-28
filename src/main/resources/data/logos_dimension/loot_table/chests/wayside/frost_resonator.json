@@ -158,6 +158,21 @@
       "rolls": 1,
       "entries": [
         {
+          "type": "minecraft:item",
+          "name": "logos_dimension:dragon_scale",
+          "weight": 3,
+          "quality": 2
+        },
+        {
+          "type": "minecraft:empty",
+          "weight": 37
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
           "type": "minecraft:loot_table",
           "value": "logos_dimension:chests/tiers/common"
         }

@@ -100,6 +100,8 @@ public final class LacertaDragon {
 
     /** 变不了的原因（能变返回 null）：{@code room} 地方太挤、{@code mana} 你的魔力不够。 */
     @Nullable String cannotTransform(ServerLevel level, ServerPlayer p) {
+        // 太古真身是第九印
+        if (!LacertaSeals.has(c.bond(p).seals(), LacertaSeals.DRAGON)) return "seal";
         if (!roomAt(level, c.position())) return "room";
         if (!affordable(p, c.bond(p).seals(), UPKEEP_RESERVE)) return "mana";
         return null;
@@ -110,6 +112,7 @@ public final class LacertaDragon {
         if (c.isDragonForm() || c.withdrawing() || cannotTransform(level, p) != null) return false;
         this.auto = auto;
         c.blade.drop();
+        c.seal.stop(level);
         c.rest.rise(level, true);
         c.flight.land();
         c.mood.cut();

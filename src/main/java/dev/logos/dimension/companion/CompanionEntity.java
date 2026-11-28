@@ -406,7 +406,7 @@ public abstract class CompanionEntity extends PathfinderMob implements NpcAnimat
         return true;
     }
 
-    private void tickEating(ServerLevel level, long now, @Nullable ServerPlayer p) {
+    void tickEating(ServerLevel level, long now, @Nullable ServerPlayer p) {
         if (eatStart < 0) return;
         int t = (int) (now - eatStart);
         for (int bite : EAT_BITES) {

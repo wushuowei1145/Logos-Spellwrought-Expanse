@@ -261,6 +261,8 @@ public final class Companions {
         NeoForge.EVENT_BUS.addListener(Companions::onDamaged);
         NeoForge.EVENT_BUS.addListener(Companions::onProtect);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LacertaFlight::onOwnerHurt);
+        NeoForge.EVENT_BUS.addListener(LacertaSeals::onOwnerHurt);
+        NeoForge.EVENT_BUS.addListener(LacertaMeet::onPlayerTick);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, Companions::onDeath);
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) stowAll(p, true);

@@ -101,8 +101,8 @@ final class LacertaMind extends CompanionMind {
         // 藏宝癖：地上有亮晶晶的，先去抢（压过跟着你）
         ItemEntity loot = loot();
         if (loot != null && LacertaLife.shiny(loot.getItem())) scores.put(Kind.SCAVENGE, SHINY_LOOT);
-        // 喷着龙炎、挥着爪时不陪坐
-        double lounge = l.dragon.breathing() || l.dragon.clawing() ? 0 : l.rest.score(level, p, s.doing(), s.calm(), now);
+        // 喷着龙炎、挥着爪、振翼、喷龙息时不陪坐
+        double lounge = l.dragon.breathing() || l.dragon.clawing() || l.seal.acting() ? 0 : l.rest.score(level, p, s.doing(), s.calm(), now);
         // 附近有掉落要捡时先捡，再去陪你坐（同琥珀）；你睡着时不管
         if (!p.isSleeping() && lounge > 0 && scores.getOrDefault(Kind.SCAVENGE, 0.0) > 0) lounge = Math.min(lounge, LOUNGE_AFTER_LOOT);
         scores.put(Kind.LOUNGE, lounge);
@@ -111,6 +111,9 @@ final class LacertaMind extends CompanionMind {
     /** 通用的挑法之外，再往外找一圈：你周围 18 格（优先近战 24 格）里冲着你、她或别的同伴来的，和会主动伤人的敌对生物。 */
     @Override
     protected @Nullable LivingEntity pickFoe(ServerLevel level, ServerPlayer p, OwnerWatch w, long now) {
+        // 逆鳞：先收拾伤你的那个
+        LivingEntity wrath = l.seal.wrathFoe();
+        if (wrath != null && wrath.distanceTo(p) < 24) return wrath;
         LivingEntity foe = super.pickFoe(level, p, w, now);
         if (foe != null || tactic == CompanionTactic.PASSIVE || c.staying()) return foe;
         double r = tactic == CompanionTactic.MELEE ? HUNT_MELEE : HUNT;
@@ -169,6 +172,8 @@ final class LacertaMind extends CompanionMind {
             if (foe == null && l.dragon.breathing() && !l.isVehicle()) l.dragon.stopBreath(level);
             breathUntil = -1;
         }
+        // 人形的龙息：目标没了就收
+        if (foe == null && l.seal.breathing()) l.seal.stopBreath(level);
         l.life.think(level, p, now, foe == null);
     }
 
@@ -235,8 +240,11 @@ final class LacertaMind extends CompanionMind {
     }
 
     static final double DRAGON_NEAR = 5, DRAGON_FAR = 8;
-    /** 附近有掉落要捡时，陪你坐 / 守宝藏的分压到多少（比捡东西低）；亮晶晶的掉落捡的分（比跟着你加上惯性高）。 */
-    static final double LOUNGE_AFTER_LOOT = .3, SHINY_LOOT = .5;
+    /**
+     * 附近有掉落要捡时，陪你坐 / 守宝藏的分压到多少（比捡东西低）；亮晶晶的掉落捡的分：比「离你 6 格以外快回来」（0.7）还高——掉落只捡你身边
+     * 10 格内的，掉在离你 6 格多的地方时不然她走过去就被叫回来、回来又去捡，来回打转。
+     */
+    static final double LOUNGE_AFTER_LOOT = .3, SHINY_LOOT = .75;
 
     @Override
     protected int lootRank(ItemStack s) {
@@ -279,6 +287,13 @@ final class LacertaMind extends CompanionMind {
         // 坠星砸下去的那几刻让它砸完
         var move = l.blade.move();
         if (move != null && "skyfall_judgement".equals(move.name()) && !l.blade.canFollowUp()) return;
+        // 振翼、喷龙息的那几刻：站住对着它
+        if (l.seal.acting()) {
+            c.getNavigation().stop();
+            c.getLookControl().setLookAt(target, 40, 40);
+            return;
+        }
+        if (seals(level, target, now, d)) return;
         // 够不着（飞着、站在高处、隔着水）：坠星好了就飞上去砸，不然掌心赤焰；地上远处的接着用剑的游脉
         if (l.flight.mode() == LacertaFlight.Mode.PURSUE || !melee(target)) {
             if (!pursue(target, now, hold, low)) ranged(level, target, now, d, hold);
@@ -293,7 +308,8 @@ final class LacertaMind extends CompanionMind {
             c.getLookControl().setLookAt(target, 40, 40);
             return;
         }
-        if (low) {
+        // 血少了：会武艺（第二印）就守着等弹反；不会就照砍（寸步不退）
+        if (low && l.seal.has(LacertaSeals.ARTS)) {
             guardAndCounter(level, target, now, d);
             return;
         }
@@ -301,11 +317,30 @@ final class LacertaMind extends CompanionMind {
     }
 
     /**
+     * 契印的两招：第三印烈风振翼（身边 {@link LacertaSeals#GUST_RADIUS} 格里围着 {@link LacertaSeals#GUST_CROWD} 个以上）、
+     * 第六印赤穹龙息（前方锥里扎着 {@link LacertaSeals#BREATH_CROWD} 个以上）。放了返回真。
+     */
+    private boolean seals(ServerLevel level, LivingEntity target, long now, double d) {
+        if (l.blade.attacking() || l.throwing()) return false;
+        if (l.seal.gustReady(now) && l.seal.around() >= LacertaSeals.GUST_CROWD) {
+            face(target);
+            l.seal.gust(level, now);
+            return true;
+        }
+        if (l.seal.breathReady(now) && d <= LacertaSeals.BREATH_START_RANGE && c.hasLineOfSight(target) && l.seal.inCone(target) >= LacertaSeals.BREATH_CROWD) {
+            face(target);
+            return l.seal.breathe(level, target, now);
+        }
+        return false;
+    }
+
+    /**
      * 空中追击（接入方案 6.1）：够不着的敌人，炽翼坠星破好了、她起得来、不是优先远程时飞到它头顶，拔着剑飞到够近接一记坠星
      * （收了重力，坠星自己往上蹿、往下砸）。追不了返回假。
      */
     private boolean pursue(LivingEntity target, long now, boolean hold, boolean low) {
-        boolean ready = now >= this.ready.getOrDefault("skyfall_judgement", 0L);
+        // 炽翼坠星破是第四印
+        boolean ready = l.seal.has(LacertaSeals.SKYFALL) && now >= this.ready.getOrDefault("skyfall_judgement", 0L);
         if (hold || low || tactic == CompanionTactic.RANGED || !ready || !l.flight.canPursue(target)) {
             if (l.flight.mode() == LacertaFlight.Mode.PURSUE) l.flight.land();
             return false;
@@ -486,8 +521,10 @@ final class LacertaMind extends CompanionMind {
         boolean ground = target.onGround() && Math.abs(rise) < 2;
         if (ahead >= 2 && d <= SWEEP_MAX) util.put("flame_sweep", .85 + (rangedTactic ? .2 : 0));
         else if (ground && d >= SWEEP_MIN && d <= SWEEP_MAX && c.hasLineOfSight(target)) util.put("flame_sweep", .7 + (rangedTactic ? .2 : 0) + (away ? .1 : 0));
-        if (strong && d >= SKYFALL_MIN && d <= SKYFALL_MAX) util.put("skyfall_judgement", .8 + (melee ? .15 : 0));
-        else if (rise >= 2 && rise <= 5 && d <= 8) util.put("skyfall_judgement", .6 + (melee ? .15 : 0));
+        // 炽翼坠星破是第四印
+        boolean skyfall = l.seal.has(LacertaSeals.SKYFALL);
+        if (skyfall && strong && d >= SKYFALL_MIN && d <= SKYFALL_MAX) util.put("skyfall_judgement", .8 + (melee ? .15 : 0));
+        else if (skyfall && rise >= 2 && rise <= 5 && d <= 8) util.put("skyfall_judgement", .6 + (melee ? .15 : 0));
         String best = null;
         double top = .2;
         for (var e : util.entrySet()) {
@@ -600,7 +637,7 @@ final class LacertaMind extends CompanionMind {
         if (!(c.level() instanceof ServerLevel level)) return;
         double d = c.distanceTo(threat);
         if (holdsBack()) {
-            boolean onMe = threat instanceof Mob m && m.getTarget() == c && d <= 4;
+            boolean onMe = threat instanceof Mob m && m.getTarget() == c && d <= 4 && l.seal.has(LacertaSeals.ARTS);
             if (onMe && (l.blade.drawn() || l.blade.draw())) {
                 guardAndCounter(level, threat, now, d);
                 return;
@@ -613,6 +650,11 @@ final class LacertaMind extends CompanionMind {
             return;
         }
         if (!l.blade.drawn() && !l.blade.draw()) return;
+        // 不会武艺（第二印以前）：不守，照砍
+        if (!l.seal.has(LacertaSeals.ARTS)) {
+            strike(level, threat, now, d, false);
+            return;
+        }
         guardAndCounter(level, threat, now, d);
     }
 
