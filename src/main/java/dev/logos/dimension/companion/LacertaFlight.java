@@ -35,8 +35,13 @@ import org.jetbrains.annotations.Nullable;
 final class LacertaFlight {
     enum Mode { NONE, ESCORT, PURSUE, CATCH, CARRY }
 
-    /** 伴飞的位置：在你身后、左边、比你的脚高多少格。 */
+    /** 伴飞的位置：在你身后、左边、比你的脚高多少格（巨龙离得远一些）。 */
     static final double ESCORT_BACK = 2.2, ESCORT_SIDE = 1.6, ESCORT_UP = 1.4;
+    static final double DRAGON_BACK = 7, DRAGON_SIDE = 3, DRAGON_UP = 3.5;
+    /** 巨龙够不着的敌人：悬停在它后方、上方多少格喷龙炎。 */
+    static final double DRAGON_HOVER_BACK = 8, DRAGON_HOVER_UP = 4;
+    /** 巨龙起飞、落地（{@code takeoff}、{@code land} 都是 1.8 秒）。 */
+    static final int DRAGON_TAKEOFF = 36, DRAGON_LAND = 36;
     /** 你离地这么高、浮了这么多刻（又没在往下掉），算在飞。 */
     static final double ALOFT_HEIGHT = 2.5;
     static final int ALOFT_TICKS = 10;
@@ -71,8 +76,9 @@ final class LacertaFlight {
     /** 最多带多久；接完以后多久才会再接；接住以后多久里摔伤保底（剩半颗心）。 */
     static final int CARRY_MAX = 400, CATCH_GAP = 40, SAFE_WINDOW = 60;
 
-    /** 谁被她接住了、到哪一刻以前摔伤保底（主人的 UUID → 游戏刻）。 */
+    /** 谁被她接住了、到哪一刻以前摔伤保底（主人的 UUID → 游戏刻）；在巨龙背上半空下来的，这一摔只受多少（UUID → 比例）。 */
     private static final Map<UUID, Long> SAFE = new ConcurrentHashMap<>();
+    private static final Map<UUID, Double> KEEP = new ConcurrentHashMap<>();
     /** 测试用：接过几次、保底挡下过几次。 */
     static int catches, saves;
 
@@ -84,6 +90,8 @@ final class LacertaFlight {
     private Vec3 from = Vec3.ZERO;
     /** 她在你哪一侧（yaw）。 */
     private float sideYaw;
+    /** 巨龙在天上（收了重力往下滑也算），落地时播 {@code land}。 */
+    private boolean dragonAloft;
     private double frozenFall, approachCap;
     /** 你上一刻在哪、这一刻挪了多少（服务端玩家的 xo/yo 跟实体更新的先后有关，靠不住，自己记）。 */
     private @Nullable Vec3 ownerPrev;
@@ -111,9 +119,10 @@ final class LacertaFlight {
 
     // ---------------------------------------------------------------- 起飞、落地
 
-    /** 起得来：不在逼仄的地方、水里、坐着、龙眠、睡着。 */
+    /** 起得来：不在逼仄的地方（巨龙要一块空地）、水里、坐着、龙眠、睡着。 */
     boolean canTakeOff() {
-        return !c.cramped() && !c.isInWater() && !c.isPassenger() && !c.withdrawing() && !c.curled();
+        boolean room = c.isDragonForm() ? c.level() instanceof ServerLevel level && LacertaDragon.roomAt(level, c.position()) : !c.cramped();
+        return room && !c.isInWater() && !c.isPassenger() && !c.withdrawing() && !c.curled();
     }
 
     void takeOff() {
@@ -124,6 +133,10 @@ final class LacertaFlight {
         c.setSitting(false);
         Vec3 v = c.getDeltaMovement();
         c.setDeltaMovement(v.x, Math.max(v.y, .3), v.z);
+        if (c.isDragonForm()) {
+            dragonAloft = true;
+            if (c.onGround()) c.mood.play("takeoff", DRAGON_TAKEOFF);
+        }
         if (c.level() instanceof ServerLevel level) {
             level.sendParticles(ParticleTypes.CLOUD, c.getX(), c.getY() + .1, c.getZ(), 6, .35, .05, .35, .03);
             level.playSound(null, c.getX(), c.getY(), c.getZ(), SoundEvents.ENDER_DRAGON_FLAP, SoundSource.NEUTRAL, .45f, 1.6f);
@@ -158,6 +171,11 @@ final class LacertaFlight {
         }
         // 这一刻心智没让她飞（伴飞、追击都是每刻调一次）：收了重力滑下来
         if (flying() && now - steeredAt > 2) land();
+        // 巨龙落地：四足吸震
+        if (dragonAloft && c.onGround()) {
+            dragonAloft = false;
+            if (c.isDragonForm() && !c.isVehicle()) c.mood.play("land", DRAGON_LAND);
+        }
         if (now >= nextCatch && shouldCatch(level, p)) startCatch(level, p, now);
     }
 
@@ -187,13 +205,17 @@ final class LacertaFlight {
         }
     }
 
-    /** 往 {@code dir} 看 {@link #LOOK_AHEAD} 格，脚边和头边有没有东西挡着。 */
+    /** 往 {@code dir} 看 {@link #LOOK_AHEAD} 格（加上她的半宽），脚边、腰、头边（巨龙再加左右两边）有没有东西挡着。 */
     private boolean blocked(Vec3 dir) {
-        for (double h : new double[]{.3, 1.1}) {
-            Vec3 a = c.position().add(0, h, 0);
-            Vec3 b = a.add(dir.scale(LOOK_AHEAD));
-            if (c.level().clip(new ClipContext(a, b, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, c)).getType() != HitResult.Type.MISS) return true;
-        }
+        double w = c.getBbWidth() * .45, h = c.getBbHeight();
+        Vec3 side = new Vec3(-dir.z, 0, dir.x);
+        double[] lateral = c.isDragonForm() ? new double[]{-w, 0, w} : new double[]{0};
+        for (double y : new double[]{.3, h * .5, h - .25})
+            for (double x : lateral) {
+                Vec3 a = c.position().add(side.scale(x)).add(0, y, 0);
+                Vec3 b = a.add(dir.scale(LOOK_AHEAD + c.getBbWidth() * .5));
+                if (c.level().clip(new ClipContext(a, b, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, c)).getType() != HitResult.Type.MISS) return true;
+            }
         return false;
     }
 
@@ -216,22 +238,28 @@ final class LacertaFlight {
         mode = Mode.ESCORT;
         steeredAt = now;
         double owner = ownerVel.length();
-        steer(escortPoint(p.position(), p.getYRot()), Math.min(MAX_SPEED, Math.max(CRUISE, owner * 1.3 + .15)));
+        Vec3 to = c.isDragonForm() ? point(p.position(), p.getYRot(), DRAGON_BACK, DRAGON_SIDE, DRAGON_UP) : escortPoint(p.position(), p.getYRot());
+        steer(to, Math.min(MAX_SPEED, Math.max(CRUISE, owner * 1.3 + .15)));
         if (c.getDeltaMovement().horizontalDistance() < .12) c.getLookControl().setLookAt(p, 30, 30);
         return true;
     }
 
     /** 伴飞点：你（脚下 {@code at}、朝 {@code yaw}）身后 {@link #ESCORT_BACK}、左边 {@link #ESCORT_SIDE}、高 {@link #ESCORT_UP}。 */
     static Vec3 escortPoint(Vec3 at, float yaw) {
+        return point(at, yaw, ESCORT_BACK, ESCORT_SIDE, ESCORT_UP);
+    }
+
+    /** 你（脚下 {@code at}、朝 {@code yaw}）身后 {@code back}、左边 {@code side}、高 {@code up} 的那一处。 */
+    static Vec3 point(Vec3 at, float yaw, double back, double side, double up) {
         double r = Math.toRadians(yaw);
         Vec3 forward = new Vec3(-Math.sin(r), 0, Math.cos(r)), left = new Vec3(Math.cos(r), 0, Math.sin(r));
-        return at.add(forward.scale(-ESCORT_BACK)).add(left.scale(ESCORT_SIDE)).add(0, ESCORT_UP, 0);
+        return at.add(forward.scale(-back)).add(left.scale(side)).add(0, up, 0);
     }
 
     /** 飞着离你太远（你飞得太快、她被挡住）：直接闪到伴飞点（那里没东西挡着才闪）。返回真时这一刻不再做别的。 */
     boolean reflex(ServerLevel level, ServerPlayer p, double dist) {
         if (!flying() || mode != Mode.ESCORT || dist <= FLY_BLINK) return false;
-        Vec3 to = escortPoint(p.position(), p.getYRot());
+        Vec3 to = c.isDragonForm() ? point(p.position(), p.getYRot(), DRAGON_BACK, DRAGON_SIDE, DRAGON_UP) : escortPoint(p.position(), p.getYRot());
         if (!level.noCollision(c, c.getBoundingBox().move(to.subtract(c.position())))) return false;
         c.puff(level, c.position().add(0, .7, 0));
         c.teleportTo(to.x, to.y, to.z);
@@ -260,6 +288,17 @@ final class LacertaFlight {
         Vec3 back = c.position().subtract(t.position()).multiply(1, 0, 1);
         back = back.lengthSqr() < 1e-4 ? Vec3.directionFromRotation(0, c.getYRot()).scale(-1) : back.normalize();
         return t.position().add(back.scale(PURSUE_BACK)).add(0, t.getBbHeight() + PURSUE_ABOVE, 0);
+    }
+
+    /** 巨龙：飞到够不着的 {@code t} 后方 {@link #DRAGON_HOVER_BACK}、上方 {@link #DRAGON_HOVER_UP} 格悬停（在那里喷龙炎）。 */
+    void dragonHover(LivingEntity t, long now) {
+        if (!flying()) takeOff();
+        mode = Mode.PURSUE;
+        steeredAt = now;
+        Vec3 back = c.position().subtract(t.position()).multiply(1, 0, 1);
+        back = back.lengthSqr() < 1e-4 ? Vec3.directionFromRotation(0, c.getYRot()).scale(-1) : back.normalize();
+        steer(t.position().add(back.scale(DRAGON_HOVER_BACK)).add(0, DRAGON_HOVER_UP, 0), 1.2);
+        c.getLookControl().setLookAt(t, 40, 40);
     }
 
     /** 飞到了出手的那一处（差 {@link #STRIKE_SLACK} 格以内）。 */
@@ -299,6 +338,7 @@ final class LacertaFlight {
     }
 
     private boolean shouldCatch(ServerLevel level, ServerPlayer p) {
+        if (c.isDragonForm()) return false;
         if (p.isCreative() || p.isSpectator() || p.getAbilities().flying || p.isFallFlying() || p.isPassenger() || p.isInWater() || p.onGround()
                 || p.hasEffect(MobEffects.SLOW_FALLING) || p.isDeadOrDying()) return false;
         if (c.withdrawing() || c.isPassenger() || c.distanceTo(p) > CATCH_RANGE) return false;
@@ -414,15 +454,24 @@ final class LacertaFlight {
         }
     }
 
-    /** 被她接住的那一摔：落地那一下最多摔到剩半颗心。 */
+    /** 在巨龙背上半空下来（{@link LacertaRide#dismounted}）：之后 {@link #CARRY_MAX} 刻里摔下去只受 {@code keep}，至少留半颗心。 */
+    static void protectFall(ServerPlayer p, long now, double keep) {
+        SAFE.put(p.getUUID(), now + CARRY_MAX);
+        KEEP.put(p.getUUID(), keep);
+    }
+
+    /** 被她接住的那一摔：落地那一下最多摔到剩半颗心（从巨龙背上下来的再先打折）。 */
     static void onOwnerHurt(LivingDamageEvent.Pre e) {
         if (!(e.getEntity() instanceof ServerPlayer p) || !e.getSource().is(DamageTypeTags.IS_FALL)) return;
         Long until = SAFE.get(p.getUUID());
         if (until == null) return;
         if (p.level().getGameTime() > until) {
             SAFE.remove(p.getUUID());
+            KEEP.remove(p.getUUID());
             return;
         }
+        Double keep = KEEP.remove(p.getUUID());
+        if (keep != null) e.setNewDamage((float) (e.getNewDamage() * keep));
         float max = Math.max(0, p.getHealth() - 1);
         if (e.getNewDamage() > max) {
             e.setNewDamage(max);

@@ -33,6 +33,10 @@ class LacertaTest {
         return read("/assets/logos_dimension/geckolib/animations/entity/lacerta_companion.animation.json").getAsJsonObject("animations");
     }
 
+    private static JsonObject dragonAnimations() throws Exception {
+        return read("/assets/logos_dimension/geckolib/animations/entity/lacerta_dragon_beast.animation.json").getAsJsonObject("animations");
+    }
+
     private static JsonObject moves(String moveset) throws Exception {
         return read("/data/logos_dimension/combat/movesets/" + moveset + ".json").getAsJsonObject("moves");
     }
@@ -225,6 +229,104 @@ class LacertaTest {
     }
 
     /**
+     * 巨龙（阶段 C）：用到的每一段都在巨龙模型里；登场落地、昂首一吼、龙爪砍中的那一刻和时间轴标记一致；
+     * 蓄压、收龙炎、起飞、落地、振翅嘲讽的长度和模型一致；飞的几段、吐息喷着那段循环。
+     */
+    @Test void dragonClipsMatchTheModel() throws Exception {
+        JsonObject anims = dragonAnimations();
+        for (String n : new String[]{"idle", "walk", "run", "appear", "claw_attack", "breath_start", "breath_loop", "breath_end", "takeoff", "land",
+                "wing_flap", "fly_flap", "fly_glide", "fly_hover", "fly_dive", "fly_bank_left", "fly_bank_right"}) {
+            assertTrue(anims.has(n), "巨龙模型里没有 " + n);
+        }
+        JsonObject appear = anims.getAsJsonObject("appear");
+        assertEquals(LacertaDragon.APPEAR_TICKS, ticks(appear));
+        assertEquals(LacertaDragon.APPEAR_LAND, marker(appear, "dragon_land_impact"));
+        assertEquals(LacertaDragon.APPEAR_ROAR, marker(appear, "dragon_roar"));
+        JsonObject claw = anims.getAsJsonObject("claw_attack");
+        assertEquals(LacertaDragon.CLAW_TICKS, ticks(claw));
+        assertEquals(LacertaDragon.CLAW_HIT, marker(claw, "claw_slash"));
+        assertEquals(LacertaDragon.BREATH_START, ticks(anims.getAsJsonObject("breath_start")));
+        assertEquals(LacertaDragon.BREATH_END, ticks(anims.getAsJsonObject("breath_end")));
+        assertEquals(LacertaFlight.DRAGON_TAKEOFF, ticks(anims.getAsJsonObject("takeoff")));
+        assertEquals(LacertaFlight.DRAGON_LAND, ticks(anims.getAsJsonObject("land")));
+        assertEquals(32, ticks(anims.getAsJsonObject("wing_flap")), "巨龙嘲讽振翅一次 32 刻");
+        for (String n : new String[]{"breath_loop", "fly_flap", "fly_glide", "fly_hover", "fly_dive", "fly_bank_left", "fly_bank_right"}) {
+            assertTrue(anims.getAsJsonObject(n).get("loop").getAsBoolean(), n + " 要循环");
+        }
+        assertEquals("hold_on_last_frame", anims.getAsJsonObject("breath_start").get("loop").getAsString(), "蓄压停在最后一帧");
+    }
+
+    /** 巨龙的碰撞箱 3.2×2.4、眼高 1.85；挨打只受四分之一；嘴在身前、离地，喷得比龙爪远。 */
+    @Test void dragonBodyFollowsThePlan() {
+        assertEquals(3.2f, LacertaDragon.SIZE.width(), 1e-6);
+        assertEquals(2.4f, LacertaDragon.SIZE.height(), 1e-6);
+        assertEquals(1.85f, LacertaDragon.SIZE.eyeHeight(), 1e-6);
+        assertEquals(.25, LacertaDragon.TAKEN, 1e-9);
+        assertEquals(.95, LacertaDragon.KNOCKBACK, 1e-9);
+        Vec3 mouth = LacertaDragon.mouth(Vec3.ZERO, 0);
+        assertEquals(LacertaDragon.MOUTH_FORWARD, mouth.z, 1e-6, "面朝南（yaw 0）时嘴在南边");
+        assertEquals(LacertaDragon.MOUTH_UP, mouth.y, 1e-6);
+        assertTrue(LacertaDragon.BREATH_RANGE > LacertaDragon.CLAW_REACH * 2);
+        assertTrue(LacertaMind.BREATH_TICKS >= LacertaDragon.BREATH_START + LacertaDragon.BREATH_PULSE * 5, "一口龙炎至少喷五下");
+    }
+
+    /** 你出的魔力：每秒 50 起，每枚鳞之契少 2，最少 20。 */
+    @Test void dragonUpkeepShrinksWithSeals() {
+        assertEquals(50, LacertaDragon.upkeep(0));
+        assertEquals(50, LacertaDragon.upkeep(-3));
+        assertEquals(40, LacertaDragon.upkeep(5));
+        assertEquals(20, LacertaDragon.upkeep(15));
+        assertEquals(32, LacertaDragon.upkeep(LacertaTalk.MAX_SEALS), "九枚 32");
+        assertEquals(42, LacertaDragon.upkeep(4));
+    }
+
+    /** 她自己变身的门槛：首领、生命上限 40 以上的强敌、或者身边三只以上的敌人。 */
+    @Test void sheTransformsForStrongFoesAndCrowds() {
+        assertTrue(LacertaMind.worthDragon(LacertaMind.STRONG_HEALTH, false, 0));
+        assertFalse(LacertaMind.worthDragon(LacertaMind.STRONG_HEALTH - 1, false, LacertaMind.CROWD - 1));
+        assertTrue(LacertaMind.worthDragon(20, true, 0), "首领");
+        assertTrue(LacertaMind.worthDragon(20, false, LacertaMind.CROWD), "被围");
+        assertTrue(LacertaMind.DRAGON_FAR > LacertaMind.DRAGON_NEAR);
+    }
+
+    /** 巨龙飞的那一段：俯冲、左右压坡、悬停、振翅往上、滑翔。 */
+    @Test void dragonFlightPicksTheRightClip() {
+        assertEquals("fly_dive", LacertaCompanion.dragonFlyClip(.5, -.5, 0));
+        assertEquals("fly_bank_right", LacertaCompanion.dragonFlyClip(.5, 0, 5));
+        assertEquals("fly_bank_left", LacertaCompanion.dragonFlyClip(.5, 0, -5));
+        assertEquals("fly_hover", LacertaCompanion.dragonFlyClip(.05, 0, 0));
+        assertEquals("fly_flap", LacertaCompanion.dragonFlyClip(.4, .1, 0));
+        assertEquals("fly_glide", LacertaCompanion.dragonFlyClip(.4, -.05, 0));
+        assertEquals("fly_hover", LacertaCompanion.dragonFlyClip(.05, 0, 6), "悬停时转身不压坡");
+    }
+
+    /**
+     * 骑龙飞：按住 W 顺着视线、疾跑更快；松开慢慢下沉；空格往上抬；A 往左（面朝南时往东）；每刻只往想要的速度靠一点（有惯性）。
+     */
+    @Test void ridingFliesAlongYourView() {
+        Vec3 look = new Vec3(0, 0, 1);
+        Vec3 first = LacertaRide.fly(Vec3.ZERO, look, 0, 1, 0, false, false);
+        assertEquals(LacertaRide.FLY_SPEED * LacertaRide.ACCEL, first.z, 1e-9, "有惯性");
+        assertEquals(LacertaRide.FLY_SPEED, settle(look, 1, 0, false, false).z, 1e-3);
+        assertEquals(LacertaRide.FLY_SPEED * LacertaRide.SPRINT, settle(look, 1, 0, false, true).z, 1e-3);
+        Vec3 glide = settle(look, 0, 0, false, false);
+        assertEquals(-LacertaRide.SINK, glide.y, 1e-3, "松开慢慢下沉");
+        assertTrue(settle(look, 0, 0, true, false).y >= LacertaRide.CLIMB - 1e-3, "空格往上抬");
+        assertEquals(LacertaRide.STRAFE, settle(look, 0, 1, false, false).x, 1e-3, "A 往左（面朝南时往东），不越按越快");
+        Vec3 braked = LacertaRide.fly(new Vec3(0, 0, LacertaRide.FLY_SPEED), look, 0, -1, 0, false, false);
+        assertEquals(LacertaRide.FLY_SPEED * (1 - LacertaRide.BRAKE), braked.z, 1e-9, "S 刹住");
+        assertEquals(0, settle(look, -1, 0, true, false).z, 1e-6, "按着 S 停在半空往上抬");
+        Vec3 up = new Vec3(0, .6, .8);
+        assertEquals(.6 * LacertaRide.FLY_SPEED, settle(up, 1, 0, false, false).y, 1e-3, "仰着头往上飞");
+    }
+
+    private static Vec3 settle(Vec3 look, float forward, float strafe, boolean up, boolean sprint) {
+        Vec3 v = Vec3.ZERO;
+        for (int i = 0; i < 400; i++) v = LacertaRide.fly(v, look, 0, forward, strafe, up, sprint);
+        return v;
+    }
+
+    /**
      * 护落：原版的摔伤算法；会摔死（剩不到 1 点）或者摔掉三成生命上限才接；抓住以前那一段掉落拉住手减 75%、抱住减 80%。
      */
     @Test void catchesHeavyFalls() {
@@ -291,6 +393,13 @@ class LacertaTest {
         assertEquals(10, d.praiseDay());
         assertEquals(12, d.critiqueDay());
         assertEquals(10, d.withCritique(13).praiseDay(), "别的记录不动");
+        assertFalse(d.dragonForm(), "默认人形登场");
+        LacertaDays dragon = d.withDragonForm(true);
+        assertTrue(dragon.dragonForm());
+        assertTrue(dragon.withPraise(11).dragonForm(), "别的记录不动");
+        assertEquals(12, dragon.critiqueDay());
+        var savedDragon = LacertaDays.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, dragon).getOrThrow();
+        assertEquals(dragon, LacertaDays.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, savedDragon).getOrThrow());
         var empty = new JsonObject();
         assertEquals(LacertaDays.NONE, LacertaDays.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, empty).getOrThrow());
         var saved = LacertaDays.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, d).getOrThrow();
@@ -346,7 +455,7 @@ class LacertaTest {
         assertNotNull(chat);
         for (TalkMenu.Option o : chat.children()) if (o.id().startsWith("chat.")) keys.add(TALK + "option." + o.id());
         for (String s : new String[]{"blade", "thrust", "vortex", "sweep", "skyfall", "parry", "taunt", "flame", "scale", "glide", "tank", "mana",
-                "vigil", "withdraw", "flight", "catch"}) {
+                "vigil", "withdraw", "flight", "catch", "dragon", "claw", "breath", "ride"}) {
             for (String part : new String[]{"name", "icon", "desc"}) keys.add(TALK + "skill." + s + "." + part);
         }
         for (LacertaRest.Tier t : LacertaRest.Tier.values()) keys.add(TALK + "skill.vigil." + t.name().toLowerCase(Locale.ROOT));
@@ -361,14 +470,15 @@ class LacertaTest {
             keys.add(LINE + "talk.greet_" + s + "_2");
         }
         for (String l : new String[]{"stay", "follow", "refuse", "full", "stuck", "hungry", "seal", "remake", "withdraw", "taunt", "catch_hand", "catch_embrace",
-                "catch_after_hand", "catch_after_embrace", "talk.bye",
+                "catch_after_hand", "catch_after_embrace", "talk.bye", "dragon_mana_out", "dragon_auto", "dragon_revert", "appear_room", "appear_mana",
                 "talk.danger", "talk.rest"}) {
             keys.add(LINE + l);
         }
         for (String l : new String[]{"greet_hurt", "greet_hungry", "food_1", "food_2", "food_3", "slept_1", "slept_2", "pauldron_1", "pauldron_2",
                 "pauldron_3", "knight_early_1", "knight_early_2", "knight_close_1", "knight_close_2", "cold_1", "cold_2", "airships_1", "airships_2",
                 "praise_early_1", "praise_early_2", "praise_close_1", "praise_close_2", "past_more", "seals_none_1", "seals_none_2", "seals_1",
-                "seals_2", "seals_full", "follow", "stay", "pvp_on", "pvp_off", "pvp_off_server", "pouch_back", "scale_have", "scale_given"}) {
+                "seals_2", "seals_full", "follow", "stay", "pvp_on", "pvp_off", "pvp_off_server", "pouch_back", "scale_have", "scale_given",
+                "form_dragon", "form_human", "form_room", "form_mana"}) {
             keys.add(LINE + "talk." + l);
         }
         for (String v : new String[]{"none", "crimson", "rival", "joke", "broken", "ranged", "enchanted", "melee"}) keys.add(LINE + "talk.weapon_" + v);

@@ -78,6 +78,8 @@ final class LacertaMind extends CompanionMind {
     private long nextTaunt, restUntil = -1, calmSince = -1, guardSince = -1, countered;
     private int combo;
     private boolean opening;
+    /** 巨龙：龙炎喷到哪一刻、下次什么时候能喷；她自己变的巨龙打完以后从哪一刻开始太平；下次什么时候能再自己变身。 */
+    private long breathUntil = -1, nextBreath, dragonCalmSince = -1, nextAuto;
     /** 测试用：放过几次赤龙威压。 */
     static int taunts;
     /** 测试用：强行让下一招是这一招（null 照常挑）。 */
@@ -92,9 +94,9 @@ final class LacertaMind extends CompanionMind {
 
     @Override
     protected void scoreOwn(ServerLevel level, ServerPlayer p, OwnerWatch w, long now, Situation s) {
-        // 睡觉、陪你坐都走她自己的（LacertaRest），不用通用的休息
+        // 睡觉、陪你坐都走她自己的（LacertaRest），不用通用的休息；巨龙形态先不坐不睡
         scores.put(Kind.REST, 0.0);
-        scores.put(Kind.LOUNGE, l.rest.score(p, s.doing(), s.calm()));
+        scores.put(Kind.LOUNGE, l.isDragonForm() ? 0 : l.rest.score(p, s.doing(), s.calm()));
     }
 
     /** 通用的挑法之外，再往外找一圈：你周围 18 格（优先近战 24 格）里冲着你、她或别的同伴来的，和会主动伤人的敌对生物。 */
@@ -129,6 +131,18 @@ final class LacertaMind extends CompanionMind {
 
     @Override
     protected void afterThink(ServerLevel level, ServerPlayer p, long now) {
+        // 她自己打起来变的巨龙：打完太平 {@link #DRAGON_REVERT_AFTER} 刻变回人形（你骑着时等你下来）
+        if (l.isDragonForm() && l.dragon.auto() && foe == null && !l.isVehicle() && !l.dragon.breathing()) {
+            if (dragonCalmSince < 0) dragonCalmSince = now;
+            if (now - dragonCalmSince >= DRAGON_REVERT_AFTER) {
+                CompanionLines.say(c, p, "dragon_revert", 40);
+                l.dragon.revert(level, p);
+                dragonCalmSince = -1;
+                nextAuto = now + AUTO_GAP;
+            }
+        } else {
+            dragonCalmSince = -1;
+        }
         // 敌人没了：过一会收剑（剑花、驻剑致礼）
         if (foe == null && l.blade.drawn() && !keepsFighting()) {
             if (calmSince < 0) calmSince = now;
@@ -159,7 +173,7 @@ final class LacertaMind extends CompanionMind {
     /** 接住你的那几秒里什么都不做。 */
     @Override
     protected boolean busy(ServerLevel level, ServerPlayer p, long now) {
-        return l.flight.catching();
+        return l.flight.catching() || l.isVehicle() || l.dragon.appearing();
     }
 
     /** 正在接你：别的反射都不做（掉队闪回会把她闪回地上）。跟着你飞时离得太远：闪到伴飞点。 */
@@ -172,8 +186,25 @@ final class LacertaMind extends CompanionMind {
     @Override
     protected void follow(ServerPlayer p, long now) {
         if (!c.staying() && l.flight.escort(p, now)) return;
+        if (l.isDragonForm()) {
+            dragonFollow(p, now);
+            return;
+        }
         super.follow(p, now);
     }
+
+    /** 巨龙跟着走：离你 {@link #DRAGON_FAR} 格以外才走，走到 {@link #DRAGON_NEAR} 格停（她太大，别挤着你）。 */
+    private void dragonFollow(ServerPlayer p, long now) {
+        if (dist > DRAGON_FAR) {
+            boolean run = dist > DRAGON_FAR * 2 || p.isSprinting();
+            if (now % THINK == 0 || c.getNavigation().isDone()) c.getNavigation().moveTo(p, run ? 1.3 : .9);
+        } else if (dist < DRAGON_NEAR) {
+            c.getNavigation().stop();
+            c.getLookControl().setLookAt(p, 20, 20);
+        }
+    }
+
+    static final double DRAGON_NEAR = 5, DRAGON_FAR = 8;
 
     @Override
     protected void idle(ServerPlayer p, long now, boolean follow) {
@@ -201,6 +232,12 @@ final class LacertaMind extends CompanionMind {
         opening = false;
         double d = l.distanceTo(target);
         boolean low = l.getHealth() < l.getMaxHealth() * TAUNT_HEALTH;
+        if (l.isDragonForm()) {
+            dragonFight(level, target, now, d, hold);
+            return;
+        }
+        // 遇上强敌、被围住：她自己化身巨龙（要有空地、你的魔力够）
+        if (autoTransform(level, target, now)) return;
         // 坠星砸下去的那几刻让它砸完
         var move = l.blade.move();
         if (move != null && "skyfall_judgement".equals(move.name()) && !l.blade.canFollowUp()) return;
@@ -245,6 +282,77 @@ final class LacertaMind extends CompanionMind {
             attack("skyfall_judgement", target, now);
         }
         return true;
+    }
+
+    // ---------------------------------------------------------------- 巨龙（LacertaDragon）
+
+    /** 她自己打完以后多久变回人形；变回以后多久才会再自己变身。 */
+    static final int DRAGON_REVERT_AFTER = 100, AUTO_GAP = 600;
+    /** 强敌：生命上限这么多以上、首领，或者身边这么多格里围着这么多敌人。 */
+    static final double STRONG_HEALTH = 40, CROWD_RADIUS = 8;
+    static final int CROWD = 3;
+    /** 巨龙的龙炎：多远喷、喷多久、喷完多久再喷。 */
+    static final double BREATH_MIN = 6, BREATH_MAX = 16;
+    static final int BREATH_TICKS = 60, BREATH_GAP = 160;
+
+    /** 值得化身巨龙的仗：强敌（{@link #STRONG_HEALTH} 生命以上、首领）或者被围住。 */
+    static boolean worthDragon(double maxHealth, boolean boss, int crowd) {
+        return boss || maxHealth >= STRONG_HEALTH || crowd >= CROWD;
+    }
+
+    /** 刚变回人形（你让的、打完了、魔力不够）：一阵子里不再自己变身。 */
+    void deferAuto(long now) {
+        nextAuto = now + AUTO_GAP;
+    }
+
+    private boolean autoTransform(ServerLevel level, LivingEntity target, long now) {
+        if (owner == null || !target.isAlive() || now < nextAuto || tactic == CompanionTactic.PASSIVE || l.flight.flying() || l.blade.attacking()) return false;
+        if (!worthDragon(target.getMaxHealth(), target.is(Tags.EntityTypes.BOSSES), crowd(c.position(), CROWD_RADIUS))) return false;
+        if (!l.dragon.transform(level, owner, true)) {
+            nextAuto = now + 100;
+            return false;
+        }
+        CompanionLines.say(c, owner, "dragon_auto", 40);
+        return true;
+    }
+
+    /**
+     * 巨龙怎么打：龙炎喷着时对着它喷完；贴身挥爪；6–16 格、看得见、龙炎好了就喷；够不着（天上、高台）飞到它后上方悬停着喷；
+     * 不然走过去。
+     */
+    private void dragonFight(ServerLevel level, LivingEntity target, long now, double d, boolean hold) {
+        LacertaDragon dragon = l.dragon;
+        c.getLookControl().setLookAt(target, 30, 30);
+        if (dragon.breathing()) {
+            if (now >= breathUntil || !target.isAlive() || d > BREATH_MAX + 4) dragon.stopBreath(level);
+            return;
+        }
+        double reach = LacertaDragon.CLAW_REACH - .3 + target.getBbWidth() * .5;
+        if (d <= reach && dragon.clawReady(now)) {
+            face(target);
+            dragon.claw(now);
+            return;
+        }
+        boolean reachable = melee(target);
+        if (d >= BREATH_MIN && d <= BREATH_MAX && now >= nextBreath && c.hasLineOfSight(target) && dragon.breathReady()) {
+            if (dragon.startBreath(() -> target.getEyePosition().subtract(dragon.mouth()).normalize())) {
+                breathUntil = now + BREATH_TICKS;
+                nextBreath = now + BREATH_TICKS + BREATH_GAP;
+                c.getNavigation().stop();
+                return;
+            }
+        }
+        if (!reachable && !hold && l.flight.canTakeOff() || l.flight.flying() && !reachable) {
+            l.flight.dragonHover(target, now);
+            return;
+        }
+        if (l.flight.flying()) l.flight.land();
+        if (hold || d <= reach - .5) {
+            c.getNavigation().stop();
+            face(target);
+        } else if (now % 5 == 0 || c.getNavigation().isDone()) {
+            c.getNavigation().moveTo(target, d > 10 ? 1.3 : 1.0);
+        }
     }
 
     /** 近战够得着：在地上（或者不高），寻路过得去。 */
@@ -479,14 +587,20 @@ final class LacertaMind extends CompanionMind {
     void taunt(ServerLevel level, long now, boolean open) {
         if (holdsBack() || now < nextTaunt || l.getHealth() <= l.getMaxHealth() * TAUNT_HEALTH) return;
         ServerPlayer p = owner;
-        List<Mob> mobs = level.getEntitiesOfClass(Mob.class, l.getBoundingBox().inflate(TAUNT_RADIUS),
-                m -> m.isAlive() && l.canHarm(m) && l.hostileTo(m) && m.distanceTo(l) <= TAUNT_RADIUS && !m.is(Tags.EntityTypes.BOSSES));
+        double radius = l.isDragonForm() ? LacertaDragon.TAUNT_RADIUS : TAUNT_RADIUS;
+        List<Mob> mobs = level.getEntitiesOfClass(Mob.class, l.getBoundingBox().inflate(radius),
+                m -> m.isAlive() && l.canHarm(m) && l.hostileTo(m) && m.distanceTo(l) <= radius && !m.is(Tags.EntityTypes.BOSSES));
         if (mobs.isEmpty()) return;
         boolean onAllies = mobs.stream().anyMatch(m -> m.getTarget() != null && m.getTarget() != l);
         if (!open && !onAllies && mobs.size() < 2) return;
         nextTaunt = now + TAUNT_GAP;
         taunts++;
-        l.mood.act("taunt");
+        // 巨龙：全幅扇翼威慑（人形是巨翼一甩的 taunt）
+        if (l.isDragonForm()) {
+            if (!l.dragon.appearing()) l.mood.play("wing_flap", 32);
+        } else {
+            l.mood.act("taunt");
+        }
         for (Mob m : mobs) {
             m.setTarget(l);
             taunted.put(m, now + TAUNT_HOLD);
