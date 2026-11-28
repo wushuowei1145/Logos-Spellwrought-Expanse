@@ -1,5 +1,20 @@
 # 首版验证记录
 
+## 武器的 AI 用法 · 第一步（诸武精通，2026-11-28）
+
+分支 `feat/weapon-ai`，基于 main `dc6e6df7`（#326）。设计见 [武器的 AI 用法](docs/WEAPON_AI.md)，拉塞塔这边的变化见 [拉塞塔](docs/LACERTA_COMPANION.md) 第 23 节。维护者定的：用法写在招式文件里；只对玩家有意义的机制不给 AI；车万女仆先不做；角色自己的用法自己覆盖。AI 和玩家按同一份招式文件按键这一条维护者没另外说，照提议做。jar 同阶段 A（`builds/lacerta-jars/`）。
+
+| 项 | 结果 |
+|---|---|
+| 构建 | `compileJava` 通过 |
+| 单元 | 全部 **546** 个通过。新加 `WeaponAiTest` 5 个：炽焰长剑的 `ai` 读得通、对得上招式；驾驶员沿转移图找得到怎么按（横扫要先横防、坠星要空中、跳不起来就没有坠星、突刺要潜行、旋风要疾跑、龙牙只能接在弹开后面、一式砍到一半缓冲接二式、想放突刺先等一式播完）；角色文件只写 `ai` 的招照搬武器的招、几种用法都盖上、没写的字段照旧、`"ai": false` 不用、顶层只盖写到的；写错的用途、近远写反、写在不存在的招上、`via` 不认识的键都报错。`LacertaTest` 改成对她跑的玩家那份招式（28 个，防复读挪进 `WeaponAiTest`） |
+| GameTest（玩家这边不变） | `longsword_*` 22/22、`crimson_flame_*` 3/3、`jinghong_*` 7/7、`lingxiao_*` 11/11、`dawnvow_*` 12/12、`*round*` 18/18、`ammo_bench_*` 5/5、`elf_spear_*` 16/16、`dragonfire_*` 11/11。`shiraume_*` 13 个整组跑三遍有两遍各挂一个（`ichimonji_turns_when_behind`、`ichimonji_wave`），单独跑 10/10；main 上整组跑两遍也挂（`ichimonji_wave`；`beast_pounce_lands_on_mark` 和 `beast_pounce_land_breaks_guard`），原来就有的组内偶发 |
+| 客户端（玩家这边不变） | 八组连着跑 8/11：`crimson_flame_longsword`、`blacksteel`、`blacksteel_cast`、`blacksteel_left`、`dawnvow`、`jinghong`、`oath_spear`、`parried` 过；`gunaxe`（木桩挨了霰弹）、`lingxiao`（fp 进入 attack_1）、`weapon_trails_crimson_flame`（默认是龙炎刀光）没过。main 上同样八组连着跑，挂的是同样三个、同样的步骤；这三个单独跑在 main 和这边都 3/3。是前面的场景留下的状态串到后面（铳斧失败那张截图上玩家身上还缠着前面场景的特效），和这次无关 |
+| 客户端（拉塞塔） | `group:lacerta_companion` **35/36**（87/87 个检查），没过的还是阶段 C 的 `lacerta_dragon_ride`（飞到十几格高时超时，阶段 E 那一轮也是它）。`lacerta_skills` 逐招强行出突刺、旋风、横扫、坠星、十文字都出得来（坠星先跳起来、横扫先横防，十文字经旋风接上）；`lacerta_fight` 打倒两只僵尸、至少换两种招；`lacerta_pursuit` 飞上去砸坠星；`lacerta_seal_locks`、`lacerta_wrath` 照旧。`group:lacerta_ultimate` 4/4、`group:companion_book` 1/1 |
+| 人工看截图 | 仓库外 `MinecraftLogosMod/lacerta_dragon_model/ingame/weapon_ai_v01`（逐招、打僵尸、空中追击）。坠星时她在半空、靶子被挑起；横扫扫出游脉；打僵尸时剑砍中 |
+
+没测：她拿炽焰长剑以外的武器（下一步）；`NpcWeapon.block`（同伴按住横防时挡正面一下，拉塞塔用的是她自己的龙骑武艺，这一步没人走到）；`ai.via`（只测了读，炽焰长剑用不上）；手感（连段比原来慢一点、挑飞的敌人在空中定一会儿）。
+
 ## 拉塞塔同伴（阶段 E：鳞之契与初遇，2026-11-28）
 
 分支 `feat/lacerta-seals`，基于 main `07676443`（#318 阶段 D）。做了什么、和设计稿不同的地方见 [拉塞塔](docs/LACERTA_COMPANION.md) 第 21 节。维护者这一轮定的：契印照第 4 节锁回去；诸武精通拆出去先讨论；初遇照第 3.1 节；没有的契印动作先借现成的。jar 同阶段 A（`builds/lacerta-jars/`）。

@@ -4,6 +4,7 @@ import dev.logos.dimension.DimensionBlocks;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.combat.CombatWeapon;
 import dev.logos.dimension.combat.Moveset;
+import dev.logos.dimension.combat.Wielder;
 import dev.logos.dimension.longsword.LongswordCombat;
 import java.util.List;
 import java.util.Optional;
@@ -78,25 +79,25 @@ public final class CrimsonFlameLongswordItem extends Item implements CombatWeapo
     public CombatWeapon combatWeapon() { return weapon; }
 
     @Override
-    public boolean allows(ServerPlayer player, String requirement) {
-        return CrimsonFlameSkills.allows(player, requirement);
+    public boolean allows(Wielder w, String requirement) {
+        return CrimsonFlameSkills.allows(w, requirement);
     }
 
     @Override
-    public void combatTick(ServerPlayer player, String move) {
-        CrimsonFlameSkills.combatTick(player, move);
+    public boolean combatTick(Wielder w, String move) {
+        return CrimsonFlameSkills.combatTick(w, move);
     }
 
     @Override
-    public boolean swing(ServerPlayer player, Moveset.Move move) {
-        CrimsonFlameSkills.onSwing(player, move);
+    public boolean swing(Wielder w, Moveset.Move move) {
+        CrimsonFlameSkills.onSwing(w, move);
         return true;
     }
 
     /** 每一剑都换成龙炎（{@link CrimsonFlameSkills#strike}），不走原版近战。 */
     @Override
-    public boolean strike(ServerPlayer player, Entity target, Moveset.Move move) {
-        if (target instanceof LivingEntity living) CrimsonFlameSkills.strike(player, living, move);
+    public boolean strike(Wielder w, Entity target, Moveset.Move move) {
+        if (target instanceof LivingEntity living) CrimsonFlameSkills.strike(w, living, move);
         return true;
     }
 

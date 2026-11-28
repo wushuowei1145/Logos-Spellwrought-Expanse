@@ -86,11 +86,11 @@ final class LacertaTalk {
         boolean dragon = LacertaSeals.has(seals, LacertaSeals.DRAGON);
         List<CompanionSheet.Skill> skills = new ArrayList<>(List.of(
                 new CompanionSheet.Skill("blade", CompanionSheet.NORMAL, 0, true, List.of(num(hit), num(hit * 1.45))),
-                new CompanionSheet.Skill("thrust", CompanionSheet.SPECIAL, 0, true, List.of(num(hit * 1.25), cd("crimson_thrust"))),
-                new CompanionSheet.Skill("vortex", CompanionSheet.SPECIAL, 0, true, List.of(num(hit * .85), cd("vortex_rush"))),
-                new CompanionSheet.Skill("sweep", CompanionSheet.SPECIAL, 0, true, List.of(num(hit * 1.35), "10", "11", cd("flame_sweep"))),
+                new CompanionSheet.Skill("thrust", CompanionSheet.SPECIAL, 0, true, List.of(num(hit * 1.25), cd(c, "crimson_thrust"))),
+                new CompanionSheet.Skill("vortex", CompanionSheet.SPECIAL, 0, true, List.of(num(hit * .85), cd(c, "vortex_rush"))),
+                new CompanionSheet.Skill("sweep", CompanionSheet.SPECIAL, 0, true, List.of(num(hit * 1.35), "10", "11", cd(c, "flame_sweep"))),
                 new CompanionSheet.Skill("skyfall", CompanionSheet.SPECIAL, LacertaSeals.SKYFALL, LacertaSeals.has(seals, LacertaSeals.SKYFALL),
-                        List.of(num(hit * 1.55), "12", "3.8", cd("skyfall_judgement"))),
+                        List.of(num(hit * 1.55), "12", "3.8", cd(c, "skyfall_judgement"))),
                 new CompanionSheet.Skill("parry", CompanionSheet.SPECIAL, LacertaSeals.ARTS, LacertaSeals.has(seals, LacertaSeals.ARTS),
                         List.of(num(LacertaBlade.BLOCK_MELEE * 100), num(hit * 1.5))),
                 new CompanionSheet.Skill("taunt", CompanionSheet.SPECIAL, 0, true, List.of(num(LacertaMind.TAUNT_RADIUS), num(LacertaMind.TAUNT_HOLD / 20f),
@@ -137,8 +137,9 @@ final class LacertaTalk {
                 (float) LacertaStats.tankRatio(seals));
     }
 
-    private static String cd(String move) {
-        return num(LacertaMind.COOLDOWN.getOrDefault(move, 0) / 20f);
+    /** 剑招的软冷却（秒）：炽焰长剑招式文件里这一招的 {@code ai.cooldown}。 */
+    private static String cd(LacertaCompanion c, String move) {
+        return num((float) c.blade.cooldown(move));
     }
 
     private static CompanionSheet.Stat stat(String id, float value, CompanionStats.Part part, float current) {

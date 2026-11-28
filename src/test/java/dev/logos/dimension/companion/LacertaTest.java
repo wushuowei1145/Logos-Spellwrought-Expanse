@@ -15,8 +15,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * 拉塞塔同伴第一阶段（docs/LACERTA_COMPANION.md，接入方案第八节阶段 A）：游戏里用到的动画都在她的模型里、长度和标记对得上；
- * 她的招式文件和模型里的 crimson_* 一致、和玩家的炽焰长剑同一套数；防御向继承分段上升不封顶、魔力法强慢慢长、超出原版上限的护甲和魔咒
- * 折成有上限的减伤；防复读的罚分；床边的朝向；一天的事一天算；掌心赤焰的术式编得过；台词、对话、面板的语言键中英文都齐。
+ * 她跑的玩家炽焰长剑招式和模型里的 crimson_* 一致；防御向继承分段上升不封顶、魔力法强慢慢长、超出原版上限的护甲和魔咒
+ * 折成有上限的减伤；床边的朝向；一天的事一天算；掌心赤焰的术式编得过；台词、对话、面板的语言键中英文都齐。
  * 看武器怎么评要真的物品（单元测试里物品的组件还没绑定），放在客户端测试 {@code lacerta_talk} 里。
  */
 class LacertaTest {
@@ -88,7 +88,7 @@ class LacertaTest {
                 "act_guard", "act_wing_cape", "flame_throw", "act_oath", "act_sniff", "act_hmph"));
         for (LacertaRest.Tier t : LacertaRest.Tier.values()) used.add(t.clip);
         used.addAll(LacertaCompanion.WHOLE_BODY);
-        for (String m : moves("lacerta_companion").keySet()) used.add(LacertaBlade.PREFIX + m);
+        for (String m : moves("crimson_flame_longsword").keySet()) used.add(crimson() + m);
         for (String name : used) assertTrue(anims.has(name), "模型里没有 " + name);
     }
 
@@ -114,19 +114,27 @@ class LacertaTest {
         assertTrue(anims.getAsJsonObject("wings_folded").get("loop").getAsBoolean());
     }
 
+    /** 她用的炽焰长剑动作前缀：招式文件顶层 {@code ai.clips}（docs/WEAPON_AI.md 第 3.2 节）。 */
+    private static String crimson() throws Exception {
+        return read("/data/logos_dimension/combat/movesets/crimson_flame_longsword.json").getAsJsonObject("ai").get("clips").getAsString() + "_";
+    }
+
     /**
-     * 她的招式文件：每一招的时长和模型里的 crimson_* 一致、接触时刻对得上 contact 标记；招式、时长、接触、张角、倍数和玩家的炽焰长剑一样；
-     * 没有按键（下一招由心智挑）；心智里提到的招式（冷却、后继）都在文件里。
+     * 她跑的是玩家那份炽焰长剑招式文件（docs/WEAPON_AI.md）：每一招在模型里有 crimson_*，时长一致、接触时刻对得上 contact 标记；
+     * 心智、龙骑武艺里点名的招都在文件里。
      */
-    @Test void movesetMatchesTheClipsAndThePlayersSword() throws Exception {
+    @Test void playersMovesetMatchesHerClips() throws Exception {
         JsonObject anims = animations();
-        JsonObject mine = moves("lacerta_companion"), player = moves("crimson_flame_longsword");
-        for (var e : mine.entrySet()) {
+        JsonObject player = moves("crimson_flame_longsword");
+        String prefix = crimson();
+        assertEquals("crimson_", prefix);
+        for (var e : player.entrySet()) {
             String name = e.getKey();
             JsonObject m = e.getValue().getAsJsonObject();
-            JsonObject clip = anims.getAsJsonObject(LacertaBlade.PREFIX + name);
+            String clipName = m.has("clip") ? m.get("clip").getAsString() : name;
+            JsonObject clip = anims.getAsJsonObject(prefix + clipName);
+            assertNotNull(clip, "模型里没有 " + prefix + clipName);
             assertEquals(ticks(clip), Math.round(m.get("length").getAsDouble() * 20), name + " 的时长");
-            assertFalse(m.has("input"), name + " 不该有按键");
             if (m.has("contact")) {
                 List<Double> want = new ArrayList<>();
                 JsonElement c = m.get("contact");
@@ -134,17 +142,9 @@ class LacertaTest {
                 else want.add(c.getAsDouble());
                 assertEquals(want, markers(clip, "contact"), name + " 的接触时刻");
             }
-            JsonObject p = player.getAsJsonObject(name);
-            if (p == null) continue;
-            for (String k : new String[]{"length", "contact", "cone", "damage"}) {
-                assertEquals(p.get(k), m.get(k), name + " 的 " + k + " 和玩家的不一样");
-            }
         }
-        for (String m : LacertaMind.COOLDOWN.keySet()) assertTrue(mine.has(m), "冷却里的 " + m + " 不在招式文件里");
-        for (var e : LacertaMind.FLOW.entrySet()) {
-            assertTrue(mine.has(e.getKey()), e.getKey());
-            for (String next : e.getValue().keySet()) assertTrue(mine.has(next), next);
-        }
+        for (String m : List.of("idle", "draw", "guard", "parry", "dragon_fang", "flame_sweep", "skyfall_judgement", "parried_npc"))
+            assertTrue(player.has(m), m + " 不在招式文件里");
     }
 
     /** 防御向继承：0 枚 50%、4 枚 100%、9 枚 200%，之后每枚 +10%；魔力法强 10% 起每枚 +5%。 */
@@ -394,17 +394,6 @@ class LacertaTest {
         }
         Vec3 south = LacertaFlight.escortPoint(Vec3.ZERO, 0);
         assertTrue(south.z < 0 && south.x > 0, south.toString());
-    }
-
-    /** 防复读：刚放过的那一招罚 0.45，往前每一招减半，放过几次就叠几次；顺手的后继加分。 */
-    @Test void repeatsArePenalised() {
-        assertEquals(.45, LacertaMind.repeat(List.of("flame_sweep", "cleave_1"), "flame_sweep"), 1e-9);
-        assertEquals(.225, LacertaMind.repeat(List.of("cleave_1", "flame_sweep"), "flame_sweep"), 1e-9);
-        assertEquals(.45 + .1125, LacertaMind.repeat(List.of("vortex_rush", "cleave_1", "vortex_rush"), "vortex_rush"), 1e-9);
-        assertEquals(0, LacertaMind.repeat(List.of(), "cleave_1"), 1e-9);
-        assertEquals(.5, LacertaMind.flow("vortex_rush", "cross_rend"), 1e-9);
-        assertEquals(0, LacertaMind.flow(null, "cross_rend"), 1e-9);
-        assertEquals(0, LacertaMind.flow("cleave_1", "skyfall_judgement"), 1e-9);
     }
 
     /**

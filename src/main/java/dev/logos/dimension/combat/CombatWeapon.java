@@ -20,20 +20,23 @@ public record CombatWeapon(int id, String mesh, String animations, Identifier mo
     /** 明确选择菱形判定的武器，其他武器继续使用原有锥形。 */
     private static final java.util.Set<Integer> DIAMONDS = ConcurrentHashMap.newKeySet();
 
-    /** 战斗武器物品。 */
+    /**
+     * 战斗武器物品。钩子都对持握者（{@link Wielder}：玩家或同伴，docs/WEAPON_AI.md 第 2.1 节）写；只对玩家有意义的，
+     * 开头 {@code if (w.player() == null) return 默认值;}。格挡的两个（{@link #manaGuard}、{@link #manaGuarded}）跟着原版盾牌走，只认玩家。
+     */
     public interface Holder {
         CombatWeapon combatWeapon();
         /** 左键将要交给招式状态机前调用（{@code move} 为当前招式）；返回 false 时这次左键作废。施法剑在格挡里借此开始蓄力。 */
-        default boolean allowsAttack(net.minecraft.server.level.ServerPlayer player, String move) { return true; }
-        /** 招式状态机每刻结算之后调用。 */
-        default void combatTick(net.minecraft.server.level.ServerPlayer player, String move) {}
+        default boolean allowsAttack(Wielder w, String move) { return true; }
+        /** 招式状态机每刻结算之后调用。返回这一刻是不是武器自己在推着持握者走（突刺、坠星）：同伴这一刻就不再往目标带步。 */
+        default boolean combatTick(Wielder w, String move) { return false; }
         /** 一刀接触、结算目标之前调用；返回 false 时这一刀落空，不打任何目标（流火魔力不够时）。 */
-        default boolean swing(net.minecraft.server.level.ServerPlayer player, Moveset.Move move) { return true; }
+        default boolean swing(Wielder w, Moveset.Move move) { return true; }
         /**
-         * 自己结算这一刀对 {@code target} 的伤害时返回 true，这一下就不走原版 {@code player.attack}（流火只打魔法伤害）。
-         * 默认 false：伤害走原版近战流程。
+         * 自己结算这一刀对 {@code target} 的伤害时返回 true，这一下就不走原版近战（玩家 {@code player.attack}，同伴生物近战伤害）。
+         * 默认 false。流火只打魔法伤害，炽焰长剑只打龙炎。
          */
-        default boolean strike(net.minecraft.server.level.ServerPlayer player, net.minecraft.world.entity.Entity target, Moveset.Move move) { return false; }
+        default boolean strike(Wielder w, net.minecraft.world.entity.Entity target, Moveset.Move move) { return false; }
         /**
          * 正在招式 {@code move} 里格挡时，格挡是不是一面魔力护盾（{@code longsword.ManaGuard}）：挡下的扣魔力不扣耐久，
          * 正面的魔法伤害与法术体也挡，虚空穿透。默认 false：原版格挡。黑钢长剑在竖剑格挡时是，流火一直是。
@@ -42,21 +45,21 @@ public record CombatWeapon(int id, String mesh, String animations, Identifier mo
         /** 魔力护盾挡下一击、付完这一下的魔力之后调用（流火在这里结算破盾）。 */
         default void manaGuarded(net.minecraft.server.level.ServerPlayer player, net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent event) {}
         /**
-         * 这一刀打中了 {@code target}（原版攻击已结算、没有被弹开）之后调用，每个目标一次；{@code first} 为这一刀的第一个目标
-         * （准星正对着的那个排第一）。惊鸿在这里让身后的剑追击。
+         * 这一刀打中了 {@code target}（伤害已结算、没有被弹开）之后调用，每个目标一次；{@code first} 为这一刀的第一个目标
+         * （对着的那个排第一）。惊鸿在这里让身后的剑追击。
          */
-        default void hit(net.minecraft.server.level.ServerPlayer player, net.minecraft.world.entity.Entity target, Moveset.Move move, boolean first) {}
+        default void hit(Wielder w, net.minecraft.world.entity.Entity target, Moveset.Move move, boolean first) {}
         /**
-         * 原版格挡挡下一击、交给招式文件的 {@code block} 输入之后调用；{@code parried} 为这一下转入了弹刀（{@code effect: parry}）。
+         * 格挡挡下一击、交给招式文件的 {@code block} 输入之后调用；{@code parried} 为这一下转入了弹刀（{@code effect: parry}）。
          * 惊鸿在这里让身后的剑反击。
          */
-        default void blocked(net.minecraft.server.level.ServerPlayer player, net.minecraft.world.damagesource.DamageSource source, boolean parried) {}
+        default void blocked(Wielder w, net.minecraft.world.damagesource.DamageSource source, boolean parried) {}
         /** 招式的 {@code fire} 时刻（铳扣扳机，见 docs/FIREARMS.md）。 */
-        default void fire(net.minecraft.server.level.ServerPlayer player, Moveset.Move move, int index) {}
+        default void fire(Wielder w, Moveset.Move move, int index) {}
         /** 招式的 {@code feed} 时刻（铳换弹装到位）。 */
-        default void feed(net.minecraft.server.level.ServerPlayer player, Moveset.Move move) {}
-        /** 招式文件里转移的前提（{@code require}）对这名玩家是否满足；默认都不满足（这把武器的招式文件不该写前提）。 */
-        default boolean allows(net.minecraft.server.level.ServerPlayer player, String requirement) { return false; }
+        default void feed(Wielder w, Moveset.Move move) {}
+        /** 招式文件里转移的前提（{@code require}）对这名持握者是否满足；默认都不满足（这把武器的招式文件不该写前提）。 */
+        default boolean allows(Wielder w, String requirement) { return false; }
     }
 
     public static CombatWeapon register(int id, String mesh, String animations, Identifier moveset) {

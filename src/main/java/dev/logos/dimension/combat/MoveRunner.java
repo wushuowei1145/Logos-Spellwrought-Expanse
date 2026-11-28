@@ -47,6 +47,18 @@ public final class MoveRunner {
     public double age(double now) { return now - start; }
     /** 当前招式已经播放的动作时间（秒），不取模、不截断。 */
     private double elapsed(double now) { return Math.max(0, now - start) / 20 * rate; }
+    /** 同 {@link #elapsed}：转移的时间窗按它算（驾驶员看现在按下去接不接得上）。 */
+    public double time(double now) { return elapsed(now); }
+    /** 有缓冲着、还没到取消点的转移。 */
+    public boolean hasQueued() { return queued != null; }
+    /** 这条转移现在按下去接到哪一招：带 {@code combo} 的、上一段连招还在记忆时间内时是它的 {@code combo_next}。 */
+    public String destination(Moveset.Transition transition, double now) {
+        if (transition.combo() && comboMove != null && now - comboTime <= set.comboMemory() * 20 + EPSILON) {
+            var next = set.move(comboMove).comboNext();
+            if (next != null) return next;
+        }
+        return transition.to();
+    }
 
     /** 处理一次输入；接受（立即切换或排队）时返回 true。 */
     public boolean input(Moveset.Input input, double now) {

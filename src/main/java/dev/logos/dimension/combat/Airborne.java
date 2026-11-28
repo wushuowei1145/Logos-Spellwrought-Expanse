@@ -94,7 +94,7 @@ public final class Airborne {
     }
 
     /** 挑飞；已经在空中时重新计时。返回是否进入（或保持）浮空。 */
-    public static boolean launch(LivingEntity e, ServerPlayer by) {
+    public static boolean launch(LivingEntity e, LivingEntity by) {
         if (!canLaunch(e)) return false;
         long now = e.level().getGameTime();
         int duration = durationTicks(e.getBbWidth(), e.getBbHeight());
@@ -157,12 +157,12 @@ public final class Airborne {
         state.bump = Math.min(state.bump + 0.06, 0.3);
     }
 
-    /** 这名玩家挑起、离 center 不超过 range 格的浮空目标。 */
-    public static List<LivingEntity> launchedBy(ServerPlayer player, double range) {
+    /** {@code by}（玩家或同伴）挑起、离它不超过 range 格的浮空目标。 */
+    public static List<LivingEntity> launchedBy(LivingEntity by, double range) {
         List<LivingEntity> out = new ArrayList<>();
         for (var state : STATES.values())
-            if (state.by.equals(player.getUUID()) && state.entity.level() == player.level() && state.entity.isAlive()
-                    && state.entity.distanceTo(player) <= range) out.add(state.entity);
+            if (state.by.equals(by.getUUID()) && state.entity.level() == by.level() && state.entity.isAlive()
+                    && state.entity.distanceTo(by) <= range) out.add(state.entity);
         return out;
     }
 

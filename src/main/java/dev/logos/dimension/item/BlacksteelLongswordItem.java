@@ -2,6 +2,7 @@ package dev.logos.dimension.item;
 
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.combat.CombatWeapon;
+import dev.logos.dimension.combat.Wielder;
 import dev.logos.dimension.longsword.LongswordCombat;
 import dev.logos.dimension.longsword.ManaGuard;
 import dev.logos.dimension.longsword.SwordCasting;
@@ -87,8 +88,12 @@ public final class BlacksteelLongswordItem extends WandItem implements CombatWea
         return true;
     }
 
-    @Override public boolean allowsAttack(ServerPlayer player, String move) { return SwordCasting.allowsAttack(player, move); }
-    @Override public void combatTick(ServerPlayer player, String move) { SwordCasting.tick(player, move); }
+    // 施法跟着玩家（Logos 的蓄力）；同伴还不会用（docs/WEAPON_AI.md 第 7 节）
+    @Override public boolean allowsAttack(Wielder w, String move) { return !(w.player() instanceof ServerPlayer player) || SwordCasting.allowsAttack(player, move); }
+    @Override public boolean combatTick(Wielder w, String move) {
+        if (w.player() instanceof ServerPlayer player) SwordCasting.tick(player, move);
+        return false;
+    }
     @Override public boolean manaGuard(ServerPlayer player, String move) { return SwordCasting.guarding(move); }
 
     @Override protected Component usage() { return Component.translatable("tooltip.logos_dimension.blacksteel_longsword.cast"); }

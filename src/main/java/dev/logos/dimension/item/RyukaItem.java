@@ -4,6 +4,7 @@ import dev.logos.dimension.DimensionBlocks;
 import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.combat.CombatWeapon;
 import dev.logos.dimension.combat.Moveset;
+import dev.logos.dimension.combat.Wielder;
 import dev.logos.dimension.ryuka.Ryuka;
 import dev.logos.dimension.longsword.LongswordCombat;
 import java.util.List;
@@ -71,21 +72,25 @@ public final class RyukaItem extends Item implements CombatWeapon.Holder {
         return true;
     }
 
-    @Override public boolean allowsAttack(ServerPlayer player, String move) { return Ryuka.canSwing(player); }
+    // 魔力、架势突进、处决都跟着玩家；同伴（白梅）用自己的那一份（CompanionBlade）
+    @Override public boolean allowsAttack(Wielder w, String move) { return !(w.player() instanceof ServerPlayer player) || Ryuka.canSwing(player); }
 
-    @Override public void combatTick(ServerPlayer player, String move) {
+    @Override public boolean combatTick(Wielder w, String move) {
+        if (!(w.player() instanceof ServerPlayer player)) return false;
         Ryuka.upkeep(player, player.getMainHandItem());
         dev.logos.dimension.ryuka.RyukaDash.tick(player, move);
+        return false;
     }
 
-    @Override public boolean swing(ServerPlayer player, Moveset.Move move) { return Ryuka.swing(player, move); }
+    @Override public boolean swing(Wielder w, Moveset.Move move) { return !(w.player() instanceof ServerPlayer player) || Ryuka.swing(player, move); }
 
     /** 流火的格挡一直是魔力护盾：挡下的扣魔力，魔法和法术体也挡（{@link dev.logos.dimension.longsword.ManaGuard}）。 */
     @Override public boolean manaGuard(ServerPlayer player, String move) { return true; }
 
     @Override public void manaGuarded(ServerPlayer player, net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent event) { Ryuka.guarded(player, event); }
 
-    @Override public boolean strike(ServerPlayer player, Entity target, Moveset.Move move) {
+    @Override public boolean strike(Wielder w, Entity target, Moveset.Move move) {
+        if (!(w.player() instanceof ServerPlayer player)) return false;
         if (target instanceof LivingEntity living) {
             Ryuka.strike(player, living, Ryuka.DAMAGE * move.damage());
             // 突进后的上挑：缠身着的处决，其余挑飞

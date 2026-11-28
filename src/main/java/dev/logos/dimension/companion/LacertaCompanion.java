@@ -56,7 +56,7 @@ import org.jspecify.annotations.Nullable;
  * </ul>
  * 召唤和收回用誓约逆鳞（{@link DragonScaleItem}）。表情和小动作在 {@link LacertaMood}，对话在 {@link LacertaTalk}。
  */
-public class LacertaCompanion extends CompanionEntity implements ManaVessel {
+public class LacertaCompanion extends CompanionEntity implements ManaVessel, dev.logos.dimension.combat.Parry.Reactive {
     public static final String ID = "lacerta";
     public static final Identifier ASSET = LogosDimension.id("lacerta_companion");
     /** 巨龙形态的模型、动画、贴图（{@link LacertaDragon}）。 */
@@ -583,6 +583,17 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     @Override
     protected boolean busyHands() {
         return blade.drawn() || throwing();
+    }
+
+    /** 她这一剑被弹开（玩家的弹刀、神狐格开）：进 NPC 的僵直（招式文件的 {@code parried_npc}）。 */
+    @Override
+    public boolean parried(LivingEntity by) {
+        return blade.parried(by);
+    }
+
+    @Override
+    public boolean staggered() {
+        return blade.staggered();
     }
 
     // ---------------------------------------------------------------- 每刻

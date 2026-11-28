@@ -148,6 +148,8 @@ CombatWeapon.register(6, "glaive", "glaive", GLAIVE_MOVESET).withCone(90);
 
 被弹反：招式名 `parried` 和 `parried_npc` 是保留的。转入带 `effect: parry` 的招式（打刀的弹刀）或神狐格开近战时，攻击方被强制切到自己招式文件里的僵直：玩家用 `parried`（约 0.5 秒），NPC 用 `parried_npc`（约 0.8 秒，没有时退回 `parried`）。两者都不写 `on`（这段时间不能出招、不能格挡），`reset_combo`，`next` 回待机。僵直长短跟着招式文件走，不写在生物上，用同一把武器的 NPC 都一样；某个 NPC 要不同的长度时，用 `extends` 继承武器的招式文件，只改 `parried_npc`。这一下没有砍中：后面的目标不再结算，缓冲的输入和挑飞之类的效果作废；按着右键时原版格挡也停掉。攻击方能走动，切走物品照常收剑（收剑比僵直长，也不能出招）。只有亲手的近战算数，弹射物和法术被挡下时攻击方没有反应。入口是 `combat/Parry`：玩家走 `LongswordCombat.parried`，只对招式文件里有 `parried` 的武器生效（和弓没有）；生物要实现 `Parry.Reactive`（目前只有神狐）。用招式状态机的 NPC 这样接入：`parried` 里调 `Parry.staggerNpc` 和 `StaggerGoal.interrupt`（当刻打断正在跑的移动类行为，不然追击行为还会多跑一下，可能正好触发突进），`staggered` 里调 `Parry.isStagger`，高优先级加一个 `StaggerGoal`（僵直时占住移动和视线）；受击时要不要格挡由 NPC 自己决定，神狐僵直时挡不了。动作要烘焙到这个 NPC 的骨架上。以后的 Boss 实现 `Reactive` 就能接上自己的动作。原版和其他模组的生物不实现这个接口，行为不变（第 1 节第 1 条）。
 
+AI 用法：招式文件可以写 `ai`（顶层一份、每一招一份），说给同伴听这一招是干什么用的、什么时候用；同伴和玩家跑同一份招式文件、按同样的键。字段、驾驶员怎么挑怎么按、角色怎么只改用法（`extends` 里只写 `ai` 的招照搬父文件的招）见 [武器的 AI 用法](WEAPON_AI.md)。`ai` 写错了只记日志，招式照常给玩家用。
+
 兼容（第 1 节第 5 条）：招式文件缺失或格式错误时 `Movesets` 记一次日志，长剑不进入持剑动作，按原版物品处理（左键是原版攻击）；客户端在服务端回报持剑动作之前也不拦截左键。
 
 ## 6. 动作标记（美术交付）
@@ -211,6 +213,9 @@ CombatWeapon.register(6, "glaive", "glaive", GLAIVE_MOVESET).withCone(90);
 - `MoveRunner`：一名角色身上的招式状态机，只依赖游戏刻和攻速，通过 `Actor` 回调换招与接触。
 - `Movesets`：按服务端资源管理器缓存招式，`/reload` 后重新读取。
 - `Parry`：弹刀成功后让近战的攻击方僵直（第 5 节「被弹反」）；`Parry.Reactive` 是生物接入的接口，`Parry.staggerNpc`、`Parry.isStagger` 和 `StaggerGoal` 是 NPC 共用的部分。
+- `Wielder`：拿着战斗武器的那一个（玩家或同伴）。`CombatWeapon.Holder` 的钩子都对它写，只对玩家有意义的钩子开头 `if (w.player() == null) return 默认值;`（[武器的 AI 用法](WEAPON_AI.md) 第 2.1 节）。
+- `CombatHits`：玩家和同伴共用的命中结算：锥形里打到谁、招式倍数与击退（受伤、击退事件）、连招自己留下的受击冷却。
+- `NpcWeapon`、`WeaponPilot`、`WeaponAi`：同伴手里的武器、挑招按键的驾驶员、招式文件里的 `ai`（同上，第 2.2、2.3、3 节）。
 - `CombatWeapon.Holder`：战斗武器物品。`allowsAttack` 在左键交给状态机前把关（返回 false 这次左键作废），`combatTick` 在每刻结算之后调用。施法剑（黑钢长剑，`longsword/SwordCasting`）借这两处接上 Logos 的蓄力：格挡中左键先试着开始蓄力，开得起来才转到蓄力招式；施放结果用 `LongswordCombat.force` 切到对应收势。`swing` 在每一刀接触、结算目标之前调用，返回 false 时这一刀落空（流火魔力不够）；`strike` 返回 true 时这一下由武器自己结算伤害，不走原版 `player.attack`（流火只打奥秘伤害）。两者默认不改变原来的行为。`manaGuard` 说当前招式里的格挡是不是魔力护盾（`longsword/ManaGuard`：挡下的扣魔力不扣耐久，魔法与法术体也挡，虚空穿透；黑钢长剑只在竖剑格挡里是，流火一直是），`manaGuarded` 在护盾付完一击的魔力后调用（流火在这里结算斧头、监守者的破盾）；默认不是护盾。
 
 客户端 `LongswordRig`（长剑、打刀、长枪与和弓共用）用它们取样并绘制武器、刀鞘、武器附件和分段手臂。迁移到本标准时，用迁移前的渲染算法对旧数据求了参考矩阵（`src/test/resources/combat/longsword_reference.json`），`LongswordMotionTest` 逐矩阵对照，保证动作外观没有变化。`MovesetTest` 逐刻检查长剑招式的出招、接触、输入缓冲与取消点、连招记忆、蓄力与取消、收剑；客户端的过渡混合在 `LongswordClient` 里按上一招在切换那一刻的姿势计算。
