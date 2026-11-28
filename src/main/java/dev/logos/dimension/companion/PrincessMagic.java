@@ -275,12 +275,19 @@ final class PrincessMagic {
      * 她照顾的：主人、主人的宠物（包括车万女仆这类有主人的生物）、主人的使魔、主人别的同伴、森林精灵（没在和主人、她打的）、她自己。
      */
     boolean ally(LivingEntity e, ServerPlayer owner) {
+        return e == c && e.isAlive() && !e.isSpectator() || cared(e, owner);
+    }
+
+    /** 同上，除了她自己（奥义的莲华光环、森之加护的治愈脉冲按这个挑；精灵公主本人也是主人的同伴，照样算上）。 */
+    static boolean cared(LivingEntity e, ServerPlayer owner) {
         if (!e.isAlive() || e.isSpectator()) return false;
-        if (e == owner || e == c) return true;
+        if (e == owner) return true;
         if (e instanceof OwnableEntity o && o.getOwner() != null && o.getOwner().getUUID().equals(owner.getUUID())) return true;
         if (owner.getUUID().equals(LogosMagicBridge.masterOf(e))) return true;
         if (e instanceof CompanionEntity other) return owner.getUUID().equals(other.ownerId());
-        if (e instanceof ForestElf elf) return elf.getTarget() != owner && elf.getTarget() != c;
+        // 森林精灵：没在和主人、主人的同伴（她自己也是）打的
+        if (e instanceof ForestElf elf) return elf.getTarget() != owner
+                && !(elf.getTarget() instanceof CompanionEntity fought && owner.getUUID().equals(fought.ownerId()));
         return false;
     }
 

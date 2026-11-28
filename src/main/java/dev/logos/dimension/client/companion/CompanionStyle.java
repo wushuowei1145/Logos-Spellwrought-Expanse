@@ -125,8 +125,8 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 }
                 return c;
             }, 28, new CutinShot(38, .2f, 4, 5, 0), new CutinMotes(CutinMotes.Kind.LEAF, 0xA8F0C6)),
-            // 奥义「万分之一 · 世界树祈愿矢」的画面：专属过场做好以前先用占位的那一段
-            StandInShow.of(UltimateFilm.Wipe.LEAF, 0xA8F0C6, 0xF2D58A));
+            // 奥义「万分之一 · 世界树祈愿矢」的画面：种子破土、抽枝化箭、满弓、莲华化雨、圣箭贯地，叶片擦镜（docs/ELF_PRINCESS_COMPANION.md 第 11 节）
+            PrincessUltimateShow::begin);
 
     /**
      * 琥珀：温室午后的咖啡色到深棕，琥珀色当主色，金线，奶油色正文，被动能力用淡紫（星辰花）；纹是一只琥珀色的猫爪按在圆形炼成阵上。

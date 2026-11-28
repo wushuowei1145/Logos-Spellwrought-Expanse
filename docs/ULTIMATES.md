@@ -73,8 +73,8 @@ WINDOW ──在场的全放过了、都演完了──▶ CUTIN ──第 26 �
 | 第 1 / 2 / 3 / 4 段的威力 | 1 / 1.25 / 1.55 / 1.9 | `UltimateChain.power` |
 | 第 1 / 2 / 3 / 4 段的耗魔 | 基准的 100% / 85% / 70% / 55% | `UltimateChain.manaFactor` |
 | 最后一击的威力 | 两位同伴 1 倍，三位 1.6 倍（满格），四位 2 倍；不耗魔 | `UltimateChain.finisherPower` |
+| 精灵公主 | 40 秒，300；完整版 104 刻（第 79 刻出手）、缩短版 44 刻（第 30 刻）；馈赠森之加护（[ELF_PRINCESS_COMPANION.md](ELF_PRINCESS_COMPANION.md) 第 11 节） | `ElfPrincessCompanion.ULTIMATE` |
 | 白梅「狐嫁入 · 水镜形代断」 | 冷却 35 秒，基准耗魔 260；完整版 107 刻、第 78 刻出手，缩短版 44 刻、第 24 刻出手（[SHIRAUME_COMPANION.md](SHIRAUME_COMPANION.md) 第 11 节） | `ShiraumeCompanion.ULTIMATE` |
-| 精灵公主 | 40 秒，300 | `ElfPrincessCompanion.ULTIMATE` |
 | 琥珀 | 35 秒，280；完整版 106 刻（第 75 刻出手）、缩短版 42 刻（第 26 刻），馈赠「炼金回流」 | `KohakuCompanion.ULTIMATE`（`KohakuUltimate`，见 [KOHAKU_COMPANION.md](KOHAKU_COMPANION.md) 第 20 节） |
 | 拉塞塔 | 40 秒，320 | `LacertaCompanion.ULTIMATE` |
 
