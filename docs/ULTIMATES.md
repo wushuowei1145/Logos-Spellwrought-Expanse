@@ -142,7 +142,7 @@ UltimateFilm.of(cast)
   - `wipe`：擦镜，花瓣、叶子、纸片、碎晶、烟、火星、星芒从左往右扫过，正中盖满的那几刻镜头回到玩家视角（`returning` 改回来用几刻，默认 6）。
   - 同一种层同一刻只有一层起作用（后加的）。
 - **她自己的全屏后期**：浮世绘、画面凝进琥珀、碎镜这类，写在她的 `UltimateShow#screen` 里（每帧在过场叠层之前调），自己注册管线、画全屏三角形，照 `UltimateFilmRenderer` 的写法，不用改 `ScreenEffectMixin`。只在 `film.mine()` 时画。
-- **世界里的特效**：粒子、Logos 的 `Vfx`、`PostVfx`、`GlowBloom` 照常用，从服务端发的所有人都看得见。
+- **世界里的特效**：粒子、Logos 的 `Vfx`、`PostVfx`、`GlowBloom` 照常用，从服务端发的所有人都看得见。有奥义的画面在放时 `PostVfx` 自动收几何（`UltimateClient.postVfx`），交上去的发光特效（穿雾、在后期调暗之后仍亮）不会被丢掉。
 - **最小的用法**：`StandInShow`（占位过场）。
 
 ### 截帧看动态
