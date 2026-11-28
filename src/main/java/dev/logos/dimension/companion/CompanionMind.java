@@ -1,6 +1,7 @@
 package dev.logos.dimension.companion;
 
 import dev.logos.dimension.npc.LogosMagicBridge;
+import dev.logos.dimension.ultimate.Ultimates;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
@@ -156,6 +157,8 @@ public abstract class CompanionMind extends Goal {
         ServerPlayer p = c.ownerPlayer();
         if (p == null || !(c.level() instanceof ServerLevel level)) return;
         owner = p;
+        // 放奥义的这几秒由奥义脚本管她（docs/ULTIMATES.md）：不打分、不走、不出别的招
+        if (Ultimates.performing(c)) return;
         long now = level.getGameTime();
         dist = c.distanceTo(p);
         if (now % THINK == 0) think(level, p, now);

@@ -218,14 +218,14 @@ public final class Companions {
     }
 
     public static final CompanionDef SHIRAUME_DEF = new CompanionDef(ShiraumeTalk.ID, SHIRAUME, BOND, POUCH, CompanionStats.SHIRAUME, REST_TICKS,
-            ShiraumeTalk.MAX_SEALS);
+            ShiraumeTalk.MAX_SEALS, ShiraumeCompanion.ULTIMATE);
     public static final CompanionDef PRINCESS_DEF = new CompanionDef(ElfPrincessCompanion.ID, ELF_PRINCESS, PRINCESS_BOND, PRINCESS_POUCH,
-            ElfPrincessCompanion.GROWTH, ElfPrincessCompanion.REST_TICKS, ElfPrincessCompanion.MAX_SEALS);
+            ElfPrincessCompanion.GROWTH, ElfPrincessCompanion.REST_TICKS, ElfPrincessCompanion.MAX_SEALS, ElfPrincessCompanion.ULTIMATE);
     /** 全部同伴（登录、重生、换维度、下线时一位位看）。 */
     public static final CompanionDef KOHAKU_DEF = new CompanionDef(KohakuCompanion.ID, KOHAKU, KOHAKU_BOND, KOHAKU_POUCH,
-            KohakuCompanion.GROWTH, KohakuCompanion.REST_TICKS, KohakuCompanion.MAX_SEALS);
+            KohakuCompanion.GROWTH, KohakuCompanion.REST_TICKS, KohakuCompanion.MAX_SEALS, KohakuCompanion.ULTIMATE);
     public static final CompanionDef LACERTA_DEF = new CompanionDef(LacertaCompanion.ID, LACERTA, LACERTA_BOND, LACERTA_POUCH,
-            LacertaCompanion.GROWTH, LacertaCompanion.REST_TICKS, LacertaCompanion.MAX_SEALS);
+            LacertaCompanion.GROWTH, LacertaCompanion.REST_TICKS, LacertaCompanion.MAX_SEALS, LacertaCompanion.ULTIMATE);
     public static final List<CompanionDef> ALL = List.of(SHIRAUME_DEF, PRINCESS_DEF, KOHAKU_DEF, LACERTA_DEF);
 
     /** 等到下一刻再叫出来的同伴（上线、重生、换维度之后）：「主人 UUID|同伴 ID」 → 还要等几刻。 */

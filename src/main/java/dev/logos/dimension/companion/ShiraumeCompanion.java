@@ -6,6 +6,8 @@ import dev.logos.dimension.foxfire.FoxfireBearer;
 import dev.logos.dimension.foxfire.FoxfireFlame;
 import dev.logos.dimension.foxfire.FoxfireWraps;
 import dev.logos.dimension.shiraume.FoxfireBolt;
+import dev.logos.dimension.ultimate.StandInUltimate;
+import dev.logos.dimension.ultimate.UltimateDef;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -62,6 +64,8 @@ import org.jspecify.annotations.Nullable;
  */
 public class ShiraumeCompanion extends CompanionEntity implements FoxfireBearer, Parry.Reactive {
     public static final Identifier ASSET = LogosDimension.id("shiraume_companion");
+    /** 奥义（docs/ULTIMATES.md）：绯梅落 · 九尾残月斩。冷却 35 秒、基准耗魔 260；专属演出做好以前先用占位的那一段。 */
+    public static final UltimateDef ULTIMATE = new UltimateDef(700, 260, StandInUltimate::new);
 
     public enum Mode { COMPANION, WAITING, PACT, LEAVING }
 

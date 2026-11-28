@@ -2,6 +2,7 @@ package dev.logos.dimension.client.companion;
 
 import dev.logos.dimension.client.cutin.CutinMotes;
 import dev.logos.dimension.client.cutin.CutinShot;
+import dev.logos.dimension.client.ultimate.UltimateShow;
 import dev.logos.dimension.companion.CompanionOutfit;
 import dev.logos.dimension.companion.CompanionSheet;
 import dev.logos.dimension.companion.Companions;
@@ -31,9 +32,10 @@ import org.jspecify.annotations.Nullable;
  * @param crest      她的纹：名字旁一个小的，面板里身后一个大的
  * @param showcase   面板里展示的她
  * @param cutin      连携切入里的她
+ * @param ultimate   她的奥义在客户端的画面（docs/ULTIMATES.md「画面」）；服务端那一半在她的 {@code CompanionDef#ultimate}
  */
 public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int ink, int dim, int night0, int night1, int card, Crest crest,
-                             Showcase showcase, Cutin cutin) {
+                             Showcase showcase, Cutin cutin, UltimateShow.Factory ultimate) {
     /** 画纹：圆心、半径（像素）、颜色。 */
     public interface Crest {
         void draw(GuiGraphicsExtractor g, float cx, float cy, float r, int color);
@@ -96,7 +98,9 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 var c = Companions.SHIRAUME.get().create(level, EntitySpawnReason.LOAD);
                 if (c != null) c.showcase(CompanionOutfit.byId(sheet.outfit()), "face_kitsune", "cutin", true);
                 return c;
-            }, 0, new CutinShot(46, .14f, 14, 9, -.05f), new CutinMotes(CutinMotes.Kind.FOXFIRE, 0xFFC2E0)));
+            }, 0, new CutinShot(46, .14f, 14, 9, -.05f), new CutinMotes(CutinMotes.Kind.FOXFIRE, 0xFFC2E0)),
+            // 奥义「绯梅落 · 九尾残月斩」的画面：专属演出做好以前没有客户端画面
+            UltimateShow.NONE);
 
     /**
      * 精灵公主：夜里的林子（深绿到墨绿），薄荷绿当主色，金线，被动能力用荷花粉；纹是世界树的叶（一圈细环、四片菱形的叶、正中一颗生命晶）。
@@ -118,7 +122,9 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                     c.stage("face_determined", "cutin");
                 }
                 return c;
-            }, 28, new CutinShot(38, .2f, 4, 5, 0), new CutinMotes(CutinMotes.Kind.LEAF, 0xA8F0C6)));
+            }, 28, new CutinShot(38, .2f, 4, 5, 0), new CutinMotes(CutinMotes.Kind.LEAF, 0xA8F0C6)),
+            // 奥义「万分之一 · 世界树祈愿矢」的画面：专属演出做好以前没有客户端画面
+            UltimateShow.NONE);
 
     /**
      * 琥珀：温室午后的咖啡色到深棕，琥珀色当主色，金线，奶油色正文，被动能力用淡紫（星辰花）；纹是一只琥珀色的猫爪按在圆形炼成阵上。
@@ -140,7 +146,9 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                     c.stage("face_focus", "cutin");
                 }
                 return c;
-            }, 0, new CutinShot(42, .1f, -10, 7, .05f), new CutinMotes(CutinMotes.Kind.TALISMAN, 0xF2D06E)));
+            }, 0, new CutinShot(42, .1f, -10, 7, .05f), new CutinMotes(CutinMotes.Kind.TALISMAN, 0xF2D06E)),
+            // 奥义「星辰花炼成 · 凝时琥珀」的画面：专属演出做好以前没有客户端画面
+            UltimateShow.NONE);
 
     /**
      * 拉塞塔：熔岩夜里的酒红到深绯，珊瑚红当主色（翼骨与龙鳞），金线（角尖鎏金），被动能力用骑士甲的冷银，奶油色正文；
@@ -163,7 +171,9 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                     c.stage("face_battle", "cutin");
                 }
                 return c;
-            }, 0, new CutinShot(50, .08f, 8, 4, -.08f), new CutinMotes(CutinMotes.Kind.EMBER, 0xF6A04D)));
+            }, 0, new CutinShot(50, .08f, 8, 4, -.08f), new CutinMotes(CutinMotes.Kind.EMBER, 0xF6A04D)),
+            // 奥义「绯穹裁决 · 炽龙陨星破」的画面：专属演出做好以前没有客户端画面
+            UltimateShow.NONE);
 
     /** 盾形的龙鳞，正中一簇龙炎：一圈细环，环里一枚大菱形（鳞），鳞的上半一枚小菱形、下面一点（火苗）。 */
     static void dragonScale(GuiGraphicsExtractor g, float cx, float cy, float r, int color) {

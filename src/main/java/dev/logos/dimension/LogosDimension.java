@@ -73,6 +73,7 @@ public final class LogosDimension {
         dev.logos.dimension.camera.CameraShots.register(bus);
         dev.logos.dimension.screenfx.ScreenEffects.register(bus);
         dev.logos.dimension.cutin.ChainCutins.register(bus);
+        dev.logos.dimension.ultimate.Ultimates.register(bus);
         dev.logos.dimension.execution.ExecutionShots.register(bus);
         dev.logos.dimension.dissolve.Dissolving.register(bus);
         dev.logos.dimension.worldstyle.StyleRealms.register(bus);
