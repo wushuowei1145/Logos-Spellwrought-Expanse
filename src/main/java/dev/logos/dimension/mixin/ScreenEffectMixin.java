@@ -28,8 +28,10 @@ public abstract class ScreenEffectMixin {
     private void screenEffectProjection(DeltaTracker deltaTracker, CallbackInfo ci, @Local(ordinal = 0) Matrix4f projection) {
         WorldStyleRenderer.PROJECTION.set(projection);
         GlowBloom.begin();
+        // 奥义的画面在放时也收几何：魔弹、光柱这类发光特效走 PostVfx（穿雾，在后期调暗之后仍亮）
         dev.logos.dimension.client.screenfx.PostVfx.begin(dev.logos.dimension.client.explosion.ExplosionClient.active()
-                || dev.logos.dimension.client.vfx.DawnvowScreen.active() || dev.logos.dimension.client.WorldTintScreen.wanted());
+                || dev.logos.dimension.client.vfx.DawnvowScreen.active() || dev.logos.dimension.client.WorldTintScreen.wanted()
+                || dev.logos.dimension.client.ultimate.UltimateClient.postVfx());
         dev.logos.dimension.client.vfx.DawnvowScreen.beginFrame();
     }
 
