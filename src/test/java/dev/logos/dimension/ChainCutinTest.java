@@ -67,17 +67,57 @@ class ChainCutinTest {
     /** 角色冲进来之前和甩出去之后都在画面外；落位时正好在原位；相邻两格方向相反；中途不跳。 */
     @Test void portraitsSlideInAndOutAlternately() {
         for (int slot = 0; slot < 5; slot++) {
-            assertTrue(Math.abs(ChainTimeline.slide(ChainTimeline.TAKEOVER, slot)) >= 1, "冲进来之前在画面外");
-            assertTrue(Math.abs(ChainTimeline.slide(ChainTimeline.SWAP, slot)) >= 1, "甩出去之后在画面外");
-            assertEquals(0, ChainTimeline.slide(ChainTimeline.LAND, slot), 1e-4);
-            assertEquals(Math.signum(ChainTimeline.slide(ChainTimeline.TAKEOVER, slot)), -Math.signum(ChainTimeline.slide(ChainTimeline.SWAP, slot)),
-                    "顺着进来的方向出去");
-            assertEquals(Math.signum(ChainTimeline.slide(ChainTimeline.TAKEOVER, slot)), -Math.signum(ChainTimeline.slide(ChainTimeline.TAKEOVER, slot + 1)),
-                    "相邻两格一上一下");
-            assertTrue(ChainTimeline.slide(ChainTimeline.TAKEOVER, 0) > 0, "第一格从上面下来");
-            for (float a = ChainTimeline.LAND; a < ChainTimeline.PEAK; a += .05f) {
-                assertEquals(ChainTimeline.slide(a, slot), ChainTimeline.slide(a + .05f, slot), .01, "停留时只是慢慢漂");
+            for (int order = 0; order < 5; order++) {
+                float land = ChainTimeline.landing(order);
+                assertTrue(Math.abs(ChainTimeline.slide(ChainTimeline.TAKEOVER, slot, order)) >= 1, "冲进来之前在画面外");
+                assertTrue(Math.abs(ChainTimeline.slide(ChainTimeline.SWAP, slot, order)) >= 1, "甩出去之后在画面外");
+                assertEquals(0, ChainTimeline.slide(land, slot, order), 1e-4);
+                assertEquals(Math.signum(ChainTimeline.slide(ChainTimeline.TAKEOVER, slot, order)), -Math.signum(ChainTimeline.slide(ChainTimeline.SWAP, slot, order)),
+                        "顺着进来的方向出去");
+                assertEquals(Math.signum(ChainTimeline.slide(ChainTimeline.TAKEOVER, slot, order)),
+                        -Math.signum(ChainTimeline.slide(ChainTimeline.TAKEOVER, slot + 1, order)), "相邻两格一上一下");
+                assertEquals(-Math.signum(ChainTimeline.slide(ChainTimeline.TAKEOVER, slot, order)), ChainTimeline.direction(slot), "背景顺着她冲进来的方向走");
+                for (float a = land; a < ChainTimeline.PEAK; a += .05f) {
+                    assertEquals(ChainTimeline.slide(a, slot, order), ChainTimeline.slide(a + .05f, slot, order), .01, "停留时只是慢慢漂");
+                }
             }
+            assertTrue(ChainTimeline.slide(ChainTimeline.TAKEOVER, 0, 0) > 0, "第一格从上面下来");
+        }
+    }
+
+    /** 一个接一个落位：玩家先到，同伴从中间一左一右往外，最后一位在停留之前到；还没轮到的那一格是空的。 */
+    @Test void landingsFollowOneAnother() {
+        ChainLayout l = ChainLayout.of(4);
+        assertEquals(List.of(3, 1, 0, 2, 4), l.slots().stream().map(ChainLayout.Slot::order).toList());
+        assertEquals(ChainTimeline.LAND, ChainTimeline.landing(0), 1e-6, "玩家落位就是爆闪那一下");
+        assertTrue(ChainTimeline.landing(4) < ChainTimeline.HOLD, "都到了才算停留");
+        for (int order = 1; order <= 4; order++) {
+            float gap = ChainTimeline.landing(order) - ChainTimeline.landing(order - 1);
+            assertTrue(gap >= .8f && gap <= 1.5f, "相隔 " + gap + " 刻：看得出先后，又连成一串");
+        }
+        assertTrue(Math.abs(ChainTimeline.slide(ChainTimeline.landing(0), 0, 4)) >= 1, "玩家落位时最外那位还没进来");
+    }
+
+    /** 镜头：冲进来时从远处跟着冲，落位时冲过头一点再回来；停留时一直在走、越走越慢但到峰值还在走；甩出时往前冲；歪的角度落位后摆正。 */
+    @Test void cameraRushesInAndKeepsMoving() {
+        for (int order = 0; order < 5; order++) {
+            float land = ChainTimeline.landing(order);
+            assertTrue(ChainTimeline.approach(ChainTimeline.TAKEOVER, order) > .5f, "冲进来之前镜头在远处");
+            assertEquals(0, ChainTimeline.approach(land, order), 1e-3);
+            assertTrue(ChainTimeline.approach(land + 1.5f, order) < -.04f, "落位时冲过头");
+            assertEquals(0, ChainTimeline.approach(land + 4, order), 1e-6);
+            assertTrue(ChainTimeline.approach(ChainTimeline.SWAP, order) < -.3f, "甩出时往前冲");
+            float last = -1;
+            for (float a = land; a <= ChainTimeline.PEAK; a += .5f) {
+                float p = ChainTimeline.progress(a, order);
+                assertTrue(p > last, "停留时一直在走");
+                last = p;
+            }
+            assertEquals(1, ChainTimeline.progress(ChainTimeline.PEAK, order), 1e-6);
+            float endSpeed = ChainTimeline.progress(ChainTimeline.PEAK, order) - ChainTimeline.progress(ChainTimeline.PEAK - 1, order);
+            assertTrue(endSpeed > .3f / (ChainTimeline.PEAK - land) * .9f, "到峰值还在走");
+            assertEquals(1, ChainTimeline.settle(land - 1, order), 1e-6);
+            assertTrue(ChainTimeline.settle(land + 3, order) < .2f, "落位后摆正");
         }
     }
 
@@ -88,28 +128,36 @@ class ChainCutinTest {
         assertEquals(1, ChainTimeline.grow(ChainTimeline.TAKEOVER, 3, .3f), 1e-6, "黑底接管时全部贯穿");
     }
 
-    /** 白光盖满的那一段两种模式都一样：卸掉分格、界面回来都发生在全白底下。 */
-    @Test void swapHappensUnderFullWhite() {
+    /** 收尾的光幕两种模式都一样：盖满的那一段很短（不晃眼），卸掉分格、界面回来都在盖满时；黑底在光幕底下化开，不是一下子切掉。 */
+    @Test void swapHappensUnderTheVeil() {
         for (boolean gentle : new boolean[] {false, true}) {
-            for (float a = ChainTimeline.PEAK + 1; a < ChainTimeline.FADE; a += .1f) assertEquals(1, ChainTimeline.white(a, gentle), 1e-6);
-            assertEquals(0, ChainTimeline.white(ChainTimeline.END, gentle), 1e-6);
-            assertEquals(0, ChainTimeline.white(ChainTimeline.LAND, gentle), 1e-6);
+            for (float a = ChainTimeline.PEAK + ChainTimeline.VEIL_RAMP; a < ChainTimeline.FADE; a += .1f) assertEquals(1, ChainTimeline.veil(a, gentle), 1e-6);
+            assertTrue(ChainTimeline.veil(ChainTimeline.SWAP, gentle) == 1, "幕布在盖满时");
+            assertEquals(0, ChainTimeline.veil(ChainTimeline.END, gentle), 1e-6);
+            assertEquals(0, ChainTimeline.veil(ChainTimeline.LAND, gentle), 1e-6);
+            assertTrue(ChainTimeline.plate(ChainTimeline.SWAP - .05f, gentle) < .02f, "幕布之前黑底已经化开了");
+            for (float a = ChainTimeline.PEAK; a < ChainTimeline.END; a += .1f) {
+                assertEquals(ChainTimeline.plate(a, gentle), ChainTimeline.plate(a + .1f, gentle), .1, "黑底化开，不是切掉（第 " + a + " 刻）");
+                assertEquals(ChainTimeline.dim(a), ChainTimeline.dim(a + .1f), .1, "战场慢慢回来（第 " + a + " 刻）");
+                assertEquals(ChainTimeline.cloud(a, gentle), ChainTimeline.cloud(a + .1f, gentle), .1, "白光云散掉（第 " + a + " 刻）");
+            }
         }
+        assertTrue(ChainTimeline.FADE - (ChainTimeline.PEAK + ChainTimeline.VEIL_RAMP) <= 2, "盖满不超过两刻");
+        assertTrue(ChainTimeline.veil(ChainTimeline.FADE + 2, false) < .4f, "退得快：两刻后退掉大半");
         assertFalse(ChainTimeline.portraits(ChainTimeline.SWAP));
         assertTrue(ChainTimeline.portraits(ChainTimeline.SWAP - .01f));
-        assertFalse(ChainTimeline.hidesHud(ChainTimeline.SWAP), "界面在白光底下回来");
+        assertFalse(ChainTimeline.hidesHud(ChainTimeline.SWAP), "界面在光幕底下回来");
         assertTrue(ChainTimeline.hidesHud(ChainTimeline.TAKEOVER));
         assertFalse(ChainTimeline.hidesHud(ChainTimeline.TAKEOVER - .01f), "刺穿那一拍界面还在");
     }
 
-    /** 「隐藏闪电的闪烁」：没有落位爆闪，闪白和黑底都是慢慢盖上的（一刻之内变化不超过三成）。 */
+    /** 「隐藏闪电的闪烁」：没有落位爆闪，光幕和黑底都是慢慢盖上的（一刻之内变化不超过三成）。 */
     @Test void gentleModeHasNoSuddenFlashes() {
         for (float a = 0; a < ChainTimeline.END; a += .25f) {
-            assertTrue(Math.abs(ChainTimeline.white(a + 1, true) - ChainTimeline.white(a, true)) <= .3f, "闪白在第 " + a + " 刻");
-            // 黑底和白光云在幕布那一刻一下子撤掉，那时已经全白，看不见
-            if (a + 1 >= ChainTimeline.SWAP) continue;
+            assertTrue(Math.abs(ChainTimeline.veil(a + 1, true) - ChainTimeline.veil(a, true)) <= .3f, "光幕在第 " + a + " 刻");
             assertTrue(Math.abs(ChainTimeline.cloud(a + 1, true) - ChainTimeline.cloud(a, true)) <= .3f, "白光云在第 " + a + " 刻");
             assertTrue(Math.abs(ChainTimeline.plate(a + 1, true) - ChainTimeline.plate(a, true)) <= .8f, "黑底在第 " + a + " 刻");
+            assertTrue(Math.abs(ChainTimeline.exposure(a + 1, true) - ChainTimeline.exposure(a, true)) <= .2f, "曝光在第 " + a + " 刻");
         }
         assertTrue(Math.abs(ChainTimeline.plate(ChainTimeline.TAKEOVER + .5f, false) - ChainTimeline.plate(ChainTimeline.TAKEOVER, false)) > .9f,
                 "平常黑底是一下子接管的");

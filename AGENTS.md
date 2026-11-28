@@ -18,7 +18,7 @@
 - 复用现有 Logos 材料注册 ID，不复制注册污染碎片。
 - 特效按 [docs/VFX.md](docs/VFX.md) 做：复用 Logos 的法术特效时在服务端调用 `dev.logos.runtime.Vfx`；附属自己的特效直接用 Photon 写，已有贴图用 `logos:` 路径引用。构建需要 `-PlogosJar`。
 - 做运镜、全屏后期、画风、处决特写或新的全屏通道之前，先读总览 [docs/CINEMATICS.md](docs/CINEMATICS.md)：选哪个系统、通道的顺序、深度在哪一步取、兼容和光敏的规矩（全屏明暗交替每秒不超过 3 次，遵从「隐藏闪电的闪烁」）、不要贴在屏幕上的纹理、着色器不要用 GLSL 内置名、怎么测。
-- 连携切入（小队合力一击的斜切分格演出）按 [docs/CHAIN_CUTIN.md](docs/CHAIN_CUTIN.md)：服务端调 `ChainCutins.play`，玩家永远在正中间，同伴按在场人数自动排；分格改 `ChainLayout`，时刻看 `ChainTimeline`。
+- 连携切入（小队合力一击的斜切分格演出）按 [docs/CHAIN_CUTIN.md](docs/CHAIN_CUTIN.md)：服务端调 `ChainCutins.play`，玩家永远在正中间，同伴按在场人数自动排；分格改 `ChainLayout`，时刻看 `ChainTimeline`；每个人的姿势、镜头、光屑写在各自的档案里（同伴 `CompanionStyle.Cutin`，玩家 `HeroCutin`），不写进渲染器。
 - 处决特写（投技、处决的两秒特写）按 [docs/EXECUTION_SHOTS.md](docs/EXECUTION_SHOTS.md)：服务端调 `ExecutionShots.play`，玩家逐刀点击的用 `InteractiveExecutions.start`；伤害由调用方按 `ExecutionTimeline` 的时刻自己做。
 - 运镜（镜头暂时离开玩家再回来，方块、Boss 等共用）按 [docs/CAMERA_SHOTS.md](docs/CAMERA_SHOTS.md)：服务端调 `CameraShots.play`，不要用 `setCameraEntity` 做这件事。
 - 全屏后期（黑白闪、电影蒙版）按 [docs/SCREEN_EFFECTS.md](docs/SCREEN_EFFECTS.md)：服务端调 `ScreenEffects.flash`，不要占原版 `setPostEffect` 的槽。改了后期要在文档列的 Sodium、Iris 和两种光影包下各跑一遍。

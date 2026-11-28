@@ -18,7 +18,8 @@ import net.minecraft.world.phys.Vec3;
 /**
  * 实际客户端检查连携切入（docs/CHAIN_CUTIN.md），一组 {@code chain_cutin}。白瓷台上四位同伴站成一排，玩家用 {@code /alchemy chain} 发动：
  * <ul>
- * <li>{@code chain_cutin_full}：四位同伴都在，停在每一段上截图（刺穿、冲入、落位、停留、预升、闪白、幕布、退潮）；</li>
+ * <li>{@code chain_cutin_full}：四位同伴都在，停在每一段上截图（刺穿、冲入、落位、停留、预升、峰值、幕布、退潮）；</li>
+ * <li>{@code chain_cutin_frames}：四位同伴都在，每半刻截一张，拼成动图看镜头、速度线、光屑和收尾的光幕动起来的样子；</li>
  * <li>{@code chain_cutin_counts}：一位、两位、三位同伴时各停在停留期截一张，看分格和玩家是否在正中间；</li>
  * <li>{@code chain_cutin_timing}：真放一次，界面在黑底那一段藏起来、白光散去后回来，放完自己结束。</li>
  * </ul>
@@ -112,7 +113,7 @@ public abstract class ChainCutinViews extends CompanionViews {
                     .screenshot("chain_cutin_1_pierce")
                     .step("冲入", ctx -> ChainCutinRenderer.hold(2.7f)).ticks(3)
                     .screenshot("chain_cutin_2_slide")
-                    .step("落位爆闪", ctx -> ChainCutinRenderer.hold(4.9f)).ticks(3)
+                    .step("落位爆闪：玩家到了，同伴一个个跟上", ctx -> ChainCutinRenderer.hold(6.2f)).ticks(3)
                     .screenshot("chain_cutin_3_land")
                     .step("停留", ctx -> {
                         ChainCutinRenderer.hold(13);
@@ -122,9 +123,9 @@ public abstract class ChainCutinViews extends CompanionViews {
                     .screenshot("chain_cutin_4_hold")
                     .step("过曝预升", ctx -> ChainCutinRenderer.hold(22.2f)).ticks(3)
                     .screenshot("chain_cutin_5_rise")
-                    .step("闪白甩出", ctx -> ChainCutinRenderer.hold(24.2f)).ticks(3)
+                    .step("光幕盖上来、甩出", ctx -> ChainCutinRenderer.hold(24.2f)).ticks(3)
                     .screenshot("chain_cutin_6_peak")
-                    .step("白光幕布", ctx -> {
+                    .step("幕布", ctx -> {
                         ChainCutinRenderer.hold(26.5f);
                         portraits = ChainCutinRenderer.portraitsDrawn();
                     }).ticks(3)
@@ -134,6 +135,30 @@ public abstract class ChainCutinViews extends CompanionViews {
                     .screenshot("chain_cutin_8_fade")
                     .step("放开", ctx -> ChainCutinRenderer.hold(-1))
                     .waitUntil("放完了", ctx -> !ChainCutinRenderer.active());
+            teardown(s);
+        }
+    }
+
+    @LDLRegisterClient(name = "chain_cutin_frames", group = "chain_cutin", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class Frames extends ChainCutinViews {
+        /** 每隔多少刻截一张（半刻：拼成动图是 40 帧每秒的真实速度）。 */
+        static final float STEP = .5f;
+
+        @Override
+        public void define(ScenarioBuilder s) {
+            cutinStage(s).server("四位都叫出来", ctx -> call(ctx.player(), 4))
+                    .waitUntilServer("都站好了", ctx -> arrived(ctx.player(), 4)).ticks(30)
+                    .step("停在开头，发动", ctx -> {
+                        ChainCutinRenderer.hold(0);
+                        chain();
+                    })
+                    .waitUntil("开始放了", ctx -> ChainCutinRenderer.active()).ticks(10);
+            int frames = Math.round(ChainTimeline.END / STEP);
+            for (int i = 0; i < frames; i++) {
+                float age = i * STEP;
+                s.step("第 " + age + " 刻", ctx -> ChainCutinRenderer.hold(age)).ticks(2).screenshot(String.format("chain_cutin_frame_%03d", i));
+            }
+            s.step("放开", ctx -> ChainCutinRenderer.hold(-1)).waitUntil("放完了", ctx -> !ChainCutinRenderer.active());
             teardown(s);
         }
     }

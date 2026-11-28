@@ -22,6 +22,7 @@ import dev.logos.dimension.cutin.ChainCutin;
 import dev.logos.dimension.cutin.ChainCutinPayload;
 import dev.logos.dimension.cutin.ChainLayout;
 import dev.logos.dimension.cutin.ChainTimeline;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,12 +60,14 @@ import org.jspecify.annotations.Nullable;
  *
  * <ol>
  *   <li><b>角色</b>：每一格的角色单独画进自己的一张贴图，做法和原版物品栏里的小人一样（{@code GuiEntityRenderer}：
- *       把输出临时改到自己的贴图、换一个投影、照常提交实体），只是换成仰拍的透视镜头。不再渲染一遍世界，光影包只管世界渲染，
- *       这里的角色在原版、Sodium、Iris 下画出来一样。同伴画的是她的展示模型（角色面板里那个，带她自己的姿势和表情、现在穿的那一套），
- *       玩家画他本人（皮肤、手里的东西），把主手举起来。</li>
- *   <li><b>合成</b>：一个全屏通道把主画面复制一份当底，压暗战场，再画黑底、星空、斜切的格子、格子里的角色和逆光描边、
- *       带焰的分割线、白光云、光尘和全屏白。格子是按分割线直接算的，不用模板缓冲。</li>
+ *       把输出临时改到自己的贴图、换一个投影、照常提交实体），只是换成仰拍的透视镜头，而且每帧都在动（冲镜、推、扫、歪，
+ *       见 {@link CutinShot}）。不再渲染一遍世界，光影包只管世界渲染，这里的角色在原版、Sodium、Iris 下画出来一样。
+ *       同伴画的是她的展示模型（角色面板里那个，带她自己的姿势和表情、现在穿的那一套），玩家画他本人（皮肤、手里的东西），摆出架势。</li>
+ *   <li><b>合成</b>：一个全屏通道把主画面复制一份当底，压暗战场，再画黑底、斜切的格子、格子里她自己颜色的能量底、角色和逆光描边、
+ *       她的光屑、带焰的分割线、白光云和收尾的光幕。格子是按分割线直接算的，不用模板缓冲。</li>
  * </ol>
+ *
+ * <p>每一格的镜头、光屑、颜色都照那个人自己的档案（同伴的 {@link CompanionStyle.Cutin}，玩家的 {@link HeroCutin}），这里不写死谁是什么样。
  *
  * <p>按游戏刻计时（{@link ChainTimeline}），暂停时停。换维度、退出世界、播完时结束，并释放角色贴图。
  */
@@ -87,12 +90,10 @@ public final class ChainCutinRenderer {
 
     static {
         Std140SizeCalculator size = new Std140SizeCalculator();
-        for (int i = 0; i < 5 + LINES * 2 + SLOTS * 2; i++) size.putVec4();
+        for (int i = 0; i < 6 + LINES * 2 + SLOTS * 4; i++) size.putVec4();
         UNIFORM_SIZE = size.get();
     }
 
-    /** 玩家那一格的主色（暖金）。 */
-    private static final int PLAYER_COLOR = 0xFFF2D58A;
     /**
      * 特写怎么取景：画面高度装她身上多高的一段（格），眼睛落在离画面顶多远（画面高度的几成）。同伴是大头的二头身，头约 0.4 格，
      * 装到腰，竖在身侧、高过头顶的武器也在画面里；玩家头约 0.47 格、身子长，装得再多一点，不是一张大脸。
@@ -102,8 +103,10 @@ public final class ChainCutinRenderer {
         static final Framing PLAYER = new Framing(1.6f, .24f);
     }
 
-    /** 镜头离她多远（格）；比对准的点再低多少（画面高度的几成，仰拍）。 */
-    private static final float DISTANCE = 2.4f, LOW_ANGLE = .12f;
+    /** 仰拍多少度（镜头在对准的点下面，往上看）。 */
+    private static final float LOOK_UP = 5;
+    /** 拖影拖多长：她刚才（这么多刻以前）在哪，就从那里拖到现在的位置。 */
+    private static final float SMEAR = .35f;
     /**
      * 角色贴图往画面下面多画多少（画面高度的几成）：冲进来、甩出去时格子里露出的是她的身子，而不是贴图的下边。
      * 动得最快的头一两帧还是会露出来，那时贴图下边已经淡掉了。
@@ -115,22 +118,24 @@ public final class ChainCutinRenderer {
     private static final int WARM_TICKS = 8;
     /** 角色身子朝中间侧多少（度，每离中间一个画面宽度）；头回过来看着镜头的比例。 */
     private static final float TURN = 40, LOOK_BACK = .75f;
-    /** 玩家在正中间，身子侧一点（看得到举着武器的那条胳膊），头回过来看着镜头。 */
-    private static final float PLAYER_TURN = -18;
 
     /**
-     * 玩家在切入里的架势（弧度，原版人形模型的骨骼角度；左手惯用时左右镜像）：主手抬到胸前，武器竖在脸旁；副手往前下方一展，两脚一前一后。
-     * 格子窄（五人时只有约 0.35 格宽），手和武器都收在身前、竖着，不往两边伸。
-     * 由 {@code ChainCutinModelMixin} 在模型摆完动作之后套上，只对画进切入贴图的那一份渲染状态生效。
+     * 一格里的人在切入里的档案，摊平成一样的：同伴的 {@link CompanionStyle.Cutin} 加上她界面的主色、底色（{@code night0}），
+     * 玩家的 {@link HeroCutin}。
      */
-    public record HeroPose(float mainArmX, float mainArmY, float mainArmZ, float offArmX, float offArmY, float offArmZ, float headX, float headZ,
-                           float frontLegX, float backLegX) {
-        public static final HeroPose PLAYER = new HeroPose(-1.3f, .09f, .12f, -.55f, -.3f, -.18f, .12f, -.06f, -.35f, .3f);
-    }
+    private record Look(float turn, CutinShot shot, CutinMotes motes, int accent, int night) {
+        /** 同伴还没加载出来（她那一格是空的）：淡蓝的空格子。 */
+        static final Look ABSENT = new Look(0, HeroCutin.PLAYER.shot(), new CutinMotes(CutinMotes.Kind.GLINT, 0xB9C6F2), 0xB9C6F2, 0x14142A);
 
-    /** 渲染状态上带着这个的是切入里的玩家（只在画切入贴图时设）。 */
-    public static final net.minecraft.util.context.ContextKey<HeroPose> PLAYER_POSE = new net.minecraft.util.context.ContextKey<>(
-            LogosDimension.id("chain_cutin_pose"));
+        static Look of(HeroCutin hero) {
+            return new Look(hero.turn(), hero.shot(), hero.motes(), hero.accent(), hero.night());
+        }
+
+        static Look of(CompanionStyle style) {
+            CompanionStyle.Cutin c = style.cutin();
+            return new Look(c.turn(), c.shot(), c.motes(), style.accent() & 0xFFFFFF, style.night0() & 0xFFFFFF);
+        }
+    }
 
     private static @Nullable ChainCutin cutin;
     private static @Nullable ChainLayout layout;
@@ -212,7 +217,7 @@ public final class ChainCutinRenderer {
         }
     }
 
-    /** 黑底盖着的那一段不画界面；白光盖满时界面回来。排在最后，取消的是已经收集好的整层界面。 */
+    /** 黑底盖着的那一段不画界面；光幕盖满时界面回来。排在最后，取消的是已经收集好的整层界面。 */
     @SubscribeEvent(priority = EventPriority.LOWEST) static void hud(RenderGuiEvent.Pre event) {
         float age = age(event.getPartialTick().getGameTimeDeltaPartialTick(false));
         if (age >= 0 && ChainTimeline.hidesHud(age)) {
@@ -243,12 +248,13 @@ public final class ChainCutinRenderer {
         RenderTarget main = mc.getMainRenderTarget();
         boolean faces = ChainTimeline.portraits(age);
         boolean[] present = new boolean[SLOTS];
+        Look[] looks = looks();
         // 刺穿那一拍就开始画（不显示）：展示模型的表情、姿势要先过渡到位，冲进来时才是摆好的样子
         if (age < ChainTimeline.SWAP) {
             warmUp();
-            drawPortraits(mc, main, partial, present);
+            drawPortraits(mc, main, partial, age, looks, present);
         }
-        pass(mc, main, age, faces, present);
+        pass(main, age, faces, looks, present);
         passes++;
     }
 
@@ -277,7 +283,7 @@ public final class ChainCutinRenderer {
 
     // ---------------------------------------------------------------- 角色
 
-    private static void drawPortraits(Minecraft mc, RenderTarget main, float partial, boolean[] present) {
+    private static void drawPortraits(Minecraft mc, RenderTarget main, float partial, float age, Look[] looks, boolean[] present) {
         if (cutin == null || layout == null || mc.level == null) return;
         float scale = Math.min(1, MAX_PORTRAIT_HEIGHT / (float) Math.max(1, main.height));
         int w = Math.max(16, Math.round(main.width * portraitWidth() * scale)), h = Math.max(16, Math.round(main.height * (1 + EXTEND) * scale));
@@ -288,9 +294,8 @@ public final class ChainCutinRenderer {
             LivingEntity who = player ? leader(mc) : companion(mc, cutin.members().get(slot.member()));
             if (who == null) continue;
             RenderTarget target = portrait(i, w, h);
-            float yaw = player ? PLAYER_TURN : (slot.center() - .5f) * TURN + turnOf(cutin.members().get(slot.member()));
             try {
-                drawPortrait(mc, target, i, who, partial, yaw, player);
+                drawPortrait(mc, target, i, slot, who, partial, age, looks[i], player);
                 present[i] = true;
                 portraitsDrawn++;
             } finally {
@@ -300,10 +305,23 @@ public final class ChainCutinRenderer {
         }
     }
 
-    /** 档案里给的额外侧身（{@link CompanionStyle.Cutin#turn()}）。 */
-    private static float turnOf(int id) {
+    /** 每一格的人在切入里的档案（每帧取：同伴可能刚加载出来）。 */
+    private static Look[] looks() {
+        Look[] looks = new Look[SLOTS];
+        Arrays.fill(looks, Look.ABSENT);
+        if (cutin == null || layout == null) return looks;
         Minecraft mc = Minecraft.getInstance();
-        return mc.level != null && mc.level.getEntity(id) instanceof CompanionEntity c ? CompanionStyle.of(c.def().id()).cutin().turn() : 0;
+        List<ChainLayout.Slot> slots = layout.slots();
+        for (int i = 0; i < slots.size() && i < SLOTS; i++) {
+            int member = slots.get(i).member();
+            if (member == ChainLayout.PLAYER) {
+                looks[i] = Look.of(HeroCutin.PLAYER);
+            } else if (mc.level != null && member < cutin.members().size()
+                    && mc.level.getEntity(cutin.members().get(member)) instanceof CompanionEntity c) {
+                looks[i] = Look.of(CompanionStyle.of(c.def().id()));
+            }
+        }
+        return looks;
     }
 
     private static @Nullable LivingEntity leader(Minecraft mc) {
@@ -336,10 +354,13 @@ public final class ChainCutinRenderer {
     }
 
     /**
-     * 把 {@code who} 画进 {@code target}：她站在原点，身子朝中间侧 {@code yaw} 度、头回过来看着镜头；镜头在她正前方略低处往上看，
-     * 画面只装得下胸口以上。输出临时改到这张贴图上，和原版画物品栏小人时一样。
+     * 把 {@code who} 画进 {@code target}：她站在原点，身子朝中间侧一点（再加上档案里的 {@code turn}）、头回过来看着镜头；
+     * 镜头在她前面略低处往上看，照她档案里的 {@link CutinShot} 动：冲进来时从远处跟着冲过来、落位时冲过头一点，停留时推近、横扫、升降，
+     * 一直歪着（头往格子外侧倒）。视锥按停在原位时定，镜头推近她就变大。输出临时改到这张贴图上，和原版画物品栏小人时一样。
      */
-    private static void drawPortrait(Minecraft mc, RenderTarget target, int slot, LivingEntity who, float partial, float yaw, boolean player) {
+    private static void drawPortrait(Minecraft mc, RenderTarget target, int index, ChainLayout.Slot slot, LivingEntity who, float partial, float age,
+                                     Look look, boolean player) {
+        float yaw = (slot.center() - .5f) * TURN + look.turn();
         if (!inWorld(who)) {
             // 展示模型不在世界里：照角色面板的做法摆好朝向再取状态
             who.yBodyRot = who.yBodyRotO = yaw;
@@ -380,38 +401,52 @@ public final class ChainCutinRenderer {
             hs.isUsingItem = false;
         }
         if (player && state instanceof ArmedEntityRenderState a) {
-            // 手的角度由 HeroPose 定，原版的持物姿势（举弓、格挡……）不叠上去
+            // 手的角度由档案里的架势定，原版的持物姿势（举弓、格挡……）不叠上去
             a.rightArmPose = HumanoidModel.ArmPose.ITEM;
             a.leftArmPose = HumanoidModel.ArmPose.EMPTY;
             if (a.mainArm == HumanoidArm.LEFT) {
                 a.leftArmPose = HumanoidModel.ArmPose.ITEM;
                 a.rightArmPose = HumanoidModel.ArmPose.EMPTY;
             }
-            state.setRenderData(PLAYER_POSE, HeroPose.PLAYER);
+            state.setRenderData(HeroCutin.POSE, HeroCutin.PLAYER.pose());
         }
 
         Framing framing = player ? Framing.PLAYER : Framing.COMPANION;
         float eye = state.eyeHeight > .2f ? state.eyeHeight : Math.max(.5f, state.boundingBoxHeight * .9f);
         float frame = framing.height();
-        float aimY = eye - (.5f - framing.eyeFromTop()) * frame, camY = aimY - LOW_ANGLE * frame;
+        float aimY = eye - (.5f - framing.eyeFromTop()) * frame;
+        CutinShot shot = look.shot();
+        int order = slot.order();
+        // 停在原位时：画面正好装 frame 那么高，视角越广镜头越近
+        float base = frame / 2 / (float) Math.tan(Math.toRadians(shot.fov() / 2));
+        float below = (float) Math.tan(Math.toRadians(LOOK_UP)) * base;
+        float progress = ChainTimeline.progress(age, order);
+        float distance = base * (1 + ChainTimeline.approach(age, order) - shot.push() * progress);
+        double orbit = Math.toRadians(shot.orbit() * (progress - .5f));
+        float camX = (float) Math.sin(orbit) * distance, camZ = (float) Math.cos(orbit) * distance;
+        float camY = aimY - below + shot.crane() * frame * (progress - .5f);
+        // 头往格子外侧倒（正中那一格往右）：左边的格子画面逆时针转
+        float side = Math.abs(slot.center() - .5f) < .01f ? 1 : Math.signum(slot.center() - .5f);
+        float lean = side * shot.lean() * (1 + CutinShot.LEAN_SETTLE * ChainTimeline.settle(age, order));
+
         // 镜头对准画面那一段的正中；贴图往下多画 EXTEND，所以视锥上下不对称
-        float near = .05f, k = near / (float) Math.sqrt(DISTANCE * DISTANCE + (aimY - camY) * (aimY - camY));
+        float near = .05f, k = near / (float) Math.sqrt(base * base + below * below);
         float halfWidth = frame * (1 + EXTEND) * target.width / (float) target.height / 2;
         Matrix4f projection = new Matrix4f().setFrustum(-halfWidth * k, halfWidth * k, -(frame / 2 + EXTEND * frame) * k, frame / 2 * k, near, 64,
                 RenderSystem.getDevice().isZZeroToOne());
-        Matrix4f view = new Matrix4f().lookAt(0, camY, DISTANCE, 0, aimY, 0, 0, 1, 0);
-        Quaternionf rotation = view.getNormalizedRotation(new Quaternionf());
+        Matrix4f view = new Matrix4f().lookAt(camX, camY, camZ, 0, aimY, 0, 0, 1, 0);
+        Quaternionf rotation = new Quaternionf().rotateZ((float) Math.toRadians(-lean)).mul(view.getNormalizedRotation(new Quaternionf()));
         PoseStack poseStack = new PoseStack();
         poseStack.mulPose(rotation);
-        poseStack.translate(0, -camY, -DISTANCE);
+        poseStack.translate(-camX, -camY, -camZ);
 
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
         encoder.clearColorAndDepthTextures(target.getColorTexture(), 0, target.getDepthTexture(), 1.0);
         RenderSystem.outputColorTextureOverride = target.getColorTextureView();
         RenderSystem.outputDepthTextureOverride = target.getDepthTextureView();
-        if (projections[slot] == null) projections[slot] = new ProjectionMatrixBuffer("logos_dimension chain cutin portrait " + slot);
-        RenderSystem.setProjectionMatrix(projections[slot].getBuffer(projection), ProjectionType.PERSPECTIVE);
-        // 镜头几乎是正着看的，世界的两道光照方向（从上方斜照）在这里也成立
+        if (projections[index] == null) projections[index] = new ProjectionMatrixBuffer("logos_dimension chain cutin portrait " + index);
+        RenderSystem.setProjectionMatrix(projections[index].getBuffer(projection), ProjectionType.PERSPECTIVE);
+        // 镜头差不多是正着看的，世界的两道光照方向（从上方斜照）在这里也成立
         mc.gameRenderer.getLighting().setupFor(Lighting.Entry.LEVEL);
         CameraRenderState camera = new CameraRenderState();
         camera.orientation = new Quaternionf(rotation).conjugate();
@@ -432,7 +467,7 @@ public final class ChainCutinRenderer {
         return copy;
     }
 
-    private static void pass(Minecraft mc, RenderTarget main, float age, boolean faces, boolean[] present) {
+    private static void pass(RenderTarget main, float age, boolean faces, Look[] looks, boolean[] present) {
         if (cutin == null || layout == null) return;
         RenderTarget input = copy(main);
         if (uniforms == null) uniforms = new MappableRingBuffer(() -> "logos_dimension chain cutin", GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_MAP_WRITE, UNIFORM_SIZE);
@@ -446,10 +481,12 @@ public final class ChainCutinRenderer {
         try (GpuBuffer.MappedView view = encoder.mapBuffer(uniforms.currentBuffer(), false, true)) {
             Std140Builder b = Std140Builder.intoBuffer(view.data());
             b.putVec4(main.width, main.height, age, cutin.seed() & 0xFFF);
-            b.putVec4(ChainTimeline.dim(age), ChainTimeline.plate(age, gentle), ChainTimeline.stars(age), faces ? 1 : 0);
-            b.putVec4(ChainTimeline.cloud(age, gentle), ChainTimeline.white(age, gentle), ChainTimeline.beam(age), lineStrength);
-            b.putVec4(lines.size(), ChainTimeline.zoom(age), ChainTimeline.shake(age, cutin.seed(), false) * aspect, ChainTimeline.shake(age, cutin.seed(), true));
-            b.putVec4(ChainTimeline.exposure(age, gentle), layout.fullPlate() ? 1 : 0, EXTEND, portraitWidth());
+            b.putVec4(ChainTimeline.dim(age), ChainTimeline.plate(age, gentle), ChainTimeline.backdrop(age), faces ? 1 : 0);
+            b.putVec4(ChainTimeline.cloud(age, gentle), ChainTimeline.veil(age, gentle), ChainTimeline.beam(age), lineStrength);
+            b.putVec4(lines.size(), ChainTimeline.exposure(age, gentle), ChainTimeline.shake(age, cutin.seed(), false) * aspect,
+                    ChainTimeline.shake(age, cutin.seed(), true));
+            b.putVec4(layout.fullPlate() ? 1 : 0, EXTEND, portraitWidth(), 0);
+            putColor(b, veilTint(looks, slots.size()), 0);
             for (int i = 0; i < LINES; i++) {
                 if (i >= lines.size()) {
                     b.putVec4(-9, -9, 0, 1);
@@ -459,21 +496,19 @@ public final class ChainCutinRenderer {
                 float dx = (float) Math.tan(Math.toRadians(l.tilt())) * aspect * .5f;
                 b.putVec4(l.x() - dx, l.x() + dx, ChainTimeline.grow(age, i, l.pierce()), l.edge() ? 1 : 0);
             }
-            for (int i = 0; i < LINES; i++) {
-                int rgb = i < lines.size() ? lineColor(i, slots) : 0xFFFFFF;
-                b.putVec4(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 0);
-            }
+            for (int i = 0; i < LINES; i++) putColor(b, i < lines.size() ? lineColor(i, slots, looks) : 0xFFFFFF, 0);
             for (int i = 0; i < SLOTS; i++) {
                 if (i >= slots.size()) {
                     b.putVec4(-9, 0, 0, 0);
                     continue;
                 }
-                b.putVec4(slots.get(i).center(), ChainTimeline.slide(age, i), 0, present[i] ? 1 : 0);
+                int order = slots.get(i).order();
+                float slide = ChainTimeline.slide(age, i, order);
+                b.putVec4(slots.get(i).center(), slide, ChainTimeline.slide(age - SMEAR, i, order) - slide, present[i] ? 1 : 0);
             }
-            for (int i = 0; i < SLOTS; i++) {
-                int rgb = i < slots.size() ? slotColor(slots.get(i)) : 0xFFFFFF;
-                b.putVec4(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 0);
-            }
+            for (int i = 0; i < SLOTS; i++) putColor(b, looks[i].accent(), ChainTimeline.direction(i));
+            for (int i = 0; i < SLOTS; i++) putColor(b, looks[i].night(), 0);
+            for (int i = 0; i < SLOTS; i++) putColor(b, looks[i].motes().color(), looks[i].motes().kind().ordinal());
         }
         var linear = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
         try (RenderPass pass = encoder.createRenderPass(() -> "logos_dimension chain cutin", main.getColorTextureView(), OptionalInt.empty())) {
@@ -489,26 +524,31 @@ public final class ChainCutinRenderer {
         uniforms.rotate();
     }
 
-    /** 格子的主色：同伴用她界面的主色，玩家用暖金。 */
-    private static int slotColor(ChainLayout.Slot slot) {
-        if (slot.member() == ChainLayout.PLAYER || cutin == null) return PLAYER_COLOR & 0xFFFFFF;
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level != null && slot.member() < cutin.members().size()
-                && mc.level.getEntity(cutin.members().get(slot.member())) instanceof CompanionEntity c) {
-            return CompanionStyle.of(c.def().id()).accent() & 0xFFFFFF;
-        }
-        return 0xB9C6F2;
+    private static void putColor(Std140Builder b, int rgb, float w) {
+        b.putVec4(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, w);
     }
 
-    /** 分割线的外焰取两边离中间远的那一格的颜色（贴着玩家的线就是同伴的颜色）。 */
-    private static int lineColor(int line, List<ChainLayout.Slot> slots) {
-        ChainLayout.Slot left = line > 0 && line - 1 < slots.size() ? slots.get(line - 1) : null;
-        ChainLayout.Slot right = line < slots.size() ? slots.get(line) : null;
-        ChainLayout.Slot pick;
-        if (left == null) pick = right;
-        else if (right == null) pick = left;
-        else pick = Math.abs(left.center() - .5f) >= Math.abs(right.center() - .5f) ? left : right;
-        return pick == null ? 0xFFFFFF : slotColor(pick);
+    /** 光幕四周的颜色：在场各人主色的平均。 */
+    private static int veilTint(Look[] looks, int count) {
+        int r = 0, g = 0, b = 0, n = Math.max(1, Math.min(count, SLOTS));
+        for (int i = 0; i < n; i++) {
+            r += (looks[i].accent() >> 16) & 0xFF;
+            g += (looks[i].accent() >> 8) & 0xFF;
+            b += looks[i].accent() & 0xFF;
+        }
+        return (r / n) << 16 | (g / n) << 8 | b / n;
+    }
+
+    /** 分割线的外焰取两边离中间远的那一格的主色（贴着玩家的线就是同伴的颜色）。 */
+    private static int lineColor(int line, List<ChainLayout.Slot> slots, Look[] looks) {
+        int left = line - 1, right = line;
+        boolean hasLeft = left >= 0 && left < slots.size(), hasRight = right < slots.size();
+        if (!hasLeft && !hasRight) return 0xFFFFFF;
+        int pick;
+        if (!hasLeft) pick = right;
+        else if (!hasRight) pick = left;
+        else pick = Math.abs(slots.get(left).center() - .5f) >= Math.abs(slots.get(right).center() - .5f) ? left : right;
+        return looks[pick].accent();
     }
 
     /** 测试用：现在的分格（没在放时是 null）。 */

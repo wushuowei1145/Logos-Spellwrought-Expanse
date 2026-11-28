@@ -142,7 +142,7 @@
 | 饿了 | 台词 + `act_sheepish` |
 | 主人一直看着她 | `act_head_tilt` |
 | 盖叶之契 | `act_curtsy` |
-| 连携切入（[CHAIN_CUTIN.md](CHAIN_CUTIN.md)） | 世界树之弓拉满、朝前瞄，身子再侧 28°，`face_determined`（`cutin`：取 `use_mainhand:bow` 0.5 秒；`CompanionStyle` 的 `cutin`） |
+| 连携切入（[CHAIN_CUTIN.md](CHAIN_CUTIN.md)） | 世界树之弓拉满、朝前瞄，身子再侧 28°，`face_determined`（`cutin`：取 `use_mainhand:bow` 0.5 秒；`CompanionStyle` 的 `cutin`）。镜头几乎不扫、一直往脸上推，光叶打着转落下 |
 
 ## 8. 对话和面板
 
