@@ -1,5 +1,7 @@
 package dev.logos.dimension.client.companion;
 
+import dev.logos.dimension.client.cutin.CutinMotes;
+import dev.logos.dimension.client.cutin.CutinShot;
 import dev.logos.dimension.companion.CompanionOutfit;
 import dev.logos.dimension.companion.CompanionSheet;
 import dev.logos.dimension.companion.Companions;
@@ -59,17 +61,13 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
     }
 
     /**
-     * 连携切入里的她（docs/CHAIN_CUTIN.md「角色的姿势」）：{@code make} 造一个不放进世界的实体，摆成她在切入里的样子。
+     * 连携切入里的她（docs/CHAIN_CUTIN.md「角色的姿势」「每个人的镜头和光屑」）：{@code make} 造一个不放进世界的实体，摆成她在切入里的样子。
      * 身体播她动画文件里的 {@code cutin}（tools/chain_cutin_poses.py 从她自己的出招、施法里取的那一刻，合她的人设），
      * 表情是她自己的一段 {@code face_*}；穿哪一套照档案（{@link CompanionSheet#outfit()}）。{@code turn} 是身子在朝着画面中间之外再侧多少度
-     * （正数往她自己的左边转），头照样回过来看着镜头。
+     * （正数往她自己的左边转），头照样回过来看着镜头。{@code shot} 是拍她的镜头怎么动，{@code motes} 是飘在她前面的光屑；
+     * 格子的底色和光用她的 {@link #night0()}、{@link #accent()}。
      */
-    public record Cutin(BiFunction<Level, CompanionSheet, @Nullable LivingEntity> make, float turn) {
-        /** 身子不额外侧。 */
-        public Cutin(BiFunction<Level, CompanionSheet, @Nullable LivingEntity> make) {
-            this(make, 0);
-        }
-    }
+    public record Cutin(BiFunction<Level, CompanionSheet, @Nullable LivingEntity> make, float turn, CutinShot shot, CutinMotes motes) {}
 
     private static final Map<String, CompanionStyle> STYLES = new ConcurrentHashMap<>();
 
@@ -92,12 +90,13 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 if (c != null) c.showcase(CompanionOutfit.byId(sheet.outfit()), "face_kitsune", "ryuka_idle", true);
                 return c;
             }, 18, .75f, -8, .68f, 0),
-            // 切入：流火斜着划过身前，左手压在胸前凝着狐火，眯着眼笑——赢的人的式神，也还是那只骄傲的九尾
+            // 切入：流火竖在右肩外、刀尖过头，左手叉腰，眯着眼笑——赢的人的式神，也还是那只骄傲的九尾。
+            // 镜头横扫、歪得最多，慢慢往下沉；身前飘着淡粉的狐火
             new Cutin((level, sheet) -> {
                 var c = Companions.SHIRAUME.get().create(level, EntitySpawnReason.LOAD);
                 if (c != null) c.showcase(CompanionOutfit.byId(sheet.outfit()), "face_kitsune", "cutin", true);
                 return c;
-            }));
+            }, 0, new CutinShot(46, .14f, 14, 9, -.05f), new CutinMotes(CutinMotes.Kind.FOXFIRE, 0xFFC2E0)));
 
     /**
      * 精灵公主：夜里的林子（深绿到墨绿），薄荷绿当主色，金线，被动能力用荷花粉；纹是世界树的叶（一圈细环、四片菱形的叶、正中一颗生命晶）。
@@ -110,7 +109,8 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 if (c != null) c.showcase("face_content");
                 return c;
             }, 18, .75f, -8, .68f, 0),
-            // 切入：把世界树之弓拉满，难得一脸认真——哪怕只有万分之一的机会
+            // 切入：把世界树之弓拉满，难得一脸认真——哪怕只有万分之一的机会。
+            // 镜头几乎不扫，一直往她脸上推（瞄准时的那股专注）；光叶打着转落下
             new Cutin((level, sheet) -> {
                 var c = Companions.ELF_PRINCESS.get().create(level, EntitySpawnReason.LOAD);
                 if (c != null) {
@@ -118,7 +118,7 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                     c.stage("face_determined", "cutin");
                 }
                 return c;
-            }, 28));
+            }, 28, new CutinShot(38, .2f, 4, 5, 0), new CutinMotes(CutinMotes.Kind.LEAF, 0xA8F0C6)));
 
     /**
      * 琥珀：温室午后的咖啡色到深棕，琥珀色当主色，金线，奶油色正文，被动能力用淡紫（星辰花）；纹是一只琥珀色的猫爪按在圆形炼成阵上。
@@ -131,7 +131,8 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 if (c != null) c.showcase("face_lazy", sheet.seals(), KohakuOutfit.byId(sheet.outfit()));
                 return c;
             }, 18, .75f, -8, .68f, 0),
-            // 切入：长杖拄在身侧，左手抬到下巴前竖起一指，竖瞳一闪——想到解法了，这一下交给她
+            // 切入：长杖拄在身侧，左手抬到下巴前竖起一指，竖瞳一闪——想到解法了，这一下交给她。
+            // 镜头从左往右扫、慢慢升起来；身前翻飞着黄符纸
             new Cutin((level, sheet) -> {
                 var c = Companions.KOHAKU.get().create(level, EntitySpawnReason.LOAD);
                 if (c != null) {
@@ -139,7 +140,7 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                     c.stage("face_focus", "cutin");
                 }
                 return c;
-            }));
+            }, 0, new CutinShot(42, .1f, -10, 7, .05f), new CutinMotes(CutinMotes.Kind.TALISMAN, 0xF2D06E)));
 
     /**
      * 拉塞塔：熔岩夜里的酒红到深绯，珊瑚红当主色（翼骨与龙鳞），金线（角尖鎏金），被动能力用骑士甲的冷银，奶油色正文；
@@ -152,7 +153,8 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                 if (c != null) c.showcase("face_poise");
                 return c;
             }, 20, .75f, -8, .68f, 0),
-            // 切入：炽焰长剑剑尖朝下拄在身前，双翼全展，龙瞳一竖——寸步不退的绯翼前排
+            // 切入：炽焰长剑剑尖朝下拄在身前，双翼全展，龙瞳一竖——寸步不退的绯翼前排。
+            // 镜头最广、最稳，往下沉着仰拍，几乎不歪；火星往上蹿
             new Cutin((level, sheet) -> {
                 var c = Companions.LACERTA.get().create(level, EntitySpawnReason.LOAD);
                 if (c != null) {
@@ -161,7 +163,7 @@ public record CompanionStyle(int accent, int accentDeep, int gold, int cool, int
                     c.stage("face_battle", "cutin");
                 }
                 return c;
-            }));
+            }, 0, new CutinShot(50, .08f, 8, 4, -.08f), new CutinMotes(CutinMotes.Kind.EMBER, 0xF6A04D)));
 
     /** 盾形的龙鳞，正中一簇龙炎：一圈细环，环里一枚大菱形（鳞），鳞的上半一枚小菱形、下面一点（火苗）。 */
     static void dragonScale(GuiGraphicsExtractor g, float cx, float cy, float r, int color) {

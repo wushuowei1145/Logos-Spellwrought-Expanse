@@ -490,7 +490,7 @@
 | 闲着 | 偶尔 `act_groom`；凑过来坐下 |
 | 主人从远处回来 | `act_wave` |
 | 盖爪之契 | 咬一口金镑，`face_smug` |
-| 连携切入（[CHAIN_CUTIN.md](CHAIN_CUTIN.md)） | 右手拄着长杖，左手抬到下巴前竖起一指——想到解法的那一下，`face_focus`（`cutin`：取 `act_formula` 0.7 秒的右手镜像到左手；`CompanionStyle` 的 `cutin`） |
+| 连携切入（[CHAIN_CUTIN.md](CHAIN_CUTIN.md)） | 右手拄着长杖，左手抬到下巴前竖起一指——想到解法的那一下，`face_focus`（`cutin`：取 `act_formula` 0.7 秒的右手镜像到左手；`CompanionStyle` 的 `cutin`）。镜头从左往右扫、慢慢升起来，身前翻飞着黄符纸 |
 
 ## 13. 对话和面板（提议）
 

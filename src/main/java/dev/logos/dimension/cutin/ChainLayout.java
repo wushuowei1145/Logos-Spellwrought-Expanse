@@ -36,7 +36,12 @@ public record ChainLayout(List<Line> lines, List<Slot> slots, boolean fullPlate)
      * @param center 角色站在哪（画面 x）
      * @param member 谁：{@link #PLAYER} 是玩家，否则是第几位同伴（{@link ChainCutin#members()} 的下标）
      */
-    public record Slot(float center, int member) {}
+    public record Slot(float center, int member) {
+        /** 第几个落位（{@link ChainTimeline#landing}）：玩家先到，同伴按点名的顺序，从中间一左一右往外。 */
+        public int order() {
+            return member == PLAYER ? 0 : member + 1;
+        }
+    }
 
     public static final int PLAYER = -1;
     /** 刺穿那一拍各道线刺到的高度，错落着（中间最高）。 */

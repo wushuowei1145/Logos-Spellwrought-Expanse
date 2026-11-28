@@ -7,7 +7,7 @@
 | 运镜 | [CAMERA_SHOTS.md](CAMERA_SHOTS.md) | 镜头暂时离开玩家，看完平滑回来，可带遮幅和电影蒙版 |
 | 全屏后期 | [SCREEN_EFFECTS.md](SCREEN_EFFECTS.md) | 黑白闪（冲击帧）、电影蒙版、泛光 `GlowBloom`、后期里画的特效 `PostVfx` |
 | 区域画风 | [WORLD_STYLES.md](WORLD_STYLES.md) | 门后、群系里的世界换一种画风（黑白、童话、国画），走进去时球形切换 |
-| 连携切入 | [CHAIN_CUTIN.md](CHAIN_CUTIN.md) | 小队合力一击的切入：斜切分格里玩家（正中）和在场的同伴，落位爆闪、闪白甩出；角色单独画进贴图再合成 |
+| 连携切入 | [CHAIN_CUTIN.md](CHAIN_CUTIN.md) | 小队合力一击的切入：斜切分格里玩家（正中）和在场的同伴，一个接一个落位，每格的镜头、背景和光屑照各人的档案动，光幕收尾；角色单独画进贴图再合成 |
 | 处决特写 | [EXECUTION_SHOTS.md](EXECUTION_SHOTS.md) | 投技、处决的两秒特写：抛起、黑白、刀光、红色重击、拍下；可交互版本；飞身刺（两人的剪影，刺中后定格，定格时换场景） |
 | 各功能自己的通道 | [EXPLOSION_MAGIC.md](EXPLOSION_MAGIC.md)、[DAWNVOW_CHARGE.md](DAWNVOW_CHARGE.md)、[RAILGUN.md](RAILGUN.md)、[SHIRAUME_BOSS.md](SHIRAUME_BOSS.md)、[ORCHESTRA.md](https://github.com/MagicFoxDemon/StarbloomOrchestra/blob/main/docs/ORCHESTRA.md)、[QUEEN_CORE_BATTLE.md](QUEEN_CORE_BATTLE.md) | 爆裂魔法、曦誓蓄力、超电磁炮、白梅战、乐团描边、树心净化各有一个全屏通道 |
 | 世界球体着色 | [QUEEN_CORE_BATTLE.md](QUEEN_CORE_BATTLE.md)「画面」 | 一次画多个世界坐标的球：染腐、净化、显露、搏动波；女王战和树心净化结局在用，别的功能也能交球 |
