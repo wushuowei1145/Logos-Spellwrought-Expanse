@@ -16,10 +16,11 @@
 - **琥珀独有**（[琥珀](KOHAKU_COMPANION.md)，分五步做，第一步已进游戏）：长杖和换杖（`KohakuStaff`）、魔力（她是 Logos 的 `ManaVessel`，回复由附属结算）、
   生命单独的继承比例和不继承护甲（`CompanionDef.Growth` 的 `healthRatio`、`inheritsArmor`）、琥珀护膜、她自己施放的载页（`KohakuSpells`）、哈气和幻翼；
   之后是按意图挑页（含你给她的页）、凝辉、猫步、凑过来坐下、雨伞、睡姿和醒来的礼物、琥珀相伴。
-- **拉塞塔独有**（[拉塞塔](LACERTA_COMPANION.md) 第 17 节，接入方案分五个阶段，阶段 A 人形核心已进游戏）：誓约逆鳞（`DragonScaleItem`）、
+- **拉塞塔独有**（[拉塞塔](LACERTA_COMPANION.md) 第 17–19 节，接入方案分五个阶段，阶段 A–C 已进游戏）：誓约逆鳞（`DragonScaleItem`）、
   不封顶的分段继承和超出原版上限的护甲、魔咒折成的减伤（`LacertaStats`）、炽焰长剑（`LacertaBlade`）和按处境挑招、防复读（`LacertaMind`）、
   赤龙威压（嘲讽）、掌心赤焰（龙炎弹）、龙眠、收展翅、展翼滑翔、四档守夜（`LacertaRest`）；阶段 B 加了飞行（`LacertaFlight`：伴飞、
-  空中追击接坠星、高空护落）。
+  空中追击接坠星、高空护落）；阶段 C 加了巨龙化身（`LacertaDragon`：同一个实体两种形态、重爪、龙炎吐息、你出魔力维持、记着下次以巨龙登场）
+  和骑龙（`LacertaRide`）。一个同伴要换整套模型时，`NpcRenderer` 按烘焙模型各存一份网格，覆盖 `meshTexture` 给每份配贴图。
 - 角色面板的数值页按档案给的顺序画（`CompanionSheet.stats`）：白梅生命、攻击、护甲、韧性；精灵公主把攻击换成法术强度；琥珀生命、法术强度、魔力、护甲；
   拉塞塔同白梅（攻击含剑的 8 点）。
 
@@ -44,7 +45,7 @@
 | 11 | 行动策略、攻击玩家 | 随机应变、优先远程、优先近战、不参与攻击；攻击玩家开关（第 3.4 节） | 菜单和存储公共，「怎么打」每位自己写 | `CompanionTactic`；`Bond.tactic`、`Bond.pvp`；`CompanionMind` |
 | 12 | 护主 | 截下射向主人的弹射物，再去收拾射手；第一印替主人挡死（眼前转出信物，同不死图腾） | 弹道判断公共，挡死用的是形代 | `CompanionGuard` |
 | 13 | 防困 | 连着五次闪不回主人身边（矿车、船、座位）就回信物里 | **公共** | `CompanionMind.stuckInSeat` |
-| 14 | 表情、小动作 | 每半秒按处境挑一种表情（`face_*`），遇事插一个小动作（`act_*`） | 播放公共，挑哪一个每位自己写；主控制器换状态的过渡刻数每位可以自己定（`NpcAnimated.npcMainTransition`，默认 2，拉塞塔 5）；主状态也可以由她自己定（`NpcAnimated.npcMainOverride`，拉塞塔飞着时播飞的） | `CompanionMood`（`ShiraumeMood`、`PrincessMood`） |
+| 14 | 表情、小动作 | 每半秒按处境挑一种表情（`face_*`），遇事插一个小动作（`act_*`） | 播放公共，挑哪一个每位自己写；主控制器换状态的过渡刻数每位可以自己定（`NpcAnimated.npcMainTransition`，默认 2，拉塞塔 5）；主状态也可以由她自己定（`NpcAnimated.npcMainOverride`，拉塞塔飞着时播飞的，巨龙飞着时按速度挑六段飞行动画） | `CompanionMood`（`ShiraumeMood`、`PrincessMood`） |
 | 15 | 台词字幕 | 她说话：名字 + 一句，屏幕下方字幕（名字取 `talk.logos_dimension.<同伴>.name`，颜色取她的主色） | **公共** | `CompanionLines.say(她, 主人, 键)`、`client/companion/CompanionLinesHud` |
 | 16 | 对话 | 潜行右键打开；一人同时只和一位说话；走开八格、来了敌人就断；看包袱时先放下，关上回来 | **公共** | `CompanionTalk`（`Talker`）、`TalkMenu`；白梅的在 `ShiraumeTalk` |
 | 17 | 角色档案 | 对话和面板显示的一切：数值、能力、契印、羁绊、饱腹、策略、往事 | **公共** | `CompanionSheet` |

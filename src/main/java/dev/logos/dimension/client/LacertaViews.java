@@ -49,6 +49,10 @@ import net.minecraft.world.phys.Vec3;
  * <li>{@code lacerta_pursuit}：站在高柱上够不着的僵尸，她飞到它头顶接一记炽翼坠星破，砸完落地。</li>
  * <li>{@code lacerta_catch_hand} / {@code lacerta_catch_embrace}：你从二十几格高处掉下去，她飞过来拉住你的手（信赖起抱住你），带你慢慢降落；
  *     你活着落地、几乎没掉血，她数落你一句。</li>
+ * <li>{@code lacerta_dragon}（阶段 C）：你让她化身巨龙（碰撞箱变大、血量百分比不变、你的魔力在扣），龙炎喷中远处的、龙爪砍中贴身的，变回人形。</li>
+ * <li>{@code lacerta_dragon_auto}：遇上强敌（劫掠兽）她自己化身、打它；它没了，她过一会自己变回来。</li>
+ * <li>{@code lacerta_dragon_appear}：上次是巨龙，叫她出来时以巨龙登场，昂首一吼，二十几格外冲你来的僵尸都转头冲她。</li>
+ * <li>{@code lacerta_dragon_ride}：空手右键骑上去，空格起飞、按住 W 往前飞、左键挥爪；在半空下来，这一摔只受两成、活着落地。</li>
  * </ul>
  */
 public abstract class LacertaViews extends KohakuSleepViews {
@@ -81,6 +85,11 @@ public abstract class LacertaViews extends KohakuSleepViews {
             p.removeAllEffects();
             p.setHealth(p.getMaxHealth());
             p.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, 20 * 150, 4, false, false));
+            // 魔力回到新玩家的默认值（200）：巨龙场景补满过，留着的话打高血量的靶子时她会自己化身巨龙（0 印要够维持 5 秒，250）
+            var fresh = new dev.logos.runtime.PlayerMagic();
+            var magic = dev.logos.runtime.PlayerMagic.of(p);
+            magic.baseMaxMana = fresh.baseMaxMana;
+            magic.mana = fresh.mana;
         });
     }
 
@@ -139,6 +148,31 @@ public abstract class LacertaViews extends KohakuSleepViews {
             double yaw = Math.toRadians(c.yBodyRot + side);
             Vec3 at = c.position().add(-Math.sin(yaw) * dist, height - lead, Math.cos(yaw) * dist);
             return new Vec3[]{at, c.position().add(0, .9 - lead, 0)};
+        });
+    }
+
+    /** 对着巨龙拍：她身前偏 {@code side} 度、{@code dist} 格远、高 {@code height} 格，看着她前胸（翼展十来格，得站远些）。 */
+    static ScenarioBuilder shootDragon(ScenarioBuilder s, String name, java.util.function.Supplier<LacertaCompanion> who, double side, double dist,
+                                       double height) {
+        return shoot(s, name, () -> {
+            LacertaCompanion c = who.get();
+            double yaw = Math.toRadians(c.yBodyRot + side), face = Math.toRadians(c.yBodyRot);
+            Vec3 chest = c.position().add(-Math.sin(face) * 1.5, 2, Math.cos(face) * 1.5);
+            return new Vec3[]{chest.add(-Math.sin(yaw) * dist, height - 2, Math.cos(yaw) * dist), chest};
+        });
+    }
+
+    /** 从侧面拍她和 {@code other} 之间（喷龙炎、打它）：两者中点往旁边 {@code dist} 格、高 {@code height} 格。 */
+    static ScenarioBuilder shootBetween(ScenarioBuilder s, String name, java.util.function.Supplier<LacertaCompanion> who,
+                                        java.util.function.Supplier<? extends net.minecraft.world.entity.Entity> other, double dist, double height) {
+        return shoot(s, name, () -> {
+            LacertaCompanion c = who.get();
+            Vec3 a = c.position(), b = other.get().position();
+            Vec3 mid = a.add(b).scale(.5).add(0, 1.8, 0);
+            Vec3 along = b.subtract(a).multiply(1, 0, 1);
+            along = along.lengthSqr() < 1e-4 ? new Vec3(0, 0, 1) : along.normalize();
+            Vec3 side = new Vec3(along.z, 0, -along.x);
+            return new Vec3[]{mid.add(side.scale(dist)).add(0, height - 1.8, 0), mid};
         });
     }
 
@@ -602,7 +636,7 @@ public abstract class LacertaViews extends KohakuSleepViews {
                     .step("聊天", ctx -> CompanionTalkViews.talk().choose("chat")).ticks(6)
                     .check("她自己的话题", ctx -> CompanionTalkViews.talk().options().equals(List.of("chat.scale", "chat.food", "chat.slept",
                             "chat.pauldron", "chat.knight", "chat.cold", "chat.airships", "chat.praise", "chat.weapon", "chat.past", "chat.seals", "chat.us",
-                            "chat.rest", "back")))
+                            "chat.form", "chat.rest", "back")))
                     .step("右肩甲的来历", ctx -> CompanionTalkViews.talk().choose("chat.pauldron"))
                     .waitUntil("她回话", ctx -> CompanionTalkViews.said("pauldron_1"))
                     .step("跳到最后", ctx -> CompanionTalkViews.talk().skip()).ticks(6)
@@ -806,5 +840,228 @@ public abstract class LacertaViews extends KohakuSleepViews {
     @LDLRegisterClient(name = "lacerta_catch_embrace", group = "lacerta_companion", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
     public static class CatchEmbrace extends Catch {
         @Override boolean embrace() { return true; }
+    }
+
+    // ---------------------------------------------------------------- 阶段 C：巨龙
+
+    /** 你的魔力补满（巨龙每秒要你出魔力）。 */
+    static void fillMana(ServerPlayer p, double amount) {
+        var m = dev.logos.runtime.PlayerMagic.of(p);
+        m.baseMaxMana = Math.max(m.baseMaxMana, amount);
+        m.mana = amount;
+    }
+
+    @LDLRegisterClient(name = "lacerta_dragon", group = "lacerta_companion", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class Dragon extends LacertaViews {
+        private LacertaCompanion c;
+        private Mob far, near;
+        private float ratio;
+        private double mana;
+        private int breathHits, clawHits;
+
+        @Override
+        public void define(ScenarioBuilder s) {
+            lacertaStage(s, GameType.SURVIVAL).runCommand("difficulty normal")
+                    .server("站好、召唤；魔力补满", ctx -> {
+                        ServerPlayer p = ctx.player();
+                        standAt(p, new Vec3(-8.5, FLOOR + 1, -8.5));
+                        c = summonLacerta(p, SPOT);
+                        fillMana(p, 5000);
+                    })
+                    .waitUntilServer("入场播完", ctx -> arrived(c))
+                    .server("让她化身巨龙（你在对话里让她变的）", ctx -> {
+                        ServerPlayer p = ctx.player();
+                        c.setHealth(c.getMaxHealth() * .6f);
+                        ratio = c.getHealth() / c.getMaxHealth();
+                        mana = dev.logos.runtime.PlayerMagic.of(p).mana;
+                        c.transformForTest(p, false);
+                    })
+                    .checkServer("变成巨龙：碰撞箱 3.2 宽", ctx -> c.isDragonForm() && Math.abs(c.getBbWidth() - 3.2f) < .01)
+                    .checkServer("血量百分比不变，生命上限翻倍", ctx -> Math.abs(c.getHealth() / c.getMaxHealth() - ratio) < .02)
+                    .checkServer("记在你身上：下次以巨龙登场", ctx -> dev.logos.dimension.companion.LacertaDays.NONE != null
+                            && ctx.player().getData(Companions.LACERTA_DAYS).dragonForm())
+                    .ticks(40)
+                    .checkServer("你的魔力在扣", ctx -> dev.logos.runtime.PlayerMagic.of(ctx.player()).mana < mana - 20);
+            shootDragon(s, "lacerta_dragon_front", () -> c, -35, 14, 5.5);
+            shootDragon(s, "lacerta_dragon_side", () -> c, -90, 15, 4.5);
+            back(s).server("十二格外一只站着不动的僵尸", ctx -> {
+                        ServerLevel level = ctx.server().overworld();
+                        far = dummy(level, new Vec3(.5, FLOOR + 1, 12.5), 180, 300);
+                        breathHits = LacertaCompanion.breathHits();
+                        c.breathForTest(far.getEyePosition().subtract(c.position().add(0, 1.8, 0)).normalize());
+                    })
+                    .waitUntilServer("龙炎喷中它", ctx -> LacertaCompanion.breathHits() > breathHits && far.getHealth() < far.getMaxHealth())
+                    .waitUntil("客户端沿喷的方向画了一道龙炎", ctx -> dev.logos.dimension.client.companion.LacertaBreathClient.streamed() > 150);
+            shootBetween(s, "lacerta_dragon_breath", () -> c, () -> far, -15, 5);
+            back(s).server("收住龙炎；贴身再来一只", ctx -> {
+                        c.stopBreathForTest();
+                        far.discard();
+                        near = dummy(ctx.server().overworld(), new Vec3(.5, FLOOR + 1, 4.5), 180, 300);
+                    })
+                    .ticks(20)
+                    .server("挥一爪", ctx -> {
+                        clawHits = LacertaCompanion.clawHits();
+                        c.setYRot(0);
+                        c.yBodyRot = 0;
+                        c.clawForTest();
+                    })
+                    .ticks(8);
+            shootBetween(s, "lacerta_dragon_claw", () -> c, () -> near, -12, 5);
+            back(s).waitUntilServer("龙爪砍中它", ctx -> LacertaCompanion.clawHits() > clawHits && near.getHealth() < near.getMaxHealth())
+                    .server("变回人形", ctx -> {
+                        near.discard();
+                        c.revertForTest(ctx.player());
+                    })
+                    .checkServer("变回来：碰撞箱、血量百分比", ctx -> !c.isDragonForm() && Math.abs(c.getBbWidth() - .6f) < .01
+                            && Math.abs(c.getHealth() / c.getMaxHealth() - ratio) < .1)
+                    .checkServer("不再记着以巨龙登场", ctx -> !ctx.player().getData(Companions.LACERTA_DAYS).dragonForm());
+        }
+    }
+
+    @LDLRegisterClient(name = "lacerta_dragon_auto", group = "lacerta_companion", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class DragonAuto extends LacertaViews {
+        private LacertaCompanion c;
+        private Mob ravager;
+        private int transforms, hits;
+
+        @Override
+        public void define(ScenarioBuilder s) {
+            lacertaStage(s, GameType.SURVIVAL).runCommand("difficulty normal")
+                    .server("站好、召唤；魔力补满", ctx -> {
+                        ServerPlayer p = ctx.player();
+                        standAt(p, new Vec3(-8.5, FLOOR + 1, -8.5));
+                        c = summonLacerta(p, SPOT);
+                        fillMana(p, 5000);
+                    })
+                    .waitUntilServer("入场播完", ctx -> arrived(c))
+                    .server("十格外一只劫掠兽（站着不动，100 生命）", ctx -> {
+                        transforms = LacertaCompanion.transforms();
+                        hits = LacertaCompanion.clawHits() + LacertaCompanion.breathHits();
+                        ravager = CompanionLifeViews.spawn(ctx.server().overworld(), EntityType.RAVAGER, new Vec3(.5, FLOOR + 1, 10.5), 180);
+                        ravager.setNoAi(true);
+                    })
+                    .waitUntilServer("她自己化身巨龙", ctx -> LacertaCompanion.transforms() > transforms && c.isDragonForm())
+                    .waitUntilServer("龙爪或龙炎打中它", ctx -> LacertaCompanion.clawHits() + LacertaCompanion.breathHits() > hits);
+            shootBetween(s, "lacerta_dragon_auto", () -> c, () -> ravager, -16, 6);
+            back(s).server("劫掠兽没了", ctx -> ravager.discard())
+                    .waitUntilServer("打完过一会，她自己变回人形", ctx -> !c.isDragonForm())
+                    .checkServer("她自己变的不记着（下次照常以人形登场）", ctx -> !ctx.player().getData(Companions.LACERTA_DAYS).dragonForm())
+                    .server("她自己再变一次巨龙，这时收回她", ctx -> {
+                        c.transformForTest(ctx.player(), true);
+                        Companions.dismiss(ctx.player(), Companions.LACERTA_DEF);
+                    })
+                    .checkServer("巨龙形态下收回的，下次以巨龙登场", ctx -> ctx.player().getData(Companions.LACERTA_DAYS).dragonForm())
+                    .teardown("不再记着", ctx -> ctx.player().setData(Companions.LACERTA_DAYS, dev.logos.dimension.companion.LacertaDays.NONE));
+        }
+    }
+
+    @LDLRegisterClient(name = "lacerta_dragon_appear", group = "lacerta_companion", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class DragonAppear extends LacertaViews {
+        private LacertaCompanion c;
+        private Mob z1, z2;
+
+        @Override
+        public void define(ScenarioBuilder s) {
+            lacertaStage(s, GameType.SURVIVAL).runCommand("difficulty normal")
+                    .server("上次是巨龙；两只僵尸冲你来（二十格外）", ctx -> {
+                        ServerPlayer p = ctx.player();
+                        standAt(p, new Vec3(-8.5, FLOOR + 1, -8.5));
+                        fillMana(p, 5000);
+                        Companions.grantPact(p, Companions.LACERTA_DEF);
+                        p.setData(Companions.LACERTA_DAYS, new dev.logos.dimension.companion.LacertaDays(-1, -1, true));
+                        ServerLevel level = ctx.server().overworld();
+                        z1 = PrincessViews.helmeted(CompanionLifeViews.spawn(level, EntityType.ZOMBIE, new Vec3(10.5, FLOOR + 1, 12.5), 180));
+                        z2 = PrincessViews.helmeted(CompanionLifeViews.spawn(level, EntityType.ZOMBIE, new Vec3(12.5, FLOOR + 1, 10.5), 180));
+                        z1.setTarget(p);
+                        z2.setTarget(p);
+                        c = summonLacerta(p, SPOT);
+                    })
+                    .checkServer("以巨龙登场", ctx -> c.isDragonForm() && "appear".equals(misc(c)))
+                    .ticks(12);
+            shootDragon(s, "lacerta_dragon_appear_land", () -> c, -40, 15, 5);
+            back(s).waitUntilServer("昂首一吼，僵尸都转头冲她", ctx -> z1.getTarget() == c && z2.getTarget() == c);
+            shootDragon(s, "lacerta_dragon_appear_roar", () -> c, -40, 15, 5);
+            back(s).teardown("不再记着", ctx -> ctx.player().setData(Companions.LACERTA_DAYS, dev.logos.dimension.companion.LacertaDays.NONE));
+        }
+    }
+
+    @LDLRegisterClient(name = "lacerta_dragon_ride", group = "lacerta_companion", registry = UIScenario.REGISTRY, environment = RegistrationEnvironment.DEV_ONLY)
+    public static class DragonRide extends LacertaViews {
+        private LacertaCompanion c;
+        private double startZ;
+        private int claws;
+        private float health;
+        private double dismountY;
+
+        /** 客户端那一只（骑着时由你的客户端算她怎么走）。 */
+        private LacertaCompanion clientDragon() {
+            return Minecraft.getInstance().level.getEntity(c.getId()) instanceof LacertaCompanion l ? l : null;
+        }
+
+        @Override
+        public void define(ScenarioBuilder s) {
+            lacertaStage(s, GameType.SURVIVAL).runCommand("difficulty peaceful")
+                    .server("站好、召唤、化身巨龙", ctx -> {
+                        ServerPlayer p = ctx.player();
+                        standAt(p, new Vec3(.5, FLOOR + 1, -4.5));
+                        c = summonLacerta(p, new Vec3(.5, FLOOR + 1, -9.5));
+                        fillMana(p, 20000);
+                    })
+                    .waitUntilServer("入场播完", ctx -> arrived(c))
+                    .server("变身", ctx -> c.transformForTest(ctx.player(), false))
+                    .ticks(20)
+                    .server("空手右键她", ctx -> {
+                        ServerPlayer p = ctx.player();
+                        p.removeAllEffects();
+                        p.setHealth(p.getMaxHealth());
+                        p.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                        c.interact(p, InteractionHand.MAIN_HAND, Vec3.ZERO);
+                    })
+                    .waitUntilServer("骑上去了", ctx -> ctx.player().getVehicle() == c)
+                    .waitUntil("你的客户端：骑着时第三人称镜头拉远到 10 格", ctx -> clientDragon() != null
+                            && clientDragon().getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.CAMERA_DISTANCE) >= 9.9)
+                    .step("第三人称", ctx -> thirdPerson(true))
+                    .ticks(10).screenshot("lacerta_dragon_ride_seat")
+                    .step("按住空格：起飞", ctx -> dev.logos.dimension.client.companion.LacertaRideClient.forceForTest(
+                            new net.minecraft.world.entity.player.Input(false, false, false, false, true, false, false)))
+                    .waitUntil("她飞起来了（你的客户端）", ctx -> clientDragon() != null && clientDragon().rideAirborneForTest())
+                    .ticks(20)
+                    .server("记下位置", ctx -> startZ = c.getZ())
+                    .step("按住 W：顺着视线往前飞", ctx -> {
+                        var mc = Minecraft.getInstance();
+                        mc.player.setYRot(0);
+                        mc.player.setXRot(-35);
+                        dev.logos.dimension.client.companion.LacertaRideClient.forceForTest(
+                                new net.minecraft.world.entity.player.Input(true, false, false, false, false, false, false));
+                    })
+                    .ticks(10)
+                    .step("视线放平一些再拍（仰着拍，镜头在她肚子底下）", ctx -> Minecraft.getInstance().player.setXRot(-8))
+                    .ticks(6).screenshot("lacerta_dragon_ride_fly")
+                    .step("马上按住 S 刹住、空格往上抬（截图那几秒她一直在往前飞，别飞出台子）", ctx -> dev.logos.dimension.client.companion.LacertaRideClient.forceForTest(
+                            new net.minecraft.world.entity.player.Input(false, true, false, false, true, false, false)))
+                    .checkServer("往前飞了好几格、离地了", ctx -> c.getZ() > startZ + 4 && !c.onGround())
+                    .step("左键：挥爪", ctx -> {
+                        claws = LacertaCompanion.claws();
+                        net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(
+                                dev.logos.dimension.companion.LacertaRideCommands.claw());
+                    })
+                    .waitUntilServer("挥了一爪", ctx -> LacertaCompanion.claws() > claws)
+                    .waitUntilServer("飞到十几格高（还在台子上方）", ctx -> c.getY() > FLOOR + 14 && Math.abs(c.getZ()) < 13)
+                    .step("松开", ctx -> dev.logos.dimension.client.companion.LacertaRideClient.forceForTest(null))
+                    .server("在半空下来", ctx -> {
+                        ServerPlayer p = ctx.player();
+                        health = p.getHealth();
+                        dismountY = p.getY();
+                        p.stopRiding();
+                    })
+                    .waitUntilServer("你落地", ctx -> ctx.player().onGround())
+                    .checkServer("落在台子上、活着，这一摔只受了两成（照下龙的高度算）", ctx -> {
+                        ServerPlayer p = ctx.player();
+                        double full = dismountY - (FLOOR + 1) - 3;
+                        return p.isAlive() && Math.abs(p.getY() - (FLOOR + 1)) < .1 && p.getHealth() >= health - (full * .2 + 1) && p.getHealth() < health;
+                    })
+                    .step("第一人称", ctx -> thirdPerson(false))
+                    .teardown("松开按键", ctx -> dev.logos.dimension.client.companion.LacertaRideClient.forceForTest(null));
+        }
     }
 }

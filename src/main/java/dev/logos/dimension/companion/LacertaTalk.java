@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -37,7 +38,7 @@ final class LacertaTalk {
             Option.server("chat.scale"), Option.server("chat.food"), Option.server("chat.slept"), Option.server("chat.pauldron"),
             Option.server("chat.knight"), Option.server("chat.cold"), Option.server("chat.airships"), Option.server("chat.praise"),
             Option.server("chat.weapon"), Option.server("chat.past"), Option.server("chat.seals"), Option.server("chat.us"),
-            Option.server("chat.rest")), true);
+            Option.server("chat.form"), Option.server("chat.rest")), true);
     /** 测试用：让她看过几次武器、最近一次说的是哪一种；夸过她几次。 */
     static int critiques, praises;
     static String lastVerdict = "";
@@ -72,11 +73,13 @@ final class LacertaTalk {
         CompanionStats.apply(c, p, seals);
         CompanionStats.Parts parts = c.parts();
         CompanionStats.Part atk = parts.attack();
+        // 巨龙形态护甲、韧性翻倍（属性里是乘上去的，档案照实显示）
+        double form = c.isDragonForm() ? 2 : 1;
         List<CompanionSheet.Stat> stats = List.of(
                 stat("health", c.getMaxHealth(), parts.health(), c.getHealth()),
                 new CompanionSheet.Stat("attack", (float) (atk.total() + LacertaBlade.SWORD), (float) (atk.own() + LacertaBlade.SWORD), (float) atk.bond(), -1),
-                stat("armor", (float) parts.armor().total(), parts.armor(), -1),
-                stat("toughness", (float) parts.toughness().total(), parts.toughness(), -1));
+                stat("armor", (float) (parts.armor().total() * form), parts.armor(), -1),
+                stat("toughness", (float) (parts.toughness().total() * form), parts.toughness(), -1));
         float hit = c.attack() + LacertaBlade.SWORD;
         List<CompanionSheet.Skill> skills = new ArrayList<>(List.of(
                 new CompanionSheet.Skill("blade", CompanionSheet.NORMAL, 0, true, List.of(num(hit), num(hit * 1.45))),
@@ -99,7 +102,14 @@ final class LacertaTalk {
                 new CompanionSheet.Skill("mana", CompanionSheet.PASSIVE, 0, true, List.of(num(c.maxMana()), num(c.regenPerSecond()), num(c.spellPower()))),
                 new CompanionSheet.Skill("vigil", CompanionSheet.PASSIVE, 0, true, List.of("#talk.logos_dimension.lacerta.skill.vigil."
                         + LacertaRest.Tier.of(CompanionBond.Stage.of(bond.affection())).name().toLowerCase(Locale.ROOT))),
-                new CompanionSheet.Skill("withdraw", CompanionSheet.PASSIVE, 0, true, List.of(num(LacertaCompanion.REST_TICKS / 1200f)))));
+                new CompanionSheet.Skill("withdraw", CompanionSheet.PASSIVE, 0, true, List.of(num(LacertaCompanion.REST_TICKS / 1200f))),
+                new CompanionSheet.Skill("dragon", CompanionSheet.SPECIAL, 0, true, List.of(num(LacertaDragon.upkeep(seals)),
+                        num(LacertaDragon.UPKEEP_RESERVE), num((1 - LacertaDragon.TAKEN) * 100))),
+                new CompanionSheet.Skill("claw", CompanionSheet.SPECIAL, 0, true, List.of(num(c.attack() * LacertaDragon.CLAW_MULT),
+                        num(LacertaDragon.CLAW_REACH))),
+                new CompanionSheet.Skill("breath", CompanionSheet.SPECIAL, 0, true, List.of(num(c.attack() * LacertaDragon.BREATH_MULT * 20 / LacertaDragon.BREATH_PULSE),
+                        num(LacertaDragon.BREATH_RANGE))),
+                new CompanionSheet.Skill("ride", CompanionSheet.PASSIVE, 0, true, List.of())));
         CompanionBond.Stage st = CompanionBond.Stage.of(bond.affection());
         CompanionBond.Stage[] all = CompanionBond.Stage.values();
         float progress = st.ordinal() + 1 >= all.length ? 1 : (bond.affection() - st.from) / (all[st.ordinal() + 1].from - st.from);
@@ -189,6 +199,9 @@ final class LacertaTalk {
                 if (n < MEMORY_LINES.length - 1) out.add(line("past_more"));
                 return Reply.say(out);
             }
+            case "chat.form" -> {
+                return form(c, p, now);
+            }
             case "chat.seals" -> {
                 int seals = bond.seals();
                 c.mood.talk("face_smug", now, 100);
@@ -244,6 +257,23 @@ final class LacertaTalk {
             return Reply.say(line("tactic_" + t.id));
         }
         return Reply.NONE;
+    }
+
+    /** 化身巨龙 / 变回人形（你让她变的，收回再叫出来还是巨龙）；地方太挤、你的魔力不够时不变。 */
+    private static Reply form(LacertaCompanion c, ServerPlayer p, long now) {
+        if (!(c.level() instanceof ServerLevel level)) return Reply.NONE;
+        if (c.isDragonForm()) {
+            c.dragon.revert(level, p);
+            c.mood.talk("face_poise", now, 80);
+            return Reply.say(line("form_human"));
+        }
+        String why = c.dragon.cannotTransform(level, p);
+        if (why != null) {
+            c.mood.talk("face_pout", now, 80);
+            return Reply.say(line("form_" + why));
+        }
+        c.dragon.transform(level, p, false);
+        return Reply.say(line("form_dragon"));
     }
 
     /** 熟悉以前、亲近以后两种说法（为什么当我的骑士）。 */

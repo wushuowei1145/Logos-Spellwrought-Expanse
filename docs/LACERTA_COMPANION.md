@@ -535,3 +535,34 @@
 - 第 4 节把「接住你」放在第五印、冷却 5 分钟。这一步按接入方案第七节第 8 条，一开始就有，接完 2 秒后就能再接；契印门槛和冷却等阶段 E 一起定。
 - 「接住你」是飞过去接，不是瞬移：离你太远（32 格外）、或者被墙挡着够不着时不接。
 - 主人「浮空」按离地高度和时间判断，没有专门认 Logos 的浮空法术。
+
+---
+
+## 19. 进度：阶段 C · 太古真身与骑龙（2026-11-28）
+
+接在阶段 B（#315）后面。巨龙用 `lacerta_dragon_beast` 现成的模型和 29 段动画（从 `lacerta_dragon_beast/exports` 复制成 `geckolib/…/lacerta_dragon_beast.*`，源文件没动）。
+
+| 部分 | 做了什么 | 代码 |
+|---|---|---|
+| 双形态 | 同一个实体，同步数据切形态；碰撞箱人形 0.6×1.35 ↔ 巨龙 3.2×2.4（眼高 1.85），契约、羁绊、包袱、仇恨都不断。变身、变回时炸开一团龙炎遮着。客户端换模型、贴图和动画（`NpcRenderer` 按烘焙模型各存一份网格，`meshTexture` 给每份配贴图） | `LacertaDragon`、`LacertaCompanion.setDragonForm`、`CompanionClient.LacertaRenderer` |
+| 数值 | 生命上限、护甲、韧性 ×2（变身、变回都保持血量百分比），击退抗性 0.95；挨的每一下只受四分之一（在超限减伤之后再乘） | `LacertaDragon.setForm`、`LacertaCompanion.reduceDamage` |
+| 重爪裂击 | `claw_attack`（1.4 秒），0.62 秒砍中：身前 5.5 格、120° 扇形里的，攻击 × 2.6 的龙炎，往外掀开；1.8 秒一次 | `LacertaDragon.claw` |
+| 古龙龙炎 | `breath_start`（蓄压 0.75 秒）→ `breath_loop` → `breath_end`，叠在颈首上，地上、空中都能喷。蓄满以后每 4 刻一下：嘴前 18 格、半角 22° 的锥里看得见的敌人吃攻击 × 0.25 的龙炎并烧着（每秒约攻击 × 1.25），不点方块，不伤你和同伴。往哪喷每刻同步给客户端，客户端沿着它画一股股顺着方向拉长的龙炎喷流和熔金火星（不用原版粒子）。嘴的位置取 `breath_loop` 姿势里 `MouthLocator` 的位置（身前 4.6 格、离地 1.5 格） | `LacertaDragon.tickBreath`、`client/companion/LacertaBreathClient`、`FoxfireClient.jet` |
+| 魔力维持 | 你每秒出 max(20, 50 − 2 × 鳞之契) 魔力（每刻扣二十分之一，创造模式不扣）；不够了她说一句、变回人形；你骑在她背上时一起下来，在半空就护着你这一摔 | `LacertaDragon.tick` |
+| 她自己变 | 打的是首领、生命上限 40 以上的强敌、或者 8 格内三只以上的敌人，身边有 5×4×5 的空地，你的魔力够维持 5 秒，不是被动策略：喊一句「退到我背上——」变巨龙。打完太平 5 秒变回来（你骑着时等你下来）；变回来以后 30 秒内不再自己变 | `LacertaMind.autoTransform`、`afterThink` |
+| 对话里变 | 「化身巨龙 / 变回人形」；太挤、你的魔力不够时她不变，说为什么。你让她变的打完不变回来 | `LacertaTalk.form` |
+| 下次登场 | 记在你身上（`lacerta_days` 的 `dragon_form`）：你让她变的、或者巨龙形态下被收回 / 你下线 / 换维度的，下次以巨龙 `appear` 登场，昂首一吼时 24 格内的敌人都冲她来；落点太挤或你魔力不够就以人形登场、吐槽一句。变回人形（你让的、打完了、魔力不够、龙眠）的下次以人形登场 | `LacertaDays`、`LacertaDragon.appear`、`LacertaCompanion.startSummon`、`onLeave`、`Companions.stow` |
+| 巨龙怎么打 | 贴身挥爪；6–16 格、看得见时喷 3 秒（8 秒一次）；够不着的飞到它后方上空悬停着喷。跟着你时离 8 格以外才走、走到 5 格停；嘲讽半径 24 格，动作换成振翅（`wing_flap`） | `LacertaMind.dragonFight`、`dragonFollow`、`taunt` |
+| 巨龙飞 | 地上起飞播 `takeoff`、落地播 `land`；飞着按速度挑 `fly_flap` / `fly_glide` / `fly_hover` / `fly_dive` / `fly_bank_left` / `fly_bank_right`（一段至少 8 刻再换，免得闪）；伴飞在你身后 7、左边 3、上方 3.5 格；挡路按龙的宽高查 | `LacertaFlight`、`LacertaCompanion.dragonFlyClip` |
+| 骑龙 | 巨龙形态空手右键骑上去（潜行右键照样说话），坐在颈肩后方。地上 W/A/S/D 走（疾跑快一半），空格起飞；飞着按住 W 顺着视线飞（每秒 22 格，疾跑 ×1.6），松开滑翔慢慢下沉，S 刹住（约半秒停稳），A/D 横移，空格往上抬，碰到地面自己落地。左键挥爪，按住右键朝你看的方向喷龙炎。Shift 下龙，在半空下来这一摔只受两成、至少留半颗心。骑着时第三人称镜头拉到 10 格（原版坐骑的镜头距离属性），不然镜头埋在龙身里 | `LacertaRide`、`client/companion/LacertaRideClient` |
+| 面板、台词 | 特技「太古真身」「重爪裂击」「古龙龙炎」、被动「骑龙」；巨龙形态时面板上的护甲、韧性翻倍；台词 `dragon_mana_out`、`dragon_auto`、`dragon_revert`、`appear_room`、`appear_mana`，对话 `form_dragon`、`form_human`、`form_room`、`form_mana` | `LacertaTalk`、语言文件 |
+
+**和接入方案不一样的地方**：
+
+- A/D 是横移，不是压弯转向：她跟着你的视线转身，你转视角转得快时她自己播左右压坡。
+- 龙炎的伤害按 4 刻一下、每下攻击 × 0.25 定的；骑着飞的速度、刹车、上抬都是建议初值，需要试玩调。
+- 魔力门槛照方案：0 印每秒 50、要够维持 5 秒（250）才变。Logos 新玩家默认魔力上限 200，所以刚立契、魔力没涨过的你还变不了（自己变、对话里变都是），鳞之契多了或魔力上限涨了才行。要不要放宽等你定。
+- 巨龙挨下致命一击时先变回人形再演「最后的骑士」，下次以人形登场。
+- 巨龙形态的坐、趴、睡、被摸（`sit`、`lie_flat`、`sleep`、`petted`）和 `act_*` 小动作还没接，放阶段 D；包袱里的武器仍等诸武精通（阶段 E）。
+
+**接下来**：阶段 D（日常活人感，含巨龙形态的日常动作）、E（契印机制、初遇剧情、诸武精通）。

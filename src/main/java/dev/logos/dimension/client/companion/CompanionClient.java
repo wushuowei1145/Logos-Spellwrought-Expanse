@@ -364,8 +364,51 @@ public final class CompanionClient {
         private static final DataTicket<Boolean> APPEAR = DataTicket.create("logos_dimension_lacerta_sword_appear", Boolean.class);
         private static final DataTicket<Integer> ID = DataTicket.create("logos_dimension_lacerta_id", Integer.class);
 
+        /** 巨龙形态（这一帧画哪个模型）。 */
+        private static final DataTicket<Boolean> DRAGON = DataTicket.create("logos_dimension_lacerta_dragon", Boolean.class);
+        private static final Identifier DRAGON_GEO = LogosDimension.id("entity/lacerta_dragon_beast");
+        private static final Identifier DRAGON_TEXTURE = LogosDimension.id("textures/entity/lacerta_dragon_beast.png");
+        private static final Identifier DRAGON_ANIMATION = LogosDimension.id("entity/lacerta_dragon_beast");
+
         public LacertaRenderer(EntityRendererProvider.Context context) {
-            super(context, "lacerta_companion");
+            super(context, new LacertaModel());
+        }
+
+        /** 人形、巨龙两套模型、贴图、动画：按这一帧是不是巨龙给。 */
+        private static final class LacertaModel extends com.geckolib.model.DefaultedEntityGeoModel<LacertaCompanion> {
+            LacertaModel() {
+                super(LacertaCompanion.ASSET);
+            }
+
+            @Override
+            public Identifier getModelResource(com.geckolib.renderer.base.GeoRenderState state) {
+                return dragon(state) ? DRAGON_GEO : super.getModelResource(state);
+            }
+
+            @Override
+            public Identifier getTextureResource(com.geckolib.renderer.base.GeoRenderState state) {
+                return dragon(state) ? DRAGON_TEXTURE : super.getTextureResource(state);
+            }
+
+            @Override
+            public Identifier getAnimationResource(LacertaCompanion animatable) {
+                return animatable != null && animatable.isDragonForm() ? DRAGON_ANIMATION : super.getAnimationResource(animatable);
+            }
+
+            private static boolean dragon(com.geckolib.renderer.base.GeoRenderState state) {
+                return state != null && state.getOrDefaultGeckolibData(DRAGON, false);
+            }
+        }
+
+        @Override
+        protected Identifier meshTexture(com.geckolib.cache.model.BakedGeoModel model) {
+            return model == getGeoModel().getBakedModel(DRAGON_GEO) ? DRAGON_TEXTURE : super.meshTexture(model);
+        }
+
+        /** 巨龙的影子大一些（碰撞箱宽过 2 格就是巨龙）。 */
+        @Override
+        protected float getShadowRadius(R state) {
+            return state.boundingBoxWidth > 2 ? 1.8f : super.getShadowRadius(state);
         }
 
         @Override
@@ -376,6 +419,7 @@ public final class CompanionClient {
         @Override
         public void addRenderData(LacertaCompanion animatable, Void relatedObject, R state, float partialTick) {
             super.addRenderData(animatable, relatedObject, state, partialTick);
+            state.addGeckolibData(DRAGON, animatable.isDragonForm());
             if (animatable.curled()) {
                 state.xRot = 0;
                 state.yRot = 0;

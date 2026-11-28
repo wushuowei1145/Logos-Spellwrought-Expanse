@@ -248,6 +248,7 @@ public final class Companions {
         PrincessTalk.init();
         KohakuTalk.init();
         LacertaTalk.init();
+        LacertaRide.register(bus);
         bus.addListener((EntityAttributeCreationEvent event) -> {
             event.put(SHIRAUME.get(), ShiraumeCompanion.createAttributes().build());
             event.put(ELF_PRINCESS.get(), ElfPrincessCompanion.createAttributes().build());
@@ -405,6 +406,7 @@ public final class Companions {
 
     static void stow(ServerPlayer owner, CompanionDef d, boolean comeBack) {
         CompanionEntity c = out(owner, d);
+        if (c instanceof LacertaCompanion l) l.rememberForm(owner);
         if (c != null) c.discard();
         Bond b = bond(owner, d);
         setBond(owner, d, b.withOut(null).withComeBack(comeBack && (c != null || b.comeBack())));

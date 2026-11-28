@@ -63,8 +63,8 @@ public final class FoxfireClient {
     private record Cast(FoxfireFlame flame, Vec3 at, float start) {}
     private record Daze(FoxfireFlame flame, int entity, float start, float ticks) {}
     private record Mark(FoxfireFlame flame, long until) {}
-    /** 一点自己画的火（龙炎不用原版粒子）：火舌 {@code spark} 为假，火星为真。 */
-    private record Ember(FoxfireFlame flame, boolean spark, Vec3 at, Vec3 vel, float start, float life, float size, float roll) {}
+    /** 一点自己画的火（龙炎不用原版粒子）：火舌 {@code spark} 为假，火星为真；{@code jet} 是顺着 {@code vel} 拉长的一股（吐息），不往上窜。 */
+    private record Ember(FoxfireFlame flame, boolean spark, boolean jet, Vec3 at, Vec3 vel, float start, float life, float size, float roll) {}
     private static final List<Ember> EMBERS = new ArrayList<>();
     private static final int MAX_EMBERS = 768;
 
@@ -98,7 +98,18 @@ public final class FoxfireClient {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) return;
         if (EMBERS.size() >= MAX_EMBERS) EMBERS.removeFirst();
-        EMBERS.add(new Ember(flame, spark, at, vel, level.getGameTime(), life, size, level.getRandom().nextFloat() * 6.28f));
+        EMBERS.add(new Ember(flame, spark, false, at, vel, level.getGameTime(), life, size, level.getRandom().nextFloat() * 6.28f));
+    }
+
+    /**
+     * 放一股龙炎喷流（吐息用）：同 {@link #ember} 的火舌，但火焰动画顺着 {@code vel} 拉成一条（尾巴朝来处、焰尖朝去处），
+     * 飞着越拉越长越宽；许多股叠起来就是一道连着的火。
+     */
+    public static void jet(FoxfireFlame flame, Vec3 at, Vec3 vel, float life, float size) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return;
+        if (EMBERS.size() >= MAX_EMBERS) EMBERS.removeFirst();
+        EMBERS.add(new Ember(flame, false, true, at, vel, level.getGameTime(), life, size, level.getRandom().nextFloat() * 6.28f));
     }
 
     /**
@@ -306,7 +317,8 @@ public final class FoxfireClient {
 
     /** 一点龙炎此刻的位置：沿速度飘、越飘越往上（火舌浮得快，火星有些拖慢）。 */
     private static Vec3 emberAt(Ember m, float age, float k) {
-        float drift = m.spark ? age * (1 - .3f * k) : age;
+        // 喷流一路慢下来（出嘴最快）
+        float drift = m.spark ? age * (1 - .3f * k) : m.jet ? age * (1 - .35f * k) : age;
         return m.at.add(m.vel.scale(drift)).add(0, (m.spark ? .0005 : .0015) * age * age, 0);
     }
 
@@ -323,6 +335,15 @@ public final class FoxfireClient {
         float hgt = m.size * 3.2f * (.6f + .4f * Mth.sqrt(k));
         float a = VfxParts.smooth(0, .15f, k) * (1 - VfxParts.smooth(.55f, 1, k)) * VfxParts.fade(view.cam(), p, .3, .9);
         int rgb = body ? VfxParts.lerpColor(m.flame.core, EMBER_DARK, k) : VfxParts.lerpColor(m.flame.bright, m.flame.core, Math.min(1, k * 1.6f));
+        if (m.jet) {
+            // 喷流：顺着飞的方向拉长，越飞越长、越宽（出嘴时细而亮，散开时粗而暗）
+            Vec3 d = m.vel.lengthSqr() < 1e-6 ? new Vec3(0, 1, 0) : m.vel.normalize();
+            float len = m.size * (2.2f + 2.4f * k), wide = m.size * (.7f + .8f * k);
+            a = VfxParts.smooth(0, .1f, k) * (1 - VfxParts.smooth(.6f, 1, k)) * VfxParts.fade(view.cam(), p, .3, .9);
+            VfxParts.streak(pose, buf, view, p.subtract(d.scale(len * .55)), p.add(d.scale(len * .45)), wide,
+                    u0, v0, u0 + 1f / FLAME_COLS, v0 + 1 / 16f, VfxParts.argb(a * (body ? .85f : 1), rgb));
+            return;
+        }
         VfxParts.streak(pose, buf, view, p.subtract(0, hgt * .3, 0), p.add(0, hgt * .7, 0), hgt / 1.5f,
                 u0, v0, u0 + 1f / FLAME_COLS, v0 + 1 / 16f, VfxParts.argb(a * (body ? .9f : 1), rgb));
     }

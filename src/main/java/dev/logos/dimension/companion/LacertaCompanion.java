@@ -58,6 +58,8 @@ import org.jspecify.annotations.Nullable;
 public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     public static final String ID = "lacerta";
     public static final Identifier ASSET = LogosDimension.id("lacerta_companion");
+    /** 巨龙形态的模型、动画、贴图（{@link LacertaDragon}）。 */
+    public static final Identifier DRAGON_ASSET = LogosDimension.id("lacerta_dragon_beast");
     /**
      * 定义里的成长只用到她自己的基础值（属性的底），生命、护甲、韧性、攻击的契印成长和继承按 {@link LacertaStats} 自己算
      * （{@link #statParts}）。
@@ -92,6 +94,13 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     private static final EntityDataAccessor<Long> WINGS_AT = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.LONG);
     private static final EntityDataAccessor<Boolean> SITTING = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> FLYING = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.BOOLEAN);
+    /** 巨龙形态；在喷龙炎、从哪一刻开始（或停下）。 */
+    private static final EntityDataAccessor<Boolean> DRAGON = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> BREATH = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Long> BREATH_AT = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.LONG);
+    /** 龙炎往哪喷（yaw、pitch，度）：客户端沿它画火。 */
+    private static final EntityDataAccessor<Float> BREATH_YAW = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> BREATH_PITCH = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.FLOAT);
     /** 护落时抱着谁（实体 ID，-1 没有）、抱住还是拉住手、她在你哪一侧（yaw）：客户端照你在画面上的位置画她（{@link #carryOffset}）。 */
     private static final EntityDataAccessor<Integer> CARRY = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> CARRY_HUG = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.BOOLEAN);
@@ -100,6 +109,14 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     final LacertaBlade blade = new LacertaBlade(this);
     final LacertaRest rest = new LacertaRest(this);
     final LacertaFlight flight = new LacertaFlight(this);
+    final LacertaDragon dragon = new LacertaDragon(this);
+    final LacertaRide ride = new LacertaRide(this);
+    /** 想以巨龙登场却变不了（太挤、魔力不够）：入场后嘀咕一句。 */
+    private @Nullable String appearComplaint;
+    /** 客户端：巨龙离地多少刻了（飞的动画要离地几刻才换，台阶不算）；飞的动画换到哪一段、哪一刻换的。 */
+    private int airTicks;
+    private String flyClip = "fly_glide";
+    private int flyClipAt;
     private CompanionStats.Parts parts = LacertaStats.parts(new CompanionStats.Owner(0, 0, 0, 0, 1), 0, 0);
     private CompanionStats.Part power = new CompanionStats.Part(LacertaStats.POWER, 0, 0), manaParts = new CompanionStats.Part(LacertaStats.MANA, 0, 0);
     private float spellPower = (float) LacertaStats.POWER;
@@ -120,6 +137,11 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
         builder.define(WINGS_AT, -1000L);
         builder.define(SITTING, false);
         builder.define(FLYING, false);
+        builder.define(DRAGON, false);
+        builder.define(BREATH, false);
+        builder.define(BREATH_AT, -1000L);
+        builder.define(BREATH_YAW, 0f);
+        builder.define(BREATH_PITCH, 0f);
         builder.define(CARRY, -1);
         builder.define(CARRY_HUG, false);
         builder.define(CARRY_SIDE, 0f);
@@ -162,7 +184,7 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
 
     @Override
     public Identifier npcAnimationAsset() {
-        return ASSET;
+        return isDragonForm() ? DRAGON_ASSET : ASSET;
     }
 
     @Override
@@ -192,9 +214,12 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     @Override
     protected float reduceDamage(DamageSource source, float damage, float protection) {
         float d = LacertaStats.afterProtection(damage, protection);
+        double k = isDragonForm() ? 2 : 1;
         if (!source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_ARMOR)) {
-            d *= (float) (1 - LacertaStats.overflow(parts.armor().total(), parts.toughness().total()));
+            d *= (float) (1 - LacertaStats.overflow(parts.armor().total() * k, parts.toughness().total() * k));
         }
+        // 巨龙：同末影龙的躯干，挨的每一下只受四分之一
+        if (isDragonForm()) d *= (float) LacertaDragon.TAKEN;
         return d;
     }
 
@@ -321,11 +346,149 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
         return hug ? side.scale(.45).add(0, .3, 0) : side.scale(.4).add(0, 1.25, 0);
     }
 
-    /** 飞着时主状态：水平快过 {@link LacertaFlight#FLY_MOVE_SPEED} 格/秒播 {@code fly_move}，不然 {@code fly_hover}。 */
+    /**
+     * 飞着时主状态。人形：水平快过 {@link LacertaFlight#FLY_MOVE_SPEED} 格/秒播 {@code fly_move}，不然 {@code fly_hover}。
+     * 巨龙（飞着，或离地几刻以上：被你骑着飞、收了重力往下滑）：{@link #dragonFlyClip}。
+     */
     @Override
     public String npcMainOverride() {
+        if (isDragonForm()) return isFlying() || airTicks > 3 && !isInWater() ? dragonFlyClip() : null;
         if (!isFlying()) return null;
         return Math.hypot(getX() - xo, getZ() - zo) * 20 > LacertaFlight.FLY_MOVE_SPEED ? "fly_move" : "fly_hover";
+    }
+
+    /**
+     * 巨龙在天上播哪一段（末影龙式）：往下扎得快 {@code fly_dive}，转得快 {@code fly_bank_left / right}，几乎不动 {@code fly_hover}，
+     * 往上 {@code fly_flap}，不然 {@code fly_glide}。一段至少播 {@link #FLY_CLIP_HOLD} 刻再换，免得来回闪。
+     */
+    private String dragonFlyClip() {
+        double h = Math.hypot(getX() - xo, getZ() - zo), vy = getY() - yo;
+        float turn = net.minecraft.util.Mth.wrapDegrees(yBodyRot - yBodyRotO);
+        String want = dragonFlyClip(h, vy, turn);
+        if (!want.equals(flyClip) && tickCount - flyClipAt >= FLY_CLIP_HOLD) {
+            flyClip = want;
+            flyClipAt = tickCount;
+        }
+        return flyClip;
+    }
+
+    /** 巨龙飞的那一段：水平每刻 {@code h} 格、往上 {@code vy} 格、每刻转 {@code turn} 度。 */
+    static String dragonFlyClip(double h, double vy, float turn) {
+        if (vy < -.3 && h > .25) return "fly_dive";
+        if (Math.abs(turn) > 3.5 && h > .3) return turn > 0 ? "fly_bank_right" : "fly_bank_left";
+        if (h < .12 && Math.abs(vy) < .15) return "fly_hover";
+        if (vy > .04) return "fly_flap";
+        return "fly_glide";
+    }
+
+    static final int FLY_CLIP_HOLD = 8;
+
+    // ---------------------------------------------------------------- 巨龙形态（LacertaDragon）
+
+    public boolean isDragonForm() {
+        return entityData.get(DRAGON);
+    }
+
+    void setDragonForm(boolean on) {
+        if (entityData.get(DRAGON) != on) entityData.set(DRAGON, on);
+        refreshDimensions();
+    }
+
+    /** 在喷龙炎（客户端：吐息控制器按它和 {@link #breathChangedAt} 播三段）。 */
+    public boolean breathingFire() {
+        return entityData.get(BREATH);
+    }
+
+    public long breathChangedAt() {
+        return entityData.get(BREATH_AT);
+    }
+
+    void setBreathing(boolean on, long at) {
+        entityData.set(BREATH, on);
+        entityData.set(BREATH_AT, at);
+    }
+
+    /** 龙炎往哪喷（单位向量）。 */
+    public Vec3 breathDir() {
+        return Vec3.directionFromRotation(entityData.get(BREATH_PITCH), entityData.get(BREATH_YAW));
+    }
+
+    void setBreathDir(Vec3 dir) {
+        entityData.set(BREATH_YAW, (float) (net.minecraft.util.Mth.atan2(-dir.x, dir.z) * net.minecraft.util.Mth.RAD_TO_DEG));
+        entityData.set(BREATH_PITCH, (float) (-net.minecraft.util.Mth.atan2(dir.y, Math.sqrt(dir.x * dir.x + dir.z * dir.z)) * net.minecraft.util.Mth.RAD_TO_DEG));
+    }
+
+    @Override
+    public net.minecraft.world.entity.EntityDimensions getDefaultDimensions(net.minecraft.world.entity.Pose pose) {
+        return isDragonForm() ? LacertaDragon.SIZE : super.getDefaultDimensions(pose);
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (DRAGON.equals(key)) {
+            refreshDimensions();
+            // 换了模型和动画文件：所有控制器从头来（不然还在播人形那份动画）
+            if (level().isClientSide()) {
+                getAnimatableInstanceCache().getManagerForId(getId()).getAnimationControllers().values().forEach(AnimationController::reset);
+            }
+        }
+    }
+
+    @Override
+    protected void clientTick() {
+        super.clientTick();
+        airTicks = onGround() || isInWater() ? 0 : airTicks + 1;
+    }
+
+    // ---------------------------------------------------------------- 骑巨龙（LacertaRide）
+
+    @Override
+    public @Nullable LivingEntity getControllingPassenger() {
+        if (isDragonForm() && getFirstPassenger() instanceof Player p) return p;
+        return super.getControllingPassenger();
+    }
+
+    @Override
+    protected boolean canAddPassenger(net.minecraft.world.entity.Entity passenger) {
+        return isDragonForm() && getPassengers().isEmpty();
+    }
+
+    @Override
+    protected Vec3 getPassengerAttachmentPoint(net.minecraft.world.entity.Entity passenger, net.minecraft.world.entity.EntityDimensions dims, float scale) {
+        if (!isDragonForm()) return super.getPassengerAttachmentPoint(passenger, dims, scale);
+        return new Vec3(0, LacertaRide.SEAT_UP, LacertaRide.SEAT_FORWARD).yRot(-getYRot() * net.minecraft.util.Mth.DEG_TO_RAD);
+    }
+
+    @Override
+    protected void tickRidden(Player controller, Vec3 input) {
+        super.tickRidden(controller, input);
+        ride.tick(controller);
+    }
+
+    @Override
+    protected Vec3 getRiddenInput(Player controller, Vec3 self) {
+        return ride.input(controller);
+    }
+
+    @Override
+    protected float getRiddenSpeed(Player controller) {
+        return ride.speed(controller);
+    }
+
+    @Override
+    protected void removePassenger(net.minecraft.world.entity.Entity passenger) {
+        super.removePassenger(passenger);
+        ride.dismounted(passenger);
+    }
+
+    /** 巨龙形态时空手右键：骑上去（潜行右键照样说话）。 */
+    @Override
+    protected net.minecraft.world.@Nullable InteractionResult interactSpecial(ServerPlayer sp) {
+        if (!isDragonForm() || sp.isShiftKeyDown() || !sp.getMainHandItem().isEmpty() || isVehicle() || dragon.appearing()) return null;
+        sp.startRiding(this);
+        rides++;
+        return net.minecraft.world.InteractionResult.SUCCESS;
     }
 
     @Override
@@ -345,8 +508,18 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
 
     // ---------------------------------------------------------------- 每刻
 
+    /** 入场：上次是巨龙（你在对话里让她化身的）就以巨龙登场；这里太挤、你的魔力不够就以人形来，入场后嘀咕一句。 */
     @Override
     void startSummon() {
+        ServerPlayer p = ownerPlayer();
+        if (p != null && level() instanceof ServerLevel level && LacertaDays.of(p).dragonForm()) {
+            String why = dragon.cannotTransform(level, p);
+            if (why == null) {
+                dragon.appear();
+                return;
+            }
+            appearComplaint = "appear_" + why;
+        }
         summonAt = level().getGameTime();
         super.startSummon();
     }
@@ -361,11 +534,16 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     @Override
     protected void tickActions(ServerLevel level, long now, @Nullable ServerPlayer p) {
         if (summonAt >= 0) summonEffects(level, now - summonAt);
+        if (appearComplaint != null && summonAt < 0 && p != null) {
+            CompanionLines.say(this, p, appearComplaint, 40);
+            appearComplaint = null;
+        }
         mana = Math.min(maxMana, mana + regen / 20);
         blade.tick(level);
         tickFlame(level, now);
         if (p != null) rest.tick(level, p, now);
         flight.tick(level, p, now);
+        dragon.tick(level, p, now);
         glide();
         if (tickCount % 10 == 0) tickWings();
     }
@@ -400,6 +578,10 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
      * 拿着剑在打的时候、出来到开阔的地方展开。
      */
     private void tickWings() {
+        if (isDragonForm()) {
+            setWingsFolded(false);
+            return;
+        }
         boolean fold = !blade.drawn() && !isFlying() && (isPassenger() || isInWater() || cramped());
         setWingsFolded(fold);
     }
@@ -459,6 +641,11 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
         flames++;
     }
 
+    /** 巨龙形态下被收回、你下线、换维度：记着下次以巨龙登场（接入方案 5.4）。 */
+    void rememberForm(@Nullable ServerPlayer p) {
+        if (p != null && isDragonForm()) p.setData(Companions.LACERTA_DAYS, LacertaDays.of(p).withDragonForm(true));
+    }
+
     // ---------------------------------------------------------------- 龙眠（代替死去）
 
     public boolean withdrawing() {
@@ -472,6 +659,8 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     void startWithdraw(ServerLevel level) {
         if (withdrawing()) return;
         withdrawAt = level.getGameTime();
+        // 巨龙撑不住：先变回人形，再演「最后的骑士」
+        if (isDragonForm()) dragon.revert(level, ownerPlayer());
         setHealth(1);
         if (flight.catching()) flight.release(level, ownerPlayer(), withdrawAt, false);
         flight.land();
@@ -564,10 +753,16 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
         level.sendParticles(new DustParticleOptions(CORAL, 1.4f), at.x, at.y + 1.5, at.z, 20, .5, .8, .5, 0);
     }
 
+    /** 收回：巨龙形态下（不管是不是她自己变的）记着下次以巨龙登场；收住龙炎、放你下来（在半空就护着你这一摔）。 */
     @Override
     protected void onLeave() {
         blade.drop();
-        if (level() instanceof ServerLevel level) rest.rise(level, true);
+        rememberForm(ownerPlayer());
+        if (level() instanceof ServerLevel level) {
+            rest.rise(level, true);
+            dragon.stopBreath(level);
+        }
+        ejectPassengers();
     }
 
     @Override
@@ -660,17 +855,29 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     private static final RawAnimation FOLD = RawAnimation.begin().then("wings_fold", LoopType.HOLD_ON_LAST_FRAME);
     private static final RawAnimation FOLDED = RawAnimation.begin().then("wings_folded", LoopType.LOOP);
     private static final RawAnimation UNFOLD = RawAnimation.begin().then("wings_unfold", LoopType.PLAY_ONCE);
+    /** 巨龙的龙炎三段（只动颈首、喉甲，叠在主状态上）。 */
+    private static final RawAnimation BREATH_IN = RawAnimation.begin().then("breath_start", LoopType.HOLD_ON_LAST_FRAME);
+    private static final RawAnimation BREATH_LOOP = RawAnimation.begin().then("breath_loop", LoopType.LOOP);
+    private static final RawAnimation BREATH_OUT = RawAnimation.begin().then("breath_end", LoopType.PLAY_ONCE);
 
     /** 通用的 NPC 控制器之后再加一个翅膀的：收着时盖过所有动画的翅膀（入场、睡、倒下这些整身动作自己摆翅膀，不管）。 */
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         super.registerControllers(controllers);
         controllers.add(new AnimationController<LacertaCompanion>("wings", 3, test -> {
+            if (isDragonForm()) return PlayState.STOP;
             String misc = npcMiscAnimation();
             if (misc != null && WHOLE_BODY.contains(misc)) return PlayState.STOP;
             long age = level().getGameTime() - entityData.get(WINGS_AT);
             if (entityData.get(WINGS_FOLDED)) return test.setAndContinue(age < WINGS_FOLD ? FOLD : FOLDED);
             return age < WINGS_UNFOLD ? test.setAndContinue(UNFOLD) : PlayState.STOP;
+        }));
+        // 巨龙的龙炎：蓄压、喷、收（只动颈首，地上空中都能叠）
+        controllers.add(new AnimationController<LacertaCompanion>("breath", 2, test -> {
+            if (!isDragonForm()) return PlayState.STOP;
+            long age = level().getGameTime() - breathChangedAt();
+            if (breathingFire()) return test.setAndContinue(age < LacertaDragon.BREATH_START ? BREATH_IN : BREATH_LOOP);
+            return age < LacertaDragon.BREATH_END ? test.setAndContinue(BREATH_OUT) : PlayState.STOP;
         }));
     }
 
@@ -744,6 +951,60 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
 
     public static int saves() {
         return LacertaFlight.saves;
+    }
+
+    /** 测试用：变过几次身、挥过几爪（砍中几次）、喷过几次龙炎（烧到几下）、被骑过几次。 */
+    public static int transforms() {
+        return LacertaDragon.transforms;
+    }
+
+    public static int claws() {
+        return LacertaDragon.claws;
+    }
+
+    public static int clawHits() {
+        return LacertaDragon.clawHits;
+    }
+
+    public static int breaths() {
+        return LacertaDragon.breaths;
+    }
+
+    public static int breathHits() {
+        return LacertaDragon.breathHits;
+    }
+
+    static int rides;
+
+    public static int rides() {
+        return rides;
+    }
+
+    /** 测试用：变身（{@code auto} 当作她自己打起来变的）、变回。 */
+    public boolean transformForTest(ServerPlayer p, boolean auto) {
+        return level() instanceof ServerLevel level && dragon.transform(level, p, auto);
+    }
+
+    public void revertForTest(ServerPlayer p) {
+        if (level() instanceof ServerLevel level) dragon.revert(level, p);
+    }
+
+    /** 测试用：龙炎朝 {@code dir} 喷、停。 */
+    public boolean breathForTest(Vec3 dir) {
+        return dragon.startBreath(() -> dir);
+    }
+
+    public void stopBreathForTest() {
+        if (level() instanceof ServerLevel level) dragon.stopBreath(level);
+    }
+
+    public boolean clawForTest() {
+        return dragon.claw(level().getGameTime());
+    }
+
+    /** 测试用：骑着时在不在天上（你的客户端那一侧）。 */
+    public boolean rideAirborneForTest() {
+        return ride.airborne();
     }
 
     /** 测试用：飞行在做什么（none / escort / pursue / catch / carry）。 */

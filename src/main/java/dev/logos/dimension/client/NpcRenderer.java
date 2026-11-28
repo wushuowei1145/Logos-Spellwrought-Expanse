@@ -78,7 +78,8 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
     /** 本帧隐藏的骨骼，下标见 {@link NpcMesh#id}（外观里没选中的零件，见 {@link NpcPartsHolder}）。 */
     private static final DataTicket<boolean[]> HIDDEN_BONES = DataTicket.create("logos_dimension_npc_hidden_bones", boolean[].class);
 
-    private NpcMesh mesh;
+    /** 每个模型一份预先算好的网格（大多只有一个模型；拉塞塔人形、巨龙两个）。资源重载后模型换了就重建。 */
+    private final java.util.Map<BakedGeoModel, NpcMesh> meshes = new java.util.IdentityHashMap<>();
 
     public NpcRenderer(EntityRendererProvider.Context context, String asset) {
         this(context, LogosDimension.id(asset));
@@ -105,17 +106,26 @@ public class NpcRenderer<T extends Mob & GeoEntity, R extends LivingEntityRender
 
     /** 这个模型预先算好的网格；资源重载后模型换了就重建。 */
     NpcMesh mesh(BakedGeoModel model) {
-        if (mesh == null || mesh.model != model) {
+        NpcMesh mesh = meshes.get(model);
+        if (mesh == null) {
+            // 资源重载换了模型：旧的不要了
+            if (meshes.size() >= 4) meshes.clear();
             // 贴图只在这里读一次，用来判断哪些方块透明；读不到就退回不跳过背面，只是慢一点。
-            try (var texture = Minecraft.getInstance().getResourceManager().getResourceOrThrow(getGeoModel().getTextureResource(null)).open();
+            try (var texture = Minecraft.getInstance().getResourceManager().getResourceOrThrow(meshTexture(model)).open();
                  var image = NativeImage.read(texture)) {
                 mesh = new NpcMesh(model, GLOW_PREFIX, image);
             } catch (IOException | RuntimeException error) {
                 LogUtils.getLogger().warn("NPC 贴图读不到，不跳过背面", error);
                 mesh = new NpcMesh(model, GLOW_PREFIX, null);
             }
+            meshes.put(model, mesh);
         }
         return mesh;
+    }
+
+    /** 算网格时读哪张贴图判断透明（默认的贴图；换模型的角色给那个模型自己的）。 */
+    protected Identifier meshTexture(BakedGeoModel model) {
+        return getGeoModel().getTextureResource(null);
     }
 
     /** 被实心方块完全挡住的不画，见 {@link NpcOcclusion}。 */
