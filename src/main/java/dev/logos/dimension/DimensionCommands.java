@@ -79,6 +79,12 @@ public final class DimensionCommands {
         root.then(realm);
         root.then(Commands.literal("flash").executes(c -> flash(c.getSource().getPlayerOrException(), null))
                 .then(Commands.argument("frames", StringArgumentType.word()).executes(c -> flash(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "frames")))));
+        // 试连携切入：在场的同伴和自己一起，自己看（只有画面，不打伤害）
+        root.then(Commands.literal("chain").executes(c -> {
+            if (dev.logos.dimension.cutin.ChainCutins.play(c.getSource().getPlayerOrException())) return 1;
+            c.getSource().sendFailure(net.minecraft.network.chat.Component.literal("No companion is out nearby."));
+            return 0;
+        }));
         root.then(execution());
         root.then(dissolve());
         root.then(dev.logos.dimension.shiraume.ShiraumeCommands.build());

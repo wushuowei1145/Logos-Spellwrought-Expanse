@@ -52414,6 +52414,40 @@
      }
     }
    }
+  },
+  "cutin": {
+   "loop": true,
+   "animation_length": 1.0,
+   "bones": {
+    "LeftArm": {
+     "rotation": [
+      -90.0,
+      29.0,
+      0.0
+     ]
+    },
+    "LeftForeArm": {
+     "rotation": [
+      -8.0,
+      0.0,
+      0.0
+     ]
+    },
+    "RightArm": {
+     "rotation": [
+      -90.0,
+      -6.0,
+      0.0
+     ]
+    },
+    "RightForeArm": {
+     "rotation": [
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   }
   }
  }
 }

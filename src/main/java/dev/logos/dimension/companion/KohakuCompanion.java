@@ -107,6 +107,11 @@ public class KohakuCompanion extends CompanionEntity implements ManaVessel {
         return KohakuOutfit.byId(entityData.get(OUTFIT));
     }
 
+    @Override
+    public String outfitId() {
+        return outfit().id;
+    }
+
     /** 换上 {@code o}：身边一小团琥珀色的光点和一声轻响，像炼成一样一下子换好（{@code quiet}：叫出来时直接穿上，不放）。 */
     void dress(KohakuOutfit o, boolean quiet) {
         if (outfit() == o) return;

@@ -386,6 +386,7 @@
   - 主色 **珊瑚红 `#e0566b`**（翼骨与龙鳞）、深色酒红、金线（角尖鎏金）、冷色银（骑士甲）、正文奶油色；
   - 纹章：一枚盾形龙鳞，正中跃动一簇绯金龙炎（既是真龙之鳞，也是护主之盾）；
   - 展示姿势：采用 `idle`（左手叉腰、自信浅笑、双翼舒展），身躯微侧 20°。
+  - 连携切入的姿势（`CompanionStyle` 的 `cutin`，[CHAIN_CUTIN.md](CHAIN_CUTIN.md)）：炽焰长剑剑尖朝下拄在身前、手按剑柄（骑士拄剑），双翼全展，`face_battle`（`cutin`：取 `crimson_sheathe` 0.8 秒 + `act_wingspan` 1.8 秒的翅膀）。
 - **友人帐**：注册进 `Companions.ALL` 与 `CompanionStyle` 后自动生成专属页；她目前仅有一套服装，无需扩展 `CompanionBook.outfit`。
 
 ---

@@ -850,6 +850,12 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
         entityData.set(MOVE, "");
     }
 
+    /** 展示的那一位手里握着炽焰长剑（已经凝好的，不播凝出来的过程）。 */
+    public void showcaseSword() {
+        entityData.set(SWORD, true);
+        entityData.set(SWORD_AT, -1000L);
+    }
+
     // ---------------------------------------------------------------- 动画
 
     private static final RawAnimation FOLD = RawAnimation.begin().then("wings_fold", LoopType.HOLD_ON_LAST_FRAME);
