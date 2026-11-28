@@ -4,6 +4,7 @@ import dev.logos.dimension.LogosDimension;
 import dev.logos.dimension.client.foxfire.FoxfireClient;
 import dev.logos.dimension.companion.LacertaCompanion;
 import dev.logos.dimension.companion.LacertaDragon;
+import dev.logos.dimension.companion.LacertaSeals;
 import dev.logos.dimension.foxfire.FoxfireFlame;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -36,7 +37,10 @@ public final class LacertaBreathClient {
         ClientLevel level = mc.level;
         if (level == null || mc.isPaused()) return;
         for (Entity e : level.entitiesForRendering()) {
-            if (e instanceof LacertaCompanion l && l.isDragonForm() && l.breathingFire()) stream(level, l);
+            if (e instanceof LacertaCompanion l && l.breathingFire()) {
+                if (l.isDragonForm()) stream(level, l);
+                else palm(level, l);
+            }
         }
     }
 
@@ -75,6 +79,41 @@ public final class LacertaBreathClient {
             FoxfireClient.ember(FoxfireFlame.DRAGON, true, mouth, vel, 10 + r.nextInt(6), .05f + r.nextFloat() * .04f);
         }
         streamed += CORE + BODY + SPARKS;
+    }
+
+    /**
+     * 人形的赤穹龙息（第六印）：从推出去的左掌心喷出一股扇形龙炎，比巨龙的细、短（{@link LacertaSeals#BREATH_RANGE} 格），推掌那几刻先聚一点火星。
+     */
+    private static void palm(ClientLevel level, LacertaCompanion l) {
+        RandomSource r = level.getRandom();
+        long age = level.getGameTime() - l.breathChangedAt();
+        // 掌心按喷的方向算（身子朝向客户端也按它转过去了）
+        Vec3 aim = l.breathDir();
+        Vec3 from = LacertaSeals.palm(l.position(), (float) Math.toDegrees(Math.atan2(-aim.x, aim.z)));
+        if (age < LacertaSeals.BREATH_START) {
+            Vec3 off = new Vec3(r.nextDouble() - .5, r.nextDouble() - .5, r.nextDouble() - .5).normalize().scale(.35);
+            FoxfireClient.ember(FoxfireFlame.DRAGON, true, from.add(off), off.scale(-1 / 5d), 5, .04f);
+            streamed++;
+            return;
+        }
+        Vec3 dir = l.breathDir();
+        double range = LacertaSeals.BREATH_RANGE;
+        double reach = Math.min(range, 1.5 + (age - LacertaSeals.BREATH_START) * REACH_SPEED);
+        for (int i = 0; i < 2; i++) {
+            Vec3 at = from.add(dir.scale(r.nextDouble() * .5)).add(disk(r, dir, .05));
+            FoxfireClient.jet(FoxfireFlame.DRAGON, at, dir.scale(.7), 3, .12f + r.nextFloat() * .05f);
+        }
+        for (int i = 0; i < 16; i++) {
+            double speed = .6 + r.nextDouble() * .35;
+            int life = 4 + r.nextInt(4);
+            double d = Math.max(0, reach - speed * life * .8) * r.nextDouble();
+            Vec3 at = from.add(dir.scale(d)).add(disk(r, dir, .06 + d * Math.tan(Math.toRadians(LacertaSeals.BREATH_HALF)) * .6));
+            float size = (float) ((.2 + .42 * d / range) * (.8 + .4 * r.nextDouble()));
+            FoxfireClient.jet(FoxfireFlame.DRAGON, at, dir.scale(speed).add(disk(r, dir, .08)), life, size);
+        }
+        Vec3 vel = dir.scale(.8 + r.nextDouble() * .3).add(disk(r, dir, .12));
+        FoxfireClient.ember(FoxfireFlame.DRAGON, true, from, vel, 8 + r.nextInt(5), .04f + r.nextFloat() * .03f);
+        streamed += 19;
     }
 
     /** 垂直于 {@code dir}、半径 {@code radius} 的圆盘里随便一点。 */

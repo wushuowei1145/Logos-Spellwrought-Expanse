@@ -160,7 +160,7 @@ public abstract class LacertaDailyViews extends LacertaViews {
                         ServerPlayer p = ctx.player();
                         bed(level, FOOT);
                         standAt(p, BEDSIDE);
-                        c = summonLacerta(p, new Vec3(-5.5, FLOOR + 1, -4.5));
+                        c = summonLacerta(p, new Vec3(-5.5, FLOOR + 1, -4.5), 9);
                         fillMana(p, 20000);
                         p.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 20 * 120, 0, false, false));
                     })
@@ -209,7 +209,7 @@ public abstract class LacertaDailyViews extends LacertaViews {
                     .server("召唤、化身巨龙；让她留在原地", ctx -> {
                         ServerPlayer p = ctx.player();
                         standAt(p, new Vec3(.5, FLOOR + 1, -6.5));
-                        c = summonLacerta(p, SPOT);
+                        c = summonLacerta(p, SPOT, 9);
                         fillMana(p, 20000);
                     })
                     .waitUntilServer("入场播完", ctx -> arrived(c))

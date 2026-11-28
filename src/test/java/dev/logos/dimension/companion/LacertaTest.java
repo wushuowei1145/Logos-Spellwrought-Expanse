@@ -83,7 +83,9 @@ class LacertaTest {
                 "refuse", "pick", "wings_fold", "wings_folded", "wings_unfold", "pre_parallel0", "pre_parallel1", "pre_parallel2",
                 "face_poise", "face_aloof", "face_smug", "face_happy", "face_sweet", "face_pout", "face_flustered", "face_foodie", "face_curious",
                 "face_surprised", "face_angry", "face_sad", "face_sleepy", "face_battle", "sleep_together_down", "sleep_together_up",
-                "fly_hover", "fly_move", "catch_hand", "catch_embrace"));
+                "fly_hover", "fly_move", "catch_hand", "catch_embrace",
+                // 契印借的动作（LacertaSeals）、初遇（LacertaMeet）
+                "act_guard", "act_wing_cape", "flame_throw", "act_oath", "act_sniff", "act_hmph"));
         for (LacertaRest.Tier t : LacertaRest.Tier.values()) used.add(t.clip);
         used.addAll(LacertaCompanion.WHOLE_BODY);
         for (String m : moves("lacerta_companion").keySet()) used.add(LacertaBlade.PREFIX + m);
@@ -424,6 +426,63 @@ class LacertaTest {
         }
     }
 
+    /**
+     * 契印借来的动作和模型对得上：振翼从 act_wing_cape 的第 {@link LacertaSeals#GUST_FROM} 秒播起，扇中在它的 gust 标记、播到完；
+     * 不屈跪下（death 的 kneel 之后、火星散开之前），站起来从 summon 的 land 标记播到完；翼护拢翅整段 act_guard。
+     * 初遇硬拗一句是整段 act_hmph、立誓整段 act_oath，龙鳞在立誓里递出来。
+     */
+    @Test void sealClipsMatchTheModel() throws Exception {
+        JsonObject anims = animations();
+        JsonObject cape = anims.getAsJsonObject("act_wing_cape");
+        double gust = markers(cape, "gust").get(0);
+        assertTrue(LacertaSeals.GUST_FROM < gust);
+        assertEquals(Math.round((gust - LacertaSeals.GUST_FROM) * 20), LacertaSeals.GUST_HIT);
+        assertEquals(Math.round((cape.get("animation_length").getAsDouble() - LacertaSeals.GUST_FROM) * 20), LacertaSeals.GUST_TICKS);
+        JsonObject summon = anims.getAsJsonObject("summon");
+        assertEquals(markers(summon, "land").get(0), LacertaSeals.RISE_FROM, 1e-9);
+        assertEquals(Math.round((summon.get("animation_length").getAsDouble() - LacertaSeals.RISE_FROM) * 20), LacertaSeals.RISE_STAND);
+        JsonObject death = anims.getAsJsonObject("death");
+        assertTrue(LacertaSeals.RISE_KNEEL > marker(death, "kneel") && LacertaSeals.RISE_KNEEL < marker(death, "ember_out"));
+        assertEquals(ticks(anims.getAsJsonObject("act_guard")), LacertaSeals.SHELTER_POSE);
+        assertEquals(ticks(anims.getAsJsonObject("act_hmph")), LacertaMeet.PROUD);
+        assertEquals(ticks(anims.getAsJsonObject("act_oath")), LacertaMeet.OATH);
+        assertTrue(LacertaMeet.GIVE > 0 && LacertaMeet.GIVE < LacertaMeet.OATH);
+        double thrown = markers(anims.getAsJsonObject("flame_throw"), "throw").get(0);
+        assertEquals(thrown * 20, LacertaSeals.BREATH_START, 1, "龙息在推掌出手时喷出来");
+        assertTrue(LacertaSeals.BREATH_POSE >= thrown && LacertaSeals.BREATH_POSE < .5, "推掌定在推到底的那一帧");
+    }
+
+    /**
+     * 鳞之契按第 4 节一枚解锁一项：第 1–9 印各是一项、没有重的；0 印一项都没有，盖到第 n 印正好有前 n 项。接住你歇 5 分钟。
+     * 第九印巨龙每秒 32 魔力，要够维持 5 秒是 160，新玩家默认的魔力上限（200）就变得了。
+     */
+    @Test void sealsUnlockInOrder() {
+        int[] order = {LacertaSeals.SHELTER, LacertaSeals.ARTS, LacertaSeals.GUST, LacertaSeals.SKYFALL, LacertaSeals.CATCH, LacertaSeals.BREATH,
+                LacertaSeals.RISE, LacertaSeals.WRATH, LacertaSeals.DRAGON};
+        for (int i = 0; i < order.length; i++) assertEquals(i + 1, order[i]);
+        for (int seals = 0; seals <= 9; seals++) {
+            for (int seal : order) assertEquals(seal <= seals, LacertaSeals.has(seals, seal), seals + " 枚、第 " + seal + " 印");
+        }
+        assertEquals(6000, LacertaSeals.CATCH_COOLDOWN);
+        assertEquals(.3, LacertaSeals.SHELTER_SHARE, 1e-9);
+        assertTrue(LacertaDragon.upkeep(LacertaSeals.DRAGON) * LacertaDragon.UPKEEP_RESERVE <= new dev.logos.runtime.PlayerMagic().mana);
+    }
+
+    /** 空白龙鳞藏在山地远行小遗迹（霜脊谐铃台、断崖星纱门）的宝箱里，好运多一点；初遇的高山群系是第 3.1 节那几个。 */
+    @Test void blankScalesHideInMountainRuins() throws Exception {
+        for (String ruin : new String[]{"frost_resonator", "ravine_thread"}) {
+            String table = read("/data/logos_dimension/loot_table/chests/wayside/" + ruin + ".json").toString();
+            assertTrue(table.contains("\"logos_dimension:dragon_scale\""), ruin);
+        }
+        String mountains = read("/data/logos_dimension/tags/worldgen/biome/lacerta_meet.json").getAsJsonArray("values").toString();
+        for (String b : new String[]{"minecraft:jagged_peaks", "minecraft:frozen_peaks", "minecraft:stony_peaks", "minecraft:snowy_slopes",
+                "logos_dimension:cloudsea_cloud_peaks"}) {
+            assertTrue(mountains.contains(b), b);
+        }
+        assertEquals(.3f, LacertaMeet.CHANCE);
+        assertEquals(1200, LacertaMeet.WAIT, "等你一分钟");
+    }
+
     /** 夸她、看武器每天头一次加羁绊：一天记一次，各记各的；旧存档没有这一项时是没记过；存了读回来不变。 */
     @Test void daysAreKeptOnYou() {
         LacertaDays d = LacertaDays.NONE.withPraise(10).withCritique(12);
@@ -450,6 +509,15 @@ class LacertaTest {
         assertEquals(LacertaDays.NONE, LacertaDays.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, empty).getOrThrow());
         var saved = LacertaDays.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, d).getOrThrow();
         assertEquals(d, LacertaDays.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, saved).getOrThrow());
+        // 不屈用过、初遇判定过的那一天：存了读回来不变，别的记录不动
+        LacertaDays risen = guarded.withRiseDay(7).withMeetDay(6);
+        assertEquals(7, risen.riseDay());
+        assertEquals(6, risen.meetDay());
+        assertEquals(hoard, risen.hoard().orElseThrow());
+        assertEquals(-1, LacertaDays.NONE.riseDay());
+        assertEquals(-1, LacertaDays.NONE.meetDay());
+        var savedRise = LacertaDays.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, risen).getOrThrow();
+        assertEquals(risen, LacertaDays.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, savedRise).getOrThrow());
     }
 
     /** 掌心赤焰的术式编得过（攻击玩家开着、关着两种），注入的魔力就是她一发花的。 */
@@ -502,7 +570,8 @@ class LacertaTest {
         assertNotNull(chat);
         for (TalkMenu.Option o : chat.children()) if (o.id().startsWith("chat.")) keys.add(TALK + "option." + o.id());
         for (String s : new String[]{"blade", "thrust", "vortex", "sweep", "skyfall", "parry", "taunt", "flame", "scale", "glide", "tank", "mana",
-                "vigil", "withdraw", "flight", "catch", "dragon", "claw", "breath", "ride", "hoard", "warmth"}) {
+                "vigil", "withdraw", "flight", "catch", "dragon", "claw", "breath", "ride", "hoard", "warmth",
+                "shelter", "gust", "fire_breath", "rise", "wrath"}) {
             for (String part : new String[]{"name", "icon", "desc"}) keys.add(TALK + "skill." + s + "." + part);
         }
         for (LacertaRest.Tier t : LacertaRest.Tier.values()) keys.add(TALK + "skill.vigil." + t.name().toLowerCase(Locale.ROOT));
@@ -519,6 +588,7 @@ class LacertaTest {
         for (String l : new String[]{"stay", "follow", "refuse", "full", "stuck", "hungry", "seal", "remake", "withdraw", "taunt", "catch_hand", "catch_embrace",
                 "catch_after_hand", "catch_after_embrace", "talk.bye", "dragon_mana_out", "dragon_auto", "dragon_revert", "appear_room", "appear_mana",
                 "hoard_claim", "cold_snuggle", "give_food", "mine", "present", "jealous",
+                "shelter", "gust", "breath", "rise", "wrath", "meet_sniff", "meet_fed", "meet_refuse", "meet_raw", "meet_leave", "meet_stranger",
                 "talk.danger", "talk.rest"}) {
             keys.add(LINE + l);
         }
@@ -526,7 +596,7 @@ class LacertaTest {
                 "pauldron_3", "knight_early_1", "knight_early_2", "knight_close_1", "knight_close_2", "cold_1", "cold_2", "airships_1", "airships_2",
                 "praise_early_1", "praise_early_2", "praise_close_1", "praise_close_2", "past_more", "seals_none_1", "seals_none_2", "seals_1",
                 "seals_2", "seals_full", "follow", "stay", "pvp_on", "pvp_off", "pvp_off_server", "pouch_back", "scale_have", "scale_given",
-                "form_dragon", "form_human", "form_room", "form_mana", "roast_none", "roast_burnt", "roast_done"}) {
+                "form_dragon", "form_human", "form_room", "form_mana", "form_seal", "roast_none", "roast_burnt", "roast_done"}) {
             keys.add(LINE + "talk." + l);
         }
         for (String v : new String[]{"none", "crimson", "rival", "joke", "broken", "ranged", "enchanted", "melee"}) keys.add(LINE + "talk.weapon_" + v);

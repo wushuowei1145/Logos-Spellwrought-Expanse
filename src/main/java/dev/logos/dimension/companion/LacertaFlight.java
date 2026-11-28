@@ -176,7 +176,8 @@ final class LacertaFlight {
             dragonAloft = false;
             if (c.isDragonForm() && !c.isVehicle()) c.mood.play("land", DRAGON_LAND);
         }
-        if (now >= nextCatch && shouldCatch(level, p)) startCatch(level, p, now);
+        // 接住你是第五印星穹怀抱
+        if (now >= nextCatch && c.seal.has(LacertaSeals.CATCH) && shouldCatch(level, p)) startCatch(level, p, now);
     }
 
     /**
@@ -443,7 +444,8 @@ final class LacertaFlight {
         boolean held = mode == Mode.CARRY;
         mode = Mode.NONE;
         c.setCarry(-1, false, 0);
-        nextCatch = now + CATCH_GAP;
+        // 接住过你：歇 5 分钟（第 4 节第五印）；没接住（够不着、被挡）的过一会就能再接
+        nextCatch = now + (held ? LacertaSeals.CATCH_COOLDOWN : CATCH_GAP);
         c.mood.pose(null);
         land();
         if (p == null) return;

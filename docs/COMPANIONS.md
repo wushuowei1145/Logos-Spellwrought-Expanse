@@ -16,12 +16,14 @@
 - **琥珀独有**（[琥珀](KOHAKU_COMPANION.md)，分五步做，第一步已进游戏）：长杖和换杖（`KohakuStaff`）、魔力（她是 Logos 的 `ManaVessel`，回复由附属结算）、
   生命单独的继承比例和不继承护甲（`CompanionDef.Growth` 的 `healthRatio`、`inheritsArmor`）、琥珀护膜、她自己施放的载页（`KohakuSpells`）、哈气和幻翼；
   之后是按意图挑页（含你给她的页）、凝辉、猫步、凑过来坐下、雨伞、睡姿和醒来的礼物、琥珀相伴。
-- **拉塞塔独有**（[拉塞塔](LACERTA_COMPANION.md) 第 17–20 节，接入方案分五个阶段，阶段 A–D 已进游戏）：誓约逆鳞（`DragonScaleItem`）、
+- **拉塞塔独有**（[拉塞塔](LACERTA_COMPANION.md) 第 17–21 节，接入方案分五个阶段都已进游戏，诸武精通拆出去另做）：誓约逆鳞（`DragonScaleItem`）、
   不封顶的分段继承和超出原版上限的护甲、魔咒折成的减伤（`LacertaStats`）、炽焰长剑（`LacertaBlade`）和按处境挑招、防复读（`LacertaMind`）、
   赤龙威压（嘲讽）、掌心赤焰（龙炎弹）、龙眠、收展翅、展翼滑翔、四档守夜（`LacertaRest`）；阶段 B 加了飞行（`LacertaFlight`：伴飞、
   空中追击接坠星、高空护落）；阶段 C 加了巨龙化身（`LacertaDragon`：同一个实体两种形态、重爪、龙炎吐息、你出魔力维持、记着下次以巨龙登场）
   和骑龙（`LacertaRide`）；阶段 D 加了日常（`LacertaHoard` 宝藏窝、`LacertaLife` 递吃的 / 龙息烤肉 / 龙温 / 藏宝癖、
-  巨龙的坐趴盘睡、`LacertaWarmth` 绯翼余温）。公共钩子：`CompanionEntity.lootTaken`（捡起了地上的东西）、`ownerFavoured`
+  巨龙的坐趴盘睡、`LacertaWarmth` 绯翼余温）；阶段 E 加了鳞之契（`LacertaSeals`：第 n 枚解锁第 n 项——翼护替你挡三成、武艺、
+  振翼、坠星、接住你、人形龙息、不屈、逆鳞、巨龙；借来的动作由她自己的 `seal` 控制器从中间某一秒播起）和初遇（`LacertaMeet`：高山营火、
+  喂她最爱吃的立契，空白龙鳞进山地远行小遗迹的宝箱）。`CompanionEntity.tickEating` 改成包内可见（初遇时她还不是同伴，吃东西自己推）。公共钩子：`CompanionEntity.lootTaken`（捡起了地上的东西）、`ownerFavoured`
   （主人当着她的面摸、喂了别的同伴，由 `Companions.favoured` 通知）。一个同伴要换整套模型时，`NpcRenderer` 按烘焙模型各存一份网格，覆盖 `meshTexture` 给每份配贴图。
 - 角色面板的数值页按档案给的顺序画（`CompanionSheet.stats`）：白梅生命、攻击、护甲、韧性；精灵公主把攻击换成法术强度；琥珀生命、法术强度、魔力、护甲；
   拉塞塔同白梅（攻击含剑的 8 点）。

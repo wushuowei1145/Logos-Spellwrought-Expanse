@@ -109,6 +109,9 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     private static final EntityDataAccessor<Integer> CARRY = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> CARRY_HUG = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> CARRY_SIDE = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.FLOAT);
+    /** 契印的动作（{@link #playSeal}：「动画|从第几秒播起|播几刻|停在第几秒」，空的没有）和从哪一刻开始：客户端 {@code seal} 控制器播。 */
+    private static final EntityDataAccessor<String> SEAL_CLIP = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Long> SEAL_AT = SynchedEntityData.defineId(LacertaCompanion.class, EntityDataSerializers.LONG);
 
     final LacertaBlade blade = new LacertaBlade(this);
     final LacertaRest rest = new LacertaRest(this);
@@ -116,6 +119,9 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     final LacertaDragon dragon = new LacertaDragon(this);
     final LacertaRide ride = new LacertaRide(this);
     final LacertaLife life = new LacertaLife(this);
+    final LacertaSeals seal = new LacertaSeals(this);
+    /** 初遇（{@link LacertaMeet}）：还没立契，循着营火的香味落下来的那一位；立契以后是 null。 */
+    @Nullable LacertaMeet meet;
     /** 巨龙形态时空手右键她的头前（你站在她胸口前面这么多格以外）是摸头，不然是骑上去。 */
     static final double PET_FRONT = 2.2;
     /** 想以巨龙登场却变不了（太挤、魔力不够）：入场后嘀咕一句。 */
@@ -152,6 +158,8 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
         builder.define(CARRY, -1);
         builder.define(CARRY_HUG, false);
         builder.define(CARRY_SIDE, 0f);
+        builder.define(SEAL_CLIP, "");
+        builder.define(SEAL_AT, -1000L);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -227,7 +235,8 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
         }
         // 巨龙：同末影龙的躯干，挨的每一下只受四分之一
         if (isDragonForm()) d *= (float) LacertaDragon.TAKEN;
-        return d;
+        // 不屈站起来以后的几秒
+        return d * seal.takenScale(level().getGameTime());
     }
 
     @Override
@@ -277,6 +286,39 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     /** 测试用：魔力加满。 */
     public void topUp() {
         mana = maxMana;
+    }
+
+    /** 花掉自己的 {@code amount} 魔力（够才花）。 */
+    boolean spend(double amount) {
+        if (mana < amount) return false;
+        mana -= amount;
+        return true;
+    }
+
+    /** 逆鳞时攻击多三成（{@link LacertaSeals#attackScale}）。 */
+    @Override
+    public float attack() {
+        return super.attack() * seal.attackScale();
+    }
+
+    // ---------------------------------------------------------------- 契印的动作（客户端 seal 控制器）
+
+    /**
+     * 播一段契印的动作：{@code clip} 从第 {@code from} 秒播起，播 {@code ticks} 刻；{@code stopAt} 大于 0 时播到那一秒就定住（龙息推掌推到底）。
+     * 盖在所有动画上面（包括剑招）；{@code clip} 为空就停。模型里还没有的契印动作先借现成的一段（{@link LacertaSeals}）。
+     */
+    void playSeal(String clip, double from, int ticks, double stopAt) {
+        entityData.set(SEAL_CLIP, clip.isEmpty() ? "" : clip + "|" + from + "|" + ticks + "|" + stopAt);
+        entityData.set(SEAL_AT, level().getGameTime());
+    }
+
+    /** 此刻在播的契印动作（测试用；没有为空）。 */
+    public String sealClip() {
+        String s = entityData.get(SEAL_CLIP);
+        if (s.isEmpty()) return "";
+        String[] p = s.split("\\|");
+        long age = level().getGameTime() - entityData.get(SEAL_AT);
+        return age < Integer.parseInt(p[2]) ? p[0] : "";
     }
 
     // ---------------------------------------------------------------- 剑、翅膀、坐着（同步给客户端）
@@ -446,6 +488,11 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     protected void clientTick() {
         super.clientTick();
         airTicks = onGround() || isInWater() ? 0 : airTicks + 1;
+        // 人形喷龙息时身子朝着喷的方向（原版客户端站着不动时不把身子转过去，只在头转过头了才带一下）
+        if (breathingFire() && !isDragonForm()) {
+            Vec3 d = breathDir();
+            yBodyRot = (float) (net.minecraft.util.Mth.atan2(-d.x, d.z) * net.minecraft.util.Mth.RAD_TO_DEG);
+        }
     }
 
     // ---------------------------------------------------------------- 骑巨龙（LacertaRide）
@@ -492,6 +539,7 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     /** 巨龙形态时空手右键：站在她头前是摸头（照常走摸头那一套），从侧面、背后是骑上去（潜行右键照样说话）。 */
     @Override
     protected net.minecraft.world.@Nullable InteractionResult interactSpecial(ServerPlayer sp) {
+        if (meet != null) return meet.interact(sp);
         if (!isDragonForm() || sp.isShiftKeyDown() || !sp.getMainHandItem().isEmpty() || isVehicle() || dragon.appearing()) return null;
         if (inFrontOfHead(sp.position())) return null;
         sp.startRiding(this);
@@ -550,7 +598,9 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
                 dragon.appear();
                 return;
             }
-            appearComplaint = "appear_" + why;
+            // 第九印还没盖（命令把契印改少了）：照常以人形来，不再记着巨龙
+            if (why.equals("seal")) p.setData(Companions.LACERTA_DAYS, LacertaDays.of(p).withDragonForm(false));
+            else appearComplaint = "appear_" + why;
         }
         summonAt = level().getGameTime();
         super.startSummon();
@@ -558,9 +608,52 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
 
     @Override
     protected boolean tickSpecial(ServerLevel level, long now) {
+        if (meet != null) {
+            meet.tick(level, now);
+            return true;
+        }
+        if (seal.rising()) {
+            seal.tickRise(level, now);
+            return true;
+        }
         if (withdrawAt < 0) return false;
         tickWithdraw(level, now);
         return true;
+    }
+
+    // ---------------------------------------------------------------- 初遇（LacertaMeet）
+
+    /** 还没立契、在营火边等你喂的那一位（心智不动，打不到）。 */
+    public boolean meeting() {
+        return meet != null;
+    }
+
+    @Override
+    public boolean isCompanion() {
+        return meet == null;
+    }
+
+    /** 初遇时等的是 {@code p}（主人的 UUID 先记着，立契以后才真的认主）。 */
+    void meetFor(ServerPlayer p, LacertaMeet m) {
+        owner = p.getUUID();
+        meet = m;
+    }
+
+    /** 立契完成：成为 {@code p} 的同伴。 */
+    void joinAfterMeet(ServerPlayer p) {
+        meet = null;
+        bind(p);
+        Companions.join(p, this);
+    }
+
+    /** 初遇时别的玩家拿吃的给她：她连眼皮都懒得抬，只撂下一句。 */
+    @Override
+    protected net.minecraft.world.InteractionResult mobInteract(Player player, net.minecraft.world.InteractionHand hand) {
+        if (meet != null && hand == net.minecraft.world.InteractionHand.MAIN_HAND && player instanceof ServerPlayer sp && !sp.getUUID().equals(ownerId())) {
+            if (CompanionFood.taste(ID, sp.getMainHandItem()) != CompanionFood.Taste.NOT_FOOD) CompanionLines.say(this, sp, "meet_stranger", 40);
+            return net.minecraft.world.InteractionResult.SUCCESS;
+        }
+        return super.mobInteract(player, hand);
     }
 
     @Override
@@ -577,6 +670,7 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
             rest.tick(level, p, now);
             life.tick(p, now);
         }
+        seal.tick(level, p, now);
         flight.tick(level, p, now);
         dragon.tick(level, p, now);
         glide();
@@ -584,7 +678,7 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     }
 
     /** 入场：从空中俯冲急刹落地，落地那一下脚下炸开一圈龙炎、扬起风。 */
-    private void summonEffects(ServerLevel level, long t) {
+    void summonEffects(ServerLevel level, long t) {
         Vec3 at = position();
         if (t == 0) level.playSound(null, at.x, at.y, at.z, SoundEvents.ENDER_DRAGON_FLAP, SoundSource.NEUTRAL, .7f, 1.5f);
         if (t == SUMMON_LAND) {
@@ -693,8 +787,11 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
      * 歇 5 分钟。这几秒里打不到、不动。由 {@link Companions} 的死亡事件调用（取消死亡），命令、测试也用。
      */
     void startWithdraw(ServerLevel level) {
-        if (withdrawing()) return;
+        if (withdrawing() || seal.rising()) return;
+        // 第七印燃烬不屈：今天还没用过就站起来
+        if (seal.tryRise(level)) return;
         withdrawAt = level.getGameTime();
+        seal.stop(level);
         // 巨龙撑不住：先变回人形，再演「最后的骑士」
         if (isDragonForm()) dragon.revert(level, ownerPlayer());
         setHealth(1);
@@ -740,7 +837,7 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
 
     @Override
     protected boolean immune() {
-        return withdrawing();
+        return withdrawing() || seal.rising() || meet != null;
     }
 
     /** 龙眠时推不动；摆好姿势陪着你时（坐、睡、守宝藏、盘着）也不被挤开、不挤床上的你。 */
@@ -751,7 +848,8 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
 
     @Override
     protected boolean blocked(ServerLevel level, DamageSource source) {
-        return blade.tryBlock(level, source);
+        // 翼护替你挡下的那一下照实挨（不弹反）
+        return !seal.sheltering && blade.tryBlock(level, source);
     }
 
     @Override
@@ -799,6 +897,7 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
         if (level() instanceof ServerLevel level) {
             rest.rise(level, true);
             dragon.stopBreath(level);
+            seal.stop(level);
         }
         ejectPassengers();
     }
@@ -903,6 +1002,8 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     private static final RawAnimation BREATH_IN = RawAnimation.begin().then("breath_start", LoopType.HOLD_ON_LAST_FRAME);
     private static final RawAnimation BREATH_LOOP = RawAnimation.begin().then("breath_loop", LoopType.LOOP);
     private static final RawAnimation BREATH_OUT = RawAnimation.begin().then("breath_end", LoopType.PLAY_ONCE);
+    /** 契印动作（{@link #playSeal}）每段各存一份。 */
+    private static final java.util.Map<String, RawAnimation> SEAL_ANIMS = new java.util.concurrent.ConcurrentHashMap<>();
 
     /** 通用的 NPC 控制器之后再加一个翅膀的：收着时盖过所有动画的翅膀（入场、睡、倒下这些整身动作自己摆翅膀，不管）。 */
     @Override
@@ -915,6 +1016,46 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
             long age = level().getGameTime() - entityData.get(WINGS_AT);
             if (entityData.get(WINGS_FOLDED)) return test.setAndContinue(age < WINGS_FOLD ? FOLD : FOLDED);
             return age < WINGS_UNFOLD ? test.setAndContinue(UNFOLD) : PlayState.STOP;
+        }));
+        // 契印的动作（翼护拢翅、振翼、不屈站起来、龙息推掌）：盖在所有动画上面，可以从中间某一秒播起
+        String[] sealKey = {null};
+        // 还没跳到起播的那一秒（刚换动画的那一下跳了不算数，要等控制器真的开始播这一段再跳）
+        boolean[] seek = {false};
+        controllers.add(new AnimationController<LacertaCompanion>("seal", 3, test -> {
+            String s = entityData.get(SEAL_CLIP);
+            if (isDragonForm() || s.isEmpty()) {
+                sealKey[0] = null;
+                test.controller().setAnimationSpeed(1);
+                return PlayState.STOP;
+            }
+            String[] p = s.split("\\|");
+            long at = entityData.get(SEAL_AT), age = level().getGameTime() - at;
+            if (age < 0 || age >= Integer.parseInt(p[2])) {
+                sealKey[0] = null;
+                test.controller().setAnimationSpeed(1);
+                return PlayState.STOP;
+            }
+            String key = s + "@" + at;
+            boolean fresh = !key.equals(sealKey[0]);
+            double from = Double.parseDouble(p[1]);
+            double stopAt = Double.parseDouble(p[3]);
+            if (fresh) {
+                test.controller().reset();
+                test.controller().setAnimationSpeed(1);
+                sealKey[0] = key;
+                seek[0] = from > 0;
+            }
+            PlayState st = test.setAndContinue(SEAL_ANIMS.computeIfAbsent(p[0], k -> RawAnimation.begin().then(k, LoopType.HOLD_ON_LAST_FRAME)));
+            // 播到那一秒定住
+            if (stopAt > 0 && test.controller().getCurrentAnimationPoint() != null && test.controller().getCurrentAnimationTime() >= stopAt) {
+                test.controller().setAnimationSpeed(0);
+            }
+            if (seek[0] && test.controller().getCurrentAnimationPoint() != null) {
+                // 跳到「起播的那一秒 + 已经过去的」，跳到了就不再跳
+                if (test.controller().getCurrentAnimationTime() >= from - .05) seek[0] = false;
+                else test.controller().setAnimationTime(from + age / 20.0);
+            }
+            return st;
         }));
         // 巨龙的龙炎：蓄压、喷、收（只动颈首，地上空中都能叠）
         controllers.add(new AnimationController<LacertaCompanion>("breath", 2, test -> {
@@ -1102,5 +1243,37 @@ public class LacertaCompanion extends CompanionEntity implements ManaVessel {
     /** 测试用：{@code at} 在她头前（巨龙：右键是摸头）。 */
     public boolean inFrontOfHeadForTest(Vec3 at) {
         return inFrontOfHead(at);
+    }
+
+    // ---------------------------------------------------------------- 测试用：契印、初遇（阶段 E）
+
+    /** 测试用：翼护挡过几下；振翼扇过几次、扇中几个；龙息喷过几次、烧到几下；不屈站起来几次；逆鳞几次。 */
+    public static int[] sealCountsForTest() {
+        return LacertaSeals.counts();
+    }
+
+    /** 测试用：拔着剑挨 {@code tries} 下 {@code by} 的近战，挡下了几下（第二印以前一下都挡不了）。 */
+    public int blocksForTest(LivingEntity by, int tries) {
+        if (!(level() instanceof ServerLevel level) || !blade.draw()) return 0;
+        int n = 0;
+        for (int i = 0; i < tries; i++) {
+            if (blade.tryBlock(level, level.damageSources().mobAttack(by))) n++;
+            blade.idleForTest();
+        }
+        return n;
+    }
+
+    /** 测试用：不屈跪着、站起来的那几秒；逆鳞着。 */
+    public boolean risingForTest() {
+        return seal.rising();
+    }
+
+    public boolean wrathfulForTest() {
+        return seal.wrathful();
+    }
+
+    /** 测试用：初遇走到哪一步（arrive / wait / eat / proud / oath / leave；不在初遇为空）。 */
+    public String meetStageForTest() {
+        return meet == null ? "" : meet.describe();
     }
 }

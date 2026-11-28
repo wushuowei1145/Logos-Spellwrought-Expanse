@@ -15,37 +15,49 @@ import net.minecraft.world.entity.player.Player;
  * @param dragonForm  下次叫她出来时以巨龙登场（你在对话里让她化身的，收回、下线、换维度时还是巨龙；她自己打起来变的、变回来的不算）
  * @param hoard       她认下的宝藏（钻石块、金块、下界合金块，{@link LacertaHoard}）
  * @param hoardDay    最近一次守着宝藏陪你、加了羁绊的那一天
+ * @param riseDay     最近一次燃烬不屈（第七印，挨了致命一击又站起来，每天一次）的那一天
+ * @param meetDay     还没立契时，最近一次在高山营火边判定过她来不来（初遇，每天一次，{@link LacertaMeet}）的那一天
  */
-public record LacertaDays(long praiseDay, long critiqueDay, boolean dragonForm, Optional<GlobalPos> hoard, long hoardDay) {
-    public static final LacertaDays NONE = new LacertaDays(-1, -1, false, Optional.empty(), -1);
+public record LacertaDays(long praiseDay, long critiqueDay, boolean dragonForm, Optional<GlobalPos> hoard, long hoardDay, long riseDay, long meetDay) {
+    public static final LacertaDays NONE = new LacertaDays(-1, -1, false, Optional.empty(), -1, -1, -1);
     static final Codec<LacertaDays> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.LONG.optionalFieldOf("praise_day", -1L).forGetter(LacertaDays::praiseDay),
             Codec.LONG.optionalFieldOf("critique_day", -1L).forGetter(LacertaDays::critiqueDay),
             Codec.BOOL.optionalFieldOf("dragon_form", false).forGetter(LacertaDays::dragonForm),
             GlobalPos.CODEC.optionalFieldOf("hoard").forGetter(LacertaDays::hoard),
-            Codec.LONG.optionalFieldOf("hoard_day", -1L).forGetter(LacertaDays::hoardDay)).apply(i, LacertaDays::new));
+            Codec.LONG.optionalFieldOf("hoard_day", -1L).forGetter(LacertaDays::hoardDay),
+            Codec.LONG.optionalFieldOf("rise_day", -1L).forGetter(LacertaDays::riseDay),
+            Codec.LONG.optionalFieldOf("meet_day", -1L).forGetter(LacertaDays::meetDay)).apply(i, LacertaDays::new));
 
     static LacertaDays of(Player p) {
         return p.getData(Companions.LACERTA_DAYS);
     }
 
     LacertaDays withPraise(long day) {
-        return new LacertaDays(day, critiqueDay, dragonForm, hoard, hoardDay);
+        return new LacertaDays(day, critiqueDay, dragonForm, hoard, hoardDay, riseDay, meetDay);
     }
 
     LacertaDays withCritique(long day) {
-        return new LacertaDays(praiseDay, day, dragonForm, hoard, hoardDay);
+        return new LacertaDays(praiseDay, day, dragonForm, hoard, hoardDay, riseDay, meetDay);
     }
 
     public LacertaDays withDragonForm(boolean on) {
-        return new LacertaDays(praiseDay, critiqueDay, on, hoard, hoardDay);
+        return new LacertaDays(praiseDay, critiqueDay, on, hoard, hoardDay, riseDay, meetDay);
     }
 
     public LacertaDays withHoard(Optional<GlobalPos> at) {
-        return new LacertaDays(praiseDay, critiqueDay, dragonForm, at, hoardDay);
+        return new LacertaDays(praiseDay, critiqueDay, dragonForm, at, hoardDay, riseDay, meetDay);
     }
 
     LacertaDays withHoardDay(long day) {
-        return new LacertaDays(praiseDay, critiqueDay, dragonForm, hoard, day);
+        return new LacertaDays(praiseDay, critiqueDay, dragonForm, hoard, day, riseDay, meetDay);
+    }
+
+    LacertaDays withRiseDay(long day) {
+        return new LacertaDays(praiseDay, critiqueDay, dragonForm, hoard, hoardDay, day, meetDay);
+    }
+
+    public LacertaDays withMeetDay(long day) {
+        return new LacertaDays(praiseDay, critiqueDay, dragonForm, hoard, hoardDay, riseDay, day);
     }
 }

@@ -182,15 +182,20 @@ final class LacertaBlade implements MoveRunner.Actor {
         return true;
     }
 
-    /** 托脊横防（站住挡，挡下就弹开）。 */
+    /** 托脊横防（站住挡，挡下就弹开；第二印龙骑武艺）。 */
     boolean guard() {
-        if (!drawn()) return false;
+        if (!drawn() || !c.seal.has(LacertaSeals.ARTS)) return false;
         Moveset.Move m = move();
         if (m != null && ("guard".equals(m.name()) || "guard_hit".equals(m.name()))) return true;
         if (!canFollowUp()) return false;
         aim = null;
         runner.force("guard", c.level().getGameTime());
         return true;
+    }
+
+    /** 测试用：回到待机（不管在出哪一招）。 */
+    void idleForTest() {
+        if (runner != null) runner.force("idle", c.level().getGameTime());
     }
 
     /** 放下横防回到待机。 */
@@ -315,7 +320,8 @@ final class LacertaBlade implements MoveRunner.Actor {
             Vec3 to = e.position().add(0, e.getBbHeight() * .5, 0).subtract(eye);
             double flat = Math.sqrt(to.x * to.x + to.z * to.z);
             if (flat > .9 && (to.x * fwd.x + to.z * fwd.z) / flat < Math.cos(Math.toRadians(cone / 2))) continue;
-            any |= hit(level, e, (float) damage, CrimsonFlameSkills.burning(move.name()));
+            // 逆鳞时每一剑都带火
+            any |= hit(level, e, (float) damage, CrimsonFlameSkills.burning(move.name()) || c.seal.wrathful());
             if ("launch".equals(move.effect()) && e.isAlive() && !e.is(dev.logos.dimension.combat.Airborne.IMMUNE)
                     && e.getMaxHealth() < CompanionEntity.STRONG * 5) {
                 Vec3 v = e.getDeltaMovement();
@@ -350,7 +356,8 @@ final class LacertaBlade implements MoveRunner.Actor {
      * 她记下来趁机反击；弹射物一剑扫回去。
      */
     boolean tryBlock(ServerLevel level, DamageSource source) {
-        if (!drawn() || attacking() || staggered()) return false;
+        // 格挡、弹反是第二印龙骑武艺
+        if (!drawn() || attacking() || staggered() || !c.seal.has(LacertaSeals.ARTS)) return false;
         Entity direct = source.getDirectEntity();
         boolean projectile = direct instanceof Projectile;
         boolean melee = Parry.melee(source);
